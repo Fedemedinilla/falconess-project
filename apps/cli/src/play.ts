@@ -34,6 +34,14 @@ const seed = argString(args, "seed", String(Math.floor(Math.random() * 1_000_000
 const falconessId = argString(args, "falconess", "peregrina");
 const hangar = argString(args, "hangar", "shiden,mule,nimbus,falke").split(",");
 const rl = createInterface({ input: stdin, output: stdout });
+let closed = false;
+rl.on("close", () => {
+  if (!closed) {
+    closed = true;
+    console.log("\n(entrada cerrada)");
+    process.exit(0);
+  }
+});
 
 async function ask(prompt: string): Promise<string> {
   return (await rl.question(prompt)).trim();
@@ -132,8 +140,9 @@ async function main(): Promise<void> {
   } catch (e) {
     if (!(e instanceof Error && e.message === "quit")) throw e;
   } finally {
-    rl.close();
     console.log(`\nreplay: ${JSON.stringify({ seed, inputs })}`);
+    closed = true;
+    rl.close();
   }
 }
 
