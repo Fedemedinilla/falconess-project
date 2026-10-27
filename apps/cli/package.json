@@ -1,0 +1,12 @@
+{
+  "name": "@falconess/cli",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@falconess/content": "workspace:*",
+    "@falconess/rng": "workspace:*",
+    "@falconess/schema": "workspace:*",
+    "@falconess/sim": "workspace:*"
+  }
+}

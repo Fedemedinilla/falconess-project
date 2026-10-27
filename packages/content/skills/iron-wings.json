@@ -1,0 +1,15 @@
+{
+  "id": "iron-wings",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 70,
+  "textKey": "skill.iron-wings",
+  "trigger": {
+    "phase": "any"
+  },
+  "effect": {
+    "durabilityGuard": true,
+    "durationTicks": 90
+  }
+}

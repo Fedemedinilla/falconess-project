@@ -1,0 +1,33 @@
+{
+  "id": "altair-contract-1",
+  "version": 1,
+  "source": {
+    "kind": "crew",
+    "manufacturer": "altair",
+    "minBond": 10
+  },
+  "weight": 10,
+  "textKey": "ev.altair-contract-1",
+  "options": [
+    {
+      "textKey": "ev.altair-contract-1.opt0",
+      "effects": {
+        "feathers": 120,
+        "fatigue": 15,
+        "bond": {
+          "altair": 5
+        }
+      }
+    },
+    {
+      "textKey": "ev.altair-contract-1.opt1",
+      "effects": {
+        "mood": 1
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [5, 42],
+    "maxOccurrences": 2
+  }
+}

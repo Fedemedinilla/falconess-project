@@ -1,0 +1,45 @@
+{
+  "id": "caracara-ground-truth",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "caracara"
+  },
+  "weight": 8,
+  "textKey": "ev.caracara-ground-truth",
+  "options": [
+    {
+      "textKey": "ev.caracara-ground-truth.opt0",
+      "effects": {
+        "stats": {
+          "courage": 8
+        }
+      }
+    },
+    {
+      "textKey": "ev.caracara-ground-truth.opt1",
+      "effects": {
+        "stats": {
+          "technique": 6
+        },
+        "mood": 1
+      },
+      "chance": [
+        {
+          "p": 0.8,
+          "effects": {}
+        },
+        {
+          "p": 0.2,
+          "effects": {
+            "durability": -15
+          }
+        }
+      ]
+    }
+  ],
+  "conditions": {
+    "turnRange": [10, 40]
+  },
+  "handwritten": true
+}

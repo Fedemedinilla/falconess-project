@@ -1,0 +1,11 @@
+{
+  "id": "boneyard-battery",
+  "version": 1,
+  "type": "battery",
+  "manufacturer": "boneyard",
+  "textKey": "part.boneyard-battery",
+  "mods": {
+    "energy": 25,
+    "durability": -10
+  }
+}

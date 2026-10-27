@@ -1,0 +1,24 @@
+{
+  "id": "hard-loss",
+  "version": 1,
+  "source": {
+    "kind": "race-result",
+    "result": "goal-failed"
+  },
+  "weight": 10,
+  "textKey": "ev.hard-loss",
+  "options": [
+    {
+      "textKey": "ev.hard-loss.opt0",
+      "effects": {
+        "stats": {
+          "intelligence": 6
+        }
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [1, 48],
+    "maxOccurrences": 4
+  }
+}

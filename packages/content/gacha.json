@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "pullCost": 150,
+  "premiumEnabled": false,
+  "rerollBaseScrap": 40,
+  "feathersByGrade": {
+    "G": 0,
+    "F": 200,
+    "E": 400,
+    "D": 700,
+    "C": 1000,
+    "B": 1200,
+    "A": 1500,
+    "S": 1800,
+    "SS": 2000
+  },
+  "pools": [
+    {
+      "id": "falconess-standard",
+      "version": 1,
+      "kind": "falconess",
+      "rates": {
+        "SSR": 8,
+        "SR": 60,
+        "R": 932
+      },
+      "pity": 90,
+      "items": ["peregrina", "cernicala", "caracara"]
+    },
+    {
+      "id": "frames-standard",
+      "version": 1,
+      "kind": "frames",
+      "rates": {
+        "SSR": 10,
+        "SR": 100,
+        "R": 890
+      },
+      "pity": 80,
+      "selectorSize": 2,
+      "items": [
+        "falke",
+        "erzherzog",
+        "sylphe",
+        "etoile",
+        "shiden",
+        "hayate",
+        "nimbus",
+        "horizon",
+        "peregrina-signature",
+        "cernicala-signature",
+        "caracara-signature"
+      ]
+    }
+  ]
+}

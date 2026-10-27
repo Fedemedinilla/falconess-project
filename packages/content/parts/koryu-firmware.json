@@ -1,0 +1,14 @@
+{
+  "id": "koryu-firmware",
+  "version": 1,
+  "type": "firmware",
+  "manufacturer": "koryu",
+  "textKey": "part.koryu-firmware",
+  "modifiers": [
+    {
+      "kind": "falconess-stat",
+      "stat": "intelligence",
+      "delta": 30
+    }
+  ]
+}

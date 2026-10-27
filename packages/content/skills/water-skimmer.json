@@ -1,0 +1,15 @@
+{
+  "id": "water-skimmer",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 80,
+  "textKey": "skill.water-skimmer",
+  "trigger": {
+    "segment": "water"
+  },
+  "effect": {
+    "speed": 0.7,
+    "durationTicks": 30
+  }
+}

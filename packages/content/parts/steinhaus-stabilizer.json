@@ -1,0 +1,10 @@
+{
+  "id": "steinhaus-stabilizer",
+  "version": 1,
+  "type": "stabilizer",
+  "manufacturer": "steinhaus",
+  "textKey": "part.steinhaus-stabilizer",
+  "mods": {
+    "durability": 20
+  }
+}

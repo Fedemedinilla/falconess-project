@@ -1,0 +1,11 @@
+{
+  "id": "steinhaus-turbine",
+  "version": 1,
+  "type": "turbine",
+  "manufacturer": "steinhaus",
+  "textKey": "part.steinhaus-turbine",
+  "mods": {
+    "powerToWeight": 0.1,
+    "dissipation": -10
+  }
+}

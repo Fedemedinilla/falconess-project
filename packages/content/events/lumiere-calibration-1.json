@@ -1,0 +1,49 @@
+{
+  "id": "lumiere-calibration-1",
+  "version": 1,
+  "source": {
+    "kind": "crew",
+    "manufacturer": "lumiere",
+    "minBond": 20
+  },
+  "weight": 10,
+  "textKey": "ev.lumiere-calibration-1",
+  "options": [
+    {
+      "textKey": "ev.lumiere-calibration-1.opt0",
+      "effects": {
+        "stats": {
+          "technique": 8
+        },
+        "bond": {
+          "lumiere": 5
+        }
+      }
+    },
+    {
+      "textKey": "ev.lumiere-calibration-1.opt1",
+      "effects": {
+        "stats": {
+          "agility": 6
+        },
+        "mood": 1
+      },
+      "chance": [
+        {
+          "p": 0.7,
+          "effects": {}
+        },
+        {
+          "p": 0.3,
+          "effects": {
+            "fatigue": 10
+          }
+        }
+      ]
+    }
+  ],
+  "conditions": {
+    "turnRange": [6, 44],
+    "maxOccurrences": 2
+  }
+}

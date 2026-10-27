@@ -1,0 +1,13 @@
+{
+  "id": "heat-to-energy",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.heat-to-energy",
+  "modifiers": [
+    {
+      "kind": "heat-to-energy",
+      "ratio": 0.5
+    }
+  ]
+}

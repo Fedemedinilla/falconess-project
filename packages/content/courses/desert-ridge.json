@@ -1,0 +1,41 @@
+{
+  "id": "desert-ridge",
+  "biome": "desert",
+  "traits": ["obstacles"],
+  "segments": [
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "descent",
+      "length": 400,
+      "grade": 0.3
+    },
+    {
+      "type": "jump",
+      "length": 100,
+      "liftRequired": 20
+    },
+    {
+      "type": "flat",
+      "length": 400
+    },
+    {
+      "type": "descent",
+      "length": 300,
+      "grade": 0.2
+    },
+    {
+      "type": "jump",
+      "length": 80,
+      "liftRequired": 15
+    },
+    {
+      "type": "flat",
+      "length": 420
+    }
+  ],
+  "version": 1,
+  "textKey": "course.desert-ridge"
+}

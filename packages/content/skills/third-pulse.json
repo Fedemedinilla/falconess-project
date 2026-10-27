@@ -1,0 +1,14 @@
+{
+  "id": "third-pulse",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.third-pulse",
+  "modifiers": [
+    {
+      "kind": "pulse-chain-accel",
+      "chainIndex": 3,
+      "accelBonus": 0.2
+    }
+  ]
+}

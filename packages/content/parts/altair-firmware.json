@@ -1,0 +1,10 @@
+{
+  "id": "altair-firmware",
+  "version": 1,
+  "type": "firmware",
+  "manufacturer": "altair",
+  "textKey": "part.altair-firmware",
+  "mods": {
+    "skillSlots": 1
+  }
+}

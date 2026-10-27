@@ -1,0 +1,16 @@
+{
+  "id": "last-gasp",
+  "version": 1,
+  "kind": "active",
+  "rarity": "SR",
+  "cost": 150,
+  "textKey": "skill.last-gasp",
+  "trigger": {
+    "phase": "final"
+  },
+  "effect": {
+    "speed": 1.0,
+    "durationTicks": 30
+  },
+  "activationBase": 0.8
+}

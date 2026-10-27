@@ -1,0 +1,28 @@
+{
+  "id": "sponsor-photo",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "weight": 5,
+  "textKey": "ev.sponsor-photo",
+  "options": [
+    {
+      "textKey": "ev.sponsor-photo.opt0",
+      "effects": {
+        "feathers": 60,
+        "mood": -1
+      }
+    },
+    {
+      "textKey": "ev.sponsor-photo.opt1",
+      "effects": {
+        "scrap": 15
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [4, 44],
+    "maxOccurrences": 2
+  }
+}

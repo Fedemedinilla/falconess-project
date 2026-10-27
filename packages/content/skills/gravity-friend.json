@@ -1,0 +1,15 @@
+{
+  "id": "gravity-friend",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 90,
+  "textKey": "skill.gravity-friend",
+  "trigger": {
+    "segment": "descent"
+  },
+  "effect": {
+    "accel": 0.4,
+    "durationTicks": 30
+  }
+}

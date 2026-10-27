@@ -1,0 +1,35 @@
+{
+  "id": "peregrina-speed-doubt",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "peregrina"
+  },
+  "weight": 8,
+  "textKey": "ev.peregrina-speed-doubt",
+  "options": [
+    {
+      "textKey": "ev.peregrina-speed-doubt.opt0",
+      "effects": {
+        "stats": {
+          "intelligence": 8
+        },
+        "mood": 0
+      }
+    },
+    {
+      "textKey": "ev.peregrina-speed-doubt.opt1",
+      "effects": {
+        "stats": {
+          "courage": 8
+        },
+        "fatigue": 10,
+        "mood": 1
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [10, 40]
+  },
+  "handwritten": true
+}

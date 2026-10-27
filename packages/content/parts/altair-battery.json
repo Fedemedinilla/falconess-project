@@ -1,0 +1,10 @@
+{
+  "id": "altair-battery",
+  "version": 1,
+  "type": "battery",
+  "manufacturer": "altair",
+  "textKey": "part.altair-battery",
+  "mods": {
+    "energy": 20
+  }
+}

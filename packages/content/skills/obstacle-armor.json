@@ -1,0 +1,13 @@
+{
+  "id": "obstacle-armor",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.obstacle-armor",
+  "modifiers": [
+    {
+      "kind": "obstacle-armor",
+      "extraTicks": 10
+    }
+  ]
+}

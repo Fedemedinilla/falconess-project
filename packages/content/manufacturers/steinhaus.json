@@ -1,0 +1,24 @@
+{
+  "id": "steinhaus",
+  "rule": "mass-thrust",
+  "palette": {
+    "primary": "#4a5a6a",
+    "secondary": "#c8d0d8"
+  },
+  "crew": {
+    "stats": ["stamina", "courage"],
+    "trainingBonus": 0.15,
+    "signatureEvent": "steinhaus-maintenance-1",
+    "textKey": "crew.steinhaus"
+  },
+  "home": {
+    "biomes": ["tundra", "mountain"]
+  },
+  "weak": {
+    "biomes": ["urban", "desert"]
+  },
+  "sponsors": [],
+  "inGacha": true,
+  "version": 1,
+  "textKey": "mfr.steinhaus"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "second-wind",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 90,
+  "textKey": "skill.second-wind",
+  "trigger": {
+    "phase": "final",
+    "energyBelow": 20
+  },
+  "effect": {
+    "energyRefund": 10
+  }
+}

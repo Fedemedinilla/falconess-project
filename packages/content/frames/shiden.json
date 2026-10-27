@@ -1,0 +1,16 @@
+{
+  "id": "shiden",
+  "version": 1,
+  "manufacturer": "koryu",
+  "style": "dive",
+  "rarity": "SSR",
+  "stats": {
+    "powerToWeight": 1.4,
+    "energy": 100,
+    "dissipation": 60,
+    "durability": 100
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.shiden",
+  "passive": "third-pulse"
+}

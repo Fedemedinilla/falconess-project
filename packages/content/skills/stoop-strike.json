@@ -1,0 +1,17 @@
+{
+  "id": "stoop-strike",
+  "version": 1,
+  "kind": "active",
+  "rarity": "SSR",
+  "cost": 0,
+  "textKey": "skill.stoop-strike",
+  "trigger": {
+    "phase": "final",
+    "segment": "descent"
+  },
+  "effect": {
+    "speed": 1.5,
+    "durationTicks": 45
+  },
+  "uniqueTo": "peregrina"
+}

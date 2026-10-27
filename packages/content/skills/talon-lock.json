@@ -1,0 +1,19 @@
+{
+  "id": "talon-lock",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.talon-lock",
+  "modifiers": [
+    {
+      "kind": "pulse-cooldown",
+      "segment": "descent",
+      "cooldownTicks": 20
+    },
+    {
+      "kind": "activation-bonus",
+      "phase": "final",
+      "bonus": 0.1
+    }
+  ]
+}

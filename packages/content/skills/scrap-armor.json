@@ -1,0 +1,19 @@
+{
+  "id": "scrap-armor",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.scrap-armor",
+  "modifiers": [
+    {
+      "kind": "obstacle-armor",
+      "extraTicks": 6
+    },
+    {
+      "kind": "segment-factor",
+      "segment": "water",
+      "mode": "override",
+      "value": 1.0
+    }
+  ]
+}

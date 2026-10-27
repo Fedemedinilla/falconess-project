@@ -1,0 +1,16 @@
+{
+  "id": "etoile",
+  "version": 1,
+  "manufacturer": "lumiere",
+  "style": "dive",
+  "rarity": "SSR",
+  "stats": {
+    "powerToWeight": 1.4,
+    "energy": 60,
+    "dissipation": 80,
+    "durability": 60
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.etoile",
+  "passive": "free-first-pulse"
+}

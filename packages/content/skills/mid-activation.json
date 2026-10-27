@@ -1,0 +1,14 @@
+{
+  "id": "mid-activation",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SR",
+  "textKey": "skill.mid-activation",
+  "modifiers": [
+    {
+      "kind": "activation-bonus",
+      "phase": "middle",
+      "bonus": 0.1
+    }
+  ]
+}

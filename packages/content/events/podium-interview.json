@@ -1,0 +1,28 @@
+{
+  "id": "podium-interview",
+  "version": 1,
+  "source": {
+    "kind": "race-result",
+    "result": "podium"
+  },
+  "weight": 10,
+  "textKey": "ev.podium-interview",
+  "options": [
+    {
+      "textKey": "ev.podium-interview.opt0",
+      "effects": {
+        "feathers": 40
+      }
+    },
+    {
+      "textKey": "ev.podium-interview.opt1",
+      "effects": {
+        "mood": 1
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [1, 48],
+    "maxOccurrences": 4
+  }
+}

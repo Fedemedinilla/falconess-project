@@ -1,0 +1,36 @@
+{
+  "id": "steinhaus-maintenance-1",
+  "version": 1,
+  "source": {
+    "kind": "crew",
+    "manufacturer": "steinhaus",
+    "minBond": 10
+  },
+  "weight": 10,
+  "textKey": "ev.steinhaus-maintenance-1",
+  "options": [
+    {
+      "textKey": "ev.steinhaus-maintenance-1.opt0",
+      "effects": {
+        "durability": 40,
+        "fatigue": 5,
+        "bond": {
+          "steinhaus": 5
+        }
+      }
+    },
+    {
+      "textKey": "ev.steinhaus-maintenance-1.opt1",
+      "effects": {
+        "durability": 15,
+        "stats": {
+          "stamina": 4
+        }
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [4, 44],
+    "maxOccurrences": 3
+  }
+}

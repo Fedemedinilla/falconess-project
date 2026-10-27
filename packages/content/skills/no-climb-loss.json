@@ -1,0 +1,15 @@
+{
+  "id": "no-climb-loss",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SR",
+  "textKey": "skill.no-climb-loss",
+  "modifiers": [
+    {
+      "kind": "segment-factor",
+      "segment": "climb",
+      "mode": "override",
+      "value": 1.0
+    }
+  ]
+}

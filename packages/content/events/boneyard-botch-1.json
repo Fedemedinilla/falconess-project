@@ -1,0 +1,43 @@
+{
+  "id": "boneyard-botch-1",
+  "version": 1,
+  "source": {
+    "kind": "crew",
+    "manufacturer": "boneyard",
+    "minBond": 0
+  },
+  "weight": 10,
+  "textKey": "ev.boneyard-botch-1",
+  "options": [
+    {
+      "textKey": "ev.boneyard-botch-1.opt0",
+      "chance": [
+        {
+          "p": 0.5,
+          "effects": {
+            "durability": 30,
+            "scrap": 20,
+            "mood": 1
+          }
+        },
+        {
+          "p": 0.5,
+          "effects": {
+            "durability": -20,
+            "mood": -1
+          }
+        }
+      ]
+    },
+    {
+      "textKey": "ev.boneyard-botch-1.opt1",
+      "effects": {
+        "scrap": 10
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [2, 46],
+    "maxOccurrences": 3
+  }
+}

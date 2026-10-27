@@ -1,0 +1,16 @@
+{
+  "id": "sylphe",
+  "version": 1,
+  "manufacturer": "lumiere",
+  "style": "hover",
+  "rarity": "SR",
+  "stats": {
+    "powerToWeight": 1.2,
+    "energy": 60,
+    "dissipation": 80,
+    "durability": 80
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.sylphe",
+  "passive": "pack-regen"
+}

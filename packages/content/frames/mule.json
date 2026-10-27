@@ -1,0 +1,15 @@
+{
+  "id": "mule",
+  "version": 1,
+  "manufacturer": "boneyard",
+  "style": "ground",
+  "rarity": "R",
+  "stats": {
+    "powerToWeight": 0.7,
+    "energy": 100,
+    "dissipation": 45,
+    "durability": 180
+  },
+  "quirkSlots": 2,
+  "textKey": "frame.mule"
+}

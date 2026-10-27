@@ -1,0 +1,16 @@
+{
+  "id": "nimbus",
+  "version": 1,
+  "manufacturer": "altair",
+  "style": "hover",
+  "rarity": "SR",
+  "stats": {
+    "powerToWeight": 0.85,
+    "energy": 120,
+    "dissipation": 80,
+    "durability": 100
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.nimbus",
+  "passive": "mid-activation"
+}

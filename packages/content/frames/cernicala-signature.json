@@ -1,0 +1,17 @@
+{
+  "id": "cernicala-signature",
+  "version": 1,
+  "manufacturer": "altair",
+  "style": "hover",
+  "rarity": "SSR",
+  "stats": {
+    "powerToWeight": 0.85,
+    "energy": 120,
+    "dissipation": 80,
+    "durability": 100
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.cernicala-signature",
+  "passive": "still-air",
+  "signatureOf": "cernicala"
+}

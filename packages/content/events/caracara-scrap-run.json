@@ -1,0 +1,30 @@
+{
+  "id": "caracara-scrap-run",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "caracara"
+  },
+  "weight": null,
+  "textKey": "ev.caracara-scrap-run",
+  "options": [
+    {
+      "textKey": "ev.caracara-scrap-run.opt0",
+      "effects": {
+        "scrap": 30,
+        "bond": {
+          "boneyard": 3
+        }
+      }
+    },
+    {
+      "textKey": "ev.caracara-scrap-run.opt1",
+      "effects": {
+        "fatigue": -10,
+        "mood": -1
+      }
+    }
+  ],
+  "fixedTurn": 3,
+  "handwritten": true
+}

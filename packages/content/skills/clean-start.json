@@ -1,0 +1,15 @@
+{
+  "id": "clean-start",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 60,
+  "textKey": "skill.clean-start",
+  "trigger": {
+    "phase": "start"
+  },
+  "effect": {
+    "accel": 0.3,
+    "durationTicks": 30
+  }
+}

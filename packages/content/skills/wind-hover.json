@@ -1,0 +1,17 @@
+{
+  "id": "wind-hover",
+  "version": 1,
+  "kind": "active",
+  "rarity": "SSR",
+  "cost": 0,
+  "textKey": "skill.wind-hover",
+  "trigger": {
+    "phase": "middle",
+    "positionRange": [0.3, 0.7]
+  },
+  "effect": {
+    "energyRefund": 15,
+    "heatCool": 10
+  },
+  "uniqueTo": "cernicala"
+}

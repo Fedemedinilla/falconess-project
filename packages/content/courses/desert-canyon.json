@@ -1,0 +1,41 @@
+{
+  "id": "desert-canyon",
+  "biome": "desert",
+  "traits": ["long"],
+  "segments": [
+    {
+      "type": "flat",
+      "length": 400
+    },
+    {
+      "type": "climb",
+      "length": 500,
+      "grade": 0.25
+    },
+    {
+      "type": "canyon",
+      "length": 600,
+      "wind": -0.1
+    },
+    {
+      "type": "flat",
+      "length": 500
+    },
+    {
+      "type": "canyon",
+      "length": 400,
+      "wind": 0.15
+    },
+    {
+      "type": "water",
+      "length": 200,
+      "drag": 0.2
+    },
+    {
+      "type": "flat",
+      "length": 400
+    }
+  ],
+  "version": 1,
+  "textKey": "course.desert-canyon"
+}

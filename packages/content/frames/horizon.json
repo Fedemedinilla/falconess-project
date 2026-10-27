@@ -1,0 +1,16 @@
+{
+  "id": "horizon",
+  "version": 1,
+  "manufacturer": "altair",
+  "style": "glide",
+  "rarity": "SSR",
+  "stats": {
+    "powerToWeight": 1.0,
+    "energy": 140,
+    "dissipation": 80,
+    "durability": 100
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.horizon",
+  "passive": "heat-to-energy"
+}

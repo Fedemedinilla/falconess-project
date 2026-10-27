@@ -1,0 +1,17 @@
+{
+  "id": "scavenger-stride",
+  "version": 1,
+  "kind": "active",
+  "rarity": "SSR",
+  "cost": 0,
+  "textKey": "skill.scavenger-stride",
+  "trigger": {
+    "segment": "jump"
+  },
+  "effect": {
+    "durabilityGuard": true,
+    "speed": 0.6,
+    "durationTicks": 30
+  },
+  "uniqueTo": "caracara"
+}

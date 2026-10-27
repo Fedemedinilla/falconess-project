@@ -1,0 +1,7 @@
+node_modules/
+dist/
+out/
+*.tsbuildinfo
+.claude/allow-protected
+tools/.usage.json
+coverage/

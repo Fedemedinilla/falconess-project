@@ -1,0 +1,25 @@
+{
+  "id": "altair",
+  "rule": "telemetry",
+  "palette": {
+    "primary": "#1b2a49",
+    "secondary": "#2ec4f1"
+  },
+  "crew": {
+    "stats": ["intelligence"],
+    "trainingBonus": 0.2,
+    "signatureEvent": "altair-contract-1",
+    "textKey": "crew.altair"
+  },
+  "home": {
+    "biomes": ["urban"],
+    "traits": ["long"]
+  },
+  "weak": {
+    "traits": ["sprint"]
+  },
+  "sponsors": ["cernicala"],
+  "inGacha": true,
+  "version": 1,
+  "textKey": "mfr.altair"
+}

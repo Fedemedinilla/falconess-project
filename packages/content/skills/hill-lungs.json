@@ -1,0 +1,15 @@
+{
+  "id": "hill-lungs",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 100,
+  "textKey": "skill.hill-lungs",
+  "trigger": {
+    "segment": "climb"
+  },
+  "effect": {
+    "speed": 0.6,
+    "durationTicks": 45
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "lead-guard",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 90,
+  "textKey": "skill.lead-guard",
+  "trigger": {
+    "phase": "middle",
+    "positionRange": [0, 0.2]
+  },
+  "effect": {
+    "energyRefund": 8
+  }
+}

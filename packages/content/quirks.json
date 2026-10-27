@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "quirks": [
+    {
+      "id": "cheap-fuel",
+      "version": 1,
+      "textKey": "quirk.cheap-fuel",
+      "mods": {
+        "energy": 15,
+        "dissipation": -10
+      }
+    },
+    {
+      "id": "loose-rivets",
+      "version": 1,
+      "textKey": "quirk.loose-rivets",
+      "mods": {
+        "durability": -20,
+        "powerToWeight": 0.1
+      }
+    },
+    {
+      "id": "old-radio",
+      "version": 1,
+      "textKey": "quirk.old-radio",
+      "modifiers": [
+        {
+          "kind": "activation-bonus",
+          "phase": "middle",
+          "bonus": 0.1
+        }
+      ]
+    },
+    {
+      "id": "patched-tank",
+      "version": 1,
+      "textKey": "quirk.patched-tank",
+      "mods": {
+        "energy": -10,
+        "durability": 40
+      }
+    },
+    {
+      "id": "hot-head",
+      "version": 1,
+      "textKey": "quirk.hot-head",
+      "modifiers": [
+        {
+          "kind": "heat-penalty-immunity",
+          "untilMeters": 300
+        }
+      ]
+    },
+    {
+      "id": "mud-runner",
+      "version": 1,
+      "textKey": "quirk.mud-runner",
+      "modifiers": [
+        {
+          "kind": "segment-factor",
+          "segment": "water",
+          "mode": "override",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "thin-air",
+      "version": 1,
+      "textKey": "quirk.thin-air",
+      "modifiers": [
+        {
+          "kind": "segment-factor",
+          "segment": "climb",
+          "mode": "multiply",
+          "value": 1.05
+        },
+        {
+          "kind": "segment-factor",
+          "segment": "descent",
+          "mode": "multiply",
+          "value": 0.95
+        }
+      ]
+    },
+    {
+      "id": "heavy-paint",
+      "version": 1,
+      "textKey": "quirk.heavy-paint",
+      "mods": {
+        "powerToWeight": -0.05,
+        "durability": 25
+      }
+    },
+    {
+      "id": "lucky-bolt",
+      "version": 1,
+      "textKey": "quirk.lucky-bolt",
+      "modifiers": [
+        {
+          "kind": "random-skill-guaranteed"
+        }
+      ]
+    },
+    {
+      "id": "stutter",
+      "version": 1,
+      "textKey": "quirk.stutter",
+      "modifiers": [
+        {
+          "kind": "no-pulse"
+        }
+      ]
+    },
+    {
+      "id": "glider-tape",
+      "version": 1,
+      "textKey": "quirk.glider-tape",
+      "modifiers": [
+        {
+          "kind": "lift-bonus",
+          "factor": 0.1
+        }
+      ]
+    },
+    {
+      "id": "scrap-heart",
+      "version": 1,
+      "textKey": "quirk.scrap-heart",
+      "modifiers": [
+        {
+          "kind": "regen",
+          "perTick": 0.25
+        }
+      ]
+    }
+  ]
+}

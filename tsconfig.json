@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/rng" },
+    { "path": "packages/schema" },
+    { "path": "packages/sim" },
+    { "path": "packages/content" },
+    { "path": "apps/cli" }
+  ]
+}

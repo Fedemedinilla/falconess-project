@@ -1,0 +1,16 @@
+{
+  "id": "pack-shadow",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 70,
+  "textKey": "skill.pack-shadow",
+  "trigger": {
+    "phase": "middle",
+    "positionRange": [0.4, 1]
+  },
+  "effect": {
+    "speed": 0.4,
+    "durationTicks": 60
+  }
+}

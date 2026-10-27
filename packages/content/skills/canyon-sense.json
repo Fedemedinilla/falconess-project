@@ -1,0 +1,15 @@
+{
+  "id": "canyon-sense",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 80,
+  "textKey": "skill.canyon-sense",
+  "trigger": {
+    "segment": "canyon"
+  },
+  "effect": {
+    "speed": 0.5,
+    "durationTicks": 45
+  }
+}

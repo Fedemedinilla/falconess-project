@@ -1,0 +1,51 @@
+{
+  "id": "koryu-data-session-1",
+  "version": 1,
+  "source": {
+    "kind": "crew",
+    "manufacturer": "koryu",
+    "minBond": 20
+  },
+  "weight": 10,
+  "textKey": "ev.koryu-data-session-1",
+  "options": [
+    {
+      "textKey": "ev.koryu-data-session-1.opt0",
+      "effects": {
+        "stats": {
+          "intelligence": 12
+        },
+        "mood": -1
+      }
+    },
+    {
+      "textKey": "ev.koryu-data-session-1.opt1",
+      "effects": {
+        "stats": {
+          "agility": 6
+        },
+        "bond": {
+          "koryu": 5
+        }
+      },
+      "chance": [
+        {
+          "p": 0.7,
+          "effects": {
+            "mood": 1
+          }
+        },
+        {
+          "p": 0.3,
+          "effects": {
+            "fatigue": 15
+          }
+        }
+      ]
+    }
+  ],
+  "conditions": {
+    "turnRange": [8, 40],
+    "maxOccurrences": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "falke",
+  "version": 1,
+  "manufacturer": "steinhaus",
+  "style": "glide",
+  "rarity": "SR",
+  "stats": {
+    "powerToWeight": 1.0,
+    "energy": 120,
+    "dissipation": 45,
+    "durability": 140
+  },
+  "quirkSlots": 0,
+  "textKey": "frame.falke",
+  "passive": "no-climb-loss"
+}

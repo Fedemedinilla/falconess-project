@@ -1,0 +1,14 @@
+{
+  "id": "flat-cooldown",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SR",
+  "textKey": "skill.flat-cooldown",
+  "modifiers": [
+    {
+      "kind": "pulse-cooldown",
+      "segment": "flat",
+      "cooldownTicks": 20
+    }
+  ]
+}

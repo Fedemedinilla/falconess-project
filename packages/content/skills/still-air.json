@@ -1,0 +1,17 @@
+{
+  "id": "still-air",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.still-air",
+  "modifiers": [
+    {
+      "kind": "regen",
+      "perTick": 0.25
+    },
+    {
+      "kind": "heat-to-energy",
+      "ratio": 0.25
+    }
+  ]
+}

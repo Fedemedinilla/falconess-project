@@ -1,0 +1,24 @@
+{
+  "id": "lumiere",
+  "rule": "regen",
+  "palette": {
+    "primary": "#f5f0e1",
+    "secondary": "#c9a227"
+  },
+  "crew": {
+    "stats": ["technique", "agility"],
+    "trainingBonus": 0.15,
+    "signatureEvent": "lumiere-calibration-1",
+    "textKey": "crew.lumiere"
+  },
+  "home": {
+    "biomes": ["coast", "urban"]
+  },
+  "weak": {
+    "segments": ["jump"]
+  },
+  "sponsors": [],
+  "inGacha": true,
+  "version": 1,
+  "textKey": "mfr.lumiere"
+}

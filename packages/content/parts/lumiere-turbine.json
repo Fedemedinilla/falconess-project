@@ -1,0 +1,11 @@
+{
+  "id": "lumiere-turbine",
+  "version": 1,
+  "type": "turbine",
+  "manufacturer": "lumiere",
+  "textKey": "part.lumiere-turbine",
+  "mods": {
+    "powerToWeight": 0.05,
+    "dissipation": 10
+  }
+}

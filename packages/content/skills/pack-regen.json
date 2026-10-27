@@ -1,0 +1,13 @@
+{
+  "id": "pack-regen",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SR",
+  "textKey": "skill.pack-regen",
+  "modifiers": [
+    {
+      "kind": "regen-pack-multiplier",
+      "factor": 2
+    }
+  ]
+}

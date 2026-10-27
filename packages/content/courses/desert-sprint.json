@@ -1,0 +1,31 @@
+{
+  "id": "desert-sprint",
+  "biome": "desert",
+  "traits": ["sprint", "pure-speed"],
+  "segments": [
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 60
+    },
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "curves",
+      "length": 150,
+      "radius": 40
+    },
+    {
+      "type": "flat",
+      "length": 250
+    }
+  ],
+  "version": 1,
+  "textKey": "course.desert-sprint"
+}

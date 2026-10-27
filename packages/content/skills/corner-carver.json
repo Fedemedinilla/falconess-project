@@ -1,0 +1,15 @@
+{
+  "id": "corner-carver",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 100,
+  "textKey": "skill.corner-carver",
+  "trigger": {
+    "segment": "curves"
+  },
+  "effect": {
+    "speed": 0.8,
+    "durationTicks": 30
+  }
+}

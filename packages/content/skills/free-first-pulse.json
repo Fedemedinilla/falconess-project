@@ -1,0 +1,13 @@
+{
+  "id": "free-first-pulse",
+  "version": 1,
+  "kind": "passive",
+  "rarity": "SSR",
+  "textKey": "skill.free-first-pulse",
+  "modifiers": [
+    {
+      "kind": "free-first-boost",
+      "segment": "descent"
+    }
+  ]
+}

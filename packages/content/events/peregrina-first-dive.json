@@ -1,0 +1,34 @@
+{
+  "id": "peregrina-first-dive",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "peregrina"
+  },
+  "weight": null,
+  "textKey": "ev.peregrina-first-dive",
+  "options": [
+    {
+      "textKey": "ev.peregrina-first-dive.opt0",
+      "effects": {
+        "stats": {
+          "courage": 6
+        },
+        "bond": {
+          "koryu": 3
+        }
+      }
+    },
+    {
+      "textKey": "ev.peregrina-first-dive.opt1",
+      "effects": {
+        "stats": {
+          "intelligence": 4
+        },
+        "mood": 1
+      }
+    }
+  ],
+  "fixedTurn": 3,
+  "handwritten": true
+}

@@ -1,0 +1,14 @@
+{
+  "id": "cool-head",
+  "version": 1,
+  "kind": "active",
+  "rarity": "R",
+  "cost": 80,
+  "textKey": "skill.cool-head",
+  "trigger": {
+    "heatAbove": 50
+  },
+  "effect": {
+    "heatCool": 20
+  }
+}

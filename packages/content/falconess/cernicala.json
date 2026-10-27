@@ -1,0 +1,58 @@
+{
+  "id": "cernicala",
+  "species": "Falco tinnunculus",
+  "baseStats": {
+    "agility": 85,
+    "stamina": 95,
+    "technique": 100,
+    "courage": 75,
+    "intelligence": 115
+  },
+  "growth": {
+    "agility": 0,
+    "stamina": 0,
+    "technique": 0.1,
+    "courage": 0,
+    "intelligence": 0.2
+  },
+  "biomeAptitude": {
+    "desert": "B",
+    "mountain": "C",
+    "coast": "B",
+    "urban": "A",
+    "tundra": "C"
+  },
+  "styleAptitude": {
+    "dive": "C",
+    "hover": "A",
+    "glide": "B",
+    "ground": "D"
+  },
+  "preferredStyle": "hover",
+  "uniqueSkills": ["wind-hover"],
+  "sponsor": "altair",
+  "seasonGoals": [
+    {
+      "turn": 12,
+      "courseId": "desert-sprint",
+      "minPlace": 5
+    },
+    {
+      "turn": 24,
+      "courseId": "desert-canyon",
+      "minPlace": 3
+    },
+    {
+      "turn": 36,
+      "courseId": "desert-ridge",
+      "minPlace": 3
+    },
+    {
+      "turn": 46,
+      "courseId": "desert-canyon",
+      "minPlace": 1
+    }
+  ],
+  "version": 1,
+  "textKey": "falconess.cernicala"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "koryu",
+  "rule": "pulse",
+  "palette": {
+    "primary": "#c0392b",
+    "secondary": "#f1c40f"
+  },
+  "crew": {
+    "stats": ["agility", "intelligence"],
+    "trainingBonus": 0.15,
+    "signatureEvent": "koryu-data-session-1",
+    "textKey": "crew.koryu"
+  },
+  "home": {
+    "biomes": ["desert"],
+    "segments": ["descent"]
+  },
+  "weak": {
+    "segments": ["water"]
+  },
+  "sponsors": ["peregrina"],
+  "inGacha": true,
+  "version": 1,
+  "textKey": "mfr.koryu"
+}

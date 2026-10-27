@@ -1,0 +1,13 @@
+{
+  "id": "lumiere-stabilizer",
+  "version": 1,
+  "type": "stabilizer",
+  "manufacturer": "lumiere",
+  "textKey": "part.lumiere-stabilizer",
+  "modifiers": [
+    {
+      "kind": "curves-penalty-scale",
+      "scale": 0.5
+    }
+  ]
+}

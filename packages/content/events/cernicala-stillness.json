@@ -1,0 +1,32 @@
+{
+  "id": "cernicala-stillness",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "cernicala"
+  },
+  "weight": null,
+  "textKey": "ev.cernicala-stillness",
+  "options": [
+    {
+      "textKey": "ev.cernicala-stillness.opt0",
+      "effects": {
+        "stats": {
+          "technique": 6
+        },
+        "bond": {
+          "altair": 3
+        }
+      }
+    },
+    {
+      "textKey": "ev.cernicala-stillness.opt1",
+      "effects": {
+        "mood": 1,
+        "fatigue": -5
+      }
+    }
+  ],
+  "fixedTurn": 3,
+  "handwritten": true
+}

@@ -1,0 +1,58 @@
+{
+  "id": "caracara",
+  "species": "Caracara plancus",
+  "baseStats": {
+    "agility": 80,
+    "stamina": 115,
+    "technique": 90,
+    "courage": 105,
+    "intelligence": 80
+  },
+  "growth": {
+    "agility": 0,
+    "stamina": 0.2,
+    "technique": 0.05,
+    "courage": 0.1,
+    "intelligence": 0
+  },
+  "biomeAptitude": {
+    "desert": "B",
+    "mountain": "A",
+    "coast": "B",
+    "urban": "C",
+    "tundra": "B"
+  },
+  "styleAptitude": {
+    "dive": "D",
+    "hover": "C",
+    "glide": "B",
+    "ground": "A"
+  },
+  "preferredStyle": "ground",
+  "uniqueSkills": ["scavenger-stride"],
+  "sponsor": "boneyard",
+  "seasonGoals": [
+    {
+      "turn": 12,
+      "courseId": "desert-ridge",
+      "minPlace": 5
+    },
+    {
+      "turn": 24,
+      "courseId": "desert-sprint",
+      "minPlace": 4
+    },
+    {
+      "turn": 36,
+      "courseId": "desert-canyon",
+      "minPlace": 3
+    },
+    {
+      "turn": 46,
+      "courseId": "desert-ridge",
+      "minPlace": 2
+    }
+  ],
+  "version": 1,
+  "textKey": "falconess.caracara"
+}

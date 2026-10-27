@@ -1,0 +1,33 @@
+{
+  "id": "cernicala-chart",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "cernicala"
+  },
+  "weight": 8,
+  "textKey": "ev.cernicala-chart",
+  "options": [
+    {
+      "textKey": "ev.cernicala-chart.opt0",
+      "effects": {
+        "stats": {
+          "intelligence": 10
+        }
+      }
+    },
+    {
+      "textKey": "ev.cernicala-chart.opt1",
+      "effects": {
+        "stats": {
+          "agility": 5
+        },
+        "skillPoints": 5
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [10, 40]
+  },
+  "handwritten": true
+}

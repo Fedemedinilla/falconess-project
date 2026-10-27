@@ -1,0 +1,24 @@
+{
+  "id": "boneyard",
+  "rule": "repairable",
+  "palette": {
+    "primary": "#8b4513",
+    "secondary": "#6b7b3a"
+  },
+  "crew": {
+    "stats": ["courage", "technique"],
+    "trainingBonus": 0.15,
+    "signatureEvent": "boneyard-botch-1",
+    "textKey": "crew.boneyard"
+  },
+  "home": {
+    "traits": ["obstacles"]
+  },
+  "weak": {
+    "traits": ["pure-speed"]
+  },
+  "sponsors": ["caracara"],
+  "inGacha": false,
+  "version": 1,
+  "textKey": "mfr.boneyard"
+}

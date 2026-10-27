@@ -1,0 +1,31 @@
+{
+  "id": "sandstorm-week",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "weight": 6,
+  "textKey": "ev.sandstorm-week",
+  "options": [
+    {
+      "textKey": "ev.sandstorm-week.opt0",
+      "effects": {
+        "stats": {
+          "intelligence": 5
+        },
+        "fatigue": 5
+      }
+    },
+    {
+      "textKey": "ev.sandstorm-week.opt1",
+      "effects": {
+        "fatigue": -15,
+        "mood": 1
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [2, 46],
+    "maxOccurrences": 2
+  }
+}

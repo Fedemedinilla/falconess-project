@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Rng > golden: first draws for seed 42 (regression lock) 1`] = `
+[
+  1802449637,
+  4039812248,
+  3895425314,
+  1360870150,
+  872843342,
+]
+`;

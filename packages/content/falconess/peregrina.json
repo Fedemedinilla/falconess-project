@@ -1,0 +1,58 @@
+{
+  "id": "peregrina",
+  "species": "Falco peregrinus",
+  "baseStats": {
+    "agility": 110,
+    "stamina": 80,
+    "technique": 95,
+    "courage": 100,
+    "intelligence": 85
+  },
+  "growth": {
+    "agility": 0.2,
+    "stamina": 0,
+    "technique": 0,
+    "courage": 0.1,
+    "intelligence": 0
+  },
+  "biomeAptitude": {
+    "desert": "A",
+    "mountain": "B",
+    "coast": "B",
+    "urban": "C",
+    "tundra": "D"
+  },
+  "styleAptitude": {
+    "dive": "A",
+    "hover": "C",
+    "glide": "B",
+    "ground": "E"
+  },
+  "preferredStyle": "dive",
+  "uniqueSkills": ["stoop-strike"],
+  "sponsor": "koryu",
+  "seasonGoals": [
+    {
+      "turn": 12,
+      "courseId": "desert-sprint",
+      "minPlace": 5
+    },
+    {
+      "turn": 24,
+      "courseId": "desert-ridge",
+      "minPlace": 3
+    },
+    {
+      "turn": 36,
+      "courseId": "desert-canyon",
+      "minPlace": 3
+    },
+    {
+      "turn": 46,
+      "courseId": "desert-ridge",
+      "minPlace": 1
+    }
+  ],
+  "version": 1,
+  "textKey": "falconess.peregrina"
+}
