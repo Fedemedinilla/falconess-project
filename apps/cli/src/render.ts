@@ -70,13 +70,20 @@ export function trainingMenu(ctx: SimContext, s: SeasonState): string[] {
     const gain = trainingGain(ctx, s as Parameters<typeof trainingGain>[1], k, stat);
     const crews = (s.crewPresence[k] ?? []).map((m) => c.t(c.getManufacturer(m).crew.textKey));
     const lvl = facilityLevel(ctx, s.facilityUses[k]);
-    const extra =
-      k === "train:risk-flight"
-        ? ` (coraje ×1.5, agilidad ×0.5, riesgo)`
-        : k === "train:simulator"
-          ? " (+5 SP)"
-          : "";
-    return `${i + 1}. ${c.t(`action.${k}`)} nv${lvl}  +${gain} ${c.t(`stat.${stat}`)}${extra}${crews.length ? `  ← ${crews.join(", ")}` : ""}`;
+    const S = ctx.ruleset.season;
+    let shown = `+${gain} ${c.t(`stat.${stat}`)}`;
+    if (k === "train:risk-flight") {
+      const cou = Math.floor((gain * S.riskFlightCourage) / 1000);
+      const agi = Math.floor((gain * S.riskFlightAgility) / 1000);
+      shown = `+${cou} ${c.t("stat.courage")} +${agi} ${c.t("stat.agility")} (riesgo ${S.riskFlightFail / 10} %)`;
+    } else {
+      const sec = ctx.ruleset.trainingSecondary[k];
+      if (sec)
+        shown += ` +${Math.max(1, Math.floor((gain * S.secondaryGain) / 1000))} ${c.t(`stat.${sec}`)}`;
+      if (k === "train:simulator") shown += ` +${S.simulatorSkillPoints} SP`;
+    }
+    const crewTxt = crews.length ? `  ← ${crews.join(", ")}` : "";
+    return `${i + 1}. ${c.t(`action.${k}`)} nv${lvl}  ${shown}${crewTxt}`;
   });
 }
 
