@@ -19,8 +19,13 @@ La aptitud de bioma multiplica `agility`; la de estilo multiplica `intelligence`
 ### Ganancia de entrenamiento
 
 Intención: el nivel de pista (1–5) fija la base, el ánimo y las cuadrillas presentes la escalan.
-`gain = floor(base[level] × (1000 + Σ crewBonus) / 1000 × m_mood / 1000)` con
-`base = [8, 10, 11, 13, 14]` para los entrenamientos simples; `risk-flight` da `courage ×1.5` y
+`gain = floor(base[level] × (1000 + Σ crewBonus) × m_mood × (1000 + growth) / 10^9)`, un solo
+redondeo al final, con `base = [44, 52, 60, 68, 76]` (el brief proponía 8–14; con 48 turnos esa
+base deja la temporada en ~135 por stat, lejos del objetivo 550–800, así que se recalibró en la
+primera pasada y queda pendiente de `sim:season-batch` con el motor real) y `growth` el multiplicador
+de la Falconess para esa stat (0–300 per-mille); nivel de pista = `1 + floor(usos / 4)`, máximo 5.
+Cada entrenamiento simple sube además una stat secundaria al 50 % (`agility→technique`,
+`stamina→courage`, `technique→agility`, `simulator→technique`); `risk-flight` da `courage ×1.5` y
 `agility ×0.5`; `simulator` da `intelligence` y +5 puntos de habilidad. Rango por sesión: 5–30.
 
 ### Fallo de entrenamiento

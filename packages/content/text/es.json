@@ -91,6 +91,7 @@
   "log.rest": "Descanso.",
   "log.rest.forced": "Fatiga alta: descanso forzado.",
   "log.season.end": "Fin de temporada.",
+  "log.season.start": "Comienza la temporada.",
   "log.train.fail": "El entrenamiento salió mal.",
   "log.train.injury": "Lesión: pierde dos turnos.",
   "log.train.ok": "Entrenamiento completado.",

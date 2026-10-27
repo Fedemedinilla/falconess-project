@@ -48,3 +48,7 @@ pnpm play -- --seed 42 · pnpm sim:batch -- --runs 10000 · pnpm lint
 
 (Al cerrar cada tarea, agregar aquí en una línea lo que conviene recordar. No borrar entradas.)
 - El test de pureza también lee strings y JSDoc: `**` en un literal dispara la regla del operador exponente.
+- Encadenar `floor` en una fórmula multiplicativa pierde puntos: multiplicar todo y redondear una vez al final.
+- `structuredClone` no está en `lib: ES2022`; `packages/sim` clona el estado con JSON porque el estado es el formato de guardado.
+- Las ganancias de entrenamiento 8–14 del brief dejan la temporada en ~135 por stat con 48 turnos; la base inicial recalibrada es 44–76 (ver docs/formulas.md).
+- El RNG por input se deriva de `seed/inputsApplied`: el estado no carga RNG y la reproducción es trivial.

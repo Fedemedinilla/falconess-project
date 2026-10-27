@@ -20,7 +20,8 @@
     "sim": "tsx apps/cli/src/sim.ts",
     "play": "tsx apps/cli/src/play.ts",
     "sim:batch": "tsx apps/cli/src/not-yet.ts sim:batch",
-    "sim:race": "tsx apps/cli/src/not-yet.ts sim:race"
+    "sim:race": "tsx apps/cli/src/not-yet.ts sim:race",
+    "sim:season-batch": "tsx apps/cli/src/season-batch.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

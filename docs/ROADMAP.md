@@ -72,24 +72,24 @@ es una unidad de trabajo de 6–8 horas y el calendario se estira sin cambiar el
 
 Tareas, en orden:
 
-- [ ] D1 · Monorepo pnpm con `packages/{rng,schema,sim,content}` y `apps/cli`. `ui-kit` y `apps/web`
+- [x] D1 · Monorepo pnpm con `packages/{rng,schema,sim,content}` y `apps/cli`. `ui-kit` y `apps/web`
   se crean en la fase 4, no antes.
-- [ ] D1 · TypeScript `strict` + `noUncheckedIndexedAccess`; `tsconfig.base.json`; `.nvmrc`; `engines`.
+- [x] D1 · TypeScript `strict` + `noUncheckedIndexedAccess`; `tsconfig.base.json`; `.nvmrc`; `engines`.
   Verificar versiones con `pnpm view <paquete> version` antes de fijarlas.
-- [ ] D1 · Vitest + fast-check, Biome, tsx. Scripts raíz: `typecheck`, `test`, `test:golden`,
+- [x] D1 · Vitest + fast-check, Biome, tsx. Scripts raíz: `typecheck`, `test`, `test:golden`,
   `content:validate`, `sim`, `sim:batch` (los últimos tres como stubs que fallan con mensaje claro).
-- [ ] D1 · Guardia de pureza de `packages/sim`: test en Vitest que recorre los fuentes y falla si
+- [x] D1 · Guardia de pureza de `packages/sim`: test en Vitest que recorre los fuentes y falla si
   encuentra `Math.random`, `Date`, `Math.pow`, `Math.sin`, `Math.cos`, división flotante marcada
   o imports de `react`, `phaser`, `@supabase`. Es más fiable que depender de una regla de lint
   custom y corre en cada commit.
-- [ ] D2 · `CLAUDE.md` (copiar del brief §13), `.claude/settings.json` con los tres hooks,
+- [x] D2 · `CLAUDE.md` (copiar del brief §13), `.claude/settings.json` con los tres hooks,
   `guard-protected-paths.mjs`, `related-tests.mjs`. Contrastar sintaxis con la documentación
   vigente de Claude Code antes del commit.
-- [ ] D2 · Subagente `sim-reviewer.md` (el único necesario en semanas 1–2). `balance-analyst`,
+- [x] D2 · Subagente `sim-reviewer.md` (el único necesario en semanas 1–2). `balance-analyst`,
   `content-generator` y `voice-reviewer` llegan en las fases 2 y 3.
-- [ ] D2 · `docs/BRIEF.md`, `docs/formulas.md` (esqueleto con una sección por fórmula del brief §6),
+- [x] D2 · `docs/BRIEF.md`, `docs/formulas.md` (esqueleto con una sección por fórmula del brief §6),
   `docs/decisions/ADR-0000-template.md`, `docs/world.md` (esqueleto).
-- [ ] D2 · GitHub Actions: `typecheck`, `test`, `content:validate`. El job `sim:batch` se agrega en D14.
+- [x] D2 · GitHub Actions: `typecheck`, `test`, `content:validate`. El job `sim:batch` se agrega en D14.
 
 **Criterio de aceptación:** CI en verde con el test de pureza y un test de humo por paquete.
 
@@ -103,38 +103,43 @@ Tareas, en orden:
 
 Tareas, en orden:
 
-- [ ] D3 · `packages/rng`: xoshiro128** con semilla derivada de string (hash estable), streams
+- [x] D3 · `packages/rng`: xoshiro128** con semilla derivada de string (hash estable), streams
   `training`, `events`, `race`, `gacha`, `quirks`, estado serializable. Punto fijo: `mul`, `div`
   con redondeo definido, `clamp`. Tests: vectores conocidos, independencia de streams, misma
   semilla → misma secuencia tras serializar y restaurar.
-- [ ] D3 · `packages/schema/core.ts`: `Slug`, `Stat`, `Aptitude`, `Style`, `Biome`, `SegmentType`,
+- [x] D3 · `packages/schema/core.ts`: `Slug`, `Stat`, `Aptitude`, `Style`, `Biome`, `SegmentType`,
   `FalconessStats`, `Falconess`, `Manufacturer` (con `Crew`), `Frame`, `Part`, `Quirk`.
   `Event`, `Course`, `Skill` se completan en D5 y D8.
-- [ ] D4 · `SeasonState` y `RunInput` (8 acciones del brief §8). `loadContent()` con índice único y
+- [x] D4 · `SeasonState` y `RunInput` (8 acciones del brief §8). `loadContent()` con índice único y
   resolución de referencias por id; id inexistente = error de carga.
-- [ ] D4 · `sim/season`: stats efectivas (ánimo × aptitud, enteros), fatiga, 5 entrenamientos con
+- [x] D4 · `sim/season`: stats efectivas (ánimo × aptitud, enteros), fatiga, 5 entrenamientos con
   fallo y lesión, `rest`, `outing`, `workshop` (equipar bastidor y piezas, reparar, re-sortear
   peculiaridades con `scrap`). Propiedades fast-check: ningún recurso negativo, stats en 1–1200,
   `fatigue ≥ 80` fuerza descanso.
-- [ ] D5 · Hangar: hasta 4 bastidores, presencia de cuadrilla 35 % + 5 %·vínculo, bonificaciones de
+- [x] D5 · Hangar: hasta 4 bastidores, presencia de cuadrilla 35 % + 5 %·vínculo, bonificaciones de
   entrenamiento. Eventos: esquema `Event`, selección por peso con stream `events`, eventos de
   historia con turno fijo y `handwritten: true`.
-- [ ] D5 · Carreras objetivo con **motor provisional**: hasta que exista `simulateRace` (fase 2), la
+- [x] D5 · Carreras objetivo con **motor provisional**: hasta que exista `simulateRace` (fase 2), la
   carrera objetivo se resuelve con un `raceStub` determinista que ordena por suma ponderada de
   stats efectivas más ruido del stream `race`. Vive en `sim/race/stub.ts`, se borra en D12 y
   ningún test golden lo usa. Fin de temporada al fallar un objetivo.
-- [ ] D6 · Contenido mínimo: `falconess/{peregrina,cernicala,caracara}.json`, `manufacturers/boneyard.json`,
+- [x] D6 · Contenido mínimo: `falconess/{peregrina,cernicala,caracara}.json`, `manufacturers/boneyard.json`,
   `frames/{mule,kite}.json`, `quirks.json` (12), 6 eventos escritos a mano (2 por Falconess),
   `text/es.json`. `pnpm content:validate` con verificación de `textKey`.
-- [ ] D6 · `apps/cli`: `pnpm sim -- --seed <n> --falconess <id>` imprime la temporada turno a turno
+- [x] D6 · `apps/cli`: `pnpm sim -- --seed <n> --falconess <id>` imprime la temporada turno a turno
   con una política fija "entrenar la stat más baja". Test de determinismo: dos ejecuciones,
   salida idéntica byte a byte.
-- [ ] D7 · `apps/cli`: `pnpm play -- --seed <n>` modo interactivo por `readline`: muestra stats,
+- [x] D7 · `apps/cli`: `pnpm play -- --seed <n>` modo interactivo por `readline`: muestra stats,
   fatiga, ánimo, cuadrilla presente, pide la acción, muestra el evento y sus opciones. Es el
   banco de pruebas de **PT0**. No es interfaz: no tiene estado propio, solo llama a `advanceSeason`.
 
 **Criterio de aceptación (brief §14, semana 1):** `pnpm sim -- --seed 42 --falconess peregrina` idéntico
 en dos ejecuciones; `pnpm test` en verde con ≥ 40 tests; `content:validate` pasa.
+
+**Estado (2026-10-27): cumplido.** 82 tests en verde, salida de `pnpm sim` idéntica byte a byte,
+`content:validate` en verde. Se adelantó `pnpm sim:season-batch` (D17) para calibrar la curva:
+la política de referencia termina con stats 575–620 y completa el 83–96 % de las temporadas con el
+motor provisional. Pendiente de PT0.
 
 **Entregable extra respecto al brief:** `pnpm play`. Justificación: permite PT0 tres semanas antes
 de la primera pantalla.

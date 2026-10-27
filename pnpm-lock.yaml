@@ -66,6 +66,10 @@ importers:
       "@falconess/schema":
         specifier: workspace:*
         version: link:../schema
+    devDependencies:
+      "@falconess/content":
+        specifier: workspace:*
+        version: link:../content
 
 packages:
   "@biomejs/biome@2.6.3":

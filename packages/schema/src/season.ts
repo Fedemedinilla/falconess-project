@@ -82,13 +82,18 @@ export type TurnLogEntry = z.infer<typeof TurnLogEntry>;
 
 export const PendingEvent = z.strictObject({ eventId: Slug, turn: z.number().int() });
 
-export const SeasonStatus = z.enum(["created", "active", "ended"]);
+export const RaceOutcome = z.enum(["win", "podium", "lose", "goal-failed"]);
+export type RaceOutcome = z.infer<typeof RaceOutcome>;
+
+export const SeasonStatus = z.enum(["active", "ended"]);
 export const SeasonEndReason = z.enum(["completed", "goal-failed"]);
 
 /** Full state of one raising season. Reconstructed from seed + inputs; never trusted from a save. */
 export const SeasonState = z.strictObject({
   rulesetVersion: RulesetVersion,
   seed: z.string().min(1),
+  /** Number of RunInputs applied so far; the per-input RNG is derived from seed + this counter. */
+  inputsApplied: z.number().int().min(0),
   status: SeasonStatus,
   endReason: SeasonEndReason.optional(),
   turn: z.number().int().min(0).max(48),
@@ -110,7 +115,11 @@ export const SeasonState = z.strictObject({
   frameDurability: z.record(Slug, z.number().int().min(0)),
   rerollsThisSeason: z.number().int().min(0),
   wallet: z.strictObject({ feathers: z.number().int().min(0), scrap: z.number().int().min(0) }),
+  /** Uses per training kind; facility level = 1 + floor(uses / usesPerLevel), max 5. */
+  facilityUses: z.record(TrainingKind, z.number().int().min(0)),
   crewPresence: CrewPresence,
+  /** Outcome of the race run this turn, if any; drives `race-result` events. */
+  lastRace: z.strictObject({ turn: z.number().int(), outcome: RaceOutcome }).optional(),
   pendingEvent: PendingEvent.optional(),
   eventHistory: z.record(Slug, z.number().int().min(0)),
   raceResults: z.array(RaceResultEntry),

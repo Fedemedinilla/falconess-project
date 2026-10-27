@@ -11,5 +11,7 @@
     "@falconess/rng": "workspace:*",
     "@falconess/schema": "workspace:*"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@falconess/content": "workspace:*"
+  }
 }
