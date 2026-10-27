@@ -5,3 +5,4 @@ out/
 .claude/allow-protected
 tools/.usage.json
 coverage/
+.work/
