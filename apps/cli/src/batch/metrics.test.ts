@@ -10,14 +10,20 @@ import { meanInterval, pointsFromTimeGain, wilson } from "./stats.js";
 const content = loadContent();
 const catalog = buildCatalog(content);
 
-type Row = { job: Omit<Job, "id" | "seed">; races?: RaceRecord[]; extra?: Partial<JobResult> };
+/** Omit distributed over the union, so each scenario keeps its own fields. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+type Row = {
+  job: DistributiveOmit<Job, "id" | "seed">;
+  races?: RaceRecord[];
+  extra?: Partial<JobResult>;
+};
 
 function input(
   rows: readonly Row[],
   scenarios: BalanceScenario[],
   profile: Profile = "pr",
 ): MetricsInput {
-  const jobs = rows.map((r, id) => ({ ...r.job, id, seed: `t/${id}` }) as Job);
+  const jobs = rows.map((r, id): Job => ({ ...r.job, id, seed: `t/${id}` }));
   const results: JobResult[] = rows.map((r, id) => ({
     id,
     races: r.races ?? [],

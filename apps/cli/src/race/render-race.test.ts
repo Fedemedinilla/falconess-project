@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { loadRaceFixture, RACE_FIXTURES, type RaceFixtureName } from "./__fixtures__/load.js";
 import { contentLabels } from "./labels.js";
 import {
+  type BoostMode,
   RACE_FRAME_FLAGS,
   type RaceEvent,
   type RaceGeometry,
@@ -94,6 +95,7 @@ describe("header", () => {
 
   it("never drops a segment shorter than half a char", () => {
     const geometry: RaceGeometry = {
+      biome: "desert",
       lengthMm: 3_000_000,
       startEndMm: 500_000,
       finalStartMm: 2_000_000,
@@ -122,7 +124,7 @@ describe("header", () => {
 
   it("names the biome the log carries, else the content course's", () => {
     const log = loadRaceFixture("ridge");
-    const geometry = { ...log.geometry, biome: "tundra" };
+    const geometry = { ...log.geometry, biome: "tundra" as const };
     const [title] = renderRace({ ...log, geometry }, labels);
     expect(title).toContain(" · Tundra · ");
     expect(labels.biomeName("desert-ridge")).toBe("Desierto");
@@ -533,10 +535,31 @@ describe("why", () => {
         expect(line.split(" → ").length).toBeLessThanOrEqual(15);
       }
     }
-    const canyon = renderRace(loadRaceFixture("canyon"), labels);
-    expect(
-      canyon.some((l) => /^ {5}modos {8}\(regen-overflow → ground-constant [\d.]+\) ×\d+/.test(l)),
-    ).toBe(true);
+    // Real v1 logs no longer churn (ADR-0003 D54 hysteresis), so build a churny log by hand: lane
+    // 0 of the canyon log alternates regen-overflow and a ground-constant level twelve times, then
+    // plans and kicks. Its own boostMode events are replaced; every other event stays.
+    const log = loadRaceFixture("canyon");
+    const mode = (tick: number, m: BoostMode, levelMms = 0): RaceEvent => ({
+      kind: "boostMode",
+      tick,
+      lane: 0,
+      posMm: tick * 20_000,
+      mode: m,
+      levelMms,
+    });
+    const churn: RaceEvent[] = [];
+    for (let i = 1; i <= 12; i++) {
+      churn.push(mode(30 * i - 15, "regen-overflow"), mode(30 * i, "ground-constant", 1_310));
+    }
+    churn.push(mode(400, "off"), mode(1_035, "plan", 2_608), mode(1_606, "kick"));
+    const events = [
+      ...(log.events ?? []).filter((e) => e.lane !== 0 || e.kind !== "boostMode"),
+      ...churn,
+    ].sort((a, b) => a.tick - b.tick || a.lane - b.lane);
+    const modes = renderRace({ ...log, events }, labels).filter((l) => l.startsWith("     modos "));
+    expect(modes).toContain(
+      `     modos        (regen-overflow → ground-constant 1.31) ×12 → plan 2.61 → kick`,
+    );
   });
 
   it("keeps one label column for every runner", () => {

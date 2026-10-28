@@ -9,6 +9,7 @@
   "ticks": 666,
   "maxTicks": 12000,
   "geometry": {
+    "biome": "desert",
     "lengthMm": 1200000,
     "startEndMm": 200000,
     "finalStartMm": 800000,

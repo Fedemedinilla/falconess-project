@@ -109,7 +109,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 2107 m (893 m a velocidad mínima) · energía sin usar 60.0
      juicio       ritmo -43/+37/0 ‰ · error de plan -15 ‰ (±76)
      plan         2.98 m/s de 2001 m a 2080 m · hp-limited · limpio · E 32.0 (percibe 31.5) · hp 123 (percibe 122) · 59 cand.
-     modos        surplus ×92 → plan 2.98 → hold → kick
+     modos        surplus → plan 2.98 → hold → kick
      términos     picada 1400 ‰
      tramos       _ 1.00/31.8 · / 0.96/33.2 · | 0.90/31.0 · _ 1.00/34.5 · | 1.15/38.2 · ~ 0.80/26.6 · _ 1.00/33.2  (f / crucero m/s)
      energía      gastada 367.0 · lift 0.0 · regen +359.0 · reembolso +8.0 · calor +0.0 · queda 60.0
@@ -133,7 +133,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 2273 m (727 m a velocidad mínima) · energía sin usar 13.6
      juicio       ritmo +2/-40/-19 ‰ · error de plan -20 ‰ (±71)
      plan         2.61 m/s de 2018 m a 2230 m · hp-limited · limpio · E 28.0 (percibe 27.4) · hp 297 (percibe 291) · 27 cand. · 1 replan, el último (broken): ninguno (exhausted)
-     modos        surplus → hold → plan 2.61 → hold → kick
+     modos        surplus → plan 2.61 → hold → kick
      términos     picada 1400 ‰ · aire _1150 /1150 |1150 _1150 |1150 ~690 _1150
      tramos       _ 1.00/33.0 · / 0.96/30.4 · | 0.90/28.4 · _ 1.00/31.6 · | 1.15/37.1 · ~ 0.80/25.8 · _ 1.00/32.3  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
@@ -177,7 +177,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     energía sin usar 0.8
      juicio       ritmo -16/+8/+2 ‰ · error de plan +36 ‰ (±51)
      plan         0.65 m/s de 2101 m a 2940 m · planned · limpio · E 59.3 (percibe 61.4) · hp 779 (percibe 807) · 26 cand.
-     modos        regen-overflow ×8 → hover-catchup ×6 → preheat → hover-catchup → plan 0.65 → kick
+     modos        hover-catchup → preheat → hover-catchup → plan 0.65 → kick
      tramos       _ 1.00/19.8 · / 0.96/19.6 · | 0.90/18.3 · _ 1.00/20.3 · | 1.15/23.2 · ~ 0.80/16.2 · _ 1.00/20.2  (f / crucero m/s)
      energía      gastada 560.0 · lift 0.0 · regen +422.5 · reembolso +0.0 · calor +18.3 · queda 0.8
      cuerpo       hp final 294 · durabilidad -10.0 +0.0 → 90.0
@@ -188,7 +188,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     energía sin usar 1.0
      juicio       ritmo +9/-44/-24 ‰ · error de plan -33 ‰ (±83)
      plan         0.70 m/s de 2107 m a 2940 m · planned · limpio · E 123.5 (percibe 119.4) · hp 938 (percibe 907) · 21 cand.
-     modos        (regen-overflow → ground-constant 0.08) ×390 → regen-overflow → hold → plan 0.70 → kick
+     modos        hold → plan 0.70 → kick
      tramos       _ 1.00/16.4 · / 0.96/14.9 · | 0.90/14.0 · _ 1.00/15.5 · | 1.15/18.2 · ~ 1.00/15.8 · _ 1.00/15.8  (f / crucero m/s)
      energía      gastada 645.0 · lift 0.0 · regen +521.0 · reembolso +0.0 · calor +0.0 · queda 1.0
      cuerpo       hp final 431 · durabilidad -5.0 +4.0 → 11.0
@@ -414,7 +414,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 1805 m (195 m a velocidad mínima) · 2 aterrizaje(s) -16.03 m/s en total · energía sin usar 60.0
      juicio       ritmo +8/-37/-14 ‰ · error de plan +21 ‰ (±71)
      plan         2.15 m/s de 1415 m a 1762 m · hp-limited · limpio · E 60.0 (percibe 61.3) · hp 338 (percibe 345) · 38 cand. · 1 replan, el último (jump): 2.65 m/s de 1582 m
-     modos        regen-overflow ×238 → hold → plan 2.15 → plan 2.65 → hold → kick
+     modos        plan 2.15 → plan 2.65 → hold → kick
      términos     aterrizaje 720 ‰
      tramos       _ 1.00/29.6 · \\ 1.03/29.1 · ^ 1.00/28.3 · _ 1.00/28.3 · \\ 1.02/29.5 · ^ 1.00/29.0 · _ 1.00/29.0  (f / crucero m/s)
      energía      gastada 329.0 · lift 35.0 · regen +364.0 · reembolso +0.0 · calor +0.0 · queda 60.0
@@ -426,7 +426,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     2 desvío(s) por tierra · sobrecalor 16 ticks
      juicio       ritmo -19/-3/-1 ‰ · error de plan -64 ‰ (±76)
      plan         1.40 m/s de 1811 m a 1940 m · planned · limpio · E 39.0 (percibe 36.5) · hp 513 (percibe 480) · 30 cand.
-     modos        surplus → ground-constant 0.21 → hold → plan 1.40 → kick
+     modos        ground-constant 0.21 → hold → plan 1.40 → kick
      términos     desvío 1100 ‰
      tramos       _ 1.00/23.1 · \\ 1.03/24.1 · ^ 1.00/23.4 · _ 1.00/23.4 · \\ 1.02/23.9 · ^ 1.00/23.5 · _ 1.00/23.5  (f / crucero m/s)
      energía      gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
@@ -437,7 +437,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     2 aterrizaje(s) -5.48 m/s en total
      juicio       ritmo -15/-38/-3 ‰ · error de plan -34 ‰ (±66)
      plan         1.35 m/s de 1753 m a 1940 m · planned · limpio · E 88.0 (percibe 85.0) · hp 650 (percibe 628) · 26 cand. · 1 replan, el último (jump): 1.35 m/s de 1752 m
-     modos        hover-catchup → hold → plan 1.35 → kick
+     modos        hold → plan 1.35 → kick
      términos     aterrizaje 860 ‰
      tramos       _ 1.00/19.7 · \\ 1.03/19.8 · ^ 1.00/19.2 · _ 1.00/19.2 · \\ 1.02/20.3 · ^ 1.00/19.9 · _ 1.00/19.9  (f / crucero m/s)
      energía      gastada 85.0 · lift 35.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
@@ -576,7 +576,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 1108 m (92 m a velocidad mínima) · energía sin usar 52.5
      juicio       ritmo +23/-24/+6 ‰ · error de plan -87 ‰ (±90)
      plan         3.48 m/s de 802 m a 1055 m · hp-limited · limpio · E 58.5 (percibe 53.4) · hp 352 (percibe 321) · 59 cand.
-     modos        regen-overflow ×151 → plan 3.48 → hold → kick
+     modos        plan 3.48 → hold → kick
      términos     picada 1400 ‰
      tramos       _ 1.00/34.0 · ) 0.91/29.4 · _ 1.00/32.4 · ) 0.91/30.3 · _ 1.00/33.4  (f / crucero m/s)
      energía      gastada 220.0 · lift 0.0 · regen +210.5 · reembolso +2.0 · calor +0.0 · queda 52.5
@@ -588,7 +588,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 1107 m (93 m a velocidad mínima) · energía sin usar 48.0
      juicio       ritmo -3/-39/-2 ‰ · error de plan -12 ‰ (±90)
      plan         3.38 m/s de 802 m a 1078 m · hp-limited · limpio · E 58.0 (percibe 57.3) · hp 352 (percibe 348) · 59 cand.
-     modos        regen-overflow ×152 → plan 3.38 → hold → kick
+     modos        plan 3.38 → hold → kick
      términos     picada 1400 ‰
      tramos       _ 1.00/33.1 · ) 0.91/28.9 · _ 1.00/31.9 · ) 0.91/30.0 · _ 1.00/33.1  (f / crucero m/s)
      energía      gastada 222.0 · lift 0.0 · regen +210.0 · reembolso +0.0 · calor +0.0 · queda 48.0
@@ -600,7 +600,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 1104 m (96 m a velocidad mínima) · energía sin usar 41.5
      juicio       ritmo -25/-16/+34 ‰ · error de plan +81 ‰ (±90)
      plan         3.38 m/s de 802 m a 1099 m · hp-limited · limpio · E 59.0 (percibe 63.8) · hp 361 (percibe 390) · 59 cand.
-     modos        regen-overflow ×154 → plan 3.38 → hold → kick
+     modos        plan 3.38 → hold → kick
      términos     picada 1400 ‰
      tramos       _ 1.00/32.4 · ) 0.91/29.6 · _ 1.00/32.7 · ) 0.91/31.1 · _ 1.00/34.3  (f / crucero m/s)
      energía      gastada 227.0 · lift 0.0 · regen +208.5 · reembolso +0.0 · calor +0.0 · queda 41.5
@@ -624,7 +624,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 1114 m (86 m a velocidad mínima) · energía sin usar 44.5
      juicio       ritmo -33/+25/-4 ‰ · error de plan -87 ‰ (±90)
      plan         3.48 m/s de 802 m a 1065 m · hp-limited · limpio · E 59.0 (percibe 53.9) · hp 361 (percibe 330) · 59 cand. · 1 replan, el último (refund): 4.98 m/s de 1035 m
-     modos        regen-overflow ×154 → plan 3.48 → plan 4.98 → hold → kick
+     modos        plan 3.48 → plan 4.98 → hold → kick
      términos     picada 1400 ‰
      tramos       _ 1.00/32.1 · ) 0.91/30.8 · _ 1.00/34.0 · ) 0.91/30.0 · _ 1.00/33.1  (f / crucero m/s)
      energía      gastada 233.0 · lift 0.0 · regen +207.5 · reembolso +10.0 · calor +0.0 · queda 44.5
@@ -636,7 +636,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      pérdidas     agotada en 1132 m (68 m a velocidad mínima) · energía sin usar 9.2
      juicio       ritmo +3/-46/+1 ‰ · error de plan +38 ‰ (±90)
      plan         2.61 m/s de 823 m a 1114 m · hp-limited · limpio · E 42.4 (percibe 44.0) · hp 378 (percibe 393) · 27 cand. · 1 replan, el último (refund): 2.61 m/s de 1018 m
-     modos        surplus → hold → plan 2.61 → hold → kick
+     modos        surplus → plan 2.61 → kick
      términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
      tramos       _ 1.00/33.3 · ) 0.91/28.7 · _ 1.00/31.7 · ) 0.91/30.1 · _ 1.00/33.2  (f / crucero m/s)
      energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +10.0 · calor +0.0 · queda 9.2

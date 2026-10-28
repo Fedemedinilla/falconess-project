@@ -22,7 +22,9 @@ const ctx: BuildContext = {
 };
 
 type RaceJob = Exclude<Job, { scenario: "S7" }>;
-const job = <J extends RaceJob>(j: Omit<J, "id">): J => ({ id: 0, ...j }) as J;
+/** Omit distributed over the union, so each scenario keeps its own fields. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+const job = (j: DistributiveOmit<RaceJob, "id">): RaceJob => ({ id: 0, ...j });
 
 function isPermutation(lanes: readonly number[]): boolean {
   return [...lanes].sort((a, b) => a - b).every((l, i) => l === i);
