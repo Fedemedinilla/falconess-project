@@ -1,5 +1,13 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import type { RunInput, SeasonState } from "@falconess/schema";
-import { RULESET_V1, replaySeason } from "@falconess/sim";
+import {
+  advanceSeason,
+  CURRENT_RULESET,
+  canonicalJson,
+  RULESET_V1,
+  replaySeason,
+} from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../content/load";
 import { GameController } from "./controller";
@@ -8,7 +16,20 @@ import { type KeyValueStore, RUN_KEY, SEEN_KEY } from "./storage";
 
 const HANGAR = ["shiden", "mule", "nimbus", "falke"] as const;
 const content = getContent();
-const ctx = { ruleset: RULESET_V1, content };
+const ctx = { ruleset: CURRENT_RULESET, content };
+
+/** The owner's playtest 1 (ruleset v1) and the digests 5f0fd65 recorded for it (packages/sim). */
+const FIXTURES = new URL("../../../../packages/sim/src/season/__fixtures__/", import.meta.url);
+const RUN1_TEXT = readFileSync(new URL("playtest-run1.json", FIXTURES), "utf8");
+const V1_DIGESTS = JSON.parse(
+  readFileSync(new URL("v1-invariance-5f0fd65.json", FIXTURES), "utf8"),
+);
+
+/** sha256 of the state without its log, as v1-invariance.test.ts hashes it. */
+function rulesDigest(state: SeasonState): string {
+  const { log: _log, ...rest } = state;
+  return createHash("sha256").update(canonicalJson(rest)).digest("hex").slice(0, 16);
+}
 
 function memoryStore(): KeyValueStore & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -54,7 +75,9 @@ describe("GameController", () => {
     const game = started();
     const run = game.getSnapshot().run;
     expect(run?.seed).toBe("web-42");
-    expect(run?.rulesetVersion).toBe("v1");
+    expect(run?.rulesetVersion).toBe(CURRENT_RULESET.version);
+    expect(run?.state.rulesetVersion).toBe("v2");
+    expect(game.context().ruleset).toBe(CURRENT_RULESET);
     expect(run?.inputs).toEqual([
       { kind: "start", falconessId: "peregrina", hangar: [...HANGAR], parents: [] },
     ]);
@@ -251,6 +274,56 @@ describe("GameController", () => {
     expect(a).not.toBe(b);
     expect(a).toBe(runFingerprint({ ...base, inputs: [start, { kind: "rest" }] }));
     expect(a.startsWith("v1|s|2|")).toBe(true);
+  });
+
+  it("loads the owner's v1 playtest under v1: the same final state as 5f0fd65, input for input", () => {
+    const game = new GameController(content, memoryStore());
+    expect(game.loadText(RUN1_TEXT)).toBe(true);
+    const run = game.getSnapshot().run;
+    if (!run) throw new Error("no run");
+    expect(run.rulesetVersion).toBe("v1");
+    expect(game.context().ruleset).toBe(RULESET_V1);
+    expect(game.newRunContext().ruleset).toBe(CURRENT_RULESET);
+    expect(run.inputs).toHaveLength(V1_DIGESTS.run1.perInput.length);
+    expect(rulesDigest(run.state)).toBe(V1_DIGESTS.run1.perInput.at(-1));
+    expect(run.state.grade).toBe(V1_DIGESTS.run1.final.grade);
+    expect(run.state.raceResults.map((r) => r.place)).toEqual(V1_DIGESTS.run1.final.places);
+    // the rebuilt last step is the same replay, split before the last input
+    expect(game.getSnapshot().lastStep?.after).toBe(run.state);
+    // the copy it exports keeps its ruleset
+    expect(JSON.parse(game.exportText() ?? "{}").rulesetVersion).toBe("v1");
+  });
+
+  it("continues a v1 run under v1 rules: forced rest at high fatigue, as the owner played it", () => {
+    const saved = JSON.parse(RUN1_TEXT);
+    // up to week 19, whose training the v1 rules turned into a forced rest
+    const game = new GameController(content, memoryStore());
+    const v1 = { ruleset: RULESET_V1, content };
+    let cut = 1;
+    let state = replaySeason(v1, saved.seed, saved.inputs.slice(0, cut));
+    while (state.turn < 19 || state.pendingEvent) {
+      cut += 1;
+      state = replaySeason(v1, saved.seed, saved.inputs.slice(0, cut));
+    }
+    expect(state.fatigue).toBeGreaterThanOrEqual(RULESET_V1.season.forcedRestAt);
+    expect(game.loadText(JSON.stringify({ ...saved, inputs: saved.inputs.slice(0, cut) }))).toBe(
+      true,
+    );
+    expect(game.act({ kind: "train:agility" })).toBe(true);
+    const after = game.getSnapshot().run?.state;
+    expect(after?.log.at(-1)?.notes).toContain("log.rest.forced");
+    expect(after).toEqual(advanceSeason(v1, state, { kind: "train:agility" }));
+  });
+
+  it("reads a version-less `replay:` line of the CLI as a v1 run", () => {
+    const saved = JSON.parse(RUN1_TEXT);
+    const line = `replay: ${JSON.stringify({ seed: saved.seed, inputs: saved.inputs.slice(0, 5) })}`;
+    const game = new GameController(content, memoryStore());
+    expect(game.loadText(line)).toBe(true);
+    const run = game.getSnapshot().run;
+    if (!run) throw new Error("no run");
+    expect(run.rulesetVersion).toBe("v1");
+    expect(rulesDigest(run.state)).toBe(V1_DIGESTS.run1.perInput[4]);
   });
 
   it("leaves the run for a new season and notifies subscribers once per change", () => {

@@ -23,7 +23,11 @@ export function getContent(): ContentIndex {
   return cached;
 }
 
-/** The simulation context of a ruleset (the current one by default). Throws on an unknown one. */
+/**
+ * The simulation context of a ruleset; v1 by default, the ruleset of `pnpm sim:race`, which the
+ * free race mirrors (v2 changes the season, not the race engine). Season screens take theirs from
+ * the run (`GameController.context`). Throws on an unknown version.
+ */
 export function simContext(rulesetVersion: string = RULESET_V1.version): SimContext {
   return { ruleset: getRuleset(rulesetVersion), content: getContent() };
 }

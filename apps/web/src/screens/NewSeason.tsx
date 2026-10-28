@@ -190,7 +190,8 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
  */
 export function NewSeason() {
   const { game } = useGame();
-  const ctx = game.context();
+  // a new season starts on the current ruleset, whatever run is in storage
+  const ctx = game.newRunContext();
   const content = ctx.content;
   const roster = [...content.falconess.values()];
   const frames = useMemo(() => orderedFrames(content), [content]);
@@ -214,7 +215,7 @@ export function NewSeason() {
       parents: [],
     };
     try {
-      return startSeason(game.context(), "preview", input).equippedFrame;
+      return startSeason(game.newRunContext(), "preview", input).equippedFrame;
     } catch {
       return undefined;
     }

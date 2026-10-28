@@ -128,14 +128,21 @@ export function Home({ onOpenRun }: HomeProps) {
     const name = nameOf(run.state.falconessId);
     continueNote =
       run.state.status === "ended"
-        ? ui("ui.home.continue.ended", { name, seed: run.seed })
-        : ui("ui.home.continue.active", { name, turn: run.state.turn, turns, seed: run.seed });
+        ? ui("ui.home.continue.ended", { name, seed: run.seed, ruleset: run.rulesetVersion })
+        : ui("ui.home.continue.active", {
+            name,
+            turn: run.state.turn,
+            turns,
+            seed: run.seed,
+            ruleset: run.rulesetVersion,
+          });
   } else if (saved) {
     const start = saved.inputs[0];
     continueNote = ui("ui.home.continue.saved", {
       name: start?.kind === "start" ? nameOf(start.falconessId) : saved.seed,
       decisions: uiCount("ui.count.decisions", saved.inputs.length - 1),
       seed: saved.seed,
+      ruleset: saved.rulesetVersion,
     });
   }
 
@@ -189,7 +196,9 @@ export function Home({ onOpenRun }: HomeProps) {
   return (
     <div className={s.home}>
       <section className={s.intro} aria-labelledby="inicio-titulo">
-        <p className={s.eyebrow}>{ui("ui.home.eyebrow", { ruleset: ctx.ruleset.version })}</p>
+        <p className={s.eyebrow}>
+          {ui("ui.home.eyebrow", { ruleset: game.newRunContext().ruleset.version })}
+        </p>
         <h1 className={s.title} id="inicio-titulo">
           {ui("ui.home.title")}
         </h1>

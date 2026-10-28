@@ -9,6 +9,7 @@
 import type { ContentIndex, RunInput, SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
+  CURRENT_RULESET,
   getRuleset,
   InvalidInputError,
   RULESET_V1,
@@ -82,6 +83,13 @@ const EMPTY: GameSnapshot = {
   saved: false,
 };
 
+/**
+ * The ruleset of a pasted `replay:` line that carries no version: those lines were all printed by
+ * `pnpm play` on v1 (today it prints the whole save, version included). Never the current ruleset:
+ * replaying a v1 run on v2 rules gives another season.
+ */
+const CLI_REPLAY_RULESET = RULESET_V1.version;
+
 function message(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
@@ -113,17 +121,28 @@ export class GameController {
     return this.#store !== undefined;
   }
 
-  /** The simulation context of the run in play (the current ruleset when there is none). */
+  /**
+   * The simulation context of the run in play: the ruleset that run started on (a v1 save keeps
+   * playing v1), or the ruleset new seasons start on when there is none.
+   */
   context(): SimContext {
-    return this.#ctx(this.#snap.run?.rulesetVersion ?? RULESET_V1.version);
+    return this.#ctx(this.#snap.run?.rulesetVersion ?? CURRENT_RULESET.version);
+  }
+
+  /** The context a new season starts on (`CURRENT_RULESET`), whatever run is in play. */
+  newRunContext(): SimContext {
+    return this.#ctx(CURRENT_RULESET.version);
   }
 
   // --- actions ----------------------------------------------------------------------------------
 
-  /** Start a season. False (and `error`) when the sim rejects the start input. */
+  /**
+   * Start a season on the current ruleset (`CURRENT_RULESET`, ADR-0006). False (and `error`) when
+   * the sim rejects the start input.
+   */
   start(falconessId: string, hangar: readonly string[], seed: string): boolean {
     const input: RunInput = { kind: "start", falconessId, hangar: [...hangar], parents: [] };
-    const ctx = this.#ctx(RULESET_V1.version);
+    const ctx = this.newRunContext();
     try {
       const state = startSeason(ctx, seed, input);
       this.#setRun({ seed, rulesetVersion: ctx.ruleset.version, inputs: [input], state });
@@ -214,7 +233,7 @@ export class GameController {
   savedRun(): SavedRun | undefined {
     const text = readKey(this.#store, RUN_KEY);
     if (text === undefined) return undefined;
-    const parsed = parseSavedRun(text, RULESET_V1.version);
+    const parsed = parseSavedRun(text, CLI_REPLAY_RULESET);
     return parsed.ok ? parsed.run : undefined;
   }
 
@@ -227,7 +246,7 @@ export class GameController {
 
   /** Replay a pasted run (the JSON of "Copiar partida", or the `replay:` line of `pnpm play`). */
   loadText(text: string): boolean {
-    const parsed = parseSavedRun(text, RULESET_V1.version);
+    const parsed = parseSavedRun(text, CLI_REPLAY_RULESET);
     if (!parsed.ok) {
       this.#fail(`load-${parsed.error}`, parsed.detail);
       return false;

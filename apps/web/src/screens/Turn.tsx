@@ -73,7 +73,9 @@ export function Turn() {
           <p className={s.sub}>
             <Livery palette={sponsor.palette} size="sm" />
             <span>{gameText(sponsor.textKey)}</span>
-            <span className={s.seed}>{ui("ui.turn.seed", { seed: run.seed })}</span>
+            <span className={s.seed}>
+              {ui("ui.turn.seed", { seed: run.seed, ruleset: run.rulesetVersion })}
+            </span>
             {state.injuryTurns > 0 && (
               <Pill tone="bad" solid icon="injury">
                 {ui("ui.action.injured")}
