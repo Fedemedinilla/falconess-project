@@ -18,6 +18,7 @@ import {
   WorkshopError,
 } from "@falconess/sim";
 import { argString, parseArgs } from "./args.js";
+import { goalRaceView } from "./goal-race-view.js";
 import {
   finalSummary,
   frameLine,
@@ -131,6 +132,8 @@ async function main(): Promise<void> {
         const next = advanceSeason(ctx, state, input);
         inputs.push(input);
         for (const line of turnSummary(ctx, next, state)) console.log(line);
+        if (next.raceResults.length > state.raceResults.length)
+          for (const line of goalRaceView(ctx, state, input)) console.log(line);
         state = next;
       } catch (e) {
         if (e instanceof WorkshopError) console.log(`  taller: ${e.message}`);

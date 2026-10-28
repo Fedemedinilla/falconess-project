@@ -553,13 +553,36 @@ function skillsLine(log: RaceLog, r: Runner, labels: RaceLabels): string {
 /** One label column for every block: the longest label, "habilidades". */
 const WHY_LABEL_WIDTH = 11;
 
-function whyBlock(log: RaceLog, r: Runner, winner: Runner, labels: RaceLabels): string[] {
+/** The rows of a "why" block, by label. */
+type WhyRow =
+  | "fases"
+  | "ganancias"
+  | "pérdidas"
+  | "juicio"
+  | "plan"
+  | "modos"
+  | "términos"
+  | "tramos"
+  | "energía"
+  | "cuerpo"
+  | "habilidades";
+
+/** The rows of the compact summary: phases against the winner, gains and time sinks. */
+const SUMMARY_ROWS: ReadonlySet<WhyRow> = new Set(["fases", "ganancias", "pérdidas"]);
+
+function whyBlock(
+  log: RaceLog,
+  r: Runner,
+  winner: Runner,
+  labels: RaceLabels,
+  only?: ReadonlySet<WhyRow>,
+): string[] {
   const { entry, derived, result } = r;
   const L = result.ledger;
   const W = winner.result.ledger;
   const g = log.geometry;
   const isWinner = r === winner;
-  const lines: [string, string][] = [];
+  const lines: [WhyRow, string][] = [];
 
   const gap =
     !isWinner && result.finishMilli !== null && winner.result.finishMilli !== null
@@ -670,7 +693,9 @@ function whyBlock(log: RaceLog, r: Runner, winner: Runner, labels: RaceLabels): 
 
   return [
     `  ${result.place}º ${labels.runnerName(entry)}  ${formatTime(result)}${gap}`,
-    ...lines.map(([k, v]) => `     ${k.padEnd(WHY_LABEL_WIDTH)}  ${v}`),
+    ...lines
+      .filter(([k]) => only === undefined || only.has(k))
+      .map(([k, v]) => `     ${k.padEnd(WHY_LABEL_WIDTH)}  ${v}`),
   ];
 }
 
@@ -683,7 +708,21 @@ function why(log: RaceLog, runners: readonly Runner[], labels: RaceLabels): stri
   ];
 }
 
-// --- entry point --------------------------------------------------------------------------------
+// --- entry points -------------------------------------------------------------------------------
+
+/**
+ * The compact view of a race (`pnpm play` after a goal race): the classification, then the
+ * player's phases against the winner, her gains and her time sinks ("pérdidas"). Works on either
+ * detail; without the player (a field of rivals or fixtures) only the classification.
+ */
+export function renderRaceSummary(log: RaceLog, labels: RaceLabels): string[] {
+  const runners = runnersInPlaceOrder(log);
+  const winner = runners[0];
+  const player = runners.find((r) => r.entry.kind === "player");
+  const lines = classification(runners, labels);
+  if (winner && player) lines.push(...whyBlock(log, player, winner, labels, SUMMARY_ROWS));
+  return lines;
+}
 
 /** The whole text view, one string per line. */
 export function renderRace(log: RaceLog, labels: RaceLabels): string[] {
