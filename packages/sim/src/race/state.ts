@@ -511,6 +511,7 @@ export function createRaceArena(): RaceArena {
       zeroAll(arena.tables);
       zeroAll(arena.state);
       zeroAll(arena.state.pulse);
+      arena.tables.luckyIdx.fill(-1);
       arena.U.fill(0);
       arena.n = n;
       return arena;
