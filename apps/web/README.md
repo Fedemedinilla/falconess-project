@@ -65,8 +65,11 @@ Every explanation a card can shorten has two texts in es.json: the full one unde
 one-line brief one under `<key>.brief` (`rule.pulse.brief`, `skill.third-pulse.brief`,
 `ui.goals.consequence.brief`…). `uiAt(detail, key)` and `gameBrief(textKey)` pick them;
 `brief.test.ts` checks that every one exists, is shorter than its full text and uses no value
-the full one lacks, and that every skill and rule has one (parts and quirks when their text is
-long). Briefs must say what the engine does (docs/race-engine.md), only shorter.
+the full one lacks, that it keeps every downside of the full text (a cap, a lower value, a weaker
+chance, the season ending…) and says «activación» for a skill-chance bonus, and that every skill
+and rule has one (parts and quirks when their text is long). Briefs must say what the engine
+does (docs/race-engine.md), only shorter. Status messages have no brief: the race-week warning
+always says the whole stake.
 
 Each such card has «Breve | Completo» in its header (`ExplainSwitch`: two `aria-pressed` buttons,
 ids `<card>-breve` and `<card>-completo`, 44 px tall on phones): frame and runner cards of

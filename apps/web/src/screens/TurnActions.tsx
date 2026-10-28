@@ -515,7 +515,7 @@ export function TurnActions({
       {next?.weeksLeft === 0 && !pending && (
         <p className={s.raceWeek} role="status">
           <Icon name="goalRace" />
-          {uiAt(explain, "ui.turn.raceThisWeek", {
+          {ui("ui.turn.raceThisWeek", {
             course: gameText(ctx.content.getCourse(next.goal.courseId).textKey),
             place: next.goal.minPlace,
           })}

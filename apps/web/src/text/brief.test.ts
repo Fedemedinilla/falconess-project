@@ -5,7 +5,8 @@ import { BRIEF_UI_KEYS, gameBrief, uiAt } from "./brief";
 
 /**
  * Every explanation a card can shorten has a brief variant in es.json (`<full key>.brief`): it
- * exists, says something, is shorter than the full text and uses no value the full text lacks.
+ * exists, says something, is shorter than the full text, uses no value the full text lacks and
+ * drops none of its downsides.
  */
 const content = getContent();
 
@@ -21,6 +22,57 @@ function fullOfSkill(id: string): string {
   return skill.kind === "active"
     ? describeActiveSkill(skill)
     : skill.modifiers.map(describeModifier).join(" · ");
+}
+
+/**
+ * What a brief line may shorten but never drop: each downside its full text states (a cap, a lower
+ * value, a weaker chance, the season ending…), and the subject of a skill-chance bonus, which
+ * without "activación" reads as stronger skills. `full` finds the term in the full text, `brief`
+ * the way the brief must say it.
+ */
+const KEPT_TERMS: readonly { name: string; full: RegExp; brief: RegExp }[] = [
+  { name: "the cap", full: /\btope\b/i, brief: /\btope\b/i },
+  { name: "less durability", full: /Durabilidad −/, brief: /menos durabilidad|frágil/i },
+  { name: "less energy", full: /Energía −/, brief: /menos energía/i },
+  { name: "less dissipation", full: /Disipación −/, brief: /menos calor/i },
+  { name: "less power", full: /Potencia\/peso −/, brief: /lenta/i },
+  { name: "a slower terrain", full: /Velocidad en [^·]*×0,/, brief: /peor|lenta/i },
+  { name: "a weaker chance", full: /activación ×0,/i, brief: /se activa menos/i },
+  // a brief may leave a chance bonus out, but one it states says "activación"
+  {
+    name: "the subject of the chance bonus",
+    full: /activación (de habilidades )?\+/i,
+    brief: /activación|^(?![\s\S]*habilidades? \+)/i,
+  },
+  { name: "a low capacity", full: /capacidad baja/i, brief: /chic|baja|poca/i },
+  { name: "the drain", full: /\bdrena\b/i, brief: /gasta|drena/i },
+  { name: "the slowdown", full: /\bfrena\b|más lenta/i, brief: /frena|lenta|rotas/i },
+  { name: "the missing boost", full: /no hay boost/i, brief: /no hay boost/i },
+  { name: "the halved gain", full: /\bresta\b/i, brief: /\bresta\b/i },
+  { name: "the lower mood", full: /baja el ánimo/i, brief: /ánimo/i },
+  { name: "the rising cost", full: /cada vez más/i, brief: /cuesta más|cada vez más|más caro/i },
+  {
+    name: "the season ending",
+    full: /temporada (termina|se acaba)|(termina|se acaba) la temporada/i,
+    brief: /temporada (termina|se acaba)|(termina|se acaba) la temporada/i,
+  },
+];
+
+/** Every full text with a brief line, as the cards show them. */
+function briefPairs(): { owner: string; full: string; brief: string }[] {
+  const pairs: { owner: string; full: string; brief: string }[] = [];
+  for (const key of BRIEF_UI_KEYS)
+    pairs.push({ owner: key, full: content.t(key), brief: content.t(`${key}.brief`) });
+  const game = (owner: string, full: string) => {
+    const brief = gameBrief(owner);
+    if (brief !== undefined) pairs.push({ owner, full, brief });
+  };
+  for (const skill of content.skills.values()) game(skill.textKey, fullOfSkill(skill.id));
+  for (const source of [...content.parts.values(), ...content.quirks.values()])
+    game(source.textKey, describeSource(source).join(" · "));
+  for (const m of content.manufacturers.values())
+    game(`rule.${m.rule}`, content.t(`rule.${m.rule}`));
+  return pairs;
 }
 
 describe("brief texts", () => {
@@ -60,6 +112,15 @@ describe("brief texts", () => {
         expect(brief.length, source.textKey).toBeLessThan(full.length);
       }
     }
+  });
+
+  it("keeps every downside of its full text, and what a bonus applies to", () => {
+    const missing: string[] = [];
+    for (const { owner, full, brief } of briefPairs())
+      for (const term of KEPT_TERMS)
+        if (term.full.test(full) && !term.brief.test(brief))
+          missing.push(`${owner}: «${brief}» drops ${term.name}`);
+    expect(missing).toEqual([]);
   });
 
   it("keeps no brief text that nothing shows", () => {
