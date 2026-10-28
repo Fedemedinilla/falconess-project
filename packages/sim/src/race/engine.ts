@@ -662,8 +662,8 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
 /**
  * Step C of tick t: gaps of every runner unfinished at the start of the tick at each crosser's
  * instant, then places by (finishMilli, lane); equal finishMilli is a dead heat (`deadHeat` on the
- * whole group, margin 0, places still distinct by lane); the k-th finisher's margin is
- * gap[(k − 1)-th][k-th].
+ * whole group, margin 0 on every member, places still distinct by lane); the margin of any other
+ * k-th finisher is gap[(k − 1)-th][k-th].
  */
 function placeFinishers(c: Ctx, crossers: Int32Array, nCross: number, startUnfinished: number) {
   const { G, S, n, rec } = c;
@@ -717,8 +717,11 @@ function placeFinishers(c: Ctx, crossers: Int32Array, nCross: number, startUnfin
       const place = c.groupStart + g;
       S.place[lane] = place;
       S.deadHeat[lane] = c.groupCount > 1 ? 1 : 0;
+      // margin 0 on every runner of a dead heat, the first one included (19)
       S.marginMm[lane] =
-        g === 0 && c.beforeGroup >= 0 ? (S.gap[c.beforeGroup * MAX_LANES + lane] ?? 0) : 0;
+        c.groupCount === 1 && c.beforeGroup >= 0
+          ? (S.gap[c.beforeGroup * MAX_LANES + lane] ?? 0)
+          : 0;
       if (lane !== A) rec.patchFinishPlace(c.finishEvent[lane] ?? -1, place);
     }
     c.finishEvent[A] = rec.finish(c.t, A, posMm(c, A), fm, S.place[A] ?? 0);

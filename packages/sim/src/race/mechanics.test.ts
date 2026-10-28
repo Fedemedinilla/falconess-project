@@ -822,6 +822,28 @@ describe("finish placing (docs/race-engine.md 19)", () => {
       [2, 3, false, 1000],
     ]);
   });
+
+  it("a dead heat for 2nd: every runner of the group has margin 0, the first one included (19)", () => {
+    // 19: "deadHeat: true on every runner of the group, margin 0"; "marginMm ... (0 for the winner
+    // and for dead heats)". The first runner of the group used to keep its gap to the winner (1000)
+    const L = 2000 * M;
+    const entries = [fixture("hover", 0), fixture("hover", 1), fixture("hover", 2)];
+    const log = simulateRaceProbed(NO_BOOST, entries, LONG_FLAT, "dh2", (t, A) => {
+      if (t === 500) {
+        A.state.pos[0] = L - 352_500;
+        A.state.pos[1] = L - 352_500 - 225_000; // 1 m behind the winner
+        A.state.pos[2] = L - 352_500 - 225_000;
+      }
+    });
+    expect(RaceLog.parse(log)).toEqual(log);
+    expect(
+      log.results.map((r) => [r.lane, r.place, r.finishMilli, r.deadHeat, r.marginMm]),
+    ).toEqual([
+      [0, 1, 502_000, false, 0],
+      [1, 2, 502_638, true, 0],
+      [2, 3, 502_638, true, 0],
+    ]);
+  });
 });
 
 describe("instantaneous terms and rule regen (docs/race-engine.md 5, 8.1, 13)", () => {
