@@ -78,7 +78,10 @@ export function inPack(R: RaceConstants, S: RaceState, i: number): boolean {
 
 /** What the controller reports to the log (events of 20.4); the engine adds tick and position. */
 export type ControllerSink = {
-  /** The (mode, level) pair changed (9.5); level in vu. */
+  /**
+   * The (mode, level) pair changed (9.5); level in vu. Reported on every change: the log keeps
+   * only the pairs that hold `R.log.sampleEveryTicks` ticks (ADR-0003 D54).
+   */
   boostMode(i: number, mode: number, level: number): void;
   /** A free-first-boost bit was spent on this segment type (9.6, 12). */
   freeBoost(i: number, segType: number): void;
@@ -270,8 +273,8 @@ export function licenceOk(
 }
 
 /**
- * Step B7 for runner i at tick t (9.6, 12): select the mode, reset the accumulator and log a
- * `boostMode` event when (mode, level) changes, accrue the accumulator in level modes (not on
+ * Step B7 for runner i at tick t (9.6, 12): select the mode, reset the accumulator and report a
+ * `boostMode` change to the sink when (mode, level) changes, accrue the accumulator in level modes (not on
  * jump-blocked ticks), apply the gates of 9.3 (true values, never perceived), then either run the
  * Kōryū state machine or take the continuous decision with free-first-boost. Writes the tick's
  * `boostOn`, `isPulseTick`, `freeTick`, `burstChain`; the speed step applies thrust, air and stoop.

@@ -1706,7 +1706,13 @@ Events are ordered by emission: per tick, step-B events in lane order (each runn
 order), then step-C finish events in place order. Segment and phase entries are not events
 (`posMm` + `geometry` determine them) except those carrying data (`detour`, `waterHit`, `repair`).
 Boost on/off is explained by `boostMode` changes (reason) plus the per-row `boost` count (exact
-duty); per-tick toggles are never logged.
+duty); per-tick toggles are never logged. **`boostMode` hysteresis (ADR-0003 D54):** a
+`(mode, level)` is logged only if it holds at least `R.log.sampleEveryTicks` ticks (1 s) and
+differs from the runner's last logged pair, with the tick (and `posMm`) where it began; every
+runner starts in `("off", 0)` without an event. Physics never reads the log: results are
+unchanged. A regen frame that alternates REGEN/OFF every 2-3 ticks (≈ 300 changes per runner on
+the sprint) now logs only its long spans (an etoile on the sprint: `plan`, `kick`). Measured on an
+8-frame field of the three v1 courses: 8-14 events per runner, 68-109 before D54.
 
 ### 20.5 Results and ledger
 

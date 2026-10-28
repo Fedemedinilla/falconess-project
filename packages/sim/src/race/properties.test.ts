@@ -19,6 +19,7 @@ import { freezeEntry, freezeSkill } from "./entry.js";
 import { disableSkill, neutralFixtureEntry } from "./fixtures.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { createRaceArena, drawRaceBlock, ib, ibps, ips, is, type RaceArena } from "./state.js";
+import { MODE_OFF, modeName, POS_PER_MM, VEL_PER_MMS } from "./units.js";
 
 /**
  * Properties of docs/race-engine.md 24.2 with fast-check: P1 determinism, P2 symmetry (exact with
@@ -498,6 +499,66 @@ describe("P5 log consistency (and P8 integers)", () => {
         const ticks = log.frames?.tick ?? [];
         for (let k = 1; k < ticks.length; k++)
           expect(at(ticks, k)).toBeGreaterThan(at(ticks, k - 1));
+      }),
+      { numRuns: RUNS },
+    );
+  });
+});
+
+describe("P5b boostMode hysteresis (ADR-0003 D54)", () => {
+  it("the log keeps exactly the (mode, level) spans that hold sampleEveryTicks ticks and change the last kept pair, at the tick they began", () => {
+    const minTicks = RULESET_V1.race.log.sampleEveryTicks;
+    type Change = { tick: number; lane: number; posMm: number; mode: string; levelMms: number };
+    fc.assert(
+      fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+        const n = entries.length;
+        // every raw change the controller makes (B7), with the tick-start position
+        const changes: Change[][] = Array.from({ length: n }, () => []);
+        const mode = new Int32Array(n).fill(MODE_OFF);
+        const level = new Int32Array(n);
+        const pos = new Float64Array(n);
+        const log = simulateRaceProbed(RULESET_V1, entries, course, seed, (t, A) => {
+          const S = A.state;
+          for (let i = 0; i < n; i++) {
+            const m = S.mode[i] ?? MODE_OFF;
+            const l = S.modeLevel[i] ?? 0;
+            if (m !== mode[i] || l !== level[i]) {
+              changes[i]?.push({
+                tick: t,
+                lane: i,
+                posMm: Math.floor((pos[i] ?? 0) / POS_PER_MM),
+                mode: modeName(m),
+                levelMms: Math.floor(l / VEL_PER_MMS),
+              });
+              mode[i] = m;
+              level[i] = l;
+            }
+            pos[i] = S.pos[i] ?? 0;
+          }
+        });
+        // a span lasts until the next change, or the tick after the runner's last simulated tick
+        const want: Change[] = [];
+        for (let i = 0; i < n; i++) {
+          const r = log.results.find((x) => x.lane === i);
+          const end = r?.timeTicks ?? log.ticks;
+          const cs = changes[i] ?? [];
+          let shown = "off 0";
+          cs.forEach((c, k) => {
+            const stop = cs[k + 1]?.tick ?? end;
+            const key = `${c.mode} ${c.levelMms}`;
+            if (stop - c.tick >= minTicks && key !== shown) {
+              want.push(c);
+              shown = key;
+            }
+          });
+        }
+        want.sort((a, b) => a.tick - b.tick || a.lane - b.lane);
+        const got = (log.events ?? []).flatMap((e) =>
+          e.kind === "boostMode"
+            ? [{ tick: e.tick, lane: e.lane, posMm: e.posMm, mode: e.mode, levelMms: e.levelMms }]
+            : [],
+        );
+        expect(got).toEqual(want);
       }),
       { numRuns: RUNS },
     );

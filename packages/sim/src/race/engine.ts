@@ -175,7 +175,7 @@ function runRace(
   initState(ruleset, E, A);
 
   const units = engineUnits(R);
-  const rec = new RaceRecorder(full, E);
+  const rec = new RaceRecorder(full, E, R.log.sampleEveryTicks);
   const c: Ctx = {
     R,
     G,
@@ -274,7 +274,10 @@ function runRace(
   };
   if (full) {
     log.frames = rec.frames();
-    log.events = rec.events;
+    // a runner's last boostMode candidate is held until the tick after its last simulated tick:
+    // its crossing tick + 1, or the end of the loop for a DNF (ADR-0003 D54)
+    const ticks = t;
+    log.events = rec.events((i) => (flag(S, i, F_FINISHED) ? (S.timeTicks[i] ?? ticks) : ticks));
   }
   return log;
 }

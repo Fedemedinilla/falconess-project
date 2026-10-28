@@ -33,7 +33,8 @@ import { engineUnits, SEG_JUMP, STYLE_DIVE, STYLE_GROUND } from "./units.js";
  * The race log (docs/race-engine.md 20): events in emission order, race-wide frame sampling, the
  * per-runner skill lists of the ledger, and the materialisation of `derived` and `results`. With
  * detail "results" no event object and no frame row is ever built; `derived` and `results` are
- * identical in both modes (property P7).
+ * identical in both modes (property P7). `boostMode` events pass a hysteresis (ADR-0003 D54) that
+ * touches only the event list, never physics.
  */
 
 type Column = number[];
@@ -50,7 +51,6 @@ type RunnerColumns = {
 
 export class RaceRecorder {
   readonly full: boolean;
-  readonly events: RaceEvent[] = [];
   readonly frameTick: number[] = [];
   readonly columns: RunnerColumns[] = [];
   /** Skill ids per lane, in activation order (ledger `skillsActivated`). */
@@ -58,11 +58,33 @@ export class RaceRecorder {
   /** Skill ids per lane, in miss order (ledger `skillsMissed`). */
   readonly missed: string[][] = [];
   private readonly entries: readonly RaceEntry[];
+  /** Every event in emission order, `boostMode` candidates included (see `events()`). */
+  private readonly list: RaceEvent[] = [];
+  /**
+   * `boostMode` hysteresis (ADR-0003 D54): a (mode, level) is logged only if it holds at least
+   * `modeMinTicks` ticks, at the tick it began. Each change is pushed as a candidate in its natural
+   * place; when the next change (or the runner's last tick) closes it, it is kept if it held long
+   * enough and differs from the last kept pair of its lane, else dropped.
+   */
+  private readonly modeMinTicks: number;
+  /** Per lane: index in `list` of the running candidate (−1 = none) and the tick it began. */
+  private readonly modeEvent: Int32Array;
+  private readonly modeSince: Int32Array;
+  /** Per lane: the last kept pair; every runner starts in (off, 0) without an event (9.4). */
+  private readonly shownMode: BoostMode[] = [];
+  private readonly shownLevel: Int32Array;
+  /** Indices in `list` of the dropped candidates. */
+  private readonly dropped = new Set<number>();
 
-  constructor(full: boolean, entries: readonly RaceEntry[]) {
+  constructor(full: boolean, entries: readonly RaceEntry[], modeMinTicks: number) {
     this.full = full;
     this.entries = entries;
+    this.modeMinTicks = modeMinTicks;
+    this.modeEvent = new Int32Array(entries.length).fill(-1);
+    this.modeSince = new Int32Array(entries.length);
+    this.shownLevel = new Int32Array(entries.length);
     for (let i = 0; i < entries.length; i++) {
+      this.shownMode.push("off");
       this.activated.push([]);
       this.missed.push([]);
       if (full)
@@ -87,8 +109,44 @@ export class RaceRecorder {
 
   // --- events (20.4); every member carries tick, lane, posMm ---------------------------------------
 
+  /**
+   * The (mode, level) of `lane` changed at `tick` (9.5): closes the running candidate and opens a
+   * new one at this tick (ADR-0003 D54).
+   */
   boostMode(tick: number, lane: number, posMm: number, mode: BoostMode, levelMms: number): void {
-    if (this.full) this.events.push({ kind: "boostMode", tick, lane, posMm, mode, levelMms });
+    if (!this.full) return;
+    this.closeMode(lane, tick);
+    this.modeEvent[lane] = this.list.length;
+    this.modeSince[lane] = tick;
+    this.list.push({ kind: "boostMode", tick, lane, posMm, mode, levelMms });
+  }
+
+  /** The running candidate of `lane` held until `end` (exclusive): keep or drop it (D54). */
+  private closeMode(lane: number, end: number): void {
+    const k = this.modeEvent[lane] ?? -1;
+    if (k < 0) return;
+    this.modeEvent[lane] = -1;
+    const e = this.list[k];
+    if (e === undefined || e.kind !== "boostMode") return;
+    const held = end - (this.modeSince[lane] ?? 0);
+    if (
+      held >= this.modeMinTicks &&
+      (e.mode !== this.shownMode[lane] || e.levelMms !== this.shownLevel[lane])
+    ) {
+      this.shownMode[lane] = e.mode;
+      this.shownLevel[lane] = e.levelMms;
+    } else this.dropped.add(k);
+  }
+
+  /**
+   * The event list of the log: closes every lane's running `boostMode` candidate at the end of
+   * its race (`endTick(lane)`, the tick after its last simulated tick) and leaves out the dropped
+   * candidates. Called once, after the tick loop.
+   */
+  events(endTick: (lane: number) => number): RaceEvent[] {
+    for (let i = 0; i < this.entries.length; i++) this.closeMode(i, endTick(i));
+    if (this.dropped.size === 0) return this.list;
+    return this.list.filter((_, k) => !this.dropped.has(k));
   }
 
   pulse(
@@ -101,12 +159,12 @@ export class RaceRecorder {
     cooldown: number,
   ): void {
     if (this.full)
-      this.events.push({ kind: "pulse", tick, lane, posMm, chain, thrustMms, free, cooldown });
+      this.list.push({ kind: "pulse", tick, lane, posMm, chain, thrustMms, free, cooldown });
   }
 
   freeBoost(tick: number, lane: number, posMm: number, segType: number): void {
     if (this.full)
-      this.events.push({ kind: "freeBoost", tick, lane, posMm, segment: segName(segType) });
+      this.list.push({ kind: "freeBoost", tick, lane, posMm, segment: segName(segType) });
   }
 
   sprintPlan(
@@ -130,20 +188,20 @@ export class RaceRecorder {
       clean: boolean;
     },
   ): void {
-    if (this.full) this.events.push({ kind: "sprintPlan", tick, lane, posMm, ...plan });
+    if (this.full) this.list.push({ kind: "sprintPlan", tick, lane, posMm, ...plan });
   }
 
   skill(tick: number, lane: number, posMm: number, j: number, p: number, u: number, k: number) {
     const skillId = this.skillId(lane, j);
     this.activated[lane]?.push(skillId);
     if (this.full)
-      this.events.push({ kind: "skill", tick, lane, posMm, skillId, p, u, activation: k });
+      this.list.push({ kind: "skill", tick, lane, posMm, skillId, p, u, activation: k });
   }
 
   skillMiss(tick: number, lane: number, posMm: number, j: number, p: number, u: number) {
     const skillId = this.skillId(lane, j);
     this.missed[lane]?.push(skillId);
-    if (this.full) this.events.push({ kind: "skillMiss", tick, lane, posMm, skillId, p, u });
+    if (this.full) this.list.push({ kind: "skillMiss", tick, lane, posMm, skillId, p, u });
   }
 
   jumpOk(
@@ -155,7 +213,7 @@ export class RaceRecorder {
     before: number,
   ) {
     if (this.full)
-      this.events.push({ kind: "jumpOk", tick, lane, posMm, lift, required, energyBefore: before });
+      this.list.push({ kind: "jumpOk", tick, lane, posMm, lift, required, energyBefore: before });
   }
 
   jumpFail(
@@ -169,7 +227,7 @@ export class RaceRecorder {
     stallTicks: number,
   ): void {
     if (this.full)
-      this.events.push({
+      this.list.push({
         kind: "jumpFail",
         tick,
         lane,
@@ -183,52 +241,52 @@ export class RaceRecorder {
   }
 
   detour(tick: number, lane: number, posMm: number, segment: number): void {
-    if (this.full) this.events.push({ kind: "detour", tick, lane, posMm, segment });
+    if (this.full) this.list.push({ kind: "detour", tick, lane, posMm, segment });
   }
 
   waterHit(tick: number, lane: number, posMm: number, damage: number): void {
-    if (this.full) this.events.push({ kind: "waterHit", tick, lane, posMm, damage });
+    if (this.full) this.list.push({ kind: "waterHit", tick, lane, posMm, damage });
   }
 
   overheat(tick: number, lane: number, posMm: number, on: boolean, heat: number): void {
-    if (this.full) this.events.push({ kind: "overheat", tick, lane, posMm, on, heat });
+    if (this.full) this.list.push({ kind: "overheat", tick, lane, posMm, on, heat });
   }
 
   hpEmpty(tick: number, lane: number, posMm: number): void {
-    if (this.full) this.events.push({ kind: "hpEmpty", tick, lane, posMm });
+    if (this.full) this.list.push({ kind: "hpEmpty", tick, lane, posMm });
   }
 
   durabilityBroken(tick: number, lane: number, posMm: number, powerToWeight: number): void {
-    if (this.full) this.events.push({ kind: "durabilityBroken", tick, lane, posMm, powerToWeight });
+    if (this.full) this.list.push({ kind: "durabilityBroken", tick, lane, posMm, powerToWeight });
   }
 
   landing(tick: number, lane: number, posMm: number, speedLossMms: number): void {
-    if (this.full) this.events.push({ kind: "landing", tick, lane, posMm, speedLossMms });
+    if (this.full) this.list.push({ kind: "landing", tick, lane, posMm, speedLossMms });
   }
 
   repair(tick: number, lane: number, posMm: number, amount: number): void {
-    if (this.full) this.events.push({ kind: "repair", tick, lane, posMm, amount });
+    if (this.full) this.list.push({ kind: "repair", tick, lane, posMm, amount });
   }
 
   heatToEnergy(tick: number, lane: number, posMm: number, heat: number, energy: number): void {
-    if (this.full) this.events.push({ kind: "heatToEnergy", tick, lane, posMm, heat, energy });
+    if (this.full) this.list.push({ kind: "heatToEnergy", tick, lane, posMm, heat, energy });
   }
 
   /** Returns the event's index (−1 with detail "results") so a later dead heat can re-place it. */
   finish(tick: number, lane: number, posMm: number, finishMilli: number, place: number): number {
     if (!this.full) return -1;
-    this.events.push({ kind: "finish", tick, lane, posMm, finishMilli, place });
-    return this.events.length - 1;
+    this.list.push({ kind: "finish", tick, lane, posMm, finishMilli, place });
+    return this.list.length - 1;
   }
 
   /** A dead heat that spans two ticks re-sorts its group by lane (19): fix the earlier event. */
   patchFinishPlace(index: number, place: number): void {
-    const e = this.events[index];
+    const e = this.list[index];
     if (e !== undefined && e.kind === "finish") e.place = place;
   }
 
   dnf(tick: number, lane: number, posMm: number): void {
-    if (this.full) this.events.push({ kind: "dnf", tick, lane, posMm });
+    if (this.full) this.list.push({ kind: "dnf", tick, lane, posMm });
   }
 
   // --- frames (20.4) --------------------------------------------------------------------------------

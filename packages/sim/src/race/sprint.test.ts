@@ -119,9 +119,13 @@ function planAt(u: Unit, x: number, i = 0): PlanReport {
 describe("worked values of docs/race-engine.md 11.4 (neutral dive, 600 stats, noise off)", () => {
   it("sprint: SURPLUS spends 1 at the gun; at 800.8 m Ep 99 plans 1.80 m/s from 801 m, 90 on-ticks; 54.12 s", () => {
     const log = simulateRace(QUIET, [fixture("dive")], SPRINT, "w");
+    // the one-tick SURPLUS at the gun and the OFF after it hold less than a second, so the log
+    // keeps no boostMode event for them (ADR-0003 D54); boostTicks below still counts the tick
     const modes = (log.events ?? []).filter((e) => e.kind === "boostMode");
-    expect(at(modes, 0)).toMatchObject({ tick: 0, mode: "surplus" });
-    expect(at(modes, 1)).toMatchObject({ tick: 1, mode: "off" });
+    expect(modes.map((e) => [e.tick, e.posMm, e.mode, e.levelMms])).toEqual([
+      [561, 800_802, "plan", 1800],
+      [775, 1_140_214, "kick", 0],
+    ]);
     expect(plans(log)).toHaveLength(1);
     expect(at(plans(log), 0)).toMatchObject({
       posMm: 800_802,

@@ -312,7 +312,12 @@ export const RaceFrames = z
   });
 export type RaceFrames = z.infer<typeof RaceFrames>;
 
-/** Why boost was on (9.4); `boostMode` events carry it. */
+/**
+ * Why boost was on (9.4); `boostMode` events carry it. The log keeps a (mode, level) only if it
+ * holds at least `R.log.sampleEveryTicks` ticks (1 s) and differs from the runner's last logged
+ * pair, stamped with the tick it began (ADR-0003 D54); shorter spans show only in the frame
+ * `boost` counts. Every runner starts in ("off", 0) without an event.
+ */
 export const BoostMode = z.enum([
   "off",
   "kick",
@@ -350,6 +355,7 @@ function raceEvent<K extends string, S extends z.ZodRawShape>(kind: K, shape: S)
 
 /** Events in emission order (20.4): per tick, step-B events in lane order, then finishes. */
 export const RaceEvent = z.discriminatedUnion("kind", [
+  /** A (mode, level) that held at least 1 s, at the tick it began (ADR-0003 D54). */
   raceEvent("boostMode", { mode: BoostMode, levelMms: Nat }),
   raceEvent("pulse", { chain: Int.min(1), thrustMms: Nat, free: z.boolean(), cooldown: Nat }),
   raceEvent("freeBoost", { segment: SegmentType }),

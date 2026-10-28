@@ -221,6 +221,28 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
     expect([sixty.geometry.reserveAtMm, at(sixty.derived, 0).kickAtMm]).toEqual([0, 0]);
   });
 
+  it("an etoile (Lumière regen) on desert-sprint logs 2 boostMode events instead of ~300 (ADR-0003 D54)", () => {
+    // REGEN-overflow and OFF alternate every 2-3 ticks before the plan point: ~300 raw changes,
+    // none holding a second, so the log keeps only the plan and the kick (each held > 15 ticks)
+    const c = course("desert-sprint");
+    const e = frozen("etoile", c, 0);
+    expect(e.rule).toBe("regen");
+    let changes = 0;
+    let prev = 0;
+    const log = simulateRaceProbed(RULESET_V1, [e], c, "d54", (_t, A) => {
+      const key = (A.state.mode[0] ?? 0) * 1_000_000 + (A.state.modeLevel[0] ?? 0);
+      if (key !== prev) changes++;
+      prev = key;
+    });
+    expect(changes).toBeGreaterThan(250);
+    const modes = (log.events ?? []).filter((x) => x.kind === "boostMode");
+    expect(modes.map((x) => x.mode)).toEqual(["plan", "kick"]);
+    // physics untouched: the regen duty before the plan still shows in the frame boost counts
+    const r = at(log.results, 0);
+    expect(r.ledger.boostTicks[0] + r.ledger.boostTicks[1]).toBeGreaterThan(100);
+    expect(RaceLog.parse(log)).toEqual(log);
+  });
+
   it("the ridge flyers lift twice (35 energy) and land twice; ground detours both jumps", () => {
     const log = simulateRace(RULESET_V1, neutralField(), course("desert-ridge"), "ridge");
     for (const r of log.results) {
