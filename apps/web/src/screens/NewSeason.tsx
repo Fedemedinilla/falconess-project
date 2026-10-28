@@ -312,7 +312,7 @@ export function NewSeason() {
       <div className={s.startBar}>
         <p className={s.summary}>
           {chosen && <strong>{gameText(chosen.textKey)}</strong>}
-          <span>
+          <span className={hangar.length === 0 ? undefined : s.summaryHangar}>
             {hangar.length === 0
               ? ui("ui.new.summary.empty")
               : ui("ui.new.summary.hangar", {

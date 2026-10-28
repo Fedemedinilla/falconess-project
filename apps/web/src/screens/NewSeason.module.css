@@ -286,7 +286,7 @@
 }
 
 .full {
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 .full .hitArea {
@@ -304,8 +304,8 @@
   accent-color: var(--accent);
 }
 
-/* make room for the checkbox at the right of the frame's name */
-.frameOption h3 {
+/* make room for the checkbox at the right of the frame's head */
+.frameOption article > header {
   padding-right: var(--space-6);
 }
 
@@ -382,4 +382,15 @@
 
 .summaryEquipped {
   color: var(--ink-3);
+}
+
+/* on a phone the bar keeps the name, the starting frame and the button */
+@media (max-width: 40rem) {
+  .startBar {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .summaryHangar {
+    display: none;
+  }
 }

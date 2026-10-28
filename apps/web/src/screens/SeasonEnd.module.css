@@ -11,8 +11,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "grade who numbers"
-    "ladder ladder ladder"
-    "cap cap cap";
+    "ladder ladder ladder";
   align-items: end;
   gap: var(--space-3) var(--space-5);
   padding-bottom: var(--space-4);
@@ -157,9 +156,12 @@
 }
 
 .capNote {
-  grid-area: cap;
   font-size: var(--fs-sm);
   color: var(--bad);
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 @media (max-width: 48rem) {
@@ -168,8 +170,7 @@
     grid-template-areas:
       "grade who"
       "numbers numbers"
-      "ladder ladder"
-      "cap cap";
+      "ladder ladder";
   }
 }
 

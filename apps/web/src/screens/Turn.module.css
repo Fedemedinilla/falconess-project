@@ -261,11 +261,15 @@
     order: 3;
   }
 
-  .hangar {
+  .profile {
     order: 4;
   }
 
-  .log {
+  .hangar {
     order: 5;
+  }
+
+  .log {
+    order: 6;
   }
 }

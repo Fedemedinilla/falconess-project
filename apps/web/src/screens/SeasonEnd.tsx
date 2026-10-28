@@ -112,6 +112,9 @@ export function SeasonEnd() {
               </Pill>
             )}
           </p>
+          {summary.cap !== undefined && (
+            <p className={s.capNote}>{ui("ui.end.cap", { cap: summary.cap })}</p>
+          )}
         </div>
         <dl className={s.numbers}>
           <div>
@@ -147,9 +150,6 @@ export function SeasonEnd() {
             </li>
           ))}
         </ol>
-        {summary.cap !== undefined && (
-          <p className={s.capNote}>{ui("ui.end.cap", { cap: summary.cap })}</p>
-        )}
       </header>
 
       <div className={s.grid}>
@@ -181,8 +181,16 @@ export function SeasonEnd() {
                     {ui("ui.end.notRun")}
                   </span>
                 ),
-                ui("ui.goals.need", { place: g.goal.minPlace }),
-                g.result ? ui("ui.end.time", { time: formatSeconds(g.result.timeTicks) }) : "",
+                <span key="goal" className={s.nowrap}>
+                  {ui("ui.goals.need", { place: g.goal.minPlace })}
+                </span>,
+                g.result ? (
+                  <span key="time" className={s.nowrap}>
+                    {ui("ui.end.time", { time: formatSeconds(g.result.timeTicks) })}
+                  </span>
+                ) : (
+                  ""
+                ),
                 g.result ? gameText(content.getFrame(g.result.frameId).textKey) : "",
                 g.result ? (
                   <Button

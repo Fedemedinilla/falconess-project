@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
@@ -17,6 +17,26 @@ export function EventDialog() {
   const pending = snap.run?.state.pendingEvent;
   const key = pending ? `${pending.eventId}/${pending.turn}` : "";
   const [hiddenFor, setHiddenFor] = useState<string | undefined>();
+  const options = pending ? game.context().content.getEvent(pending.eventId).options.length : 0;
+  const open = pending !== undefined && hiddenFor !== key;
+
+  // keys 1–3 answer while the dialog is open
+  const chooseRef = useRef((option: number) => {
+    game.act({ kind: "event:choose", option });
+  });
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      const n = Number.parseInt(e.key, 10);
+      if (String(n) !== e.key || n < 1 || n > options) return;
+      e.preventDefault();
+      chooseRef.current(n - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, options]);
+
   if (!pending) return null;
 
   const ctx = game.context();
@@ -49,9 +69,7 @@ export function EventDialog() {
       break;
   }
 
-  const choose = (option: number) => {
-    game.act({ kind: "event:choose", option });
-  };
+  const choose = chooseRef.current;
 
   return (
     <>

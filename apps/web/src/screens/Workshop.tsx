@@ -157,10 +157,12 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
                       className={s.radio}
                     />
                     <Livery palette={maker.palette} size="sm" />
-                    <span className={s.frameName}>{gameText(frame.textKey)}</span>
-                    <span className={s.frameMeta}>
-                      {gameText(`style.${frame.style}`)} ·{" "}
-                      {ui("ui.frame.durability", { current: d.current, max: d.max })}
+                    <span className={s.frameText}>
+                      <span className={s.frameName}>{gameText(frame.textKey)}</span>
+                      <span className={s.frameMeta}>
+                        {gameText(`style.${frame.style}`)} ·{" "}
+                        {ui("ui.frame.durability", { current: d.current, max: d.max })}
+                      </span>
                     </span>
                     {id === state.equippedFrame && (
                       <Pill tone="accent">{ui("ui.hangar.equipped")}</Pill>

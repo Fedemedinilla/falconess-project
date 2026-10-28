@@ -13,7 +13,7 @@ import { useViewRace } from "./shared/useViewRace";
 import s from "./Turn.module.css";
 import { TurnActions } from "./TurnActions";
 import { GoalsPanel, HangarPanel, LogPanel } from "./TurnSide";
-import { TurnStatus } from "./TurnStatus";
+import { TurnProfile, TurnStatus } from "./TurnStatus";
 import { Workshop } from "./Workshop";
 
 const LOG_WEEKS = 6;
@@ -158,6 +158,7 @@ export function Turn() {
       <div className={s.board}>
         <div className={s.left}>
           <TurnStatus ctx={ctx} state={state} preview={preview} className={s.status} />
+          <TurnProfile ctx={ctx} state={state} className={s.profile} />
           <LogPanel ctx={ctx} weeks={recentWeeks(state, LOG_WEEKS)} className={s.log} />
         </div>
         <div className={s.right}>

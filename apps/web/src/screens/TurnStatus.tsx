@@ -21,12 +21,11 @@ export type TurnStatusProps = {
   className?: string | undefined;
 };
 
-/** The Falconess this week: mood, fatigue, resources, stats with last week's changes, aptitudes. */
+/** The Falconess this week: mood, fatigue, resources and stats with last week's changes. */
 export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) {
   const S = ctx.ruleset.season;
   const deltas = turnDeltas(state, lastClosedTurn(state));
   const fatigueTo = previewFatigue(ctx, state, preview);
-  const cap = learnCap(ctx, state);
   return (
     <Panel
       title={ui("ui.turn.status")}
@@ -134,7 +133,23 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
             );
           })}
         </div>
+      </div>
+    </Panel>
+  );
+}
 
+export type TurnProfileProps = {
+  ctx: SimContext;
+  state: SeasonState;
+  className?: string | undefined;
+};
+
+/** What changes slowly: aptitude letters by biome and style, and the skills learned. */
+export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
+  const cap = learnCap(ctx, state);
+  return (
+    <Panel title={ui("ui.turn.profile")} className={className}>
+      <div className={s.profile}>
         <div className={s.aptitudes}>
           <p className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</p>
           <ul className={s.letters}>

@@ -63,7 +63,6 @@ export function FrameCard({
     "--livery-primary": maker.palette.primary,
     "--livery-secondary": maker.palette.secondary,
   };
-  const signature = frame.signatureOf && content.falconess.get(frame.signatureOf);
   const passive = frame.passive === undefined ? undefined : content.getPassive(frame.passive);
 
   return (
@@ -81,9 +80,6 @@ export function FrameCard({
         <p className={s.chips}>
           <Pill>{gameText(`style.${frame.style}`)}</Pill>
           <Pill tone={frame.rarity === "SSR" ? "accent" : "neutral"}>{frame.rarity}</Pill>
-          {signature && (
-            <Pill>{ui("ui.frame.signature", { name: gameText(signature.textKey) })}</Pill>
-          )}
         </p>
       </header>
 
