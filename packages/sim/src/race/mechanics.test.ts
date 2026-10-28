@@ -753,3 +753,37 @@ describe("finish placing (docs/race-engine.md 19)", () => {
     ]);
   });
 });
+
+describe("instantaneous terms and rule regen (docs/race-engine.md 5, 8.1, 13)", () => {
+  it("skill speed adds to the moved speed at once and leaves at once (never through vCore)", () => {
+    const fast = luckySkill("burst", {}, { speedMms: 1000, durationTicks: 30 });
+    const e = withTraits(fixture("hover", 0, { skills: [fast] }), { randomSkillGuaranteed: true });
+    const { rows } = trace(QUIET, [e], LONG_FLAT, "speed");
+    for (let t = 0; t < 30; t++) expect(at(rows, t).vOut - at(rows, t).vCore).toBe(15_000);
+    expect(at(rows, 30).vOut).toBe(at(rows, 30).vCore);
+    // the body ramp is the same as without the skill
+    const plain = trace(QUIET, [fixture("hover")], LONG_FLAT, "speed").rows;
+    expect(rows.slice(0, 40).map((r) => r.vCore)).toEqual(plain.slice(0, 40).map((r) => r.vCore));
+  });
+
+  it("broken wings inside the plan window ask for a replan (placeholder count +1)", () => {
+    const canyon = content.getCourse("desert-canyon");
+    const { rows } = trace(QUIET, [fixture("glide", 0, { durabilityStart: 3 })], canyon);
+    // plan at the final (2000 m), then the water hit at 2400 m breaks the wings
+    expect(at(rows, rows.length - 1).planCount).toBe(2);
+    const intact = trace(QUIET, [fixture("glide")], canyon).rows;
+    expect(at(intact, intact.length - 1).planCount).toBe(1);
+  });
+
+  it("Lumière regenerates 500 me on every non-boost tick: the ridge lifts are refilled", () => {
+    const ridge = content.getCourse("desert-ridge");
+    const { log, rows } = trace(QUIET, [fixture("hover", 0, { rule: "regen" })], ridge);
+    const ok = events(log, "jumpOk");
+    expect(ok).toHaveLength(2);
+    const after = at(rows, at(ok, 0).tick);
+    expect(after.energy).toBe(80_000 + 500); // lift 20, then this tick's regen
+    const r = at(log.results, 0);
+    expect(r.energyEnd).toBe(100_000);
+    expect(r.ledger.energyRegen).toBe(35_000);
+  });
+});
