@@ -1,0 +1,319 @@
+{
+  "commit": "5f0fd65",
+  "digest": "sha256 of canonicalJson, first 16 hex digits; `state` and `perInput` hash the state without its log, `log`/`finalLog` hash the log",
+  "ruleset": "v1",
+  "run1": {
+    "perInput": [
+      "7cf3d084c3d44c52",
+      "98c128094ecbbd57",
+      "3db8f52d5a8b7ccf",
+      "180d91d4d1bcf5ba",
+      "96ee74fbc43bd43d",
+      "9fc4994ada0cdb69",
+      "2847246bfa69ff93",
+      "bbadfabe763bc54f",
+      "5129cddd1f22206c",
+      "c1222dafcfe56534",
+      "0df28d5f7a4cde0e",
+      "d1d7074c3b266df5",
+      "f279ab481e05b9be",
+      "91c6627fb104d4d8",
+      "a6f3a5249e0effb3",
+      "90f6663f74b8363f",
+      "b07d5cf5a96c006e",
+      "5c718afab175639d",
+      "17c0aae878901490",
+      "36fa88e83850f9a6",
+      "3572944cd484f9e0",
+      "100ff795be83aa25",
+      "cbbc2611b41864f5",
+      "f34d04217b8836b9",
+      "fcaddf66a353b259",
+      "98772a5f2ee6a308",
+      "e41f52e6f511c20b",
+      "f18b4e1147cb9066",
+      "611b902a604f44be",
+      "657777239c208602",
+      "2a4b073665aabbfb",
+      "8b541ac99c101b2e",
+      "da2e1280982c0b27",
+      "9ea94411a84c6523",
+      "3f2aad8801aeda36",
+      "d1e2e2efb0ae297a",
+      "816f9444383dc425",
+      "ee64af7a0aff08e5",
+      "7102a1e8705eb6f7",
+      "2d52af742e45e4ed",
+      "c9baecc6de24186b",
+      "48aaf0b336a9b26c",
+      "f77ccfc01a5ad7f5",
+      "3e8cef62b67e998b",
+      "0968eb21cde379fa",
+      "9013172dab8b38cc",
+      "026639f773679a1d",
+      "428d4aadb5b6adf1",
+      "82e0620b55089ff2",
+      "6a0323d9d9e79129",
+      "ba75f78213f36304",
+      "d315c6d271714821",
+      "d0462a937654c996",
+      "094b0857b0df1b17",
+      "acc4e58c723b9053",
+      "a982fd2a44968402",
+      "718b15afd7fd924f",
+      "78ea89d26398c96a",
+      "27c6b13562e0fc1c",
+      "3da855f726d1591e",
+      "d151c0a24e7d7c87"
+    ],
+    "finalLog": "92b5cc603efc220c",
+    "final": {
+      "status": "ended",
+      "grade": "B",
+      "turn": 48,
+      "places": [1, 1, 2, 1]
+    }
+  },
+  "mixed": [
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-0",
+      "inputs": 57,
+      "state": "3efa11a66b288a77",
+      "log": "911060b2002d6b8d",
+      "grade": "D"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-1",
+      "inputs": 48,
+      "state": "56c9f44f67b27ccb",
+      "log": "a58c2773b70b3710",
+      "grade": "F"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-2",
+      "inputs": 62,
+      "state": "68510a161bdd2839",
+      "log": "17dc2a5eb084e05b",
+      "grade": "C"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-3",
+      "inputs": 49,
+      "state": "66a9c88e04739306",
+      "log": "81fac55bd36b29ab",
+      "grade": "F"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-4",
+      "inputs": 35,
+      "state": "c7dcb9d0c419176a",
+      "log": "d211a2f8c2c48bae",
+      "grade": "G"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-5",
+      "inputs": 59,
+      "state": "eabf5716e46fadd9",
+      "log": "d4287e74dcfe7db3",
+      "grade": "D"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-6",
+      "inputs": 58,
+      "state": "56974e679b8d49c8",
+      "log": "b643cbff68abb75a",
+      "grade": "D"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-7",
+      "inputs": 58,
+      "state": "d0ee5a355df9dd8f",
+      "log": "a244c0236faf18fe",
+      "grade": "D"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-8",
+      "inputs": 59,
+      "state": "eed4c07dbb9e4879",
+      "log": "76e065424f95fbfa",
+      "grade": "C"
+    },
+    {
+      "falconessId": "peregrina",
+      "seed": "v1-invariance-9",
+      "inputs": 60,
+      "state": "9e6b9b24d02c22a0",
+      "log": "9593eb665096857b",
+      "grade": "D"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-0",
+      "inputs": 60,
+      "state": "37d8c3a2a722f801",
+      "log": "496be08b788a6853",
+      "grade": "D"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-1",
+      "inputs": 58,
+      "state": "d5f74ec546c4fdfd",
+      "log": "1ad67a482d97ccde",
+      "grade": "E"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-2",
+      "inputs": 60,
+      "state": "1dc6d50fc3039474",
+      "log": "d33150084324c1c9",
+      "grade": "C"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-3",
+      "inputs": 36,
+      "state": "dda47448070552c6",
+      "log": "998c284bb02424d0",
+      "grade": "G"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-4",
+      "inputs": 35,
+      "state": "26d41ddda6b08cb9",
+      "log": "aae5b72c4df028e0",
+      "grade": "G"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-5",
+      "inputs": 58,
+      "state": "011a25285617b15b",
+      "log": "dd56679ee3eca837",
+      "grade": "E"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-6",
+      "inputs": 52,
+      "state": "ead95601e99e5992",
+      "log": "39eee866e497c478",
+      "grade": "F"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-7",
+      "inputs": 58,
+      "state": "a9372775d908090d",
+      "log": "8c217915c9eb4aa2",
+      "grade": "D"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-8",
+      "inputs": 37,
+      "state": "aa45b4e3b8ec79d5",
+      "log": "f433a0ea5b7a3da9",
+      "grade": "E"
+    },
+    {
+      "falconessId": "cernicala",
+      "seed": "v1-invariance-9",
+      "inputs": 47,
+      "state": "2ee96a0194ff6f75",
+      "log": "006846b565e7cca0",
+      "grade": "E"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-0",
+      "inputs": 56,
+      "state": "6fedbb18547073f5",
+      "log": "ec8cd5599626902a",
+      "grade": "D"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-1",
+      "inputs": 58,
+      "state": "5a82c966caf2a519",
+      "log": "e4a42e38d3bcc596",
+      "grade": "E"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-2",
+      "inputs": 60,
+      "state": "353072508008b6e6",
+      "log": "bce5381731f572c3",
+      "grade": "D"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-3",
+      "inputs": 36,
+      "state": "52473e6156b58697",
+      "log": "248d8bba22bdaeba",
+      "grade": "G"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-4",
+      "inputs": 61,
+      "state": "c5d8c5c26379efc0",
+      "log": "4b951442b60781c6",
+      "grade": "C"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-5",
+      "inputs": 61,
+      "state": "496ae14a09fa398a",
+      "log": "86c98c5a9156acc0",
+      "grade": "C"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-6",
+      "inputs": 63,
+      "state": "bef7aed4abc14143",
+      "log": "f4c78f48bc82d96c",
+      "grade": "D"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-7",
+      "inputs": 58,
+      "state": "afca304120c75a71",
+      "log": "bbea82d0db7a4efc",
+      "grade": "D"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-8",
+      "inputs": 48,
+      "state": "ea6222dc758d078b",
+      "log": "7ca17d0a31546ffc",
+      "grade": "D"
+    },
+    {
+      "falconessId": "caracara",
+      "seed": "v1-invariance-9",
+      "inputs": 57,
+      "state": "91a896823472f046",
+      "log": "54adc39cb048bad8",
+      "grade": "C"
+    }
+  ]
+}
