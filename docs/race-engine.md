@@ -1782,6 +1782,9 @@ generateField(ruleset, content, { course, turn, raceSeed, player: EntryInput }):
 `F.rivalWeights` (‰, each row sums to 1000; agility / stamina / technique / courage /
 intelligence): glide 240/210/170/180/200, dive 250/180/170/220/180, hover 220/200/170/170/240,
 ground 200/230/220/190/160. The relative curve is the stub's (`5 × (95 + 9 t) ± 20 %`).
+Balance pass 1 (ADR-0005, metric 7) re-anchors v1 at `60 + 8 t` (T12 156, T24 252, T36 348, T46
+428 per stat, ≈ ¾ of the reference policy's measured curve at every goal turn); the par table
+below was measured on the stub curve.
 
 Class-matching implements pillar 2's "clase de equipo igualado" for goal races: with literal PW an
 unrestricted pool makes Peregrina (1.4) win everything and Caracara (0.7) nothing (judges'

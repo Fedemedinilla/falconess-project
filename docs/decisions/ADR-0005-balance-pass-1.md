@@ -414,4 +414,183 @@ Estado: **propuesto**.
    Caracara baja de 40 % a 33 % al sumar los cambios de la métrica 2 (este ajuste no la mueve).
    Opciones: (a) una pasada propia de la métrica 7 (metas de la temporada, política de referencia,
    crecimiento: contenido de `packages/content/falconess`); (b) objetivo: revisar el 60 % con un ADR
-   si la política fija no representa a un jugador.
+   si la política fija no representa a un jugador. Resuelta en la sección «Métrica 7» con la curva
+   de rivales (`FIELD`), sin tocar el objetivo.
+
+## Métrica 7
+
+Estado: **aceptado** (dos constantes de `FIELD` dentro de rango); la sección «Propuestas para el
+dueño (métrica 7)» queda **propuesta**. Medida sobre `phase-2-race-engine` con las métricas 2 a 5
+ya combinadas (`b37f0bf`). Las líneas base del lote son ese mismo `HEAD` en las dos bases de
+semillas (`pr` completo y `full` de S7), no la v1: las métricas 2 a 5 ya movieron las carreras de S7.
+
+### Diagnóstico (verificado)
+
+Métrica 7 literal (21.1): ≥ B exige `seasonScore ≥ 2900` y ningún objetivo fallado. Arnés local
+(`.work/balance/m7`, no versionado): juega temporadas con la política y el hangar de referencia y
+`minPlace` 8 en todos los objetivos, y guarda el puesto de cada carrera objetivo y las partes de la
+nota. Una temporada que pasa todos los objetivos con el `minPlace` real sigue la misma trayectoria,
+así que cualquier vector de `minPlace` y cualquier umbral o peso de la nota se evalúan después sin
+volver a jugar, de forma exacta. 1000 temporadas por Falconess, semillas `batch-0` … `batch-999`
+(las de `sim:season-batch`): con sus 500 primeras da lo mismo que `sim:season-batch` (≥ B 32,6 /
+22,2 / 36,6 %); con las 1000, 32,3 / 20,7 / 36,3 %.
+
+- La nota no es lo que falla: las temporadas completas puntúan 3379-3453 de media (decil 10:
+  3176-3233) y solo 0-2 de cada 1000 completas quedan bajo 2900. Toda la pérdida son objetivos
+  fallados.
+- El primer objetivo es una moneda al aire. En T12 la Falconess de referencia lleva 207-211 por stat
+  y los rivales 203 (`95 + 9 × 12`); su puesto se reparte casi uniforme (Caracara en el ridge,
+  acumulado del 1.º al 8.º: 17 / 32 / 47 / 59 / 69 / 81 / 89 / 100 %; lo justo es 12,5 por puesto)
+  y `≤ 5` pasa 60-69 %.
+- La causa es la curva del stub, que nunca se calibró contra la economía de entrenamiento real:
+  `rivalBase` 95 es la media inicial de las tres Falconess (94) y los rivales suben 9 por turno
+  frente a ≈ 10,9 de la política de referencia (media por stat 208 / 326 / 459 / 579 en T12 / T24 /
+  T36 / T46, ≈ 71 + 10,9 × turno). La razón rival / jugadora cae de 0,97 en T12 a 0,88 en T46: la
+  temporada es más difícil al principio que al final, al revés que la escalera de `minPlace` (5 → 1-2).
+- La economía de entrenamiento no es la causa: las temporadas completas terminan en 644-660 por stat,
+  dentro de la curva 550-800 de BRIEF §8; subir `trainBase` inflaría además la nota y la build
+  perfecta.
+- La carrera sí premia la ventaja de stats: `≤ 5` en T12 por quintil de stats de la jugadora va de
+  34-46 % (el quintil más bajo: lesiones, fallos, ánimo bajo) a 80-86 % (el más alto) en v1, y de
+  78-83 % a 99-100 % con el cambio.
+
+### Cambio aceptado
+
+- `FIELD.rivalBase`: 95 → 60.
+- `FIELD.rivalPerTurn`: 9 → 8.
+
+Media por stat de los rivales en T12 / T24 / T36 / T46: 203 / 311 / 419 / 509 → 156 / 252 / 348 /
+428. Razón frente a la curva de referencia: 0,97 / 0,95 / 0,91 / 0,88 → 0,75 / 0,77 / 0,76 / 0,74.
+
+Razones: un solo principio, la razón constante. Los rivales de una carrera objetivo quedan a ≈ ¾ de
+una Falconess entrenada con criterio en cada objetivo y la dificultad la pone `minPlace`, el
+contenido. `rivalNoise` (± 20 %), la banda de PW, el pool y las activas de los rivales no cambian:
+la variedad del campo se queda. Exploración con el arnés (≥ B, Caracara / Cernícala / Peregrina):
+
+| `rivalBase` / `rivalPerTurn` | ≥ B (%)            | Nota                                                        |
+| ---------------------------- | ------------------ | ----------------------------------------------------------- |
+| 95 / 9 (v1)                  | 32,3 / 20,7 / 36,3 | razón 0,97 → 0,88                                           |
+| 80 / 9                       | 43,8 / 33,5 / 53,3 |                                                             |
+| 70 / 9                       | 52,3 / 42,8 / 61,4 |                                                             |
+| 60 / 9                       | 60,7 / 52,5 / 70,2 | razón 0,81-0,85; Cernícala no llega                         |
+| 50 / 9                       | 67,9 / 60,7 / 77,7 | razón 0,76 → 0,80; Cernícala T46 84,5 %                     |
+| 40 / 9                       | 74,9 / 67,5 / 83,8 | razón 0,71 → 0,78                                           |
+| 60 / 9, `rivalNoise` 100     | 65,4 / 61,9 / 73,8 | menos variedad de campo; Cernícala al borde                 |
+| 50 / 9, `rivalNoise` 100     | 72,6 / 69,5 / 80,8 |                                                             |
+| 70 / 8                       | 73,9 / 66,7 / 79,0 | razón 0,80 → 0,76                                           |
+| 65 / 8                       | 75,8 / 71,1 / 81,3 | Cernícala pasa `pr` (≥ 44 de 60) menos de la mitad de veces |
+| **60 / 8**                   | 78,8 / 74,3 / 84,3 | elegida: razón 0,74-0,77                                    |
+| 55 / 8                       | 81,5 / 76,8 / 86,1 |                                                             |
+
+Descartado:
+
+- `minPlace` solo: en T12 haría falta `≤ 6` o `≤ 7` y aflojar casi todas las metas, sin tocar la
+  causa (rivales a la par de la jugadora al principio de la temporada).
+- La nota (`gradeThresholds`, `scorePerSkill`, `scoreWinBonus`, `scorePodiumBonus`): no muerde.
+- `rivalNoise` 100: ayuda a las metas del cañón de Cernícala, pero quita variedad al campo y con
+  60 / 8 no hace falta.
+- 65 / 8 o 70 / 8: S7 `pr` corre 60 temporadas por Falconess y pasar exige ≥ 44 de 60 (cota de
+  Wilson ≥ 60 %); con la tasa de Cernícala en 67-71 % sale menos de la mitad de las veces y el
+  portón de §25.2.1 no levanta un fail con un inconcluso. Con 60 / 8 Cernícala queda en 74-78 %.
+
+### Evidencia (lote)
+
+S7 `pr` (`--runs 10000`, 60 temporadas por Falconess) contra el mismo `HEAD` sin el cambio, con su
+intervalo de Wilson. Ninguna otra celda del lote cambia: las 85 celdas de las métricas 1-6 y 8 dan
+± 0 en las dos bases.
+
+| Base        | Caracara                   | Cernícala                  | Peregrina                  | Veredicto               |
+| ----------- | -------------------------- | -------------------------- | -------------------------- | ----------------------- |
+| por defecto | 30,0 → 83,3 % [72,0, 90,7] | 26,7 → 78,3 % [66,4, 86,9] | 36,7 → 86,7 % [75,8, 93,1] | fail 0/3/0 → pass 3/0/0 |
+| alt1        | 36,7 → 75,0 % [62,8, 84,2] | 25,0 → 80,0 % [68,2, 88,2] | 36,7 → 80,0 % [68,2, 88,2] | fail 0/3/0 → pass 3/0/0 |
+
+S7 `full` (`--profile full --scenarios S7`, 500 temporadas por Falconess):
+
+| Base        | Caracara                   | Cernícala                  | Peregrina                  | Veredicto               |
+| ----------- | -------------------------- | -------------------------- | -------------------------- | ----------------------- |
+| por defecto | 36,0 → 83,0 % [79,5, 86,0] | 23,6 → 78,0 % [74,2, 81,4] | 34,6 → 83,8 % [80,3, 86,8] | fail 0/3/0 → pass 3/0/0 |
+| alt1        | 29,0 → 80,0 % [76,3, 83,3] | 23,0 → 74,4 % [70,4, 78,0] | 40,2 → 83,6 % [80,1, 86,6] | fail 0/3/0 → pass 3/0/0 |
+
+`pnpm sim:season-batch -- --runs 500`: ≥ B 33 / 22 / 37 % → 80 / 75 / 85 %; temporadas completas
+33 / 22 / 37 % → 81 / 77 / 86 %.
+
+Tabla de objetivos de 21.1: S7 `full`, porcentaje de las temporadas que llegan a la carrera que la
+pasan, por defecto / alt1. Antes 15 de las 24 celdas quedaban bajo 80 %; ahora ninguna (90,3-98,3 %):
+
+| Falconess | Objetivo       | Antes       | Ahora       |
+| --------- | -------------- | ----------- | ----------- |
+| caracara  | T12 ridge ≤ 5  | 74,2 / 70,6 | 94,8 / 93,2 |
+| caracara  | T24 sprint ≤ 4 | 70,4 / 66,9 | 96,6 / 94,0 |
+| caracara  | T36 canyon ≤ 3 | 87,0 / 81,8 | 98,3 / 97,5 |
+| caracara  | T46 ridge ≤ 2  | 79,7 / 75,1 | 93,8 / 94,8 |
+| cernicala | T12 sprint ≤ 5 | 71,2 / 69,6 | 94,6 / 94,8 |
+| cernicala | T24 canyon ≤ 3 | 57,9 / 60,9 | 92,2 / 90,3 |
+| cernicala | T36 ridge ≤ 3  | 84,5 / 76,4 | 97,0 / 96,7 |
+| cernicala | T46 canyon ≤ 1 | 68,4 / 71,0 | 93,9 / 90,8 |
+| peregrina | T12 sprint ≤ 5 | 60,0 / 61,6 | 92,6 / 93,6 |
+| peregrina | T24 ridge ≤ 3  | 87,3 / 89,3 | 98,3 / 97,0 |
+| peregrina | T36 canyon ≤ 3 | 81,3 / 85,1 | 97,6 / 97,6 |
+| peregrina | T46 ridge ≤ 1  | 81,7 / 85,9 | 97,5 / 97,3 |
+
+Diagnósticos de S7 `full` por defecto (Caracara / Cernícala / Peregrina), antes → ahora:
+
+- Notas: B 34,2 / 23,4 / 34,2 → 79,0 / 77,4 / 81,8 %; A 1,8 / 0,2 / 0,4 → 4,0 / 0,6 / 2,0 %; ninguna
+  S ni SS; G (fallos tempranos) 25,8 / 28,8 / 40,0 → 5,4 / 5,4 / 7,6 %.
+- `seasonScore` medio (todas las temporadas): stats 2260 / 2009 / 2117 → 2982 / 2811 / 2918;
+  bonos de carrera 60 / 52 / 65 → 150 / 151 / 157; habilidades 20; carreras objetivo por temporada
+  2,7 / 2,5 / 2,6 → 3,8 / 3,7 / 3,7.
+- Curva de stats: el entrenamiento no cambia; las temporadas completas terminan en 618-639 por stat
+  (arnés; antes 644-660 porque solo terminaban las temporadas fuertes), dentro de 550-800.
+
+La temporada sigue siendo un desafío (arnés, 500 temporadas por Falconess, semillas `batch-0` …
+`batch-499`, ≥ B Caracara / Cernícala / Peregrina):
+
+| Política                                                                | 95 / 9 (v1)        | 60 / 8             |
+| ----------------------------------------------------------------------- | ------------------ | ------------------ |
+| referencia (`sim:season-batch`)                                         | 32,6 / 22,2 / 36,6 | 79,8 / 75,2 / 84,8 |
+| al azar: los 5 entrenamientos, descanso y salida, uniforme; opción 0    | 7,8 / 0,4 / 8,6    | 32,0 / 15,0 / 37,6 |
+| solo agilidad: la de referencia, pero todo entrenamiento es de agilidad | 0,2 / 0,4 / 1,8    | 17,8 / 17,2 / 50,2 |
+
+Con la política al azar el 7-15 % de las temporadas pasa los cuatro objetivos y aun así queda en C
+(nota < 2900): el umbral de B muerde al entrenamiento descuidado y casi nunca a la referencia.
+
+Corridas del lote de esta sección: 8 (`pr` completo y `full` de S7 del `HEAD` y del cambio, en las
+dos bases) y 2 de `sim:season-batch`; arnés: 13 variantes de `FIELD` y 5 corridas de políticas.
+Tests: ninguno fija `FIELD` de v1 (los de `field.test.ts` leen `SPEC_RULESET`); la suite sin golden,
+`pnpm typecheck` y `pnpm lint` pasan. Documentos: `docs/formulas.md` («Rivales de las carreras
+objetivo») y una nota en 21.1 de `docs/race-engine.md`. Los golden v1 que generan campo (g04-g09,
+T24 y T46) cambian además de los que ya cambiaban; los regenera el líder.
+
+### Consecuencias
+
+- La métrica 7 pasa en `pr` y en `full`, en las dos bases; todas las celdas de objetivo quedan en
+  90-98 %. Las métricas 1-6 y 8 no se mueven (S7 es el único escenario que usa `generateField`).
+- Cernícala sigue siendo la más floja (74-78 % frente a 80-85 %): su curva de stats queda ≈ 3-4 %
+  por debajo (crecimiento en técnica e inteligencia) y sus dos metas del cañón son sus celdas más
+  bajas (90-94 %). No se tocó su contenido: con 60 / 8 pasa con margen en `full`.
+- Las carreras objetivo de `pnpm sim`, `pnpm play` y de cualquier jugadora corren contra rivales más
+  flojos; con su bastidor de firma (el hangar de referencia lleva genéricos) la temporada es aún más
+  fácil.
+- La razón ¾ depende de la curva de referencia: un cambio de la economía de entrenamiento
+  (`trainBase`, `secondaryGain`, fatiga), del crecimiento de las Falconess o de la política de
+  referencia vuelve a medir la razón con el arnés antes de tocar `FIELD`.
+
+### Propuestas para el dueño (métrica 7)
+
+Estado: **propuesto**.
+
+1. **La política de referencia no gasta puntos de habilidad.** Termina la temporada con su única
+   habilidad (20 puntos de nota) mientras los rivales llevan una activa genérica por cada 12 turnos
+   (3 desde T36). La métrica 7 mide así a una jugadora que ignora las habilidades. Opción (código de
+   la herramienta, `apps/cli/src/policy.ts`): aprender una activa cuando alcancen los puntos, y volver
+   a medir la razón de `FIELD` con esa política.
+2. **Una política descuidada pasa más que antes** (al azar 15-38 %, solo agilidad 17-50 %; antes
+   0-9 %). Opciones: (a) objetivo: sumar al lote una política descuidada con un techo (por ejemplo
+   ≤ 40 % de ≥ B) para que la métrica 7 no se cumpla solo aflojando el campo; (b) si se quiere una
+   temporada más dura con la misma política, 65-70 / 8 da 74-76 / 67-71 / 79-81 % (arnés) a costa
+   del margen en `pr`.
+3. **La durabilidad y la fatiga no presionan a la referencia.** No reparar nunca o descansar solo en
+   el descanso forzado (fatiga 80) da lo mismo (79,8 / 75,4 / 85,4 % y 78,6 / 75,4 / 85,2 %, arnés):
+   la referencia repara en 0 / 14 / 12 % de las temporadas (una vez; 300 semillas), así que R8 no
+   muerde. Si reparar debe ser una decisión, hace falta más desgaste de temporada (constantes de
+   durabilidad o contenido de pistas), fuera de esta métrica.

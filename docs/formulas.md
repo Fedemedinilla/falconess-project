@@ -299,14 +299,19 @@ mili-ticks; margen = distancia real del siguiente al cruzar el anterior; guarda 
 
 ### Rivales de las carreras objetivo
 
-Intención: campo de clase igualada que sigue la curva del stub. Potencia
+Intención: campo de clase igualada que sigue a ≈ ¾ la curva de stats de la Falconess de referencia
+(política de la stat más baja, ≈ 71 + 10,9 × turno por stat de T12 a T46): la jugadora entrenada
+con criterio llega a cada objetivo con la misma ventaja relativa y la dificultad la pone
+`minPlace`. Potencia
 `fl(5 × (rivalBase + rivalPerTurn × turno) × (1000 ± rivalNoise), 1000)` repartida por pesos de estilo
 (±`rivalStatJitter`); bastidores genéricos con `|PW − pw0| × 1000 ≤ rivalPwBandPm × pw0`, donde
 `pw0` es el PW base del bastidor de la jugadora (banda relativa del 5 %; mínimo 1 bastidor, elección
 con reemplazo); los rivales no llevan piezas ni peculiaridades (revisión 3), así que su PW construido
 es su PW base y queda dentro de la banda;
-`min(rivalMaxSkills, fl(turno, rivalTurnsPerSkill))` activas genéricas. Rango: media por stat 203 /
-311 / 419 / 509 en los turnos 12 / 24 / 36 / 46. Constantes: `FIELD.*`.
+`min(rivalMaxSkills, fl(turno, rivalTurnsPerSkill))` activas genéricas. Rango: media por stat 156 /
+252 / 348 / 428 en los turnos 12 / 24 / 36 / 46 (`rivalBase` 60, `rivalPerTurn` 8; ADR-0005
+«Métrica 7»: la curva del stub, 95 + 9 × turno, dejaba la primera meta a la par). Constantes:
+`FIELD.*`.
 
 ### Métricas del lote (D14)
 

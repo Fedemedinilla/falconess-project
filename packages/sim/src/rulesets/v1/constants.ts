@@ -269,8 +269,8 @@ const RACE_V1 = {
 
 /** Rival field for season goal races (spec 21.1). */
 const FIELD_V1 = {
-  rivalBase: 95, // per-stat mean at turn 0 (stub curve)
-  rivalPerTurn: 9, // per-stat mean growth per turn
+  rivalBase: 60, // per-stat mean at turn 0; with rivalPerTurn ≈ ¾ of the reference policy's stats (ADR-0005: 95 → 60)
+  rivalPerTurn: 8, // per-stat mean growth per turn (ADR-0005: 9 → 8)
   rivalNoise: 200, // ‰ ± spread of a rival's total power
   rivalStatJitter: 100, // ‰ ± spread per stat
   rivalTurnsPerSkill: 12, // one generic active per 12 turns
