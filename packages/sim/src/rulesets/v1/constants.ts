@@ -213,7 +213,7 @@ const RACE_V1 = {
   telemetryPowerCap: 1_100, // ‰ PW cap (applied by resolveFrameBuild)
 
   // rule terms (new, revision 2; numeric, BRIEF §7 deviation; section 13.1, ADR-0003 D45)
-  massThrustCoolPm: { desert: 50, mountain: 1_250, coast: 1_000, urban: 50, tundra: 1_250 }, // ‰ of coolTick, Steinhaus (ADR-0005: desert, urban 500 → 50)
+  massThrustCoolPm: { desert: 50, mountain: 1_250, coast: 1_000, urban: 500, tundra: 1_250 }, // ‰ of coolTick, Steinhaus (ADR-0005: desert 500 → 50; urban stays 500, no v1 course)
   regenLandLossPm: 2_000, // ‰ of the landing loss, Lumière (light airframe)
   pulseAirPm: [1_000, 1_000, 2_500, 1_000, 600, 1_000, 1_000], // ‰ burst thrust per segment type (SEGMENT_TYPES order), Kōryū (ADR-0005: descent 1200 → 2500)
   pulseBiomePm: { desert: 1_450, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰ burst thrust per biome, Kōryū (ADR-0005: desert 1150 → 1450)

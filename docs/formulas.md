@@ -277,7 +277,7 @@ un término numérico que se compila con su `RuleSpec`. Son bonificaciones numé
 de BRIEF §7 («no como bonificación numérica»; ADR-0003 D45).
 
 - Dentro del mecanismo de su regla, ligados a un bioma o a un tipo de segmento:
-  - Steinhaus: `coolTick × massThrustCoolPm[bioma]` (desierto y urbano 50, tundra y montaña
+  - Steinhaus: `coolTick × massThrustCoolPm[bioma]` (desierto 50, urbano 500, tundra y montaña
     1250; ADR-0005). Ninguna stat lo iguala; en el desierto enfría 0,05 por tick: el ciclo de boost
     gobernado en el tope de calor baja de 1/3 a 1/41 y el tanque no se vacía en ninguna pista
     (≈ 46 / 58 / 77 ticks de boost en sprint / ridge / cañón).

@@ -1218,3 +1218,27 @@ y puerta). Corridas del lote: 6 `pr` completas, 2 `pr` de S3 (alt4, alt5) y 4 `f
   bases medidas): informa, no bloquea.
 - `full` sigue con el 95 % por celda (D48, sin cambio): con las celdas de hoy un fail falso en
   `full` sale ≈ 0,06 % de las veces; una celda que quede justo en un borde da hasta 2,5 % por noche.
+
+### Higiene de la verificación de la pasada 1
+
+Estado: **aceptado**. Notas del verificador sobre la pasada 1 (m1-m5); ninguna mueve una celda del
+lote.
+
+**m1: `massThrustCoolPm.urban` vuelve a 500.** La pasada 1 bajó el término urbano de Steinhaus
+junto con el del desierto (500 → 50, `102fd9b`) sin medirlo: v1 no tiene pistas urbanas, así que
+ninguna corrida del lote ni del arnés lo vio. Vuelve al último valor medido, el de la
+especificación (500, `SPEC_RULESET`; el prototipo y las tablas de §25.4 se midieron con él). El
+desierto se queda en 50, que sí se midió («Métricas 2 y 5»). En lo urbano Steinhaus sigue débil
+con el término de la especificación (enfriamiento ×0,5); cuánto debe pesar lo mide la primera pista
+urbana con su lote.
+
+| Constante                | Antes | Después | Lote contra el `HEAD` previo (`637198f`)                                                   |
+| ------------------------ | ----- | ------- | ------------------------------------------------------------------------------------------ |
+| `massThrustCoolPm.urban` | 50    | 500     | `pr` 10 000 y `full`, por defecto y alt1: 88 y 180 celdas idénticas en las dos bases (± 0) |
+
+Veredictos sin cambio (`pr` por defecto y alt1: 1 pass, 2 inconclusa 7/0/3, 3 inconclusa 0/0/9,
+4-7 pass, 8 inconclusa 3/0/1; `full`: 2 inconclusa 9/0/1, 3 inconclusa 8/0/1, 8 pass 96/0/0) y
+`pnpm sim:season-batch -- --runs 500` idéntico (≥ B 80 / 75 / 85 %). Corridas: 4 de `sim:batch`
+`pr` (antes y después en las dos bases), 2 `full` (después; la línea base es la de «Pasada 2»,
+`.work/balance/p2-broken/post-full-*.json`) y 1 de `sim:season-batch`. Documentos:
+`docs/formulas.md` («Términos de regla»).
