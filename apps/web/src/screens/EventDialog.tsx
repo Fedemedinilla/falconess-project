@@ -130,13 +130,21 @@ export function EventDialog() {
                         // branches have no id; their order is the content's
                         // biome-ignore lint/suspicious/noArrayIndexKey: fixed content order
                         <span key={j} className={s.branch}>
-                          {ui("ui.fx.branch", {
-                            chance: b.chance,
-                            effects:
-                              b.effects.length === 0
-                                ? ui("ui.fx.none")
-                                : b.effects.map((e) => e.text).join(" · "),
-                          })}
+                          <span className={s.branchChance}>
+                            {ui("ui.fx.branch.chance", { chance: b.chance })}
+                          </span>
+                          {b.effects.length === 0 ? (
+                            <span className={s.none}>{ui("ui.fx.none")}</span>
+                          ) : (
+                            // each effect with its concept's emoji, as the sure ones show it
+                            b.effects.map((e, k) => (
+                              <span key={e.text} className={s.branchEffect}>
+                                {k > 0 && <span className={s.dot}>·</span>}
+                                <Icon name={e.icon} />
+                                {e.text}
+                              </span>
+                            ))
+                          )}
                         </span>
                       ))}
                     </span>

@@ -3,8 +3,6 @@ import { getContent } from "../../content/load";
 import type { Detail } from "../../text/brief";
 import { formatInt } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
-import { Icon } from "../../ui/Icon";
-import { segmentIcon } from "../../ui/icons";
 import s from "./CourseStrip.module.css";
 
 export type CourseStripProps = {
@@ -52,7 +50,6 @@ export function CourseStrip({ courseId, legend }: CourseStripProps) {
           {types.map((t) => (
             <li key={t}>
               <span className={s.swatch} style={{ background: `var(--seg-${t})` }} />
-              <Icon name={segmentIcon(t)} />
               {legend === "full"
                 ? ui("ui.course.segment", {
                     segment: gameText(`segment.${t}`),

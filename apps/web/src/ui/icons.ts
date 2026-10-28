@@ -8,8 +8,9 @@
  * training and the stat it raises, Resistencia and the Físico it enlarges, a goal race and its
  * finish line, durability on a frame and in a race. `icons.test.ts` keeps any other pair apart.
  *
- * Emojis render with the viewer's system font. Most are from Unicode 6–12, which every current
- * system draws; 🪶 (13.0) is the newest.
+ * Emojis render with the viewer's system font. Most are from Unicode 6–11; 🪂 🪁 🥱 🧊 🩹 are
+ * 12.0, which Windows 10 draws since 2019. Nothing from 13.0 or later: Windows 10 shows those as empty
+ * boxes (the feather 🪶 was one; Plumas use the peacock).
  */
 import type { Biome, SegmentType, StatName, Style, TrainingKind } from "@falconess/schema";
 
@@ -42,7 +43,8 @@ export const ICONS = {
   "action.rest": "💤",
   "action.outing": "☕",
 
-  // mood follows its level
+  // Ánimo as a concept (a gain, an event's effect); the status panel shows the level's face
+  mood: "😐",
   "mood.-2": "😞",
   "mood.-1": "🙁",
   "mood.0": "😐",
@@ -53,7 +55,7 @@ export const ICONS = {
   fatigue: "🥱",
   skillPoints: "⭐",
   scrap: "🔩",
-  feathers: "🪶",
+  feathers: "🦚",
   injury: "🩹",
   risk: "🎲",
   crew: "👥",
@@ -137,6 +139,7 @@ export const SHARED_ICONS: readonly (readonly IconName[])[] = [
   ["framestat.durability", "race.durability"],
   ["goalRace", "finish"],
   ["risk", "skillMiss"],
+  ["mood", "mood.0"],
 ];
 
 export const statIcon = (stat: StatName): IconName => `stat.${stat}`;
@@ -145,7 +148,7 @@ export const segmentIcon = (type: SegmentType): IconName => `segment.${type}`;
 export const biomeIcon = (biome: Biome): IconName => `biome.${biome}`;
 export const styleIcon = (style: Style): IconName => `style.${style}`;
 
-/** The face of a mood level, −2 … +2 (outside the range, the nearest end). */
+/** The face of a mood level, −2 … +2 (outside the range, the nearest end): the current mood only. */
 const MOOD_ICONS: readonly IconName[] = ["mood.-2", "mood.-1", "mood.0", "mood.1", "mood.2"];
 export function moodIcon(mood: number): IconName {
   return MOOD_ICONS[Math.max(0, Math.min(4, Math.round(mood) + 2))] ?? "mood.0";

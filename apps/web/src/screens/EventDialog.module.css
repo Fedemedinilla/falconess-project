@@ -109,7 +109,32 @@
 }
 
 .branch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-1);
   color: var(--ink-2);
+}
+
+/* a rule between two branches, so each chance reads with its own effects */
+.branch + .branch {
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--line-strong);
+}
+
+.branchChance {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.branchEffect {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.dot {
+  color: var(--ink-3);
 }
 
 /* the event behind its bar while the dialog is hidden */

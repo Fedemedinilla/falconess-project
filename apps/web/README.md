@@ -50,14 +50,18 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
 ## Icons
 
 `src/ui/icons.ts` maps each concept to one emoji: the eight actions (💤 Descansar, ☕ Salida…),
-the five stats (a training shares its stat's emoji), mood faces by level, fatigue, skill points,
-scrap, feathers, injury, risk, crew and bond, the four frame stats, passive, quirk, part, rule,
-skill, the race gauges, terrain, biomes, styles, the runners' flags and events, goal races,
-medals, the grade. They are presentation, like colors: `Icon` draws one `aria-hidden` before
-the label that names the concept (never instead of it), at a fixed width so a column of labels
-stays aligned. A concept keeps its emoji everywhere; two concepts share one only when listed in
-`SHARED_ICONS` (a training and its stat, Resistencia and Físico, a goal race and its finish).
-They render with the system's emoji font: the label always says it in words.
+the five stats (a training shares its stat's emoji), Ánimo (😐 for a gain or an event's effect;
+the status panel shows the current level's face), fatigue, skill points, scrap, feathers, injury,
+risk (🎲 before every «Fallo», 🩹 before «Lesión»), crew and bond, the four frame stats, passive,
+quirk, part, rule, skill, the race gauges, terrain, biomes, styles, the runners' flags and events,
+goal races, medals, the grade. They are presentation, like colors: `Icon` draws one
+`aria-hidden` before the label that names the concept (never instead of it), at a fixed width so
+a column of labels stays aligned, with a thin edge on the light theme (`--emoji-edge`) so pale
+ones show. A concept keeps its emoji everywhere; two concepts share one only when listed in
+`SHARED_ICONS` (a training and its stat, Resistencia and Físico, a goal race and its finish, Ánimo
+and the «Normal» face). Where a colour swatch already marks an item (the terrain and timeline
+legends, the season strip's goal marks) there is no emoji. They render with the system's emoji
+font and stop at Unicode 12 (Windows 10 has no 13.0 emojis): the label always says it in words.
 
 ## Brief and full explanations
 

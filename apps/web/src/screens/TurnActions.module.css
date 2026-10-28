@@ -321,3 +321,15 @@
 .titleIcon {
   margin-inline-end: 0;
 }
+
+/* a training's level at the right end of its gains */
+.levelEnd {
+  margin-inline-start: auto;
+}
+
+/* the fail chance and, when there is one, the injury chance: kept together */
+.risk {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}

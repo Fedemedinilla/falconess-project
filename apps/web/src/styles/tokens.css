@@ -36,6 +36,8 @@
   --shadow-rgb: 17 24 32;
   --backdrop: rgb(17 24 32 / 0.5);
   --scroll-shade: rgb(17 24 32 / 0.16);
+  /* a thin edge around the emojis of ui/icons.ts, so white ones (a dove, snow) show on light */
+  --emoji-edge: rgb(57 68 79 / 0.7);
 
   /* track terrain (segment types) */
   --seg-flat: #98a3af;
@@ -106,6 +108,7 @@
     --shadow-rgb: 0 0 0;
     --backdrop: rgb(0 0 0 / 0.6);
     --scroll-shade: rgb(0 0 0 / 0.55);
+    --emoji-edge: transparent;
     --seg-flat: #5f6b78;
     --seg-climb: #d5a03b;
     --seg-descent: #43b2a2;
@@ -141,6 +144,7 @@
   --shadow-rgb: 0 0 0;
   --backdrop: rgb(0 0 0 / 0.6);
   --scroll-shade: rgb(0 0 0 / 0.55);
+  --emoji-edge: transparent;
   --seg-flat: #5f6b78;
   --seg-climb: #d5a03b;
   --seg-descent: #43b2a2;

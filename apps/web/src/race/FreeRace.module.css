@@ -189,14 +189,14 @@
 
 .checkGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
   gap: var(--space-1) var(--space-3);
   margin-top: var(--space-2);
 }
 
 .check {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
   min-height: 2rem;
   font-size: var(--fs-sm);
@@ -205,7 +205,21 @@
 }
 
 .check input {
+  margin-top: 0.2em;
   accent-color: var(--accent);
+}
+
+/* the name, and under it what it does */
+.checkText {
+  display: grid;
+  gap: 1px;
+  padding-block: var(--space-1);
+}
+
+.checkDesc {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--ink-3);
 }
 
 .check input:disabled + span {

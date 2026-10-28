@@ -7,7 +7,7 @@ import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Icon, WithIcon } from "../ui/Icon";
-import { actionIcon, type IconName, moodIcon, statIcon } from "../ui/icons";
+import { actionIcon, type IconName, statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -323,11 +323,6 @@ export function TurnActions({
           key={kind}
           {...common}
           disabled={pending}
-          meta={
-            <span className={s.level} title={ui("ui.action.level.title")}>
-              {ui("ui.action.level", { level: t.level })}
-            </span>
-          }
           effects={
             <>
               {t.gains.map((g, i) => (
@@ -346,24 +341,29 @@ export function TurnActions({
                   icon="skillPoints"
                 />
               )}
+              {/* the track's level, at the end of the gains it raises (the title keeps its row) */}
+              <span className={cx(s.level, s.levelEnd)} title={ui("ui.action.level.title")}>
+                {ui("ui.action.level", { level: t.level })}
+              </span>
             </>
           }
           detail={<Crews ctx={ctx} crews={t.crews} />}
           footer={
             <>
-              <WithIcon
-                icon={t.failPm === 0 ? undefined : t.injuryPm > 0 ? "injury" : "risk"}
-                className={cx(t.failPm >= 150 && s.risky)}
-              >
-                {t.failPm === 0
-                  ? ui("ui.action.noFail")
-                  : t.injuryPm > 0
-                    ? ui("ui.action.failInjury", {
-                        fail: formatChance(t.failPm),
-                        injury: formatChance(t.injuryPm),
-                      })
-                    : ui("ui.action.fail", { fail: formatChance(t.failPm) })}
-              </WithIcon>
+              {t.failPm === 0 ? (
+                <span>{ui("ui.action.noFail")}</span>
+              ) : (
+                <span className={cx(s.risk, t.failPm >= 150 && s.risky)}>
+                  <WithIcon icon="risk">
+                    {ui("ui.action.fail", { fail: formatChance(t.failPm) })}
+                  </WithIcon>
+                  {t.injuryPm > 0 && (
+                    <WithIcon icon="injury">
+                      {ui("ui.action.injury", { injury: formatChance(t.injuryPm) })}
+                    </WithIcon>
+                  )}
+                </span>
+              )}
               <WithIcon icon="fatigue">
                 {ui("ui.action.fatigue", { delta: formatSigned(t.fatigue) })}
               </WithIcon>
@@ -386,7 +386,7 @@ export function TurnActions({
                 icon="fatigue"
                 strong
               />
-              <Effect value="+1" label={ui("ui.action.moodShort")} icon={moodIcon(1)} />
+              <Effect value="+1" label={ui("ui.action.moodShort")} icon="mood" />
             </>
           }
           detail={
@@ -409,7 +409,7 @@ export function TurnActions({
               <Effect
                 value={formatSigned(outing.mood)}
                 label={ui("ui.action.moodShort")}
-                icon={moodIcon(Math.sign(outing.mood))}
+                icon="mood"
                 strong
               />
               <Effect

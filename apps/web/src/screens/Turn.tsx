@@ -5,7 +5,6 @@ import { useGame } from "../game/useGame";
 import { formatSeconds } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
-import { placeIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Pill } from "../ui/Pill";
 import { SeasonStrip } from "../ui/SeasonStrip";
@@ -107,7 +106,6 @@ export function Turn() {
             current={state.turn}
             marks={goals.map((g) => ({
               turn: g.goal.turn,
-              icon: g.result ? (placeIcon(g.result.place) ?? "goalRace") : "goalRace",
               label: g.result
                 ? ui("ui.turn.strip.place", { place: g.result.place })
                 : ui("ui.goals.week", { turn: g.goal.turn }),

@@ -6,8 +6,6 @@ import { getContent } from "../content/load";
 import { uiAt } from "../text/brief";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
-import { Icon } from "../ui/Icon";
-import { segmentIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
 import { Controls } from "./Controls";
 import { ReplayClock } from "./clock";
@@ -34,7 +32,6 @@ function TerrainLegend({ view }: { view: RaceView }) {
       {types.map((t) => (
         <li key={t} className={s.flagLegendItem}>
           <span className={s.terrainSwatch} style={{ background: `var(--seg-${t})` }} />
-          <Icon name={segmentIcon(t)} />
           {view.labels.segmentName(t)}
         </li>
       ))}

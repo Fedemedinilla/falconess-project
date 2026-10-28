@@ -69,7 +69,7 @@ function Roster() {
                 </dd>
               </div>
               {signature && (
-                <div className={s.fact}>
+                <div className={cx(s.fact, s.signature)}>
                   <dt>
                     <Icon name="frame" />
                     {ui("ui.home.roster.signature")}
@@ -82,7 +82,6 @@ function Roster() {
               turns={turns}
               marks={f.seasonGoals.map((g) => ({
                 turn: g.turn,
-                icon: "goalRace",
                 label: ui("ui.home.goal.week", { turn: g.turn }),
               }))}
               label={ui("ui.home.strip.label", { turns, weeks })}

@@ -245,6 +245,19 @@
   color: var(--ink-3);
 }
 
+/* a label stays on one line ("Bastidor firma") */
+.fact dt {
+  white-space: nowrap;
+}
+
+/* on a phone the signature frame's label sits above its name: the three cards keep one shape */
+@media (max-width: 37.5rem) {
+  .signature {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
 .fact dd {
   margin: 0;
   font-family: var(--font-display);

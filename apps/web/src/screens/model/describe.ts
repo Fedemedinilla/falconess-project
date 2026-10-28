@@ -19,7 +19,7 @@ import { STAT_ORDER } from "@falconess/sim";
 import { getContent } from "../../content/load";
 import { formatFixed, formatInt, formatPermille, formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
-import { type IconName, moodIcon, statIcon } from "../../ui/icons";
+import { type IconName, statIcon } from "../../ui/icons";
 
 const TICKS_PER_SECOND = 15;
 const MINUS = "−";
@@ -220,8 +220,7 @@ export function describeEffects(
     if (delta !== undefined && delta !== 0)
       add(statIcon(stat), ui("ui.fx.stat", { stat: statName(stat), delta: formatSigned(delta) }));
   }
-  if (fx.mood !== 0)
-    add(moodIcon(Math.sign(fx.mood)), ui("ui.fx.mood", { delta: formatSigned(fx.mood) }));
+  if (fx.mood !== 0) add("mood", ui("ui.fx.mood", { delta: formatSigned(fx.mood) }));
   if (fx.fatigue !== 0) add("fatigue", ui("ui.fx.fatigue", { delta: formatSigned(fx.fatigue) }));
   for (const [mfr, delta] of Object.entries(fx.bond))
     if (delta !== 0)

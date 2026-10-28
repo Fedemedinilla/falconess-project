@@ -5,12 +5,14 @@ import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useDetail } from "../app/explain";
 import { simContext } from "../content/load";
 import { randomSeed } from "../game/seed";
+import { describeActiveSkill, describeModifier, describeSource } from "../screens/model/describe";
 import { gameBrief, uiAt } from "../text/brief";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { ExplainSwitch } from "../ui/ExplainSwitch";
 import { Icon } from "../ui/Icon";
+import type { IconName } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import s from "./FreeRace.module.css";
@@ -126,8 +128,10 @@ function NumberField({
   );
 }
 
+/** Skills or parts to tick, each with what it does in the form's length (as the workshop says it). */
 function CheckList({
   name,
+  icon,
   legend,
   note,
   options,
@@ -136,9 +140,10 @@ function CheckList({
   onChange,
 }: {
   name: string;
+  icon: IconName;
   legend: string;
   note: string;
-  options: readonly { id: string; label: string }[];
+  options: readonly { id: string; label: string; desc: string }[];
   chosen: readonly string[];
   max: number;
   onChange: (ids: string[]) => void;
@@ -147,6 +152,7 @@ function CheckList({
   return (
     <fieldset className={s.checks}>
       <legend>
+        <Icon name={icon} />
         {legend}{" "}
         <span className={s.count}>{ui("ui.freeRace.chosen", { n: chosen.length, max })}</span>
       </legend>
@@ -163,7 +169,10 @@ function CheckList({
                 disabled={!on && full}
                 onChange={() => onChange(on ? chosen.filter((x) => x !== o.id) : [...chosen, o.id])}
               />
-              <span>{o.label}</span>
+              <span className={s.checkText}>
+                <span>{o.label}</span>
+                <span className={s.checkDesc}>{o.desc}</span>
+              </span>
             </label>
           );
         })}
@@ -444,24 +453,40 @@ export function FreeRace() {
               <div className={s.lists}>
                 <CheckList
                   name="libre-habilidad"
+                  icon="skill"
                   legend={ui("ui.freeRace.skills")}
                   note={uiAt(detail, "ui.freeRace.skills.note")}
-                  options={skills.map((id) => ({
-                    id,
-                    label: gameText(content.getSkill(id).textKey),
-                  }))}
+                  options={skills.map((id) => {
+                    const skill = content.getSkill(id);
+                    return {
+                      id,
+                      label: gameText(skill.textKey),
+                      desc:
+                        (detail === "brief" && gameBrief(skill.textKey)) ||
+                        (skill.kind === "active"
+                          ? describeActiveSkill(skill)
+                          : skill.modifiers.map(describeModifier).join(" · ")),
+                    };
+                  })}
                   chosen={form.skills}
                   max={ctx.ruleset.race.maxSkills}
                   onChange={(ids) => set({ skills: ids })}
                 />
                 <CheckList
                   name="libre-pieza"
+                  icon="part"
                   legend={ui("ui.freeRace.parts")}
                   note={uiAt(detail, "ui.freeRace.parts.note")}
-                  options={parts.map((id) => ({
-                    id,
-                    label: gameText(content.getPart(id).textKey),
-                  }))}
+                  options={parts.map((id) => {
+                    const part = content.getPart(id);
+                    return {
+                      id,
+                      label: gameText(part.textKey),
+                      desc:
+                        (detail === "brief" && gameBrief(part.textKey)) ||
+                        describeSource(part).join(" · "),
+                    };
+                  })}
                   chosen={form.parts}
                   max={MAX_PARTS}
                   onChange={(ids) => set({ parts: ids })}

@@ -58,8 +58,3 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-
-.label .icon {
-  width: auto;
-  margin-inline-end: 1px;
-}

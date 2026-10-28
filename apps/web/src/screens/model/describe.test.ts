@@ -66,7 +66,7 @@ describe("content in plain words", () => {
     expect(describeOption(first, crew)).toEqual({
       sure: [
         { icon: "stat.intelligence", text: "Inteligencia +12" },
-        { icon: "mood.-1", text: "Ánimo −1" },
+        { icon: "mood", text: "Ánimo −1" },
       ],
       branches: [],
     });
@@ -76,7 +76,7 @@ describe("content in plain words", () => {
         { icon: "bond", text: "Vínculo Box Kōryū +5" },
       ],
       branches: [
-        { chance: "70\u00a0%", effects: [{ icon: "mood.1", text: "Ánimo +1" }] },
+        { chance: "70\u00a0%", effects: [{ icon: "mood", text: "Ánimo +1" }] },
         { chance: "30\u00a0%", effects: [{ icon: "fatigue", text: "Fatiga +15" }] },
       ],
     });

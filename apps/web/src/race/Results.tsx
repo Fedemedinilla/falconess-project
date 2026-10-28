@@ -15,7 +15,7 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { ExplainSwitch } from "../ui/ExplainSwitch";
 import { Icon } from "../ui/Icon";
-import { type IconName, placeIcon } from "../ui/icons";
+import { placeIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -407,21 +407,6 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
   );
 }
 
-/** The emoji of a timeline cell in the legend, when its concept has one. */
-const CELL_ICON: Partial<Record<TimelineCell, IconName>> = {
-  finish: "finish",
-  dnf: "dnf",
-  stalled: "flag.stalled",
-  broken: "flag.broken",
-  airborne: "flag.airborne",
-  overheated: "flag.overheated",
-  exhausted: "flag.exhausted",
-  pulse: "flag.pulse",
-  boost: "flag.boost",
-  lightBoost: "flag.boost",
-  drafting: "flag.drafting",
-};
-
 const CELL_TONE: Record<TimelineCell, string> = {
   finish: "cellFinish",
   dnf: "cellBad",
@@ -492,7 +477,6 @@ export function TimelinePanel({ view, clock }: { view: RaceView; clock: ReplayCl
         {shown.map((c) => (
           <li key={c} className={s.legendItem}>
             <span className={cx(s.legendSwatch, s[CELL_TONE[c]])} />
-            {CELL_ICON[c] && <Icon name={CELL_ICON[c]} />}
             {ui(`ui.race.timeline.cell.${c}`)}
           </li>
         ))}
