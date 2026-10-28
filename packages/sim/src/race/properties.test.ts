@@ -24,8 +24,8 @@ import { createRaceArena, drawRaceBlock, ib, ibps, ips, is, type RaceArena } fro
  * Properties of docs/race-engine.md 24.2 with fast-check: P1 determinism, P2 symmetry (exact with
  * noise off, statistical with noise), P3 agility monotonicity in the three tiers of ADR-0003 D41
  * (and P9 for stamina), P4 bounds on every tick, P5 log consistency, P6 RNG accounting and
- * isolation (P6b ablation alignment) and P7 options invariance. Run counts are kept small enough
- * for the whole suite to stay fast; every run is a full race.
+ * isolation (P6b ablation alignment) and P7 options invariance. Every property runs the 500 cases
+ * 24.2 asks for (`RUNS`); every case is a full race.
  */
 
 const content = loadContent();
@@ -42,10 +42,10 @@ const ACTIVE_IDS = [...content.skills.values()]
   .map((s) => s.id)
   .sort();
 const FROZEN = new Map<string, RaceSkill>(ACTIVE_IDS.map((id) => [id, freezeSkill(content, id)]));
-const GENERIC_FRAMES = [...content.frames.values()]
-  .filter((f) => f.signatureOf === undefined)
-  .map((f) => f.id)
-  .sort();
+/** P3 and P9 draw "any frame" (24.2): the ten generic frames and the three signature frames. */
+const ALL_FRAMES = [...content.frames.values()].map((f) => f.id).sort();
+/** Cases per property (24.2: "fast-check, 500 cases each"). */
+const RUNS = 500;
 const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 
 function at<T>(arr: readonly T[] | undefined, i: number): T {
@@ -191,19 +191,13 @@ const segmentArb: fc.Arbitrary<Segment> = fc.oneof(
 );
 
 /**
- * A content course or a random one of up to 7 segments (≤ 3200 m). Random courses are padded to at
- * least 200 m: below `finalSprintReserveMeters` (60 m) `reserveAt` is negative and the log does not
- * parse (open issue: the validator of 1.4 accepts such a course).
+ * A content course or a random one of 1 to 6 segments (50 m to 3000 m). Courses shorter than
+ * `finalSprintReserveMeters` (60 m) are kept: their `reserveAt` and `kickAt` are negative, which
+ * the log types as Int (20.1).
  */
 const courseArb: fc.Arbitrary<Course> = fc.oneof(
   fc.constantFrom(...COURSES),
-  fc
-    .array(segmentArb, { minLength: 1, maxLength: 6 })
-    .map((s) =>
-      testCourse(
-        s.reduce((m, x) => m + x.length, 0) < 200 ? [...s, { type: "flat", length: 200 }] : s,
-      ),
-    ),
+  fc.array(segmentArb, { minLength: 1, maxLength: 6 }).map((s) => testCourse(s)),
 );
 
 const fieldArb = (min: number, max: number, maxSkills = 3) =>
@@ -229,7 +223,7 @@ describe("P1 determinism (docs/race-engine.md 24.2)", () => {
         expect(b).toBe(a);
         expect(JSON.stringify(entries)).toBe(before);
       }),
-      { numRuns: 25 },
+      { numRuns: RUNS },
     );
   });
 });
@@ -250,7 +244,7 @@ describe("P2 symmetry", () => {
         }
         expect(new Set(log.frames?.runners.map((r) => JSON.stringify(r))).size).toBe(1);
       }),
-      { numRuns: 30 },
+      { numRuns: RUNS },
     );
   });
 
@@ -291,7 +285,7 @@ type Pair = {
 };
 
 const pairArb: fc.Arbitrary<Pair> = fc.record({
-  frameId: fc.constantFrom(...GENERIC_FRAMES),
+  frameId: fc.constantFrom(...ALL_FRAMES),
   base: statsArb,
   lengthM: fc.integer({ min: 200, max: 3000 }),
   d: fc.integer({ min: 1, max: 200 }),
@@ -374,24 +368,24 @@ function monotone(statName: "agility" | "stamina", tiers: "a" | "bc") {
 
 describe("P3 agility monotonicity, three tiers (ADR-0003 D41)", () => {
   it("(a) boost neutralised (kBoost = kH = 0): strict without exhaustion, one tick with it", () => {
-    fc.assert(monotone("agility", "a"), { numRuns: 150 });
+    fc.assert(monotone("agility", "a"), { numRuns: RUNS });
   });
 
   it("(b) within one tick (one burst for pulse frames) when neither run exhausts; (c) within 0.5 % otherwise", () => {
-    fc.assert(monotone("agility", "bc"), { numRuns: 250 });
+    fc.assert(monotone("agility", "bc"), { numRuns: RUNS });
   });
 });
 
 describe("P9 stamina monotonicity (tiers b and c)", () => {
   it("more stamina never costs more than one tick (one burst) without exhaustion, 0.5 % with it", () => {
-    fc.assert(monotone("stamina", "bc"), { numRuns: 150 });
+    fc.assert(monotone("stamina", "bc"), { numRuns: RUNS });
   });
 });
 
 // --- P4 -------------------------------------------------------------------------------------------
 
 describe("P4 bounds on every tick", () => {
-  it("hp, energy, heat, durability and speed stay in bounds; governed runners never pass capLim; licensed runners never break themselves", () => {
+  it("hp, energy, heat, durability and speed stay in bounds; governed runners never pass capLim; licensed runners never break themselves; the telemetry clamp is a no-op", () => {
     fc.assert(
       fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
         const bad: string[] = [];
@@ -399,11 +393,19 @@ describe("P4 bounds on every tick", () => {
         const prevPos = new Float64Array(n);
         const dur0 = new Float64Array(n);
         const minDur = new Float64Array(n).fill(Number.MAX_SAFE_INTEGER);
+        const telemetry = new Uint8Array(n);
         const E = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
         const log = simulateRaceProbed(RULESET_V1, entries, course, seed, (t, A) => {
           const S = A.state;
           const T = A.tables;
           for (let i = 0; i < n; i++) {
+            if (t === 0) {
+              // 13 telemetry (2): the defensive clamp heat = min(heat, D) is asserted as a no-op.
+              // It is switched off after tick 0 (heat ≤ kH there), so heat ≤ D below is the
+              // governor's work alone (capLim = D), not the clamp's
+              telemetry[i] = T.clampHeat[i] ?? 0;
+              T.clampHeat[i] = 0;
+            }
             const hp = S.hp[i] ?? -1;
             const energy = S.energy[i] ?? -1;
             const heat = S.heat[i] ?? -1;
@@ -412,7 +414,7 @@ describe("P4 bounds on every tick", () => {
             if (hp < 0 || hp > (T.hpMax[i] ?? 0)) bad.push(`t${t} ${i} hp ${hp}`);
             if (energy < 0 || energy > (T.Emax[i] ?? 0)) bad.push(`t${t} ${i} energy ${energy}`);
             if (heat < 0) bad.push(`t${t} ${i} heat ${heat}`);
-            if (T.clampHeat[i] === 1 && heat > (T.D[i] ?? 0)) bad.push(`t${t} ${i} telemetry`);
+            if (telemetry[i] === 1 && heat > (T.D[i] ?? 0)) bad.push(`t${t} ${i} telemetry`);
             if (T.licensed[i] !== 1 && heat > (T.capLim[i] ?? 0)) bad.push(`t${t} ${i} governor`);
             if (dur < 0 || dur > (T.durMax[i] ?? 0)) bad.push(`t${t} ${i} dur ${dur}`);
             if ((S.vOut[i] ?? -1) < 0 || (S.vCore[i] ?? -1) < 0) bad.push(`t${t} ${i} speed`);
@@ -441,7 +443,7 @@ describe("P4 bounds on every tick", () => {
           if (e.durabilityStart > 0) expect(r.broken).toBe(false);
         }
       }),
-      { numRuns: 25 },
+      { numRuns: RUNS },
     );
   });
 });
@@ -489,7 +491,7 @@ describe("P5 log consistency (and P8 integers)", () => {
         for (let k = 1; k < ticks.length; k++)
           expect(at(ticks, k)).toBeGreaterThan(at(ticks, k - 1));
       }),
-      { numRuns: 20 },
+      { numRuns: RUNS },
     );
   });
 });
@@ -514,7 +516,7 @@ describe("P6 RNG accounting and isolation", () => {
         expect(counts.race).toBe(32 * E.length);
         expect(counts.quirks).toBe(E.filter((e) => e.traits.randomSkillGuaranteed).length);
       }),
-      { numRuns: 30 },
+      { numRuns: RUNS },
     );
   });
 
@@ -540,7 +542,7 @@ describe("P6 RNG accounting and isolation", () => {
           }
         },
       ),
-      { numRuns: 20 },
+      { numRuns: RUNS },
     );
   });
 
@@ -582,7 +584,7 @@ describe("P6 RNG accounting and isolation", () => {
           expect(evs).toEqual([]);
         },
       ),
-      { numRuns: 20 },
+      { numRuns: RUNS },
     );
   });
 });
@@ -606,7 +608,7 @@ describe("P7 options invariance", () => {
           expect(JSON.stringify([v.results, v.derived])).toBe(want);
         }
       }),
-      { numRuns: 20 },
+      { numRuns: RUNS },
     );
   });
 });
