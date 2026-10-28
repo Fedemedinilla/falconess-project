@@ -53,9 +53,12 @@ for (const falconessId of FALCONESS) {
     await page.click("#turno-ver-carrera");
     await expect(page).toHaveURL(/#carrera$/);
     await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: 12 }))).toBeVisible();
-    await expect(
-      page.getByText(t("ui.goalRace.recorded", { place: recorded.place, n: recorded.field })),
-    ).toBeVisible();
+    // the recorded place would give the race away: it waits for the finish
+    const recordedText = t("ui.goalRace.recorded", { place: recorded.place, n: recorded.field })
+      .replace(/[.*+?^$()|[\]\\]/g, "\\$&")
+      .replace("{time}", "[0-9.,]+");
+    const recordedPill = page.getByText(new RegExp(`^${recordedText}$`));
+    await expect(recordedPill).toHaveCount(0);
     await expect(page.getByText(t("ui.goalRace.mismatch"))).toHaveCount(0);
     await expect(page.getByText(t("ui.race.pending"))).toBeVisible();
     await page.selectOption("#carrera-pronostico", { index: 1 });
@@ -65,6 +68,12 @@ for (const falconessId of FALCONESS) {
     expect(replayPlace, "the replay's classification matches the season's record").toBe(
       recorded.place,
     );
+    await expect(recordedPill).toBeVisible();
+    await expect(
+      page
+        .getByText(textPattern("ui.race.guess.right"))
+        .or(page.getByText(textPattern("ui.race.guess.wrong"))),
+    ).toBeVisible();
     await expect(page.getByRole("heading", { name: t("ui.race.why.title") })).toBeVisible();
 
     // back to the season; the goals panel opens the same race

@@ -2,7 +2,7 @@ import type { RunInput, SeasonState } from "@falconess/schema";
 import { advanceSeason, RULESET_V1, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../content/load";
-import { goalRaceLog, replayStep } from "./goal-race";
+import { goalRaceLog, recordedOf, replayMatches, replayStep } from "./goal-race";
 
 const ctx = { ruleset: RULESET_V1, content: getContent() };
 const START: Extract<RunInput, { kind: "start" }> = {
@@ -35,6 +35,21 @@ describe("goal race replay", () => {
         expect(me?.place).toBe(result?.place);
         expect(me?.timeTicks).toBe(result?.timeTicks);
         expect(log?.courseId).toBe(result?.courseId);
+        if (!log || !result) throw new Error("no log or result");
+        expect(replayMatches(log, result)).toBe(true);
+        expect(replayMatches(log, { ...result, timeTicks: result.timeTicks + 1 })).toBe(false);
+        expect(replayMatches(log, { ...result, place: result.place + 1 })).toBe(false);
+
+        // a DNF is recorded as last place with the race's maxTicks, like runGoalRace does
+        const dnf = {
+          ...log,
+          results: log.results.map((r) =>
+            r.runnerId === "player"
+              ? { ...r, dnf: true, place: 3, finishMilli: null, timeTicks: null }
+              : r,
+          ),
+        };
+        expect(recordedOf(dnf)).toEqual({ place: log.results.length, timeTicks: log.maxTicks });
 
         const step = replayStep(ctx, "web-race", inputs, inputs.length - 1);
         expect(step.before).toEqual(s);

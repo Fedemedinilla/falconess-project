@@ -7,6 +7,8 @@ export type TableColumn = {
   readonly label: string;
   /** Numbers align to the end. */
   readonly align?: "start" | "end" | "center";
+  /** A long header that may break into lines (headers stay on one line by default). */
+  readonly wrap?: boolean;
 };
 
 export type TableRow = {
@@ -22,18 +24,23 @@ export type TableProps = {
   /** Read by screen readers; also names the scroll region. */
   caption: string;
   dense?: boolean;
+  /**
+   * A wide table: the first column stays in place while the rest scrolls, and a shade at the
+   * right edge shows there is more.
+   */
+  sticky?: boolean;
 };
 
 /** A data table in its own horizontal scroll box, so the page never scrolls sideways. */
-export function Table({ columns, rows, caption, dense = false }: TableProps) {
+export function Table({ columns, rows, caption, dense = false, sticky = false }: TableProps) {
   return (
-    <div className={s.scroll}>
-      <table className={cx(s.table, dense && s.dense)}>
+    <div className={cx(s.scroll, sticky && s.cue)}>
+      <table className={cx(s.table, dense && s.dense, sticky && s.sticky)}>
         <caption className="visually-hidden">{caption}</caption>
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c.key} scope="col" className={s[c.align ?? "start"]}>
+              <th key={c.key} scope="col" className={cx(s[c.align ?? "start"], c.wrap && s.wrap)}>
                 {c.label}
               </th>
             ))}

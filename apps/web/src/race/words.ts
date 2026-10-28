@@ -10,6 +10,7 @@ import {
   type ModeSpan,
   type RaceLabels,
   type SprintPlanEvent,
+  type WhyModel,
   type WhySink,
   type WhyTerm,
 } from "@falconess/race-view";
@@ -66,6 +67,20 @@ export function runnerName(entry: RaceEntry, labels: RaceLabels): string {
   return entry.runnerId;
 }
 
+/**
+ * A runner's name in a narrow lane label: "Vos" for the player, "R3" for the season's rivals,
+ * "Pic2" for the neutral fixtures, else the first letters of her name.
+ */
+export function runnerShort(entry: RaceEntry, labels: RaceLabels): string {
+  if (entry.kind === "player") return ui("ui.race.lane.you");
+  const rival = /^rival-(\d+)$/.exec(entry.runnerId);
+  if (rival) return ui("ui.race.lane.rival", { n: rival[1] ?? "" });
+  const neutral = /^neutral-([a-z]+)-(\d+)$/.exec(entry.runnerId);
+  if (neutral && entry.style === neutral[1])
+    return `${labels.styleName(entry.style).slice(0, 3)}${neutral[2] ?? ""}`;
+  return runnerName(entry, labels).slice(0, 3);
+}
+
 /** "Falke · Steinhaus Aerowerk · Planeo". */
 export function runnerKit(entry: RaceEntry, labels: RaceLabels): string {
   return [
@@ -117,6 +132,23 @@ export function planTitle(e: SprintPlanEvent): string {
     : ui("ui.race.plan.replan", { n: e.index, cause });
 }
 
+/** A sprint plan in the events list, in player terms (the full plan is in the technical detail). */
+function sprintEventText(e: SprintPlanEvent): string {
+  if (e.levelMms === 0)
+    return ui("ui.race.event.sprint.none", { reason: ui(`ui.race.plan.reason.${e.reason}`) });
+  return e.index === 0
+    ? ui("ui.race.event.sprint", {
+        level: mps(e.levelMms, 1),
+        from: metres(e.startMm),
+        to: metres(e.endMm),
+      })
+    : ui("ui.race.event.sprint.replan", {
+        cause: ui(`ui.race.plan.cause.${e.cause}`),
+        level: mps(e.levelMms, 1),
+        from: metres(e.startMm),
+      });
+}
+
 /** The speed factor of broken wings (8.4), when it is not neutral. */
 function brokenSpeed(log: RaceLog, lane: number): string | undefined {
   const pm = log.derived[lane]?.brokenSpeedPm ?? 1000;
@@ -148,34 +180,21 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
           })
         : ui("ui.race.event.overheat.end", { from: units(item.heat) });
     case "skill": {
-      const text = ui("ui.race.event.skill", {
-        skill: labels.skillName(item.skillId),
-        p: item.p,
-        u: item.u,
-      });
+      const text = ui("ui.race.event.skill", { skill: labels.skillName(item.skillId) });
       return item.activation > 1
         ? `${text} · ${ui("ui.race.event.skill.again", { n: item.activation })}`
         : text;
     }
     case "skillMiss":
-      return ui("ui.race.event.skillMiss", {
-        skill: labels.skillName(item.skillId),
-        p: item.p,
-        u: item.u,
-      });
+      return ui("ui.race.event.skillMiss", { skill: labels.skillName(item.skillId) });
     case "freeBoost":
       return ui("ui.race.event.freeBoost", { segment: labels.segmentName(item.segment) });
     case "sprintPlan":
-      return `${planTitle(item)}: ${planText(item)}`;
+      return sprintEventText(item);
     case "jumpOk":
-      return ui("ui.race.event.jumpOk", {
-        lift: units(item.lift),
-        required: units(item.required),
-      });
+      return ui("ui.race.event.jumpOk");
     case "jumpFail":
       return ui("ui.race.event.jumpFail", {
-        lift: units(item.lift),
-        required: units(item.required),
         damage: units(item.damage),
         s: secs(item.stallTicks),
       });
@@ -346,4 +365,118 @@ export function planSummary(first: SprintPlanEvent, last: SprintPlanEvent, count
     cause: ui(`ui.race.plan.cause.${last.cause}`),
     last: lastText,
   })}`;
+}
+
+// --- why, in a few plain lines ------------------------------------------------------------------
+
+const SUMMARY_PHASES = ["start", "middle", "final"] as const;
+
+/** A share of the energy capacity under which what is left over is not worth a line. */
+const ENERGY_LEFT_WORTH = 0.1;
+
+export type WhySummaryInput = {
+  readonly m: WhyModel;
+  /** Her energy capacity (milli-units), to judge what was left over. */
+  readonly energyMax: number;
+  /** For the winner: milli-ticks to the second at the line; null without a second finisher. */
+  readonly leadMilli: number | null;
+};
+
+function phaseName(i: number): string {
+  return ui(`ui.race.why.summary.phase.${SUMMARY_PHASES[i] ?? "start"}`);
+}
+
+/** The gap to the winner and where it was lost, from the phase deltas of the model. */
+function gapLine({ m, leadMilli }: WhySummaryInput): string {
+  if (m.runner.result.dnf) return ui("ui.race.why.summary.dnf");
+  if (m.isWinner)
+    return leadMilli !== null && leadMilli > 0
+      ? ui("ui.race.why.summary.winner", { lead: secsMilli(leadMilli, 2) })
+      : ui("ui.race.why.summary.winner.alone", { time: finishTime(m.runner.result) });
+  if (m.gapMilli === null || m.gapMilli <= 0) return ui("ui.race.why.summary.level");
+  const lost = m.phases
+    .map((p, i) => ({ i, d: p.deltaTicks ?? 0 }))
+    .filter((p) => p.d > 0)
+    .sort((a, b) => b.d - a.d || a.i - b.i);
+  const total = lost.reduce((sum, p) => sum + p.d, 0);
+  const gap = secsMilli(m.gapMilli, 2);
+  const [first, second] = lost;
+  let line: string;
+  if (!first) line = ui("ui.race.why.summary.level");
+  else if (!second || first.d * 10 >= total * 7)
+    line = ui("ui.race.why.summary.lost.one", {
+      gap,
+      phase: phaseName(first.i),
+      delta: withSign(secs(first.d, 2)),
+    });
+  else
+    line = ui("ui.race.why.summary.lost.two", {
+      gap,
+      phase: phaseName(first.i),
+      delta: withSign(secs(first.d, 2)),
+      phase2: phaseName(second.i),
+      delta2: withSign(secs(second.d, 2)),
+    });
+  const ahead = m.phases
+    .map((p, i) => ({ i, d: p.deltaTicks ?? 0 }))
+    .filter((p) => p.d < 0)
+    .sort((a, b) => a.d - b.d)[0];
+  return ahead
+    ? `${line} ${ui("ui.race.why.summary.ahead", {
+        phase: phaseName(ahead.i),
+        delta: secs(ahead.d, 2),
+      })}`
+    : line;
+}
+
+/** A time sink in player terms, or undefined for the ones the summary leaves to the list. */
+function sinkLine(sink: WhySink): string | undefined {
+  switch (sink.kind) {
+    case "hpEmpty":
+      return ui("ui.race.why.summary.hpEmpty", {
+        at: metres(sink.atMm),
+        rest: metres(sink.restMm),
+      });
+    case "stall":
+      return sink.jumpsFailed > 0
+        ? uiPlural("ui.race.why.summary.stall.jumps", sink.jumpsFailed, { s: secs(sink.ticks, 1) })
+        : ui("ui.race.why.summary.stall", { s: secs(sink.ticks, 1) });
+    case "broken":
+      return sink.atMm !== null
+        ? ui("ui.race.why.summary.broken.at", { at: metres(sink.atMm) })
+        : ui(sink.fromStart ? "ui.race.why.summary.broken.start" : "ui.race.why.summary.broken");
+    case "overheat":
+      return ui("ui.race.why.summary.overheat", { s: secs(sink.ticks) });
+    case "detours":
+      return uiPlural("ui.race.why.summary.detours", sink.count);
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * "Why" in a few plain lines, for a tester who never read the engine spec: the gap to the winner
+ * and the phase where it went, what cost her the race, and energy left unused. Only words for
+ * the model's numbers (race-view's whyModel); nothing is recomputed.
+ */
+export function whySummary(input: WhySummaryInput): string[] {
+  const { m, energyMax } = input;
+  const lines = [gapLine(input)];
+  const sinks = m.sinks.flatMap((sink) => {
+    const line = sinkLine(sink);
+    return line === undefined ? [] : [line];
+  });
+  lines.push(...sinks.slice(0, 2));
+  const hpEmpty = m.sinks.some((sink) => sink.kind === "hpEmpty");
+  const left = m.sinks.find((sink) => sink.kind === "energyLeft");
+  if (left?.kind === "energyLeft" && left.energy >= energyMax * ENERGY_LEFT_WORTH)
+    lines.push(
+      ui(hpEmpty ? "ui.race.why.summary.energy.hp" : "ui.race.why.summary.energy", {
+        energy: units(left.energy),
+        max: formatFixed(energyMax, 1000, 0),
+      }),
+    );
+  if (sinks.length === 0 && !m.isWinner && !m.runner.result.dnf && lines.length === 1)
+    lines.push(ui("ui.race.why.summary.clean"));
+  return lines;
 }

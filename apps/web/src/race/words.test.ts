@@ -14,8 +14,10 @@ import {
   metres,
   modesText,
   runnerName,
+  runnerShort,
   secsMilli,
   sinkText,
+  whySummary,
   withSign,
 } from "./words";
 
@@ -93,7 +95,7 @@ describe("race words", () => {
     const winner = view.byPlace[0];
     if (!winner) throw new Error("no winner");
     const texts = view.byPlace.flatMap((r) => whyModel(canyon, r, winner).sinks.map(sinkText));
-    expect(texts.some((t) => t.startsWith("Sin hp en "))).toBe(true);
+    expect(texts.some((t) => t.startsWith("Sin físico a los "))).toBe(true);
     expect(texts.some((t) => t.startsWith("Alas rotas"))).toBe(true);
     expect(texts.some((t) => t.startsWith("Sobrecalor"))).toBe(true);
     for (const t of texts) expect(t).not.toMatch(/\{[a-z]+\}|undefined|NaN/);
@@ -101,6 +103,53 @@ describe("race words", () => {
       const modes = modesText(whyModel(canyon, r, winner).modes);
       expect(modes).not.toMatch(/\{|ui\.race/);
     }
+  });
+
+  it("sums up the why in plain lines, without engine tokens", () => {
+    const view = raceView(canyon, labels);
+    const winner = view.byPlace[0];
+    const second = view.byPlace[1];
+    if (!winner || !second) throw new Error("no winner");
+    const lines = view.byPlace.map((r) =>
+      whySummary({
+        m: whyModel(canyon, r, winner),
+        energyMax: r.max.energy,
+        leadMilli:
+          r === winner && second.result.finishMilli !== null && r.result.finishMilli !== null
+            ? second.result.finishMilli - r.result.finishMilli
+            : null,
+      }),
+    );
+    for (const block of lines) {
+      expect(block.length).toBeGreaterThan(0);
+      expect(block.length).toBeLessThanOrEqual(4);
+      for (const line of block)
+        expect(line).not.toMatch(/‰|\blift\b|\bhp\b|candidatos|\{[a-z0-9]+\}|undefined|NaN/);
+    }
+    expect(lines[0]?.[0]).toMatch(/^Ganó con .+ s de ventaja sobre la segunda\.$/);
+    expect(lines[1]?.[0]).toMatch(/^Perdió .+ s con la ganadora, (casi todo|sobre todo) en /);
+    // the canyon's hp runs out: said in player terms, and why the energy left did not help
+    const all = lines.flat();
+    expect(all.some((l) => l.startsWith("Se quedó sin físico a los "))).toBe(true);
+    const hpLeft = lines.find(
+      (b) =>
+        b.some((l) => l.startsWith("Se quedó sin físico")) && b.some((l) => l.includes("energía")),
+    );
+    if (hpLeft) expect(hpLeft.join(" ")).toContain("sin físico no hay boost");
+  });
+
+  it("gives every runner a short lane name", () => {
+    const view = raceView(canyon, labels);
+    expect(view.player?.short).toBe("Vos");
+    const log = runFreeRace(ctx, defaultForm(content));
+    const rival = log.entries.find((e) => e.runnerId === "rival-3");
+    if (!rival) throw new Error("no rival-3");
+    expect(runnerShort(rival, labels)).toBe("R3");
+    const neutral = runFreeRace(ctx, { ...defaultForm(content), field: "neutral" });
+    expect(neutral.entries.map((e) => runnerShort(e, labels)).slice(0, 2)).toEqual([
+      "Pic1",
+      "Sus1",
+    ]);
   });
 
   it("gathers names, liveries, badges and lane pins once per log", () => {

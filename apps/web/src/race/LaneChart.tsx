@@ -59,11 +59,16 @@ function RunnerGlyph({ player }: { player: boolean }) {
   );
 }
 
-/** The whole course on top: phases, terrain, distances, the 60 m reserve and the finish. */
+/** The whole course on top: phases, terrain, distances, where the kick starts and the finish. */
 function Header({ view, g }: { view: RaceView; g: ChartGeometry }) {
   const { layout } = view;
   const last = layout.scale.length - 1;
   const headBottom = g.scaleY - 9;
+  const lastX = xAt(g, layout.scale[last]?.at ?? 1);
+  // on a narrow plot a label that would run into its neighbour is left out (the line stays)
+  const finalX = xAt(g, layout.phases[layout.phases.length - 1]?.from ?? 0);
+  const reserveX = layout.reserve ? xAt(g, layout.reserve.at) : 0;
+  const reserveLabel = reserveX - finalX >= 70;
   return (
     <g>
       {layout.phases.map((p, i) => (
@@ -121,14 +126,16 @@ function Header({ view, g }: { view: RaceView; g: ChartGeometry }) {
             y1={g.stripY + g.stripH}
             y2={g.stripY + g.stripH + 4}
           />
-          <text
-            className={s.scaleText}
-            x={xAt(g, m.at)}
-            y={g.scaleY}
-            textAnchor={i === 0 ? "start" : i === last ? "end" : "middle"}
-          >
-            {i === last ? ui("ui.race.track.metres", { m: metres(m.mm) }) : metres(m.mm)}
-          </text>
+          {(i === last || lastX - xAt(g, m.at) >= 48) && (
+            <text
+              className={s.scaleText}
+              x={xAt(g, m.at)}
+              y={g.scaleY}
+              textAnchor={i === 0 ? "start" : i === last ? "end" : "middle"}
+            >
+              {i === last ? ui("ui.race.track.metres", { m: metres(m.mm) }) : metres(m.mm)}
+            </text>
+          )}
         </g>
       ))}
       {layout.reserve && (
@@ -140,14 +147,17 @@ function Header({ view, g }: { view: RaceView; g: ChartGeometry }) {
             y1={g.stripY - 2}
             y2={g.stripY + g.stripH + 2}
           />
-          <text
-            className={s.reserveText}
-            x={xAt(g, layout.reserve.at) - 3}
-            y={g.phaseY}
-            textAnchor="end"
-          >
-            {ui("ui.race.track.reserve")}
-          </text>
+          {reserveLabel && (
+            <text
+              className={s.reserveText}
+              x={xAt(g, layout.reserve.at) - 3}
+              y={g.phaseY}
+              textAnchor="end"
+            >
+              {ui("ui.race.track.reserve")}
+            </text>
+          )}
+          <title>{ui("ui.race.legend.reserve")}</title>
         </g>
       )}
       <line
@@ -340,6 +350,9 @@ export function LaneChart({ view, clock, mode }: LaneChartProps) {
               <span className={s.noLivery} aria-hidden="true" />
             )}
             <span className={s.labelName}>{r.name}</span>
+            <span className={s.labelShort} aria-hidden="true">
+              {r.short}
+            </span>
           </li>
         ))}
       </ol>

@@ -1,9 +1,11 @@
-import { PLAYER_RUNNER_ID } from "@falconess/sim";
+import type { RaceLog } from "@falconess/schema";
 import { useMemo, useState } from "react";
+import { routeHref } from "../app/route";
 import { navigate } from "../app/useRoute";
-import { goalRaceLog } from "../game/goal-race";
+import { goalRaceLog, replayMatches } from "../game/goal-race";
 import { type RacePick, usePickedRace } from "../game/race-pick";
 import { useGame } from "../game/useGame";
+import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Pill } from "../ui/Pill";
@@ -63,15 +65,18 @@ export function GoalRaceScreen() {
     [game, step],
   );
 
+  // the place the season recorded gives the race away: it shows once the replay has
+  const [revealedLog, setRevealedLog] = useState<RaceLog>();
+
   if (!run || !step || !log) return <Empty hasRun={run !== undefined} />;
 
   const recorded = run.state.raceResults.find((r) => r.turn === step.turn);
-  const mine = log.results.find((r) => r.runnerId === PLAYER_RUNNER_ID);
-  const replayPlace = mine ? (mine.dnf ? log.results.length : mine.place) : undefined;
-  const matches = recorded === undefined || replayPlace === recorded.place;
+  const matches = replayMatches(log, recorded);
+  const revealed = revealedLog === log;
   const course = ctx.content.courses.get(step.courseId);
   const courseName = course ? gameText(course.textKey) : step.courseId;
   const ended = run.state.status === "ended";
+  const back = ended ? "fin" : "temporada";
 
   return (
     <section className={s.screen} aria-labelledby="carrera-titulo">
@@ -82,9 +87,13 @@ export function GoalRaceScreen() {
         </h1>
         <p className={s.screenLead}>
           <Pill tone="accent">{ui("ui.goalRace.goal", { place: step.minPlace })}</Pill>
-          {recorded && (
+          {recorded && revealed && (
             <Pill tone={recorded.place <= step.minPlace ? "good" : "bad"} solid>
-              {ui("ui.goalRace.recorded", { place: recorded.place, n: recorded.fieldSize })}
+              {ui("ui.goalRace.recorded", {
+                place: recorded.place,
+                n: recorded.fieldSize,
+                time: formatSeconds(recorded.timeTicks),
+              })}
             </Pill>
           )}
         </p>
@@ -112,16 +121,17 @@ export function GoalRaceScreen() {
             </select>
           </span>
         )}
-        <Button
-          id="carrera-temporada"
-          variant="primary"
-          onClick={() => navigate(ended ? "fin" : "temporada")}
-        >
+        <a className={s.backLink} href={routeHref(back)} id="carrera-volver">
+          {ui(ended ? "ui.goalRace.back.end.link" : "ui.goalRace.back.link")}
+        </a>
+      </div>
+      {!matches && <p className={s.notice}>{ui("ui.goalRace.mismatch")}</p>}
+      <Replay log={log} idPrefix="carrera" onReveal={() => setRevealedLog(log)} />
+      <div className={s.screenEnd}>
+        <Button id="carrera-temporada" onClick={() => navigate(back)}>
           {ui(ended ? "ui.goalRace.back.end" : "ui.goalRace.back")}
         </Button>
       </div>
-      {!matches && <p className={s.notice}>{ui("ui.goalRace.mismatch")}</p>}
-      <Replay log={log} idPrefix="carrera" />
     </section>
   );
 }

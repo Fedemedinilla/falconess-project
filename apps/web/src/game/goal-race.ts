@@ -6,12 +6,13 @@
  * (`goalRaceSetup`). Property P7 (docs/race-engine.md 24.2) makes both runs place and time every
  * runner identically, so the replay matches the recorded `RaceResultEntry`.
  */
-import type { RaceLog, RunInput, SeasonState } from "@falconess/schema";
+import type { RaceLog, RaceResultEntry, RunInput, SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
   goalForTurn,
   goalRaceSetup,
   goalRaceState,
+  PLAYER_RUNNER_ID,
   replaySeason,
   type SimContext,
   simulateRace,
@@ -45,4 +46,24 @@ export function replayStep(
   if (index < 1 || !input) throw new Error(`no step ${index} in a run of ${inputs.length} inputs`);
   const before = replaySeason(ctx, seed, inputs.slice(0, index));
   return { before, input, after: advanceSeason(ctx, before, input) };
+}
+
+/**
+ * The player's result in a replay, as the season records it (`runGoalRace`): a DNF counts as last
+ * place with the race's `maxTicks`. Undefined when the log has no player.
+ */
+export function recordedOf(log: RaceLog): { place: number; timeTicks: number } | undefined {
+  const mine = log.results.find((r) => r.runnerId === PLAYER_RUNNER_ID);
+  if (!mine) return undefined;
+  return {
+    place: mine.dnf ? log.results.length : mine.place,
+    timeTicks: mine.dnf || mine.timeTicks === null ? log.maxTicks : mine.timeTicks,
+  };
+}
+
+/** Whether a replay gives the place and time the season recorded (P7 says it always does). */
+export function replayMatches(log: RaceLog, recorded: RaceResultEntry | undefined): boolean {
+  if (!recorded) return true;
+  const mine = recordedOf(log);
+  return mine?.place === recorded.place && mine.timeTicks === recorded.timeTicks;
 }

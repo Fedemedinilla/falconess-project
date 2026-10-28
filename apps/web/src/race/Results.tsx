@@ -34,6 +34,7 @@ import {
   termText,
   uiPlural,
   units,
+  whySummary,
   withSign,
 } from "./words";
 
@@ -68,7 +69,7 @@ export function Classification({ view }: { view: RaceView }) {
           { key: "place", label: ui("ui.race.result.place"), align: "end" },
           { key: "runner", label: ui("ui.race.result.runner") },
           { key: "time", label: ui("ui.race.result.time"), align: "end" },
-          { key: "margin", label: ui("ui.race.result.margin"), align: "end" },
+          { key: "margin", label: ui("ui.race.result.margin"), align: "end", wrap: true },
         ]}
         rows={view.byPlace.map((r) => ({
           key: String(r.lane),
@@ -102,8 +103,114 @@ function WhyRow({ label, children }: { label: string; children: ReactNode }) {
 
 const PHASE_KEYS = ["start", "middle", "final"] as const;
 
-function WhyBlock({ m, view }: { m: WhyModel; view: RaceView }) {
+function skillRow(m: WhyModel, view: RaceView, draws: boolean): ReactNode {
   const { labels } = view;
+  return (
+    <ul className={s.skills}>
+      {m.skills.map((sk) => {
+        const skill = labels.skillName(sk.skillId);
+        const pu = draws && sk.p !== null && sk.u !== null;
+        return (
+          <li
+            key={`${sk.skillId}-${sk.fired}-${sk.tick ?? ""}`}
+            className={sk.fired ? s.skillHit : s.skillMiss}
+          >
+            {pu
+              ? ui(sk.fired ? "ui.race.why.skill.hit.pu" : "ui.race.why.skill.miss.pu", {
+                  skill,
+                  p: sk.p,
+                  u: sk.u,
+                })
+              : ui(sk.fired ? "ui.race.why.skill.hit" : "ui.race.why.skill.miss", { skill })}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** The engine's own numbers, for whoever knows the spec: closed until asked for. */
+function WhyDetail({ m, view, id }: { m: WhyModel; view: RaceView; id: string }) {
+  const { labels } = view;
+  const terms = m.terms ?? [];
+  const hasDraws = m.skills.some((sk) => sk.p !== null && sk.u !== null);
+  return (
+    <details className={s.whyDetail} id={id}>
+      <summary className={s.whyDetailSummary}>{ui("ui.race.why.detail")}</summary>
+      <p className={s.hint}>{ui("ui.race.why.detail.note")}</p>
+      <dl className={s.why}>
+        {m.judgement && (
+          <WhyRow label={ui("ui.race.why.judgement")}>
+            {ui("ui.race.why.judgement.text", {
+              pace: m.judgement.pace.map((pm) => (pm > 0 ? `+${pm}` : String(pm))).join(" / "),
+              err:
+                m.judgement.planErrPm > 0
+                  ? `+${m.judgement.planErrPm}`
+                  : String(m.judgement.planErrPm),
+              window: m.judgement.planErrWindowPm,
+            })}
+          </WhyRow>
+        )}
+        {m.plan && (
+          <WhyRow label={ui("ui.race.why.plan")}>
+            {planSummary(m.plan.first, m.plan.last, m.plan.count)}
+          </WhyRow>
+        )}
+        {m.modes.length > 0 && (
+          <WhyRow label={ui("ui.race.why.modes")}>{modesText(m.modes)}</WhyRow>
+        )}
+        {terms.length > 0 && (
+          <WhyRow label={ui("ui.race.why.terms")}>
+            {terms.map((t) => termText(t, labels)).join(" · ")}
+          </WhyRow>
+        )}
+        {m.segments && (
+          <WhyRow label={ui("ui.race.why.segments")}>
+            <span className={s.segRows}>
+              {m.segments.map((seg) => (
+                <span key={seg.index} className={s.segRow}>
+                  <span className={s.segChip} style={{ background: `var(--seg-${seg.type})` }} />
+                  <span className={s.segName}>{gameText(`segment.${seg.type}`)}</span>
+                  <span className={s.num}>
+                    {seg.fPm === null
+                      ? "—"
+                      : ui("ui.race.why.segment", {
+                          f: factor(seg.fPm),
+                          v: mps(seg.cruiseMms ?? 0, 1),
+                        })}
+                  </span>
+                </span>
+              ))}
+            </span>
+          </WhyRow>
+        )}
+        <WhyRow label={ui("ui.race.why.energy")}>
+          {ui("ui.race.why.energy.text", {
+            spent: units(m.energy.spent),
+            lift: units(m.energy.lift),
+            regen: units(m.energy.regen),
+            refunded: units(m.energy.refunded),
+            heat: units(m.energy.fromHeat),
+            left: units(m.energy.left),
+          })}
+        </WhyRow>
+        <WhyRow label={ui("ui.race.why.body")}>
+          {ui("ui.race.why.body.text", {
+            hp: formatFixed(m.body.hpEnd, 1000, 0),
+            lost: units(m.body.durabilityLost),
+            repaired: units(m.body.durabilityRepaired),
+            end: units(m.body.durabilityEnd),
+          })}
+        </WhyRow>
+        {hasDraws && <WhyRow label={ui("ui.race.why.draws")}>{skillRow(m, view, true)}</WhyRow>}
+      </dl>
+      <p className={s.hint}>{ui("ui.race.track.seed", { seed: view.log.seed })}</p>
+    </details>
+  );
+}
+
+/** What a tester reads: the phases against the winner, what helped, what cost and the skills. */
+function WhyBlock({ m, view }: { m: WhyModel; view: RaceView }) {
   const g = m.gains;
   const gains = [
     ui("ui.race.why.gains.boost", {
@@ -115,7 +222,6 @@ function WhyBlock({ m, view }: { m: WhyModel; view: RaceView }) {
   if (g.pulses > 0) gains.push(uiPlural("ui.race.why.gains.pulses", g.pulses));
   if (g.draftTicks > 0) gains.push(ui("ui.race.why.gains.draft", { s: secs(g.draftTicks) }));
   if (g.skillsActivated > 0) gains.push(uiPlural("ui.race.why.gains.skills", g.skillsActivated));
-  const terms = m.terms ?? [];
   return (
     <dl className={s.why}>
       <WhyRow label={ui("ui.race.why.phases")}>
@@ -139,7 +245,6 @@ function WhyBlock({ m, view }: { m: WhyModel; view: RaceView }) {
           ))}
         </span>
       </WhyRow>
-      <WhyRow label={ui("ui.race.why.gains")}>{gains.join(" · ")}</WhyRow>
       <WhyRow label={ui("ui.race.why.sinks")}>
         {m.sinks.length === 0 ? (
           ui("ui.race.why.sinks.none")
@@ -153,88 +258,9 @@ function WhyBlock({ m, view }: { m: WhyModel; view: RaceView }) {
           </ul>
         )}
       </WhyRow>
-      {m.judgement && (
-        <WhyRow label={ui("ui.race.why.judgement")}>
-          {ui("ui.race.why.judgement.text", {
-            pace: m.judgement.pace.map((pm) => (pm > 0 ? `+${pm}` : String(pm))).join(" / "),
-            err:
-              m.judgement.planErrPm > 0
-                ? `+${m.judgement.planErrPm}`
-                : String(m.judgement.planErrPm),
-            window: m.judgement.planErrWindowPm,
-          })}
-        </WhyRow>
-      )}
-      {m.plan && (
-        <WhyRow label={ui("ui.race.why.plan")}>
-          {planSummary(m.plan.first, m.plan.last, m.plan.count)}
-        </WhyRow>
-      )}
-      {m.modes.length > 0 && <WhyRow label={ui("ui.race.why.modes")}>{modesText(m.modes)}</WhyRow>}
-      {terms.length > 0 && (
-        <WhyRow label={ui("ui.race.why.terms")}>
-          {terms.map((t) => termText(t, labels)).join(" · ")}
-        </WhyRow>
-      )}
-      {m.segments && (
-        <WhyRow label={ui("ui.race.why.segments")}>
-          <span className={s.segRows}>
-            {m.segments.map((seg) => (
-              <span key={seg.index} className={s.segRow}>
-                <span className={s.segChip} style={{ background: `var(--seg-${seg.type})` }} />
-                <span className={s.segName}>{gameText(`segment.${seg.type}`)}</span>
-                <span className={s.num}>
-                  {seg.fPm === null
-                    ? "—"
-                    : ui("ui.race.why.segment", {
-                        f: factor(seg.fPm),
-                        v: mps(seg.cruiseMms ?? 0, 1),
-                      })}
-                </span>
-              </span>
-            ))}
-          </span>
-        </WhyRow>
-      )}
-      <WhyRow label={ui("ui.race.why.energy")}>
-        {ui("ui.race.why.energy.text", {
-          spent: units(m.energy.spent),
-          lift: units(m.energy.lift),
-          regen: units(m.energy.regen),
-          refunded: units(m.energy.refunded),
-          heat: units(m.energy.fromHeat),
-          left: units(m.energy.left),
-        })}
-      </WhyRow>
-      <WhyRow label={ui("ui.race.why.body")}>
-        {ui("ui.race.why.body.text", {
-          hp: formatFixed(m.body.hpEnd, 1000, 0),
-          lost: units(m.body.durabilityLost),
-          repaired: units(m.body.durabilityRepaired),
-          end: units(m.body.durabilityEnd),
-        })}
-      </WhyRow>
+      <WhyRow label={ui("ui.race.why.gains")}>{gains.join(" · ")}</WhyRow>
       {m.skills.length > 0 && (
-        <WhyRow label={ui("ui.race.why.skills")}>
-          <ul className={s.skills}>
-            {m.skills.map((sk) => (
-              <li
-                key={`${sk.skillId}-${sk.fired}-${sk.tick ?? ""}`}
-                className={sk.fired ? s.skillHit : s.skillMiss}
-              >
-                {sk.p === null || sk.u === null
-                  ? ui(sk.fired ? "ui.race.why.skill.hit" : "ui.race.why.skill.miss", {
-                      skill: labels.skillName(sk.skillId),
-                    })
-                  : ui(sk.fired ? "ui.race.why.skill.hit.pu" : "ui.race.why.skill.miss.pu", {
-                      skill: labels.skillName(sk.skillId),
-                      p: sk.p,
-                      u: sk.u,
-                    })}
-              </li>
-            ))}
-          </ul>
-        </WhyRow>
+        <WhyRow label={ui("ui.race.why.skills")}>{skillRow(m, view, false)}</WhyRow>
       )}
     </dl>
   );
@@ -280,6 +306,19 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
     [view, r, winner],
   );
   if (!r || !winner || !m) return null;
+  const second = view.byPlace[1];
+  const summary = whySummary({
+    m,
+    energyMax: r.max.energy,
+    leadMilli:
+      m.isWinner &&
+      second &&
+      !second.result.dnf &&
+      second.result.finishMilli !== null &&
+      r.result.finishMilli !== null
+        ? second.result.finishMilli - r.result.finishMilli
+        : null,
+  });
   const head = m.isWinner
     ? ui("ui.race.why.head.winner", { name: r.name, time: finishTime(r.result) })
     : m.gapMilli === null
@@ -303,8 +342,17 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
           <RunnerCell r={r} />
           <span className={s.whyHeadText}>{head}</span>
         </p>
+        <div className={s.whySummary}>
+          <p className={s.whySummaryLabel}>{ui("ui.race.why.summary.label")}</p>
+          <ul className={s.whySummaryList}>
+            {summary.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
         <p className={s.hint}>{ui("ui.race.why.hint")}</p>
         <WhyBlock m={m} view={view} />
+        <WhyDetail m={m} view={view} id={`${idPrefix}-porque-detalle`} />
       </Panel>
       <Panel
         title={ui("ui.race.events.title")}
@@ -417,8 +465,10 @@ export function SplitsPanel({ view }: { view: RaceView }) {
   const marks = Array.from({ length: 10 }, (_, k) => k + 1);
   return (
     <Panel title={ui("ui.race.splits.title")} meta={ui("ui.race.splits.meta")} flush>
+      <p className={s.splitsSwipe}>{ui("ui.race.splits.swipe")}</p>
       <Table
         dense
+        sticky
         caption={ui("ui.race.splits.title")}
         columns={[
           { key: "runner", label: ui("ui.race.result.runner") },

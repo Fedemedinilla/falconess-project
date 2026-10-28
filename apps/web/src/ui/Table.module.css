@@ -27,6 +27,10 @@
   vertical-align: top;
 }
 
+.table th.wrap {
+  white-space: normal;
+}
+
 .dense th,
 .dense td {
   padding: var(--space-1) var(--space-2);
@@ -54,4 +58,28 @@
 
 .center {
   text-align: center;
+}
+
+/* a wide table: the first column stays, a shade at the right edge says the rest scrolls */
+.cue {
+  background:
+    linear-gradient(to left, var(--surface) 40%, transparent) right / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--scroll-shade), transparent) right / 1.25rem 100% no-repeat scroll;
+  background-color: var(--surface);
+}
+
+.sticky th:first-child,
+.sticky td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  box-shadow: inset -1px 0 0 var(--line);
+}
+
+.sticky .highlight td:first-child {
+  background: var(--accent-soft);
+  box-shadow:
+    inset 3px 0 0 var(--accent),
+    inset -1px 0 0 var(--line);
 }

@@ -65,6 +65,12 @@
   white-space: nowrap;
 }
 
+/* the short name ("Vos", "R3") replaces the full one on a phone */
+.labelShort {
+  display: none;
+  white-space: nowrap;
+}
+
 .plot {
   min-width: 0;
   overflow: hidden;
@@ -243,6 +249,12 @@
   filter: drop-shadow(0 0 1.5px var(--accent));
 }
 
+/* the player's arrow carries an accent outline: rivals often wear the same livery */
+.player .chevronEdge {
+  stroke: var(--accent);
+  stroke-width: 4.5;
+}
+
 .trail,
 .draft,
 .shadow,
@@ -325,7 +337,11 @@
 
 @media (max-width: 40rem) {
   .chart {
-    grid-template-columns: 2.75rem minmax(0, 1fr);
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+
+  .labelShort {
+    display: inline;
   }
 
   .label {

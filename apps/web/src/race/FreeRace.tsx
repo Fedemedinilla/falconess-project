@@ -227,10 +227,12 @@ export function FreeRace() {
         }
       >
         <p className={s.summary}>{summary(outcome.form, content)}</p>
-        <p className={s.cli}>
-          <span>{ui("ui.freeRace.cli")}</span>
-          <code>{cliArgs(outcome.form)}</code>
-        </p>
+        <details className={s.cli} id="libre-desarrollo">
+          <summary>{ui("ui.freeRace.cli")}</summary>
+          <p>
+            <span>{ui("ui.freeRace.cli.lead")}</span> <code>{cliArgs(outcome.form)}</code>
+          </p>
+        </details>
         <form
           id="libre-form"
           className={s.form}

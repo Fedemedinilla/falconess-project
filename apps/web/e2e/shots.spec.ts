@@ -100,7 +100,7 @@ for (const vp of VIEWPORTS)
         });
         // every form control carries a stable id (not one of React's generated «r1» ids)
         const loose = await page.evaluate(() =>
-          [...document.querySelectorAll("input, select, textarea")]
+          [...document.querySelectorAll("input, select, textarea, button")]
             .filter((el) => !el.id || /[:«»]/.test(el.id))
             .map((el) => el.outerHTML.slice(0, 120)),
         );

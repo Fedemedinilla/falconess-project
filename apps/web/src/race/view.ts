@@ -14,11 +14,21 @@ import {
 import type { RaceLog } from "@falconess/schema";
 import { overheatByLane, replayEnd } from "./playback";
 import { type TrackLayout, trackLayout } from "./track";
-import { eventBadge, eventPin, eventText, type PinKind, runnerKit, runnerName } from "./words";
+import {
+  eventBadge,
+  eventPin,
+  eventText,
+  type PinKind,
+  runnerKit,
+  runnerName,
+  runnerShort,
+} from "./words";
 
 export type RunnerView = Runner & {
   readonly lane: number;
   readonly name: string;
+  /** "Vos", "R3": the name in a narrow lane label. */
+  readonly short: string;
   /** Frame · manufacturer · style. */
   readonly kit: string;
   readonly livery: Livery | undefined;
@@ -83,6 +93,7 @@ export function raceView(log: RaceLog, labels: RaceLabels): RaceView {
         ...r,
         lane,
         name: runnerName(r.entry, labels),
+        short: runnerShort(r.entry, labels),
         kit: runnerKit(r.entry, labels),
         livery: labels.livery(r.entry.manufacturer),
         isPlayer: r.entry.kind === "player",

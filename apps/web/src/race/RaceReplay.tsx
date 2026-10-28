@@ -1,6 +1,6 @@
 import { contentLabels, type RaceLabels } from "@falconess/race-view";
 import type { RaceLog } from "@falconess/schema";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { getContent } from "../content/load";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
@@ -22,8 +22,8 @@ export function pageLabels(): RaceLabels {
   return defaultLabels;
 }
 
-/** The flags the chart draws, with the glyph each one uses. */
-function FlagLegend() {
+/** The flags the chart draws, with the glyph each one uses, and the kick line when there is one. */
+function FlagLegend({ reserve }: { reserve: boolean }) {
   const items: { key: string; glyph: string }[] = [
     { key: "boost", glyph: "M2 8 L12 6 L12 10 Z" },
     { key: "pulse", glyph: "M8 2 a6 6 0 1 0 0.01 0" },
@@ -56,6 +56,14 @@ function FlagLegend() {
         </svg>
         {ui("ui.race.legend.pin.trouble")}
       </li>
+      {reserve && (
+        <li className={s.flagLegendItem}>
+          <svg className={s["legend-reserve"]} viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 1 V15" />
+          </svg>
+          {ui("ui.race.legend.reserve")}
+        </li>
+      )}
     </ul>
   );
 }
@@ -65,6 +73,8 @@ export type RaceReplayProps = {
   labels: RaceLabels;
   /** Prefix of the controls' ids, unique on the page. */
   idPrefix: string;
+  /** Told once the result shows (the replay reached the finish, or "Ir a la meta"). */
+  onReveal?: (() => void) | undefined;
 };
 
 /**
@@ -72,7 +82,7 @@ export type RaceReplayProps = {
  * replay reaches the finish (or "Ir a la meta"), the classification, the "why" of each runner, her
  * events, the timeline and the splits.
  */
-function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
+function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
   const view = useMemo(() => raceView(log, labels), [log, labels]);
   const [clock] = useState(() => new ReplayClock(view.end));
   useEffect(() => () => clock.dispose(), [clock]);
@@ -83,13 +93,16 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
   useEffect(() => {
     if (snap.atEnd) setRevealed(true);
   }, [snap.atEnd]);
+  const revealRef = useRef(onReveal);
+  revealRef.current = onReveal;
+  useEffect(() => {
+    if (revealed) revealRef.current?.();
+  }, [revealed]);
 
   const g = log.geometry;
   const meta = ui("ui.race.track.meta", {
     m: metres(g.lengthMm),
     biome: labels.biomeName(log.courseId, g.biome),
-    seed: log.seed,
-    n: view.runners.length,
   });
 
   if (!view.hasFrames)
@@ -131,6 +144,33 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
         className={s.trackPanel}
       >
         <div className={s.trackBody}>
+          {!revealed && (
+            <div className={s.guessBar}>
+              <span className={s.select}>
+                <label htmlFor={`${idPrefix}-pronostico`}>{ui("ui.race.guess")}</label>
+                <select
+                  id={`${idPrefix}-pronostico`}
+                  value={guess ?? ""}
+                  aria-describedby={`${idPrefix}-pronostico-ayuda`}
+                  disabled={snap.tick > 0}
+                  onChange={(e) => {
+                    const value = e.currentTarget.value;
+                    setGuess(value === "" ? undefined : Number(value));
+                  }}
+                >
+                  <option value="">{ui("ui.race.guess.none")}</option>
+                  {view.runners.map((r) => (
+                    <option key={r.lane} value={r.lane}>
+                      {ui("ui.race.guess.option", { lane: r.lane + 1, name: r.name })}
+                    </option>
+                  ))}
+                </select>
+              </span>
+              <p className={s.guessHint} id={`${idPrefix}-pronostico-ayuda`}>
+                {ui("ui.race.guess.hint")}
+              </p>
+            </div>
+          )}
           <Controls
             clock={clock}
             snap={snap}
@@ -141,34 +181,14 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
             }}
           />
           <LaneChart view={view} clock={clock} mode={mode} />
-          <FlagLegend />
+          <FlagLegend reserve={view.layout.reserve !== null} />
         </div>
       </Panel>
-      <LivePanel view={view} tick={snap.tick} />
+      <LivePanel view={view} tick={snap.tick} idPrefix={idPrefix} />
       {revealed ? (
         <Results view={view} clock={clock} idPrefix={idPrefix} guess={guess} />
       ) : (
-        <div className={s.pending}>
-          <p>{ui("ui.race.pending")}</p>
-          <span className={s.select}>
-            <label htmlFor={`${idPrefix}-pronostico`}>{ui("ui.race.guess")}</label>
-            <select
-              id={`${idPrefix}-pronostico`}
-              value={guess ?? ""}
-              onChange={(e) => {
-                const value = e.currentTarget.value;
-                setGuess(value === "" ? undefined : Number(value));
-              }}
-            >
-              <option value="">{ui("ui.race.guess.none")}</option>
-              {view.runners.map((r) => (
-                <option key={r.lane} value={r.lane}>
-                  {ui("ui.race.guess.option", { lane: r.lane + 1, name: r.name })}
-                </option>
-              ))}
-            </select>
-          </span>
-        </div>
+        <p className={s.pending}>{ui("ui.race.pending")}</p>
       )}
     </div>
   );
@@ -192,11 +212,19 @@ export type ReplayProps = {
   labels?: RaceLabels | undefined;
   /** Prefix of the controls' ids, unique on the page. */
   idPrefix: string;
+  /** Told once the result shows, so the screen can show what it would have given away. */
+  onReveal?: (() => void) | undefined;
 };
 
 /** The replay of `log`, started afresh for every new log. */
-export function Replay({ log, labels, idPrefix }: ReplayProps) {
+export function Replay({ log, labels, idPrefix, onReveal }: ReplayProps) {
   return (
-    <RaceReplay key={keyOf(log)} log={log} labels={labels ?? pageLabels()} idPrefix={idPrefix} />
+    <RaceReplay
+      key={keyOf(log)}
+      log={log}
+      labels={labels ?? pageLabels()}
+      idPrefix={idPrefix}
+      onReveal={onReveal}
+    />
   );
 }

@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ui } from "../text/ui";
+import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
@@ -53,10 +54,14 @@ export type LivePanelProps = {
   view: RaceView;
   /** Race time in whole ticks. */
   tick: number;
+  /** Prefix of the controls' ids, unique on the page. */
+  idPrefix: string;
 };
 
 /** The order at the moment the replay shows: gap, speed, gauges and what each runner is doing. */
-export function LivePanel({ view, tick }: LivePanelProps) {
+export function LivePanel({ view, tick, idPrefix }: LivePanelProps) {
+  // on a phone the order folds to the first three and the player (CSS); this unfolds it
+  const [folded, setFolded] = useState(true);
   const rows = useMemo(() => {
     const samples = sampleAt(view.log, tick, view.spans);
     return standings(view.log, samples);
@@ -64,7 +69,7 @@ export function LivePanel({ view, tick }: LivePanelProps) {
   const byLane = useMemo(() => new Map(view.runners.map((r) => [r.lane, r])), [view]);
   return (
     <Panel title={ui("ui.race.live.title")} meta={ui("ui.race.live.meta")} flush className={s.live}>
-      <ol className={s.liveList}>
+      <ol className={cx(s.liveList, folded && s.liveFolded)}>
         {rows.map(({ sample, order, gapMm, behindMilli }) => {
           const r: RunnerView | undefined = byLane.get(sample.lane);
           if (!r) return null;
@@ -123,6 +128,19 @@ export function LivePanel({ view, tick }: LivePanelProps) {
           );
         })}
       </ol>
+      {rows.length > 3 && (
+        <div className={s.liveMore}>
+          <Button
+            id={`${idPrefix}-en-vivo-todas`}
+            size="sm"
+            aria-expanded={!folded}
+            onClick={() => setFolded((f) => !f)}
+          >
+            {folded ? ui("ui.race.live.all", { n: rows.length }) : ui("ui.race.live.top")}
+          </Button>
+        </div>
+      )}
+      <p className={s.gaugeLegend}>{ui("ui.race.gauge.legend")}</p>
     </Panel>
   );
 }
