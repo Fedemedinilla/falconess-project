@@ -142,7 +142,7 @@ const RACE_V1 = {
   kStartDash: 24_000, // mm/s², new: start dash, also after a failed jump (recovery dash)
   dashUntilPm: 850, // ‰ of min(vBase, target), new: the dash ends at this speed
   kDecel: 3_000, // mm/s², new: rate limit when the target drops
-  pwCruiseWeight: 5, // ‰, new knob: weight of (PW − 1) in cruise, accel and vMin; 1000 = brief (ADR-0005: 1000 → 5)
+  pwCruiseWeight: 5, // ‰, new knob: weight of (PW − 1) in cruise, accel and vMin; 1000 = brief (ADR-0005: 1000 → 5, proposed to the owner, proposal 5)
   pwBoostWeight: 250, // ‰, new knob: weight of (PW − 1) in boost thrust; 1000 = brief (ADR-0005: 1000 → 250)
   stylePace: {
     // ‰ per phase [start, middle, final], new knob; 1000 = neutral (balance-pass lever, metric 1)
@@ -185,7 +185,7 @@ const RACE_V1 = {
   massThrustDurMult: 2_000, // ‰, new: Steinhaus "durability ×2"
   groundDamagePm: 500, // ‰, new: ground "resiste daño", every durability loss × 0.5
   overheatFloorPm: 250, // ‰ of durabilityMax, new: the overheat licence never projects durability below it
-  durabilityZeroPowerMult: 750, // ‰ PW once durability reaches 0
+  durabilityZeroPowerMult: 750, // ‰ PW once durability reaches 0, before the PW weights (at pwCruiseWeight 5 a broken frame loses ≈ 0.2 %: ADR-0005)
   surplusHeatPm: 800, // ‰ of capLim, new: heat limit of SURPLUS mode
   regenOverflowHeatPm: 900, // ‰ of capLim, new: heat limit of REGEN mode
   freeBoostMaxTicks: 12, // ticks, new: free-first-boost length on continuous frames

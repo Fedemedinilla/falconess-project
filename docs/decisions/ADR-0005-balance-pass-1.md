@@ -1,7 +1,10 @@
 # ADR-0005: Primera pasada de balance del motor de carrera (D14)
 
 - Estado: **aceptado** para los cambios de constantes y de contenido dentro de rango; las secciones
-  «Propuestas para el dueño» quedan **propuestas**.
+  «Propuestas para el dueño» quedan **propuestas**. Excepción: `pwCruiseWeight` 1000 → 5 (métrica
+  2) y lo que depende de él (las turbinas de la métrica 5) quedan **propuestos**. El valor sigue en
+  `constants.ts` y todas las cifras del lote lo suponen, pero deja casi inertes el PW en crucero y
+  las alas rotas (BRIEF §1 pilar 3 y §5): lo decide el dueño (propuesta 5 de «Métricas 2 y 5»).
 - Fecha: 2026-10-28
 - Alcance: `packages/sim/src/rulesets/v1/constants.ts`, `packages/content/` (bastidores, piezas,
   habilidades)
@@ -49,7 +52,7 @@ y sus celdas salen idénticas bit a bit.
 
 | Constante o contenido                            | Antes | Después | Por qué                                                                                                                                     |
 | ------------------------------------------------ | ----- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pwCruiseWeight`                                 | 1000  | 5       | Todo el rango 0,7-1,4 vale ±0,2 % de crucero, un tercio de σ (`pwc` 998 / 1002).                                                            |
+| `pwCruiseWeight`                                 | 1000  | 5       | **Propuesto** (propuesta 5): 0,7-1,4 vale ±0,2 % de crucero (`pwc` 998 / 1002) y romper las alas, ≈ 0,2 %.                                  |
 | `pwBoostWeight`                                  | 1000  | 250     | El PW sigue siendo «potencia de boost»: empuje ×0,925 a PW 0,7 y ×1,10 a 1,4.                                                               |
 | `regenPerTick` (Lumière)                         | 500   | 100     | R9, paso 3 de §25.3: con 500, Lumière gana el 84 % del sprint con PW plano.                                                                 |
 | `pulseBiomePm.desert` (Kōryū)                    | 1150  | 1450    | Casa desierto: ráfaga ×1,45 en el desierto.                                                                                                 |
@@ -86,7 +89,9 @@ picada en los descensos).
 
 Métrica 5 con estas constantes: las turbinas pasan sin tocar su contenido (`steinhaus-turbine`
 87,5 / 87,1 / 87,5 → 0,5 / 0,3 / 0,3 puntos; `lumiere-turbine` 76,8 / 74,2 / 79,2 → 0,4 / 0,1 / 0,4
-en sprint / ridge / cañón; igual con alt1).
+en sprint / ridge / cañón; igual con alt1). Este resultado es **propuesto** con `pwCruiseWeight` 5:
+las turbinas pasan porque el PW ya casi no mueve el crucero, no porque su contenido mida lo que
+pide §25.3 (+0,01-0,02 de PW o una perilla de PW propia de las piezas).
 
 Efectos en métricas de otros dueños (informados, no ajustados):
 
@@ -158,13 +163,62 @@ del lote en proceso (mismas semillas y conteo que `sim:batch`, perfil `full`, 60
    presupuesto de bastidor paga un PW literal. Si el dueño quiere niveles de PW que se noten:
    (a) el juego de energía (`kE` ↓, §25.3 paso 2) y un re-presupuesto de bastidores donde energía y
    disipación paguen el PW (mueve las métricas 1, 3, 4 y 6, de otros dueños); (b) dejarlo así: el PW
-   es potencia de boost (empuje ×0,925-1,10).
+   es potencia de boost (empuje ×0,925-1,10). Es la misma decisión que la propuesta 5, que la
+   amplía con la durabilidad a cero.
 4. **Las piezas dentro de 3 puntos valen 2-3 m o menos** (baterías +6 / +8, estabilizador −3 % de
    la penalización de curvas, turbinas ≈ 0,4 m). Si el dueño quiere piezas que se sientan:
    (a) objetivo: subir el tope de la métrica 5 con un ADR (por ejemplo 5 puntos); (b) código: una
    perilla de peso de PW propia de las piezas (§25.3), para dimensionar turbinas sin tocar los
    bastidores; (c) contenido: piezas de compromiso que ganen en un tipo de pista y pierdan en otro
    (la métrica 5 sigue limitando la mejor pista).
+5. **`pwCruiseWeight` 5 deja casi sin costo las alas rotas (BRIEF §1 pilar 3 y §5).** BRIEF §5:
+   «si `durability` llega a 0, `powerToWeight` se reduce un 25 % el resto de la carrera»; el pilar 3
+   cuenta la durabilidad entre los presupuestos de la carrera. El motor arma la tabla de alas rotas
+   con `PW × durabilityZeroPowerMult` (750) y le aplica después los pesos de PW (`powerVariant` y
+   `weightedPower` en `state.ts`), así que con 5 / 250 un bastidor PW 1,0 roto corre con `pwc` 998
+   (−0,2 % de crucero) y `pwb` 937 (−6,3 % de empuje); con 1000 / 1000 eran 750 y 750. Medido con
+   los scripts locales de la verificación (`.work/balance/verify/broken.ts` y `steinhaus.ts`):
+
+   | Caso (mismas semillas, intacto contra roto desde la salida)                       | v1 (5 / 250)         | `SPEC_RULESET` (1000 / 1000) |
+   | --------------------------------------------------------------------------------- | -------------------- | ---------------------------- |
+   | Campo S1 (8 neutros, stats 600): coste de tiempo sprint / ridge / cañón           | 0,27 / 0,22 / 0,17 % | 29,7 / 30,7 / 29,6 %         |
+   | Campo S1: victorias del roto (intacto 8,5 / 9,0 / 12,0 %; 200 semillas por pista) | 7,0 / 6,5 / 8,5 %    | 0 / 0 / 0 %                  |
+   | Campo real de 8 bastidores, erzherzog roto (100 semillas por pista)               | 0,23 / 0,22 / 0,20 % | 28,8 / 30,6 / 29,1 % ¹       |
+   | Campo S1 con `durabilityZeroPowerMult` 0 (PW roto 0; victorias 4,0 / 4,5 / 4,5 %) | 0,83 / 0,64 / 0,47 % | —                            |
+
+   ¹ v1 con solo `pwCruiseWeight` 1000: esta constante sola causa la diferencia. Ninguna constante
+   devuelve el castigo con el peso 5: `pwc` no baja de 995 con ningún PW ≥ 0, y la última fila es
+   el máximo que da `durabilityZeroPowerMult`. La especificación lo advertía: §25.1 (métrica 5) dice
+   que pesos de PW de ≈ 20 ‰ «borran lo que gobiernan», y §25.3 pone el juego de energía (paso 2,
+   `kE` 1000 → 500 → 250) antes de `pwCruiseWeight` 1000 → 500 → 250 (paso 5). Esta pasada saltó el
+   paso 2: `kE` sigue en 1000.
+
+   Alcance medido. Pierde su valor en carrera todo lo que castiga o protege una durabilidad que
+   llega a 0 dentro de la carrera: la reparación de la regla `repairable` de Boneyard,
+   `obstacle-armor`, la guarda de `iron-wings`, la armadura de `scrap-armor` y el desgaste de la
+   licencia Steinhaus. El tope de PW 1,1 de Altair solo pesa ya en el empuje. Hoy no se nota en
+   ninguna métrica porque ningún bastidor se rompe en las carreras medidas, con cualquier peso:
+   `steinhaus-stabilizer` (durabilidad +20) y la guarda de `iron-wings` ya valían 0 en la línea base
+   v1 con `pwCruiseWeight` 1000 (0,0 puntos y 0 m). En 300 temporadas por Falconess con la política
+   de referencia, y también sin reparar nunca, ninguna carrera objetivo empieza ni termina con las
+   alas rotas (0 de 3311; como mucho el 5,8 % empieza bajo la mitad, Cernícala). La propuesta 3 de
+   «Métrica 7» («no reparar da lo mismo») sale de ese desgaste bajo. El peso 5 suma una segunda
+   razón, latente: si las alas llegaran a romperse, costarían 0,2 % en vez de ≈ 30 %.
+
+   Volver a 1000 sin otro cambio devuelve el diagnóstico de esta sección (R1: el PW del bastidor
+   decide los campos reales; con la energía de hoy un PW 0,7 solo gana su casa con un peso de
+   crucero ≤ 10 ‰) y las turbinas a 74-88 puntos (v1): las métricas 2 y 5 vuelven a fallar.
+   Opciones:
+   (a) código: aplicar el castigo de alas rotas fuera del peso de PW, por ejemplo una constante
+   `brokenSpeedPm` (750) sobre `vC`, `acc`, `vMin` y el empuje de la tabla rota. Devuelve BRIEF §5
+   sin mover las métricas 2 y 5, porque en S2 y S5 nada se rompe; no arregla el PW en crucero
+   (propuesta 3).
+   (b) seguir §25.3: primero el juego de energía (`kE` 1000 → 500 → 250 con `coolDissWeight`),
+   después `pwCruiseWeight` ≈ 250 con un re-presupuesto de bastidores, y volver a medir las métricas
+   2, 3 y 5 (el paso 2 mueve también las 1, 4 y 6; con 250 un PW 1,0 roto pierde ≈ 6 % de crucero).
+   (c) el dueño acepta «PW = potencia de boost, durabilidad cosmética en carrera» y enmienda BRIEF
+   §1 pilar 3 y §5.
+   Recomendación: (a), que no depende de cómo se decida el PW en crucero (propuesta 3: (b) o (c)).
 
 ## Métricas 3 y 4
 
@@ -390,6 +444,9 @@ de cada base):
 | 7   | temporadas ≥ B ≥ 60 %      | **fail** 0/3/0                  | **fail** 0/3/0 (30,0 / 26,7 / 36,7 %; alt1 36,7 / 25,0 / 36,7 %)   |
 | 8   | la inteligencia no resta   | inconclusa 3/0/1                | inconclusa 3/0/1, idéntica                                         |
 
+Las filas 2 y 5 suponen `pwCruiseWeight` 5, que queda propuesto (propuesta 5 de «Métricas 2 y 5»):
+sin él las dos vuelven a fallar.
+
 Tests y documentos del mismo cambio: `modifiers.test.ts` (traits de los dos pasivos; el test de la
 tabla `f` suma `scrap-armor`), `entry.test.ts` (factores a mano de caracara-signature y Peregrina),
 las filas de peregrina-signature y caracara-signature de las tablas 25.4 (`docs/race-engine.md` y
@@ -593,4 +650,8 @@ Estado: **propuesto**.
    el descanso forzado (fatiga 80) da lo mismo (79,8 / 75,4 / 85,4 % y 78,6 / 75,4 / 85,2 %, arnés):
    la referencia repara en 0 / 14 / 12 % de las temporadas (una vez; 300 semillas), así que R8 no
    muerde. Si reparar debe ser una decisión, hace falta más desgaste de temporada (constantes de
-   durabilidad o contenido de pistas), fuera de esta métrica.
+   durabilidad o contenido de pistas), fuera de esta métrica. Medido en la verificación: sin reparar
+   nunca, 0 de 3311 carreras objetivo empiezan o terminan con las alas rotas (300 temporadas por
+   Falconess). Si se rompieran, con `pwCruiseWeight` 5 costarían ≈ 0,2 % de tiempo en vez de ≈ 30 %
+   (propuesta 5 de «Métricas 2 y 5»). Para que reparar sea una decisión hacen falta las dos cosas:
+   más desgaste y un castigo real de alas rotas.

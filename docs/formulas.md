@@ -77,8 +77,8 @@ energía, calor y durabilidad en milésimas. Las constantes y el log usan las un
 Intención: la agilidad y la relación peso-potencia fijan el ritmo; el terreno lo modula.
 `vC = fl(fl(vA × pwc × f_seg × stylePace[fase], 10^9) × (1000 + pace[fase]), 1000)` vu, con
 `vA = fl(VBASE × (1 200 000 + kA × A), 1 200 000)` y `pwc = 1000 + fl(pwCruiseWeight × (PW − 1000), 1000)`
-(PW en ‰; `pwCruiseWeight` 1000 = brief literal; v1 5, ADR-0005: el PW mueve el crucero ±0,2 %,
-`pwc` 998 a PW 0,7 y 1002 a PW 1,4). Rango: A 600, PW 1,0, llano = 23,5 m/s; el terreno lo mueve
+(PW en ‰; `pwCruiseWeight` 1000 = brief literal; v1 5, ADR-0005, propuesto: el PW mueve el
+crucero ±0,2 %, `pwc` 998 a PW 0,7 y 1002 a PW 1,4). Rango: A 600, PW 1,0, llano = 23,5 m/s; el terreno lo mueve
 entre ×0,8 (agua 0,2) y ×1,15. Rebufo de hover (término de estilo): en la fase media, mientras está en el
 pelotón medio, su objetivo de velocidad ×`hoverDraftPm` (1020; nunca agotada, nunca en solitario).
 Constantes: `vBase` 20 000 mm/s, `kA` 350 ‰, `pwCruiseWeight`, `stylePace` (1000 neutro),
@@ -167,9 +167,14 @@ ciclo neutro de 1/3. Constantes: `heatToleranceCourage` 300, `heatPenaltyMult` 9
 
 ### Durabilidad a cero
 
-Intención: alas rotas pierden un cuarto de potencia el resto de la carrera.
+Intención (BRIEF §5): alas rotas pierden un cuarto de potencia el resto de la carrera.
 `PW' = fl(PW × durabilityZeroPowerMult, 1000)` en crucero, aceleración, mínimo y boost; las
-reparaciones no lo deshacen. Constante: `durabilityZeroPowerMult` 750.
+reparaciones no lo deshacen. `PW'` pasa después por los pesos de PW (`pwc`, `pwb`), así que el
+efecto real depende de ellos: con 1000 / 1000 (brief) un PW 1,0 roto corre con `pwc` y `pwb` 750
+y empezar roto cuesta ≈ 30 % del tiempo; con los de v1, 5 / 250 (ADR-0005, propuesto), corre con
+`pwc` 998 y `pwb` 937 y cuesta ≈ 0,2 % (0,17-0,27 % en las tres pistas): hoy las alas rotas casi
+no cuestan en carrera (ADR-0005, propuesta 5 de «Métricas 2 y 5»). Constante:
+`durabilityZeroPowerMult` 750.
 
 ### Pulsos Kōryū
 
