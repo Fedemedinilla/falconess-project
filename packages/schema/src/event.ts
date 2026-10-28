@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Slug, StatName, TextKey, Version } from "./core.js";
+import { RulesetVersion, Slug, StatName, TextKey, Version } from "./core.js";
 
 /** What an option does. Everything is a delta applied by the season reducer. */
 export const EventEffects = z.strictObject({
@@ -19,6 +19,8 @@ export type EventEffects = z.infer<typeof EventEffects>;
 const ChanceBranch = z.strictObject({
   p: z.number().min(0).max(1),
   effects: EventEffects.prefault({}),
+  /** What this outcome reads as ("it went well"), logged when the branch is drawn (ADR-0006). */
+  textKey: TextKey.optional(),
 });
 
 export const EventOption = z.strictObject({
@@ -63,6 +65,16 @@ export const GameEvent = z
     weight: z.number().int().min(1).max(20).nullable(),
     fixedTurn: z.number().int().min(1).max(48).optional(),
     handwritten: z.boolean().default(false),
+    /**
+     * Ruleset versions this event exists in (ADR-0006); absent = every ruleset. Filtered before
+     * any draw, so events limited to a newer ruleset leave older runs' draws unchanged.
+     */
+    rulesets: z.array(RulesetVersion).min(1).optional(),
+    /**
+     * A luck event (ADR-0006): applied the turn it is rolled, with no choice and no extra input.
+     * Exactly one option, which may have chance branches.
+     */
+    auto: z.boolean().optional(),
     textKey: TextKey,
     options: z.array(EventOption).min(1).max(3),
   })
@@ -77,5 +89,8 @@ export const GameEvent = z
     {
       message: "chance branches must sum to 1",
     },
-  );
+  )
+  .refine((e) => !e.auto || e.options.length === 1, {
+    message: "auto events have exactly one option",
+  });
 export type GameEvent = z.infer<typeof GameEvent>;

@@ -50,12 +50,7 @@ function rulesDigest(s: SeasonState): string {
 /** The log as 5f0fd65 wrote it: ADR-0006's additions removed. */
 function legacyLog(log: readonly TurnLogEntry[]): unknown[] {
   return log.map((e) => {
-    const {
-      moodDelta: _m,
-      fatigueDelta: _f,
-      event: _e,
-      ...rest
-    } = e as TurnLogEntry & Record<string, unknown>;
+    const { moodDelta: _m, fatigueDelta: _f, event: _e, ...rest } = e;
     return { ...rest, notes: e.notes.filter((n) => !/^log\.(mood|vigor)\./.test(n)) };
   });
 }

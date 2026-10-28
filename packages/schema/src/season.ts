@@ -71,12 +71,31 @@ export const RaceResultEntry = z.strictObject({
 });
 export type RaceResultEntry = z.infer<typeof RaceResultEntry>;
 
+/** The event resolved in a week (ADR-0006): chosen by the player, or applied on its own (`auto`). */
+export const LoggedEvent = z.strictObject({
+  id: Slug,
+  option: z.number().int().min(0).max(2),
+  /** Index of the chance branch drawn, when the option has branches. */
+  branch: z.number().int().min(0).optional(),
+  /** True for a luck event applied the turn it was rolled, with no choice. */
+  auto: z.literal(true).optional(),
+});
+export type LoggedEvent = z.infer<typeof LoggedEvent>;
+
 export const TurnLogEntry = z.strictObject({
   turn: z.number().int(),
   input: RunInput.optional(),
   /** Text keys describing what happened, for the CLI and the UI to render. */
   notes: z.array(z.string()),
   deltas: z.partialRecord(StatName, z.number().int()).default({}),
+  /** Net mood change of this entry (ADR-0006); absent when it is 0. Causes are `log.mood.*` notes. */
+  moodDelta: z.number().int().optional(),
+  /**
+   * Net fatigue change of this entry (ADR-0006); absent when it is 0. Vigor moves by
+   * −fatigueDelta (vigor = fatigueMax − fatigue).
+   */
+  fatigueDelta: z.number().int().optional(),
+  event: LoggedEvent.optional(),
 });
 export type TurnLogEntry = z.infer<typeof TurnLogEntry>;
 

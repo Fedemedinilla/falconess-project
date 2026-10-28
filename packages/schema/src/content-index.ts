@@ -179,6 +179,9 @@ export function buildContentIndex(raw: RawContent): ContentIndex {
     needText(e.textKey, w);
     e.options.forEach((o, i) => {
       needText(o.textKey, `${w}.options[${i}]`);
+      o.chance?.forEach((b, j) => {
+        if (b.textKey !== undefined) needText(b.textKey, `${w}.options[${i}].chance[${j}]`);
+      });
       for (const b of Object.keys(o.effects.bond)) need(manufacturers, b, w, "manufacturer");
       if (o.effects.learnSkill !== undefined) need(skills, o.effects.learnSkill, w, "skill");
     });

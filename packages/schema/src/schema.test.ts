@@ -6,7 +6,7 @@ import { GameEvent } from "./event.js";
 import { Part } from "./frame.js";
 import { GachaPool } from "./gacha.js";
 import { RaceModifier } from "./modifiers.js";
-import { RunInput } from "./season.js";
+import { RunInput, TurnLogEntry } from "./season.js";
 import { Skill } from "./skill.js";
 
 describe("primitives and defaults", () => {
@@ -133,6 +133,55 @@ describe("events", () => {
       options: [{ textKey: "ev.e.a", chance: [{ p: 0.7 }, { p: 0.3 }] }],
     };
     expect(GameEvent.safeParse(ok).success).toBe(true);
+  });
+  it("auto events have exactly one option; chance branches allowed (ADR-0006)", () => {
+    const branches = [
+      { p: 0.5, textKey: "ev.e.good", effects: { mood: 1 } },
+      { p: 0.5, textKey: "ev.e.bad", effects: { fatigue: 10 } },
+    ];
+    const auto = {
+      ...base,
+      weight: 3,
+      auto: true,
+      options: [{ textKey: "ev.e.a", chance: branches }],
+    };
+    expect(GameEvent.safeParse(auto).success).toBe(true);
+    const two = { ...auto, options: [{ textKey: "ev.e.a" }, { textKey: "ev.e.b" }] };
+    expect(GameEvent.safeParse(two).success).toBe(false);
+    expect(GameEvent.safeParse({ ...two, auto: false }).success).toBe(true);
+    expect(GameEvent.parse(auto).options[0]?.chance?.[0]?.textKey).toBe("ev.e.good");
+  });
+  it("rulesets limits an event to ruleset versions; absent means every ruleset", () => {
+    expect(GameEvent.safeParse({ ...base, weight: 1, rulesets: ["v2"] }).success).toBe(true);
+    expect(GameEvent.safeParse({ ...base, weight: 1, rulesets: [] }).success).toBe(false);
+    expect(GameEvent.safeParse({ ...base, weight: 1, rulesets: ["2"] }).success).toBe(false);
+    expect(GameEvent.parse({ ...base, weight: 1 }).rulesets).toBeUndefined();
+  });
+});
+
+describe("season log entry (ADR-0006)", () => {
+  it("keeps parsing the entries v1 wrote", () => {
+    expect(TurnLogEntry.parse({ turn: 3, notes: ["log.rest"] })).toEqual({
+      turn: 3,
+      notes: ["log.rest"],
+      deltas: {},
+    });
+  });
+  it("carries mood and fatigue deltas and the event resolved that week", () => {
+    const e = {
+      turn: 5,
+      input: { kind: "rest" },
+      notes: ["log.rest", "log.mood.rest"],
+      deltas: {},
+      moodDelta: 1,
+      fatigueDelta: -50,
+      event: { id: "lucky-wind", option: 0, branch: 1, auto: true },
+    };
+    expect(TurnLogEntry.parse(e)).toEqual(e);
+    expect(TurnLogEntry.safeParse({ ...e, event: { id: "x", option: 0, extra: 1 } }).success).toBe(
+      false,
+    );
+    expect(TurnLogEntry.safeParse({ ...e, moodDelta: 0.5 }).success).toBe(false);
   });
 });
 
@@ -283,6 +332,22 @@ describe("buildContentIndex", () => {
     const raw = minimal();
     (raw.manufacturers[0] as { sponsors: string[] }).sponsors = [];
     expect(() => buildContentIndex(raw)).toThrow(/does not list it in sponsors/);
+  });
+
+  it("checks the text key of every chance branch that has one (ADR-0006)", () => {
+    const raw = minimal();
+    (raw.events[0] as { options: unknown[] }).options = [
+      {
+        textKey: "ev.koryu.data1.a",
+        chance: [
+          { p: 0.5, textKey: "ev.koryu.data1.good" },
+          { p: 0.5, effects: { mood: -1 } },
+        ],
+      },
+    ];
+    expect(() => buildContentIndex(raw)).toThrow(/missing text key "ev.koryu.data1.good"/);
+    raw.text["ev.koryu.data1.good"] = "Sale bien";
+    expect(buildContentIndex(raw).getEvent("koryu-data-session-1").options).toHaveLength(1);
   });
 
   it("keeps parts and quirks out of gacha pools", () => {
