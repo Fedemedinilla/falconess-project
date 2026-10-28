@@ -8,6 +8,7 @@ import { loadContent } from "@falconess/content";
 import { RULESET_V1 } from "@falconess/sim";
 import { buildCatalog } from "./catalog.js";
 import { createExecContext, runJob } from "./execute.js";
+import type { FakeEngineOptions } from "./fake-engine.js";
 import type { EngineChoice, FromWorker, ToWorker } from "./pool.js";
 import { createPort } from "./pool.js";
 
@@ -18,12 +19,14 @@ function engineOf(data: unknown): EngineChoice {
       if (engine.kind === "real") return { kind: "real" };
       if (engine.kind === "fake" && "options" in engine) {
         const o: unknown = engine.options;
-        const options: { tieGranularityMilli?: number; paceHalfWidthPm?: number } = {};
+        const options: FakeEngineOptions = {};
         if (typeof o === "object" && o !== null) {
           if ("tieGranularityMilli" in o && typeof o.tieGranularityMilli === "number")
             options.tieGranularityMilli = o.tieGranularityMilli;
           if ("paceHalfWidthPm" in o && typeof o.paceHalfWidthPm === "number")
             options.paceHalfWidthPm = o.paceHalfWidthPm;
+          if ("costMsPer8Runners" in o && typeof o.costMsPer8Runners === "number")
+            options.costMsPer8Runners = o.costMsPer8Runners;
         }
         return { kind: "fake", options };
       }

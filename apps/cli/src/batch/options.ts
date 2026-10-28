@@ -15,6 +15,7 @@ export const USAGE = `pnpm sim:batch -- [options]
   --markdown PATH      write the report as Markdown (PR comment)
   --workers N          worker threads (default min(4, cpus - 1)); 1 runs in process
   --engine real|fake   fake is a deterministic stand-in for development (default real)
+  --fake-cost-ms MS    with --engine fake, busy-wait MS per 8-runner race (time the budget)
   --fail-on-verdict    exit 1 when the report's verdict is fail
   --gate-report PATH   with --fail-on-verdict, also exit 1 when that report (last full of main) fails
   --help               this text
@@ -50,6 +51,7 @@ const KNOWN = new Set([
   "markdown",
   "workers",
   "engine",
+  "fake-cost-ms",
   "fail-on-verdict",
   "gate-report",
   "help",
@@ -105,8 +107,19 @@ export function parseBatchArgs(argv: readonly string[]): BatchOptions {
   const engineArg = str("engine") ?? "real";
   if (engineArg !== "real" && engineArg !== "fake")
     throw new UsageError(`--engine must be real or fake, got "${engineArg}"`);
+  const costArg = str("fake-cost-ms");
+  if (costArg !== undefined && engineArg !== "fake")
+    throw new UsageError("--fake-cost-ms needs --engine fake");
   const engine: EngineChoice =
-    engineArg === "fake" ? { kind: "fake", options: {} } : { kind: "real" };
+    engineArg === "fake"
+      ? {
+          kind: "fake",
+          options:
+            costArg === undefined
+              ? {}
+              : { costMsPer8Runners: positiveInt("fake-cost-ms", costArg) },
+        }
+      : { kind: "real" };
 
   const runsArg = str("runs");
   const workersArg = str("workers");

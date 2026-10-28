@@ -10,6 +10,7 @@ pnpm sim:batch -- --runs 10000 --markdown out/balance.md --baseline out/baseline
 pnpm sim:batch -- --profile full                       # nightly sample sizes (--runs ignored)
 pnpm sim:batch -- --scenarios S1,S3 --seed try2 --workers 3
 pnpm sim:batch -- --runs 1000 --engine fake            # development stand-in, not the engine
+pnpm sim:batch -- --engine fake --fake-cost-ms 5        # time the 60-s budget with a 5 ms engine
 ```
 
 Exit codes: 0 done, 1 verdict fail with `--fail-on-verdict` (or a fail in `--gate-report`) or any
@@ -65,6 +66,11 @@ seeds or counts. S6 and S5's `pr` verdict pull S1 in.
 Verdicts (§25.2.1): pass when the 95 % interval lies inside the target, fail when entirely outside,
 inconclusive otherwise; a metric passes only if every cell passes and fails if any fails, and the
 same rule combines metrics into the report verdict.
+
+Performance: `--engine fake --fake-cost-ms 5` busy-waits 5 ms per 8-runner race (scaled by runners
+/ 8), the engine budget of §22. On the dev container (4 cores) the 10 000-race `pr` batch took
+37.0 s wall in process (36.5 s inside the engine) and 13.7 s with the default 3 workers: the batch
+itself adds well under 1 s.
 
 Workers: jobs carry their own seed and results are merged by job index, so the report is identical
 for any `--workers` (only `metadata.timing` differs). Workers start through `batch/worker-boot.mjs`,

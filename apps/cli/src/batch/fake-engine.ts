@@ -33,7 +33,19 @@ export type FakeEngineOptions = {
   tieGranularityMilli?: number;
   /** Half-width of the pace offset in ‰ (default 21: σ/mean ≈ 1.2 %). */
   paceHalfWidthPm?: number;
+  /**
+   * Busy-wait this many ms per race, scaled by runners / 8 (default 0). Lets `sim:batch` be timed
+   * against the engine budget of §22 (≈ 5 ms per 8-runner race) before the engine exists.
+   */
+  costMsPer8Runners?: number;
 };
+
+function burn(ms: number): void {
+  const end = performance.now() + ms;
+  let spins = 0;
+  while (performance.now() < end) spins++;
+  if (spins < 0) throw new Error("unreachable");
+}
 
 const DRAWS_PER_RUNNER = 12;
 const MAX_RUNNERS = 8;
@@ -147,6 +159,7 @@ function simulateRace(
   options: Required<FakeEngineOptions>,
 ): RaceLog {
   validate(entries);
+  if (options.costMsPer8Runners > 0) burn((options.costMsPer8Runners * entries.length) / 8);
   const byLane = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
   const rng = new Rng(seed);
   const lengthMm = courseLength(course) * 1000;
@@ -404,6 +417,7 @@ export function createFakeEngine(options: FakeEngineOptions = {}): RaceEnginePor
   const resolved: Required<FakeEngineOptions> = {
     tieGranularityMilli: options.tieGranularityMilli ?? 1,
     paceHalfWidthPm: options.paceHalfWidthPm ?? 21,
+    costMsPer8Runners: options.costMsPer8Runners ?? 0,
   };
   return {
     engineId: "fake",

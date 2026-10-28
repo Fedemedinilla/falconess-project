@@ -59,6 +59,14 @@ describe("sim:batch command line", () => {
     });
   });
 
+  it("passes --fake-cost-ms to the fake engine only", () => {
+    expect(parseBatchArgs(["--engine", "fake", "--fake-cost-ms", "5"]).engine).toEqual({
+      kind: "fake",
+      options: { costMsPer8Runners: 5 },
+    });
+    expect(() => parseBatchArgs(["--fake-cost-ms", "5"])).toThrow(/needs --engine fake/);
+  });
+
   it("adds the diagnostics in the full profile", () => {
     expect(parseBatchArgs(["--profile", "full"]).config.scenarios).toContain("quirks");
   });
