@@ -51,17 +51,42 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
 
 `src/ui/icons.ts` maps each concept to one emoji: the eight actions (💤 Descansar, ☕ Salida…),
 the five stats (a training shares its stat's emoji), Ánimo (😐 for a gain or an event's effect;
-the status panel shows the current level's face), fatigue, skill points, scrap, feathers, injury,
-risk (🎲 before every «Fallo», 🩹 before «Lesión»), crew and bond, the four frame stats, passive,
-quirk, part, rule, skill, the race gauges, terrain, biomes, styles, the runners' flags and events,
-goal races, medals, the grade. They are presentation, like colors: `Icon` draws one
+the status panel shows the current level's face), fatigue, vigor (💪, the bar that drains),
+skill points, scrap, feathers, injury, risk (🎲 before every «Fallo», 🩹 before «Lesión»), crew
+and bond, the four frame stats, passive, quirk, part, rule, skill, the race gauges, terrain,
+biomes, styles, the runners' flags and events, goal races, medals, the grade, and how a week's
+training went (✅, and ❌ shared with the DNF). They are presentation, like colors: `Icon` draws one
 `aria-hidden` before the label that names the concept (never instead of it), at a fixed width so
 a column of labels stays aligned, with a thin edge on the light theme (`--emoji-edge`) so pale
 ones show. A concept keeps its emoji everywhere; two concepts share one only when listed in
 `SHARED_ICONS` (a training and its stat, Resistencia and Físico, a goal race and its finish, Ánimo
-and the «Normal» face). Where a colour swatch already marks an item (the terrain and timeline
+and the «Normal» face, a failed training and a DNF). Where a colour swatch already marks an item (the terrain and timeline
 legends, the season strip's goal marks) there is no emoji. They render with the system's emoji
 font and stop at Unicode 12 (Windows 10 has no 13.0 emojis): the label always says it in words.
+
+## «Lo que pasó» (`src/screens/WeekDialog.tsx`)
+
+After every input that closes a week or answers an event (a training, rest, outing, workshop, a
+race week, an event's answer) a modal opens over the Turn screen: the native `<dialog>` in modal
+mode (the page behind dimmed and inert, `aria-modal`, labelled by its headline, focus on
+«Continuar»), closed by «Continuar», Enter, Esc or a click on the dimmed page, the focus back
+where it was (or on the week's action when that element is gone). One headline says what happened
+(«✅ ¡Entrenamiento exitoso!», «❌ Falló el entrenamiento», «🩹 Se lesionó», «💤 Descansó», «☕
+Salida con …», «📣 Elegiste: …»; on a race week the place and the goal, the action one line
+below), then the stats as chips, the other changes with where they ended and their cause (vigor =
+`fatigueMax − fatigue`, mood, skill points, scrap, feathers, bond, durability, injury, skills),
+the log notes nothing above says (any key, through the text lookup), the race's tip with its own
+«Breve | Completo» and «Ver carrera», and a line when an event waits: the event dialog opens only
+after this one closes. A normal week fits 390 × 700 without scrolling inside.
+
+Everything comes from the controller's last step (`before`, `input`, `after`) through the pure
+view model `screens/model/week.ts` (`weekSummary`, tested on real seasons). Read once, it does not
+open again: `GameController.acknowledgeStep()` marks it in the snapshot (`lastStepSeen`) and in
+localStorage (`falconess.pruebas.vista`, the run's `runFingerprint`, guarded); a load rebuilds the
+last step and opens it unless this browser already read that week of that very run. The one-line
+recap above the actions («Lo que pasó · Semana 4: …», `#turno-semana-pasada`) brings it back
+(«Ver de nuevo»). Ids: `semana-dialogo`, `semana-titulo`, `semana-cambios`, `semana-continuar`,
+`semana-ver-carrera`, `semana-consejo` (+ `-explicacion-breve|completo`).
 
 ## Brief and full explanations
 
@@ -109,8 +134,8 @@ goal's consequence, the crews' note, the race legend) follow the default.
   the engine or the workshop) worded with `ui.advice.*` keys, the cause's and the stat's emoji
   around the words: "¡Peregrina se quedó sin físico a los 1589 m! Quizás deberías entrenar
   Resistencia.", the log's numbers below (brief, or full with what the stat does). It opens the
-  "Por qué" of any runner but the winner; after a goal race finished 3rd or worse it is also on
-  the week's result card and, when that race ended the season, on SeasonEnd. A runner 3rd or
+  "Por qué" of any runner but the winner; after a goal race finished 3rd or worse it is also in
+  that week's «Lo que pasó» and, when that race ended the season, on SeasonEnd. A runner 3rd or
   worse with nothing to train is told so.
 - A goal race does not give itself away: the place the season recorded shows once the replay
   reaches the finish, and the call of the winner sits above the controls until the replay starts.
@@ -140,15 +165,23 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   simple policy (`play.ts`: first event option, rest from fatigue 60, else train the lowest stat).
   The T12 goal race is replayed at ×8 to the finish and its classification must give the place the
   season recorded; SeasonEnd opens it again. Each season writes its timing to
-  `.work/ui/timing/<falconess>.json`: about 4,4 s per season (60–65 decisions, ~70 ms each, the
-  slowest ~110 ms, a race week included) with one worker on the production build.
+  `.work/ui/timing/<falconess>.json`: about 8–10 s per season (60–65 decisions, ~130–150 ms
+  each, the slowest ~230 ms, a race week included) with one worker on the production build; each
+  decision includes reading «Lo que pasó» and closing it with Enter (before it: ~70 ms). The T12
+  week is checked in «Lo que pasó» (place, goal) and replayed from its «Ver carrera».
 - `run.spec.ts`: "Copiar partida" → "Cargar partida" in a fresh browser gives the same week,
   stats and fatigue, and the loaded run plays on identically; "Continuar" after a reload; undo;
   storage blocked and the copy fallback (the text is selected).
 - `free-race.spec.ts`: the default race, another course and seed, the neutral field.
-- `advice.spec.ts`: a loaded run whose T12 race ends 7th: the tip on the result card (brief and
-  full), the same tip atop the replay's "Por qué", none for the winner; a resting run whose T24
-  race ends the season: the tip on SeasonEnd.
+- `advice.spec.ts`: a loaded run whose T12 race ends 7th: «Lo que pasó» with the place, the goal
+  and the tip (brief and full; Enter on its switch switches, it does not close), the same tip atop
+  the replay's "Por qué", none for the winner, and back on the season the week stays read, also
+  after a reload; a resting run whose T24 race ends the season: the tip on SeasonEnd.
+- `week.spec.ts`: «Lo que pasó» after a training at 390 × 700 (modal, headline, changes, no inner
+  scroll, inert page, no motion with reduced motion, Enter closes it, the focus comes back, the
+  recap line opens it again), a failed training closed with its button, the week's result before
+  its event (Esc) and the answer's own result (a click outside), and the reload rule (unread opens
+  again, read does not). `play.ts` reads it with Enter after every decision (`closeWeek`).
 - `explain.spec.ts`: one card's «Breve | Completo», then «Explicaciones» for every card; the
   default survives a reload and the card's own choice does not; the card in view stays put when
   the default changes; on a phone the switches open with «Ver detalle», the default sits at the
@@ -161,6 +194,10 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   and 400×860, light and dark, full page with real fonts; the screens with explanations twice,
   brief and full (`-brief`, `-full`). Each shot also checks that every form
   control has a stable id and, on the phone, that the page does not scroll sideways.
+- `week-shots.spec.ts` (shots project): «Lo que pasó» for a good and a failed training, an outing,
+  a week with an event waiting, the event's answer, the T12 race and a 7th place with its tip
+  (brief and full), and the Turn screen with the recap line, at 1280×800 and 390×844, light and
+  dark, the viewport as the player sees it (`E2E_SHOTS_DIR`, else `.work/ui/shots-week/`).
 
 The app tests answer Google Fonts with an empty stylesheet (the fallback stacks show), so they
 need no network. Failures leave traces and screenshots in `.work/ui/e2e-results/`
