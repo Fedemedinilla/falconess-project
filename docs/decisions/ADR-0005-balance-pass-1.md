@@ -763,6 +763,18 @@ dos corridas idénticas byte a byte. Cambian porque cambiaron las constantes y e
 arriba; el motor no cambió. Si el dueño decide distinto en las propuestas pendientes (peso de PW,
 dificultad de temporada), los golden se vuelven a generar con una línea en este ADR.
 
+Pasada 2 (2026-10-28): los doce se regeneraron sobre `55049f9` (las tres decisiones del dueño y la
+higiene m1-m5 integradas) con dos corridas de `pnpm golden:update -- --yes` idénticas byte a byte
+(la segunda: «0 of 12 written»; una tercera con `--dir` aparte da los mismos SHA-256). g01-g03 solo
+suman `derived[].brokenSpeedPm` 750 (ADR-0003 D56). g04-g09 cambian por `FIELD` 75 / 9: los rivales
+suben de 247-463 a 285-530 de media por stat y la Falconess de referencia pasa de 5 victorias en 6
+a 2 (g05 y g08 1.ª; g04, g06 y g09 3.ª; g07 2.ª), con su propio tiempo igual o a < 0,2 %.
+g10-g12 cambian de física por las alas rotas (D56): el carril 7, roto desde la salida, tarda
++28,2 / +29,8 / +32,2 % y termina 8.º (antes 1.º / 7.º / 1.º); en g12 el carril 2 rompe a 2401,5 m
+de 2940 (evento `durabilityBroken` con el PW intacto) y tarda +5,8 % (6.º → 7.º). Ni la estadística
+de la métrica 3 (solo la herramienta del lote) ni `massThrustCoolPm.urban` (ninguna pista urbana)
+mueven un golden.
+
 ## Pasada 2 (decisiones del dueño, 2026-10-28)
 
 ### Alas rotas fuera del peso de PW (decisión 1)
@@ -1321,3 +1333,81 @@ especificación) con el contenido de las habilidades de la pasada (`cool-head`, 
 ningún valor estaba fijado al motor. Solo cambia el comentario, que ahora lo dice; D50 coincide con
 el prototipo y D51-D55 no actúan en ese campo (ninguna habilidad `once: false`, ninguna pista corta,
 D54 y D55 son solo del log).
+
+### Integración y verificación de la pasada 2
+
+Estado: **aceptado**. La decisión 3 se trabajó sobre `a152900` y la higiene sobre `637198f`, en
+paralelo con la decisión 2; se integraron en `phase-2-race-engine` sobre `8dc51b3` (decisiones 1 y
+2) en este orden: `92930ee` (decisión 3), `7a6bd16` (m1), `ae3c511` (m3-m5) y `55049f9` (m2). Solo
+este ADR tuvo conflictos (las dos secciones van después de la decisión 2); el código se mezcló sin
+conflictos. La política que aprende activas (decisión 2) no entra en S3, así que el diagnóstico de
+la decisión 3 sigue valiendo: el genérico no barre ninguna muestra en las 27 celdas de S3 medidas
+abajo.
+
+Lote del `HEAD` integrado (`55049f9`; informes en `.work/balance2/`):
+`pnpm sim:batch -- --profile full` con la semilla por defecto, contra el `full` de la decisión 2
+(`b86765c`, `.work/balance/p2-season/batch/field-full-default.json`); `pnpm sim:batch -- --runs
+10000 --seed alt3`, una base de semillas con la que nadie ajustó; para confirmarla, también
+`--profile full --seed alt3`; y `pnpm sim:season-batch -- --runs 500`.
+
+- `full` por defecto contra `b86765c`: 171 de las 180 celdas y los 15 diagnósticos idénticos.
+  Cambian solo los intervalos de las nueve celdas de la métrica 3 (la estadística nueva): las dos
+  cotas de la razón bajan 0,0003-0,0008 (≈ 0,02 puntos de cuota), con los mismos veredictos y las
+  mismas celdas duplicadas a 8000 (Cernícala sprint y ridge). m1 y los tests de m2-m5 no mueven
+  ninguna celda.
+- `sim:season-batch -- --runs 500`: idéntico al de la decisión 2 (≥ B 73 / 72 / 85 %; temporadas
+  completas 75 / 76 / 88 %; carreras objetivo ganadas 46 / 45 / 59 %, podio 76 / 74 / 83 %).
+
+| #   | Métrica                    | `full` por defecto                                       | `pr` alt3 (10 000)                                                  | `full` alt3                                            |
+| --- | -------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------ |
+| 1   | estilos 15-35 % por bioma  | pass 4/0/0 (22,8-26,9 %)                                 | pass 4/0/0 (22,9-26,3 %)                                            | pass 4/0/0 (22,5-26,3 %)                               |
+| 2   | casa 30-45 %, débil ≤ 15 % | inconclusa 9/0/1 (Boneyard ridge 33,7 % [30,0; 37,5])    | inconclusa 6/0/4 (las cuatro casas, 30,0-34,5 %; débiles 0-8,5 %)   | pass 10/0/0 (casas 34,7-35,7 %, débiles 0-9,0 %)       |
+| 3   | genérico / firma 0,85-0,90 | inconclusa 8/0/1 (Cernícala sprint 0,858 [0,847; 0,867]) | inconclusa 0/0/9 (0,796-0,935; 5-17 barridos de 150; ninguna fuera) | pass 9/0/0 (0,861-0,889; firma 52,9-53,7 %)            |
+| 4   | habilidades 0,5-8 m        | pass 31/0/0 (0,62-6,84 m)                                | pass 31/0/0 (0,63-6,55 m)                                           | pass 31/0/0 (0,62-6,70 m)                              |
+| 5   | piezas ≤ 3 puntos          | pass 24/0/0 (cota alta máxima 2,58)                      | pass 24/0/0 (máximo 2,4, `lumiere-stabilizer` sprint)               | inconclusa 23/0/1 (`lumiere-stabilizer` sprint, abajo) |
+| 6   | dispersión 0,8-2 %         | pass 3/0/0 (1,26 / 1,42 / 1,08 %)                        | pass 3/0/0 (1,27 / 1,42 / 1,08 %)                                   | pass 3/0/0 (1,24 / 1,41 / 1,08 %)                      |
+| 7   | temporadas ≥ B ≥ 60 %      | pass 3/0/0 (76,6 / 74,0 / 84,4 %; cota baja ≥ 70,0 %)    | pass 3/0/0 (83,3 / 76,7 / 78,3 %; cota baja ≥ 64,6 %)               | pass 3/0/0 (72,8 / 70,8 / 83,8 %; cota baja ≥ 66,7 %)  |
+| 8   | la inteligencia no resta   | pass 96/0/0                                              | inconclusa 3/0/1 (600-630: +1,3 puntos [−0,2; +2,7])                | pass 96/0/0                                            |
+|     | **Informe**                | inconcluso, ningún fail                                  | inconcluso, ningún fail                                             | inconcluso, ningún fail                                |
+
+Carreras objetivo ganadas por la referencia (de las corridas; S7, «won %» de `s7-places`):
+
+| Corrida                          | Caracara | Cernícala | Peregrina | Las tres | Ganan las cuatro     |
+| -------------------------------- | -------- | --------- | --------- | -------- | -------------------- |
+| S7 `full` por defecto (500 × 3)  | 44,5 %   | 45,4 %    | 56,5 %    | 48,8 %   | 7,2 / 6,6 / 11,0 %   |
+| S7 `full` alt3 (500 × 3)         | 44,9 %   | 42,7 %    | 58,5 %    | 48,8 %   | 8,4 / 5,8 / 12,2 %   |
+| S7 `pr` alt3 (60 × 3)            | 52,4 %   | 55,6 %    | 56,4 %    | 54,8 %   | 16,7 / 16,7 / 15,0 % |
+| `sim:season-batch -- --runs 500` | 46 %     | 45 %      | 59 %      | ≈ 50 %   | 10 / 7 / 13 %        |
+
+El objetivo del dueño (≈ la mitad de las carreras objetivo ganadas, métrica 7 en pass) se cumple en
+las dos bases `full` (48,8 %). El `pr` de alt3 sale 6 puntos arriba: son 60 temporadas por
+Falconess y las carreras de una temporada no son independientes (una temporada fuerte gana
+varias). S7 `pr` en diez bases (`--scenarios S7`, por defecto y alt1-alt9; informes en
+`.work/balance2/s7pr/`): las tres juntas ganan el 46,9-55,3 % (media 50,2 %) y cada Falconess el
+36-62 %; la métrica 7 sale pass en siete bases e inconclusa en tres (alt7-alt9: Caracara o
+Cernícala en 63,3-71,7 %, cota baja 50,7-59,2 %), nunca fail. Ninguna meta queda bajo el 80 % de
+«pasa / llega» en las tres corridas S7 de la tabla (mínimo 87,1 %, Caracara T46 en `full` alt3).
+
+Lo que sigue fuera de rango (ningún fail en ninguna corrida):
+
+- Métrica 2, Boneyard en el ridge, `full` por defecto: 33,7 % [30,0; 37,5], inconclusa como en
+  toda la pasada (propuesta 1 de «Métricas 2 y 5»); en `full` alt3 pasa (34,7 % [31,0; 38,6]).
+- Métrica 3, Cernícala en el sprint, `full` por defecto: 0,858 [0,847; 0,867], inconclusa como en
+  la «Combinación» (cota baja 0,847-0,850); en `full` alt3 pasa (0,861 [0,851; 0,871]) y las nueve
+  celdas pasan. En `pr` alt3 la métrica es 0/0/9 por construcción; la regla de v1 tampoco habría
+  fallado allí (falla con ≤ 4 o ≥ 21 barridos).
+- Métrica 5, `lumiere-stabilizer` en el sprint, `full` alt3: Δ de victorias 2,47 puntos [1,68;
+  3,25], inconclusa. Es la misma celda que en la pasada 1 (1,73 [1,07; 2,39] por defecto, 2,07
+  [1,35; 2,79] alt1; ninguna decisión de la pasada 2 toca S5): con tres bases el estabilizador mide
+  1,7-2,5 puntos, dentro del tope pero sin margen para una cuarta base. Si el dueño quiere que pase
+  con cualquier base, `curves-penalty-scale` 0,97 → 0,98 es el paso siguiente (sin medir: hace falta
+  el lote `full` en tres bases).
+- Métrica 8, `pr` alt3: el escalón 600-630 agrupado queda +1,3 puntos [−0,2; +2,7], inconcluso
+  como en la línea base v1 (`pr` 3/0/1); en `full` las 96 celdas pasan en las dos bases.
+- Métrica 2 en `pr` alt3: las cuatro casas inconclusas (200 carreras por pista; una casa solo pasa
+  en `pr` con 36,8-38,3 %, sección «Métricas 2 y 5»).
+
+Tests y comprobaciones del `HEAD` con los golden nuevos: `pnpm typecheck`, `pnpm test` (con
+`golden.test.ts`) y `pnpm lint` pasan. Corridas de esta sección: 13 de `sim:batch` (`full` por
+defecto, `pr` alt3, `full` alt3 y S7 `pr` en diez bases), 1 de `sim:season-batch` y 3 de
+`golden:update`.
