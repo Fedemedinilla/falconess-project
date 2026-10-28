@@ -227,14 +227,19 @@ describe("S5 part ablation", () => {
 });
 
 describe("S7 season grade", () => {
-  const season = (grade: SeasonRecord["grade"], place12: number | null): SeasonRecord => ({
+  const season = (
+    grade: SeasonRecord["grade"],
+    place12: number | null,
+    place24: number | null = null,
+  ): SeasonRecord => ({
     grade,
     score: { stats: 2800, skills: 40, races: 70, total: 2910 },
     goals: [
       { turn: 12, minPlace: 5, place: place12 },
-      { turn: 24, minPlace: 3, place: null },
+      { turn: 24, minPlace: 3, place: place24 },
+      { turn: 36, minPlace: 3, place: null },
     ],
-    goalRaces: place12 === null ? 0 : 1,
+    goalRaces: [place12, place24].filter((p) => p !== null).length,
     raceEngine: "stub",
   });
   it("is the share of seasons graded B or better, with Wilson, plus the goal table", () => {
@@ -248,8 +253,40 @@ describe("S7 season grade", () => {
     expect(m7.cells[0]?.value).toBeCloseTo(4 / 5, 6);
     expect(m7.notes.some((n) => n.includes("stub"))).toBe(true);
     const goals = out.diagnostics.find((d) => d.id === "s7-goals");
-    expect(goals?.rows[0]?.slice(0, 7)).toEqual(["peregrina", 12, "desert-sprint", 5, 100, 80, ""]);
-    expect(goals?.rows[1]?.[6]).toBe("under 80 %");
+    expect(goals?.columns.slice(4)).toEqual([
+      "reached %",
+      "passed %",
+      "passed / reached %",
+      "flag",
+    ]);
+    expect(goals?.rows[0]).toEqual(["peregrina", 12, "desert-sprint", 5, 100, 80, 80, ""]);
+    // no season reached T24: no rate and no flag
+    expect(goals?.rows[1]?.slice(4)).toEqual([0, 0, null, ""]);
+  });
+
+  it("flags a goal on the seasons that reached it, never on the seasons an earlier goal ended (21.1)", () => {
+    // 10 seasons: 4 end at T12; of the 6 that run T24, 5 pass it (83 %), 1 fails (place 4)
+    const places: [number, number | null][] = [
+      [7, null],
+      [7, null],
+      [7, null],
+      [7, null],
+      [1, 1],
+      [1, 2],
+      [1, 3],
+      [1, 1],
+      [1, 2],
+      [1, 4],
+    ];
+    const rows: Row[] = places.map(([p12, p24], k) => ({
+      job: { scenario: "S7", falconess: "peregrina", k },
+      extra: { season: season("C", p12, p24) },
+    }));
+    const goals = computeMetrics(input(rows, ["S7"])).diagnostics.find((d) => d.id === "s7-goals");
+    // T12: 6 of 10 pass, all 10 ran it: flagged
+    expect(goals?.rows[0]?.slice(4)).toEqual([100, 60, 60, "under 80 %"]);
+    // T24: 5 of all 10 seasons (50 %), but 5 of the 6 that ran it (83.3 %): not flagged
+    expect(goals?.rows[1]?.slice(4)).toEqual([60, 50, 83.3, ""]);
   });
 });
 

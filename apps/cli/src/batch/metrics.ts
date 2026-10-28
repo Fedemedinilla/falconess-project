@@ -18,6 +18,7 @@ import {
   STYLES,
   type Style,
 } from "@falconess/schema";
+import { goalFlagged, goalPassRate } from "../goal-rate.js";
 import type { Catalog } from "./catalog.js";
 import type { JobResult } from "./execute.js";
 import { type Job, type Profile, S8_INTELLIGENCE } from "./plan.js";
@@ -836,7 +837,8 @@ function s7Metric(input: MetricsInput): MetricsOutput {
         goal.minPlace,
         pct(reached / n),
         pct(passed / n),
-        passed / n < 0.8 ? "under 80 %" : "",
+        pct(goalPassRate(passed, reached)),
+        goalFlagged(passed, reached) ? "under 80 %" : "",
       ]);
     }
   }
@@ -882,8 +884,17 @@ function s7Metric(input: MetricsInput): MetricsOutput {
             table(
               "s7-goals",
               "S7",
-              "S7 goal pass rates (% of seasons; a cell under 80 % is flagged, not gated)",
-              ["falconess", "turn", "course", "min place", "reached %", "passed %", "flag"],
+              "S7 goal pass rates (reached % and passed %: of all seasons; passed / reached %: of the seasons that ran the race, flagged under 80 %, not gated)",
+              [
+                "falconess",
+                "turn",
+                "course",
+                "min place",
+                "reached %",
+                "passed %",
+                "passed / reached %",
+                "flag",
+              ],
               goalRows,
             ),
           ],

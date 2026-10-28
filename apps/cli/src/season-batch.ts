@@ -3,8 +3,9 @@
  * Plays N seasons per Falconess with the reference policy and reports what docs/race-engine.md
  * 21.1 asks of D12: the completion rate, the grade distribution and the share graded B or better
  * (the gate: ≥ 60 % per Falconess), the mean `seasonScore` split into stat total, skills and race
- * bonuses, the mean final stats and the goal pass-rate table (share of all seasons that pass each
- * goal; a cell under 80 % is flagged, as a diagnostic). Seeds `batch-0` … `batch-(N−1)`.
+ * bonuses, the mean final stats and the goal pass-rate table (per goal: the share of the seasons
+ * that reached the race and passed it, flagged under 80 % as a diagnostic, plus the share of all
+ * seasons that reached and that passed it). Seeds `batch-0` … `batch-(N−1)`.
  */
 import { loadContent } from "@falconess/content";
 import type { Grade, RunInput, SeasonGoal } from "@falconess/schema";
@@ -18,12 +19,11 @@ import {
   statTotal,
 } from "@falconess/sim";
 import { argString, parseArgs } from "./args.js";
+import { goalFlagged } from "./goal-rate.js";
 import { lowestStatPolicy, REFERENCE_HANGAR } from "./policy.js";
 
 export const GRADE_ORDER: readonly Grade[] = ["SS", "S", "A", "B", "C", "D", "E", "F", "G"];
 const B_OR_BETTER: ReadonlySet<Grade> = new Set(["SS", "S", "A", "B"]);
-/** Goal cells under this pass rate are flagged (21.1; a diagnostic, not a gate). */
-const FLAG_BELOW = 0.8;
 
 export type GoalRow = {
   goal: SeasonGoal;
@@ -110,12 +110,13 @@ export function renderSeasonBatch(m: SeasonBatchSummary): string[] {
     `  grades: ${GRADE_ORDER.map((g) => `${g} ${pct(m.grades[g] ?? 0, m.runs)}`).join("  ")}  (≥ B ${pct(bOrBetter, m.runs)}; D12 gate 60%)`,
     `  mean seasonScore ${mean(m.score.stats + m.score.skills + m.score.races, m.runs)} = stats ${mean(m.score.stats, m.runs)} + skills ${mean(m.score.skills, m.runs)} + races ${mean(m.score.races, m.runs)}`,
     `  mean final stats: ${STAT_ORDER.map((k) => `${k} ${mean(m.statSums[k] ?? 0, m.runs)}`).join("  ")}`,
-    "  goals (passed = share of all seasons; reached = seasons that ran the race):",
+    "  goals (passed and reached: share of all seasons; passed/reached: of the seasons that ran the race, flagged under 80%):",
   ];
   for (const { goal, reached, passed } of m.goals) {
-    const flag = passed < FLAG_BELOW * m.runs ? "  < 80%" : "";
+    const flag = goalFlagged(passed, reached) ? "  < 80%" : "";
+    const rate = reached > 0 ? pct(passed, reached) : "—";
     lines.push(
-      `    T${goal.turn} ${goal.courseId} ≤ ${goal.minPlace}: passed ${pct(passed, m.runs)}  reached ${pct(reached, m.runs)}  passed/reached ${pct(passed, reached)}${flag}`,
+      `    T${goal.turn} ${goal.courseId} ≤ ${goal.minPlace}: passed ${pct(passed, m.runs)}  reached ${pct(reached, m.runs)}  passed/reached ${rate}${flag}`,
     );
   }
   const fails = Object.entries(m.failTurns).sort((a, b) => Number(a[0]) - Number(b[0]));
