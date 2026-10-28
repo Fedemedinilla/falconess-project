@@ -204,7 +204,8 @@ export function LaneChart({ view, clock, mode }: LaneChartProps) {
     const placeText = new Map(
       view.byPlace.map((r) => [r.lane, ui("ui.race.badge.place", { place: r.result.place })]),
     );
-    const maxTicks = Math.max(2, Math.floor((g.x1 - g.x0) / 70));
+    // marks at least 70 px apart, and never more than the pool (with room for a partial step)
+    const maxTicks = Math.max(2, Math.min(TICK_POOL - 2, Math.floor((g.x1 - g.x0) / 70)));
     let span: number | undefined;
     let lastT = Number.NaN;
     return clock.onFrame((t) => {
