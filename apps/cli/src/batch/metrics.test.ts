@@ -3,7 +3,14 @@ import type { BalanceMetric, BalanceScenario } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { buildCatalog } from "./catalog.js";
 import type { JobResult, RaceRecord, SeasonRecord } from "./execute.js";
-import { computeMetrics, type MetricsInput, S3_PR_OUTSIDE_NOTE, s3CellsOf } from "./metrics.js";
+import {
+  computeMetrics,
+  type MetricsInput,
+  S3_PR_FAIL_NOTE,
+  S3_PR_FAIL_Z,
+  S3_PR_OUTSIDE_NOTE,
+  s3CellsOf,
+} from "./metrics.js";
 import type { Job, Profile } from "./plan.js";
 import { meanInterval, pairedScoreInterval, pointsFromTimeGain, wilson } from "./stats.js";
 import { cellVerdict } from "./verdict.js";
@@ -208,7 +215,13 @@ describe("S3 signature ratio", () => {
     }
   });
 
-  it("never fails in pr: an inert signature (150 splits) reads inconclusive with a note, fails in full", () => {
+  /** `n` samples: `gen` generic sweeps, the rest splits. */
+  const genericRows = (n: number, gen: number): Row[] =>
+    Array.from({ length: n }, (_, k) => (k < gen ? s3(k, [2, 1], [2, 1]) : s3(k, [1, 2], [2, 1])));
+  const verdicts = (rows: Row[]) =>
+    (["pr", "full"] as const).map((profile) => s3CellsOf(input(rows, ["S3"], profile))[0]);
+
+  it("an inert signature (150 splits) reads inconclusive with a note in pr and fails in full", () => {
     const rows = sweepRows(150, 0);
     const full = computeMetrics(input(rows, ["S3"], "full"));
     expect(metric(full, "m3-signature").verdict).toBe("fail");
@@ -220,17 +233,74 @@ describe("S3 signature ratio", () => {
     expect(fullCell?.verdict).toBe("fail");
     expect(fullCell?.note).not.toContain(S3_PR_OUTSIDE_NOTE);
 
+    // At z = 5 no sweep leaves the share within ±25 / 175 / 2 = 7.1 points of even: 42.9-57.1 %.
     const pr = computeMetrics(input(rows, ["S3"], "pr"));
     const m3 = metric(pr, "m3-signature");
     expect(m3.verdict).toBe("inconclusive");
     expect(m3.cells[0]?.interval).toEqual(fullCell?.interval);
     expect(m3.cells[0]?.verdict).toBe("inconclusive");
     expect(m3.cells[0]?.note).toContain(S3_PR_OUTSIDE_NOTE);
-    expect(m3.notes.some((n) => n.startsWith("pr: metric 3 is pass or inconclusive"))).toBe(true);
+    expect(
+      m3.notes.some((n) => n.startsWith("pr: a metric 3 cell fails only when its z = 5")),
+    ).toBe(true);
     expect(metric(full, "m3-signature").notes.some((n) => n.startsWith("pr:"))).toBe(false);
-    // An overpowered signature (share 60 %) is no pr fail either.
-    expect(s3CellsOf(input(sweepRows(150, 30), ["S3"], "pr"))[0]?.verdict).toBe("inconclusive");
-    expect(s3CellsOf(input(sweepRows(150, 30), ["S3"], "full"))[0]?.verdict).toBe("fail");
+  });
+
+  it("fails in pr a signature its z = 5 interval puts outside the band (review F1)", () => {
+    expect(S3_PR_FAIL_Z).toBe(5);
+    // The signature wins every race: share 100 %, z = 5 ratio interval [0, 0.167].
+    const [prAlways, fullAlways] = verdicts(sweepRows(150, 150));
+    expect(prAlways?.verdict).toBe("fail");
+    expect(prAlways?.note).toContain(`${S3_PR_FAIL_NOTE} [0.000, 0.167]`);
+    expect(prAlways?.note).not.toContain(S3_PR_OUTSIDE_NOTE);
+    // The cell keeps its 95 % interval, the same in both profiles.
+    expect(prAlways?.interval).toEqual(fullAlways?.interval);
+    expect(fullAlways?.verdict).toBe("fail");
+    expect(fullAlways?.note).not.toContain(S3_PR_FAIL_NOTE);
+    // A generic-dominant cell, 60 generic sweeps: share 30 %, z = 5 ratio interval [1.5, 4].
+    const [prGeneric, fullGeneric] = verdicts(genericRows(150, 60));
+    expect(prGeneric?.value).toBeCloseTo(210 / 90, 6);
+    expect(prGeneric?.verdict).toBe("fail");
+    expect(prGeneric?.note).toContain(`${S3_PR_FAIL_NOTE} [1.500, 4.000]`);
+    expect(fullGeneric?.verdict).toBe("fail");
+    // The generic wins every race: the ratio is unbounded above.
+    const [prNever] = verdicts(genericRows(150, 150));
+    expect(prNever?.verdict).toBe("fail");
+    expect(prNever?.note).toContain(`${S3_PR_FAIL_NOTE} [`);
+    expect(prNever?.note).toMatch(/, ∞\]$/);
+    const pr = computeMetrics(input(sweepRows(150, 150), ["S3"], "pr"));
+    expect(metric(pr, "m3-signature").verdict).toBe("fail");
+  });
+
+  it("fails in pr from 40 signature or 16 generic sweeps of 150, not below (z = 5 thresholds)", () => {
+    expect(verdicts(sweepRows(150, 40)).map((c) => c?.verdict)).toEqual(["fail", "fail"]);
+    expect(verdicts(sweepRows(150, 39)).map((c) => c?.verdict)).toEqual(["inconclusive", "fail"]);
+    expect(verdicts(genericRows(150, 16)).map((c) => c?.verdict)).toEqual(["fail", "fail"]);
+    expect(verdicts(genericRows(150, 15)).map((c) => c?.verdict)).toEqual(["inconclusive", "fail"]);
+    // An overpowered signature at 60 % (30 sweeps) is no pr fail: the full profile catches it.
+    expect(verdicts(sweepRows(150, 30)).map((c) => c?.verdict)).toEqual(["inconclusive", "fail"]);
+  });
+
+  it("keeps a 95 % fail near the band inconclusive in pr (4 and 19-20 sweeps of 150)", () => {
+    // 4 sweeps (alt1 cernicala/desert-ridge; 8000 samples read 52.9 %, inside the band) and the
+    // 19-20 sweeps of a sprint cell in the default, alt1 and alt2 bases (ADR-0005 «Pasada 2»).
+    for (const sweeps of [4, 19, 20]) {
+      const [pr, full] = verdicts(sweepRows(150, sweeps));
+      expect(pr?.verdict).toBe("inconclusive");
+      expect(pr?.note).not.toContain(S3_PR_FAIL_NOTE);
+      if (sweeps === 4) {
+        expect(full?.verdict).toBe("inconclusive");
+        expect(pr?.note).not.toContain(S3_PR_OUTSIDE_NOTE);
+      } else {
+        expect(full?.verdict).toBe("fail");
+        expect(pr?.note).toContain(S3_PR_OUTSIDE_NOTE);
+      }
+    }
+  });
+
+  it("cannot fail in pr at 15 samples per cell (--runs 1000): z = 5 is wider than the band's reach", () => {
+    expect(verdicts(sweepRows(15, 15)).map((c) => c?.verdict)).toEqual(["inconclusive", "fail"]);
+    expect(verdicts(genericRows(15, 15)).map((c) => c?.verdict)).toEqual(["inconclusive", "fail"]);
   });
 
   it("passes in pr only when the interval fits the band (a pr run large enough to resolve it)", () => {

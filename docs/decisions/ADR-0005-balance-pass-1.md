@@ -8,7 +8,8 @@
   opción (a) de la 4): **aceptado (dueño, 2026-10-28)**; `FIELD` 75 / 9 y escalera 7 / 6 / 5 / 3
   reemplazan el 60 / 8 de «Métrica 7» (sección «Pasada 2»). Estadística de la métrica 3 (propuesta
   1 de «Métricas 3 y 4», opción (a)): **aceptado (dueño, 2026-10-28)**; intervalo de puntuación
-  pareado y veredicto `pr` pass / inconcluso, banda 0,85-0,90 sin cambio (sección «Pasada 2»).
+  pareado, y en `pr` un fail solo cuando también el intervalo a z = 5 cae fuera de la banda
+  (revisión F1), banda 0,85-0,90 sin cambio (sección «Pasada 2»).
 - Fecha: 2026-10-28
 - Alcance: `packages/sim/src/rulesets/v1/constants.ts`, `packages/content/` (bastidores, piezas,
   habilidades)
@@ -360,8 +361,9 @@ de S3); la exploración previa se hizo con el arnés.
 
 1. **Estadística de la métrica 3: aceptado (dueño, 2026-10-28), opción (a)** en la forma que
    registra «Pasada 2»: intervalo de puntuación pareado (el piso de varianza que exige cada valor
-   candidato) y veredicto `pr` pass / inconcluso; la banda no se mueve (b) ni sube el tope de `full`
-   (c). Texto de la propuesta: la banda 0,85-0,90 mide 1,5 puntos de cuota. En `pr` (150 muestras)
+   candidato) y, en `pr`, fail solo cuando también el intervalo a z = 5 cae fuera de la banda
+   (revisión F1; antes, pass / inconcluso); la banda no se mueve (b) ni sube el tope de `full` (c).
+   Texto de la propuesta: la banda 0,85-0,90 mide 1,5 puntos de cuota. En `pr` (150 muestras)
    el intervalo mide ±5-7 puntos: ninguna celda puede pasar, y una celda correcta puede fallar por
    ruido cuando la varianza muestral sale baja (alt1 Cernícala ridge: 51,3 % con intervalo de
    ±1,3 puntos, mientras 8000 muestras dan 52,9 %). Con `BALANCE_GATE=enforce` ese fail bloquearía
@@ -1135,7 +1137,10 @@ Fails falsos de la métrica 3 por corrida `pr` con las nueve celdas de hoy, toda
 | normal de la media, 95 % (v1)                      | 18,4 / 17,3 % | 61,1 %                 | 100 %                 | 53,6 / 77,9 / 97,8 %   |
 | puntuación, 95 % por celda                         | 10,3 / 10,5 % | 27,7 %                 | 100 %                 | 71,5 / 89,3 / 99,3 %   |
 | puntuación, simultáneo 95 % (Bonferroni, 9 celdas) | 0,94 / 1,5 %  | 4,4 %                  | 100 %                 | 44,2 / 70,5 / 96,3 %   |
-| **puntuación, sin fail en `pr` (elegida)**         | **0**         | **0**                  | nota; falla en `full` | nota; falla en `full`  |
+| puntuación, sin fail en `pr` (elegida hasta F1)    | 0             | 0                      | nota; falla en `full` | nota; falla en `full`  |
+| **puntuación a z = 5 (elegida en la revisión F1)** | **< 1e-11**   | **1,1e-10** ²          | nota; falla en `full` | 0,003 / 0,06 / 2,9 %   |
+
+² Con el genérico sin barrer, como se midió; con cualquier reparto de barridos, 2,4e-6 (revisión F1).
 
 En las siete bases `pr` medidas (por defecto y alt1-alt6; barridos mínimo-máximo por celda 6-19,
 5-19, 7,5-20, 5-17, 4-14, 4-16 y 6-16) la regla de v1 falla alt4 (Cernícala ridge y cañón,
@@ -1156,14 +1161,17 @@ todo PR que toque `sim` o `content`.
    alta es la de Wilson (métricas 1, 2 y 7). El piso p(1 − p) / 2 del ejemplo de la propuesta se
    descartó: tira la reducción de varianza real del diseño pareado (el genérico nunca barre), mide
    ±5,7 puntos en `pr` y no podría fallar nunca a una firma inerte (cota alta 55,7 %).
-2. **Veredicto `pr` de la métrica 3: pass o inconcluso.** El fail queda para `full` (D48: el
-   nocturno decide lo que el PR no puede). La banda mide 1,42 puntos de cuota y un intervalo de
-   150 muestras, 2,5-5,5: ninguna celda puede pasar en `pr` y, sea cual sea su cuota real, toda
-   celda queda a menos de un intervalo de un borde. Una celda `pr` cuyo intervalo cae fuera de la
-   banda se lee inconclusa y lo dice su nota («95 % interval outside the band: a pr run does not
-   fail metric 3, the full profile decides»); una nota de la métrica lo explica. `full` conserva el
-   95 % por celda y la duplicación a 8000 muestras; sus fails llegan a todo PR por el informe de
-   puerta.
+2. **Veredicto `pr` de la métrica 3: fail solo a z = 5** (desde la revisión F1, más abajo; antes,
+   pass o inconcluso sin fail). El fail dudoso queda para `full` (D48: el nocturno decide lo que el
+   PR no puede). La banda mide 1,42 puntos de cuota y un intervalo de 150 muestras, 2,5-5,5:
+   ninguna celda puede pasar en `pr` y, sea cual sea su cuota real, toda celda queda a menos de un
+   intervalo de un borde. Una celda `pr` cuyo intervalo del 95 % cae fuera de la banda falla solo
+   si el intervalo de puntuación a z = 5 (`S3_PR_FAIL_Z`) también cae fuera, y su nota lo dice con
+   ese intervalo («z = 5 interval outside the band too: a pr fail [lo, hi]»); si no, se lee
+   inconclusa y su nota lo dice («95 % interval outside the band, z = 5 interval not: no pr fail,
+   the full profile decides»). La celda conserva su intervalo del 95 %; una nota de la métrica
+   explica la regla. `full` conserva el 95 % por celda y la duplicación a 8000 muestras; sus fails
+   llegan a todo PR por el informe de puerta.
 3. **Presupuesto sin cambio** (S3: 150 muestras por celda, 2700 carreras; S1 absorbe el resto y el
    total suma `--runs`). Subirlo se descartó: S3 ya lleva 2700 de las 10 000 carreras, 300 por celda
    pediría 2700 más con S1 en 1200 (métrica 1, S6 y la σ de S5), y ningún tamaño `pr` dentro de
@@ -1171,11 +1179,7 @@ todo PR que toque `sim` o `content`.
    intervalo del 95 % quepa en 1,42 puntos (21 600 carreras las nueve). Con 300 y Bonferroni el
    fail falso seguiría en 0,5 %.
 
-Alternativa para el dueño (no aplicada; una línea en `s3CellsOf`): fail en `pr` solo con el
-intervalo simultáneo de las nueve celdas (Bonferroni, z 2,77). Falla en el mismo PR a una firma
-inerte (0 barridos: cota alta 52,44 % < 52,63 %) y a una de 60 % en el 96 % de las corridas, a
-cambio de un fail falso fijo en ≈ 1 % de los estados de contenido correctos (4,4 % con las nueve
-celdas en un borde).
+Alternativas para el dueño: «Propuestas para el dueño (decisión 3)», al final de esta sección.
 
 #### Evidencia (lote)
 
@@ -1223,13 +1227,108 @@ y puerta). Corridas del lote: 6 `pr` completas, 2 `pr` de S3 (alt4, alt5) y 4 `f
 
 #### Consecuencias
 
-- Con `--runs 10000` la métrica 3 en `pr` es inconclusa por construcción. Una firma inerte o
-  desbocada que entre en un PR solo se ve como nota en su informe: la falla el siguiente `full` y la
-  puerta bloquea los PR siguientes hasta corregirla (una noche de demora).
-- La nota «outside the band» aparece en ≈ 10 % de los estados de contenido correctos (3 de las 7
-  bases medidas): informa, no bloquea.
+- Con `--runs 10000` una celda correcta de la métrica 3 en `pr` es inconclusa: ninguna pasa con
+  150 muestras. Desde la revisión F1 una firma muy rota falla en su mismo PR (cuota ≥ 63,3 % o
+  ≤ 44,7 %; una celda sola falla siempre con la cuota real en 70 % o más o en 40 % o menos, el
+  84 % de las veces a 65 %). Una firma inerte (50 %) o pasada pero cercana (55-63 %) solo se ve
+  como nota en su PR: la falla el siguiente `full`, y desde ahí la puerta bloquea todo PR que toque
+  `sim` o `content` hasta que el arreglo entre en `main` y corra el `full` siguiente. El PR del
+  arreglo no levanta la puerta por sí mismo: ninguna celda `pr` pasa con 150 muestras y un
+  inconcluso no levanta un fail (§25.2.1, `batch/gate.ts`), así que lleva la etiqueta
+  `balance-adr` con su línea de ADR y una corrida `--profile full --scenarios S3` como evidencia.
+  La demora es de al menos una noche más lo que tarde el arreglo, no «una noche».
+- La nota «outside the band, z = 5 interval not» aparece en ≈ 10 % de los estados de contenido
+  correctos (3 de las 7 bases medidas): informa, no bloquea.
 - `full` sigue con el 95 % por celda (D48, sin cambio): con las celdas de hoy un fail falso en
   `full` sale ≈ 0,06 % de las veces; una celda que quede justo en un borde da hasta 2,5 % por noche.
+
+#### Revisión F1: fail en `pr` a z = 5
+
+Estado: **aceptado**. Hallazgo de la revisión (mayor): con «pass o inconcluso» la métrica 3 ya no
+podía fallar en una corrida `pr` hiciera lo que hiciera la firma, y el dueño pidió que `pr` no diera
+fails falsos, no que dejara de fallar los casos que sí puede resolver. Una celda `pr` tampoco puede
+pasar con 150 muestras, así que el PR que arregla un fail del `full` nocturno no levanta la puerta
+(`judgeGate` pide que la celda actual pase) y la consecuencia «una noche de demora» no lo decía.
+
+**Diagnóstico (verificado).** Con el script de la revisión (`.work/balance2/review/s3-bad.ts`:
+muestras S3 sintéticas, 150 por celda en las nueve, contra `computeMetrics` y `s3CellsOf` reales),
+cinco firmas rotas salían inconclusas en `pr` y fail en `full`: la firma gana todas las carreras
+(razón 0,000 [0,000; 0,026]), firma al 80 %, el genérico gana todas, genérico dominante al 30 %
+(2,33 [1,96; 2,85]) y firma inerte (1,000 [0,951; 1,051]). La segunda parte también es cierta: la
+única vía para levantar en un PR un fail de la métrica 3 del `full` es la etiqueta `balance-adr`
+(`balance.yml`: «a fix the `pr` sample cannot show»), y este ADR no lo decía. No hace falta cambiar
+la puerta: es la vía prevista para todo arreglo que la muestra `pr` no puede mostrar; se corrigen
+las consecuencias.
+
+**Cambio (solo la herramienta del lote, `apps/cli/src/batch/metrics.ts`).** En `pr` una celda
+cuyo intervalo del 95 % cae fuera de la banda falla si el intervalo de puntuación de Tango a z = 5
+(`S3_PR_FAIL_Z`, el mismo `pairedScoreInterval` con otro z, llevado a la razón igual) también cae
+fuera; si no, sigue inconclusa con su nota. La celda informa su intervalo del 95 %, así que un fail
+`pr` también falla bajo la regla común de §25.2.1 (la puerta vuelve a juzgar intervalos con ella).
+`full` no cambia. Se eligió z = 5 por el fail falso exacto de una celda correcta en un borde de la
+banda (trinomial exacta sobre todo par p₊, p₋ con p₊ − p₋ en el borde, 150 muestras;
+`.work/balance2/f1/false-fail.ts`, no versionado):
+
+| Regla `pr` | Falla desde (de 150)        | Fail falso por celda, genérico sin barrer (medido) | Peor caso, cualquier p₋ | Nueve celdas en el peor caso |
+| ---------- | --------------------------- | -------------------------------------------------- | ----------------------- | ---------------------------- |
+| z 1,96     | 19 barridos; 0 del genérico | 3,5e-2                                             | 3,7e-2                  | 29 %                         |
+| z 2,77     | 22; 0                       | 5,0e-3                                             | 5,3e-3                  | 4,6 %                        |
+| z 4        | 30; 8                       | 3,5e-6                                             | 3,9e-5                  | 3,6e-4                       |
+| **z 5**    | **40; 16**                  | **1,2e-11**                                        | **2,7e-7**              | **2,4e-6**                   |
+
+Con las celdas de hoy (p₊ 6,2-7,5 %, el genérico nunca barre) el fail falso a z = 5 es
+2e-15 a 1e-12 por celda. A 75 y 300 muestras por celda el peor caso queda en 2,2e-7 y 4,3e-7; a 15
+(`--runs 1000`) la regla no puede fallar (z² = 25 > n). Lo que atrapa una sola celda `pr` de 150
+muestras, por cuota real de la firma (binomial exacta; los barridos de un solo lado):
+
+| Cuota real | 30 %  | 40 %   | 45 %   | 50 % (inerte) | 57 %    | 60 %   | 63,3 % | 65 %   | 70 %, 80 %, 100 % |
+| ---------- | ----- | ------ | ------ | ------------- | ------- | ------ | ------ | ------ | ----------------- |
+| z = 5      | 100 % | 99,9 % | 43,2 % | 0             | 0,003 % | 2,9 %  | 52,4 % | 83,6 % | 100 %             |
+| z = 1,96   | 100 % | 100 %  | 100 %  | 100 %         | 71,5 %  | 99,3 % | 100 %  | 100 %  | 100 %             |
+
+Una firma rota casi nunca toca una sola celda (lo habitual es la pareja en sus tres pistas), así que
+la probabilidad de que la métrica falle es mayor que la de la tabla. La firma inerte no se atrapa en
+`pr` (sin barridos la cuota queda en 42,9-57,1 % a z = 5): la falla el `full`.
+
+**Evidencia (lote).** `pnpm sim:batch -- --runs 10000` antes y después, por defecto y alt1, y
+`--scenarios S3` en alt2, alt4 y alt5 (las bases con celdas cuyo intervalo del 95 % cae fuera,
+o con 4 barridos): las 88 celdas por defecto y en alt1 y las 9 de cada base S3 salen con el mismo
+valor, intervalo y veredicto, y los diagnósticos son idénticos. Métrica 3: inconclusa 0/0/9 antes y
+después en las cinco bases; barridos de la firma 4-20 de 150 por celda (por defecto 6-19, alt1
+5-19, alt2 7,5-20, alt4 4-14, alt5 4-16), del genérico 0: ninguna celda se acerca a 40 o a 16.
+Cambian solo textos: la nota de la métrica y la de las celdas con 19-20 barridos (por defecto
+Cernícala sprint, alt1 Peregrina sprint, alt2 Caracara sprint: «95 % interval outside the band, z =
+5 interval not: no pr fail, the full profile decides»). Pared 6,5-6,7 s con 3 workers, antes y
+después. Corridas en `.work/balance2/f1/runs` (no versionado).
+
+Tests (`metrics.test.ts`): 150 barridos de la firma de 150 y 60 del genérico fallan en `pr` (nota
+con el intervalo a z = 5: [0,000; 0,167] y [1,500; 4,000]), y el genérico que gana todas también
+(cota alta ∞); los umbrales 40 / 39 barridos y 16 / 15 del genérico; 4 y 19-20 barridos quedan
+inconclusos en `pr` (4 también en `full`; 19-20 fallan en `full`); la firma inerte y la de 60 %
+siguen inconclusas en `pr` y fallan en `full`; con 15 muestras no hay fail en `pr`. Documentos:
+`docs/balance-batch.md` («Metric 3 statistic», tabla de escenarios y «Gate report») y
+`docs/race-engine.md` §25.2.1.
+
+#### Propuestas para el dueño (decisión 3)
+
+1. **El z de la regla `pr` (aplicado z = 5).** Opciones: (a) dejar z = 5 (recomendado: el fail
+   falso queda en 2,4e-6 por corrida aun con las nueve celdas en un borde y cualquier reparto de
+   barridos); (b) z = 4 (`S3_PR_FAIL_Z`, con los umbrales de la nota de la métrica y de los
+   documentos): falla desde 30 barridos de 150 (cuota
+   ≥ 60 %, atrapada en el 53 % de las corridas por celda) o 8 del genérico, a cambio de un fail
+   falso de 3,6e-4 por corrida en el peor caso; (c) el intervalo simultáneo de las nueve celdas
+   (Bonferroni, z 2,77): falla en el mismo PR a una firma inerte (0 barridos: cota alta 52,44 % <
+   52,63 %) y a una de 60 % en el 96 % de las corridas, a cambio de un fail falso fijo en ≈ 1 % de
+   los estados de contenido correctos (4,4 % con las nueve celdas en un borde), que las semillas
+   `pr` fijas repetirían en cada PR.
+2. **Cómo levanta un PR un fail de la métrica 3 del `full`.** Hoy, con la etiqueta `balance-adr` y
+   la corrida `full` de S3 en su línea de ADR: ninguna celda `pr` pasa con 150 muestras. Opciones:
+   (a) dejarlo así (recomendado: con las celdas de hoy un fail del `full` sale ≈ 0,06 % de las
+   noches, y un arreglo de la firma ya pide su línea de ADR); (b) un job a pedido en el PR
+   (otra etiqueta) que corra `--profile full --scenarios S3` (72 000-144 000 carreras de dos
+   corredoras; las corridas `full` de S3 de esta pasada, 88 000-104 000, tardaron 12,7-15,9 s de
+   pared con 3 workers) y pase su informe a la puerta, que levantaría las celdas que pasen ahí; pide
+   cambiar `balance.yml` y `judgeGate` (§25.2.1).
 
 ### Higiene de la verificación de la pasada 1
 

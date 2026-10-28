@@ -2312,10 +2312,14 @@ Verdict of each metric, both profiles:
   `sim` or `content` fails the batch job until a PR fixes the metric or attaches an ADR that moves
   the target.
 - Metric 5 in `pr` uses S5's converted time gain; metric 8 in `pr` fails only on a significant
-  decrease (S8); metric 3 in `pr` is pass or inconclusive, never fail (ADR-0005 «Pasada 2»: its
-  band is 1.4 points of share and a 150-sample interval 2.5-5.5, so a `pr` fail cannot be told from
-  a cell near an edge; a cell whose interval lies outside the band says so in its note and the
-  `full` run decides).
+  decrease (S8); a metric 3 cell in `pr` fails only when its score interval at z = 5 also lies
+  outside the band (ADR-0005 «Pasada 2», review F1: the band is 1.4 points of share and a
+  150-sample 95 % interval 2.5-5.5, so a 95 % fail at `pr` size cannot be told from a cell near an
+  edge, while a z = 5 fail is false at most 2.7e-7 per cell at a band edge and still catches a
+  share ≥ 63.3 % or ≤ 44.7 %; a cell that fails at 95 % only reads inconclusive, says so in its
+  note, and the `full` run decides). No metric 3 cell can pass at `pr` size, so a fix of a `full`
+  fail of metric 3 lifts the gate only through the `balance-adr` label of `balance.yml` (its ADR
+  line carries a `--profile full --scenarios S3` run).
 - **Cells (revision 4):** metric 2 has one verdict per (manufacturer, course) home or weak cell
   and metric 3 one verdict per (pair, course) cell (25.2). A metric passes only if every cell
   passes, and fails if any cell fails. Otherwise it is inconclusive.

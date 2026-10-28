@@ -34,6 +34,7 @@ import {
   topShares,
   wilson,
   winShares,
+  Z95,
 } from "./stats.js";
 import { cellVerdict, combineVerdicts } from "./verdict.js";
 
@@ -508,9 +509,35 @@ function shareToRatio(p: number | null): number | null {
   return (1 - p) / p;
 }
 
-/** Note of a `pr` cell whose interval lies outside the band (ADR-0005 «Pasada 2»). */
-export const S3_PR_OUTSIDE_NOTE =
-  "95 % interval outside the band: a pr run does not fail metric 3, the full profile decides";
+/**
+ * z of the `pr` fail rule of metric 3 (ADR-0005 «Pasada 2», review F1): a `pr` cell fails only when
+ * its score interval at this z lies outside the band. Exact false fail of a correct cell at a band
+ * edge, 75-300 samples: ≤ 5e-7 per cell for any split of sweeps, 1.2e-11 at 150 samples when the
+ * generic never sweeps (as measured on v1). At 150 samples it fails from 40 signature sweeps (share
+ * ≥ 63.3 %) or 16 generic sweeps (share ≤ 44.7 %); at 15 samples (`--runs 1000`) it cannot fail.
+ * Those thresholds are also in the metric's `pr` note and in the docs: they move with it.
+ */
+export const S3_PR_FAIL_Z = 5;
+
+/** Note of a `pr` cell whose 95 % interval lies outside the band and whose z = 5 one does not. */
+export const S3_PR_OUTSIDE_NOTE = `95 % interval outside the band, z = ${S3_PR_FAIL_Z} interval not: no pr fail, the full profile decides`;
+
+/** Note of a `pr` cell that fails: its z = 5 interval lies outside the band too (followed by it). */
+export const S3_PR_FAIL_NOTE = `z = ${S3_PR_FAIL_Z} interval outside the band too: a pr fail`;
+
+/**
+ * Ratio interval of a paired sweep count at level z: the score interval of p₊ − p₋ mapped to the
+ * signature's share 0.5 + Δ / 2 and through (1 − p) / p (bounds swap; a share of 0 is unbounded).
+ */
+function s3RatioInterval(plus: number, minus: number, n: number, z: number = Z95): Interval {
+  const ci = pairedScoreInterval(plus, minus, n, z);
+  const pLo = ci.lo === null ? 0 : Math.max(0, 0.5 + ci.lo / 2);
+  const pHi = ci.hi === null ? 1 : Math.min(1, 0.5 + ci.hi / 2);
+  return { lo: pHi <= 0 ? RATIO_CAP : (1 - pHi) / pHi, hi: shareToRatio(pLo) };
+}
+
+/** A ratio bound for a note: 3 decimals, `∞` when unbounded. */
+const ratioText = (x: number | null) => (x === null ? "∞" : x.toFixed(3));
 
 /**
  * Ratio cells of S3, one per (pair, course), in plan order. A paired sample (both lane orders of
@@ -519,12 +546,13 @@ export const S3_PR_OUTSIDE_NOTE =
  * p₊ − p₋ (Tango), mapped to the share and through (1 − p) / p (ADR-0005 «Pasada 2»: the normal
  * interval of the mean collapsed when a 150-sample cell showed few sweeps).
  *
- * `pr` verdict: pass or inconclusive, never fail (owner decision of 2026-10-28). The band is 1.4
- * points of share wide and a 150-sample interval 2.5-5.5 points, so every cell sits within one
- * interval of a band edge whatever its true share: nine cells at 95 % false-fail ≈ 10 % of correct
- * content states, and the fixed `pr` seeds would repeat that fail on every PR until the content
- * changed. A cell whose interval lies outside the band reads inconclusive with
- * `S3_PR_OUTSIDE_NOTE`; the `full` profile decides fails (§25.2.1, D48).
+ * `pr` verdict (owner decision of 2026-10-28: no false fail in `pr`; review F1: a gross one still
+ * fails): a cell fails only when its `S3_PR_FAIL_Z` interval lies outside the band as well, and
+ * says so with `S3_PR_FAIL_NOTE` and that interval; the cell keeps its 95 % interval. A cell whose
+ * 95 % interval alone lies outside reads inconclusive with `S3_PR_OUTSIDE_NOTE`: the band is 1.4
+ * points of share and a 150-sample interval 2.5-5.5, so every cell sits within one interval of a
+ * band edge, nine cells at 95 % false-fail ≈ 10 % of correct content states, and the fixed `pr`
+ * seeds would repeat that fail on every PR. The `full` profile judges at 95 % (§25.2.1, D48).
  */
 export function s3CellsOf(input: MetricsInput): (BalanceCell & { pair: Slug; course: Slug })[] {
   const groups = groupBy(pairs(input, "S3"), (p) => `${p.job.pair}/${p.job.course}`);
@@ -549,24 +577,25 @@ export function s3CellsOf(input: MetricsInput): (BalanceCell & { pair: Slug; cou
       minus += Math.max(0, 1 - s);
     }
     const n = list.length;
-    const ci = pairedScoreInterval(plus, minus, n);
-    const pLo = ci.lo === null ? 0 : Math.max(0, 0.5 + ci.lo / 2);
-    const pHi = ci.hi === null ? 1 : Math.min(1, 0.5 + ci.hi / 2);
-    const ratioLo = pHi <= 0 ? RATIO_CAP : (1 - pHi) / pHi;
-    const ratioHi = shareToRatio(pLo);
     const value = sig > 0 ? gen / sig : null;
     const cell = makeCell(
       id,
       value,
-      { lo: ratioLo, hi: ratioHi },
+      s3RatioInterval(plus, minus, n),
       "share-ratio",
       BAND.signature,
       n,
       `signature wins ${pct(sig / (2 * n))} % (sweeps: signature ${plus}, generic ${minus}, of ${n})`,
     );
     if (input.profile === "pr" && cell.verdict === "fail") {
-      cell.verdict = "inconclusive";
-      cell.note = `${cell.note}; ${S3_PR_OUTSIDE_NOTE}`;
+      const strict = s3RatioInterval(plus, minus, n, S3_PR_FAIL_Z);
+      const rounded = { lo: r6(strict.lo), hi: r6(strict.hi) };
+      if (cellVerdict(rounded, BAND.signature) === "fail") {
+        cell.note = `${cell.note}; ${S3_PR_FAIL_NOTE} [${ratioText(rounded.lo)}, ${ratioText(rounded.hi)}]`;
+      } else {
+        cell.verdict = "inconclusive";
+        cell.note = `${cell.note}; ${S3_PR_OUTSIDE_NOTE}`;
+      }
     }
     out.push({ ...cell, pair: first.job.pair, course: first.job.course });
   }
@@ -590,7 +619,7 @@ function s3Metric(input: MetricsInput): MetricsOutput {
       "Ratio = generic wins / signature wins (a dead heat counts half each). A sample is a signature sweep, a split or a generic sweep; interval: paired score interval (Tango) of the difference of the two sweep rates, mapped to the signature's share 0.5 + Δ / 2 and through (1 − p) / p (ADR-0005 Pasada 2).",
       ...(input.profile === "pr"
         ? [
-            "pr: metric 3 is pass or inconclusive, never fail (ADR-0005 Pasada 2): the band is 1.4 points of share and a 150-sample interval 2.5-5.5, so a fail at pr size cannot be told from a cell near a band edge, and the fixed pr seeds would repeat it on every PR. A cell whose interval lies outside the band says so in its note; the full profile (4000-8000 samples per cell) decides.",
+            `pr: a metric 3 cell fails only when its z = ${S3_PR_FAIL_Z} score interval lies outside the band as well (ADR-0005 Pasada 2: false fail ≤ 5e-7 per cell at a band edge; at 150 samples, 40 or more signature sweeps, share ≥ 63.3 %, or 16 or more generic sweeps, share ≤ 44.7 %). The band is 1.4 points of share and a 150-sample 95 % interval 2.5-5.5, so a 95 % fail alone cannot be told from a cell near a band edge and the fixed pr seeds would repeat it on every PR: it reads inconclusive and says so in its note, and the full profile (4000-8000 samples per cell) decides. No pr cell can pass at 150 samples, so a full fail of metric 3 is lifted only by a fix that carries the balance-adr label (§25.2.1).`,
           ]
         : []),
       "Home biome read as desert for all three pairs in v1 (D47).",
