@@ -9,6 +9,8 @@
     "heatAbove": 50
   },
   "effect": {
-    "heatCool": 20
+    "heatCool": 20,
+    "speed": 0.5,
+    "durationTicks": 60
   }
 }

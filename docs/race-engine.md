@@ -2322,7 +2322,11 @@ JS, not production code), **revision 2 constants** (section 26): single runner, 
 is the fixture entry of 3.4 (`rule: "none"`, PW 1.0, energy 100, dissipation 60, durability 100).
 The implementation should land within ±0.5 % of these times; a larger gap means a formula bug (or
 a deliberate change to document). Solo runs never have a middle pack, so hover's slipstream never
-acts here; the neutral hover rows are therefore the cleanest hand-check anchors.
+acts here; the neutral hover rows are therefore the cleanest hand-check anchors. The mule, kite
+and caracara rows carry the energy 140 of balance pass 1 (ADR-0005, metric 2) and the three
+signature rows its redesigned talon-lock, still-air and scrap-armor (metrics 3 and 4), all run
+through the same prototype with the revision 2 constants; the rows before the pass are in this
+file's git history.
 
 **Hand check (neutral hover, sprint):** 1200 m at 23.5 m/s = 51.1 s; launch (dash to 17 m/s in
 9 ticks, then 0.4 m/s² for ≈ 15 s) costs ≈ +2.4 s, cut short by the first curve at 300 m; curves
@@ -2353,9 +2357,9 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | horizon (glide, telemetry, PW 1.00) | 54.09 s | 10.17/26.80/17.11 | 37/35/103 | - | 1.30 m/s from 801 m | 0.0 | 301 / 915 hp | 0 / 100 |
 | mule (ground, repairable, PW 0.70) | 77.34 s | 12.58/38.71/26.05 | 31/54/55 | - | 1.00 m/s from 1016 m | 0.0 | 431 / 915 hp | 0 / 180 |
 | kite (glide, repairable, PW 0.70) | 77.23 s | 12.69/39.20/25.34 | 12/0/128 | - | 0.80 m/s from 801 m | 0.0 | 440 / 915 hp | 0 / 180 |
-| peregrina-signature (dive, pulse, PW 1.40) | 42.81 s | 9.39/21.21/12.21 | 36/0/36 | 6 | 2.61 m/s from 800 m | 13.6 | 4 / 915 hp | 0 / 100 |
-| cernicala-signature (hover, telemetry, PW 0.85) | 60.97 s | 10.41/30.41/20.15 | 43/120/115 | - | 1.15 m/s from 841 m | 19.3 | 363 / 915 hp | 0 / 100 |
-| caracara-signature (ground, repairable, PW 0.70) | 77.34 s | 12.58/38.71/26.05 | 31/54/55 | - | 1.00 m/s from 1016 m | 0.0 | 431 / 915 hp | 0 / 180 |
+| peregrina-signature (dive, pulse, PW 1.40) | 42.69 s | 9.32/21.23/12.14 | 36/0/36 | 6 | 2.61 m/s from 802 m | 13.6 | 1 / 915 hp | 0 / 100 |
+| cernicala-signature (hover, telemetry, PW 0.85) | 62.25 s | 10.63/31.40/20.21 | 17/6/108 | - | 1.15 m/s from 841 m | 0.2 | 374 / 915 hp | 0 / 100 |
+| caracara-signature (ground, repairable, PW 0.70) | 77.16 s | 12.58/38.64/25.95 | 31/63/61 | - | 0.40 m/s from 813 m | 0.0 | 431 / 915 hp | 0 / 180 |
 
 **desert-ridge**
 
@@ -2375,9 +2379,9 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | horizon (glide, telemetry, PW 1.00) | 86.87 s | 16.46/42.40/28.01 | 0/35/105 | - | 1.30 m/s from 1459 m | 0.0 | 175 / 1235 hp | 0 / 100 |
 | mule (ground, repairable, PW 0.70) | 120.59 s | 20.73/59.78/40.09 | 21/62/57 | - | 1.00 m/s from 1801 m | 0.0 | 370 / 1235 hp | 0 / 180 |
 | kite (glide, repairable, PW 0.70) | 120.57 s | 20.86/60.13/39.58 | 0/0/105 | - | 0.80 m/s from 1622 m | 0.0 | 394 / 1235 hp | 0 / 180 |
-| peregrina-signature (dive, pulse, PW 1.40) | 71.11 s | 15.09/32.19/23.82 | 24/0/24 | 4 | 2.61 m/s from 1335 m (hp-limited) | 7.4 | empty at 1644 m | 0 / 100 |
-| cernicala-signature (hover, telemetry, PW 0.85) | 98.29 s | 16.99/48.76/32.54 | 52/159/157 | - | 1.05 m/s from 1401 m | 11.8 | 285 / 1235 hp | 0 / 100 |
-| caracara-signature (ground, repairable, PW 0.70) | 120.59 s | 20.73/59.78/40.09 | 21/62/57 | - | 1.00 m/s from 1801 m | 0.0 | 370 / 1235 hp | 0 / 180 |
+| peregrina-signature (dive, pulse, PW 1.40) | 71.03 s | 15.03/32.18/23.81 | 24/0/24 | 4 | 2.61 m/s from 1335 m (hp-limited) | 7.4 | empty at 1643 m | 0 / 100 |
+| cernicala-signature (hover, telemetry, PW 0.85) | 100.52 s | 17.40/50.05/33.07 | 4/4/96 | - | 0.75 m/s from 1415 m | 0.7 | 307 / 1235 hp | 0 / 100 |
+| caracara-signature (ground, repairable, PW 0.70) | 120.40 s | 20.72/59.78/39.90 | 22/62/80 | - | 0.30 m/s from 1334 m | 0.6 | 368 / 1235 hp | 0 / 180 |
 
 **desert-canyon**
 
@@ -2397,9 +2401,9 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | horizon (glide, telemetry, PW 1.00) | 133.59 s | 23.71/67.36/42.53 | 0/35/140 | - | 1.20 m/s from 2364 m | 0.0 | 81 / 1635 hp | 0 / 90 |
 | mule (ground, repairable, PW 0.70) | 188.46 s | 31.14/95.88/61.45 | 20/64/56 | - | 1.00 m/s from 2804 m | 0.0 | 390 / 1635 hp | 0 / 177 |
 | kite (glide, repairable, PW 0.70) | 188.35 s | 31.26/96.46/60.64 | 0/0/140 | - | 0.80 m/s from 2518 m | 0.0 | 414 / 1635 hp | 0 / 172 |
-| peregrina-signature (dive, pulse, PW 1.40) | 108.74 s | 20.61/48.59/39.55 | 60/0/12 | 6 | 2.61 m/s from 2000 m (hp-limited) | 13.6 | empty at 2231 m | 0 / 90 |
-| cernicala-signature (hover, telemetry, PW 0.85) | 152.01 s | 25.32/77.22/49.48 | 77/260/219 | - | 0.95 m/s from 2179 m | 0.0 | 244 / 1635 hp | 0 / 90 |
-| caracara-signature (ground, repairable, PW 0.70) | 184.60 s | 31.14/95.88/57.59 | 20/64/56 | - | 1.00 m/s from 2797 m | 0.0 | 364 / 1635 hp | 0 / 180 |
+| peregrina-signature (dive, pulse, PW 1.40) | 108.57 s | 20.50/48.52/39.56 | 60/0/12 | 6 | 2.61 m/s from 2002 m (hp-limited) | 13.6 | empty at 2228 m | 0 / 90 |
+| cernicala-signature (hover, telemetry, PW 0.85) | 155.62 s | 25.93/79.39/50.31 | 6/16/127 | - | 0.55 m/s from 2150 m | 0.3 | 277 / 1635 hp | 0 / 90 |
+| caracara-signature (ground, repairable, PW 0.70) | 188.08 s | 31.13/95.88/61.08 | 21/64/94 | - | 0.30 m/s from 2233 m | 0.6 | 387 / 1635 hp | 0 / 180 |
 
 **Other measured anchors (same prototype):**
 

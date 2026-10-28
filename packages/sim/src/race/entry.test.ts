@@ -44,24 +44,26 @@ function curvesByHand(agility: number, curvesScale: number): number {
 /**
  * f_seg per segment from the section 7 formulas by hand: flat/jump 1000, climb 0.25 → 963,
  * descent 0.3 → 1030 and 0.2 → 1020, canyon −0.1 → 900 and +0.15 → 1150, water 0.2 → 800, curves
- * from agility (×1.5 penalty on Boneyard frames); falke's no-climb-loss and Caracara's scrap-armor
- * override climb and water to 1000.
+ * from agility (×1.5 penalty on Boneyard frames); falke's no-climb-loss overrides climb to 1000;
+ * Peregrina's talon-lock multiplies descent by 1.005 (1030 → 1035, 1020 → 1025) and canyon by
+ * 1.004 (900 → 903, 1150 → 1154), flooring each product (ADR-0005).
  */
 function factorsByHand(courseId: string, frameId: string, agility: number): number[] {
   const c = curvesByHand(agility, BONEYARD_FRAMES.has(frameId) ? 1500 : 1000);
+  const talon = frameId === "peregrina-signature";
   switch (courseId) {
     case "desert-sprint":
       return [1000, c, 1000, c, 1000];
     case "desert-ridge":
-      return [1000, 1030, 1000, 1000, 1020, 1000, 1000];
+      return [1000, talon ? 1035 : 1030, 1000, 1000, talon ? 1025 : 1020, 1000, 1000];
     case "desert-canyon":
       return [
         1000,
         frameId === "falke" ? 1000 : 963,
-        900,
+        talon ? 903 : 900,
         1000,
-        1150,
-        frameId === "caracara-signature" ? 1000 : 800,
+        talon ? 1154 : 1150,
+        800,
         1000,
       ];
     default:
@@ -116,19 +118,19 @@ describe("freezeSkill (docs/race-engine.md 3.2)", () => {
     expect(freezeSkill(content, "lead-guard").trigger).toMatchObject({ posLoPm: 0, posHiPm: 200 });
     expect(freezeSkill(content, "cool-head")).toMatchObject({
       trigger: { heatAboveMilli: 50_000, phase: "any" },
-      effect: { heatCoolMilli: 20_000, durationTicks: 0 },
+      effect: { heatCoolMilli: 20_000, speedMms: 500, durationTicks: 60 },
     });
     expect(freezeSkill(content, "second-wind").trigger.energyBelowMilli).toBe(20_000);
     expect(freezeSkill(content, "clean-start").effect.accelMms2).toBe(300);
-    expect(freezeSkill(content, "gravity-friend").effect.accelMms2).toBe(400);
+    expect(freezeSkill(content, "gravity-friend").effect.accelMms2).toBe(800);
     expect(freezeSkill(content, "stoop-strike")).toMatchObject({
       uniqueTo: "peregrina",
       trigger: { phase: "final", segment: "descent" },
       effect: { speedMms: 1500, durationTicks: 45 },
     });
-    expect(freezeSkill(content, "iron-wings").effect).toMatchObject({
-      durabilityGuard: true,
-      durationTicks: 90,
+    expect(freezeSkill(content, "iron-wings")).toMatchObject({
+      trigger: { heatAboveMilli: null, phase: "middle" },
+      effect: { durabilityGuard: true, speedMms: 300, durationTicks: 90 },
     });
   });
 

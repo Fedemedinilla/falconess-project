@@ -10,10 +10,8 @@
       "extraTicks": 6
     },
     {
-      "kind": "segment-factor",
-      "segment": "water",
-      "mode": "override",
-      "value": 1.0
+      "kind": "regen",
+      "perTick": 0.015
     }
   ]
 }

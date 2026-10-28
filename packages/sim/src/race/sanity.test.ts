@@ -39,7 +39,9 @@ type Row = [
   SprintPlanReason,
 ];
 
-// prototype output (spec revision 2 constants = v1); seconds of 25.4 = finishMilli / 15 000
+// prototype output (spec revision 2 constants = SPEC_RULESET, current content); seconds of 25.4 =
+// finishMilli / 15 000. Mule, kite and caracara carry the ADR-0005 energy 140 (metric 2) and the
+// three signature rows its redesigned passives (metrics 3 and 4).
 const TABLE: Record<string, Row[]> = {
   "desert-sprint": [
     ["neutral-dive", 811731, [1, 0, 99], 0, 0, 100000, null, 1800, "planned"],
@@ -56,9 +58,9 @@ const TABLE: Record<string, Row[]> = {
     ["horizon", 811322, [37, 35, 103], 0, 0, 100000, null, 1300, "planned"],
     ["mule", 1160046, [31, 54, 55], 0, 0, 180000, null, 1000, "planned"],
     ["kite", 1158397, [12, 0, 128], 0, 0, 180000, null, 800, "planned"],
-    ["peregrina-signature", 642131, [36, 0, 36], 6, 13600, 100000, null, 2608, "planned"],
-    ["cernicala-signature", 914540, [43, 120, 115], 0, 19250, 100000, null, 1150, "planned"],
-    ["caracara-signature", 1160046, [31, 54, 55], 0, 0, 180000, null, 1000, "planned"],
+    ["peregrina-signature", 640331, [36, 0, 36], 6, 13600, 100000, null, 2608, "planned"],
+    ["cernicala-signature", 933706, [17, 6, 108], 0, 242, 100000, null, 1150, "planned"],
+    ["caracara-signature", 1157381, [31, 63, 61], 0, 45, 180000, null, 400, "planned"],
   ],
   "desert-ridge": [
     ["neutral-dive", 1303652, [15, 0, 50], 0, 0, 100000, null, 2600, "planned"],
@@ -75,9 +77,9 @@ const TABLE: Record<string, Row[]> = {
     ["horizon", 1303030, [0, 35, 105], 0, 0, 100000, null, 1300, "planned"],
     ["mule", 1808921, [21, 62, 57], 0, 0, 180000, null, 1000, "planned"],
     ["kite", 1808541, [0, 0, 105], 0, 0, 180000, null, 800, "planned"],
-    ["peregrina-signature", 1066630, [24, 0, 24], 4, 7400, 100000, 1644492, 2608, "hp-limited"],
-    ["cernicala-signature", 1474357, [52, 159, 157], 0, 11750, 100000, null, 1050, "planned"],
-    ["caracara-signature", 1808921, [21, 62, 57], 0, 0, 180000, null, 1000, "planned"],
+    ["peregrina-signature", 1065457, [24, 0, 24], 4, 7400, 100000, 1643180, 2608, "hp-limited"],
+    ["cernicala-signature", 1507739, [4, 4, 96], 0, 656, 100000, null, 750, "planned"],
+    ["caracara-signature", 1805936, [22, 62, 80], 0, 630, 180000, null, 300, "planned"],
   ],
   "desert-canyon": [
     ["neutral-dive", 2039108, [0, 0, 100], 0, 0, 90000, 2818357, 1800, "hp-limited"],
@@ -94,9 +96,9 @@ const TABLE: Record<string, Row[]> = {
     ["horizon", 2003923, [0, 35, 140], 0, 0, 90000, null, 1200, "planned"],
     ["mule", 2826928, [20, 64, 56], 0, 0, 177000, null, 1000, "planned"],
     ["kite", 2825303, [0, 0, 140], 0, 0, 172000, null, 800, "planned"],
-    ["peregrina-signature", 1631102, [60, 0, 12], 6, 13600, 90000, 2231348, 2608, "hp-limited"],
-    ["cernicala-signature", 2280219, [77, 260, 219], 0, 0, 90000, null, 950, "planned"],
-    ["caracara-signature", 2769015, [20, 64, 56], 0, 0, 180000, null, 1000, "planned"],
+    ["peregrina-signature", 1628566, [60, 0, 12], 6, 13600, 90000, 2227970, 2608, "hp-limited"],
+    ["cernicala-signature", 2334310, [6, 16, 127], 0, 252, 90000, null, 550, "planned"],
+    ["caracara-signature", 2821249, [21, 64, 94], 0, 645, 180000, null, 300, "planned"],
   ],
 };
 

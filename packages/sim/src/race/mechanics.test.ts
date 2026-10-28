@@ -793,7 +793,8 @@ describe("DNF guard (docs/race-engine.md 19)", () => {
 });
 
 describe("real content passives in the loop (docs/race-engine.md 16)", () => {
-  it("scrap-armor's water override and armor keep Caracara's frame unharmed on the canyon", () => {
+  // scrap-armor dropped its water override in ADR-0005; the pair is now armor plus mud-runner
+  it("obstacle-armor and mud-runner's water override keep a frame unharmed on the canyon", () => {
     const canyon = content.getCourse("desert-canyon");
     const skill = freezeSkill(content, "water-skimmer");
     const e = withTraits(fixture("ground", 0, { skills: [skill] }), {

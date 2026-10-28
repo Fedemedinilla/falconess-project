@@ -11,7 +11,7 @@
   "effect": {
     "durabilityGuard": true,
     "speed": 0.6,
-    "durationTicks": 30
+    "durationTicks": 90
   },
   "uniqueTo": "caracara"
 }

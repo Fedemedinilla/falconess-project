@@ -9,7 +9,7 @@
     "segment": "descent"
   },
   "effect": {
-    "accel": 0.4,
+    "accel": 0.8,
     "durationTicks": 30
   }
 }

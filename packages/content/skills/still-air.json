@@ -7,11 +7,7 @@
   "modifiers": [
     {
       "kind": "regen",
-      "perTick": 0.25
-    },
-    {
-      "kind": "heat-to-energy",
-      "ratio": 0.25
+      "perTick": 0.014
     }
   ]
 }

@@ -111,10 +111,12 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
       expect(noisy).toEqual(NOISY_MILLI[id]);
     });
 
+  // Prototype values for the lanes whose skills ADR-0005 left alone; sylphe (cool-head), hayate
+  // (iron-wings) and horizon (gravity-friend on the ridge) carry the engine's values after the pass.
   it("an eight-runner field of real frames with actives matches the prototype (finish, skills)", () => {
     const want: Record<string, { milli: number[]; skills: string[] }> = {
       "desert-sprint": {
-        milli: [822_021, 824_890, 690_784, 626_683, 640_368, 708_147, 923_593, 795_707],
+        milli: [822_021, 824_890, 689_635, 626_683, 640_368, 707_082, 923_593, 795_707],
         skills: [
           "corner-carver+last-gasp",
           "",
@@ -128,7 +130,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
       },
       "desert-ridge": {
         milli: [
-          1_322_759, 1_311_267, 1_179_542, 1_075_128, 1_075_772, 1_153_680, 1_493_352, 1_278_080,
+          1_322_759, 1_311_267, 1_178_912, 1_075_128, 1_075_772, 1_152_758, 1_493_352, 1_277_827,
         ],
         skills: [
           "last-gasp",
@@ -143,7 +145,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
       },
       "desert-canyon": {
         milli: [
-          2_056_408, 2_060_669, 1_780_218, 1_610_097, 1_650_306, 1_803_154, 2_305_539, 1_968_370,
+          2_056_408, 2_060_669, 1_779_095, 1_610_097, 1_650_306, 1_802_143, 2_305_539, 1_968_370,
         ],
         skills: [
           "last-gasp",

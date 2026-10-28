@@ -228,15 +228,14 @@ const PASSIVES: Record<string, Partial<ReturnType<typeof defaultTraits>>> = {
   "no-climb-loss": { segOverridePm: [0, 1000, 0, 0, 0, 0, 0] },
   "obstacle-armor": { obstacleArmor: true, obstacleArmorExtraTicks: 10 },
   "pack-regen": { packRegenMultPm: 2000 },
-  "scrap-armor": {
-    obstacleArmor: true,
-    obstacleArmorExtraTicks: 6,
-    segOverridePm: [0, 0, 0, 0, 1000, 0, 0],
-  },
-  "still-air": { regenMe: 250, heatToEnergyPm: 250 },
+  "scrap-armor": { obstacleArmor: true, obstacleArmorExtraTicks: 6, regenMe: 15 },
+  "still-air": { regenMe: 14 },
   "talon-lock": {
     pulseCooldown: [0, 0, 20, 0, 0, 0, 0],
     activationBonusPm: { start: 0, middle: 0, final: 100, any: 0 },
+    pulseChainIndex: 2,
+    pulseChainBonusPm: 300,
+    segMultiplyPm: [1000, 1000, 1005, 1000, 1000, 1004, 1000],
   },
   "third-pulse": { pulseChainIndex: 3, pulseChainBonusPm: 200 },
 };
@@ -253,7 +252,7 @@ describe("the 11 content passives", () => {
       expect(compileTraits(content.getPassive(id).modifiers)).toEqual({ ...D, ...expected });
     });
 
-  it("segment passives act on the f table: no-climb-loss climb 1000, scrap-armor water 1000", () => {
+  it("segment passives act on the f table: no-climb-loss climb 1000, talon-lock canyon × 1.004", () => {
     const canyon = buildCourseGeometry(SPEC_RULESET, content.getCourse("desert-canyon"));
     const stats = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
     const none = compileRule(R, "none", "desert");
@@ -263,9 +262,9 @@ describe("the 11 content passives", () => {
     expect(Array.from(segmentFactors(R, canyon, { stats, traits: falke }, none))).toEqual([
       1000, 1000, 900, 1000, 1150, 800, 1000,
     ]);
-    const scrap = compileTraits(content.getPassive("scrap-armor").modifiers);
-    expect(Array.from(segmentFactors(R, canyon, { stats, traits: scrap }, none))).toEqual([
-      1000, 963, 900, 1000, 1150, 1000, 1000,
+    const talon = compileTraits(content.getPassive("talon-lock").modifiers);
+    expect(Array.from(segmentFactors(R, canyon, { stats, traits: talon }, none))).toEqual([
+      1000, 963, 903, 1000, 1154, 800, 1000,
     ]);
   });
 });
