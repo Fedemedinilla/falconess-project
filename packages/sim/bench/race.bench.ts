@@ -1,0 +1,88 @@
+import { loadContent } from "@falconess/content";
+import type { EntryInput, RaceEntry } from "@falconess/schema";
+import { expect, test } from "vitest";
+import { freezeEntry } from "../src/race/entry.js";
+import { buildCourseGeometry } from "../src/race/geometry.js";
+import { simulateRace } from "../src/race/index.js";
+import { createRaceArena } from "../src/race/state.js";
+import { RULESET_V1 } from "../src/rulesets/index.js";
+
+/**
+ * Race benchmark of docs/race-engine.md 22 and ROADMAP D13: eight mixed generic frames (every
+ * manufacturer rule, every style, two pulse frames), four actives each, on desert-canyon (3000 m)
+ * and desert-sprint (1200 m), with detail "full" and "results", one reused arena and a cached
+ * geometry as the batch runs it. Target: under 5 ms per 8-runner 3000 m race (ROADMAP D10/D13):
+ * the canyon "results" run fails if its p95 exceeds it. Run with `pnpm bench` (Vitest 5 benchmark
+ * fixture, native ES modules: see the `sim-bench` project in vitest.config.ts).
+ */
+
+const content = loadContent();
+const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
+const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
+const FIELD: [string, string[]][] = [
+  ["falke", ["corner-carver", "cool-head", "hill-lungs", "last-gasp"]],
+  ["erzherzog", ["canyon-sense", "clean-start", "hill-lungs", "pack-shadow"]],
+  ["sylphe", ["cool-head", "pack-shadow", "second-wind", "water-skimmer"]],
+  ["etoile", ["iron-wings", "last-gasp", "lead-guard", "second-wind"]],
+  ["shiden", ["canyon-sense", "clean-start", "cool-head", "water-skimmer"]],
+  ["hayate", ["canyon-sense", "hill-lungs", "iron-wings", "last-gasp"]],
+  ["nimbus", ["clean-start", "gravity-friend", "lead-guard", "pack-shadow"]],
+  ["horizon", ["clean-start", "gravity-friend", "last-gasp", "second-wind"]],
+];
+
+function field(courseId: string): RaceEntry[] {
+  const course = content.getCourse(courseId);
+  return FIELD.map(([frameId, learnedSkills], lane) => {
+    const input: EntryInput = {
+      runnerId: `bench-${lane}`,
+      kind: "rival",
+      falconessId: null,
+      baseStats: S600,
+      mood: 0,
+      biomeAptitude: B,
+      styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+      frameId,
+      parts: [],
+      quirks: [],
+      learnedSkills,
+      durability: null,
+    };
+    return freezeEntry(RULESET_V1, content, input, course, lane);
+  });
+}
+
+/** Budget of one 8-runner 3000 m race at p95, ms (docs/race-engine.md 22). */
+const BUDGET_MS = 5;
+
+/** p95 of the retained samples (tinybench reports p75 and p99 only); p99 if none were kept. */
+function p95(latency: { samples?: readonly number[] | undefined; p99: number }): number {
+  const s = latency.samples;
+  if (s === undefined || s.length === 0) return latency.p99;
+  const sorted = [...s].sort((a, b) => a - b);
+  return sorted[Math.ceil(sorted.length * 0.95) - 1] ?? latency.p99;
+}
+
+for (const courseId of ["desert-canyon", "desert-sprint"]) {
+  test(`8 runners, 4 actives each, ${courseId}`, async ({ bench }) => {
+    const course = content.getCourse(courseId);
+    const entries = field(courseId);
+    const geometry = buildCourseGeometry(RULESET_V1, course);
+    const arena = createRaceArena();
+    let k = 0;
+    const run = (detail: "full" | "results") => () => {
+      k += 1;
+      simulateRace(RULESET_V1, entries, course, `bench-${k}`, { detail, arena, geometry });
+    };
+    const opts = { time: 2000, warmupTime: 500 };
+    const results = await bench("detail results", run("results")).run(opts);
+    const full = await bench("detail full", run("full")).run(opts);
+    for (const [name, r] of [
+      ["results", results],
+      ["full", full],
+    ] as const)
+      console.log(
+        `${courseId} ${name}: mean ${r.latency.mean.toFixed(3)} ms, p50 ${r.latency.p50.toFixed(3)} ms, p95 ${p95(r.latency).toFixed(3)} ms, p99 ${r.latency.p99.toFixed(3)} ms`,
+      );
+    if (courseId === "desert-canyon") expect(p95(results.latency)).toBeLessThan(BUDGET_MS);
+  });
+}

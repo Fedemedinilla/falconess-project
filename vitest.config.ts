@@ -5,10 +5,29 @@ export default defineConfig({
     projects: [
       { test: { name: "rng", root: "packages/rng" } },
       { test: { name: "schema", root: "packages/schema" } },
-      { test: { name: "sim", root: "packages/sim" } },
+      { test: { name: "sim", root: "packages/sim", benchmark: { include: [] } } },
       { test: { name: "content", root: "packages/content" } },
       { test: { name: "cli", root: "apps/cli" } },
-      { test: { name: "repo", root: ".", include: ["tests/repo/**/*.test.ts"] } },
+      {
+        test: {
+          name: "repo",
+          root: ".",
+          include: ["tests/repo/**/*.test.ts"],
+          benchmark: { include: [] },
+        },
+      },
+      {
+        // `pnpm bench`: native ES modules (tsx loader) instead of Vite's module runner, whose
+        // export getters would dominate the timing of the race loop
+        test: {
+          name: "sim-bench",
+          root: "packages/sim",
+          include: [],
+          benchmark: { include: ["bench/**/*.bench.ts"], retainSamples: true },
+          experimental: { viteModuleRunner: false },
+          execArgv: ["--import", "tsx"],
+        },
+      },
     ],
   },
 });
