@@ -349,6 +349,14 @@ describe("freezeEntry details", () => {
       0,
     );
     expect(horizon.powerToWeight).toBe(1100);
+    // the cap is read from the ruleset passed in (3.1 step 1, 24.2 test rulesets), never from v1
+    const capped = { ...R, race: { ...R.race, telemetryPowerCap: 1050 } };
+    const input = inputFor("cernicala", "horizon", { parts: ["steinhaus-turbine"] });
+    expect(freezeEntry(capped, content, input, sprint, 0).powerToWeight).toBe(1050);
+    const falke = inputFor("cernicala", "falke", { parts: ["steinhaus-turbine"] });
+    expect(freezeEntry(capped, content, falke, sprint, 0).powerToWeight).toBe(
+      freezeEntry(R, content, falke, sprint, 0).powerToWeight,
+    ); // no telemetry rule, no cap
     const mule = freezeEntry(
       R,
       content,

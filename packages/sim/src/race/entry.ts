@@ -80,7 +80,13 @@ export function freezeEntry(
     throw new Error(`laneIndex ${laneIndex} outside 0..${lanes - 1}`);
 
   // 1. frame build (telemetry PW cap, power-cap, clamps)
-  const fb = resolveFrameBuild(content, input.frameId, input.parts, input.quirks);
+  const fb = resolveFrameBuild(
+    content,
+    input.frameId,
+    input.parts,
+    input.quirks,
+    ruleset.race.telemetryPowerCap,
+  );
   const frame = content.getFrame(input.frameId);
 
   // 2. effective stats: mood on all five, biome letter on agility, frame-style letter on intelligence

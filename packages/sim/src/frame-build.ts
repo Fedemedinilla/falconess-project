@@ -36,9 +36,6 @@ const LIMITS = {
   durability: [20, 260],
 } as const;
 
-/** PW cap of the telemetry rule, applied here so every consumer agrees (v1: 1100). */
-const TELEMETRY_PW_CAP = RULESET_V1.race.telemetryPowerCap;
-
 /** Frame values before parts and quirks; PW in per-mille, the rest in content units. */
 export type BuildBase = {
   readonly powerToWeight: number;
@@ -106,11 +103,17 @@ export function applyBuild(
   };
 }
 
+/**
+ * Resolve a frame with its parts and quirks. `telemetryPowerCap` is the PW cap of the telemetry
+ * rule (‰), applied here so every consumer agrees: `freezeEntry` passes its ruleset's
+ * `race.telemetryPowerCap` (3.1 step 1); the season's callers keep the v1 default (1100).
+ */
 export function resolveFrameBuild(
   content: ContentIndex,
   frameId: string,
   partIds: readonly string[],
   quirkIds: readonly string[],
+  telemetryPowerCap: number = RULESET_V1.race.telemetryPowerCap,
 ): FrameBuild {
   const frame = content.getFrame(frameId);
   const manufacturer = content.getManufacturer(frame.manufacturer);
@@ -124,7 +127,7 @@ export function resolveFrameBuild(
     frame.passive !== undefined ? content.getPassive(frame.passive).modifiers : [],
     partIds.map((id) => content.getPart(id)),
     quirkIds.map((id) => content.getQuirk(id)),
-    manufacturer.rule === "telemetry" ? TELEMETRY_PW_CAP : null,
+    manufacturer.rule === "telemetry" ? telemetryPowerCap : null,
   );
   return {
     frameId,
