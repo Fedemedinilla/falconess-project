@@ -15,6 +15,7 @@ import {
   F_DASH,
   F_EXHAUSTED,
   F_FINISHED,
+  F_PENDING_JUMP,
   type RaceArena,
 } from "./state.js";
 
@@ -502,6 +503,46 @@ describe("jumps (docs/race-engine.md 14)", () => {
       expect(at(rows, k).heat).toBe(Math.max(0, at(rows, k - 1).heat - 1000));
       expect(at(rows, k).hp).toBe(at(rows, k - 1).hp);
       expect(at(rows, k).energy).toBe(Math.min(30_000, at(rows, k - 1).energy + 250));
+    }
+  });
+
+  it("stalled ticks regenerate regenEff: × packRegenMultPm while in the middle pack (18 stalledTick)", () => {
+    // the spec prototype adds the bare regenTick on a stalled tick; spec 18 (regenEff) wins, and the
+    // differential harness patches the prototype to match (.work/impl/diff/proto.mjs)
+    const lead = fixture("hover", 0, { stats: { ...S600, agility: 1200 } });
+    const mid = withTraits(fixture("hover", 1, { stats: { ...S600, technique: 1 } }), {
+      regenMe: 250,
+      packRegenMultPm: 2000,
+    });
+    const tail = fixture("hover", 2, { powerToWeight: 500, stats: { ...S600, agility: 1 } });
+    const energy: number[] = [];
+    const posFrac: number[] = [];
+    let drained = false;
+    const log = simulateRaceProbed(
+      NO_BOOST,
+      [lead, mid, tail],
+      JUMP_COURSE,
+      "stall-pack",
+      (_t, A) => {
+        // the tick that enters the jump leaves the runner too little energy to lift (20 000 needed)
+        if (!drained && ((A.state.flags[1] ?? 0) & F_PENDING_JUMP) !== 0) {
+          A.state.energy[1] = 10_000;
+          drained = true;
+        }
+        energy.push(A.state.energy[1] ?? 0);
+        posFrac.push(A.state.posFrac[1] ?? 0);
+      },
+    );
+    const tf = at(events(log, "jumpFail", 1), 0).tick;
+    expect(
+      at(
+        log.results.filter((r) => r.lane === 1),
+        0,
+      ).ledger.stallTicks,
+    ).toBe(20);
+    for (let k = tf; k < tf + 20; k++) {
+      expect(at(posFrac, k)).toBe(500); // second of three: in the pack
+      expect(at(energy, k)).toBe(Math.min(100_000, at(energy, k - 1) + 500));
     }
   });
 
