@@ -67,3 +67,9 @@
   background: var(--bad);
   color: var(--surface);
 }
+
+/* the pill's own gap spaces its emoji */
+.pill .icon {
+  width: auto;
+  margin-inline-end: 0;
+}

@@ -53,6 +53,10 @@
     Barlow, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono:
     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* the emojis of ui/icons.ts: the system's color emoji font */
+  --font-emoji:
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color",
+    sans-serif;
   --fs-xs: 0.75rem;
   --fs-sm: 0.8125rem;
   --fs-md: 0.9375rem;

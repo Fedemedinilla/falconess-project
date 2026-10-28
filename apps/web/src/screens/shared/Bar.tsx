@@ -1,8 +1,12 @@
 import { cx } from "../../ui/cx";
+import { Icon } from "../../ui/Icon";
+import type { IconName } from "../../ui/icons";
 import s from "./Bar.module.css";
 
 export type BarProps = {
   label: string;
+  /** The concept emoji before the label (ui/icons.ts). */
+  icon?: IconName | undefined;
   /** The value as it is printed (already formatted). */
   value: string;
   /** Filled share of the track, 0–1. */
@@ -37,6 +41,7 @@ const pct = (x: number) => `${clamp01(x) * 100}%`;
  */
 export function Bar({
   label,
+  icon,
   value,
   fraction,
   ghost,
@@ -57,7 +62,10 @@ export function Bar({
         : undefined;
   return (
     <div className={cx(s.row, size === "sm" && s.sm)}>
-      <span className={s.label}>{label}</span>
+      <span className={s.label}>
+        {icon && <Icon name={icon} />}
+        {label}
+      </span>
       {meter && (
         <meter
           className="visually-hidden"

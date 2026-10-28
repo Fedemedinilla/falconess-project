@@ -3,12 +3,16 @@ import { ui } from "../text/ui";
 import { Button } from "./Button";
 import { cx } from "./cx";
 import s from "./Dialog.module.css";
+import { Icon } from "./Icon";
+import type { IconName } from "./icons";
 
 export type DialogProps = {
   open: boolean;
   /** Called on Esc, on the close button, and whenever the dialog closes itself. */
   onClose: () => void;
   title: string;
+  /** The concept of the dialog, drawn before the title (ui/icons.ts). */
+  icon?: IconName | undefined;
   /** The dialog's buttons, right-aligned under the content. */
   footer?: ReactNode;
   size?: "md" | "lg";
@@ -21,7 +25,16 @@ export type DialogProps = {
  * A modal built into the page (the published page cannot use alert/confirm/prompt): the native
  * <dialog> in modal mode, so focus stays inside and Esc closes it.
  */
-export function Dialog({ open, onClose, title, footer, size = "md", id, children }: DialogProps) {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  icon,
+  footer,
+  size = "md",
+  id,
+  children,
+}: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const headingId = useId();
 
@@ -44,6 +57,7 @@ export function Dialog({ open, onClose, title, footer, size = "md", id, children
     >
       <header className={s.head}>
         <h2 className={s.title} id={headingId}>
+          {icon && <Icon name={icon} size="lg" />}
           {title}
         </h2>
         <Button id={id ? `${id}-cerrar` : undefined} variant="ghost" size="sm" onClick={onClose}>

@@ -1,11 +1,15 @@
 import type { CSSProperties } from "react";
 import { cx } from "./cx";
+import { Icon } from "./Icon";
+import type { IconName } from "./icons";
 import s from "./SeasonStrip.module.css";
 
 export type SeasonMark = {
   readonly turn: number;
   /** Shown under the mark ("T12"). */
   readonly label: string;
+  /** Its emoji before the label: a goal race, a medal (ui/icons.ts). */
+  readonly icon?: IconName | undefined;
 };
 
 export type SeasonStripProps = {
@@ -42,6 +46,7 @@ export function SeasonStrip({ turns, marks, current, label }: SeasonStripProps) 
       <div className={s.labels} style={columns} aria-hidden="true">
         {marks.map((m) => (
           <span key={m.turn} className={s.label} style={{ gridColumn: `${m.turn}` }}>
+            {m.icon && <Icon name={m.icon} className={s.icon} />}
             {m.label}
           </span>
         ))}

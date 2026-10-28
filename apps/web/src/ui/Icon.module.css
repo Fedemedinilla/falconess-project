@@ -1,0 +1,32 @@
+/*
+ * An emoji next to a label: the system's color emoji font, one fixed width (labels in a column
+ * stay aligned), never uppercased, spaced or bolded by the label it sits in.
+ */
+.icon {
+  display: inline-block;
+  flex: none;
+  width: 1.3em;
+  margin-inline-end: 0.2em;
+  font-family: var(--font-emoji);
+  font-size: 1em;
+  font-style: normal;
+  font-weight: 400;
+  font-variant-emoji: emoji;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+  text-transform: none;
+  text-decoration: none;
+  vertical-align: -0.08em;
+}
+
+.lg {
+  font-size: 1.3em;
+  vertical-align: -0.12em;
+}
+
+.with {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+}
