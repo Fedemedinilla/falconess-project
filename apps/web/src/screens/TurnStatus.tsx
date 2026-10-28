@@ -68,6 +68,7 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
               label={ui("ui.turn.fatigue")}
               value={formatInt(state.fatigue)}
               fraction={state.fatigue / S.fatigueMax}
+              meter={{ value: state.fatigue, max: S.fatigueMax }}
               ghost={
                 fatigueTo === undefined ? undefined : (fatigueTo - state.fatigue) / S.fatigueMax
               }

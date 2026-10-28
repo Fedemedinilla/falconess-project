@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
+import type { GameError } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
@@ -10,26 +11,35 @@ export type LoadDialogProps = { open: boolean; onClose: () => void };
 
 /** "Cargar partida": paste a run (save JSON or the `replay:` line of `pnpm play`) and replay it. */
 export function LoadDialog({ open, onClose }: LoadDialogProps) {
-  const { game, snap } = useGame();
+  const { game } = useGame();
   const [text, setText] = useState("");
+  // what the last attempt could not load: shown here, not in the page's banner behind the modal
+  const [error, setError] = useState<GameError | undefined>();
 
   useEffect(() => {
-    if (open) game.clearError();
+    if (open) {
+      game.clearError();
+      setError(undefined);
+    }
   }, [open, game]);
 
   const close = () => {
-    game.clearError();
+    setError(undefined);
     onClose();
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!game.loadText(text)) return;
+    if (!game.loadText(text)) {
+      setError(game.getSnapshot().error);
+      game.clearError();
+      return;
+    }
     setText("");
+    setError(undefined);
     onClose();
     const ended = game.getSnapshot().run?.state.status === "ended";
     navigate(ended ? "fin" : "temporada");
   };
-  const error = snap.error?.kind.startsWith("load-") ? snap.error : undefined;
 
   return (
     <Dialog open={open} onClose={close} title={ui("ui.load.title")} id="cargar-dialogo">

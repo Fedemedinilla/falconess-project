@@ -21,6 +21,11 @@ export type BarProps = {
   /** Tone of `after`. */
   afterTone?: "up" | "down" | "muted" | undefined;
   size?: "sm" | "md";
+  /**
+   * The raw value on its scale, for assistive technology: a hidden `<meter>` named by `label`
+   * (fatigue on the Turn screen). Without it the bar is only drawn.
+   */
+  meter?: { value: number; max: number } | undefined;
 };
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
@@ -40,6 +45,7 @@ export function Bar({
   after,
   afterTone = "muted",
   size = "md",
+  meter,
 }: BarProps) {
   const fill = clamp01(fraction);
   const g = ghost ?? 0;
@@ -52,6 +58,15 @@ export function Bar({
   return (
     <div className={cx(s.row, size === "sm" && s.sm)}>
       <span className={s.label}>{label}</span>
+      {meter && (
+        <meter
+          className="visually-hidden"
+          min={0}
+          max={meter.max}
+          value={meter.value}
+          aria-label={label}
+        />
+      )}
       <span
         className={s.track}
         aria-hidden="true"
