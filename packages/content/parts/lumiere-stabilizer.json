@@ -7,7 +7,7 @@
   "modifiers": [
     {
       "kind": "curves-penalty-scale",
-      "scale": 0.5
+      "scale": 0.97
     }
   ]
 }

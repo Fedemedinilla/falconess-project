@@ -86,7 +86,7 @@ Efectos en métricas de otros dueños (informados, no ajustados):
   1,000 / 1,013 → 1,239 / 1,041 / 1,013), por los términos de ráfaga; cernícala 0,141 / 0,115 /
   0,128 → 0,099 / 0,111 / 0,141 (alt1 0,124 / 0,136 / 0,145 → 0,107 / 0,124 / 0,163), por los de
   telemetría; caracara en el cañón 0,215 → 0,210 (alt1 0,163 → 0,176).
-- Métrica 7 (sigue 0/0/3): caracara 31,7 → 28,3 % (alt1 40,0 → 36,7 %), cernícala 11,7 → 28,3 %
+- Métrica 7 (sigue 0/3/0): caracara 31,7 → 28,3 % (alt1 40,0 → 36,7 %), cernícala 11,7 → 28,3 %
   (alt1 6,7 → 28,3 %), peregrina 30,0 → 36,7 % (alt1 21,7 → 36,7 %).
 - Métricas 1, 4, 6 y 8: sin cambio (idénticas bit a bit).
 
@@ -97,3 +97,63 @@ especificación (`.work/proto/proto2/table.mjs`, que reproduce las otras 42 fila
 ancla de monotonía (976 y 524 pares en vez de 977 y 523; `mono.mjs`) y la energía de mule con
 `cheap-fuel` en `stats.test.ts` (115 → 155). `docs/formulas.md` lleva los valores nuevos. Los golden
 v1 cambian y los regenera el líder.
+
+### Cambios aceptados (métrica 5)
+
+En un campo igualado de ocho con σ de 1,07-1,42 %, 3 puntos de tasa de victoria son ≈ 0,15-0,2 % del
+tiempo, 2-3 m (R18). Las turbinas ya caben por la compresión del PW y no cambian. El resto de las
+piezas se reduce hasta que la mayor ganancia de la portadora quede bajo 3 puntos con su intervalo
+también en `full`. Las dos baterías se escalan por el mismo factor (≈ 0,3), así la de Boneyard sigue
+dando más energía a cambio de durabilidad. El estabilizador toma el valor de §25.3 (≈ 0,97).
+
+| Pieza                | Antes                      | Después    | v1 sprint / ridge / cañón (puntos) | Después`pr`     | Después`pr` alt1 | `full` peor celda (Δ victorias, 95 %) | `full` alt1       |
+| -------------------- | -------------------------- | ---------- | ---------------------------------- | --------------- | ---------------- | ------------------------------------- | ----------------- |
+| `lumiere-stabilizer` | `curves-penalty-scale` 0,5 | 0,97       | **51,4** / 0 / 0                   | 2,3 / 0 / 0     | 2,3 / 0 / 0      | sprint 1,73 [1,07; 2,39]              | 2,07 [1,35; 2,79] |
+| `altair-battery`     | energy +20                 | +6         | **4,9** / 2,7 / 1,5                | 1,3 / 0,8 / 0,4 | 1,2 / 0,8 / 0,4  | sprint 1,13 [0,60; 1,67]              | 1,33 [0,75; 1,91] |
+| `boneyard-battery`   | energy +25, durability −10 | +8, −10    | **5,9** / **4,3** / 1,8            | 1,8 / 1,1 / 0,6 | 1,8 / 1,1 / 0,6  | sprint 1,87 [1,16; 2,58]              | 2,07 [1,32; 2,81] |
+| `steinhaus-turbine`  | PW +0,1, dissipation −10   | sin cambio | **87,5** / **87,1** / **87,5**     | 0,5 / 0,3 / 0,3 | 0,4 / 0,2 / 0,3  | sprint 0,40 [0,03; 0,77]              | 0,60 [0,21; 0,99] |
+| `lumiere-turbine`    | PW +0,05, dissipation +10  | sin cambio | **76,8** / **74,2** / **79,2**     | 0,4 / 0,1 / 0,4 | 0,3 / 0,1 / 0,2  | sprint 0,53 [0,16; 0,90]              | 0,87 [0,40; 1,34] |
+
+Métrica 5: `pr` **fail** (14/10/0) → **pass** (24/0/0) en las dos bases de semillas; `full` (S5 con
+1500 semillas por celda, Δ de victorias medido directo) pasa en las dos (cota alta máxima 2,81
+puntos). `koryu-firmware` (1,0-1,1), `altair-firmware` y `steinhaus-stabilizer` (0) no cambian. Las
+demás métricas quedan idénticas al cambio de la métrica 2 (S3 y S7 no llevan piezas). Tests del
+mismo cambio: `stats.test.ts` (falke con `altair-battery`: energía 140 → 126) y `fixtures.test.ts`
+(`curvesScalePm` 500 → 970; `boneyard-battery`: energía 125 → 108). Las baterías quedan medidas con
+`kE` 1000: si una pasada posterior baja `kE` (juego de energía, §25.3 paso 2) valen 2-4 veces más y
+hay que volver a medirlas (R18).
+
+### Propuestas para el dueño
+
+Estado: **propuesto**. Medido con el arnés del lote en proceso (mismas semillas y conteo que
+`sim:batch`, perfil `full`, 600 carreras por pista).
+
+1. **Boneyard en el ridge queda inconclusa en `full`** (33,0-33,7 %, cota baja 29,4-30,0 %). El
+   término de Boneyard ya está en su tope (`repairableRuggedPm` 0) y su energía en el tope del
+   brief (140). El ridge sostiene dos casas (Kōryū por desierto, Boneyard por obstáculos) y los tres
+   rellenos neutros se llevan ≈ 21 % y Steinhaus ≈ 8 %, así que cada casa queda en 33-37 %. El PW
+   solo traslada puntos entre las dos: con `pwCruiseWeight` 0 Boneyard sube a 36,8 / 39,2 % y pasa,
+   pero Kōryū baja a 31,3 % en el ridge y a 32,3-33,7 % en el sprint (inconclusas). Opciones:
+   (a) objetivo: medir una casa como «≥ 30 %» (o ≥ 2,4 veces la cuota justa) sin techo propio cuando
+   la pista es casa de dos fabricantes; (b) código: un término de Boneyard dentro de su mecanismo
+   con efecto de tiempo (que la reparación en `flat` devuelva velocidad perdida, por ejemplo);
+   (c) contenido: una pista v1 de obstáculos que no sea desierto, para que la casa de Boneyard no
+   comparta pista con la de Kōryū.
+2. **La casa de Kōryū en el ridge la hacen sus bastidores, no su regla.** Con PW igual Kōryū gana
+   el 13-14 % del ridge; con los bastidores reales, el 34-35 % (hayate es ground en la pista de
+   obstáculos; shiden, un dive con picada en los descensos). El aire de descenso tiene que ser
+   ×2,5 porque el plan no lee `airPm` (R13): con 1200 Kōryū cae al 26,2 % del ridge y falla. Opción
+   de código: que el plan o el controlador pesen las ráfagas por `airPm` (gastar en los descensos),
+   con lo que un factor de descenso de ≈ 1,2-1,5 haría la casilla desde la regla.
+3. **El PW casi no mueve el crucero** (±0,2 % entre 0,7 y 1,4). BRIEF §5 dice que el PW «escala
+   crucero y aceleración». Con `kE` 1000 la energía vale ≈ 0,2 m por unidad, así que ningún
+   presupuesto de bastidor paga un PW literal. Si el dueño quiere niveles de PW que se noten:
+   (a) el juego de energía (`kE` ↓, §25.3 paso 2) y un re-presupuesto de bastidores donde energía y
+   disipación paguen el PW (mueve las métricas 1, 3, 4 y 6, de otros dueños); (b) dejarlo así: el PW
+   es potencia de boost (empuje ×0,925-1,10).
+4. **Las piezas dentro de 3 puntos valen 2-3 m o menos** (baterías +6 / +8, estabilizador −3 % de
+   la penalización de curvas, turbinas ≈ 0,4 m). Si el dueño quiere piezas que se sientan:
+   (a) objetivo: subir el tope de la métrica 5 con un ADR (por ejemplo 5 puntos); (b) código: una
+   perilla de peso de PW propia de las piezas (§25.3), para dimensionar turbinas sin tocar los
+   bastidores; (c) contenido: piezas de compromiso que ganen en un tipo de pista y pierdan en otro
+   (la métrica 5 sigue limitando la mejor pista).

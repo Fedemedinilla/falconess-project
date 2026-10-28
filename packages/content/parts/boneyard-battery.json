@@ -5,7 +5,7 @@
   "manufacturer": "boneyard",
   "textKey": "part.boneyard-battery",
   "mods": {
-    "energy": 25,
+    "energy": 8,
     "durability": -10
   }
 }

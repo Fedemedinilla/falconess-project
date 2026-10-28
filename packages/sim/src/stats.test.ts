@@ -98,7 +98,7 @@ describe("frame build (variety seam)", () => {
       [],
     );
     expect(b.powerToWeight).toBe(1100);
-    expect(b.energy).toBe(140);
+    expect(b.energy).toBe(126);
     expect(b.dissipation).toBe(35);
     expect(b.skillSlots).toBe(1);
     expect(b.modifiers.map((m) => m.kind)).toEqual(["segment-factor", "curves-penalty-scale"]);

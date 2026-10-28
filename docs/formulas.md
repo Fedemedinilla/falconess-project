@@ -325,8 +325,8 @@ y el mismo conteo. Métrica 3: S3 en 1 contra 1 pareado, las dos entradas de la 
 sin peculiaridades). Un veredicto por casilla (par, pista); «bioma casa» se lee como desierto en
 v1, porque no hay pistas urbanas ni de montaña (ADR-0003 D47). Métrica 5: los puntos de tasa de
 victoria que gana una corredora `δ` más rápida que las otras siete en un campo igualado con tiempos normales de σ relativa; 3 puntos ≈ `δ`
-0,155 % con σ 0,99 % y 0,185 % con σ 1,18 % (las piezas v1 valen mucho más: `docs/race-engine.md`
-R18). Métrica 7, literal: cuota de temporadas con `gradeFor ≥ B` ≥ 60 % por Falconess con la
+0,155 % con σ 0,99 % y 0,185 % con σ 1,18 % (las piezas del contenido inicial valían 5-87 puntos, `docs/race-engine.md`
+R18; ADR-0005 las deja en ≤ 2,3). Métrica 7, literal: cuota de temporadas con `gradeFor ≥ B` ≥ 60 % por Falconess con la
 política de la stat más baja, donde `seasonScore = total de stats + scorePerSkill × habilidades +
 scoreWinBonus × victorias + scorePodiumBonus × segundos y terceros puestos`, y B exige
 `seasonScore ≥ 2900` y ningún objetivo fallado (un fallo limita la nota a C). Constantes: `SEASON.gradeThresholds`, `scorePerSkill` 20, `scoreWinBonus` 50,

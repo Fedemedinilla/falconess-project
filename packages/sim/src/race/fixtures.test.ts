@@ -85,7 +85,7 @@ describe("neutralFixtureEntry (docs/race-engine.md 3.4)", () => {
       rule: "none",
     });
     expect(e.stats.intelligence).toBe(630);
-    expect(e.traits.curvesScalePm).toBe(500);
+    expect(e.traits.curvesScalePm).toBe(970);
     expect(RaceEntry.parse(e)).toEqual(e);
     const top = { ...stats, intelligence: 1990 };
     expect(
@@ -119,8 +119,8 @@ describe("fixtureBuild (3.4): parts and quirks on the neutral frame", () => {
     expect(fixtureBuild(content, ["steinhaus-turbine"], ["loose-rivets"]).powerToWeight).toBe(1200);
   });
 
-  it("lumiere-stabilizer: curvesScalePm 500", () => {
-    expect(fixtureBuild(content, ["lumiere-stabilizer"], []).traits.curvesScalePm).toBe(500);
+  it("lumiere-stabilizer: curvesScalePm 970", () => {
+    expect(fixtureBuild(content, ["lumiere-stabilizer"], []).traits.curvesScalePm).toBe(970);
   });
 
   it("koryu-firmware: statDelta.intelligence 30", () => {
@@ -139,7 +139,7 @@ describe("fixtureBuild (3.4): parts and quirks on the neutral frame", () => {
 
   it("batteries and quirk mods add with the frame-build arithmetic and clamps", () => {
     expect(fixtureBuild(content, ["boneyard-battery"], [])).toMatchObject({
-      energy: 125,
+      energy: 108,
       durabilityMax: 90,
     });
     expect(fixtureBuild(content, [], ["patched-tank", "heavy-paint"])).toMatchObject({

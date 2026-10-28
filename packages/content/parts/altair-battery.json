@@ -5,6 +5,6 @@
   "manufacturer": "altair",
   "textKey": "part.altair-battery",
   "mods": {
-    "energy": 20
+    "energy": 6
   }
 }
