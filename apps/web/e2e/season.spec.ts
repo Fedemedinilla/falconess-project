@@ -1,7 +1,15 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, t, test, textPattern } from "./fixtures";
-import { parsePlace, playerPlace, playReplayToEnd, playUntil, readTurn, startSeason } from "./play";
+import {
+  decide,
+  parsePlace,
+  playerPlace,
+  playReplayToEnd,
+  playUntil,
+  readTurn,
+  startSeason,
+} from "./play";
 
 /**
  * A whole season of each Falconess with a fixed seed, played by clicking: the T12 goal race is
@@ -59,9 +67,23 @@ for (const falconessId of FALCONESS) {
     );
     await expect(page.getByRole("heading", { name: t("ui.race.why.title") })).toBeVisible();
 
-    // back to the season, and on to its end
+    // back to the season; the goals panel opens the same race
     await page.click("#carrera-temporada");
     await expect(page).toHaveURL(/#temporada$/);
+    const back = await readTurn(page);
+    let answered = 0;
+    if (back.eventOpen) {
+      await decide(page, "#evento-opcion-0", back.inputs);
+      answered = 1;
+    }
+    await page.click("#metas-ver-12");
+    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: 12 }))).toBeVisible();
+    await page.click("#carrera-meta");
+    expect(await playerPlace(page)).toBe(recorded.place);
+    await page.click("#carrera-temporada");
+    await expect(page).toHaveURL(/#temporada$/);
+
+    // on to the season's end
     const t1 = Date.now();
     const toEnd = await playUntil(page, () => false, times);
     const toEndMs = Date.now() - t1;
@@ -80,7 +102,7 @@ for (const falconessId of FALCONESS) {
     await page.click("#carrera-temporada");
     await expect(page).toHaveURL(/#fin$/);
 
-    const decisions = toRace + toEnd;
+    const decisions = toRace + answered + toEnd;
     const seasonMs = toRaceMs + toEndMs;
     const timing = {
       falconessId,
