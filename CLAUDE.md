@@ -37,7 +37,7 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 - Ids de contenido en kebab-case. Un archivo JSON por entidad (quirks.json y gacha.json son la excepción).
 - Fórmulas documentadas en docs/formulas.md con intención y rango esperado antes de implementarlas.
 - Commits: feat/fix/balance/content/docs + alcance (`balance(race): reduce k_boost to 2.8`).
-- Multiplicadores en per-mille (1000 = ×1.0). Distancias y velocidades ×1000 dentro del motor.
+- Multiplicadores en per-mille (1000 = ×1.0). Unidades públicas ×1000 (1 m = 1000, 1 m/s = 1000) en constantes, log y docs; dentro del motor de carrera, posición en pu = 1/225 mm y velocidad en vu = 1/15 mm/s (ADR-0003 D1).
 
 ## Comandos
 

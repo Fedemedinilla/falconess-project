@@ -1,9 +1,8 @@
 # ADR-0003: Fijar las interpretaciones y los huecos del motor de carrera v1
 
-- Estado: propuesto. **Bloquea D8**: ningún código del motor entra hasta que el dueño del proyecto
-  lo acepte **entero** (D1-D49; la revisión 3 elimina la aceptación parcial). Si el dueño rechaza
-  un punto, el editor de la especificación lo revisa y el ADR vuelve a aceptarse entero antes de
-  D8; no existe un subconjunto aceptado. Ver la puerta G1 de `docs/race-engine.md` §0.2.
+- Estado: **aceptado** entero (D1-D49) por el dueño del proyecto el 2026-10-28, sin puntos
+  excluidos. Los términos de estilo (D44) y de regla (D45) quedan como constantes iniciales que la
+  pasada de balance mide; cualquiera se neutraliza con su constante en 1000.
 - Fecha: 2026-10-28 (revisión 4 tras la tercera ronda de críticos; revisión 3 tras la segunda;
   revisión 2: 2026-10-27)
 - Alcance: sim, schema (`RaceRule`, D42; `RaceSkill.disabled`, D49), lote de balance (D48)
