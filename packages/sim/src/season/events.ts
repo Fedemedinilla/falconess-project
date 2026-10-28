@@ -36,7 +36,15 @@ function conditionsMet(d: Draft, e: GameEvent): boolean {
   return e.conditions.requires.every((r) => (d.eventHistory[r] ?? 0) > 0);
 }
 
-/** Events eligible this turn, sorted by id for a stable draw order. */
+/** Whether the event exists in the run's ruleset (ADR-0006 D8): no `rulesets` = every ruleset. */
+function inRuleset(d: Draft, e: GameEvent): boolean {
+  return e.rulesets === undefined || e.rulesets.includes(d.rulesetVersion);
+}
+
+/**
+ * Events eligible this turn, sorted by id for a stable draw order. Events limited to other
+ * rulesets are left out before any draw, so they never shift an older run's draws.
+ */
 export function eligibleEvents(
   ctx: SimContext,
   d: Draft,
@@ -44,7 +52,7 @@ export function eligibleEvents(
   const story: GameEvent[] = [];
   const weighted: GameEvent[] = [];
   for (const e of [...ctx.content.events.values()].sort((a, b) => (a.id < b.id ? -1 : 1))) {
-    if (!sourceMatches(ctx, d, e) || !conditionsMet(d, e)) continue;
+    if (!inRuleset(d, e) || !sourceMatches(ctx, d, e) || !conditionsMet(d, e)) continue;
     if (e.weight === null) {
       if (e.fixedTurn === d.turn) story.push(e);
     } else weighted.push(e);
@@ -52,22 +60,26 @@ export function eligibleEvents(
   return { story, weighted };
 }
 
-/** Pick at most one event for this turn. Story events always fire; weighted ones roll `eventChance`. */
+/**
+ * Pick at most one event for this turn. Story events always fire; weighted ones roll
+ * `eventChance`. A chosen event waits for `event:choose`; an `auto` event (ADR-0006 D8) is applied
+ * right here, in the same input, its chance branch drawn on stream `events` after the pick.
+ */
 export function rollEvent(ctx: SimContext, d: Draft, rng: Rng): void {
   const { story, weighted } = eligibleEvents(ctx, d);
-  const first = story[0];
-  if (first) {
-    d.pendingEvent = { eventId: first.id, turn: d.turn };
-    return;
+  let chosen = story[0];
+  if (!chosen) {
+    if (weighted.length === 0) return;
+    if (!rng.chancePermille("events", ctx.ruleset.season.eventChance)) return;
+    const i = rng.pickWeighted(
+      "events",
+      weighted.map((e) => e.weight ?? 0),
+    );
+    chosen = weighted[i];
   }
-  if (weighted.length === 0) return;
-  if (!rng.chancePermille("events", ctx.ruleset.season.eventChance)) return;
-  const i = rng.pickWeighted(
-    "events",
-    weighted.map((e) => e.weight ?? 0),
-  );
-  const chosen = weighted[i];
-  if (chosen) d.pendingEvent = { eventId: chosen.id, turn: d.turn };
+  if (!chosen) return;
+  if (chosen.auto) applyEventOption(ctx, d, chosen, 0, rng);
+  else d.pendingEvent = { eventId: chosen.id, turn: d.turn };
 }
 
 /**
@@ -107,8 +119,8 @@ export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void 
 
 /**
  * Apply one option of an event: its effects, then a chance branch drawn on stream `events`; count
- * it in `eventHistory` and log it (ADR-0006 D7): the event's text, the branch's text if it has
- * one, the net mood and vigor causes, and `event`.
+ * it in `eventHistory` and log it (ADR-0006 D7, D8): the event's text, for an auto event the
+ * option's text, the branch's text if it has one, the net mood and vigor causes, and `event`.
  */
 function applyEventOption(
   ctx: SimContext,
@@ -135,6 +147,7 @@ function applyEventOption(
   }
   d.eventHistory[e.id] = (d.eventHistory[e.id] ?? 0) + 1;
   note(d, e.textKey);
+  if (e.auto) note(d, opt.textKey);
   if (branchText !== undefined) note(d, branchText);
   if (d.mood !== mood) note(d, d.mood > mood ? "log.mood.event.up" : "log.mood.event.down");
   if (d.fatigue !== fatigue)
@@ -143,6 +156,7 @@ function applyEventOption(
     id: e.id,
     option: optionIndex,
     ...(branchIndex === undefined ? {} : { branch: branchIndex }),
+    ...(e.auto ? { auto: true as const } : {}),
   });
 }
 
