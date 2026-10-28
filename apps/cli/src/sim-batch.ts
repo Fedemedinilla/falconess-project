@@ -5,7 +5,7 @@
  *
  * The balance batch of BRIEF §12 with the scenarios, run budget and verdicts of
  * docs/race-engine.md §25.2 (ADR-0003 D40, D47, D48, D49). The race engine sits behind the port
- * of `batch/engine-port.ts`; until it lands the real adapter exits with code 2.
+ * of `batch/engine-port.ts`, bound to `@falconess/sim` by `batch/engine-adapter.ts`.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -13,7 +13,6 @@ import { loadContent } from "@falconess/content";
 import { BalanceReport } from "@falconess/schema";
 import { RULESET_V1 } from "@falconess/sim";
 import { type BaselineDiff, diffReports, renderDiffMarkdown } from "./batch/baseline.js";
-import { EngineUnavailableError } from "./batch/engine-adapter.js";
 import { parseBatchArgs, USAGE, UsageError } from "./batch/options.js";
 import { PlanError } from "./batch/plan.js";
 import { createPort } from "./batch/pool.js";
@@ -48,16 +47,7 @@ async function main(argv: readonly string[]): Promise<number> {
     return 0;
   }
 
-  let engineId: string;
-  try {
-    engineId = createPort(opts.engine).engineId;
-  } catch (e) {
-    if (e instanceof EngineUnavailableError) {
-      console.error(`sim:batch: ${e.message}`);
-      return 2;
-    }
-    throw e;
-  }
+  const engineId = createPort(opts.engine).engineId;
 
   let report: BalanceReport;
   try {

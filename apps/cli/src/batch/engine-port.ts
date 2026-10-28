@@ -3,28 +3,21 @@
  * that `sim:batch` calls, with the same names and signatures. `engine-adapter.ts` binds them to
  * `@falconess/sim`; tests bind them to the deterministic fake of `fake-engine.ts`.
  */
-import type { ContentIndex, Course, Slug, Style } from "@falconess/schema";
-import type { Ruleset } from "@falconess/sim";
+import type { ContentIndex, Course, Slug } from "@falconess/schema";
+import type { neutralFixtureEntry, Ruleset } from "@falconess/sim";
 import type {
+  BatchRaceLog,
   CourseGeometry,
   EntryInput,
   FixtureBuild,
   RaceArena,
   RaceEntry,
-  RaceLog,
   RaceSkill,
-  RaceStats,
   SimulateOptions,
 } from "./engine-types.js";
 
-export type NeutralFixtureArgs = {
-  runnerId: string;
-  laneIndex: number;
-  style: Style;
-  stats: RaceStats;
-  skills?: readonly RaceSkill[];
-  build?: FixtureBuild;
-};
+/** §3.4 / §23 `neutralFixtureEntry` arguments. */
+export type NeutralFixtureArgs = Parameters<typeof neutralFixtureEntry>[0];
 
 export type GenerateFieldArgs = {
   course: Course;
@@ -48,14 +41,17 @@ export type RaceEnginePort = {
   ): RaceEntry;
   /** §21.1: the goal-race field. S7 reaches it through the season engine (`goalRaceSetup`). */
   generateField(ruleset: Ruleset, content: ContentIndex, args: GenerateFieldArgs): RaceEntry[];
-  /** §23: always called with `detail: "results"`, the worker's arena and the cached geometry. */
+  /**
+   * §23: always called with `detail: "results"`, the worker's arena and the cached geometry. The
+   * real engine returns a whole `RaceLog`; the batch reads only the fields of `BatchRaceLog`.
+   */
   simulateRace(
     ruleset: Ruleset,
     entries: readonly RaceEntry[],
     course: Course,
     seed: string,
     opts?: SimulateOptions,
-  ): RaceLog;
+  ): BatchRaceLog;
   /** §22: one arena per worker, reused for every race. */
   createRaceArena(): RaceArena;
   /** §3.2: S4 gives every runner the skill (uniques too: no `uniqueTo` check). */

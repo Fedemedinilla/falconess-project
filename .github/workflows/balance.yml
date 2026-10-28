@@ -9,8 +9,7 @@
 # - Report only: metric verdicts never fail the job. Set the repository variable
 #   BALANCE_GATE=enforce to apply §25.2.1's blocking rule (a fail, or a fail in the last
 #   `balance-full` of main, fails the PR job) once the D14 balance pass lands.
-# - Until the race engine is wired into apps/cli/src/batch/engine-adapter.ts the batch exits with
-#   code 2 and the job reports "skipped" without failing.
+# - Any DNF exits 1 and fails the job: it is an engine bug (§19), not balance.
 name: balance
 
 on:
@@ -94,7 +93,6 @@ jobs:
         env:
           BALANCE_GATE: ${{ vars.BALANCE_GATE }}
         run: |
-          set +e
           args=(--runs 10000 --report out/balance.json --markdown out/balance.md)
           if [ -f out/baseline/balance.json ]; then args+=(--baseline out/baseline/balance.json); fi
           if [ "$BALANCE_GATE" = "enforce" ]; then
@@ -102,16 +100,6 @@ jobs:
             if [ -f out/full/balance.json ]; then args+=(--gate-report out/full/balance.json); fi
           fi
           pnpm sim:batch -- "${args[@]}"
-          code=$?
-          if [ "$code" -eq 2 ]; then
-            {
-              echo "## Balance report: skipped"
-              echo
-              echo "The race engine is not wired into \`apps/cli/src/batch/engine-adapter.ts\` yet."
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          exit "$code"
 
       - name: Job summary
         if: always() && hashFiles('out/balance.md') != ''
@@ -163,15 +151,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Run the full balance batch
-        run: |
-          set +e
-          pnpm sim:batch -- --profile full --report out/balance.json --markdown out/balance.md
-          code=$?
-          if [ "$code" -eq 2 ]; then
-            echo "## Balance report (full): skipped, race engine not wired yet" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          exit "$code"
+        run: pnpm sim:batch -- --profile full --report out/balance.json --markdown out/balance.md
 
       - name: Job summary
         if: always() && hashFiles('out/balance.md') != ''

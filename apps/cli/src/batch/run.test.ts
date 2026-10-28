@@ -28,9 +28,65 @@ function withoutTiming(r: BalanceReport): unknown {
 }
 
 describe("engine adapter", () => {
-  it("refuses to run until the race engine is wired", () => {
-    expect(() => createEngineAdapter()).toThrow(EngineUnavailableError);
-    expect(() => createEngineAdapter()).toThrow(/race engine not available yet/);
+  it("binds the real engine; generateField throws until @falconess/sim exports it", () => {
+    const port = createEngineAdapter();
+    expect(port.engineId).toBe("v1");
+    const course = content.getCourse("desert-sprint");
+    expect(() =>
+      port.generateField(RULESET_V1, content, {
+        course,
+        turn: 1,
+        raceSeed: "s",
+        player: {
+          runnerId: "player",
+          kind: "player",
+          falconessId: "peregrina",
+          baseStats: { agility: 1, stamina: 1, technique: 1, courage: 1, intelligence: 1 },
+          mood: 0,
+          biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
+          styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+          frameId: "peregrina-signature",
+          parts: [],
+          quirks: [],
+          learnedSkills: [],
+          durability: null,
+        },
+      }),
+    ).toThrow(EngineUnavailableError);
+  });
+
+  it("runs one job of every race scenario on the real engine without a DNF", () => {
+    const ctx = createExecContext(createEngineAdapter(), RULESET_V1, content, catalog);
+    const jobs = [
+      { id: 0, scenario: "S1", course: "desert-canyon", k: 0, seed: "r/s1" },
+      { id: 1, scenario: "S2", variant: "real", course: "desert-ridge", k: 0, seed: "r/s2" },
+      { id: 2, scenario: "S2", variant: "equal-pw", course: "desert-ridge", k: 0, seed: "r/s2e" },
+      { id: 3, scenario: "S3", pair: "cernicala", course: "desert-sprint", k: 0, seed: "r/s3" },
+      {
+        id: 4,
+        scenario: "S4",
+        skill: "water-skimmer",
+        course: "desert-canyon",
+        k: 0,
+        seed: "r/s4",
+      },
+      {
+        id: 5,
+        scenario: "S5",
+        part: "boneyard-battery",
+        course: "desert-sprint",
+        k: 3,
+        seed: "r/s5",
+      },
+      { id: 6, scenario: "S8", style: "glide", course: "desert-ridge", k: 5, seed: "r/s8" },
+    ] as const;
+    for (const job of jobs) {
+      const r = runJob(ctx, job);
+      expect(r.dnf).toBe(0);
+      expect(r.races.length).toBeGreaterThan(0);
+      for (const race of r.races) expect(race.finish.every((t) => t !== null && t > 0)).toBe(true);
+    }
+    expect(ctx.timing.races).toBe(1 + 1 + 1 + 2 + 2 + 2 + 5);
   });
 });
 

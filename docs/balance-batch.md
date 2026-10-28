@@ -14,7 +14,7 @@ pnpm sim:batch -- --engine fake --fake-cost-ms 5        # time the 60-s budget w
 ```
 
 Exit codes: 0 done, 1 verdict fail with `--fail-on-verdict` (or a fail in `--gate-report`) or any
-DNF (an engine bug, §19), 2 race engine not wired yet, 64 usage error.
+DNF (an engine bug, §19), 64 usage error.
 
 ## Engine port
 
@@ -33,10 +33,14 @@ The batch never imports the race engine directly. `batch/engine-port.ts` declare
 | `disableSkill(entry, skillId)`                       | S4 "off" runs                                                                      |
 | `generateField(ruleset, content, args)`              | not called by the batch: S7 reaches it through the season engine (`goalRaceSetup`) |
 
-`batch/engine-types.ts` holds temporary structural copies of the race types (§3, §20); the
-adapter (`batch/engine-adapter.ts`) shows the wiring to `@falconess/sim` and throws until then.
-`batch/fake-engine.ts` is a deterministic integer stand-in used by the tests (draws depend on
-`(seed, lane)` only, like §17.1, so paired ablations line up).
+`batch/engine-types.ts` re-exports the race types of `@falconess/schema` (§3, §20) and the
+internal `RaceArena`, `CourseGeometry`, `FixtureBuild` and `SimulateOptions` of `@falconess/sim`;
+the port's `simulateRace` returns `BatchRaceLog`, the fields of a `RaceLog` the batch reads. The
+adapter (`batch/engine-adapter.ts`) binds the nine operations to `@falconess/sim`; `generateField`
+is a stub that throws until the engine exports it (the batch never calls it).
+`batch/fake-engine.ts` keeps a deterministic integer stand-in for `simulateRace` for the tests
+(draws depend on `(seed, lane)` only, like §17.1, so paired ablations line up); its content side
+is the real engine's.
 
 ## Scenarios, as implemented
 
@@ -70,7 +74,9 @@ same rule combines metrics into the report verdict.
 Performance: `--engine fake --fake-cost-ms 5` busy-waits 5 ms per 8-runner race (scaled by runners
 / 8), the engine budget of §22. On the dev container (4 cores) the 10 000-race `pr` batch took
 37.0 s wall in process (36.5 s inside the engine) and 13.7 s with the default 3 workers: the batch
-itself adds well under 1 s.
+itself adds well under 1 s. With the real engine (v1) the same batch takes 14.0 s wall in process
+(1.46 ms per race) and 5.8 s with 3 workers (1.58 ms per race); `--runs 2000` takes 2.8 s in
+process and 3.7 s with 3 workers, where booting the workers costs more than it saves.
 
 Workers: jobs carry their own seed and results are merged by job index, so the report is identical
 for any `--workers` (only `metadata.timing` differs). Workers start through `batch/worker-boot.mjs`,
@@ -93,5 +99,4 @@ which registers tsx (the parent's TypeScript loader does not reach worker thread
 - **Gate:** report only for now; metric verdicts never fail the job. The repository variable
   `BALANCE_GATE=enforce` turns on §25.2.1's rule: `--fail-on-verdict`, plus `--gate-report` with
   the last `balance-full` of `main`, so a fail in either fails the PR job.
-- Until the engine is wired the batch exits with code 2 and the job writes "skipped" to its
-  summary without failing.
+- Any DNF exits 1 and fails the job: it is an engine bug (§19), not balance.

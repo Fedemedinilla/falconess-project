@@ -1,30 +1,32 @@
 /**
- * Deterministic stand-in for the race engine, for tests and for exercising `sim:batch` before
- * the real engine lands (`--engine fake`; the report says `engine: "fake"`). It is NOT a model of
- * the race: finish time is an integer formula of the entry (stats, PW, energy, style and rule
- * terms per segment type, enabled skills whose segment exists) plus a pace offset drawn from
- * `(seed, laneIndex)` only, exactly like the real engine's pre-drawn block (§17.1), so paired
- * ablations line up draw for draw. Optional coarse rounding of `finishMilli` forces dead heats.
+ * Deterministic stand-in for the race, for the batch's unit tests and for timing the batch itself
+ * (`--engine fake`; the report says `engine: "fake"`). Only `simulateRace` (and `generateField`)
+ * are fake: the content side (`freezeEntry`, `freezeSkill`, `neutralFixtureEntry`, `fixtureBuild`,
+ * `disableSkill`, `buildCourseGeometry`, `createRaceArena`) is the real engine's, so the entries
+ * the batch builds are the real ones. `simulateRace` is NOT a model of the race: finish time is an
+ * integer formula of the entry (stats, PW, energy, style and rule terms per segment type, enabled
+ * skills whose segment exists) plus a pace offset drawn from `(seed, laneIndex)` only, exactly like
+ * the real engine's pre-drawn block (§17.1), so paired ablations line up draw for draw. Optional
+ * coarse rounding of `finishMilli` forces dead heats.
  */
-import { clamp, fnv1a32, Rng, toPermille, uPm, uRange } from "@falconess/rng";
+import { fnv1a32, Rng, uPm, uRange } from "@falconess/rng";
+import { type ContentIndex, type Course, courseLength, type SegmentType } from "@falconess/schema";
 import {
-  type ContentIndex,
-  type Course,
-  courseLength,
-  type RaceModifier,
-  type SegmentType,
-  type Slug,
-} from "@falconess/schema";
-import { effectiveStats, type Ruleset, resolveFrameBuild } from "@falconess/sim";
-import type { GenerateFieldArgs, NeutralFixtureArgs, RaceEnginePort } from "./engine-port.js";
+  buildCourseGeometry,
+  createRaceArena,
+  disableSkill,
+  fixtureBuild,
+  freezeEntry,
+  freezeSkill,
+  neutralFixtureEntry,
+  type Ruleset,
+} from "@falconess/sim";
+import type { GenerateFieldArgs, RaceEnginePort } from "./engine-port.js";
 import type {
-  EntryInput,
-  FixtureBuild,
+  BatchRaceLog,
+  BatchRaceResult,
   RaceEntry,
-  RaceLog,
-  RaceResult,
   RaceSkill,
-  RaceStats,
   SimulateOptions,
 } from "./engine-types.js";
 
@@ -35,7 +37,7 @@ export type FakeEngineOptions = {
   paceHalfWidthPm?: number;
   /**
    * Busy-wait this many ms per race, scaled by runners / 8 (default 0). Lets `sim:batch` be timed
-   * against the engine budget of §22 (≈ 5 ms per 8-runner race) before the engine exists.
+   * against the engine budget of §22 (≈ 5 ms per 8-runner race) without the real engine.
    */
   costMsPer8Runners?: number;
 };
@@ -157,7 +159,7 @@ function simulateRace(
   seed: string,
   opts: SimulateOptions | undefined,
   options: Required<FakeEngineOptions>,
-): RaceLog {
+): BatchRaceLog {
   validate(entries);
   if (options.costMsPer8Runners > 0) burn((options.costMsPer8Runners * entries.length) / 8);
   const byLane = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
@@ -179,12 +181,13 @@ function simulateRace(
     const ticks = Math.ceil(finishMilli / 1000);
     const start = Math.floor(ticks / 6);
     const middle = Math.floor(ticks / 2);
-    return { e, finishMilli, ticks, phaseTicks: [start, middle, ticks - start - middle] };
+    const phaseTicks: [number, number, number] = [start, middle, ticks - start - middle];
+    return { e, finishMilli, ticks, phaseTicks };
   });
   const ordered = [...rows].sort(
     (a, b) => a.finishMilli - b.finishMilli || a.e.laneIndex - b.e.laneIndex,
   );
-  const results: RaceResult[] = ordered.map((r, i) => ({
+  const results: BatchRaceResult[] = ordered.map((r, i) => ({
     lane: r.e.laneIndex,
     runnerId: r.e.runnerId,
     place: i + 1,
@@ -206,177 +209,6 @@ function simulateRace(
 
 /** Test hook: how many races each arena served (proves the batch reuses one per worker). */
 export const arenaUses = new WeakMap<object, number>();
-
-function freezeSkill(content: ContentIndex, id: Slug): RaceSkill {
-  const s = content.getSkill(id);
-  if (s.kind !== "active") throw new Error(`freezeSkill: ${id} is a passive`);
-  const t = s.trigger;
-  const pos = t.positionRange;
-  return {
-    id: s.id,
-    uniqueTo: s.uniqueTo ?? null,
-    activationBasePm: toPermille(s.activationBase),
-    trigger: {
-      phase: t.phase,
-      segment: t.segment ?? null,
-      posLoPm: pos ? toPermille(pos[0]) : null,
-      posHiPm: pos ? toPermille(pos[1]) : null,
-      heatAboveMilli: t.heatAbove === undefined ? null : t.heatAbove * 1000,
-      energyBelowMilli: t.energyBelow === undefined ? null : t.energyBelow * 1000,
-      once: t.once,
-    },
-    effect: {
-      speedMms: toPermille(s.effect.speed),
-      accelMms2: toPermille(s.effect.accel),
-      energyRefundMilli: s.effect.energyRefund * 1000,
-      heatCoolMilli: s.effect.heatCool * 1000,
-      durabilityGuard: s.effect.durabilityGuard,
-      durationTicks: s.effect.durationTicks,
-    },
-    disabled: false,
-  };
-}
-
-function statDeltaOf(modifiers: readonly RaceModifier[]): RaceStats {
-  const d: RaceStats = { agility: 0, stamina: 0, technique: 0, courage: 0, intelligence: 0 };
-  for (const m of modifiers) if (m.kind === "falconess-stat") d[m.stat] += m.delta;
-  return d;
-}
-
-function addStats(a: RaceStats, b: RaceStats): RaceStats {
-  const c = (x: number) => clamp(x, 1, 2000);
-  return {
-    agility: c(a.agility + b.agility),
-    stamina: c(a.stamina + b.stamina),
-    technique: c(a.technique + b.technique),
-    courage: c(a.courage + b.courage),
-    intelligence: c(a.intelligence + b.intelligence),
-  };
-}
-
-function fixtureBuild(
-  content: ContentIndex,
-  parts: readonly Slug[],
-  quirks: readonly Slug[],
-): FixtureBuild {
-  const sources = [
-    ...parts.map((p) => content.getPart(p)),
-    ...quirks.map((q) => content.getQuirk(q)),
-  ];
-  let pw = 1000;
-  let energy = 100;
-  let dissipation = 60;
-  let durability = 100;
-  const modifiers: RaceModifier[] = [];
-  for (const s of sources) {
-    pw += toPermille(s.mods.powerToWeight);
-    energy += s.mods.energy;
-    dissipation += s.mods.dissipation;
-    durability += s.mods.durability;
-    modifiers.push(...s.modifiers);
-  }
-  for (const m of modifiers) if (m.kind === "power-cap") pw = Math.min(pw, toPermille(m.max));
-  return {
-    parts: [...parts],
-    quirks: [...quirks],
-    powerToWeight: clamp(pw, 500, 1600),
-    energy: clamp(energy, 20, 200),
-    dissipation: clamp(dissipation, 20, 120),
-    durabilityMax: clamp(durability, 20, 260),
-    statDelta: statDeltaOf(modifiers),
-    traits: { modifiers: modifiers.length },
-  };
-}
-
-function neutralFixtureEntry(args: NeutralFixtureArgs): RaceEntry {
-  const skills = [...(args.skills ?? [])];
-  validateSkills(skills);
-  const b = args.build;
-  return {
-    runnerId: args.runnerId,
-    kind: "rival",
-    falconessId: null,
-    laneIndex: args.laneIndex,
-    frameId: "fixture-neutral",
-    manufacturer: "none",
-    rule: "none",
-    style: args.style,
-    passive: null,
-    parts: b ? [...b.parts] : [],
-    quirks: b ? [...b.quirks] : [],
-    mood: 0,
-    biomeAptitude: "B",
-    styleAptitude: "B",
-    stats: b ? addStats(args.stats, b.statDelta) : { ...args.stats },
-    powerToWeight: b?.powerToWeight ?? 1000,
-    energy: b?.energy ?? 100,
-    dissipation: b?.dissipation ?? 60,
-    durabilityMax: b?.durabilityMax ?? 100,
-    durabilityStart: b?.durabilityMax ?? 100,
-    skills,
-    traits: b?.traits ?? {},
-  };
-}
-
-function freezeEntry(
-  ruleset: Ruleset,
-  content: ContentIndex,
-  input: EntryInput,
-  course: Course,
-  laneIndex: number,
-): RaceEntry {
-  const fb = resolveFrameBuild(content, input.frameId, input.parts, input.quirks);
-  const eff = effectiveStats(
-    ruleset,
-    input.baseStats,
-    input.mood,
-    input.biomeAptitude,
-    input.styleAptitude,
-    course.biome,
-    fb.style,
-  );
-  const ids = [...new Set(input.learnedSkills)].sort();
-  const skills = ids.map((id) => {
-    const s = freezeSkill(content, id);
-    if (s.uniqueTo !== null && s.uniqueTo !== input.falconessId)
-      throw new Error(`freezeEntry: ${id} is unique to ${s.uniqueTo}`);
-    return s;
-  });
-  const frame = content.getFrame(input.frameId);
-  return {
-    runnerId: input.runnerId,
-    kind: input.kind,
-    falconessId: input.falconessId,
-    laneIndex,
-    frameId: input.frameId,
-    manufacturer: fb.manufacturer,
-    rule: fb.rule,
-    style: fb.style,
-    passive: frame.passive ?? null,
-    parts: [...input.parts],
-    quirks: [...input.quirks],
-    mood: input.mood,
-    biomeAptitude: input.biomeAptitude[course.biome] ?? "B",
-    styleAptitude: input.styleAptitude[fb.style] ?? "B",
-    stats: addStats(eff, statDeltaOf(fb.modifiers)),
-    powerToWeight: fb.powerToWeight,
-    energy: fb.energy,
-    dissipation: fb.dissipation,
-    durabilityMax: fb.durabilityMax,
-    durabilityStart: Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax),
-    skills,
-    traits: { modifiers: fb.modifiers.length },
-  };
-}
-
-function disableSkill(entry: RaceEntry, skillId: Slug): RaceEntry {
-  if (!entry.skills.some((s) => s.id === skillId))
-    throw new Error(`disableSkill: ${entry.runnerId} does not carry ${skillId}`);
-  return {
-    ...entry,
-    skills: entry.skills.map((s) => (s.id === skillId ? { ...s, disabled: true } : s)),
-  };
-}
 
 function generateField(
   ruleset: Ruleset,
@@ -421,15 +253,12 @@ export function createFakeEngine(options: FakeEngineOptions = {}): RaceEnginePor
   };
   return {
     engineId: "fake",
-    buildCourseGeometry: (_ruleset, course) => ({
-      courseId: course.id,
-      lengthMm: courseLength(course) * 1000,
-    }),
+    buildCourseGeometry,
     freezeEntry,
     generateField,
     simulateRace: (ruleset, entries, course, seed, opts) =>
       simulateRace(ruleset, entries, course, seed, opts, resolved),
-    createRaceArena: () => ({ kind: "fake-arena" }),
+    createRaceArena,
     freezeSkill,
     neutralFixtureEntry,
     fixtureBuild,
