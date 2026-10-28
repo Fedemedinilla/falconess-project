@@ -1,10 +1,11 @@
 import type { Rng } from "@falconess/rng";
 import type { RunInput, SeasonState } from "@falconess/schema";
-import { type Draft, draft, note, rngForInput, type SimContext } from "./context.js";
+import { changeFatigue, type Draft, draft, note, rngForInput, type SimContext } from "./context.js";
 import { resolveEvent, rollEvent } from "./events.js";
 import { goalForTurn, runGoalRace } from "./goals.js";
 import { gradeFor } from "./grade.js";
 import { rollCrewPresence } from "./hangar.js";
+import { actionBlock } from "./rules.js";
 import { applyOuting, applyRest, applyTraining } from "./training.js";
 import { applyWorkshop } from "./workshop.js";
 
@@ -42,10 +43,22 @@ function finishTurn(ctx: SimContext, d: Draft, rng: Rng, goalFailed: boolean): v
 }
 
 /**
+ * A state is only ever advanced by the ruleset it was started on (ADR-0006 D1): a saved v1 run
+ * replays under v1 forever, and a context of another version is a caller's bug, not a rule.
+ */
+function checkRuleset(ctx: SimContext, state: SeasonState): void {
+  if (state.rulesetVersion !== ctx.ruleset.version)
+    throw new Error(
+      `the state was played on ruleset ${state.rulesetVersion}, not ${ctx.ruleset.version}: use getRuleset(state.rulesetVersion)`,
+    );
+}
+
+/**
  * The season reducer: pure, deterministic, `advanceSeason(ctx, state, input) → state'`.
  * The RNG for this step is derived from the seed and the number of inputs applied so far.
  */
 export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInput): SeasonState {
+  checkRuleset(ctx, state);
   if (state.status === "ended") throw new InvalidInputError("season has ended");
   if (input.kind === "start") throw new InvalidInputError("season already started");
   const d = draft(state);
@@ -69,19 +82,22 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
 
 type ActionInput = Exclude<RunInput, { kind: "start" } | { kind: "event:choose" }>;
 
-/** The turn's action: an injured turn rests whatever the input; training at high fatigue rests. */
+/**
+ * The turn's action: an injured turn rests whatever the input (recovering `−fatigueCost.rest`, no
+ * draw); in v1 a training at `forcedRestAt` or more rests instead (`actionBlock`).
+ */
 function applyAction(ctx: SimContext, d: Draft, input: ActionInput, rng: Rng): void {
   d.log.push({ turn: d.turn, input, notes: [], deltas: {} });
+  const block = actionBlock(ctx.ruleset, d, input.kind);
 
-  if (d.injuryTurns > 0) {
+  if (block === "injured") {
     d.injuryTurns -= 1;
-    d.fatigue = Math.max(0, d.fatigue + ctx.ruleset.season.fatigueCost.rest);
     note(d, "log.injured");
+    changeFatigue(ctx, d, ctx.ruleset.season.fatigueCost.rest);
     return;
   }
 
-  const forcedRest =
-    d.fatigue >= ctx.ruleset.season.forcedRestAt && input.kind.startsWith("train:");
+  const forcedRest = block === "forced-rest";
 
   switch (input.kind) {
     case "train:agility":
@@ -115,6 +131,7 @@ export function goalRaceState(
   state: SeasonState,
   input: RunInput,
 ): SeasonState | undefined {
+  checkRuleset(ctx, state);
   if (state.status === "ended" || state.pendingEvent) return undefined;
   if (input.kind === "start" || input.kind === "event:choose") return undefined;
   const d = draft(state);

@@ -1,23 +1,40 @@
 import type { Rng } from "@falconess/rng";
 import { scale } from "@falconess/rng";
-import type { StatName, TrainingKind } from "@falconess/schema";
-import { moodMultiplier } from "../stats.js";
-import { addDelta, type Draft, note, type SimContext } from "./context.js";
+import type { SeasonState, StatName, TrainingKind } from "@falconess/schema";
+import {
+  addDelta,
+  changeFatigue,
+  changeMood,
+  type Draft,
+  note,
+  type SimContext,
+} from "./context.js";
 import { addBond } from "./hangar.js";
+import {
+  moodDriftPm,
+  restOptions,
+  trainingMoodMultiplier,
+  trainingRisk,
+  trainingStreak,
+} from "./rules.js";
 
 export function facilityLevel(ctx: SimContext, uses: number): number {
   const { usesPerFacilityLevel, maxFacilityLevel } = ctx.ruleset.season;
   return Math.min(maxFacilityLevel, 1 + Math.floor(uses / usesPerFacilityLevel));
 }
 
+/** The parts of the state a training's gain reads. */
+type GainState = Pick<SeasonState, "facilityUses" | "crewPresence" | "falconessId" | "mood">;
+
 /**
- * gain = floor(base[level] × (1 + Σ crewBonus) × m_mood × (1 + growth)): one floor at the end so
- * small bonuses are not lost to chained rounding. All factors per-mille.
- * Exported so the UI can preview the number before the player commits (it is deterministic).
+ * gain = floor(base[level] × (1 + Σ crewBonus) × m_train_mood × (1 + growth)): one floor at the
+ * end so small bonuses are not lost to chained rounding. All factors per-mille; the mood factor is
+ * the ruleset's training table (`trainMoodMult`, ADR-0006). Exported so the UI can preview the
+ * number before the player commits (it is deterministic).
  */
 export function trainingGain(
   ctx: SimContext,
-  d: Draft,
+  d: GainState,
   kind: TrainingKind,
   stat: StatName,
 ): number {
@@ -28,8 +45,33 @@ export function trainingGain(
   for (const m of crews)
     crewBonus += Math.round(ctx.content.getManufacturer(m).crew.trainingBonus * 1000);
   const growth = Math.round(ctx.content.getFalconess(d.falconessId).growth[stat] * 1000);
-  const product = base * (1000 + crewBonus) * moodMultiplier(ctx.ruleset, d.mood) * (1000 + growth);
+  const product =
+    base * (1000 + crewBonus) * trainingMoodMultiplier(ctx.ruleset, d.mood) * (1000 + growth);
   return Math.max(1, Math.floor(product / 1_000_000_000));
+}
+
+export type StatGain = { readonly stat: StatName; readonly gain: number };
+
+/**
+ * What a successful training adds, the main stat first: the primary and its secondary (at
+ * `secondaryGain`), or a risk flight's courage and agility. Before the statMax cap; a failure
+ * loses `failLossPm` ‰ of each (at least 1).
+ */
+export function trainingGains(ctx: SimContext, state: GainState, kind: TrainingKind): StatGain[] {
+  const S = ctx.ruleset.season;
+  if (kind === "train:risk-flight") {
+    const g = trainingGain(ctx, state, kind, "courage");
+    return [
+      { stat: "courage", gain: scale(g, S.riskFlightCourage) },
+      { stat: "agility", gain: scale(g, S.riskFlightAgility) },
+    ];
+  }
+  const primary = ctx.ruleset.trainingStat[kind];
+  const g = trainingGain(ctx, state, kind, primary);
+  const out: StatGain[] = [{ stat: primary, gain: g }];
+  const secondary = ctx.ruleset.trainingSecondary[kind];
+  if (secondary) out.push({ stat: secondary, gain: Math.max(1, scale(g, S.secondaryGain)) });
+  return out;
 }
 
 function applyStat(ctx: SimContext, d: Draft, stat: StatName, delta: number): void {
@@ -42,63 +84,78 @@ function applyStat(ctx: SimContext, d: Draft, stat: StatName, delta: number): vo
   if (after !== before) addDelta(d, stat, after - before);
 }
 
+/**
+ * One training week. Draws on stream `training`: the failure roll (always), then the mood drift
+ * when the ruleset has one (ADR-0006 D5, D6). The failure and injury chances are `trainingRisk`
+ * at the fatigue before training.
+ */
 export function applyTraining(ctx: SimContext, d: Draft, kind: TrainingKind, rng: Rng): void {
   const S = ctx.ruleset.season;
-  const primary = ctx.ruleset.trainingStat[kind];
-  const isRisk = kind === "train:risk-flight";
-  const isSim = kind === "train:simulator";
-
-  const failP = isSim
-    ? 0
-    : isRisk
-      ? S.riskFlightFail
-      : S.failBase + Math.floor(d.fatigue / S.failPerFatigue);
+  const fatigueBefore = d.fatigue;
+  const { failPm, injuryPm } = trainingRisk(ctx.ruleset, fatigueBefore, kind);
   const roll = rng.nextPermille("training");
-  const failed = roll < failP;
-  const injured = isRisk && roll < S.riskFlightInjury;
-
-  const gains: Array<[StatName, number]> = [];
-  if (isRisk) {
-    const g = trainingGain(ctx, d, kind, "courage");
-    gains.push(
-      ["courage", scale(g, S.riskFlightCourage)],
-      ["agility", scale(g, S.riskFlightAgility)],
-    );
-  } else {
-    const g = trainingGain(ctx, d, kind, primary);
-    gains.push([primary, g]);
-    const secondary = ctx.ruleset.trainingSecondary[kind];
-    if (secondary) gains.push([secondary, Math.max(1, scale(g, S.secondaryGain))]);
-  }
+  const failed = roll < failPm;
+  const injured = failed && roll < injuryPm;
+  const gains = trainingGains(ctx, d, kind);
 
   if (failed) {
-    for (const [stat, g] of gains) applyStat(ctx, d, stat, -Math.max(1, Math.floor(g / 2)));
-    d.mood = Math.max(-2, d.mood - 1);
+    for (const { stat, gain } of gains)
+      applyStat(ctx, d, stat, -Math.max(1, Math.floor((gain * S.failLossPm) / 1000)));
     note(d, injured ? "log.train.injury" : "log.train.fail");
-    if (injured) d.injuryTurns = S.injuryTurns;
+    changeMood(d, -S.failMoodLoss, "failure");
+    if (injured) {
+      d.injuryTurns = S.injuryTurns;
+      if (kind !== "train:risk-flight" && fatigueBefore >= S.injuryFromFatigue)
+        note(d, "log.vigor.exhausted");
+    }
   } else {
-    for (const [stat, g] of gains) applyStat(ctx, d, stat, g);
-    if (isSim) d.skillPoints += S.simulatorSkillPoints;
+    for (const { stat, gain } of gains) applyStat(ctx, d, stat, gain);
+    if (kind === "train:simulator") d.skillPoints += S.simulatorSkillPoints;
     note(d, "log.train.ok");
   }
 
   d.facilityUses[kind] += 1;
-  d.fatigue = Math.max(0, Math.min(S.fatigueMax, d.fatigue + S.fatigueCost[kind]));
+  changeFatigue(ctx, d, S.fatigueCost[kind]);
   for (const m of d.crewPresence[kind] ?? []) addBond(ctx, d, m, S.bondPerTraining);
+
+  const driftPm = moodDriftPm(ctx.ruleset, trainingStreak(d));
+  if (driftPm > 0 && rng.chancePermille("training", driftPm)) changeMood(d, -1, "drift");
 }
 
+/** Quality note of a drawn rest: the lowest option, the highest, or one in between. */
+function restQuality(index: number, options: number): string {
+  if (index === 0) return "log.vigor.rest.poor";
+  if (index === options - 1) return "log.vigor.rest.great";
+  return "log.vigor.rest.normal";
+}
+
+/**
+ * A rest week, chosen or (v1) forced: recover `restRecovery[i]` with `i` drawn by
+ * `restRecoveryWeights` on stream `training` (one option: no draw), then mood +1 with
+ * `restMoodUpChance` (ADR-0006 D4).
+ */
 export function applyRest(ctx: SimContext, d: Draft, rng: Rng, forced: boolean): void {
   const S = ctx.ruleset.season;
-  d.fatigue = Math.max(0, d.fatigue + S.fatigueCost.rest);
-  if (rng.chancePermille("training", S.restMoodUpChance)) d.mood = Math.min(2, d.mood + 1);
   note(d, forced ? "log.rest.forced" : "log.rest");
+  const options = restOptions(ctx.ruleset);
+  let recovery = options[0]?.recovery ?? -S.fatigueCost.rest;
+  if (options.length > 1) {
+    const i = rng.pickWeighted(
+      "training",
+      options.map((o) => o.weight),
+    );
+    recovery = options[i]?.recovery ?? recovery;
+    note(d, restQuality(i, options.length));
+  }
+  changeFatigue(ctx, d, -recovery);
+  if (rng.chancePermille("training", S.restMoodUpChance)) changeMood(d, 1, "rest");
 }
 
 export function applyOuting(ctx: SimContext, d: Draft, manufacturer: string | undefined): void {
   const S = ctx.ruleset.season;
-  d.fatigue = Math.max(0, d.fatigue + S.fatigueCost.outing);
-  d.mood = Math.min(2, d.mood + 1);
+  note(d, "log.outing");
+  changeFatigue(ctx, d, S.fatigueCost.outing);
+  changeMood(d, 1, "outing");
   const target = manufacturer ?? ctx.content.getFrame(d.equippedFrame).manufacturer;
   addBond(ctx, d, target, S.bondPerOuting);
-  note(d, "log.outing");
 }

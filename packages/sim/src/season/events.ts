@@ -1,7 +1,15 @@
 import type { Rng } from "@falconess/rng";
 import type { EventEffects, GameEvent } from "@falconess/schema";
 import { STAT_ORDER } from "../stats.js";
-import { addDelta, type Draft, note, type SimContext } from "./context.js";
+import {
+  addDelta,
+  changeFatigue,
+  changeMood,
+  type Draft,
+  logEvent,
+  note,
+  type SimContext,
+} from "./context.js";
 import { addBond, hangarManufacturers } from "./hangar.js";
 import { learnCap, maxDurability } from "./workshop.js";
 
@@ -77,8 +85,8 @@ export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void 
     d.stats[stat] = Math.max(S.statMin, Math.min(S.statMax, before + delta));
     if (d.stats[stat] !== before) addDelta(d, stat, d.stats[stat] - before);
   }
-  d.mood = Math.max(-2, Math.min(2, d.mood + fx.mood));
-  d.fatigue = Math.max(0, Math.min(S.fatigueMax, d.fatigue + fx.fatigue));
+  changeMood(d, fx.mood);
+  changeFatigue(ctx, d, fx.fatigue);
   for (const [m, delta] of Object.entries(fx.bond)) addBond(ctx, d, m, delta);
   d.skillPoints = Math.max(0, d.skillPoints + fx.skillPoints);
   d.wallet.scrap = Math.max(0, d.wallet.scrap + fx.scrap);
@@ -97,19 +105,50 @@ export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void 
     d.learnedSkills.push(fx.learnSkill);
 }
 
-export function resolveEvent(ctx: SimContext, d: Draft, optionIndex: number, rng: Rng): void {
-  const pending = d.pendingEvent;
-  if (!pending) throw new Error("no pending event");
-  const e = ctx.content.getEvent(pending.eventId);
+/**
+ * Apply one option of an event: its effects, then a chance branch drawn on stream `events`; count
+ * it in `eventHistory` and log it (ADR-0006 D7): the event's text, the branch's text if it has
+ * one, the net mood and vigor causes, and `event`.
+ */
+function applyEventOption(
+  ctx: SimContext,
+  d: Draft,
+  e: GameEvent,
+  optionIndex: number,
+  rng: Rng,
+): void {
   const opt = e.options[optionIndex];
   if (!opt) throw new Error(`event ${e.id} has no option ${optionIndex}`);
+  const mood = d.mood;
+  const fatigue = d.fatigue;
   applyEffects(ctx, d, opt.effects);
+  let branchIndex: number | undefined;
+  let branchText: string | undefined;
   if (opt.chance) {
     const weights = opt.chance.map((b) => Math.round(b.p * 1000));
-    const branch = opt.chance[rng.pickWeighted("events", weights)];
-    if (branch) applyEffects(ctx, d, branch.effects);
+    branchIndex = rng.pickWeighted("events", weights);
+    const branch = opt.chance[branchIndex];
+    if (branch) {
+      applyEffects(ctx, d, branch.effects);
+      branchText = branch.textKey;
+    }
   }
   d.eventHistory[e.id] = (d.eventHistory[e.id] ?? 0) + 1;
   note(d, e.textKey);
+  if (branchText !== undefined) note(d, branchText);
+  if (d.mood !== mood) note(d, d.mood > mood ? "log.mood.event.up" : "log.mood.event.down");
+  if (d.fatigue !== fatigue)
+    note(d, d.fatigue < fatigue ? "log.vigor.event.up" : "log.vigor.event.down");
+  logEvent(d, {
+    id: e.id,
+    option: optionIndex,
+    ...(branchIndex === undefined ? {} : { branch: branchIndex }),
+  });
+}
+
+export function resolveEvent(ctx: SimContext, d: Draft, optionIndex: number, rng: Rng): void {
+  const pending = d.pendingEvent;
+  if (!pending) throw new Error("no pending event");
+  applyEventOption(ctx, d, ctx.content.getEvent(pending.eventId), optionIndex, rng);
   delete d.pendingEvent;
 }

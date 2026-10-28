@@ -1,7 +1,8 @@
 import type { RaceOutcome, RaceResult, SeasonGoal, SeasonState } from "@falconess/schema";
 import { simulateRace } from "../race/engine.js";
 import { goalRaceSetup, PLAYER_RUNNER_ID } from "../race/field.js";
-import { type Draft, note, type SimContext } from "./context.js";
+import { changeMood, type Draft, note, type SimContext } from "./context.js";
+import { raceLossCostsMood } from "./rules.js";
 
 /** The goal race of the state's turn, if any. */
 export function goalForTurn(
@@ -45,5 +46,6 @@ export function runGoalRace(ctx: SimContext, d: Draft): RaceOutcome | undefined 
   const outcome: RaceOutcome =
     place > goal.minPlace ? "goal-failed" : place === 1 ? "win" : place <= 3 ? "podium" : "lose";
   d.lastRace = { turn: d.turn, outcome };
+  if (raceLossCostsMood(ctx.ruleset, place)) changeMood(d, -1, "race-loss");
   return outcome;
 }

@@ -1,7 +1,7 @@
 import type { Rng } from "@falconess/rng";
 import type { WorkshopOp } from "@falconess/schema";
 import { installPart, resolveFrameBuild } from "../frame-build.js";
-import { type Draft, note, type SimContext } from "./context.js";
+import { changeFatigue, type Draft, note, type SimContext } from "./context.js";
 
 export function rerollCost(ctx: SimContext, d: Draft): number {
   const base = ctx.content.economy?.rerollBaseScrap ?? ctx.ruleset.season.rerollBaseScrap;
@@ -122,6 +122,6 @@ export function applyWorkshop(
       }
     }
   }
-  d.fatigue = Math.max(0, Math.min(S.fatigueMax, d.fatigue + S.fatigueCost.workshop));
   note(d, "log.workshop");
+  changeFatigue(ctx, d, S.fatigueCost.workshop);
 }
