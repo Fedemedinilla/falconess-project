@@ -4,7 +4,8 @@
   is passed** (owner acceptance of the whole ADR-0003, CLAUDE.md convention line, protected ruleset
   files). Every decision is listed and tagged (deviation, gap, literal) in section 27 and proposed
   in `docs/decisions/ADR-0003-race-engine-interpretations.md`.
-- Date: 2026-10-28 (revision 3: second critic round, see section 28.2; revision 2: section 28.1).
+- Date: 2026-10-28 (revision 4: third critic round, see section 28.3; revision 3: second critic
+  round, section 28.2; revision 2: section 28.1).
   Scope:
   `packages/sim/src/race/`, `packages/sim/src/rules/`, `packages/schema/src/race.ts`,
   `packages/rng` (three helpers), `season/goals.ts` (wiring).
@@ -59,6 +60,17 @@ switch and fixture builds (3.2, 3.4, S4, S5), metric 7 gated on the grade itself
 without quirks (21.1), a risk entry and content tickets for metric 5 (R18, 25.3), and every
 ADR-0003 item tagged, with G1 requiring the whole ADR (0.2, 27). No physics rule and no constant
 of section 26 changed, so the sanity numbers of 25.4 stand.
+
+Revision 4 answers a third critic round (three findings, all accepted; index in 28.3):
+- an exact counting rule for metric 2: one designated entry per manufacturer plus three
+  non-attributed `none` fixtures, fair share 12.5 % (25.2, D40);
+- an exact S3 build: base stats 600 with her aptitude letters and her unique skill as the only
+  active, a per-cell verdict, and "bioma casa" read as desert in v1 (25.2, R14, D47);
+- D45 restated as a deviation from BRIEF §7 "no como bonificación numérica", with each rule term's
+  stat equivalent, and no longer claimed to act inside every rule's own mechanism (13.1).
+
+No physics rule and no constant changed. The R14 table was re-measured at the defined S3 build and
+moved by at most 0.01 in ratio.
 
 ### 0.1 Notation
 
@@ -398,7 +410,7 @@ export type RaceRule = z.infer<typeof RaceRule>;
 
 - `packages/sim/src/rules/index.ts` is an exhaustive `Record<RaceRule, RuleSpec>`; `rules/none.ts`
   is the no-op spec (no regen, `capLim = heatCap`, `ruleMult = 1000`, no activation bonus, no
-  repair, no licence, no pulses, no terrain term of section 13). Internal code `RULE_NONE = 5`.
+  repair, no licence, no pulses, no rule term of 13.1). Internal code `RULE_NONE = 5`.
 - `neutralFixtureEntry(args: { runnerId: string; laneIndex: number; style: Style;
   stats: RaceEntry["stats"]; skills?: readonly RaceSkill[]; build?: FixtureBuild }): RaceEntry` in
   `packages/sim/src/race/fixtures.ts`, exported from `@falconess/sim` (the batch in `apps/cli` and
@@ -1130,7 +1142,7 @@ final window of `finTicks` absorbs at most `fl(finTicks × 12, 42)` on-ticks; fo
 
 Each rule lives in `packages/sim/src/rules/<rule>.ts` and exports a `RuleSpec` compiled at race
 start into numeric fields of the runner (`ruleCode`, `capLim`, `ruleMult` in `dmgTick`, regen
-base, activation bonus, repair amount, licence flag, pulse flag, the terrain term of 13.1).
+base, activation bonus, repair amount, licence flag, pulse flag, the rule term of 13.1).
 `rules/index.ts` is an exhaustive `Record<RaceRule, RuleSpec>` (3.4: `none` is the no-op spec of
 the neutral fixture); the hot loop switches on small integers, no virtual dispatch.
 
@@ -1143,28 +1155,53 @@ the neutral fixture); the hot loop switches on small integers, no virtual dispat
 | `pulse` (Kōryū) | Section 12. |
 | `none` (fixture) | No effect (3.4). |
 
-Each rule's terrain term (13.1) is part of the rule's `RuleSpec`, not a separate bonus.
+Each rule's term (13.1) is compiled with the rule's `RuleSpec`. That does not make it part of the
+rule's mechanism: it is a numeric bonus or penalty, which BRIEF §7 excludes, and three of the five
+terms act outside their rule's mechanism. ADR-0003 D45 records that deviation.
 
-### 13.1 Terrain terms: where home and weak cells come from (BRIEF §7, §12 metric 2)
+### 13.1 Rule terms: where home and weak cells come from (BRIEF §7, §12 metric 2; numeric, ADR-0003 D45)
 
-Revision 1 had no rule term keyed to terrain, so no home or weak cell could come from a rule; at
-equal PW its own tables inverted them (Lumière beat Kōryū on all three desert courses, Lumière was
-the fastest frame on the ridge, Steinhaus and Boneyard had no time term). Each `RuleSpec` now has
-**one term keyed to a segment type or a biome**, acting on the rule's own mechanism. Course traits
-(`sprint`, `long`, `obstacles`, `pure-speed`) are labels of segment composition and length; no rule
-reads a trait directly.
+Revision 1 had no rule term keyed to terrain, so no home or weak cell could come from a rule. At
+equal PW its own tables inverted them: Lumière beat Kōryū on all three desert courses, Lumière was
+the fastest frame on the ridge, and Steinhaus and Boneyard had no time term. Revision 2 gave each
+`RuleSpec` one numeric term.
 
-| Rule | Term (constants) | Exact rule | Intended cells (v1 desert) |
-| --- | --- | --- | --- |
-| `mass-thrust` | **ambient cooling** `massThrustCoolPm[biome]` (desert 500, urban 500, coast 1000, mountain 1250, tundra 1250) | `coolTick × massThrustCoolPm[biome]` for Steinhaus frames (table `coolTick`, 3.3): the heavy engine needs cold air; its licence turns the missing headroom into ×2 durability wear | weak desert (all three courses); home tundra/mountain (no v1 course) |
-| `regen` | **light airframe** `regenLandLossPm` 2000 | the landing loss of 14.2 is doubled for Lumière frames (table `landPm`) | weak on jump courses (ridge); home coast/urban (no v1 course) |
-| `pulse` | **intake air** `pulseAirPm[segType]` (descent 1200, water 600, others 1000), `pulseBiomePm[biome]` (desert 1150, others 1000) | every burst tick's thrust × `airPm[seg]` (12, table `airPm`); the plan's `Bon` carries the biome factor | home desert and descents; weak water (canyon: desert and water, neutral by D40) |
-| `telemetry` | **power governor** `telemetryDrainPm` 900, `telemetryAccelPm` 850 | hp drain × 0.9 (`dK`, section 6) and acceleration × 0.85 (`acc`), on top of rules (1)-(4) | home long courses (hp binds: canyon); weak sprints (the launch is a large share of a short race) |
-| `repairable` | **rugged but clumsy** `repairableRuggedPm` 500, `repairableCurvesPm` 1500 | the landing loss (14.2) and the extra length of the ground detour (`detour`) are halved; the curve penalty is × 1.5 (section 7, applied to `curvesScale`) | home obstacles (ridge); weak pure speed (sprint, the only curvy course) |
+**These terms are numeric bonuses and penalties, which BRIEF §7 excludes** ("implementada como
+`ManufacturerRule` en `packages/sim/rules/`, no como bonificación numérica"). They live in the
+rule's file (`rules/<rule>.ts`), but that code location does not put them inside the rule's
+mechanism.
+
+- Two act inside their rule's mechanism, keyed to a biome or a segment type: Steinhaus's cooling
+  (heat and the licence) and Kōryū's burst thrust (pulses).
+- Three act outside it:
+  - Lumière's landing loss is a jump term; regen is untouched.
+  - Boneyard's landing, detour and curve terms are segment terms; repair is untouched.
+  - Telemetry's drain and acceleration term is **global**: it applies on every segment of every
+    course, with no segment or biome key. It is a flat stat swap (≈ +178 St and −180 T at 600 /
+    600), and its home and weak cells come from course length: hp binds on a long race, and the
+    launch is a large share of a short one.
+
+Why the deviation: under brief constants the brief's own mechanisms cannot make these cells.
+Regen, telemetry and repairable have no terrain key. Two of them are worth almost no time: repair
+matters only once durability reaches 0, and at `kE` 1000 telemetry's heat gate hardly binds,
+because energy, not heat, limits boost (R2). A term confined to those mechanisms could not
+produce the §7 cells that metric 2 measures. ADR-0003 D45 names the deviation and the owner's
+alternatives. Course traits (`sprint`,
+`long`, `obstacles`, `pure-speed`) are labels of segment composition and length; no rule reads a
+trait directly.
+
+| Rule | Term (constants) | Exact rule | Where it acts | Stat equivalent (600 stats, PW 1.0) | Intended cells (v1 desert) |
+| --- | --- | --- | --- | --- | --- |
+| `mass-thrust` | **ambient cooling** `massThrustCoolPm[biome]` (desert 500, urban 500, coast 1000, mountain 1250, tundra 1250) | `coolTick × massThrustCoolPm[biome]` for Steinhaus frames (table `coolTick`, 3.3): the heavy engine needs cold air; its licence turns the missing headroom into ×2 durability wear | inside the rule (heat, licence); keyed to the biome | none: at the neutral knobs of D38 no stat moves cooling. At the heat cap a governed runner's sustained duty falls from 1/3 to 1/5 (`cool / (kH + cool)`), and the licence's cooling tail doubles | weak desert (all three courses); home tundra/mountain (no v1 course) |
+| `regen` | **light airframe** `regenLandLossPm` 2000 | the landing loss of 14.2 is doubled for Lumière frames (table `landPm`) | outside the rule (landings on jump segments; regen untouched) | none: T 600 keeps 720 ‰ of speed, and no technique gives that (T 0 keeps 800). ≈ 54 m lost per landing against 13.5 m (+40 m), more than the whole technique range moves a landing (T 0 → 1200: 27.6 → 4.4 m) | weak on jump courses (ridge); home coast/urban (no v1 course) |
+| `pulse` | **intake air** `pulseAirPm[segType]` (descent 1200, water 600, others 1000), `pulseBiomePm[biome]` (desert 1150, others 1000) | every burst tick's thrust × `airPm[seg]` (12, table `airPm`); the plan's `Bon` carries the biome factor | inside the rule (bursts); keyed to segment type and biome | no Falconess stat moves thrust. Burst thrust ×1.15 in the desert (descent ×1.38, water ×0.69) is the thrust of +0.15 PW at PW 1.0 (`pwBoostWeight` 1000; cruise unchanged) | home desert and descents; weak water (canyon: desert and water, neutral by D40) |
+| `telemetry` | **power governor** `telemetryDrainPm` 900, `telemetryAccelPm` 850 | hp drain × 0.9 (`dK`, section 6) and acceleration × 0.85 (`acc`), on top of rules (1)-(4) | outside the rule (heat gate, activation and PW cap untouched); **global**: every segment of every course | drain ×0.9 ≈ **+178 St** at St 600 (+144 at 300, +211 at 900: `St' = (1000 + St) / 0.9 − 1000`); acceleration ×0.85 ≈ **−180 T** at T 600 (−135 at 300, −225 at 900: `T' = 0.85 T − 90`). The T swap acts on acceleration only; landing and lift read the true T | home long courses (hp binds: canyon); weak sprints (the launch is a large share of a short race) |
+| `repairable` | **rugged but clumsy** `repairableRuggedPm` 500, `repairableCurvesPm` 1500 | the landing loss (14.2) and the extra length of the ground detour (`detour`) are halved; the curve penalty is × 1.5 (section 7, applied to `curvesScale`) | outside the rule (landings and detours on jump segments, curve segments; repair untouched) | landing: T 600 keeps 930 ‰, the landing of T 1300 (+700 T, beyond the 1200 cap of the landing formula; T 1200 keeps 920), ≈ 3.4 m per landing instead of 13.5 m. Detour 1.05 instead of 1.10, ≈ −9 m on the ridge's 180 m of jumps (ground only). Curves 850 instead of 900, the curve penalty of A 300 (−300 A on curve segments only) | home obstacles (ridge); weak pure speed (sprint, the only curvy course) |
 
 Measured at equal PW and style (prototype, hover, PW 1.0, energy 100, dissipation 60,
 durability 100, stats 600; solo time vs the `none` fixture, and win rate in an 8-runner field of
-the five rules plus three `none` fixtures, 600 races per course; full table in 25.4):
+the five rules plus three `none` fixtures, i.e. the S2 field and counting of 25.2, 600 races per
+course; full table in 25.4):
 
 | Course | mass-thrust | regen | pulse | telemetry | repairable |
 | --- | --- | --- | --- | --- | --- |
@@ -1933,7 +1970,7 @@ identifier `Date`, no `Math.pow/sqrt`, no float division in race math.
 | water | hit 10 000 md at drag 0.2; ground 5000; guard or armor 0; no stall |
 | skills | probability table (I 600 → 850, I 300 → 700, I 100 → 200); Altair +150; lucky 1000; **disabled:** `p = 0` on an Altair frame, with an activation-bonus trait and as the lucky pick (each override checked), no `skill`/`skillMiss` event, `derived.pSkill[j] = 0`; `freezeSkill` throws on a passive id and accepts a unique without a Falconess; **single check:** a trigger held 10 000 ticks with `u ≥ p` never fires; phase-scoped bonus fires at middle entry; `once: false` re-arm and cap 3; each trigger field; each effect field; refund → replan in the plan; skillMiss logged once |
 | modifiers | one table-driven case per kind (16), freeze aggregation and tick effect |
-| rules | one case per rule (5) plus `none` (no effect); one case per terrain term of 13.1 (Steinhaus desert cooling, Lumière landing ×2, pulse air per segment and biome, telemetry drain and accel, Boneyard landing/detour halved and curves ×1.5) |
+| rules | one case per rule (5) plus `none` (no effect); one case per rule term of 13.1 (Steinhaus desert cooling, Lumière landing ×2, pulse air per segment and biome, telemetry drain and accel, Boneyard landing/detour halved and curves ×1.5) |
 | fixtures | `neutralFixtureEntry` returns the fixed values of 3.4, parses as `RaceEntry`, and no season or `generateField` output ever has `rule: "none"` or a disabled skill; `skills` must be frozen, unique, id-sorted; `fixtureBuild` with no parts and quirks equals the fixed values; with `steinhaus-turbine` PW 1100 and dissipation 50, with `lumiere-stabilizer` `curvesScalePm` 500, with `koryu-firmware` `statDelta.intelligence` 30, with `altair-firmware` nothing in race; `disableSkill` changes only that skill's flag and throws on a skill the entry lacks |
 | finish | `finishMilli` on a constructed crossing (both interval ends); `timeTicks`; dead heat; margins on a constructed 2-runner case; DNF with a test ruleset with tiny `dnfTicksBase` |
 | log | zod parse of a real log; sampling rule (T ≤ 15, T % 15, finish rows, last 25 m, last tick); `detail: "results"` gives identical `results` and `derived` |
@@ -2005,7 +2042,7 @@ budget of 20 min and is not part of this gate.
 | # | Metric (target) | Knobs → direction |
 | --- | --- | --- |
 | 1 | Style win rate per biome, equal stats (15-35 %) | First the style terms of 9.8: `diveStoopPm` (dive: final and descents), `hoverDraftPm` (hover: middle pack), `glideStartAccelPm` (glide: start), `groundDetourMult` ↓ and `landBasePm`/`landTechPm` ↓ (ground vs flyers on jump courses: detour 1250 → 1100 moved ground from 6 % to 38 % on the ridge in the spec prototype, with the landing loss); `glideLeadDrainPm` ↓ helps glide on long courses (950 → 980 moved canyon glide from 44 % to 33 %); then `diveKeep`/`hoverKeep`/`glideKeep`, `hoverAttackAt`, `packLo`/`packHi`, `groundPreShare`, `groundDamagePm`; `paceHalfWidth` ↑ pulls every style towards 25 %. `stylePace[style][phase]` stays at 1000: a flat per-phase speed bonus is the last resort, not the identity (ADR-0003 D44). Measure with S1 (neutral fixture frames) and its phase-split table; real frames are diagnostics. |
-| 2 | Manufacturer home 30-45 %, weak ≤ 15 % | The terrain terms of 13.1 carry the cells: `pulseAirPm`, `pulseBiomePm` (Kōryū home desert/descents, weak water); `regenLandLossPm` (Lumière weak jumps); `telemetryDrainPm`, `telemetryAccelPm` (Altair home long, weak sprint); `repairableRuggedPm`, `repairableCurvesPm` (Boneyard home obstacles, weak pure speed); `massThrustCoolPm[biome]` (Steinhaus weak desert). The thrust- and heat-keyed terms (pulse, mass-thrust) need the energy game first: `kE` ↓ (25.3 step 2). `regenPerTick` ↓ before anything else touches Lumière (at 500 it wins 82 % of the equal-PW sprint field, R9). PW compression (`pwCruiseWeight`/`pwBoostWeight` ↓) comes **after** the terms are tuned, so the cells survive it. The global `biomeCool` must not be used for Steinhaus's desert cell: it cools every rule and helps the licence holder relative to governed rivals. Only desert exists: only some cells are measurable in v1. Measure with S2 and its equal-PW, same-style variant. |
+| 2 | Manufacturer home 30-45 %, weak ≤ 15 % (one designated entry per manufacturer, fair share 12.5 %, 25.2) | The rule terms of 13.1 (numeric, ADR-0003 D45) carry the cells: `pulseAirPm`, `pulseBiomePm` (Kōryū home desert/descents, weak water); `regenLandLossPm` (Lumière weak jumps); `telemetryDrainPm`, `telemetryAccelPm` (Altair home long, weak sprint); `repairableRuggedPm`, `repairableCurvesPm` (Boneyard home obstacles, weak pure speed); `massThrustCoolPm[biome]` (Steinhaus weak desert). The thrust- and heat-keyed terms (pulse, mass-thrust) need the energy game first: `kE` ↓ (25.3 step 2). `regenPerTick` ↓ before anything else touches Lumière (at 500 it wins 82 % of the equal-PW sprint field, R9). PW compression (`pwCruiseWeight`/`pwBoostWeight` ↓) comes **after** the terms are tuned, so the cells survive it. The global `biomeCool` must not be used for Steinhaus's desert cell: it cools every rule and helps the licence holder relative to governed rivals. Only desert exists: only some cells are measurable in v1. Measure with S2 and its equal-PW, same-style variant. |
 | 3 | Generic vs signature (0.85-0.90, i.e. the signature wins 52.6-54.1 % of 1v1 races, ≈ 0.11-0.18 % faster) | content values of the signature passives (talon-lock, still-air, scrap-armor: tickets in R14); `pulse-chain-accel` semantics (every Nth: shiden's generic third-pulse); the `PREHEAT` rule (heat-to-energy); `regen` trait value (still-air's 0.25 per tick); `waterHitPerDrag` (scrap-armor's water override); `activationNumerator`/`activationFloor` (activation passives) |
 | 4 | Skill leave-one-out (0.5-8 m) | content `speed × duration` (instant speed: gain ≈ speed × duration × p / 15 per tick); `activationNumerator` ↑ / `activationFloor` ↓ lower p; `kAcc` ↑ shrinks accel skills (they only act below target); `hpPerKm` (speed skills lose part of their value where hp binds); iron-wings and gravity-friend need content edits |
 | 5 | Part ablation (≤ 3 points of win rate; in an equal 8-field with σ 1.0-1.2 % that is a time gain of only **0.16-0.19 %**, R18) | **Content, not engine knobs** (R18): the engine knobs reach 0.16-0.19 % only by deleting what they govern (`pwCruiseWeight`/`pwBoostWeight` ≈ 20 ‰ removes PW tiers; `kCurves` with a curve penalty ≈ 10 ‰ at A 600 removes the curve term), and `kE` ↓ (25.3 step 2) raises the value of batteries. Part values: lumiere-stabilizer 2.26 % on the sprint (Boneyard 3.96 %), steinhaus-turbine ≈ 10 % cruise at literal weight and 2.5 % at weight 250, lumiere-turbine half of that, batteries 0.33 % at `kE` 1000 and 0.55-0.6 % at `kE` 250, koryu-firmware ≈ 0.1 % plus ≈ 2.5 points of p. Content tickets in 25.3 (stabilizer scale, turbine PW, batteries after step 2) or an ADR that moves metric 5. Measure with S5 (equal neutral field, paired) |
@@ -2030,20 +2067,80 @@ difference for paired scenarios (S3, S4, S5, the adjacent-I steps of S8); for σ
   not content), stats 600, no actives, lanes shuffled per seed; races per course in 25.2.1; gate on
   the per-biome mean; a real-frame variant is reported as diagnostics. Reason: every dive frame in
   content is PW 1.4, so a real-frame style metric measures frame power, not style.
-- **S2 manufacturer:** one random non-signature frame of each manufacturer + 3 random, stats 600,
-  no actives, no parts, **no quirks** (kite and mule run with empty slots). A course is home/weak
-  for a manufacturer if its biome, a trait or a segment type matches; both matching = neutral
-  (Kōryū on the canyon: desert home, water weak). **Equal-PW variant (sanity, reported before
-  D12):** the five rules plus three `none` fixtures, all on the same style and frame values (PW 1.0,
-  energy 100, dissipation 60, durability 100, no passive, no quirks), stats 600; it isolates the
-  rule terms of 13.1 from frame power. Table in 25.4.
-- **S3 signature:** 1v1 paired seeds (both lane orders of one seed form one paired sample), same
-  Falconess stats, parts and actives on both sides, signature vs same-style same-manufacturer
-  generic; **the generic carries no quirks** (caracara-signature has 0 quirk slots; mule's two
-  slots stay empty, so a quirk such as loose-rivets, +0.1 PW and ≈ 7 % of time, never decides the
-  metric); ratio = generic wins / signature wins, with the 95 % interval over the paired samples.
-  Samples per pair and course in 25.2.1: 150 in `pr`; 4000 in `full`, doubled (up to 8000) while
-  the interval straddles a band edge (band ±0.025 in ratio). Expected values at v1: R14.
+- **S2 manufacturer (revision 4: one designated entry per manufacturer, exact counting rule;
+  ADR-0003 D40):** 8 runners, lanes shuffled per seed.
+  - **Five designated entries**, one per manufacturer. Each is a frame drawn uniformly from that
+    manufacturer's non-signature frames (two each in v1; frames sorted by id, manufacturers in id
+    order, one `nextInt` per manufacturer from `new Rng(seed + "/frames")`, batch side), built with
+    `freezeEntry` (`kind: "rival"`, `falconessId: null`, base stats 600, mood 0, every aptitude
+    letter B, so the effective stats are 600), no actives, no parts, **no quirks** (kite and mule
+    run with empty slots). Signature frames never enter S2: they belong to one Falconess each, and
+    S3 measures them.
+  - **Three non-attributed fillers:** `neutralFixtureEntry` (3.4: `rule: "none"`, PW 1.0,
+    energy 100, dissipation 60, durability 100), style hover, stats 600, no skills. They are the
+    same three runners in every S2 race and in both variants, and they count for no manufacturer.
+  - **Counting (metric 2):** manufacturer m's win rate on course c is its designated entry's share
+    of first places, `wins_m / races`. A dead heat for first (19: equal `finishMilli`) gives each
+    runner of the group 1/k of a win; the lane tie-break of 19 is not used for the metric. Filler
+    wins go in their own column ("none (3 runners)"). Every manufacturer has exactly one entry in
+    every race, so its fair share is 12.5 % (1/8) whatever the draw. Revision 3's field ("one random
+    non-signature frame of each manufacturer + 3 random") gave a manufacturer 1, 2 or 3 entries, so
+    total wins measured entry count: 12.5 % of wins with one entry, 37.5 % with three, ≈ 20 % on
+    average (P(≥ 3 entries) ≈ 0.105). That alone failed "weak ≤ 15 %" for a neutral manufacturer,
+    and a lucky draw of extra entries could reach the home band with no rule effect. With the fair
+    share at 12.5 %, the weak ceiling sits 2.5 points above it: it stops a weak manufacturer from
+    beating its fair share, but it does not require it to fall below that share. The home band asks
+    for 2.4-3.6 × the fair share.
+  - **Cells:** a course is home or weak for a manufacturer if its biome, a trait or a segment type
+    matches; if both match, the cell is neutral (Kōryū on the canyon: desert home, water weak).
+    There is one verdict (25.2.1) per (manufacturer, course) home or weak cell; neutral cells are
+    only reported. v1 desert cells: Kōryū home sprint and ridge; Steinhaus weak on all three
+    courses; Lumière weak ridge; Altair home canyon, weak sprint; Boneyard home ridge, weak sprint.
+  - **Equal-PW variant (sanity, reported before D12):** the same field and the same counting, with
+    every designated entry on the neutral frame values and style hover. Each one is the fixture of
+    3.4 with `rule` and `manufacturer` set to its manufacturer's (`{ ...neutralFixtureEntry(...),
+    rule, manufacturer }`, batch side; PW 1.0, energy 100, dissipation 60, durability 100, no
+    passive, no quirks, stats 600). It isolates the rule terms of 13.1 from frame power. Table in
+    25.4.
+- **S3 signature (revision 4: exact build, cells and home biome; ADR-0003 D47):** 1v1 paired seeds
+  (both lane orders of one seed form one paired sample). Signature vs the generic of the same style
+  and manufacturer: peregrina-signature vs shiden (dive), cernicala-signature vs nimbus (hover),
+  caracara-signature vs mule (ground).
+  - **Build: both entries are the same Falconess.** Each is built with `freezeEntry` (3.1) from
+    `{ runnerId: "signature" | "generic", kind: "player", falconessId: <her id>, baseStats: 600 on
+    all five stats, mood: 0, biomeAptitude and styleAptitude: her content maps, frameId, parts: [],
+    quirks: [], learnedSkills: her uniqueSkills, durability: null }`. So the only active is her
+    unique skill (stoop-strike, wind-hover, scavenger-stride), with no generic active. Effective
+    stats on the desert courses, with the style letter of the shared frame style: Peregrina A 630
+    (desert A) and I 630 (dive A); Cernícala A 600 (desert B) and I 630 (hover A); Caracara A 600
+    (desert B) and I 630 (ground A); St, T and C 600 for all three. **The generic carries no
+    quirks** (caracara-signature has 0 quirk slots; mule's two slots stay empty, so a quirk such as
+    loose-rivets, +0.1 PW and ≈ 7 % of time, never decides the metric). Reasons for this build:
+    600 is the reference build of S1, S2, S4, S5 and S8 and is close to the T46 par
+    curve (mean 509 per stat; a hover's I ≈ 640 with letter A). The unique skill is the one active
+    every season starts with (`season/start.ts`), so it is the only active that "la misma
+    Falconess" always carries. A generic list would be an invented build, and its mix of phases
+    would set the value of the activation passives.
+  - **What the build implies for the activation passives.** Stoop-strike (final, descent) can
+    fire only on the ridge, the one course with a descent in its final phase (1333-1500 m), so
+    talon-lock's final +100 ‰ acts only there. Wind-hover (`positionRange` 0.3-0.7) never fires
+    in a two-runner race, because `posFrac` is 0 or 1000 (9.1). On an Altair frame at I 630, a
+    base-1.0 skill is already at p 1000 (857 + 150). So nimbus's mid-activation is inert in S3 by
+    construction. Scavenger-stride fires on the ridge for both sides alike.
+  - **Ratio** = generic wins / signature wins (a dead heat counts half a win for each), with the
+    95 % interval over the paired samples.
+  - **Verdict per (pair, course) cell:** all 9 cells (3 pairs × 3 courses) must lie in 0.85-0.90
+    (25.2.1); courses are not pooled. A pooled ratio would pass a passive worth ≈ 2 % on one course
+    and nothing on the others (scrap-armor's water override, R14).
+  - **Home biome** (BRIEF §9 invariant 2 "en su bioma casa", §12 metric 3 "mismo bioma"): desert
+    for all three pairs in v1, because desert is the only biome with courses. For Peregrina it is
+    both her best biome letter (A) and Kōryū's home. Cernícala's home (urban A; Altair's home is
+    urban) and Caracara's (mountain A; Boneyard's home is obstacle courses, a trait, which the
+    ridge has) have no v1 course in that biome. For those two, gating every desert course is
+    stricter than the brief, which asks for the band in the home biome only. When an urban or
+    mountain course exists, their gate moves to their home-biome cells with an ADR line (D47).
+  - Samples per pair and course in 25.2.1: 150 in `pr`; 4000 in `full`, doubled (up to 8000)
+    while the interval straddles a band edge (band ±0.025 in ratio). Expected values at v1: R14.
 - **S4 skill leave-one-out (revision 3, exact):** one cell per active skill and course where its
   static trigger can occur (`segment` present on the course, `phase` reachable): 31 cells in v1
   (the 8 actives without a `segment` trigger on all three courses, the 7 segment-triggered ones on
@@ -2144,6 +2241,9 @@ Verdict of each metric, both profiles:
   the target.
 - Metric 5 in `pr` uses S5's converted time gain; metric 8 in `pr` fails only on a significant
   decrease (S8).
+- **Cells (revision 4):** metric 2 has one verdict per (manufacturer, course) home or weak cell
+  and metric 3 one verdict per (pair, course) cell (25.2). A metric passes only if every cell
+  passes, and fails if any cell fails. Otherwise it is inconclusive.
 
 Reading "fuera de rango" as "the interval lies outside the target" and adding the `full` profile is
 an interpretation of BRIEF §12, recorded as ADR-0003 D48.
@@ -2291,7 +2391,8 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 
 **S2 equal-PW variant** (13.1; hover, PW 1.0, energy 100, dissipation 60, durability 100, stats
 600; solo time vs `none`, then the win rate in a field of the five rules plus three `none`
-fixtures, 600 races per course):
+fixtures, 600 races per course; this is the S2 field and counting of 25.2, one designated entry
+per rule, fair share 12.5 %):
 
 | Constants | Course | mass-thrust | regen | pulse | telemetry | repairable | none (3 runners) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -2302,8 +2403,9 @@ fixtures, 600 races per course):
 | `kE` 250, regen 60 | ridge | −0.01 % / 9 % | +2.41 % / 0 % | −0.98 % / 24 % | +0.73 % / 3 % | −1.00 % / 37 % | 28 % |
 | `kE` 250, regen 60 | canyon | −0.08 % / 5 % | −0.96 % / 17 % | −0.25 % / 5 % | −2.00 % / 56 % | 0.00 % / 5 % | 13 % |
 
-**S3 expectations at v1** (1v1, 600 stats, no actives, generic without quirks, 2000 seeds × 2 lane
-orders): see R14.
+**S3 expectations at v1** (the revision-4 build of 25.2: base stats 600 with her aptitude
+letters, her unique skill as the only active, generic without quirks; 2000 seeds × 2 lane orders):
+see R14.
 
 Orders of magnitude to keep in mind: one energy unit ≈ one boosted tick ≈ 0.2 m at PW 1.0 (a 100
 tank ≈ 20 m ≈ 0.85 s on 2000 m, about one sigma of the dispersion target); hp ≈ 0.6 hp per metre at
@@ -2412,7 +2514,7 @@ export const RACE = {
   telemetryActivationBonus: 150, // ‰ added to every skill check (Altair +15 %)
   telemetryPowerCap: 1_100, // ‰ PW cap (applied by resolveFrameBuild)
 
-  // rule terrain terms (new, revision 2; section 13.1, ADR-0003 D45)
+  // rule terms (new, revision 2; numeric, BRIEF §7 deviation; section 13.1, ADR-0003 D45)
   massThrustCoolPm: { desert: 500, mountain: 1_250, coast: 1_000, urban: 500, tundra: 1_250 }, // ‰ of coolTick, Steinhaus
   regenLandLossPm: 2_000, // ‰ of the landing loss, Lumière (light airframe)
   pulseAirPm: [1_000, 1_000, 1_200, 1_000, 600, 1_000, 1_000], // ‰ burst thrust per segment type (SEGMENT_TYPES order), Kōryū
@@ -2640,11 +2742,18 @@ ADR-0003 accepted **whole**, gaps included (CLAUDE.md "preguntar antes de decidi
 - **D40 [deviation: BRIEF §12 metric definitions] Batch metric definitions:** style metric on
   neutral fixture frames (S1, `rule: "none"`) with real frames as diagnostics; paired ablations with
   draws aligned (S4 with the `disabled` switch, D49; S5 on the equal neutral field with one carrier,
-  revision 3, instead of the mixed S2 field); paired 1v1 signature runs with a quirk-free generic
-  and a 95 % interval; an equal-PW variant of S2; the S8 Intelligence gate; a course both home and
-  weak is neutral; no runner carries quirks unless the scenario says so. Metric 7 is measured
-  literally (share of seasons with `gradeFor ≥ B`, revision 3; revision 2's "all four goals passed"
-  was necessary, not sufficient).
+  revision 3, instead of the mixed S2 field); paired 1v1 signature runs with a quirk-free generic,
+  the build of D47 and a 95 % interval; an equal-PW variant of S2; the S8 Intelligence gate; a
+  course both home and weak is neutral; no runner carries quirks unless the scenario says so.
+  **Metric 2 counting (revision 4, 25.2):** the S2 field is five designated entries (one per
+  manufacturer, a frame drawn uniformly from its non-signature frames; signatures never enter)
+  plus three non-attributed `none` fixtures (hover, stats 600). A manufacturer's win rate is its
+  designated entry's wins / races (a dead heat for first splits the win), so the fair share is
+  12.5 % for every manufacturer, and the verdict is per (manufacturer, course) home or weak cell.
+  Revision 3's "one per manufacturer + 3 random" gave a manufacturer 1-3 entries: entry count
+  alone made 12.5-37.5 % (≈ 20 % on average), which failed "weak ≤ 15 %" with no rule effect.
+  Metric 7 is measured literally (share of seasons with `gradeFor ≥ B`, revision 3; revision 2's
+  "all four goals passed" was necessary, not sufficient).
 - **D41 [deviation: BRIEF §12 "más agility nunca da peor tiempo en flat"] Monotonicity properties**
   in three tiers (strict without boost; one tick without exhaustion, one burst for pulse frames;
   0.5 % with exhaustion).
@@ -2661,14 +2770,45 @@ ADR-0003 accepted **whole**, gaps included (CLAUDE.md "preguntar antes de decidi
   final), hover slipstream (target ×1.02 in the middle phase while in the middle pack: a position
   effect beyond §6 "Pelotón"), glide launch (acceleration ×1.1 in the start phase), ground's
   obstacle route (D43, D46). `stylePace` stays neutral.
-- **D45 [deviation: BRIEF §7 rule texts get one terrain-keyed clause each] Rule terrain terms:**
-  Steinhaus cooling by biome (desert ×0.5), Lumière landing loss ×2, Kōryū pulse thrust by
-  segment type and biome (descent ×1.2, water ×0.6, desert ×1.15), Altair drain ×0.9 and
-  acceleration ×0.85, Boneyard landing loss and detour extra ×0.5 and curve penalty ×1.5.
+- **D45 [deviation: BRIEF §7 "implementada como `ManufacturerRule` ..., no como bonificación
+  numérica", and the five rule texts] Rule terms (numeric, revision 4 wording):** each rule gains
+  one numeric term, compiled with its `RuleSpec` (13.1).
+  - **The terms and their stat equivalents** (600 stats, PW 1.0):
+    - Steinhaus: cooling ×0.5 in the desert (×1.25 in tundra and mountain). No stat equivalent;
+      at the cap the governed duty falls from 1/3 to 1/5.
+    - Kōryū: burst thrust by segment type and biome (desert ×1.15, descent ×1.2, water ×0.6).
+      Thrust of +0.15 PW in the desert, cruise unchanged.
+    - Lumière: landing loss ×2. ≈ +40 m per landing, beyond the whole technique range.
+    - Altair: drain ×0.9 and acceleration ×0.85 on every segment of every course, ≈ +178 St and
+      −180 T.
+    - Boneyard: landing loss and detour extra ×0.5, ≈ T 1300 on landings and −9 m of detour on the
+      ridge; curve penalty ×1.5, the penalty of A 300 on curves.
+  - **The deviation:** these are numeric bonuses and penalties, which BRIEF §7 excludes. Only
+    Steinhaus's and Kōryū's terms act inside their rule's mechanism (heat, pulses). Lumière's
+    term acts on landings, not regen, and Boneyard's on landings, detours and curves, not repair.
+    Telemetry's term is global, with no segment or biome key and no link to its mechanism (heat
+    gate, activation, PW cap): it is a flat stat swap, and its cells come from course length.
+  - **Reason:** without these terms no home or weak cell can come from a rule. At equal PW
+    revision 1 inverted the cells, and under brief constants regen, telemetry and repairable have
+    no terrain key and (repair, the heat gate) almost no time value.
+  - **Owner's alternatives:** (a) re-key telemetry's term to its own mechanism or to a segment or
+    length property, and re-measure the S2 equal-PW table (D14 step 4); (b) reject numeric terms
+    altogether, which keeps BRIEF §7 literal but leaves metric 2 with no rule-made cells in v1, so
+    an ADR moves metric 2 or the cells come from frame content.
 - **D46 [deviation: BRIEF §6 "ruta 1,25 × length"] `groundDetourMult` 1.10:** with 1.25 ground
   wins 6 % of the ridge even with D43; with 1.10 it wins 38 % and S1 lands inside 15-35 %.
-- **D47 [deviation: BRIEF §12 metric 3 (part of D40)] S3 generic carries no quirks;** S3 and S8
-  are judged with a 95 % interval; S3 doubles its samples while inconclusive (`full` profile).
+- **D47 [deviation: BRIEF §12 metric 3 and §9 invariant 2 (part of D40)] S3 build, cells and
+  home biome (revision 4):**
+  - **Build:** both sides are the same Falconess, built by `freezeEntry` with base stats 600 on all
+    five, mood 0, her real biome and style aptitude maps, and her unique skill as the only active
+    (no generic actives); no parts. The generic carries no quirks.
+  - **Verdict:** one verdict per (pair, course) cell, 9 cells, no pooling.
+  - **Home biome:** "bioma casa" reads as desert for all three pairs in v1, because no urban or
+    mountain course exists. Peregrina: desert A, Kōryū home. Cernícala: urban A, Altair home
+    urban. Caracara: mountain A; Boneyard's home is obstacle courses. Their gate moves to the
+    home-biome cells, with an ADR line, once such a course exists.
+  - **Intervals:** S3 and S8 are judged with a 95 % interval; S3 doubles its samples while
+    inconclusive (`full` profile).
 - **D48 [deviation: BRIEF §12 "10.000 carreras en menos de 60 s" and "una métrica fuera de rango
   bloquea el merge"] Batch profiles and verdicts (revision 3, 25.2.1):** the `pr` profile is the
   brief's batch (10 000 races in < 60 s, every PR touching `sim` or `content`) with a fixed run
@@ -2751,6 +2891,17 @@ and no constant changed; the new measurement (rival quirks) used the revision-2 
 | 6 | Metric 5 unreachable with the planned knobs: 3 points = 0.16-0.19 % of time; the stabilizer is 2.26 % on the sprint (3.96 % on Boneyard), a +0.1 turbine 2.5 % even at weight 250, batteries worsen after `kE` 250; S5 diluted by the mixed field | R18 with the per-part table and the tolerance; content tickets (stabilizer ≈ 0.97, turbines ≈ +0.01-0.02 PW or a part-PW weight, batteries ≈ +5 after step 2) or an ADR that moves metric 5; S5 on the equal neutral field with paired seeds and one carrier, re-run after step 2; R1 points to R18 | 25.1, 25.2, 25.3, R1, R18 | the critic's stabilizer scale "≈ 0.93-0.95" was re-measured on the same sprint replica: 0.93 → 0.37 %, 0.95 → 0.25 %, 0.97 → 0.14 %, so the ticket says ≈ 0.97 |
 | 7 | Kite/mule rivals rolled two random quirks; `loose-rivets` (+0.1 PW) breaks the base-PW band: 72 % of Caracara fields hold one; T46/T36 lost regardless of training | Rivals carry no quirks (and no parts), like S2 and S3; S2 and S5 state the same policy; `generateField` draws nothing from `quirks`; measured: with rolled quirks Caracara's par T36 / T46 fall from 53 / 6 % to 24 / 4 % (18 / 2 % with a loose-rivets rival) | 21.1, 24.1, 25.2, R16, D37 | the par table of 21.1 was already measured without rival quirks, so it stands; the deviation from "2 peculiaridades sorteadas" for rival frames is tagged in D37, and a near time-neutral quirk subset is left as the owner's alternative |
 
+### 28.3 Third critic round (revision 4)
+
+Three findings; all were accepted. No physics rule and no constant changed. The S3 table (R14)
+was re-measured with the revision-2 prototype at the exact build that 25.2 now defines.
+
+| # | Finding | Fix | Where | Note |
+| --- | --- | --- | --- | --- |
+| 1 | Metric 2 had no counting rule: with "one random non-signature frame of each manufacturer + 3 random" a manufacturer held 1-3 entries, so total wins measured entry count (12.5-37.5 %, mean ≈ 20 %), failing "weak ≤ 15 %" with no rule effect | S2 = five designated entries (one per manufacturer, random non-signature frame; signatures never enter) + three non-attributed `none` fixtures; win rate = designated entry's wins / races, dead heats split; fair share 12.5 %; verdict per (manufacturer, course) home or weak cell; the equal-PW variant uses the same field and counting | 25.1, 25.2, D40; formulas.md; ADR-0003 D40 | the critic's option 1. Option 2 (per-entry rate) was rejected: same-manufacturer entries take wins from each other and the field composition would change per seed. The equal-PW table of 25.4 was already measured on this field shape (five rules + three `none`), so it stands. The weak ceiling sits 2.5 points above the fair share: it stops a weak manufacturer from beating its fair share and does not demand less (stated in 25.2) |
+| 2 | S3 build undefined (stats, letters, actives); R14 (d) "real actives" vs 25.4 "no actives"; verdict per cell or pooled unstated; "bioma casa" silently read as desert | S3 build: `freezeEntry` with base stats 600, her real aptitude maps, her unique skill as the only active, no parts, generic without quirks; verdict per (pair, course) cell; "bioma casa" = desert for all three in v1, with the reason, in D47; R14 table re-measured at that build; R14 (c) and (d) rewritten to match | 25.2, 25.4, R14, D47; formulas.md; ADR-0003 D47 | unique only rather than a generic list: it is the one active every season starts with. The critic's "two pairs depend almost entirely on activation passives" overstates the effect. Cernícala's pair is decided by still-air's regen, and mid-activation is inert in S3: wind-hover cannot fire in a two-runner race, and Altair's +150 saturates p at I 630. Talon-lock's activation clause acts only through stoop-strike on the ridge. Re-measured, the defined build moves no cell by more than 0.01 in ratio (peregrina 1.35 / 0.99 / 1.03 against 1.35 / 1.00 / 1.02) |
+| 3 | D45 never named BRIEF §7 "no como bonificación numérica"; the ADR claimed the terms act "dentro de su propio mecanismo", and 13.1 claimed each is keyed to a segment type or biome; false for telemetry (global, ≈ +178 St / −180 T), Lumière (landing) and Boneyard (landing, detour, curves) | D45 (spec and ADR) is tagged with the §7 principle it overrides and gives the reason; 13.1 says which terms act inside their rule's mechanism (Steinhaus, Kōryū) and which act outside (Lumière, Boneyard, telemetry, the last one global), with a stat-equivalent column; the false claims are removed from 13, 13.1, formulas.md and the ADR | 13, 13.1, 25.1, 26 (comment), D45; formulas.md; ADR-0003 D45 | the terms are kept: re-keying telemetry needs a new design and a new S2 equal-PW measurement. That is offered to the owner as alternative (a) of D45, with (b) "no numeric terms, move metric 2" |
+
 ## 29. Risks carried into implementation
 
 - **R1 PW tiers (highest).** With literal PW a PW 1.4 frame is ≈ 22-26 % faster than PW 1.0 and
@@ -2815,29 +2966,39 @@ and no constant changed; the new measurement (rival quirks) used the revision-2 
   of the best fixed level found by brute force.
 - **R14 Signature metric (BRIEF §7 and §9 invariant 2, §12 metric 3) is out of band at v1, by
   measurement.** The 0.85-0.90 band means the signature wins 52.6-54.1 % of 1v1 races, i.e. it is
-  ≈ 0.11-0.18 % faster than its generic. S3 at v1 constants (600 stats, no actives, generic without
-  quirks, 2000 seeds × 2 lane orders, 95 % interval ±1.5 points of share):
+  ≈ 0.11-0.18 % faster than its generic. S3 at v1 constants, with exactly the build of 25.2
+  (revision 4: base stats 600 with her aptitude letters, so A 630 / 600 / 600 and I 630; her unique
+  skill as the only active; generic without quirks; 2000 seeds × 2 lane orders; 95 % interval
+  ±1.5 points of share; one verdict per cell):
 
   | Pair (signature vs generic) | Sprint | Ridge | Canyon | Cause |
   | --- | --- | --- | --- | --- |
-  | peregrina (talon-lock) vs shiden (third-pulse) | ratio 1.35 (gap −0.17 %) | 1.00 (+0.01 %) | 1.02 (−0.02 %) | talon-lock's clauses do nothing here: its descent cooldown never binds (energy, not cadence, limits a 100-tank pulse frame at `kE` 1000) and its final activation bonus needs actives; third-pulse's chained +20 % pays on the sprint, where `SURPLUS` fires three consecutive pulses |
-  | cernícala (still-air) vs nimbus (mid-activation) | 0.14 (+2.38 %) | 0.14 (+2.47 %) | 0.14 (+2.62 %) | still-air's 0.25 regen per tick is ≈ 150 energy per race on a non-Lumière frame |
-  | caracara (scrap-armor) vs mule (no quirks) | 1.00 (+0.02 %) | 1.00 (+0.02 %) | 0.22 (+2.11 %) | obstacle-armor does nothing on a ground frame that never jumps; the water override is worth ≈ 2 % on the canyon |
+  | peregrina (talon-lock) vs shiden (third-pulse) | ratio 1.35 (gap −0.17 %) | 0.99 (+0.01 %) | 1.03 (−0.02 %) | talon-lock's clauses do almost nothing. Its descent cooldown never binds: energy, not cadence, limits a 100-tank pulse frame at `kE` 1000. Its final activation bonus acts only through stoop-strike, and only on the ridge (fires in 96 % of races against 86 %, ≈ 0.45 m). Third-pulse's chained +20 % pays on the sprint, where `SURPLUS` fires three consecutive pulses |
+  | cernícala (still-air) vs nimbus (mid-activation) | 0.14 (+2.38 %) | 0.14 (+2.46 %) | 0.14 (+2.62 %) | still-air's 0.25 regen per tick is ≈ 150 energy per race on a non-Lumière frame. Mid-activation is inert in S3: wind-hover cannot fire in a two-runner race, and Altair's +150 already puts a base-1.0 skill at p 1000 at I 630 |
+  | caracara (scrap-armor) vs mule (no quirks) | 1.00 (+0.02 %) | 1.00 (+0.02 %) | 0.22 (+2.11 %) | obstacle-armor does nothing on a ground frame that never jumps; the water override is worth ≈ 2 % on the canyon; scavenger-stride fires on the ridge for both sides alike |
 
-  At the D14 energy-game hypothesis (`kE` 250, `regenPerTick` 60) the ratios are 1.46 / 1.17 /
-  1.19, 0.78 / 0.29 / 0.26 and 1.00 / 1.00 / 0.23: the engine terms do not fix this metric; content
-  does. Ordered D14 work (after steps 2-3 of 25.3, because still-air's value scales with `kE`):
+  Revision 3's table (all five stats 600 with no letters, no actives) differed by at most 0.01 in
+  ratio (peregrina ridge 1.00, canyon 1.02): the activation clauses are worth almost nothing with
+  this build, so the gate does not hinge on them. At the D14 energy-game hypothesis (`kE` 250,
+  `regenPerTick` 60) the ratios are 1.49 / 1.16 / 1.17, 0.78 / 0.29 / 0.25 and 1.00 / 1.00 / 0.23
+  (revision 3's build: 1.46 / 1.17 / 1.19, 0.78 / 0.29 / 0.26, 1.00 / 1.00 / 0.23). The engine terms
+  do not fix this metric; content does. Ordered D14 work (after steps 2-3 of 25.3, because
+  still-air's value scales with `kE`):
   (a) content ticket **still-air**: regen 0.25 → about 0.03 (or drop the clause and keep
   heat-to-energy 0.25), target gap +0.11-0.18 % on every course; (b) content ticket
   **scrap-armor**: replace the water override (≈ 2 %) by a small water multiply and add a clause
   that acts on a ground frame on every course (for example `segment-factor` multiply on `jump`,
   which only the ground detour runs at cruise, or a `free-first-boost` on `flat`); (c) content
-  ticket **talon-lock**: a clause that pays on courses without descents (a `pulse-cooldown` on
-  `flat`, or a stronger final activation bonus measured with the Falconess's real actives) so it
-  outweighs third-pulse; (d) S3 with each Falconess's real actives is the gate; the no-actives
-  table above is the floor for activation-based passives. Knob: `regen` trait values are content,
-  not `regenPerTick`.
-- **R15 Manufacturer cells (BRIEF §7 home/weak, §12 metric 2) at v1.** The rule terms of 13.1 point
+  ticket **talon-lock**: a clause that pays on courses without descents (for example a
+  `pulse-cooldown` on `flat`) so it outweighs third-pulse. An activation clause cannot fix the
+  sprint and canyon cells: S3's only active, stoop-strike, cannot trigger there. (d) S3 with the
+  build of 25.2 (her unique skill as the only active, base stats 600 with her letters) is the gate,
+  one verdict per (pair, course) cell, and the table above is measured with exactly that build. If
+  the owner wants learned generic actives in the gate, the list is fixed in 25.2 with an ADR line
+  (D47) and the table is re-measured. Knob: `regen` trait values are content, not `regenPerTick`.
+- **R15 Manufacturer cells (BRIEF §7 home/weak, §12 metric 2) at v1.** Counted as in 25.2 (one
+  designated entry per manufacturer, fair share 12.5 %). The rule terms of 13.1 (numeric, a BRIEF §7
+  deviation, D45) point
   every measurable desert cell the right way under the D14 energy game, and at v1 constants the
   time-keyed ones already do (Altair home canyon 35 % and weak sprint 1 %, Boneyard home ridge 37 %
   and weak sprint 0 %, Lumière weak ridge 2 %, Steinhaus ≤ 13 %); Kōryū's home desert is not

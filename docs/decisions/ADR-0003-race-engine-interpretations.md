@@ -4,7 +4,8 @@
   lo acepte **entero** (D1-D49; la revisión 3 elimina la aceptación parcial). Si el dueño rechaza
   un punto, el editor de la especificación lo revisa y el ADR vuelve a aceptarse entero antes de
   D8; no existe un subconjunto aceptado. Ver la puerta G1 de `docs/race-engine.md` §0.2.
-- Fecha: 2026-10-28 (revisión 3 tras la segunda ronda de críticos; revisión 2: 2026-10-27)
+- Fecha: 2026-10-28 (revisión 4 tras la tercera ronda de críticos; revisión 3 tras la segunda;
+  revisión 2: 2026-10-27)
 - Alcance: sim, schema (`RaceRule`, D42; `RaceSkill.disabled`, D49), lote de balance (D48)
 
 ## Contexto
@@ -26,7 +27,15 @@ producía, banda de rivales); la revisión 2 los corrige (D1, D13, D16-D18, D22,
 maneras, presupuesto del lote imposible, ablación de habilidades no construible, métrica 7 mal
 mapeada, puerta parcial con etiquetas incompletas, métrica 5 inalcanzable, peculiaridades de los
 rivales); la revisión 3 los corrige sin tocar ninguna regla física ni constante (D37, D40, D47-D49 y
-las etiquetas de todos los puntos; índice en `docs/race-engine.md` §28.2).
+las etiquetas de todos los puntos; índice en `docs/race-engine.md` §28.2). Una tercera ronda
+encontró tres más:
+- la métrica 2 no tenía regla de conteo;
+- la construcción de S3 no estaba definida;
+- D45 no nombraba el principio de BRIEF §7 «no como bonificación numérica» y afirmaba que todos
+  los términos actúan dentro del mecanismo de su regla.
+
+La revisión 4 los corrige sin tocar ninguna regla física ni constante (D40, D45, D47; índice en
+`docs/race-engine.md` §28.3).
 
 ## Decisión
 
@@ -218,12 +227,27 @@ pide el ADR aceptado entero, huecos incluidos (CLAUDE.md: "preguntar antes de de
   (S1, `rule: "none"`, D42) con los reales como diagnóstico; ablaciones pareadas con sorteos
   alineados (S4 con el interruptor `disabled`, D49; S5, revisión 3, sobre el campo neutro igualado
   con una portadora en vez del campo mixto de S2, que diluía el efecto); firma en 1 contra 1 pareado
-  con genérico sin peculiaridades e intervalo del 95 % (D47); variante de S2 con PW y estilo
-  iguales; puerta S8 de Inteligencia; una pista casa y débil a la vez cuenta como neutra; ninguna
-  corredora lleva peculiaridades salvo que el escenario lo diga. La métrica 7 se mide literal
-  (revisión 3): cuota de temporadas con `gradeFor ≥ B` ≥ 60 % por Falconess con la política "entrenar
-  la stat más baja"; la versión de la revisión 2 ("pasar los cuatro objetivos") era necesaria pero no
-  suficiente, porque B exige además `seasonScore ≥ 2900`.
+  con genérico sin peculiaridades, la construcción de D47 e intervalo del 95 %; variante de S2 con
+  PW y estilo iguales; puerta S8 de Inteligencia; una pista casa y débil a la vez cuenta como
+  neutra; ninguna corredora lleva peculiaridades salvo que el escenario lo diga.
+
+  **Conteo de la métrica 2 (revisión 4, `docs/race-engine.md` §25.2).** El campo de S2 tiene cinco
+  entradas designadas, una por fabricante: cada una es un bastidor sorteado de forma uniforme entre
+  los bastidores no firma de ese fabricante, y las firmas nunca entran. Las completan tres
+  bastidores neutros `none`, que no cuentan para ningún fabricante (hover, stats 600). La tasa de
+  victoria de un fabricante es victorias de su entrada designada / carreras; un empate en el
+  primer puesto reparte la victoria. Así la cuota justa es 12,5 % para todos los fabricantes, y
+  hay un veredicto por casilla casa o débil (fabricante, pista). El techo «débil ≤ 15 %» queda 2,5
+  puntos sobre la cuota justa: impide que un fabricante débil la supere, pero no le exige quedar
+  por debajo. Razón: con «uno por fabricante + 3 al azar» un fabricante tenía de 1 a 3 entradas.
+  Solo el número de entradas daba entre 12,5 y 37,5 % de victorias (≈ 20 % de media), lo que
+  incumplía «débil ≤ 15 %» sin ningún efecto de regla y podía caer en la banda de casa por suerte
+  en el sorteo. La alternativa de contar la tasa por entrada se descarta: las entradas del mismo
+  fabricante se quitan victorias entre sí, y la composición del campo cambiaría con cada semilla.
+
+  La métrica 7 se mide literal (revisión 3): cuota de temporadas con `gradeFor ≥ B` ≥ 60 % por
+  Falconess con la política "entrenar la stat más baja"; la versión de la revisión 2 ("pasar los
+  cuatro objetivos") era necesaria pero no suficiente, porque B exige además `seasonScore ≥ 2900`.
 - **D41 [desviación: BRIEF §12 "más agility nunca da peor tiempo en flat"] Propiedades de monotonía** en tres niveles (estricta sin boost; un tick sin agotamiento, una
   ráfaga para bastidores de pulsos; 0,5 % con agotamiento).
 - **D42 [hueco] `RaceRule = ManufacturerRule | "none"`** (tipo nuevo en `packages/schema/src/race.ts`):
@@ -253,24 +277,83 @@ pide el ADR aceptado entero, huecos incluidos (CLAUDE.md: "preguntar antes de de
   25,3 / 27,6 / 33,9 / 13,2 %); glide es la más rápida en la salida en las tres pistas, hover en la
   media en el sprint y el cañón (ground en el ridge), dive en la final en las tres; ground gana el
   ridge (38 %). Las constantes son valores iniciales para D14.
-- **D45 [desviación: textos de las reglas de BRIEF §7] Términos de terreno de las reglas (cada regla de §7 gana una cláusula ligada a un tipo de
-  segmento o a un bioma, dentro de su propio mecanismo):** Steinhaus, enfriamiento por bioma
-  (desierto y urbano ×0,5, tundra y montaña ×1,25); Lumière, pérdida de aterrizaje ×2 (bastidor
-  ligero); Kōryū, empuje de pulso por tipo de segmento y bioma (descenso ×1,2, agua ×0,6, desierto
-  ×1,15); Altair, drenaje ×0,9 y aceleración ×0,85 (gobernador de potencia); Boneyard, pérdida de
-  aterrizaje y alargue del desvío ×0,5 y penalización de curvas ×1,5 (robusto pero torpe). Ninguna
-  regla lee un rasgo de pista directamente. Razón: sin términos de terreno ninguna casilla casa/débil
-  podía salir de una regla, y con PW igual las tablas de la revisión 1 las invertían (Lumière, débil en
-  saltos, era el bastidor más rápido del ridge). Medido con PW y estilo iguales: con las constantes
-  v1 salen las casillas de Altair (casa cañón 35 %, débil sprint 1 %), Boneyard (casa ridge 37 %,
-  débil sprint 0 %), Lumière (débil ridge 2 %) y Steinhaus (≤ 13 %); Kōryū (pulso −0,1 %) y la
-  debilidad de Steinhaus por tiempo solo aparecen cuando baja `kE` (paso 2 de D14), y Lumière con
-  regeneración 0,5 domina donde no es débil (82 % del sprint).
+- **D45 [desviación: BRIEF §7 «implementada como `ManufacturerRule` en `packages/sim/rules/`, no como
+  bonificación numérica», y los textos de las cinco reglas] Términos de regla (numéricos; redacción
+  de la revisión 4):** cada regla de §7 gana un término numérico, que se compila con su `RuleSpec`.
+
+  **Los términos y su equivalente en stats** (stats 600, PW 1,0):
+  - Steinhaus: enfriamiento por bioma (desierto y urbano ×0,5, tundra y montaña ×1,25). Ninguna
+    stat mueve el enfriamiento con las perillas neutras de D38; en el tope de calor, el ciclo de
+    boost gobernado baja de 1/3 a 1/5.
+  - Kōryū: empuje de ráfaga por tipo de segmento y bioma (desierto ×1,15, descenso ×1,2, agua
+    ×0,6). Es el empuje de +0,15 de PW en el desierto, sin cambio de crucero.
+  - Lumière: pérdida de aterrizaje ×2 (bastidor ligero). Pierde ≈ 54 m por aterrizaje en vez de
+    13,5 m a T 600, más que todo el rango de técnica (T 0 → 1200: 27,6 → 4,4 m).
+  - Altair: drenaje ×0,9 y aceleración ×0,85 (gobernador de potencia) en todo segmento de toda
+    pista. Equivale a ≈ +178 de stamina y −180 de técnica a 600 / 600; la técnica solo cuenta en
+    la aceleración.
+  - Boneyard: pérdida de aterrizaje y alargue del desvío ×0,5. Aterriza como con T 1300 y ahorra
+    9 m de desvío en el ridge. Además, penalización de curvas ×1,5: la de A 300 en las curvas.
+
+  **La desviación.** Son bonificaciones y penalizaciones numéricas, justo lo que §7 excluye. Solo
+  los términos de Steinhaus (calor y licencia) y de Kōryū (ráfagas) actúan dentro del mecanismo de
+  su regla, ligados a un bioma o a un tipo de segmento. Los otros tres actúan fuera de él:
+  - el de Lumière, sobre el aterrizaje, no sobre la regeneración;
+  - el de Boneyard, sobre aterrizajes, desvíos y curvas, no sobre la reparación;
+  - el de Altair es global: no lleva clave de segmento ni de bioma y no toca su mecanismo
+    (compuerta de calor, activación, tope de PW). Es un intercambio fijo de stats, y sus casillas
+    salen del largo de la pista: el hp pesa en las largas y la salida pesa en las cortas.
+
+  Ninguna regla lee un rasgo de pista directamente.
+
+  **Razón.** Sin estos términos ninguna casilla casa/débil podía salir de una regla. Con PW igual,
+  las tablas de la revisión 1 las invertían (Lumière, débil en saltos, era el bastidor más rápido
+  del ridge). Con las constantes del brief, los mecanismos de regen, telemetry y repairable no
+  tienen clave de terreno, y dos de ellos casi no valen tiempo: la reparación importa solo con la
+  durabilidad en 0, y con `kE` 1000 la compuerta de calor casi no muerde.
+
+  **Medido con PW y estilo iguales** (campo y conteo de S2: una entrada por regla y tres `none`).
+  Con las constantes v1 salen las casillas de Altair (casa cañón 35 %, débil sprint 1 %), Boneyard
+  (casa ridge 37 %, débil sprint 0 %), Lumière (débil ridge 2 %) y Steinhaus (≤ 13 %). Kōryū (pulso
+  −0,1 %) y la debilidad de Steinhaus por tiempo solo aparecen cuando baja `kE` (paso 2 de D14).
+  Lumière, con regeneración 0,5, domina donde no es débil (82 % del sprint).
+
+  **Alternativas para el dueño:** (a) volver a ligar el término de Altair a su propio mecanismo o
+  a una propiedad de segmento o de largo, y volver a medir la tabla de PW igual (paso 4 de D14);
+  (b) rechazar los términos numéricos, con lo que §7 queda literal, la métrica 2 no tiene casillas
+  hechas por reglas en v1, y un ADR mueve la métrica 2 o las casillas salen del contenido de los
+  bastidores.
 - **D46 [desviación: BRIEF §6 "ruta 1,25 × length"] `groundDetourMult` 1,10:** con 1,25 ground gana el
   6 % del ridge aun con D43; con 1,10, el 38 %, y S1 queda dentro del 15-35 %.
-- **D47 [desviación: métrica 3 de BRIEF §12, parte de D40] S3 sin peculiaridades en el genérico** (mule tiene dos ranuras sorteadas; una sola,
-  loose-rivets, cambia su tiempo ≈ 7 %), y S3 y S8 se juzgan con un intervalo del 95 %; en el perfil
-  `full` (D48), si el intervalo cruza un borde de la banda, se duplican las muestras (hasta 8000).
+- **D47 [desviación: métrica 3 de BRIEF §12 e invariante 2 de §9, parte de D40] Construcción,
+  casillas y bioma casa de S3 (revisión 4; `docs/race-engine.md` §25.2):**
+  - **Construcción.** Las dos entradas son la misma Falconess, construidas con `freezeEntry`: stats
+    base 600 en las cinco, ánimo 0, sus mapas reales de aptitud de bioma y de estilo, y su
+    habilidad única como única activa (stoop-strike, wind-hover, scavenger-stride), sin activas
+    genéricas ni piezas. En el desierto quedan A 630 / 600 / 600 e I 630 (letra A de su estilo).
+  - **Peculiaridades.** El genérico no lleva ninguna: mule tiene dos ranuras sorteadas, y una sola,
+    loose-rivets, cambia su tiempo ≈ 7 %.
+  - **Razón de la construcción.** 600 es la construcción de referencia de los demás escenarios y
+    queda cerca de la curva a la par de T46. La única es la activa con la que empieza toda
+    temporada, así que es la única que «la misma Falconess» lleva siempre; una lista genérica
+    sería una construcción inventada que fijaría el valor de los pasivos de activación.
+  - **Consecuencias.** Stoop-strike solo puede activarse en el ridge, la única pista con descenso
+    en la fase final, así que el bono final de talon-lock solo actúa allí. Wind-hover nunca se
+    activa en una carrera de dos (`posFrac` vale 0 o 1000). El +150 de Altair ya satura p a I 630,
+    así que mid-activation es inerte en S3.
+  - **Medido** (2000 semillas × 2 órdenes de carril): peregrina 1,35 / 0,99 / 1,03; cernícala 0,14
+    / 0,14 / 0,14; caracara 1,00 / 1,00 / 0,22. A lo sumo 0,01 de diferencia con la tabla de la
+    revisión 3, sin activas.
+  - **Veredicto.** Hay uno por casilla (par, pista), 9 casillas, sin agregar pistas: un promedio
+    aprobaría un pasivo que vale ≈ 2 % en una pista y nada en las otras.
+  - **Bioma casa.** Se lee como desierto para los tres pares en v1, porque no hay pistas urbanas
+    ni de montaña. Para Peregrina, el desierto es su mejor letra (A) y la casa de Kōryū. Cernícala
+    (urbano A, Altair casa urbano) y Caracara (montaña A; la casa de Boneyard son las pistas con
+    obstáculos) no tienen pista en su bioma casa. Para ellas la puerta en las tres pistas del
+    desierto es más estricta que el brief. Cuando exista una pista urbana o de montaña, su puerta
+    pasa a las casillas de su bioma casa con una línea de ADR.
+  - **Intervalos.** S3 y S8 se juzgan con un intervalo del 95 %. En el perfil `full` (D48), si el
+    intervalo cruza un borde de la banda, se duplican las muestras (hasta 8000).
 - **D48 [desviación: BRIEF §12 "10.000 carreras en menos de 60 s" y "una métrica fuera de rango
   bloquea el merge"] Perfiles y veredictos del lote (revisión 3, `docs/race-engine.md` §25.2.1):**
   el perfil `pr` es el lote del brief (`pnpm sim:batch -- --runs 10000`, < 60 s, en cada PR que toque
@@ -306,8 +389,8 @@ pide el ADR aceptado entero, huecos incluidos (CLAUDE.md: "preguntar antes de de
   valores literales (R1); la economía de energía es lineal y vale ~1 sigma, así que los términos que
   actúan por empuje o calor son pequeños hasta bajar `kE` (R2); Lumière con regeneración 0,5 domina
   donde no es débil (R9); la métrica genérico/firma está fuera de banda en los tres pares y solo el
-  contenido la arregla (R14: peregrina 1,35 / 1,00 / 1,02; cernícala 0,14; caracara 1,00 / 1,00 /
-  0,22, contra 0,85-0,90); las casillas de fabricante necesitan el juego de energía antes de
+  contenido la arregla (R14, con la construcción de D47: peregrina 1,35 / 0,99 / 1,03; cernícala 0,14;
+  caracara 1,00 / 1,00 / 0,22, contra 0,85-0,90); las casillas de fabricante necesitan el juego de energía antes de
   comprimir PW (R15); la métrica 7 es la nota (≥ B en el 60 % de las temporadas por Falconess), no
   las tasas de paso, que quedan como diagnóstico de D12 (R16); la persistencia de durabilidad cambia
   la temporada; la métrica 5 (ninguna pieza > 3 puntos, es decir ≤ 0,16-0,19 % de tiempo) no se
@@ -355,3 +438,13 @@ pide el ADR aceptado entero, huecos incluidos (CLAUDE.md: "preguntar antes de de
 - Alcanzar la métrica 5 con las perillas del motor: haría falta un peso de PW ≈ 20 ‰ (sin clases de
   bastidor) y una penalización de curvas ≈ 10 ‰ (sin término de curvas); la métrica se ataca con
   contenido o se mueve con un ADR (R18).
+- Métrica 2 con el campo «uno por fabricante + 3 al azar», sumando las victorias de todas las
+  entradas de un fabricante: medía el número de entradas (12,5-37,5 %, ≈ 20 % de media), no la
+  regla. Tampoco se usa la tasa por entrada sobre ese campo: las entradas del mismo fabricante se
+  quitan victorias entre sí (D40).
+- S3 con una lista fija de activas genéricas: sería una construcción inventada cuyo reparto por
+  fases fijaría el valor de los pasivos de activación. S3 con veredicto agregado por pista:
+  aprobaría un pasivo que vale ≈ 2 % en una pista y nada en las otras (D47).
+- Llamar a los términos de regla «parte del mecanismo de la regla»: es falso para Lumière,
+  Boneyard y Altair, cuyo término es global; D45 los declara bonificaciones numéricas, en
+  desviación de BRIEF §7.
