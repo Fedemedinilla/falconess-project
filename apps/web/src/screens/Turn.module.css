@@ -99,6 +99,11 @@
 }
 
 /* the next goal race in one line, right under the strip that marks it */
+/* the explanations' default, on a phone (the top bar has it on wider screens) */
+.explain {
+  grid-column: 1 / -1;
+}
+
 .next {
   grid-area: next;
   font-family: var(--font-display);

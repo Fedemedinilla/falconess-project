@@ -11,7 +11,7 @@ import { decide, policyChoice, RUN_KEY, readTurn, startSeason } from "./play";
  * screen needs (a week with a crew at a training, an event waiting, the week after the T12 race,
  * the ended season); each shot loads its run from storage and opens it with "Continuar". The
  * screens with "Breve | Completo" cards are shot with brief explanations (the default) and again
- * with complete ones (the top bar's "Explicaciones").
+ * with complete ones ("Explicaciones", in the top bar or the screen's head on a phone).
  */
 
 const OUT = process.env.E2E_SHOTS_DIR
@@ -120,11 +120,11 @@ for (const vp of VIEWPORTS)
         await page.screenshot({ path: `${OUT}${file}`, fullPage });
       };
 
-      /** The top bar's "Explicaciones": every card brief or complete. */
+      /** "Explicaciones" (the top bar, or the screen's head on a phone): every card's length. */
       const explain = async (page: Page, full: boolean) => {
-        const tool = page.locator("#explicaciones-cambiar");
-        if ((await tool.getAttribute("aria-checked")) !== String(full)) await tool.click();
-        await expect(tool).toHaveAttribute("aria-checked", String(full));
+        const option = page.locator(full ? "#explicaciones-completo" : "#explicaciones-breve");
+        await option.click();
+        await expect(option).toHaveAttribute("aria-pressed", "true");
       };
 
       // 1, 2 · Home and NewSeason, brief and complete

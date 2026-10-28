@@ -1,12 +1,11 @@
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { useDetail } from "../app/explain";
+import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
 import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { ExplainSwitch } from "../ui/ExplainSwitch";
 import { Icon, WithIcon } from "../ui/Icon";
 import { actionIcon, type IconName, moodIcon, statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
@@ -235,7 +234,8 @@ export function TurnActions({
   const crewChoice =
     crew !== undefined && outing.crews.includes(crew) ? crew : (outing.crews[0] ?? "");
   const equipped = durabilityOf(ctx, state, state.equippedFrame);
-  const [explain, setExplain] = useDetail("acciones-explicacion");
+  // one line in a card and the legend: they follow the page's default, with no switch of their own
+  const [explain] = useGlobalDetail();
 
   const inputFor = (kind: ActionKind): RunInput | undefined => {
     if (kind === "workshop") return undefined;
@@ -495,14 +495,6 @@ export function TurnActions({
     <Panel
       title={ui("ui.turn.actions")}
       meta={ui("ui.turn.actions.keys")}
-      actions={
-        <ExplainSwitch
-          id="acciones-explicacion"
-          detail={explain}
-          onChange={setExplain}
-          name={ui("ui.turn.actions")}
-        />
-      }
       className={className}
       id="turno-acciones"
     >

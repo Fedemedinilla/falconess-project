@@ -43,8 +43,9 @@ export type FrameCardProps = {
   tag?: ReactNode;
   headingId?: string | undefined;
   /**
-   * Stable id of the card's "Breve | Completo" (`<id>-breve`, `<id>-completo`). Without one the
-   * card has no switch and follows the page's default.
+   * Stable id of the card's "Breve | Completo" (`<id>-breve`, `<id>-completo`): in the header, or
+   * first in "Ver detalle" when the card folds. Without one the card has no switch and follows the
+   * page's default.
    */
   explainId?: string | undefined;
   /**
@@ -121,6 +122,17 @@ export function FrameCard({
     "--livery-secondary": maker.palette.secondary,
   };
   const passive = frame.passive === undefined ? undefined : content.getPassive(frame.passive);
+  // folded on a phone, the switch opens with the detail, right above the texts it changes
+  const folded = narrow && foldId !== undefined;
+  const explainSwitch = explainId && (
+    <ExplainSwitch
+      id={explainId}
+      detail={detail}
+      onChange={setDetail}
+      name={gameText(frame.textKey)}
+      className={folded ? s.switchInFold : s.switch}
+    />
+  );
 
   return (
     <article className={cx(s.card, variant === "compact" && s.compact, className)} style={livery}>
@@ -138,15 +150,7 @@ export function FrameCard({
           <Pill icon={styleIcon(frame.style)}>{gameText(`style.${frame.style}`)}</Pill>
           <Pill tone={frame.rarity === "SSR" ? "accent" : "neutral"}>{frame.rarity}</Pill>
         </p>
-        {explainId && (
-          <ExplainSwitch
-            id={explainId}
-            detail={detail}
-            onChange={setDetail}
-            name={gameText(frame.textKey)}
-            className={s.switch}
-          />
-        )}
+        {!folded && explainSwitch}
       </header>
 
       <div className={s.stats}>
@@ -191,7 +195,8 @@ export function FrameCard({
         )}
       </div>
 
-      <Fold id={narrow ? foldId : undefined}>
+      <Fold id={folded ? foldId : undefined}>
+        {folded && explainSwitch}
         <dl className={s.traits}>
           {passive && (
             <div className={s.trait}>

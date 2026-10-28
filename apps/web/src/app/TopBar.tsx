@@ -2,10 +2,10 @@ import { useGame } from "../game/useGame";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
-import { Icon } from "../ui/Icon";
 import { Livery } from "../ui/Livery";
 import { Pill } from "../ui/Pill";
-import { useGlobalDetail } from "./explain";
+import { useNarrow } from "../ui/useMedia";
+import { ExplainDefault } from "./ExplainDefault";
 import { type Route, routeHref } from "./route";
 import s from "./TopBar.module.css";
 import { setTheme, useTheme } from "./theme";
@@ -57,45 +57,23 @@ function RunStatus() {
   );
 }
 
-/**
- * "Explicaciones: breves / completas": the default length of every card's explanation, remembered
- * in this browser. Changing it also resets the cards switched by hand.
- */
-function ExplainTool() {
-  const [detail, setDetail] = useGlobalDetail();
-  const full = detail === "full";
-  const mode = ui(full ? "ui.explain.global.long" : "ui.explain.global.short");
-  return (
-    <Button
-      id="explicaciones-cambiar"
-      size="sm"
-      variant="ghost"
-      role="switch"
-      aria-checked={full}
-      aria-label={ui("ui.explain.global.aria")}
-      title={ui("ui.explain.global.title", { mode })}
-      className={cx(s.explainTool, full && s.explainOn)}
-      onClick={() => setDetail(full ? "brief" : "full")}
-    >
-      <Icon name="explain" />
-      <span className={s.explainLabel}>{ui("ui.explain.global")}</span>
-      <span className={s.explainMode}>{mode}</span>
-    </Button>
-  );
-}
-
 export type TopBarProps = {
   route: Route;
   /** Open the run tools (copy, undo). */
   onOpenRun: () => void;
 };
 
-/** The sticky timing bar: name, sections, the run in play, run tools and theme. */
+/**
+ * The sticky timing bar: name, sections, the run in play, run tools, the explanations' default and
+ * theme.
+ */
 export function TopBar({ route, onOpenRun }: TopBarProps) {
   const { snap } = useGame();
   const theme = useTheme();
   const next = theme === "dark" ? "light" : "dark";
   const nextLabel = ui(next === "dark" ? "ui.theme.dark" : "ui.theme.light");
+  // on a phone the screens with explanations carry it at their head (ScreenExplainDefault)
+  const narrow = useNarrow();
   return (
     <header className={s.bar}>
       <div className={s.inner}>
@@ -123,7 +101,7 @@ export function TopBar({ route, onOpenRun }: TopBarProps) {
               {ui("ui.top.run")}
             </Button>
           )}
-          <ExplainTool />
+          {!narrow && <ExplainDefault variant="bar" className={s.explainTool} />}
           <Button
             id="tema-cambiar"
             size="sm"

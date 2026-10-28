@@ -25,8 +25,8 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
   `brief.ts` for the two lengths of an explanation (below).
 - `src/ui/` shared components: Panel, StatBar, Button, Pill, Livery, Dialog, Table, SeasonStrip,
   Icon and ExplainSwitch; `icons.ts` is the game's concepts as emojis (below).
-- `src/app/` shell: hash routes, timing bar, theme, explanations default (`explain.ts`), error
-  banner, run and load dialogs.
+- `src/app/` shell: hash routes, timing bar, theme, explanations default (`explain.ts`,
+  `ExplainDefault.tsx`), error banner, run and load dialogs.
 - `src/screens/` season screens; `src/race/` race screens. The route map is in `src/app/App.tsx`.
 
 ## Rules
@@ -71,14 +71,20 @@ and rule has one (parts and quirks when their text is long). Briefs must say wha
 does (docs/race-engine.md), only shorter. Status messages have no brief: the race-week warning
 always says the whole stake.
 
-Each such card has «Breve | Completo» in its header (`ExplainSwitch`: two `aria-pressed` buttons,
-ids `<card>-breve` and `<card>-completo`, 44 px tall on phones): frame and runner cards of
-NewSeason, the Turn's actions, goal races, hangar frame and crews, the workshop's parts, quirks and
-skills, the free race form, the live order and "Por qué" (brief: «En pocas palabras»; full: the
-phases, losses, gains, skills and «Detalle técnico»). «Explicaciones» in the top bar sets the
-default for every card (brief unless the viewer chose otherwise; remembered in localStorage when
-the page may use it) and drops the cards' own choices; a card's own switch holds until then
-(`src/app/explain.ts`). Texts outside a card (panel hints, the race legend) follow the default.
+A card whose explanation changes by more than a line has «Breve | Completo» right above what it
+changes (`ExplainSwitch`: two `aria-pressed` buttons, ids `<card>-breve` and `<card>-completo`,
+44 px tall on phones): frame cards (in the header; first inside «Ver detalle» when the card folds
+on a phone), runner cards (on the «Habilidad única» row, inside the fold on a phone), the hangar's
+frame, the workshop's parts, quirks and skills, the free race form, the live order and "Por qué"
+(brief: «En pocas palabras»; full: the phases, losses, gains, skills and «Detalle técnico»).
+«Explicaciones [Breve | Completo]» (`app/ExplainDefault.tsx`, ids `explicaciones-breve` and
+`explicaciones-completo`) sets the default for every card: in the top bar, or on a phone at the
+head of each screen with explanations (NewSeason, Turn, the race, the free race), since the bar's
+top row scrolls away there. The default is brief unless the viewer chose otherwise, remembered in
+localStorage when the page may use it; choosing it drops the cards' own choices (a card's own
+switch holds until then, `src/app/explain.ts`) and keeps the first card in view where it was.
+Texts outside a card and one-line ones (panel hints, the actions' legend and workshop note, the
+goal's consequence, the crews' note, the race legend) follow the default.
 
 ## Race screens (`src/race/`)
 
@@ -129,8 +135,9 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   storage blocked and the copy fallback (the text is selected).
 - `free-race.spec.ts`: the default race, another course and seed, the neutral field.
 - `explain.spec.ts`: one card's «Breve | Completo», then «Explicaciones» for every card; the
-  default survives a reload and the card's own choice does not; 44 px switches on a phone, and
-  the switches with storage blocked.
+  default survives a reload and the card's own choice does not; the card in view stays put when
+  the default changes; on a phone the switches open with «Ver detalle», the default sits at the
+  screen's head, everything is 44 px and works with storage blocked.
 - `artifact.spec.ts`: the built fragment against the page contract, then wrapped the way the host
   does it with every request but Google Fonts blocked, at the top level and inside a sandboxed
   iframe at 400 px (no storage, no clipboard, no horizontal scroll).

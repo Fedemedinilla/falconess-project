@@ -2,6 +2,7 @@ import type { ContentIndex, Falconess, RunInput } from "@falconess/schema";
 import { BIOMES, STYLES } from "@falconess/schema";
 import { STAT_ORDER, startSeason } from "@falconess/sim";
 import { type FormEvent, useMemo, useState } from "react";
+import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useDetail, useGlobalDetail } from "../app/explain";
 import { SavedRunNotice } from "../app/SavedRunNotice";
 import { navigate } from "../app/useRoute";
@@ -43,13 +44,16 @@ type RunnerCardProps = {
   narrow: boolean;
 };
 
-/** A Falconess to pick: stats and growth, aptitudes, her unique skill and her goal races. */
+/**
+ * A Falconess to pick: stats and growth, aptitudes, her unique skill and her goal races. The
+ * skill's line is the one text the card shortens: its "Breve | Completo" sits on that row.
+ */
 function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: RunnerCardProps) {
   const sponsor = content.getManufacturer(f.sponsor);
   const id = `nueva-corredora-${f.id}`;
   const [detail, setDetail] = useDetail(`${id}-explicacion`);
   return (
-    <div
+    <article
       className={cx(s.runner, checked && s.checked)}
       style={{
         "--livery-primary": sponsor.palette.primary,
@@ -78,13 +82,6 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
             {ui("ui.new.chosen")}
           </Pill>
         )}
-        <ExplainSwitch
-          id={`${id}-explicacion`}
-          detail={detail}
-          onChange={setDetail}
-          name={gameText(f.textKey)}
-          className={s.runnerSwitch}
-        />
         <span className={s.species}>{f.species}</span>
       </span>
       <span className={s.sponsor}>
@@ -137,15 +134,25 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
           </span>
         </span>
 
-        {f.uniqueSkills.map((skillId) => {
+        {f.uniqueSkills.map((skillId, i) => {
           const skill = content.getSkill(skillId);
           const brief = detail === "brief" ? gameBrief(skill.textKey) : undefined;
           return (
-            <span key={skillId} className={s.unique}>
-              <span className={s.aptLabel}>
-                <Icon name="skill" />
-                {ui("ui.new.unique")}
-              </span>
+            <div key={skillId} className={s.unique}>
+              <div className={s.uniqueHead}>
+                <span className={s.aptLabel}>
+                  <Icon name="skill" />
+                  {ui("ui.new.unique")}
+                </span>
+                {i === 0 && (
+                  <ExplainSwitch
+                    id={`${id}-explicacion`}
+                    detail={detail}
+                    onChange={setDetail}
+                    name={gameText(f.textKey)}
+                  />
+                )}
+              </div>
               <strong>{gameText(skill.textKey)}</strong>
               <span className={s.uniqueDesc}>
                 {brief ??
@@ -153,7 +160,7 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
                     ? describeActiveSkill(skill)
                     : skill.modifiers.map(describeModifier).join(" · "))}
               </span>
-            </span>
+            </div>
           );
         })}
 
@@ -173,7 +180,7 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
             ))}
         </span>
       </Fold>
-    </div>
+    </article>
   );
 }
 
@@ -232,6 +239,7 @@ export function NewSeason() {
           {ui("ui.screen.newSeason.title")}
         </h1>
         <p className={s.lead}>{ui("ui.new.lead", { size: HANGAR_SIZE })}</p>
+        <ScreenExplainDefault />
       </header>
 
       {/* 1 · runner ------------------------------------------------------------------------- */}

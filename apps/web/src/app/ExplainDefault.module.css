@@ -1,0 +1,36 @@
+/* the book icon, "Explicaciones" and [Breve | Completo]: the default of every card's switch */
+.explain {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* a screen's head on a phone: the label and the control on one row, the control at the right */
+.screen {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* the narrow top bar keeps the book and the control */
+@media (max-width: 52rem) {
+  .bar .labelText {
+    display: none;
+  }
+}

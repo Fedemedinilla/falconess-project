@@ -1,6 +1,7 @@
 import { FIELD_LIMITS } from "@falconess/race-view";
 import type { ContentIndex, RaceLog } from "@falconess/schema";
 import { type FormEvent, useId, useMemo, useState } from "react";
+import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useDetail } from "../app/explain";
 import { simContext } from "../content/load";
 import { randomSeed } from "../game/seed";
@@ -214,6 +215,7 @@ export function FreeRace() {
           {ui("ui.freeRace.title")}
         </h1>
         <p className={s.lead}>{ui("ui.freeRace.lead")}</p>
+        <ScreenExplainDefault />
       </header>
 
       <Panel

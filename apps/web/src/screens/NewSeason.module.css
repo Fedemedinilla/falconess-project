@@ -200,6 +200,19 @@
   color: var(--ink-2);
 }
 
+/* "Habilidad única" and, at its right, the switch of the one line it shortens */
+.uniqueHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+}
+
+.uniqueHead > .aptLabel {
+  flex-basis: auto;
+}
+
 .goal {
   display: grid;
   grid-template-columns: 2.5rem minmax(0, 1fr) auto;
@@ -305,9 +318,14 @@
   opacity: 0.45;
 }
 
-/* make room for the checkbox at the right of the frame's head */
+/* make room for the checkbox at the right of the frame's head; the switch's own row below it
+   reaches the card's right edge, in line with the bars' values */
 .frameOption article > header {
   padding-right: var(--space-6);
+}
+
+.frameOption article > header > fieldset {
+  margin-right: calc(-1 * var(--space-6));
 }
 
 /* --- seed ---------------------------------------------------------------------------------------- */
@@ -410,9 +428,4 @@
   .summaryHangar {
     display: none;
   }
-}
-
-/* "Breve | Completo" at the right of the runner's name, above the card's hit area */
-.runnerSwitch {
-  margin-left: auto;
 }

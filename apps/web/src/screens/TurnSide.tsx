@@ -1,12 +1,11 @@
 import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
-import { useDetail } from "../app/explain";
+import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
 import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
-import { ExplainSwitch } from "../ui/ExplainSwitch";
 import { Icon, WithIcon } from "../ui/Icon";
 import { actionIcon, biomeIcon, type IconName, placeIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
@@ -34,22 +33,13 @@ export type GoalsPanelProps = {
 /** The next goal race in detail, then every goal of the season with its result. */
 export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: GoalsPanelProps) {
   const course = next && ctx.content.getCourse(next.goal.courseId);
-  const [detail, setDetail] = useDetail("metas-explicacion");
+  // one line and the strip's legend: they follow the page's default
+  const [detail] = useGlobalDetail();
   return (
     <Panel
       title={ui("ui.goals.title")}
       icon="goalRace"
       meta={next ? ui("ui.goals.week", { turn: next.goal.turn }) : undefined}
-      actions={
-        next && (
-          <ExplainSwitch
-            id="metas-explicacion"
-            detail={detail}
-            onChange={setDetail}
-            name={ui("ui.goals.title")}
-          />
-        )
-      }
       className={className}
     >
       <div className={s.goals}>
@@ -139,7 +129,8 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
   }
   const others = state.hangar.filter((f) => f !== state.equippedFrame);
   const S = ctx.ruleset.season;
-  const [crewDetail, setCrewDetail] = useDetail("hangar-cuadrillas-explicacion");
+  // the crews' note follows the page's default; the frame card has its own switch
+  const [crewDetail] = useGlobalDetail();
   return (
     <Panel
       title={ui("ui.hangar.title")}
@@ -179,18 +170,10 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
         </ul>
       )}
       <div className={s.bonds}>
-        <div className={s.bondsHead}>
-          <p className={s.bondsTitle}>
-            <Icon name="crew" />
-            {ui("ui.hangar.crews")}
-          </p>
-          <ExplainSwitch
-            id="hangar-cuadrillas-explicacion"
-            detail={crewDetail}
-            onChange={setCrewDetail}
-            name={ui("ui.hangar.crews")}
-          />
-        </div>
+        <p className={s.bondsTitle}>
+          <Icon name="crew" />
+          {ui("ui.hangar.crews")}
+        </p>
         <ul className={s.bondList}>
           {crews.map((id) => {
             const m = ctx.content.getManufacturer(id);

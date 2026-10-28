@@ -1,5 +1,6 @@
 import type { RaceLog } from "@falconess/schema";
 import { useMemo, useState } from "react";
+import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { routeHref } from "../app/route";
 import { navigate } from "../app/useRoute";
 import { goalRaceLog, replayMatches } from "../game/goal-race";
@@ -104,6 +105,7 @@ export function GoalRaceScreen() {
             </Pill>
           )}
         </p>
+        <ScreenExplainDefault />
       </header>
       <div className={s.screenActions}>
         {steps.length > 1 && (

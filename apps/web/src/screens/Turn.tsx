@@ -1,5 +1,6 @@
 import type { RunInput } from "@falconess/schema";
 import { useEffect, useRef, useState } from "react";
+import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useGame } from "../game/useGame";
 import { formatSeconds } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
@@ -133,6 +134,7 @@ export function Turn() {
             })}
           </p>
         )}
+        <ScreenExplainDefault className={s.explain} />
       </header>
 
       {fresh?.result && (

@@ -10,6 +10,8 @@ export type ExplainSwitchProps = {
   onChange: (detail: Detail) => void;
   /** What the card explains, for assistive technology ("Explicación: Shiden"). */
   name?: string | undefined;
+  /** The whole legend instead (the page's default: "Explicaciones de todas las tarjetas"). */
+  legend?: string | undefined;
   className?: string | undefined;
 };
 
@@ -19,14 +21,22 @@ const OPTIONS: readonly { detail: Detail; suffix: string; key: string }[] = [
 ];
 
 /**
- * "Breve | Completo" in a card's header: two pressed-state buttons. It sits above a selectable
- * card's stretched hit area, so switching never ticks the card.
+ * "Breve | Completo" on a card, right above the text it shortens: two pressed-state buttons. It
+ * sits above a selectable card's stretched hit area, so switching never ticks the card. The page's
+ * default uses the same control (app/ExplainDefault.tsx).
  */
-export function ExplainSwitch({ id, detail, onChange, name, className }: ExplainSwitchProps) {
+export function ExplainSwitch({
+  id,
+  detail,
+  onChange,
+  name,
+  legend,
+  className,
+}: ExplainSwitchProps) {
   return (
     <fieldset className={cx(s.switch, className)}>
       <legend className="visually-hidden">
-        {name ? ui("ui.explain.label.of", { name }) : ui("ui.explain.label")}
+        {legend ?? (name ? ui("ui.explain.label.of", { name }) : ui("ui.explain.label"))}
       </legend>
       {OPTIONS.map((o) => (
         <button

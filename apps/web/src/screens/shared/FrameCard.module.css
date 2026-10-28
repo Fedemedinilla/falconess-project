@@ -63,6 +63,11 @@
   justify-self: end;
 }
 
+/* first in "Ver detalle" on a phone: it shows with the texts it changes */
+.switchInFold {
+  margin-bottom: var(--space-3);
+}
+
 .stats {
   display: grid;
   gap: 2px;
