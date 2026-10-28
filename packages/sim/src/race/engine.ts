@@ -4,7 +4,13 @@ import { SprintPlanCause as PlanCauses, RACE_FRAME_FLAGS } from "@falconess/sche
 import { endBurst } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
 import { type Controller, createController, decide, inPack, rankSnapshot } from "./controller.js";
-import { buildCourseGeometry, type CourseGeometry, logGeometry, phaseOf } from "./geometry.js";
+import {
+  buildCourseGeometry,
+  type CourseGeometry,
+  logGeometry,
+  phaseOf,
+  raceMaxTicks,
+} from "./geometry.js";
 import { buildDerived, buildResults, RaceRecorder } from "./log.js";
 import {
   approachVu,
@@ -217,7 +223,7 @@ function runRace(
   // P5: frame row 0
   rec.row(0, A, c.posPerMm, c.velPerMms);
 
-  const maxTicks = R.dnfTicksPerMeter * floorDiv(G.lengthMm, 1000) + R.dnfTicksBase;
+  const maxTicks = raceMaxTicks(ruleset, G);
   const crossers = new Int32Array(MAX_LANES);
   let unfinished = n;
   let t = 0;

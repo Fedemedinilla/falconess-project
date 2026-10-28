@@ -1,6 +1,6 @@
 import { loadContent } from "@falconess/content";
 import { BalanceReport } from "@falconess/schema";
-import { RULESET_V1 } from "@falconess/sim";
+import { RULESET_V1, type Ruleset } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { buildCatalog } from "./catalog.js";
 import { createEngineAdapter } from "./engine-adapter.js";
@@ -147,6 +147,20 @@ describe("job execution", () => {
     );
     expect(ctx.timing.seasons).toBe(1);
     expect(ctx.timing.races).toBe(0);
+    expect(r.dnf).toBe(0);
+  });
+
+  it("counts a player DNF in an S7 goal race (§19: the batch asserts zero)", () => {
+    // every runner DNFs: the season records the goal as last place with maxTicks and ends at T12
+    const tiny: Ruleset = {
+      ...RULESET_V1,
+      race: { ...RULESET_V1.race, dnfTicksPerMeter: 0, dnfTicksBase: 30 },
+    };
+    const ctx = createExecContext(createFakeEngine(), tiny, content, catalog);
+    const r = runJob(ctx, { id: 0, scenario: "S7", falconess: "peregrina", k: 0, seed: "s7/dnf" });
+    expect(r.season?.goals[0]?.place).toBe(8);
+    expect(r.season?.goalRaces).toBe(1);
+    expect(r.dnf).toBe(1);
   });
 });
 

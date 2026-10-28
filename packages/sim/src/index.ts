@@ -24,6 +24,7 @@ export {
   neutralFixtureEntry,
   PLAYER_RUNNER_ID,
   type RaceArena,
+  raceMaxTicks,
   rivalPool,
   type SimulateOptions,
   simulateRace,

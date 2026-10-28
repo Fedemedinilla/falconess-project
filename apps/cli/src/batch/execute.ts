@@ -6,7 +6,9 @@
 import type { ContentIndex, Grade } from "@falconess/schema";
 import {
   advanceSeason,
+  buildCourseGeometry,
   type Ruleset,
+  raceMaxTicks,
   type SimContext,
   seasonScore,
   startSeason,
@@ -54,6 +56,8 @@ export type Timing = {
 export type ExecContext = BuildContext & {
   arena: RaceArena;
   geometry: Map<string, CourseGeometry>;
+  /** DNF guard per course id of the season's goal races (the season runs the real engine). */
+  goalMaxTicks: Map<string, number>;
   timing: Timing;
   now: () => number;
 };
@@ -76,6 +80,7 @@ export function createExecContext(
     catalog,
     arena: port.createRaceArena(),
     geometry: new Map(),
+    goalMaxTicks: new Map(),
     timing: emptyTiming(),
     now,
   };
@@ -106,7 +111,33 @@ function runRace(ctx: ExecContext, race: RaceSpec, withPhases: boolean): RaceRec
   return record;
 }
 
-function runSeason(ctx: ExecContext, job: Extract<Job, { scenario: "S7" }>): SeasonRecord {
+/**
+ * Player DNFs of a season's goal races: the season records a DNF as last place with the course's
+ * `maxTicks` (docs/race-engine.md 21.2 step 4), a time no healthy finisher comes near (the guard
+ * is 8 ticks per metre + 2400). Rival DNFs never reach the season state, so the batch cannot
+ * count them (the S7 note says so).
+ */
+function goalDnfs(
+  ctx: ExecContext,
+  s: { raceResults: readonly { courseId: string; timeTicks: number }[] },
+): number {
+  let dnf = 0;
+  for (const r of s.raceResults) {
+    let maxTicks = ctx.goalMaxTicks.get(r.courseId);
+    if (maxTicks === undefined) {
+      const geometry = buildCourseGeometry(ctx.ruleset, ctx.content.getCourse(r.courseId));
+      maxTicks = raceMaxTicks(ctx.ruleset, geometry);
+      ctx.goalMaxTicks.set(r.courseId, maxTicks);
+    }
+    if (r.timeTicks >= maxTicks) dnf++;
+  }
+  return dnf;
+}
+
+function runSeason(
+  ctx: ExecContext,
+  job: Extract<Job, { scenario: "S7" }>,
+): { season: SeasonRecord; dnf: number } {
   const sim: SimContext = { ruleset: ctx.ruleset, content: ctx.content };
   const t0 = ctx.now();
   let s = startSeason(sim, job.seed, {
@@ -127,17 +158,18 @@ function runSeason(ctx: ExecContext, job: Extract<Job, { scenario: "S7" }>): Sea
     minPlace: g.minPlace,
     place: s.raceResults.find((r) => r.turn === g.turn)?.place ?? null,
   }));
-  return {
+  const season: SeasonRecord = {
     grade: s.grade,
     score: { stats, skills, races: total - stats - skills, total },
     goals,
     goalRaces: s.raceResults.length,
     raceEngine: s.raceResults[0]?.engine ?? "none",
   };
+  return { season, dnf: goalDnfs(ctx, s) };
 }
 
 export function runJob(ctx: ExecContext, job: Job): JobResult {
-  if (job.scenario === "S7") return { id: job.id, races: [], season: runSeason(ctx, job), dnf: 0 };
+  if (job.scenario === "S7") return { id: job.id, races: [], ...runSeason(ctx, job) };
   const spec = buildRaceJob(ctx, job);
   const races = spec.races.map((r) => runRace(ctx, r, job.scenario === "S1"));
   let dnf = 0;

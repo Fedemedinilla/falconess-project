@@ -2,7 +2,7 @@ import { loadContent } from "@falconess/content";
 import { type Course, RaceGeometry } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { RULESET_V1 } from "../rulesets/index.js";
-import { buildCourseGeometry, logGeometry, phaseOf } from "./geometry.js";
+import { buildCourseGeometry, logGeometry, phaseOf, raceMaxTicks } from "./geometry.js";
 import {
   PH_FINAL,
   PH_MIDDLE,
@@ -147,5 +147,18 @@ describe("buildCourseGeometry (docs/race-engine.md 2)", () => {
     const b = buildCourseGeometry(R, course);
     expect(a).toEqual(b);
     expect(JSON.stringify(course)).toBe(before);
+  });
+});
+
+describe("raceMaxTicks (docs/race-engine.md 19, ADR-0003 D33)", () => {
+  it("is 8 ticks per whole metre + 2400 on the three courses", () => {
+    const expected: Record<string, number> = {
+      "desert-sprint": 8 * 1200 + 2400,
+      "desert-ridge": 8 * 2000 + 2400,
+      "desert-canyon": 8 * 3000 + 2400,
+    };
+    for (const course of content.courses.values())
+      expect(raceMaxTicks(R, buildCourseGeometry(R, course)), course.id).toBe(expected[course.id]);
+    expect(raceMaxTicks(R, { lengthMm: 1_200_999 })).toBe(8 * 1200 + 2400);
   });
 });

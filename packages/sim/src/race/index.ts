@@ -15,5 +15,5 @@ export {
   fixtureBuild,
   neutralFixtureEntry,
 } from "./fixtures.js";
-export { buildCourseGeometry, type CourseGeometry } from "./geometry.js";
+export { buildCourseGeometry, type CourseGeometry, raceMaxTicks } from "./geometry.js";
 export { createRaceArena, type RaceArena } from "./state.js";

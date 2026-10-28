@@ -60,6 +60,16 @@ export type CourseGeometry = {
 /** Maximum number of segments of a course (schema bound, validator 1.4). */
 export const MAX_SEGMENTS = 24;
 
+/**
+ * The DNF guard of a course (docs/race-engine.md 19, ADR-0003 D33): `dnfTicksPerMeter ×
+ * fl(L_mm, 1000) + dnfTicksBase` ticks. A runner unfinished after it is a DNF, and a season goal
+ * race records a player DNF with this time (21.2 step 4).
+ */
+export function raceMaxTicks(ruleset: Ruleset, geometry: Pick<CourseGeometry, "lengthMm">): number {
+  const R = ruleset.race;
+  return R.dnfTicksPerMeter * floorDiv(geometry.lengthMm, 1000) + R.dnfTicksBase;
+}
+
 export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeometry {
   const R = ruleset.race;
   const { posPerMm } = engineUnits(R);

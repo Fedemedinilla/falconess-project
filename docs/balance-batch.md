@@ -104,4 +104,6 @@ which registers tsx (the parent's TypeScript loader does not reach worker thread
 - **Gate:** report only for now; metric verdicts never fail the job. The repository variable
   `BALANCE_GATE=enforce` turns on §25.2.1's rule: `--fail-on-verdict`, plus `--gate-report` with
   the last `balance-full` of `main`, so a fail in either fails the PR job.
-- Any DNF exits 1 and fails the job: it is an engine bug (§19), not balance.
+- Any DNF exits 1 and fails the job: it is an engine bug (§19), not balance. S7 counts the
+  player's DNFs in its goal races (recorded with the course's `maxTicks`); the season keeps no
+  rival results, so rival DNFs in goal races are not checked.

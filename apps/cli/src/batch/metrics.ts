@@ -844,6 +844,7 @@ function s7Metric(input: MetricsInput): MetricsOutput {
   }
   const notes = [
     "S7: seasons through the season engine with the reference policy 'train the lowest stat' (repairing a frame below 50 % durability) and the reference hangar (shiden, mule, nimbus, falke); metric = share of seasons with gradeFor ≥ B (score ≥ 2900 and no failed goal).",
+    "S7 DNF check: the season keeps only the player's result, so the batch's DNF count covers her goal races (a DNF is recorded with the course's maxTicks) but not the rivals in them.",
   ];
   if (engines.has("stub"))
     notes.push(
