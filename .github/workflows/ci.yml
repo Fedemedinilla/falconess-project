@@ -18,3 +18,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm content:validate
+  # docs/race-engine.md 22: the race benchmark fails the build if the canyon p95 exceeds 5 ms
+  # (asserted in packages/sim/bench/race.bench.ts). Its own job, so timing noise never hides the
+  # verify results.
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bench
