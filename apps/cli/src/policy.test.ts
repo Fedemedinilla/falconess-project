@@ -1,8 +1,15 @@
 import { loadContent } from "@falconess/content";
 import type { SeasonState } from "@falconess/schema";
-import { advanceSeason, RULESET_V1, type SimContext, startSeason } from "@falconess/sim";
+import { advanceSeason, learnCap, RULESET_V1, type SimContext, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
-import { lowestStatPolicy, needsRepair, REFERENCE_HANGAR, REST_AT_FATIGUE } from "./policy.js";
+import {
+  lowestStatPolicy,
+  needsRepair,
+  REFERENCE_HANGAR,
+  REST_AT_FATIGUE,
+  skillsToLearn,
+  usefulGenericActives,
+} from "./policy.js";
 
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 const start = (falconessId: string) =>
@@ -51,5 +58,74 @@ describe("reference policy (R8: repair once durability persists)", () => {
     const input = lowestStatPolicy(ctx, s);
     const next = advanceSeason(ctx, s, input);
     expect(next.frameDurability[s.equippedFrame]).toBe(100);
+  });
+});
+
+describe("reference policy: generic actives (ADR-0005 Pasada 2, decision 2)", () => {
+  const withPoints = (s: SeasonState, skillPoints: number, turn = s.turn): SeasonState => ({
+    ...s,
+    skillPoints,
+    turn,
+  });
+
+  it("learns the cheapest useful generic actives the points pay for, ties by id", () => {
+    const s = start("peregrina");
+    const costs = usefulGenericActives(ctx, s).map((k) => k.cost);
+    expect(costs).toEqual([...costs].sort((a, b) => a - b));
+    expect(skillsToLearn(ctx, withPoints(s, 59))).toEqual([]);
+    expect(skillsToLearn(ctx, withPoints(s, 60))).toEqual(["clean-start"]);
+    // iron-wings and pack-shadow both cost 70: id order
+    expect(skillsToLearn(ctx, withPoints(s, 130))).toEqual(["clean-start", "iron-wings"]);
+    expect(skillsToLearn(ctx, withPoints(s, 199))).toEqual(["clean-start", "iron-wings"]);
+    expect(skillsToLearn(ctx, withPoints(s, 200))).toEqual([
+      "clean-start",
+      "iron-wings",
+      "pack-shadow",
+    ]);
+    expect(lowestStatPolicy(ctx, withPoints(s, 130))).toEqual({
+      kind: "workshop",
+      ops: [
+        { op: "learn-skill", skillId: "clean-start" },
+        { op: "learn-skill", skillId: "iron-wings" },
+      ],
+    });
+    const next = advanceSeason(ctx, withPoints(s, 130), lowestStatPolicy(ctx, withPoints(s, 130)));
+    expect(next.learnedSkills).toEqual(["stoop-strike", "clean-start", "iron-wings"]);
+    expect(next.skillPoints).toBe(0);
+  });
+
+  it("stops at the learn cap, the unique skill included", () => {
+    const s = withPoints(start("cernicala"), 2000);
+    const cap = learnCap(ctx, s);
+    expect(skillsToLearn(ctx, s)).toHaveLength(cap - s.learnedSkills.length);
+    const full = { ...s, learnedSkills: skillsToLearn(ctx, s).concat(s.learnedSkills) };
+    expect(full.learnedSkills).toHaveLength(cap);
+    expect(skillsToLearn(ctx, full)).toEqual([]);
+    expect(lowestStatPolicy(ctx, full).kind).toMatch(/^train:/);
+  });
+
+  it("only counts a segment trigger when a goal course still ahead has that segment", () => {
+    // Peregrina: T12 sprint, T24 ridge, T36 canyon, T46 ridge
+    const ids = (turn: number) =>
+      usefulGenericActives(ctx, withPoints(start("peregrina"), 0, turn)).map((k) => k.id);
+    expect(ids(36)).toEqual(
+      expect.arrayContaining(["water-skimmer", "canyon-sense", "hill-lungs"]),
+    );
+    expect(ids(36)).not.toContain("corner-carver"); // curves: only the T12 sprint
+    expect(ids(1)).toContain("corner-carver");
+    const late = ids(37); // only the T46 ridge is ahead
+    expect(late).toContain("gravity-friend");
+    expect(late).toContain("last-gasp");
+    for (const id of ["water-skimmer", "canyon-sense", "hill-lungs", "corner-carver"])
+      expect(late).not.toContain(id);
+    expect(ids(47)).toEqual([]); // no goal race left
+  });
+
+  it("learns on the repair visit and before resting", () => {
+    const s = withPoints(worn({ ...start("peregrina"), fatigue: REST_AT_FATIGUE }, 10), 60);
+    expect(lowestStatPolicy(ctx, s)).toEqual({
+      kind: "workshop",
+      ops: [{ op: "repair" }, { op: "learn-skill", skillId: "clean-start" }],
+    });
   });
 });

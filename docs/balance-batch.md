@@ -96,9 +96,13 @@ goal fails). The allocation is computed over every line, so `--scenarios` never 
 seeds or counts. S6 and S5's `pr` verdict pull S1 in.
 
 Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:season-batch`): option
-0 on an event; a workshop `repair` when the equipped frame's durability is below 50 % of the
-build's maximum (`REPAIR_BELOW_PM`; durability persists between goal races, ADR-0003 D35, risk
-R8); rest at fatigue 60 or more; otherwise train the lowest stat.
+0 on an event; a workshop visit that does a `repair` when the equipped frame's durability is below
+50 % of the build's maximum (`REPAIR_BELOW_PM`; durability persists between goal races, ADR-0003
+D35, risk R8) and learns, cheapest first and up to the learn cap, every useful generic active the
+skill points pay for (`skillsToLearn`: an active no Falconess owns whose trigger can fire on a goal
+course still ahead; ADR-0005 «Pasada 2»); rest at fatigue 60 or more; otherwise train the lowest
+stat. With the v1 economy the lowest-stat training ends a season with 25-50 skill points and the
+cheapest generic active costs 60, so the learning rule never fires in the reference seasons.
 
 Verdicts (§25.2.1): pass when the 95 % interval lies inside the target, fail when entirely outside,
 inconclusive otherwise; a metric passes only if every cell passes and fails if any fails, and the
