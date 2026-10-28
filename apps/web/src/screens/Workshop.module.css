@@ -40,8 +40,32 @@ fieldset.section > .legend {
   margin-bottom: var(--space-2);
 }
 
-fieldset.section > .legend + * {
+fieldset.section > .legend ~ * {
   clear: both;
+}
+
+/* a section with its own "Breve | Completo", at the right of its title */
+.switched {
+  position: relative;
+}
+
+.section.switched > .legend {
+  display: flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding-right: 8.5rem;
+}
+
+.sectionSwitch {
+  position: absolute;
+  top: var(--space-3);
+  right: 0;
+}
+
+@media (max-width: 37.5rem), (pointer: coarse) {
+  .section.switched > .legend {
+    min-height: 2.75rem;
+  }
 }
 
 .hint {

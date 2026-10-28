@@ -7,6 +7,8 @@ import { formatInt, formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { Icon } from "../ui/Icon";
+import { placeIcon, statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -98,7 +100,10 @@ export function SeasonEnd() {
     <div className={s.end}>
       <header className={s.head}>
         <div className={s.grade}>
-          <span className={s.gradeLabel}>{ui("ui.end.grade")}</span>
+          <span className={s.gradeLabel}>
+            <Icon name="grade" />
+            {ui("ui.end.grade")}
+          </span>
           <span className={s.gradeValue}>{summary.grade}</span>
         </div>
         <div className={s.who}>
@@ -110,7 +115,7 @@ export function SeasonEnd() {
             <Livery palette={sponsor.palette} size="sm" />
             <strong>{gameText(falconess.textKey)}</strong>
             {summary.endReason === "completed" ? (
-              <Pill tone="good" solid>
+              <Pill tone="good" solid icon="finish">
                 {ui("ui.end.completed")}
               </Pill>
             ) : (
@@ -129,7 +134,10 @@ export function SeasonEnd() {
             <dd>{formatInt(summary.score)}</dd>
           </div>
           <div>
-            <dt>{ui("ui.end.feathers")}</dt>
+            <dt>
+              <Icon name="feathers" />
+              {ui("ui.end.feathers")}
+            </dt>
             <dd>{formatSigned(summary.feathers)}</dd>
           </div>
           <div>
@@ -160,7 +168,7 @@ export function SeasonEnd() {
       </header>
 
       <div className={s.grid}>
-        <Panel title={ui("ui.end.races")} flush className={s.races}>
+        <Panel title={ui("ui.end.races")} icon="goalRace" flush className={s.races}>
           {narrow ? (
             <ol className={s.raceList}>
               {goals.map((g) => {
@@ -175,7 +183,7 @@ export function SeasonEnd() {
                     </p>
                     <p className={s.raceFacts}>
                       {g.result ? (
-                        <Pill tone={g.met ? "good" : "bad"}>
+                        <Pill tone={g.met ? "good" : "bad"} icon={placeIcon(g.result.place)}>
                           {ui("ui.goals.place", {
                             place: g.result.place,
                             field: g.result.fieldSize,
@@ -230,7 +238,11 @@ export function SeasonEnd() {
                   ui("ui.goals.week", { turn: g.goal.turn }),
                   gameText(content.getCourse(g.goal.courseId).textKey),
                   g.result ? (
-                    <Pill key="place" tone={g.met ? "good" : "bad"}>
+                    <Pill
+                      key="place"
+                      tone={g.met ? "good" : "bad"}
+                      icon={placeIcon(g.result.place)}
+                    >
                       {ui("ui.goals.place", { place: g.result.place, field: g.result.fieldSize })}
                     </Pill>
                   ) : (
@@ -278,6 +290,7 @@ export function SeasonEnd() {
                 key={stat}
                 size="sm"
                 label={gameText(`stat.${stat}`)}
+                icon={statIcon(stat)}
                 value={formatInt(state.stats[stat])}
                 fraction={state.stats[stat] / scale}
                 ghost={-(state.stats[stat] - summary.startStats[stat]) / scale}
@@ -287,7 +300,10 @@ export function SeasonEnd() {
             ))}
           </div>
           <p className={s.note}>{ui("ui.end.stats.note")}</p>
-          <p className={s.skillsLabel}>{ui("ui.end.skills", { n: state.learnedSkills.length })}</p>
+          <p className={s.skillsLabel}>
+            <Icon name="skill" />
+            {ui("ui.end.skills", { n: state.learnedSkills.length })}
+          </p>
           <ul className={s.skills}>
             {state.learnedSkills.map((id) => (
               <li key={id}>{gameText(content.getSkill(id).textKey)}</li>

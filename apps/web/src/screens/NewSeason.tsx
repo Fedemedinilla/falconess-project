@@ -1,15 +1,20 @@
-import type { RunInput } from "@falconess/schema";
+import type { ContentIndex, Falconess, RunInput } from "@falconess/schema";
 import { BIOMES, STYLES } from "@falconess/schema";
 import { STAT_ORDER, startSeason } from "@falconess/sim";
 import { type FormEvent, useMemo, useState } from "react";
+import { useDetail, useGlobalDetail } from "../app/explain";
 import { SavedRunNotice } from "../app/SavedRunNotice";
 import { navigate } from "../app/useRoute";
 import { randomSeed } from "../game/seed";
 import { useGame } from "../game/useGame";
+import { gameBrief, uiAt } from "../text/brief";
 import { formatInt } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon } from "../ui/Icon";
+import { biomeIcon, statIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -29,6 +34,149 @@ import { Bar } from "./shared/Bar";
 import { Fold, FrameCard } from "./shared/FrameCard";
 import { Letter } from "./shared/Letter";
 
+type RunnerCardProps = {
+  falconess: Falconess;
+  content: ContentIndex;
+  checked: boolean;
+  onPick: () => void;
+  scale: number;
+  narrow: boolean;
+};
+
+/** A Falconess to pick: stats and growth, aptitudes, her unique skill and her goal races. */
+function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: RunnerCardProps) {
+  const sponsor = content.getManufacturer(f.sponsor);
+  const id = `nueva-corredora-${f.id}`;
+  const [detail, setDetail] = useDetail(`${id}-explicacion`);
+  return (
+    <div
+      className={cx(s.runner, checked && s.checked)}
+      style={{
+        "--livery-primary": sponsor.palette.primary,
+        "--livery-secondary": sponsor.palette.secondary,
+      }}
+    >
+      <input
+        type="radio"
+        id={id}
+        name="nueva-corredora"
+        value={f.id}
+        checked={checked}
+        onChange={onPick}
+        className={s.hiddenInput}
+      />
+      <label htmlFor={id} className={s.hitArea}>
+        <span className="visually-hidden">{gameText(f.textKey)}</span>
+      </label>
+      <span className={s.band} aria-hidden="true" />
+      <span className={s.runnerHead}>
+        <span className={s.runnerName} id={`${id}-nombre`}>
+          {gameText(f.textKey)}
+        </span>
+        {checked && (
+          <Pill tone="accent" solid>
+            {ui("ui.new.chosen")}
+          </Pill>
+        )}
+        <ExplainSwitch
+          id={`${id}-explicacion`}
+          detail={detail}
+          onChange={setDetail}
+          name={gameText(f.textKey)}
+          className={s.runnerSwitch}
+        />
+        <span className={s.species}>{f.species}</span>
+      </span>
+      <span className={s.sponsor}>
+        <Livery palette={sponsor.palette} size="sm" />
+        {ui("ui.new.sponsor", { maker: gameText(sponsor.textKey) })}
+      </span>
+
+      <div className={s.block}>
+        {STAT_ORDER.map((stat) => {
+          const growth = f.growth[stat] ?? 0;
+          return (
+            <Bar
+              key={stat}
+              size="sm"
+              label={gameText(`stat.${stat}`)}
+              icon={statIcon(stat)}
+              value={formatInt(f.baseStats[stat])}
+              fraction={f.baseStats[stat] / scale}
+              after={
+                growth > 0 ? ui("ui.new.growth", { growth: formatFraction(growth) }) : undefined
+              }
+              afterTone="up"
+            />
+          );
+        })}
+      </div>
+
+      <Fold id={narrow ? `${id}-detalle` : undefined} label={ui("ui.new.runner.more")}>
+        <span className={s.aptitudes}>
+          <span className={s.aptRow}>
+            <span className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</span>
+            {BIOMES.map((b) => (
+              <span key={b} className={s.apt}>
+                <Icon name={biomeIcon(b)} />
+                {gameText(`biome.${b}`)} <Letter letter={f.biomeAptitude[b] ?? "G"} />
+              </span>
+            ))}
+          </span>
+          <span className={s.aptRow}>
+            <span className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</span>
+            {STYLES.map((st) => (
+              <span key={st} className={cx(s.apt, st === f.preferredStyle && s.preferred)}>
+                <Icon name={styleIcon(st)} />
+                {gameText(`style.${st}`)} <Letter letter={f.styleAptitude[st] ?? "G"} />
+              </span>
+            ))}
+          </span>
+          <span className={s.prefers}>
+            {ui("ui.new.preferred", { style: gameText(`style.${f.preferredStyle}`) })}
+          </span>
+        </span>
+
+        {f.uniqueSkills.map((skillId) => {
+          const skill = content.getSkill(skillId);
+          const brief = detail === "brief" ? gameBrief(skill.textKey) : undefined;
+          return (
+            <span key={skillId} className={s.unique}>
+              <span className={s.aptLabel}>
+                <Icon name="skill" />
+                {ui("ui.new.unique")}
+              </span>
+              <strong>{gameText(skill.textKey)}</strong>
+              <span className={s.uniqueDesc}>
+                {brief ??
+                  (skill.kind === "active"
+                    ? describeActiveSkill(skill)
+                    : skill.modifiers.map(describeModifier).join(" · "))}
+              </span>
+            </span>
+          );
+        })}
+
+        <span className={s.goals}>
+          <span className={s.aptLabel}>
+            <Icon name="goalRace" />
+            {ui("ui.new.goals")}
+          </span>
+          {[...f.seasonGoals]
+            .sort((a, b) => a.turn - b.turn)
+            .map((g) => (
+              <span key={g.turn} className={s.goal}>
+                <span className={s.goalWeek}>{ui("ui.goals.week", { turn: g.turn })}</span>
+                <span>{gameText(content.getCourse(g.courseId).textKey)}</span>
+                <span className={s.goalPlace}>{ui("ui.goals.need", { place: g.minPlace })}</span>
+              </span>
+            ))}
+        </span>
+      </Fold>
+    </div>
+  );
+}
+
 /**
  * Set up a season: the Falconess, up to four frames for the hangar and the seed. Everything shown
  * is content; the frame she starts with is the sim's answer (`startSeason`).
@@ -47,6 +195,7 @@ export function NewSeason() {
   const [seed, setSeed] = useState(randomSeed);
   const seedOk = seed.trim() !== "";
   const narrow = useNarrow();
+  const [pageDetail] = useGlobalDetail();
 
   // the frame the season starts with, as the sim picks it
   const equipped = useMemo(() => {
@@ -89,132 +238,19 @@ export function NewSeason() {
       <Panel title={ui("ui.new.runner")} meta={ui("ui.new.runner.meta", { n: roster.length })}>
         <fieldset className={s.fieldset}>
           <legend className="visually-hidden">{ui("ui.new.runner")}</legend>
-          <p className={s.hint}>{ui("ui.new.runner.hint")}</p>
+          <p className={s.hint}>{uiAt(pageDetail, "ui.new.runner.hint")}</p>
           <div className={s.runners}>
-            {roster.map((f) => {
-              const sponsor = content.getManufacturer(f.sponsor);
-              const checked = f.id === falconessId;
-              const id = `nueva-corredora-${f.id}`;
-              return (
-                <div
-                  key={f.id}
-                  className={cx(s.runner, checked && s.checked)}
-                  style={{
-                    "--livery-primary": sponsor.palette.primary,
-                    "--livery-secondary": sponsor.palette.secondary,
-                  }}
-                >
-                  <input
-                    type="radio"
-                    id={id}
-                    name="nueva-corredora"
-                    value={f.id}
-                    checked={checked}
-                    onChange={() => setFalconessId(f.id)}
-                    className={s.hiddenInput}
-                  />
-                  <label htmlFor={id} className={s.hitArea}>
-                    <span className="visually-hidden">{gameText(f.textKey)}</span>
-                  </label>
-                  <span className={s.band} aria-hidden="true" />
-                  <span className={s.runnerHead}>
-                    <span className={s.runnerName} id={`${id}-nombre`}>
-                      {gameText(f.textKey)}
-                    </span>
-                    {checked && (
-                      <Pill tone="accent" solid>
-                        {ui("ui.new.chosen")}
-                      </Pill>
-                    )}
-                    <span className={s.species}>{f.species}</span>
-                  </span>
-                  <span className={s.sponsor}>
-                    <Livery palette={sponsor.palette} size="sm" />
-                    {ui("ui.new.sponsor", { maker: gameText(sponsor.textKey) })}
-                  </span>
-
-                  <div className={s.block}>
-                    {STAT_ORDER.map((stat) => {
-                      const growth = f.growth[stat] ?? 0;
-                      return (
-                        <Bar
-                          key={stat}
-                          size="sm"
-                          label={gameText(`stat.${stat}`)}
-                          value={formatInt(f.baseStats[stat])}
-                          fraction={f.baseStats[stat] / scale}
-                          after={
-                            growth > 0
-                              ? ui("ui.new.growth", { growth: formatFraction(growth) })
-                              : undefined
-                          }
-                          afterTone="up"
-                        />
-                      );
-                    })}
-                  </div>
-
-                  <Fold id={narrow ? `${id}-detalle` : undefined} label={ui("ui.new.runner.more")}>
-                    <span className={s.aptitudes}>
-                      <span className={s.aptRow}>
-                        <span className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</span>
-                        {BIOMES.map((b) => (
-                          <span key={b} className={s.apt}>
-                            {gameText(`biome.${b}`)} <Letter letter={f.biomeAptitude[b] ?? "G"} />
-                          </span>
-                        ))}
-                      </span>
-                      <span className={s.aptRow}>
-                        <span className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</span>
-                        {STYLES.map((st) => (
-                          <span
-                            key={st}
-                            className={cx(s.apt, st === f.preferredStyle && s.preferred)}
-                          >
-                            {gameText(`style.${st}`)} <Letter letter={f.styleAptitude[st] ?? "G"} />
-                          </span>
-                        ))}
-                      </span>
-                      <span className={s.prefers}>
-                        {ui("ui.new.preferred", { style: gameText(`style.${f.preferredStyle}`) })}
-                      </span>
-                    </span>
-
-                    {f.uniqueSkills.map((id) => {
-                      const skill = content.getSkill(id);
-                      return (
-                        <span key={id} className={s.unique}>
-                          <span className={s.aptLabel}>{ui("ui.new.unique")}</span>
-                          <strong>{gameText(skill.textKey)}</strong>
-                          <span className={s.uniqueDesc}>
-                            {skill.kind === "active"
-                              ? describeActiveSkill(skill)
-                              : skill.modifiers.map(describeModifier).join(" · ")}
-                          </span>
-                        </span>
-                      );
-                    })}
-
-                    <span className={s.goals}>
-                      <span className={s.aptLabel}>{ui("ui.new.goals")}</span>
-                      {[...f.seasonGoals]
-                        .sort((a, b) => a.turn - b.turn)
-                        .map((g) => (
-                          <span key={g.turn} className={s.goal}>
-                            <span className={s.goalWeek}>
-                              {ui("ui.goals.week", { turn: g.turn })}
-                            </span>
-                            <span>{gameText(content.getCourse(g.courseId).textKey)}</span>
-                            <span className={s.goalPlace}>
-                              {ui("ui.goals.need", { place: g.minPlace })}
-                            </span>
-                          </span>
-                        ))}
-                    </span>
-                  </Fold>
-                </div>
-              );
-            })}
+            {roster.map((f) => (
+              <RunnerCard
+                key={f.id}
+                falconess={f}
+                content={content}
+                checked={f.id === falconessId}
+                onPick={() => setFalconessId(f.id)}
+                scale={scale}
+                narrow={narrow}
+              />
+            ))}
           </div>
         </fieldset>
       </Panel>
@@ -252,18 +288,24 @@ export function NewSeason() {
       >
         <fieldset className={s.fieldset}>
           <legend className="visually-hidden">{ui("ui.new.hangar")}</legend>
-          <p className={s.hint}>{ui("ui.new.hangar.hint", { max: HANGAR_SIZE })}</p>
+          <p className={s.hint}>{uiAt(pageDetail, "ui.new.hangar.hint", { max: HANGAR_SIZE })}</p>
           {hangar.length >= HANGAR_SIZE && (
             <p className={s.fullHint} role="status">
               {ui("ui.new.hangar.full")}
             </p>
           )}
           <div className={s.coverage}>
-            <span className={s.aptLabel}>{ui("ui.new.coverage")}</span>
+            <span className={s.aptLabel}>
+              <Icon name="crew" />
+              {ui("ui.new.coverage")}
+            </span>
             <ul className={s.coverageList}>
               {coverage.map((c) => (
                 <li key={c.stat} className={cx(s.cover, c.crews.length === 0 && s.uncovered)}>
-                  <span className={s.coverStat}>{ui(`ui.stat.abbr.${c.stat}`)}</span>
+                  <span className={s.coverStat}>
+                    <Icon name={statIcon(c.stat)} />
+                    {ui(`ui.stat.abbr.${c.stat}`)}
+                  </span>
                   {c.crews.length === 0 ? (
                     <span className={s.coverNone}>{ui("ui.new.coverage.none")}</span>
                   ) : (
@@ -304,6 +346,7 @@ export function NewSeason() {
                   <FrameCard
                     frameId={frame.id}
                     headingId={`${id}-nombre`}
+                    explainId={`${id}-explicacion`}
                     foldId={`${id}-detalle`}
                     tag={
                       checked ? (

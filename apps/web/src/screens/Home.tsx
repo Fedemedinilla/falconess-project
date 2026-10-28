@@ -7,6 +7,8 @@ import { formatInt } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { Icon } from "../ui/Icon";
+import { statIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { SeasonStrip } from "../ui/SeasonStrip";
@@ -52,17 +54,26 @@ function Roster() {
             <dl className={s.facts}>
               {STAT_ORDER.map((stat) => (
                 <div key={stat} className={s.fact}>
-                  <dt title={gameText(`stat.${stat}`)}>{ui(`ui.stat.abbr.${stat}`)}</dt>
+                  <dt title={gameText(`stat.${stat}`)}>
+                    <Icon name={statIcon(stat)} />
+                    {ui(`ui.stat.abbr.${stat}`)}
+                  </dt>
                   <dd>{formatInt(f.baseStats[stat])}</dd>
                 </div>
               ))}
               <div className={s.fact}>
                 <dt>{ui("ui.home.roster.style")}</dt>
-                <dd>{gameText(`style.${f.preferredStyle}`)}</dd>
+                <dd>
+                  <Icon name={styleIcon(f.preferredStyle)} />
+                  {gameText(`style.${f.preferredStyle}`)}
+                </dd>
               </div>
               {signature && (
                 <div className={s.fact}>
-                  <dt>{ui("ui.home.roster.signature")}</dt>
+                  <dt>
+                    <Icon name="frame" />
+                    {ui("ui.home.roster.signature")}
+                  </dt>
                   <dd>{gameText(signature.textKey)}</dd>
                 </div>
               )}
@@ -71,6 +82,7 @@ function Roster() {
               turns={turns}
               marks={f.seasonGoals.map((g) => ({
                 turn: g.turn,
+                icon: "goalRace",
                 label: ui("ui.home.goal.week", { turn: g.turn }),
               }))}
               label={ui("ui.home.strip.label", { turns, weeks })}

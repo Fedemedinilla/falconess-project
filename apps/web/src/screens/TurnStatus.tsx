@@ -3,6 +3,8 @@ import { learnCap, type SimContext, STAT_ORDER } from "@falconess/sim";
 import { formatFixed, formatInt, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { cx } from "../ui/cx";
+import { Icon } from "../ui/Icon";
+import { biomeIcon, moodIcon, statIcon, styleIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
 import { StatBar } from "../ui/StatBar";
 import { type ActionPreview, moodPm, previewFatigue, previewGain } from "./model/actions";
@@ -36,7 +38,10 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
       <div className={s.status}>
         <div className={s.gauges}>
           <div className={s.gauge}>
-            <span className={s.gaugeLabel}>{ui("ui.turn.mood")}</span>
+            <span className={s.gaugeLabel}>
+              <Icon name={moodIcon(state.mood)} />
+              {ui("ui.turn.mood")}
+            </span>
             <span
               className={s.mood}
               role="img"
@@ -67,6 +72,7 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
           <div className={s.fatigue}>
             <Bar
               label={ui("ui.turn.fatigue")}
+              icon="fatigue"
               value={formatInt(state.fatigue)}
               fraction={state.fatigue / S.fatigueMax}
               meter={{ value: state.fatigue, max: S.fatigueMax }}
@@ -89,20 +95,30 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
 
           <dl className={s.resources}>
             <div>
-              <dt>{ui("ui.turn.skillPoints")}</dt>
+              <dt>
+                <Icon name="skillPoints" />
+                {ui("ui.turn.skillPoints")}
+              </dt>
               <dd>{formatInt(state.skillPoints)}</dd>
             </div>
             <div>
-              <dt>{ui("ui.turn.scrap")}</dt>
+              <dt>
+                <Icon name="scrap" />
+                {ui("ui.turn.scrap")}
+              </dt>
               <dd>{formatInt(state.wallet.scrap)}</dd>
             </div>
             <div>
-              <dt>{ui("ui.turn.feathers")}</dt>
+              <dt>
+                <Icon name="feathers" />
+                {ui("ui.turn.feathers")}
+              </dt>
               <dd>{formatInt(state.wallet.feathers)}</dd>
             </div>
           </dl>
           {state.injuryTurns > 0 && (
             <p className={s.injured} role="status">
+              <Icon name="injury" />
               {ui("ui.turn.injured", { weeks: uiCount("ui.count.weeks", state.injuryTurns) })}
             </p>
           )}
@@ -120,6 +136,7 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
               <div key={stat} className={s.statRow}>
                 <StatBar
                   label={gameText(`stat.${stat}`)}
+                  icon={statIcon(stat)}
                   value={state.stats[stat]}
                   max={seasonStatScale(S.statMax)}
                   {...(gain === undefined ? {} : { preview: gain })}
@@ -157,7 +174,10 @@ export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
           <ul className={s.letters}>
             {BIOMES.map((b) => (
               <li key={b}>
-                <span>{gameText(`biome.${b}`)}</span>
+                <span>
+                  <Icon name={biomeIcon(b)} />
+                  {gameText(`biome.${b}`)}
+                </span>
                 <Letter letter={state.biomeAptitude[b] ?? "G"} />
               </li>
             ))}
@@ -166,7 +186,10 @@ export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
           <ul className={s.letters}>
             {STYLES.map((st) => (
               <li key={st}>
-                <span>{gameText(`style.${st}`)}</span>
+                <span>
+                  <Icon name={styleIcon(st)} />
+                  {gameText(`style.${st}`)}
+                </span>
                 <Letter letter={state.styleAptitude[st] ?? "G"} />
               </li>
             ))}
@@ -175,6 +198,7 @@ export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
 
         <div className={s.skills}>
           <p className={s.aptLabel}>
+            <Icon name="skill" />
             {ui("ui.turn.skills", { n: state.learnedSkills.length, cap })}
           </p>
           <ul className={s.skillList}>

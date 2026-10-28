@@ -63,6 +63,9 @@
 }
 
 .hit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   min-width: 0;
   padding: 0;
   border: 0;
@@ -312,4 +315,9 @@
 
 .down {
   color: var(--bad);
+}
+
+/* the action's emoji, big, before its name */
+.titleIcon {
+  margin-inline-end: 0;
 }

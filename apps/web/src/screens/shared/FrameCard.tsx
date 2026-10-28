@@ -1,10 +1,15 @@
 import { FrameStats } from "@falconess/schema";
 import { resolveFrameBuild } from "@falconess/sim";
 import type { ReactNode } from "react";
+import { useDetail, useGlobalDetail } from "../../app/explain";
 import { getContent } from "../../content/load";
+import { type Detail, gameBrief, uiAt } from "../../text/brief";
 import { formatFixed, formatInt } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
 import { cx } from "../../ui/cx";
+import { ExplainSwitch } from "../../ui/ExplainSwitch";
+import { Icon } from "../../ui/Icon";
+import { type IconName, styleIcon } from "../../ui/icons";
 import { Livery } from "../../ui/Livery";
 import { Pill } from "../../ui/Pill";
 import { useNarrow } from "../../ui/useMedia";
@@ -38,6 +43,11 @@ export type FrameCardProps = {
   tag?: ReactNode;
   headingId?: string | undefined;
   /**
+   * Stable id of the card's "Breve | Completo" (`<id>-breve`, `<id>-completo`). Without one the
+   * card has no switch and follows the page's default.
+   */
+  explainId?: string | undefined;
+  /**
    * On a phone, fold the passive, quirks, rule and crew under "Ver detalle" (a <details> with this
    * id), leaving the name and the four bars: a list of thirteen frames stays short.
    */
@@ -69,6 +79,23 @@ function durabilityColor(d: Durability): string {
   return share < 0.25 ? "var(--bad)" : share < 0.5 ? "var(--warn)" : "var(--good)";
 }
 
+/** A trait's term with its emoji before it ("Pasiva", "Regla"). */
+function Term({ icon, children }: { icon: IconName; children: ReactNode }) {
+  return (
+    <dt>
+      <Icon name={icon} />
+      {children}
+    </dt>
+  );
+}
+
+/** A card's detail: its own switch when it has an id, else the page's default. */
+function useCardDetail(explainId: string | undefined): [Detail, (d: Detail) => void] {
+  const own = useDetail(explainId ?? "");
+  const page = useGlobalDetail();
+  return explainId === undefined ? page : own;
+}
+
 /** A frame from content: livery, the four frame stats, its passive or quirks, rule and crew. */
 export function FrameCard({
   frameId,
@@ -78,10 +105,13 @@ export function FrameCard({
   variant = "full",
   tag,
   headingId,
+  explainId,
   foldId,
   className,
 }: FrameCardProps) {
   const narrow = useNarrow();
+  const [detail, setDetail] = useCardDetail(explainId);
+  const brief = detail === "brief";
   const content = getContent();
   const frame = content.getFrame(frameId);
   const maker = content.getManufacturer(frame.manufacturer);
@@ -105,27 +135,39 @@ export function FrameCard({
           <span>{gameText(maker.textKey)}</span>
         </p>
         <p className={s.chips}>
-          <Pill>{gameText(`style.${frame.style}`)}</Pill>
+          <Pill icon={styleIcon(frame.style)}>{gameText(`style.${frame.style}`)}</Pill>
           <Pill tone={frame.rarity === "SSR" ? "accent" : "neutral"}>{frame.rarity}</Pill>
         </p>
+        {explainId && (
+          <ExplainSwitch
+            id={explainId}
+            detail={detail}
+            onChange={setDetail}
+            name={gameText(frame.textKey)}
+            className={s.switch}
+          />
+        )}
       </header>
 
       <div className={s.stats}>
         <Bar
           size="sm"
           label={gameText("framestat.powerToWeight")}
+          icon="framestat.powerToWeight"
           value={formatFixed(build.powerToWeight, 1000, 2)}
           fraction={build.powerToWeight / SCALE.powerToWeight}
         />
         <Bar
           size="sm"
           label={gameText("framestat.energy")}
+          icon="framestat.energy"
           value={formatInt(build.energy)}
           fraction={build.energy / SCALE.energy}
         />
         <Bar
           size="sm"
           label={gameText("framestat.dissipation")}
+          icon="framestat.dissipation"
           value={formatInt(build.dissipation)}
           fraction={build.dissipation / SCALE.dissipation}
         />
@@ -133,6 +175,7 @@ export function FrameCard({
           <Bar
             size="sm"
             label={gameText("framestat.durability")}
+            icon="framestat.durability"
             value={ui("ui.frame.durability", { current: durability.current, max: durability.max })}
             fraction={durability.max > 0 ? durability.current / durability.max : 0}
             color={durabilityColor(durability)}
@@ -141,6 +184,7 @@ export function FrameCard({
           <Bar
             size="sm"
             label={gameText("framestat.durability")}
+            icon="framestat.durability"
             value={formatInt(build.durabilityMax)}
             fraction={build.durabilityMax / SCALE.durability}
           />
@@ -151,25 +195,29 @@ export function FrameCard({
         <dl className={s.traits}>
           {passive && (
             <div className={s.trait}>
-              <dt>{ui("ui.frame.passive")}</dt>
+              <Term icon="passive">{ui("ui.frame.passive")}</Term>
               <dd>
                 <strong className={s.traitName}>{gameText(passive.textKey)}</strong>
-                <ul className={s.lines}>
-                  {passive.modifiers.map((m, i) => (
-                    // modifiers have no id; their order is the content's
-                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed content order
-                    <li key={i}>{describeModifier(m)}</li>
-                  ))}
-                </ul>
+                {brief && gameBrief(passive.textKey) !== undefined ? (
+                  <span className={s.lineInline}>{gameBrief(passive.textKey)}</span>
+                ) : (
+                  <ul className={s.lines}>
+                    {passive.modifiers.map((m, i) => (
+                      // modifiers have no id; their order is the content's
+                      // biome-ignore lint/suspicious/noArrayIndexKey: fixed content order
+                      <li key={i}>{describeModifier(m)}</li>
+                    ))}
+                  </ul>
+                )}
               </dd>
             </div>
           )}
           {frame.quirkSlots > 0 && (
             <div className={s.trait}>
-              <dt>{ui("ui.frame.quirks")}</dt>
+              <Term icon="quirk">{ui("ui.frame.quirks")}</Term>
               <dd>
                 {quirks === undefined ? (
-                  <span>{ui("ui.frame.quirks.random", { n: frame.quirkSlots })}</span>
+                  <span>{uiAt(detail, "ui.frame.quirks.random", { n: frame.quirkSlots })}</span>
                 ) : (
                   <ul className={s.quirks}>
                     {quirks.map((q) => {
@@ -177,7 +225,10 @@ export function FrameCard({
                       return (
                         <li key={q}>
                           <strong className={s.traitName}>{gameText(quirk.textKey)}</strong>
-                          <span className={s.lineInline}>{describeSource(quirk).join(" · ")}</span>
+                          <span className={s.lineInline}>
+                            {(brief && gameBrief(quirk.textKey)) ||
+                              describeSource(quirk).join(" · ")}
+                          </span>
                         </li>
                       );
                     })}
@@ -188,20 +239,22 @@ export function FrameCard({
           )}
           {parts.length > 0 && (
             <div className={s.trait}>
-              <dt>{ui("ui.frame.parts")}</dt>
+              <Term icon="part">{ui("ui.frame.parts")}</Term>
               <dd>{parts.map((p) => gameText(content.getPart(p).textKey)).join(", ")}</dd>
             </div>
           )}
           {variant === "full" && (
             <>
               <div className={s.trait}>
-                <dt>{ui("ui.frame.rule")}</dt>
-                <dd>{gameText(`rule.${maker.rule}`)}</dd>
+                <Term icon="rule">{ui("ui.frame.rule")}</Term>
+                <dd>
+                  {(brief && gameBrief(`rule.${maker.rule}`)) || gameText(`rule.${maker.rule}`)}
+                </dd>
               </div>
               <div className={s.trait}>
-                <dt>{ui("ui.frame.crew")}</dt>
+                <Term icon="crew">{ui("ui.frame.crew")}</Term>
                 <dd>
-                  {ui("ui.frame.crew.text", {
+                  {uiAt(detail, "ui.frame.crew.text", {
                     crew: gameText(maker.crew.textKey),
                     stats: maker.crew.stats.map((st) => ui(`ui.stat.abbr.${st}`)).join(" · "),
                     bonus: formatFraction(maker.crew.trainingBonus),

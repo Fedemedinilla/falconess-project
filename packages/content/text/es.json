@@ -599,7 +599,6 @@
   "ui.race.gauge.energy": "Ene",
   "ui.race.gauge.heat": "Cal",
   "ui.race.gauge.hp": "Físico",
-  "ui.race.gauge.legend": "Físico: se gasta corriendo; Resistencia lo agranda y sin físico no hay boost. Ene: energía, se gasta con boost. Cal: calor, sube con boost y, si se pasa, frena. Dur: durabilidad de las alas.",
   "ui.race.gauge.legend.durability": "Dur: durabilidad de las alas; en 0 se rompen y va más lenta.",
   "ui.race.gauge.legend.durability.brief": "Durabilidad: en 0, alas rotas",
   "ui.race.gauge.legend.energy": "Ene: energía, se gasta con boost.",

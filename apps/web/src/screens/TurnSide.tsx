@@ -1,9 +1,14 @@
 import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
+import { useDetail } from "../app/explain";
+import { uiAt } from "../text/brief";
 import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon, WithIcon } from "../ui/Icon";
+import { actionIcon, biomeIcon, type IconName, placeIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -29,10 +34,22 @@ export type GoalsPanelProps = {
 /** The next goal race in detail, then every goal of the season with its result. */
 export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: GoalsPanelProps) {
   const course = next && ctx.content.getCourse(next.goal.courseId);
+  const [detail, setDetail] = useDetail("metas-explicacion");
   return (
     <Panel
       title={ui("ui.goals.title")}
+      icon="goalRace"
       meta={next ? ui("ui.goals.week", { turn: next.goal.turn }) : undefined}
+      actions={
+        next && (
+          <ExplainSwitch
+            id="metas-explicacion"
+            detail={detail}
+            onChange={setDetail}
+            name={ui("ui.goals.title")}
+          />
+        )
+      }
       className={className}
     >
       <div className={s.goals}>
@@ -46,14 +63,18 @@ export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: G
             <h3 className={s.course}>{gameText(course.textKey)}</h3>
             <p className={s.facts}>
               <span>
+                <Icon name={biomeIcon(course.biome)} />
                 {gameText(`biome.${course.biome}`)}{" "}
                 <Letter letter={state.biomeAptitude[course.biome] ?? "G"} />
               </span>
               <span>{ui("ui.goals.field", { n: course.entries })}</span>
-              <span className={s.need}>{ui("ui.goals.need", { place: next.goal.minPlace })}</span>
+              <span className={s.need}>
+                <Icon name="finish" />
+                {ui("ui.goals.need", { place: next.goal.minPlace })}
+              </span>
             </p>
-            <p className={s.consequence}>{ui("ui.goals.consequence")}</p>
-            <CourseStrip courseId={course.id} legend />
+            <p className={s.consequence}>{uiAt(detail, "ui.goals.consequence")}</p>
+            <CourseStrip courseId={course.id} legend={detail} />
           </div>
         ) : (
           <p className={s.none}>{ui("ui.goals.none")}</p>
@@ -74,7 +95,7 @@ export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: G
               </span>
               {g.result ? (
                 <span className={s.goalResult}>
-                  <Pill tone={g.met ? "good" : "bad"}>
+                  <Pill tone={g.met ? "good" : "bad"} icon={placeIcon(g.result.place)}>
                     {ui("ui.goals.place", { place: g.result.place, field: g.result.fieldSize })}
                   </Pill>
                   <Button
@@ -118,9 +139,11 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
   }
   const others = state.hangar.filter((f) => f !== state.equippedFrame);
   const S = ctx.ruleset.season;
+  const [crewDetail, setCrewDetail] = useDetail("hangar-cuadrillas-explicacion");
   return (
     <Panel
       title={ui("ui.hangar.title")}
+      icon="frame"
       meta={ui("ui.hangar.meta", { n: state.hangar.length })}
       flush
       className={className}
@@ -131,6 +154,7 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
         parts={state.installedParts}
         durability={durabilityOf(ctx, state, state.equippedFrame)}
         variant="compact"
+        explainId="hangar-explicacion"
         tag={<Pill tone="accent">{ui("ui.hangar.equipped")}</Pill>}
       />
       {others.length > 0 && (
@@ -143,17 +167,30 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
               <li key={f} className={s.other}>
                 <Livery palette={m.palette} size="sm" />
                 <span className={s.otherName}>{gameText(frame.textKey)}</span>
-                <span className={s.otherMeta}>{gameText(`style.${frame.style}`)}</span>
-                <span className={s.otherDur}>
+                <WithIcon icon={styleIcon(frame.style)} className={s.otherMeta}>
+                  {gameText(`style.${frame.style}`)}
+                </WithIcon>
+                <WithIcon icon="framestat.durability" className={s.otherDur}>
                   {ui("ui.frame.durability", { current: d.current, max: d.max })}
-                </span>
+                </WithIcon>
               </li>
             );
           })}
         </ul>
       )}
       <div className={s.bonds}>
-        <p className={s.bondsTitle}>{ui("ui.hangar.crews")}</p>
+        <div className={s.bondsHead}>
+          <p className={s.bondsTitle}>
+            <Icon name="crew" />
+            {ui("ui.hangar.crews")}
+          </p>
+          <ExplainSwitch
+            id="hangar-cuadrillas-explicacion"
+            detail={crewDetail}
+            onChange={setCrewDetail}
+            name={ui("ui.hangar.crews")}
+          />
+        </div>
         <ul className={s.bondList}>
           {crews.map((id) => {
             const m = ctx.content.getManufacturer(id);
@@ -178,7 +215,7 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
           })}
         </ul>
         <p className={s.bondNote}>
-          {ui("ui.hangar.crews.note", {
+          {uiAt(crewDetail, "ui.hangar.crews.note", {
             base: formatChance(S.crewPresenceBase),
             per: formatChance(S.crewPresencePerBondLevel),
             step: S.bondLevelStep,
@@ -190,6 +227,24 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
 }
 
 // --- log ---------------------------------------------------------------------------------------------
+
+/** The emoji of a week's action: the action's own, an event's answer; none for the start. */
+export function inputIcon(input: RunInput): IconName | undefined {
+  switch (input.kind) {
+    case "start":
+      return undefined;
+    case "event:choose":
+      return "event";
+    default:
+      return actionIcon(input.kind);
+  }
+}
+
+/** The emoji of a week's action, when it has one. */
+export function InputMark({ input }: { input: RunInput | undefined }) {
+  const icon = input && inputIcon(input);
+  return icon ? <Icon name={icon} /> : null;
+}
 
 /** A week's action in words: "Entrenar agilidad", "Taller: equipar Shiden, reparar". */
 export function describeInput(ctx: SimContext, input: RunInput): string {
@@ -249,6 +304,7 @@ export function LogPanel({ ctx, weeks, className }: LogPanelProps) {
               <span className={s.weekTurn}>{ui("ui.goals.week", { turn: w.turn })}</span>
               <div className={s.weekBody}>
                 <p className={s.weekAction}>
+                  <InputMark input={w.input} />
                   {w.input ? describeInput(ctx, w.input) : ui("ui.log.start")}
                 </p>
                 {w.notes
@@ -262,11 +318,13 @@ export function LogPanel({ ctx, weeks, className }: LogPanelProps) {
                   ))}
                 {w.notes.filter(isEventNote).map((n) => (
                   <p key={n} className={s.weekEvent}>
+                    <Icon name="event" />
                     {gameText(n)}
                   </p>
                 ))}
                 {w.race && (
                   <p className={s.weekRace}>
+                    <Icon name="goalRace" />
                     {ui("ui.log.race", {
                       course: gameText(ctx.content.getCourse(w.race.courseId).textKey),
                       place: w.race.place,

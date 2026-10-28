@@ -1,9 +1,13 @@
 import { contentLabels, type RaceLabels } from "@falconess/race-view";
-import type { RaceLog } from "@falconess/schema";
+import { type RaceLog, SEGMENT_TYPES } from "@falconess/schema";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useGlobalDetail } from "../app/explain";
 import { getContent } from "../content/load";
+import { uiAt } from "../text/brief";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
+import { segmentIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
 import { Controls } from "./Controls";
 import { ReplayClock } from "./clock";
@@ -11,7 +15,7 @@ import { type ChartMode, LaneChart } from "./LaneChart";
 import { LivePanel } from "./LivePanel";
 import s from "./RaceViewer.module.css";
 import { Results } from "./Results";
-import { raceView } from "./view";
+import { type RaceView, raceView } from "./view";
 import { metres } from "./words";
 
 let defaultLabels: RaceLabels | undefined;
@@ -22,8 +26,25 @@ export function pageLabels(): RaceLabels {
   return defaultLabels;
 }
 
+/** The terrain the strip over the lanes is colored by: the types this course has. */
+function TerrainLegend({ view }: { view: RaceView }) {
+  const types = SEGMENT_TYPES.filter((t) => view.layout.segments.some((seg) => seg.type === t));
+  return (
+    <ul className={s.terrainLegend} aria-hidden="true">
+      {types.map((t) => (
+        <li key={t} className={s.flagLegendItem}>
+          <span className={s.terrainSwatch} style={{ background: `var(--seg-${t})` }} />
+          <Icon name={segmentIcon(t)} />
+          {view.labels.segmentName(t)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** The flags the chart draws, with the glyph each one uses, and the kick line when there is one. */
 function FlagLegend({ reserve }: { reserve: boolean }) {
+  const [detail] = useGlobalDetail();
   const items: { key: string; glyph: string }[] = [
     { key: "boost", glyph: "M2 8 L12 6 L12 10 Z" },
     { key: "pulse", glyph: "M8 2 a6 6 0 1 0 0.01 0" },
@@ -61,7 +82,7 @@ function FlagLegend({ reserve }: { reserve: boolean }) {
           <svg className={s["legend-reserve"]} viewBox="0 0 16 16" aria-hidden="true">
             <path d="M8 1 V15" />
           </svg>
-          {ui("ui.race.legend.reserve")}
+          {uiAt(detail, "ui.race.legend.reserve")}
         </li>
       )}
     </ul>
@@ -90,6 +111,7 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
   const [revealed, setRevealed] = useState(false);
   const [mode, setMode] = useState<ChartMode>("pack");
   const [guess, setGuess] = useState<number | undefined>(undefined);
+  const [detail] = useGlobalDetail();
   useEffect(() => {
     if (snap.atEnd) setRevealed(true);
   }, [snap.atEnd]);
@@ -167,7 +189,7 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
                 </select>
               </span>
               <p className={s.guessHint} id={`${idPrefix}-pronostico-ayuda`}>
-                {ui("ui.race.guess.hint")}
+                {uiAt(detail, "ui.race.guess.hint")}
               </p>
             </div>
           )}
@@ -181,6 +203,7 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
             }}
           />
           <LaneChart view={view} clock={clock} mode={mode} />
+          <TerrainLegend view={view} />
           <FlagLegend reserve={view.layout.reserve !== null} />
         </div>
       </Panel>

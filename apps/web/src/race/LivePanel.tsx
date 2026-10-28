@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react";
+import { useDetail } from "../app/explain";
+import { type BriefUiKey, uiAt } from "../text/brief";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon } from "../ui/Icon";
+import type { IconName } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { RUNNER_FLAGS, sampleAt, standings } from "./playback";
@@ -9,13 +14,23 @@ import s from "./RaceViewer.module.css";
 import type { RaceView, RunnerView } from "./view";
 import { metres, mps, secsMilli, withSign } from "./words";
 
+/** The four gauges: their emoji and the legend line of each. */
+const GAUGES: readonly { icon: IconName; legend: BriefUiKey }[] = [
+  { icon: "race.hp", legend: "ui.race.gauge.legend.hp" },
+  { icon: "race.energy", legend: "ui.race.gauge.legend.energy" },
+  { icon: "race.heat", legend: "ui.race.gauge.legend.heat" },
+  { icon: "race.durability", legend: "ui.race.gauge.legend.durability" },
+];
+
 function Gauge({
   label,
+  icon,
   value,
   max,
   tone,
 }: {
   label: string;
+  icon: IconName;
   value: number;
   max: number;
   tone: string;
@@ -23,7 +38,10 @@ function Gauge({
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
   return (
     <span className={s.gauge} title={`${label} ${Math.round(pct)} %`}>
-      <span className={s.gaugeLabel}>{label}</span>
+      <span className={s.gaugeLabel}>
+        <Icon name={icon} />
+        {label}
+      </span>
       <span className={s.gaugeTrack} aria-hidden="true">
         <span className={cx(s.gaugeFill, s[tone])} style={{ width: `${pct}%` }} />
       </span>
@@ -67,8 +85,23 @@ export function LivePanel({ view, tick, idPrefix }: LivePanelProps) {
     return standings(view.log, samples);
   }, [view, tick]);
   const byLane = useMemo(() => new Map(view.runners.map((r) => [r.lane, r])), [view]);
+  const switchId = `${idPrefix}-en-vivo-explicacion`;
+  const [detail, setDetail] = useDetail(switchId);
   return (
-    <Panel title={ui("ui.race.live.title")} meta={ui("ui.race.live.meta")} flush className={s.live}>
+    <Panel
+      title={ui("ui.race.live.title")}
+      meta={ui("ui.race.live.meta")}
+      actions={
+        <ExplainSwitch
+          id={switchId}
+          detail={detail}
+          onChange={setDetail}
+          name={ui("ui.race.live.title")}
+        />
+      }
+      flush
+      className={s.live}
+    >
       <ol className={cx(s.liveList, folded && s.liveFolded)}>
         {rows.map(({ sample, order, gapMm, behindMilli }) => {
           const r: RunnerView | undefined = byLane.get(sample.lane);
@@ -94,24 +127,28 @@ export function LivePanel({ view, tick, idPrefix }: LivePanelProps) {
               <span className={s.liveGauges}>
                 <Gauge
                   label={ui("ui.race.gauge.hp")}
+                  icon="race.hp"
                   value={sample.hp}
                   max={r.max.hp}
                   tone="toneHp"
                 />
                 <Gauge
                   label={ui("ui.race.gauge.energy")}
+                  icon="race.energy"
                   value={sample.energy}
                   max={r.max.energy}
                   tone="toneEnergy"
                 />
                 <Gauge
                   label={ui("ui.race.gauge.heat")}
+                  icon="race.heat"
                   value={sample.heat}
                   max={r.max.heat}
                   tone="toneHeat"
                 />
                 <Gauge
                   label={ui("ui.race.gauge.durability")}
+                  icon="race.durability"
                   value={sample.durability}
                   max={r.max.durability}
                   tone="toneDurability"
@@ -120,6 +157,7 @@ export function LivePanel({ view, tick, idPrefix }: LivePanelProps) {
               <span className={s.liveFlags}>
                 {flags.map((f) => (
                   <span key={f} className={cx(s.flag, s[`flag-${f}`])}>
+                    <Icon name={`flag.${f}`} />
                     {ui(`ui.race.flag.${f}`)}
                   </span>
                 ))}
@@ -140,7 +178,14 @@ export function LivePanel({ view, tick, idPrefix }: LivePanelProps) {
           </Button>
         </div>
       )}
-      <p className={s.gaugeLegend}>{ui("ui.race.gauge.legend")}</p>
+      <ul className={cx(s.gaugeLegend, detail === "brief" && s.gaugeLegendBrief)}>
+        {GAUGES.map((g) => (
+          <li key={g.icon}>
+            <Icon name={g.icon} />
+            {uiAt(detail, g.legend)}
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }

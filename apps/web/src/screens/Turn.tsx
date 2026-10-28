@@ -4,6 +4,7 @@ import { useGame } from "../game/useGame";
 import { formatSeconds } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
+import { placeIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Pill } from "../ui/Pill";
 import { SeasonStrip } from "../ui/SeasonStrip";
@@ -88,12 +89,12 @@ export function Turn() {
             <span>{gameText(sponsor.textKey)}</span>
             <span className={s.seed}>{ui("ui.turn.seed", { seed: run.seed })}</span>
             {state.injuryTurns > 0 && (
-              <Pill tone="bad" solid>
+              <Pill tone="bad" solid icon="injury">
                 {ui("ui.action.injured")}
               </Pill>
             )}
             {state.fatigue >= ctx.ruleset.season.forcedRestAt && (
-              <Pill tone="warn" solid>
+              <Pill tone="warn" solid icon="action.rest">
                 {ui("ui.action.forcedRest")}
               </Pill>
             )}
@@ -105,6 +106,7 @@ export function Turn() {
             current={state.turn}
             marks={goals.map((g) => ({
               turn: g.goal.turn,
+              icon: g.result ? (placeIcon(g.result.place) ?? "goalRace") : "goalRace",
               label: g.result
                 ? ui("ui.turn.strip.place", { place: g.result.place })
                 : ui("ui.goals.week", { turn: g.goal.turn }),

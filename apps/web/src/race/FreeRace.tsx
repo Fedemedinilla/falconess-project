@@ -1,11 +1,15 @@
 import { FIELD_LIMITS } from "@falconess/race-view";
 import type { ContentIndex, RaceLog } from "@falconess/schema";
 import { type FormEvent, useId, useMemo, useState } from "react";
+import { useDetail } from "../app/explain";
 import { simContext } from "../content/load";
 import { randomSeed } from "../game/seed";
+import { gameBrief, uiAt } from "../text/brief";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon } from "../ui/Icon";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import s from "./FreeRace.module.css";
@@ -182,6 +186,7 @@ export function FreeRace() {
   const [form, setForm] = useState<FreeRaceForm>(outcome.form);
   const [editing, setEditing] = useState(!outcome.ok);
   const formKey = useId();
+  const [detail, setDetail] = useDetail("libre-explicacion");
 
   const set = (patch: Partial<FreeRaceForm>) => setForm((f) => ({ ...f, ...patch }));
   const submit = (e: FormEvent) => {
@@ -214,16 +219,26 @@ export function FreeRace() {
       <Panel
         title={ui("ui.freeRace.form.title")}
         actions={
-          <Button
-            id="libre-cambiar"
-            size="sm"
-            variant={editing ? "ghost" : "secondary"}
-            aria-expanded={editing}
-            aria-controls="libre-form"
-            onClick={() => setEditing((v) => !v)}
-          >
-            {ui(editing ? "ui.freeRace.edit.close" : "ui.freeRace.edit")}
-          </Button>
+          <>
+            {editing && (
+              <ExplainSwitch
+                id="libre-explicacion"
+                detail={detail}
+                onChange={setDetail}
+                name={ui("ui.freeRace.form.title")}
+              />
+            )}
+            <Button
+              id="libre-cambiar"
+              size="sm"
+              variant={editing ? "ghost" : "secondary"}
+              aria-expanded={editing}
+              aria-controls="libre-form"
+              onClick={() => setEditing((v) => !v)}
+            >
+              {ui(editing ? "ui.freeRace.edit.close" : "ui.freeRace.edit")}
+            </Button>
+          </>
         }
       >
         <p className={s.summary}>{summary(outcome.form, content)}</p>
@@ -356,7 +371,9 @@ export function FreeRace() {
                     const mfr = fr && content.manufacturers.get(fr.manufacturer);
                     return mfr ? (
                       <p className={s.hint}>
-                        <Livery palette={mfr.palette} size="sm" /> {gameText(`rule.${mfr.rule}`)}
+                        <Livery palette={mfr.palette} size="sm" /> <Icon name="rule" />
+                        {(detail === "brief" && gameBrief(`rule.${mfr.rule}`)) ||
+                          gameText(`rule.${mfr.rule}`)}
                       </p>
                     ) : null;
                   })()}
@@ -415,7 +432,7 @@ export function FreeRace() {
                 <NumberField
                   id="libre-semana"
                   label={ui("ui.freeRace.turn")}
-                  hint={ui("ui.freeRace.turn.note")}
+                  hint={uiAt(detail, "ui.freeRace.turn.note")}
                   value={form.turn}
                   min={L.minTurn}
                   max={L.maxTurn}
@@ -426,7 +443,7 @@ export function FreeRace() {
                 <CheckList
                   name="libre-habilidad"
                   legend={ui("ui.freeRace.skills")}
-                  note={ui("ui.freeRace.skills.note")}
+                  note={uiAt(detail, "ui.freeRace.skills.note")}
                   options={skills.map((id) => ({
                     id,
                     label: gameText(content.getSkill(id).textKey),
@@ -438,7 +455,7 @@ export function FreeRace() {
                 <CheckList
                   name="libre-pieza"
                   legend={ui("ui.freeRace.parts")}
-                  note={ui("ui.freeRace.parts.note")}
+                  note={uiAt(detail, "ui.freeRace.parts.note")}
                   options={parts.map((id) => ({
                     id,
                     label: gameText(content.getPart(id).textKey),
@@ -454,7 +471,7 @@ export function FreeRace() {
               <NumberField
                 id="libre-neutral-stats"
                 label={ui("ui.freeRace.neutral.stats")}
-                hint={ui("ui.freeRace.neutral.note")}
+                hint={uiAt(detail, "ui.freeRace.neutral.note")}
                 value={form.neutralStats}
                 min={L.minStat}
                 max={L.maxStat}
@@ -468,7 +485,7 @@ export function FreeRace() {
               {ui("ui.freeRace.run")}
             </Button>
             <p className={s.hint} id={`${formKey}-nota`}>
-              {ui("ui.freeRace.run.note")}
+              {uiAt(detail, "ui.freeRace.run.note")}
             </p>
           </div>
         </form>

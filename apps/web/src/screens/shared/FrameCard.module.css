@@ -56,23 +56,30 @@
   gap: var(--space-1);
 }
 
+/* "Breve | Completo" on a row of its own: every card's head keeps one height, so the bars of the
+   cards in a row line up whatever the style, rarity and maker */
+.switch {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
 .stats {
   display: grid;
   gap: 2px;
 }
 
+/* one column of terms as wide as the widest of this card, so the texts keep their room */
 .traits {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
   margin: 0;
   font-size: var(--fs-sm);
   color: var(--ink-2);
 }
 
 .trait {
-  display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr);
-  gap: var(--space-2);
+  display: contents;
 }
 
 .trait dt {

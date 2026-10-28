@@ -1,9 +1,14 @@
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { useDetail } from "../app/explain";
+import { uiAt } from "../text/brief";
 import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon, WithIcon } from "../ui/Icon";
+import { actionIcon, type IconName, moodIcon, statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -22,7 +27,7 @@ import { formatChance } from "./model/describe";
 import type { NextGoal, WeekLog } from "./model/season";
 import { durabilityOf } from "./model/workshop";
 import s from "./TurnActions.module.css";
-import { describeInput } from "./TurnSide";
+import { describeInput, InputMark } from "./TurnSide";
 
 export type TurnActionsProps = {
   ctx: SimContext;
@@ -64,16 +69,21 @@ function Crews({ ctx, crews }: { ctx: SimContext; crews: readonly CrewBonus[] })
 function Effect({
   value,
   label,
+  icon,
   strong = false,
 }: {
   value: string;
   label: string;
+  icon: IconName;
   strong?: boolean;
 }) {
   return (
     <span className={cx(s.effect, strong && s.strong)}>
       <span className={s.effectValue}>{value}</span>
-      <span className={s.effectLabel}>{label}</span>
+      <span className={s.effectLabel}>
+        <Icon name={icon} />
+        {label}
+      </span>
     </span>
   );
 }
@@ -136,7 +146,8 @@ function ActionCard({
           aria-describedby={descId}
           aria-keyshortcuts={String(SHORTCUT[kind])}
         >
-          {title}
+          <Icon name={actionIcon(kind)} size="lg" className={s.titleIcon} />
+          <span>{title}</span>
         </button>
         {meta}
       </div>
@@ -175,6 +186,7 @@ function LastWeek({ ctx, week }: { ctx: SimContext; week: WeekLog }) {
       <span className={s.feedbackLabel}>{ui("ui.turn.feedback.label")}</span>
       <span className={s.feedbackText}>
         <strong>
+          <InputMark input={week.input} />
           {ui("ui.turn.feedback", { turn: week.turn, action: describeInput(ctx, week.input) })}
         </strong>
         {result && <span className={s[`feedback-${result.tone}`]}> — {result.text}</span>}
@@ -223,6 +235,7 @@ export function TurnActions({
   const crewChoice =
     crew !== undefined && outing.crews.includes(crew) ? crew : (outing.crews[0] ?? "");
   const equipped = durabilityOf(ctx, state, state.equippedFrame);
+  const [explain, setExplain] = useDetail("acciones-explicacion");
 
   const inputFor = (kind: ActionKind): RunInput | undefined => {
     if (kind === "workshop") return undefined;
@@ -267,7 +280,7 @@ export function TurnActions({
     if (block === "injured")
       return (
         <p className={s.blockNote}>
-          <Pill tone="bad" solid>
+          <Pill tone="bad" solid icon="injury">
             {ui("ui.action.injured")}
           </Pill>
           <span>
@@ -280,7 +293,7 @@ export function TurnActions({
     if (block === "forced-rest")
       return (
         <p className={s.blockNote}>
-          <Pill tone="warn" solid>
+          <Pill tone="warn" solid icon="action.rest">
             {ui("ui.action.forcedRest")}
           </Pill>
           <span>
@@ -322,18 +335,26 @@ export function TurnActions({
                   key={g.stat}
                   value={formatSigned(g.gain)}
                   label={ui(`ui.stat.abbr.${g.stat}`)}
+                  icon={statIcon(g.stat)}
                   strong={i === 0}
                 />
               ))}
               {t.skillPoints > 0 && (
-                <Effect value={formatSigned(t.skillPoints)} label={ui("ui.action.skillPoints")} />
+                <Effect
+                  value={formatSigned(t.skillPoints)}
+                  label={ui("ui.action.skillPoints")}
+                  icon="skillPoints"
+                />
               )}
             </>
           }
           detail={<Crews ctx={ctx} crews={t.crews} />}
           footer={
             <>
-              <span className={cx(t.failPm >= 150 && s.risky)}>
+              <WithIcon
+                icon={t.failPm === 0 ? undefined : t.injuryPm > 0 ? "injury" : "risk"}
+                className={cx(t.failPm >= 150 && s.risky)}
+              >
                 {t.failPm === 0
                   ? ui("ui.action.noFail")
                   : t.injuryPm > 0
@@ -342,8 +363,10 @@ export function TurnActions({
                         injury: formatChance(t.injuryPm),
                       })
                     : ui("ui.action.fail", { fail: formatChance(t.failPm) })}
-              </span>
-              <span>{ui("ui.action.fatigue", { delta: formatSigned(t.fatigue) })}</span>
+              </WithIcon>
+              <WithIcon icon="fatigue">
+                {ui("ui.action.fatigue", { delta: formatSigned(t.fatigue) })}
+              </WithIcon>
             </>
           }
         />
@@ -360,9 +383,10 @@ export function TurnActions({
               <Effect
                 value={formatSigned(rest.fatigue)}
                 label={ui("ui.action.fatigueShort")}
+                icon="fatigue"
                 strong
               />
-              <Effect value="+1" label={ui("ui.action.moodShort")} />
+              <Effect value="+1" label={ui("ui.action.moodShort")} icon={moodIcon(1)} />
             </>
           }
           detail={
@@ -382,9 +406,22 @@ export function TurnActions({
           disabled={pending}
           effects={
             <>
-              <Effect value={formatSigned(outing.mood)} label={ui("ui.action.moodShort")} strong />
-              <Effect value={formatSigned(outing.fatigue)} label={ui("ui.action.fatigueShort")} />
-              <Effect value={formatSigned(outing.bond)} label={ui("ui.action.bondShort")} />
+              <Effect
+                value={formatSigned(outing.mood)}
+                label={ui("ui.action.moodShort")}
+                icon={moodIcon(Math.sign(outing.mood))}
+                strong
+              />
+              <Effect
+                value={formatSigned(outing.fatigue)}
+                label={ui("ui.action.fatigueShort")}
+                icon="fatigue"
+              />
+              <Effect
+                value={formatSigned(outing.bond)}
+                label={ui("ui.action.bondShort")}
+                icon="bond"
+              />
             </>
           }
           detail={
@@ -437,14 +474,17 @@ export function TurnActions({
           <Effect
             value={ui("ui.frame.durability", { current: equipped.current, max: equipped.max })}
             label={ui("ui.action.durabilityShort")}
+            icon="framestat.durability"
             strong
           />
         }
-        detail={<p className={s.note}>{ui("ui.action.workshop.note")}</p>}
+        detail={<p className={s.note}>{uiAt(explain, "ui.action.workshop.note")}</p>}
         footer={
           <>
             <span>{ui("ui.action.noFail")}</span>
-            <span>{ui("ui.action.fatigue", { delta: formatSigned(workshopFatigue(ctx)) })}</span>
+            <WithIcon icon="fatigue">
+              {ui("ui.action.fatigue", { delta: formatSigned(workshopFatigue(ctx)) })}
+            </WithIcon>
           </>
         }
       />
@@ -455,17 +495,27 @@ export function TurnActions({
     <Panel
       title={ui("ui.turn.actions")}
       meta={ui("ui.turn.actions.keys")}
+      actions={
+        <ExplainSwitch
+          id="acciones-explicacion"
+          detail={explain}
+          onChange={setExplain}
+          name={ui("ui.turn.actions")}
+        />
+      }
       className={className}
       id="turno-acciones"
     >
       {pending && (
         <p className={s.alert} role="status">
+          <Icon name="event" />
           {ui("ui.turn.eventPending")}
         </p>
       )}
       {next?.weeksLeft === 0 && !pending && (
         <p className={s.raceWeek} role="status">
-          {ui("ui.turn.raceThisWeek", {
+          <Icon name="goalRace" />
+          {uiAt(explain, "ui.turn.raceThisWeek", {
             course: gameText(ctx.content.getCourse(next.goal.courseId).textKey),
             place: next.goal.minPlace,
           })}
@@ -474,7 +524,7 @@ export function TurnActions({
       {lastWeek && <LastWeek ctx={ctx} week={lastWeek} />}
       <ul className={s.grid}>{cards}</ul>
       <p className={s.legend}>
-        {ui("ui.turn.actions.legend", {
+        {uiAt(explain, "ui.turn.actions.legend", {
           base: formatChance(ctx.ruleset.season.failBase),
           per: ctx.ruleset.season.failPerFatigue,
           secondary: formatChance(ctx.ruleset.season.secondaryGain),

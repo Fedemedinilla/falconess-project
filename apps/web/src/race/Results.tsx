@@ -9,9 +9,13 @@ import {
   whyModel,
 } from "@falconess/race-view";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useDetail } from "../app/explain";
 import { formatFixed } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon } from "../ui/Icon";
+import { type IconName, placeIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -20,6 +24,7 @@ import type { ReplayClock } from "./clock";
 import s from "./RaceViewer.module.css";
 import { cellRuns, type RaceView, type RunnerView } from "./view";
 import {
+  eventIcon,
   factor,
   finishMargin,
   finishTime,
@@ -29,6 +34,7 @@ import {
   planSummary,
   secs,
   secsMilli,
+  sinkIcon,
   sinkText,
   sinkTone,
   termText,
@@ -252,6 +258,7 @@ function WhyBlock({ m, view }: { m: WhyModel; view: RaceView }) {
           <ul className={s.sinks}>
             {m.sinks.map((sink) => (
               <li key={sink.kind} className={cx(s.sink, s[`sink-${sinkTone(sink)}`])}>
+                <Icon name={sinkIcon(sink)} />
                 {sinkText(sink)}
               </li>
             ))}
@@ -299,6 +306,9 @@ function RunnerSelect({
 /** "Why" and events of one runner, side by side on a wide screen. */
 export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: string }) {
   const [lane, setLane] = useState(() => defaultLane(view));
+  // brief: the plain lines only; full: the phases, losses, gains, skills and the engine's numbers
+  const switchId = `${idPrefix}-porque-explicacion`;
+  const [detail, setDetail] = useDetail(switchId);
   const winner = view.byPlace[0];
   const r = view.runners.find((x) => x.lane === lane) ?? view.runners[0];
   const m = useMemo(
@@ -334,7 +344,15 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
       <Panel
         title={ui("ui.race.why.title")}
         actions={
-          <RunnerSelect view={view} lane={lane} onChange={setLane} id={`${idPrefix}-por-que`} />
+          <>
+            <RunnerSelect view={view} lane={lane} onChange={setLane} id={`${idPrefix}-por-que`} />
+            <ExplainSwitch
+              id={switchId}
+              detail={detail}
+              onChange={setDetail}
+              name={ui("ui.race.why.title")}
+            />
+          </>
         }
         className={s.whyPanel}
       >
@@ -350,9 +368,13 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
             ))}
           </ul>
         </div>
-        <p className={s.hint}>{ui("ui.race.why.hint")}</p>
-        <WhyBlock m={m} view={view} />
-        <WhyDetail m={m} view={view} id={`${idPrefix}-porque-detalle`} />
+        {detail === "full" && (
+          <>
+            <p className={s.hint}>{ui("ui.race.why.hint")}</p>
+            <WhyBlock m={m} view={view} />
+            <WhyDetail m={m} view={view} id={`${idPrefix}-porque-detalle`} />
+          </>
+        )}
       </Panel>
       <Panel
         title={ui("ui.race.events.title")}
@@ -372,7 +394,10 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
                 <span className={s.eventPos}>
                   {ui("ui.race.track.metres", { m: metres(e.posMm) })}
                 </span>
-                <span className={s.eventText}>{e.text}</span>
+                <span className={s.eventText}>
+                  <Icon name={eventIcon(e.item)} />
+                  {e.text}
+                </span>
               </li>
             ))}
           </ol>
@@ -381,6 +406,21 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
     </div>
   );
 }
+
+/** The emoji of a timeline cell in the legend, when its concept has one. */
+const CELL_ICON: Partial<Record<TimelineCell, IconName>> = {
+  finish: "finish",
+  dnf: "dnf",
+  stalled: "flag.stalled",
+  broken: "flag.broken",
+  airborne: "flag.airborne",
+  overheated: "flag.overheated",
+  exhausted: "flag.exhausted",
+  pulse: "flag.pulse",
+  boost: "flag.boost",
+  lightBoost: "flag.boost",
+  drafting: "flag.drafting",
+};
 
 const CELL_TONE: Record<TimelineCell, string> = {
   finish: "cellFinish",
@@ -452,6 +492,7 @@ export function TimelinePanel({ view, clock }: { view: RaceView; clock: ReplayCl
         {shown.map((c) => (
           <li key={c} className={s.legendItem}>
             <span className={cx(s.legendSwatch, s[CELL_TONE[c]])} />
+            {CELL_ICON[c] && <Icon name={CELL_ICON[c]} />}
             {ui(`ui.race.timeline.cell.${c}`)}
           </li>
         ))}
@@ -529,6 +570,7 @@ export function Results({
               player.result.place === 1 ? "good" : player.result.place <= 3 ? "accent" : "neutral"
             }
             solid
+            icon={placeIcon(player.result.place)}
           >
             {ui("ui.race.place", { place: player.result.place })}
           </Pill>

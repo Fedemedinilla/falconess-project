@@ -17,6 +17,7 @@ import {
 import type { RaceEntry, RaceLog, RaceResult } from "@falconess/schema";
 import { formatFixed, formatInt } from "../text/format";
 import { type TextVars, ui } from "../text/ui";
+import { type IconName, segmentIcon } from "../ui/icons";
 
 // --- units --------------------------------------------------------------------------------------
 
@@ -228,6 +229,46 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
   }
 }
 
+/** The emoji of an event line: the concept it is about (ui/icons.ts). */
+export function eventIcon(item: EventItem): IconName {
+  switch (item.kind) {
+    case "pulses":
+      return "flag.pulse";
+    case "overheatSpan":
+      return "flag.overheated";
+    case "skill":
+      return "skill";
+    case "skillMiss":
+      return "skillMiss";
+    case "freeBoost":
+      return "flag.boost";
+    case "sprintPlan":
+      return "sprintPlan";
+    case "jumpOk":
+      return segmentIcon("jump");
+    case "jumpFail":
+      return "trouble";
+    case "landing":
+      return "landing";
+    case "detour":
+      return "detour";
+    case "waterHit":
+      return segmentIcon("water");
+    case "hpEmpty":
+      return "flag.exhausted";
+    case "durabilityBroken":
+      return "flag.broken";
+    case "repair":
+      return "race.durability";
+    case "heatToEnergy":
+      return "race.energy";
+    case "finish":
+      return "finish";
+    case "dnf":
+      return "dnf";
+  }
+}
+
 /** What the runner's badge on the track says for a moment after the event; none for most. */
 export function eventBadge(item: EventItem, labels: RaceLabels): string | undefined {
   switch (item.kind) {
@@ -308,6 +349,28 @@ export function sinkText(sink: WhySink): string {
       return ui("ui.race.dnf");
     case "energyLeft":
       return ui("ui.race.sink.energyLeft", { energy: units(sink.energy) });
+  }
+}
+
+/** The emoji of a time sink. */
+export function sinkIcon(sink: WhySink): IconName {
+  switch (sink.kind) {
+    case "stall":
+      return "flag.stalled";
+    case "hpEmpty":
+      return "flag.exhausted";
+    case "landings":
+      return "landing";
+    case "detours":
+      return "detour";
+    case "overheat":
+      return "flag.overheated";
+    case "broken":
+      return "flag.broken";
+    case "dnf":
+      return "dnf";
+    case "energyLeft":
+      return "race.energy";
   }
 }
 

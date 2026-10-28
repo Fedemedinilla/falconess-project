@@ -124,6 +124,28 @@
   height: 1rem;
 }
 
+/* "Explicaciones: breves / completas", the default of every card's "Breve | Completo" */
+.explainTool {
+  gap: var(--space-1);
+}
+
+.explainLabel {
+  color: var(--ink-3);
+}
+
+.explainMode {
+  color: var(--ink);
+}
+
+.explainOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.explainOn .explainMode {
+  color: var(--accent-text);
+}
+
 @media (max-width: 52rem) {
   .inner {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -133,7 +155,8 @@
     gap: var(--space-1) var(--space-3);
   }
 
-  .themeLabel {
+  .themeLabel,
+  .explainLabel {
     display: none;
   }
 }
@@ -144,15 +167,16 @@
  */
 @media (max-width: 37.5rem) {
   .bar {
+    --topbar-nav-h: 2.75rem;
     top: calc(env(safe-area-inset-top, 0px) - var(--topbar-nav-h));
   }
 
   .inner {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     grid-template-rows: var(--topbar-nav-h) auto;
     grid-template-areas:
-      "nav nav theme"
-      "brand status run";
+      "nav nav explain theme"
+      "brand status run run";
     gap: 0 var(--space-2);
     min-height: 0;
     padding-block: 0 var(--space-2);
@@ -168,6 +192,26 @@
 
   .themeTool {
     grid-area: theme;
+  }
+
+  /* only the book on a phone: its fill says "completas"; a finger's target, like the theme */
+  .explainTool {
+    grid-area: explain;
+    padding-inline: var(--space-2);
+  }
+
+  .explainTool,
+  .themeTool {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .explainMode {
+    display: none;
+  }
+
+  .link {
+    padding-inline: 6px;
   }
 
   .tag {

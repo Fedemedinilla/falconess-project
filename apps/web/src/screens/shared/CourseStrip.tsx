@@ -1,17 +1,23 @@
 import { courseLength, SEGMENT_TYPES } from "@falconess/schema";
 import { getContent } from "../../content/load";
+import type { Detail } from "../../text/brief";
 import { formatInt } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
+import { Icon } from "../../ui/Icon";
+import { segmentIcon } from "../../ui/icons";
 import s from "./CourseStrip.module.css";
 
 export type CourseStripProps = {
   courseId: string;
-  /** List the segment types under the strip. */
-  legend?: boolean;
+  /**
+   * List the segment types under the strip: their names ("brief"), or with the metres of each
+   * type ("full"). No legend when undefined.
+   */
+  legend?: Detail | undefined;
 };
 
 /** A course as one strip: every segment at its length, colored by its type. */
-export function CourseStrip({ courseId, legend = false }: CourseStripProps) {
+export function CourseStrip({ courseId, legend }: CourseStripProps) {
   const course = getContent().getCourse(courseId);
   const total = courseLength(course);
   const types = SEGMENT_TYPES.filter((t) => course.segments.some((seg) => seg.type === t));
@@ -46,7 +52,17 @@ export function CourseStrip({ courseId, legend = false }: CourseStripProps) {
           {types.map((t) => (
             <li key={t}>
               <span className={s.swatch} style={{ background: `var(--seg-${t})` }} />
-              {gameText(`segment.${t}`)}
+              <Icon name={segmentIcon(t)} />
+              {legend === "full"
+                ? ui("ui.course.segment", {
+                    segment: gameText(`segment.${t}`),
+                    meters: formatInt(
+                      course.segments
+                        .filter((seg) => seg.type === t)
+                        .reduce((sum, seg) => sum + seg.length, 0),
+                    ),
+                  })
+                : gameText(`segment.${t}`)}
             </li>
           ))}
           <li className={s.total}>{ui("ui.course.meters", { meters: formatInt(total) })}</li>

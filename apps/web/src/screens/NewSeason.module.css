@@ -411,3 +411,8 @@
     display: none;
   }
 }
+
+/* "Breve | Completo" at the right of the runner's name, above the card's hit area */
+.runnerSwitch {
+  margin-left: auto;
+}

@@ -19,6 +19,7 @@ import { STAT_ORDER } from "@falconess/sim";
 import { getContent } from "../../content/load";
 import { formatFixed, formatInt, formatPermille, formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
+import { type IconName, moodIcon, statIcon } from "../../ui/icons";
 
 const TICKS_PER_SECOND = 15;
 const MINUS = "−";
@@ -201,31 +202,42 @@ function capitalize(s: string): string {
   return s.charAt(0).toLocaleUpperCase("es") + s.slice(1);
 }
 
+/** One effect of an event option: its words and the emoji of what it changes. */
+export type EffectLine = { readonly icon: IconName; readonly text: string };
+
 /**
  * One event effect block as short lines ("Inteligencia +12", "Ánimo −1"). `crewName` names a
  * manufacturer's crew for bond changes.
  */
-export function describeEffects(fx: EventEffects, crewName: (mfrId: string) => string): string[] {
-  const out: string[] = [];
+export function describeEffects(
+  fx: EventEffects,
+  crewName: (mfrId: string) => string,
+): EffectLine[] {
+  const out: EffectLine[] = [];
+  const add = (icon: IconName, text: string) => out.push({ icon, text });
   for (const stat of STAT_ORDER) {
     const delta = fx.stats[stat];
     if (delta !== undefined && delta !== 0)
-      out.push(ui("ui.fx.stat", { stat: statName(stat), delta: formatSigned(delta) }));
+      add(statIcon(stat), ui("ui.fx.stat", { stat: statName(stat), delta: formatSigned(delta) }));
   }
-  if (fx.mood !== 0) out.push(ui("ui.fx.mood", { delta: formatSigned(fx.mood) }));
-  if (fx.fatigue !== 0) out.push(ui("ui.fx.fatigue", { delta: formatSigned(fx.fatigue) }));
+  if (fx.mood !== 0)
+    add(moodIcon(Math.sign(fx.mood)), ui("ui.fx.mood", { delta: formatSigned(fx.mood) }));
+  if (fx.fatigue !== 0) add("fatigue", ui("ui.fx.fatigue", { delta: formatSigned(fx.fatigue) }));
   for (const [mfr, delta] of Object.entries(fx.bond))
     if (delta !== 0)
-      out.push(ui("ui.fx.bond", { crew: crewName(mfr), delta: formatSigned(delta) }));
+      add("bond", ui("ui.fx.bond", { crew: crewName(mfr), delta: formatSigned(delta) }));
   if (fx.skillPoints !== 0)
-    out.push(ui("ui.fx.skillPoints", { delta: formatSigned(fx.skillPoints) }));
-  if (fx.scrap !== 0) out.push(ui("ui.fx.scrap", { delta: formatSigned(fx.scrap) }));
-  if (fx.feathers !== 0) out.push(ui("ui.fx.feathers", { delta: formatSigned(fx.feathers) }));
-  if (fx.durability !== 0) out.push(ui("ui.fx.durability", { delta: formatSigned(fx.durability) }));
+    add("skillPoints", ui("ui.fx.skillPoints", { delta: formatSigned(fx.skillPoints) }));
+  if (fx.scrap !== 0) add("scrap", ui("ui.fx.scrap", { delta: formatSigned(fx.scrap) }));
+  if (fx.feathers !== 0)
+    add("feathers", ui("ui.fx.feathers", { delta: formatSigned(fx.feathers) }));
+  if (fx.durability !== 0)
+    add("framestat.durability", ui("ui.fx.durability", { delta: formatSigned(fx.durability) }));
   if (fx.injuryTurns > 0)
-    out.push(ui("ui.fx.injury", { weeks: uiCount("ui.count.weeks", fx.injuryTurns) }));
+    add("injury", ui("ui.fx.injury", { weeks: uiCount("ui.count.weeks", fx.injuryTurns) }));
   if (fx.learnSkill !== undefined)
-    out.push(
+    add(
+      "skill",
       ui("ui.fx.learnSkill", { skill: gameText(getContent().getSkill(fx.learnSkill).textKey) }),
     );
   return out;
@@ -233,9 +245,12 @@ export function describeEffects(fx: EventEffects, crewName: (mfrId: string) => s
 
 export type OptionSummary = {
   /** The option's sure effects. */
-  readonly sure: readonly string[];
+  readonly sure: readonly EffectLine[];
   /** Chance branches: the probability and what that branch adds. */
-  readonly branches: readonly { readonly chance: string; readonly effects: readonly string[] }[];
+  readonly branches: readonly {
+    readonly chance: string;
+    readonly effects: readonly EffectLine[];
+  }[];
 };
 
 /** What an event option does, with its chance branches spelled out. */

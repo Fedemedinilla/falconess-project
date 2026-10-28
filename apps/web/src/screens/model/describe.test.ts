@@ -64,14 +64,20 @@ describe("content in plain words", () => {
     const [first, second] = event.options;
     if (!first || !second) throw new Error("fixture");
     expect(describeOption(first, crew)).toEqual({
-      sure: ["Inteligencia +12", "Ánimo −1"],
+      sure: [
+        { icon: "stat.intelligence", text: "Inteligencia +12" },
+        { icon: "mood.-1", text: "Ánimo −1" },
+      ],
       branches: [],
     });
     expect(describeOption(second, crew)).toEqual({
-      sure: ["Agilidad +6", "Vínculo Box Kōryū +5"],
+      sure: [
+        { icon: "stat.agility", text: "Agilidad +6" },
+        { icon: "bond", text: "Vínculo Box Kōryū +5" },
+      ],
       branches: [
-        { chance: "70\u00a0%", effects: ["Ánimo +1"] },
-        { chance: "30\u00a0%", effects: ["Fatiga +15"] },
+        { chance: "70\u00a0%", effects: [{ icon: "mood.1", text: "Ánimo +1" }] },
+        { chance: "30\u00a0%", effects: [{ icon: "fatigue", text: "Fatiga +15" }] },
       ],
     });
   });

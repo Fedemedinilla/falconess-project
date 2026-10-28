@@ -3,6 +3,7 @@ import { useGame } from "../game/useGame";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
+import { Icon } from "../ui/Icon";
 import { Livery } from "../ui/Livery";
 import s from "./EventDialog.module.css";
 import { describeOption } from "./model/describe";
@@ -79,6 +80,7 @@ export function EventDialog() {
         open={!hidden}
         onClose={() => setHiddenFor(key)}
         title={ui("ui.screen.event.title")}
+        icon="event"
         id="evento-dialogo"
         size="lg"
       >
@@ -111,15 +113,19 @@ export function EventDialog() {
                       <span className={s.none}>{ui("ui.fx.none")}</span>
                     ) : (
                       summary.sure.map((line) => (
-                        <span key={line} className={s.effect}>
-                          {line}
+                        <span key={line.text} className={s.effect}>
+                          <Icon name={line.icon} />
+                          {line.text}
                         </span>
                       ))
                     )}
                   </span>
                   {summary.branches.length > 0 && (
                     <span className={s.chance}>
-                      <span className={s.chanceLabel}>{ui("ui.fx.chance")}</span>
+                      <span className={s.chanceLabel}>
+                        <Icon name="risk" />
+                        {ui("ui.fx.chance")}
+                      </span>
                       {summary.branches.map((b, j) => (
                         // branches have no id; their order is the content's
                         // biome-ignore lint/suspicious/noArrayIndexKey: fixed content order
@@ -127,7 +133,9 @@ export function EventDialog() {
                           {ui("ui.fx.branch", {
                             chance: b.chance,
                             effects:
-                              b.effects.length === 0 ? ui("ui.fx.none") : b.effects.join(" · "),
+                              b.effects.length === 0
+                                ? ui("ui.fx.none")
+                                : b.effects.map((e) => e.text).join(" · "),
                           })}
                         </span>
                       ))}

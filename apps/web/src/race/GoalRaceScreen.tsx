@@ -8,6 +8,7 @@ import { useGame } from "../game/useGame";
 import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
+import { placeIcon } from "../ui/icons";
 import { Pill } from "../ui/Pill";
 import { type GoalRaceStep, goalRaceSteps, pickedTurn } from "./goal-races";
 import { Replay } from "./RaceReplay";
@@ -86,9 +87,15 @@ export function GoalRaceScreen() {
           {courseName}
         </h1>
         <p className={s.screenLead}>
-          <Pill tone="accent">{ui("ui.goalRace.goal", { place: step.minPlace })}</Pill>
+          <Pill tone="accent" icon="goalRace">
+            {ui("ui.goalRace.goal", { place: step.minPlace })}
+          </Pill>
           {recorded && revealed && (
-            <Pill tone={recorded.place <= step.minPlace ? "good" : "bad"} solid>
+            <Pill
+              tone={recorded.place <= step.minPlace ? "good" : "bad"}
+              solid
+              icon={placeIcon(recorded.place)}
+            >
               {ui("ui.goalRace.recorded", {
                 place: recorded.place,
                 n: recorded.fieldSize,

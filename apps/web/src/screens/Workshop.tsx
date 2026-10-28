@@ -1,10 +1,15 @@
 import type { PartType } from "@falconess/schema";
 import { useEffect, useRef, useState } from "react";
+import { useDetail } from "../app/explain";
 import { useGame } from "../game/useGame";
+import { gameBrief, uiAt } from "../text/brief";
 import { formatFixed, formatInt, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
+import { ExplainSwitch } from "../ui/ExplainSwitch";
+import { Icon } from "../ui/Icon";
+import type { IconName } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -48,6 +53,9 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   const turn = state?.turn;
   const inputs = run?.inputs.length;
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [partsDetail, setPartsDetail] = useDetail("taller-piezas-explicacion");
+  const [quirksDetail, setQuirksDetail] = useDetail("taller-peculiaridades-explicacion");
+  const [skillsDetail, setSkillsDetail] = useDetail("taller-habilidades-explicacion");
 
   // the panel replaces the button that opened it: the page goes to its top and focus moves in
   useEffect(() => {
@@ -81,9 +89,17 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   const rerollable = rerollableFrames(ctx, state);
   const nextReroll = nextRerollCost(ctx, state, plan);
   const skills = learnableSkills(ctx, state);
-  const builds = [
+  const builds: {
+    key: string;
+    icon: IconName;
+    label: string;
+    from: string;
+    to: string;
+    diff: number;
+  }[] = [
     {
       key: "powerToWeight",
+      icon: "framestat.powerToWeight",
       label: gameText("framestat.powerToWeight"),
       from: formatFixed(report.before.powerToWeight, 1000, 2),
       to: formatFixed(report.after.powerToWeight, 1000, 2),
@@ -91,6 +107,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
     },
     {
       key: "energy",
+      icon: "framestat.energy",
       label: gameText("framestat.energy"),
       from: formatInt(report.before.energy),
       to: formatInt(report.after.energy),
@@ -98,6 +115,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
     },
     {
       key: "dissipation",
+      icon: "framestat.dissipation",
       label: gameText("framestat.dissipation"),
       from: formatInt(report.before.dissipation),
       to: formatInt(report.after.dissipation),
@@ -105,6 +123,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
     },
     {
       key: "durability",
+      icon: "framestat.durability",
       label: ui("ui.workshop.durabilityMax"),
       from: formatInt(report.before.durabilityMax),
       to: formatInt(report.after.durabilityMax),
@@ -112,6 +131,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
     },
     {
       key: "skills",
+      icon: "skill",
       label: ui("ui.workshop.skillCap"),
       from: ui("ui.workshop.skillCap.value", {
         n: state.learnedSkills.length,
@@ -125,6 +145,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   return (
     <Panel
       title={ui("ui.screen.workshop.title")}
+      icon="action.workshop"
       meta={ui("ui.workshop.meta", {
         n: report.ops.length,
         max: MAX_WORKSHOP_OPS,
@@ -143,7 +164,10 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
 
         {/* frame ------------------------------------------------------------------------------ */}
         <fieldset className={s.section}>
-          <legend className={s.legend}>{ui("ui.workshop.frame")}</legend>
+          <legend className={s.legend}>
+            <Icon name="frame" />
+            {ui("ui.workshop.frame")}
+          </legend>
           <ul className={s.frames}>
             {state.hangar.map((id) => {
               const frame = content.getFrame(id);
@@ -184,9 +208,19 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
         </fieldset>
 
         {/* parts ------------------------------------------------------------------------------ */}
-        <fieldset className={s.section}>
-          <legend className={s.legend}>{ui("ui.workshop.parts")}</legend>
-          <p className={s.hint}>{ui("ui.workshop.parts.hint")}</p>
+        <fieldset className={cx(s.section, s.switched)}>
+          <legend className={s.legend}>
+            <Icon name="part" />
+            {ui("ui.workshop.parts")}
+          </legend>
+          <ExplainSwitch
+            id="taller-piezas-explicacion"
+            detail={partsDetail}
+            onChange={setPartsDetail}
+            name={ui("ui.workshop.parts")}
+            className={s.sectionSwitch}
+          />
+          <p className={s.hint}>{uiAt(partsDetail, "ui.workshop.parts.hint")}</p>
           <div className={s.parts}>
             {PART_TYPE_ORDER.map((type: PartType) => {
               const chosen = partOfType(ctx, plan.parts, type);
@@ -221,7 +255,10 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
                     ))}
                   </select>
                   <p className={s.partDesc}>
-                    {part ? describeSource(part).join(" · ") : ui("ui.workshop.parts.empty")}
+                    {part
+                      ? (partsDetail === "brief" && gameBrief(part.textKey)) ||
+                        describeSource(part).join(" · ")
+                      : ui("ui.workshop.parts.empty")}
                   </p>
                 </div>
               );
@@ -246,7 +283,10 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
             <tbody>
               {builds.map((b) => (
                 <tr key={b.key}>
-                  <th scope="row">{b.label}</th>
+                  <th scope="row">
+                    <Icon name={b.icon} />
+                    {b.label}
+                  </th>
                   <td>{b.from}</td>
                   <td className={cx(b.diff > 0 && s.up, b.diff < 0 && s.down)}>{b.to}</td>
                 </tr>
@@ -266,6 +306,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
               disabled={!plan.repair && report.durability.current >= report.durability.max}
               onChange={(e) => update({ ...plan, repair: e.target.checked })}
             />
+            <Icon name="framestat.durability" />
             <span>
               {report.durability.current >= report.durability.max && !plan.repair
                 ? ui("ui.workshop.repair.full", {
@@ -287,10 +328,20 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
 
         {/* quirks ----------------------------------------------------------------------------- */}
         {rerollable.length > 0 && (
-          <div className={s.section}>
-            <p className={s.legend}>{ui("ui.workshop.quirks")}</p>
+          <div className={cx(s.section, s.switched)}>
+            <p className={s.legend}>
+              <Icon name="quirk" />
+              {ui("ui.workshop.quirks")}
+            </p>
+            <ExplainSwitch
+              id="taller-peculiaridades-explicacion"
+              detail={quirksDetail}
+              onChange={setQuirksDetail}
+              name={ui("ui.workshop.quirks")}
+              className={s.sectionSwitch}
+            />
             <p className={s.hint}>
-              {ui("ui.workshop.quirks.hint", {
+              {uiAt(quirksDetail, "ui.workshop.quirks.hint", {
                 scrap: state.wallet.scrap,
                 left: report.scrapLeft,
               })}
@@ -317,7 +368,10 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
                         return (
                           <li key={q}>
                             <strong>{gameText(quirk.textKey)}</strong>
-                            <span>{describeSource(quirk).join(" · ")}</span>
+                            <span>
+                              {(quirksDetail === "brief" && gameBrief(quirk.textKey)) ||
+                                describeSource(quirk).join(" · ")}
+                            </span>
                           </li>
                         );
                       })}
@@ -358,10 +412,20 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
         )}
 
         {/* skills ----------------------------------------------------------------------------- */}
-        <fieldset className={s.section}>
-          <legend className={s.legend}>{ui("ui.workshop.skills")}</legend>
+        <fieldset className={cx(s.section, s.switched)}>
+          <legend className={s.legend}>
+            <Icon name="skill" />
+            {ui("ui.workshop.skills")}
+          </legend>
+          <ExplainSwitch
+            id="taller-habilidades-explicacion"
+            detail={skillsDetail}
+            onChange={setSkillsDetail}
+            name={ui("ui.workshop.skills")}
+            className={s.sectionSwitch}
+          />
           <p className={s.hint}>
-            {ui("ui.workshop.skills.hint", {
+            {uiAt(skillsDetail, "ui.workshop.skills.hint", {
               points: state.skillPoints,
               left: report.skillPointsLeft,
               n: report.learnedAfter,
@@ -413,7 +477,10 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
                       {ui("ui.workshop.skills.cost", { cost: skill.cost })}
                       {reason && <span className={s.skillReason}>{reason}</span>}
                     </span>
-                    <span className={s.skillDesc}>{describeActiveSkill(skill)}</span>
+                    <span className={s.skillDesc}>
+                      {(skillsDetail === "brief" && gameBrief(skill.textKey)) ||
+                        describeActiveSkill(skill)}
+                    </span>
                   </label>
                 </li>
               );
