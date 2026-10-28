@@ -227,8 +227,8 @@ export const RunnerDerived = z.strictObject({
   landPm: Nat,
   /** 0 if not ground. */
   detourPm: Nat,
-  /** Int: `kickAt = reserveAt` or earlier (9.4), below 0 on a course shorter than 60 m. */
-  kickAtMm: Int,
+  /** `kickAt = reserveAt` or earlier (9.4); 0 on a course shorter than 60 m (ADR-0003 D53). */
+  kickAtMm: Nat,
   /** 1000 if not dive. */
   stoopPm: Nat,
   /** Per segment; 1000 if not a pulse frame. */
@@ -455,13 +455,13 @@ export type RaceResult = z.infer<typeof RaceResult>;
 export const RaceGeometry = z.strictObject({
   lengthMm: Nat,
   /**
-   * The five boundaries of section 2 are Int (20.1): `reserveAtMm = Lmm − 60 000` and
-   * `denseFromMm = Lmm − 25 000` go below 0 on a course shorter than 60 m (or 25 m).
+   * The five boundaries of section 2 (20.1). `reserveAtMm = max(0, Lmm − 60 000)` is clamped at 0
+   * on a course shorter than 60 m (ADR-0003 D53); `denseFromMm = Lmm − 25 000` stays Int.
    */
   startEndMm: Int,
   finalStartMm: Int,
   hoverAttackMm: Int,
-  reserveAtMm: Int,
+  reserveAtMm: Nat,
   denseFromMm: Int,
   segments: z
     .array(z.strictObject({ type: SegmentType, startMm: Nat, endMm: Nat, param: Int }))

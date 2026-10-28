@@ -246,7 +246,9 @@ type CourseGeometry = {
   `gradePm`, `dragPm`, `windPm`.
 - Boundaries in mm, then × 225: `startEndMm = fl(Lmm, 6)`, `finalStartMm = fl(2 × Lmm, 3)`,
   `hoverAttackMm = fl(Lmm × R.style.hoverAttackAt, 1000)`,
-  `reserveAtMm = Lmm − R.finalSprintReserveMeters × 1000`, `denseFromMm = Lmm − R.log.denseLastMeters × 1000`.
+  `reserveAtMm = max(0, Lmm − R.finalSprintReserveMeters × 1000)`, `denseFromMm = Lmm − R.log.denseLastMeters × 1000`.
+  ADR-0003 D53: on a course shorter than the sprint reserve (60 m) `reserveAt` and `kickAt` (9.4)
+  are 0, never negative; the validator of 1.4 still accepts every course the schema accepts.
 - **Phase of a position** `x` (pu): `x < startEnd` → start; `x < finalStart` → middle; else final.
   A runner exactly on a boundary belongs to the later phase. Two comparisons per runner per tick.
 - **Segment lookup without allocation:** each runner keeps `seg`. After its move (step B12 of

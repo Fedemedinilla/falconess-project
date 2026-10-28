@@ -114,7 +114,8 @@ export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeo
   const startEndMm = floorDiv(lengthMm, 6);
   const finalStartMm = floorDiv(2 * lengthMm, 3);
   const hoverAttackMm = floorDiv(lengthMm * R.style.hoverAttackAt, 1000);
-  const reserveAtMm = lengthMm - R.finalSprintReserveMeters * 1000;
+  // ADR-0003 D53: clamped at 0 on a course shorter than the sprint reserve (kickAt follows, 9.4)
+  const reserveAtMm = Math.max(0, lengthMm - R.finalSprintReserveMeters * 1000);
   const denseFromMm = lengthMm - R.log.denseLastMeters * 1000;
 
   return {

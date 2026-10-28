@@ -186,23 +186,38 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
       }
     });
 
-  it("a 50 m course (the shortest Course) logs a negative reserveAt and kickAt and parses (20.1 Int)", () => {
-    // section 2: reserveAtMm = Lmm − 60 000 < 0 below 60 m, and kickAt = reserveAt (9.4); the log
-    // types the boundaries Int (20.1), so a valid course never yields a log RaceLog rejects
-    const short: Course = {
-      id: "short-flat",
+  it("a 50 m course (the shortest Course) clamps reserveAt and kickAt at 0 and parses (ADR-0003 D53)", () => {
+    // section 2: Lmm − 60 000 is below 0 under 60 m; reserveAt and kickAt (9.4) are clamped at 0,
+    // so the log carries no negative boundary and RaceLog (reserveAtMm, kickAtMm: Nat) accepts it
+    const short = (segments: Course["segments"]): Course => ({
+      id: "short-course",
       version: 1,
       biome: "desert",
       traits: [],
       entries: 8,
-      segments: [{ type: "flat", length: 50 }],
+      segments,
       textKey: "course.short",
-    };
-    const log = simulateRace(RULESET_V1, neutralField().slice(0, 4), short, "short");
-    expect(log.geometry.reserveAtMm).toBe(-10_000);
-    expect(log.derived.map((d) => d.kickAtMm)).toEqual([-10_000, -10_000, -10_000, -10_000]);
-    expect(RaceLog.parse(log)).toEqual(log);
-    expect(log.results.every((r) => !r.dnf)).toBe(true);
+    });
+    for (const c of [
+      short([{ type: "flat", length: 50 }]),
+      short([{ type: "jump", length: 50, liftRequired: 5 }]),
+      short([{ type: "water", length: 50, drag: 0.2 }]),
+    ]) {
+      const log = simulateRace(RULESET_V1, neutralField(), c, "short");
+      expect(log.geometry.reserveAtMm).toBe(0);
+      expect(log.geometry.denseFromMm).toBe(25_000);
+      expect(log.derived.map((d) => d.kickAtMm)).toEqual(new Array(8).fill(0));
+      expect(RaceLog.parse(log)).toEqual(log);
+      expect(log.results.every((r) => !r.dnf)).toBe(true);
+    }
+    // 60 m is the first length with no clamp
+    const sixty = simulateRace(
+      RULESET_V1,
+      neutralField(),
+      short([{ type: "flat", length: 60 }]),
+      "s",
+    );
+    expect([sixty.geometry.reserveAtMm, at(sixty.derived, 0).kickAtMm]).toEqual([0, 0]);
   });
 
   it("the ridge flyers lift twice (35 energy) and land twice; ground detours both jumps", () => {

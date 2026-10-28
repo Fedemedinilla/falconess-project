@@ -108,6 +108,20 @@ describe("buildCourseGeometry (docs/race-engine.md 2)", () => {
     expect(sprint.segments.map((s) => s.param)).toEqual([0, 60, 0, 40, 0]);
   });
 
+  it("reserveAt = max(0, L − 60 m) for every length from 50 m: never negative in the log (ADR-0003 D53)", () => {
+    for (let m = 50; m <= 3000; m++) {
+      const course: Course = {
+        ...content.getCourse("desert-sprint"),
+        segments: [{ type: "flat", length: m }],
+      };
+      const G = buildCourseGeometry(R, course);
+      expect(G.reserveAtMm).toBe(Math.max(0, (m - R.race.finalSprintReserveMeters) * 1000));
+      expect(G.reserveAt).toBe(G.reserveAtMm * POS_PER_MM);
+      const g = logGeometry(R, G);
+      expect(RaceGeometry.safeParse(g).success).toBe(true);
+    }
+  });
+
   it("rejects courses longer than maxCourseMeters (the 2^53 bound of 1.5)", () => {
     const long: Course = {
       ...content.getCourse("desert-sprint"),

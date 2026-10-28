@@ -746,7 +746,7 @@ export function buildTables(
           kickAt = Math.min(G.reserveAt, G.segStart[s] ?? 0);
           break;
         }
-    T.kickAt[i] = kickAt;
+    T.kickAt[i] = Math.max(0, kickAt); // ADR-0003 D53 (reserveAt and segStart are already ≥ 0)
     T.planPoint[i] = st === STYLE_HOVER ? G.hoverAttack : G.finalStart;
 
     // style and rule thrust terms (9.8, 13.1) and the plan's thrust quantities (3.3)

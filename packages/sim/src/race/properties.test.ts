@@ -192,8 +192,8 @@ const segmentArb: fc.Arbitrary<Segment> = fc.oneof(
 
 /**
  * A content course or a random one of 1 to 6 segments (50 m to 3000 m). Courses shorter than
- * `finalSprintReserveMeters` (60 m) are kept: their `reserveAt` and `kickAt` are negative, which
- * the log types as Int (20.1).
+ * `finalSprintReserveMeters` (60 m) are kept: their `reserveAt` and `kickAt` are clamped at 0
+ * (ADR-0003 D53), which P5's schema parse checks (both Nat in RaceLog).
  */
 const courseArb: fc.Arbitrary<Course> = fc.oneof(
   fc.constantFrom(...COURSES),
