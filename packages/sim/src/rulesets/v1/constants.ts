@@ -185,7 +185,8 @@ const RACE_V1 = {
   massThrustDurMult: 2_000, // ‰, new: Steinhaus "durability ×2"
   groundDamagePm: 500, // ‰, new: ground "resiste daño", every durability loss × 0.5
   overheatFloorPm: 250, // ‰ of durabilityMax, new: the overheat licence never projects durability below it
-  durabilityZeroPowerMult: 750, // ‰ PW once durability reaches 0, before the PW weights (at pwCruiseWeight 5 a broken frame loses ≈ 0.2 %: ADR-0005)
+  durabilityZeroPowerMult: 1_000, // ‰ PW once durability reaches 0, before the PW weights (ADR-0005 pass 2: 750 → 1000; at pwCruiseWeight 5 it cost ≈ 0.2 %)
+  brokenSpeedPm: 750, // ‰ of cruise, acceleration, vMin and thrust once durability reaches 0, after the PW weights (new, ADR-0005 pass 2, ADR-0003 D56: BRIEF §5 −25 %)
   surplusHeatPm: 800, // ‰ of capLim, new: heat limit of SURPLUS mode
   regenOverflowHeatPm: 900, // ‰ of capLim, new: heat limit of REGEN mode
   freeBoostMaxTicks: 12, // ticks, new: free-first-boost length on continuous frames

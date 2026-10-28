@@ -127,6 +127,83 @@ describe("per-race tables of docs/race-engine.md 3.3 (600-balanced, PW 1.0, nois
     expect([T.B[ib(0, 1)], T.Bp[ib(0, 1)]]).toEqual([33_750, 45_562]);
   });
 
+  it("brokenSpeedPm (ADR-0003 D56): overridden to 750 with a neutral PW cut, the broken tables match the spec's PW route", () => {
+    // at the spec's weights (1000 / 1000) PW × 0.75 and × 0.75 after the weights are the same race
+    const SPEED: Ruleset = {
+      ...QUIET,
+      race: { ...QUIET.race, durabilityZeroPowerMult: 1000, brokenSpeedPm: 750 },
+    };
+    const entries = (course: Course) => [
+      fixture("hover"),
+      fixture("ground", {}, 1),
+      frozen("shiden", course, 2),
+      frozen("erzherzog", course, 3),
+      frozen("mule", course, 4),
+      frozen("etoile", course, 5),
+    ];
+    const cols = [
+      "pwc",
+      "pwb",
+      "vC",
+      "acc",
+      "accStart",
+      "vMin",
+      "B",
+      "Bp",
+      "Bpc",
+      "Bon",
+      "unit",
+      "sMax",
+      "capFinal",
+      "groundLevel",
+    ] as const;
+    for (const course of [SPRINT, RIDGE, CANYON]) {
+      const spec = tablesOf(entries(course), course).tables;
+      const speed = tablesOf(entries(course), course, SPEED).tables;
+      for (const k of cols) expect([k, Array.from(speed[k])]).toEqual([k, Array.from(spec[k])]);
+      // only the event's PW differs: the factor route keeps it
+      expect(Array.from(speed.pwBroken.slice(0, 6))).toEqual(
+        entries(course).map((e) => e.powerToWeight),
+      );
+      expect(Array.from(spec.pwBroken.slice(0, 6))).toEqual(
+        entries(course).map((e) => Math.floor((e.powerToWeight * 750) / 1000)),
+      );
+    }
+  });
+
+  it("brokenSpeedPm scales the broken tables after the PW weights: ×0.75 at the v1 weights 5 / 250", () => {
+    const V1W: Ruleset = {
+      ...QUIET,
+      race: {
+        ...QUIET.race,
+        pwCruiseWeight: 5,
+        pwBoostWeight: 250,
+        durabilityZeroPowerMult: 1000,
+        brokenSpeedPm: 750,
+      },
+    };
+    const { tables: T } = tablesOf([fixture("hover"), frozen("etoile", RIDGE, 1)], RIDGE, V1W);
+    for (const i of [0, 1]) {
+      // within 1 ‰ (pwc and pwb are whole ‰) plus the floors
+      const near = (intact: number, broken: number) =>
+        expect(Math.abs(broken - Math.floor((intact * 750) / 1000))).toBeLessThanOrEqual(
+          Math.floor(intact / 1000) + 1,
+        );
+      near(T.pwc[ib(i, 0)] ?? 0, T.pwc[ib(i, 1)] ?? 0);
+      near(T.vC[ibps(i, 0, PH_MIDDLE, 0)] ?? 0, T.vC[ibps(i, 1, PH_MIDDLE, 0)] ?? 0);
+      near(T.acc[ibs(i, 0, 0)] ?? 0, T.acc[ibs(i, 1, 0)] ?? 0);
+      near(T.vMin[ibps(i, 0, PH_MIDDLE, 0)] ?? 0, T.vMin[ibps(i, 1, PH_MIDDLE, 0)] ?? 0);
+      near(T.B[ib(i, 0)] ?? 0, T.B[ib(i, 1)] ?? 0);
+      near(T.Bp[ib(i, 0)] ?? 0, T.Bp[ib(i, 1)] ?? 0);
+    }
+    // PW 1.0: exactly the spec's broken table; etoile (PW 1.4): pwc 1002 → 751, pwb 1100 → 825
+    expect(T.vC[ibps(0, 1, PH_START, 0)]).toBe(264_375);
+    expect([T.pwc[ib(1, 0)], T.pwc[ib(1, 1)], T.pwb[ib(1, 0)], T.pwb[ib(1, 1)]]).toEqual([
+      1002, 751, 1100, 825,
+    ]);
+    expect(T.pwBroken[1]).toBe(1400);
+  });
+
   it("hp, heat and durability scalars: 1235 hp, 625 000 / 812 500 µhp, heatCap 69 000, cool 1000", () => {
     const { tables: T } = tablesOf([fixture("glide")], RIDGE);
     expect(T.hpMax[0]).toBe(1_235_000_000);

@@ -118,6 +118,7 @@ const derived: RunnerDerived = {
   jumpNeed: [],
   capFinal: 99_000,
   groundLevelMms: 0,
+  brokenSpeedPm: 750,
   segments: [
     {
       fPm: 1000,
@@ -375,6 +376,10 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       ],
       ["PW above 1600", (l) => ({ ...l, entries: [{ ...entry, powerToWeight: 1700 }] })],
       ["u out of range", (l) => ({ ...l, derived: [{ ...derived, u: [[1000, 0, 0]] }] })],
+      [
+        "broken wings that speed up (ADR-0003 D56)",
+        (l) => ({ ...l, derived: [{ ...derived, brokenSpeedPm: 1001 }] }),
+      ],
       ["dnf with a finish time", (l) => ({ ...l, results: [{ ...result, dnf: true }] })],
       ["finisher without a time", (l) => ({ ...l, results: [{ ...result, timeTicks: null }] })],
       [

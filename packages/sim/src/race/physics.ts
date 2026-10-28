@@ -190,9 +190,20 @@ export function powerVariant(R: RaceConstants, pw: number, b: number): number {
   return b === 0 ? pw : floorDiv(pw * R.durabilityZeroPowerMult, 1000);
 }
 
-/** `pwc` / `pwb` of 3.3: `1000 + fl(weight × (PW − 1000), 1000)` (weight 1000 = the brief's PW). */
+/** Weighted PW of 3.3: `1000 + fl(weight × (PW − 1000), 1000)` (weight 1000 = the brief's PW). */
 export function weightedPower(weightPm: number, pw: number): number {
   return 1000 + floorDiv(weightPm * (pw - 1000), 1000);
+}
+
+/**
+ * `pwc[b]` / `pwb[b]` of 3.3: the weighted PW of variant b, times `R.brokenSpeedPm` on the broken
+ * variant (8.4): `fl(weightedPower(weight, PW_b) × R.brokenSpeedPm, 1000)`. Every PW table (cruise,
+ * acceleration, vMin, thrust) is linear in it, so broken wings cost `brokenSpeedPm` whatever the
+ * PW weights; 1000 leaves only the PW route of `durabilityZeroPowerMult`.
+ */
+export function variantPower(R: RaceConstants, weightPm: number, pw: number, b: number): number {
+  const weighted = weightedPower(weightPm, pw);
+  return b === 0 ? weighted : floorDiv(weighted * R.brokenSpeedPm, 1000);
 }
 
 /** `vA = fl(VBASE × (1 200 000 + R.kA × A), 1 200 000)` vu: the brief's `v_base·(1 + k_a·A/1200)`. */

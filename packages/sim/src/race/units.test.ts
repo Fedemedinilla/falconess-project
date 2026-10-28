@@ -143,6 +143,7 @@ describe("overflow table (1.5): every product stays a safe integer at the valida
     ["cruise × (1000 + pace)", floorDiv(vA * pwc * F * STYLE_PACE, 1e9) * (1000 + 65)],
     ["kAcc × (600 + T) × pwc × f", R.kAcc * (600 + STAT) * pwc * F],
     ["kAcc raised to 4000", 4000 * (600 + STAT) * pwc * F],
+    ["weighted PW × brokenSpeedPm (broken variant)", Math.max(pwc, pwb) * 1000],
     ["kHp × 1000 × 1.2e6 × fat", R.kHp * 1000 * 1_200_000 * fat],
     ["rPm × rPm × dK (drain)", rPm * rPm * dKFinal],
     ["s × Ep × Bon (plan gain, pulse)", sPulse * E * bonPulse],

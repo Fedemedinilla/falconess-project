@@ -54,6 +54,11 @@ const nameOf = (log: RaceLog, lane: number) => {
 };
 const texts = (log: RaceLog, lane: number) => runnerEvents(log, lane, labels).map((l) => l.text);
 const tenths = (milli: number) => fixed(milli, 1000, 1);
+/** The log with every runner's broken-wing speed factor set (`derived.brokenSpeedPm`, 8.4). */
+const slowBroken = (log: RaceLog, brokenSpeedPm: number): RaceLog => ({
+  ...log,
+  derived: log.derived.map((d) => ({ ...d, brokenSpeedPm })),
+});
 
 describe("renderRace snapshots", () => {
   for (const name of names) {
@@ -467,8 +472,10 @@ describe("events", () => {
     const broken = eventsOf(canyon, "durabilityBroken");
     expect(broken.length).toBeGreaterThan(0);
     for (const e of broken) {
+      const speedPm = canyon.derived[e.lane]?.brokenSpeedPm ?? 1000;
+      const speed = speedPm === 1000 ? "" : `, velocidad ×${fixed(speedPm, 1000, 2)}`;
       expect(texts(canyon, e.lane)).toContain(
-        `alas rotas (P/W ${fixed(e.powerToWeight, 1000, 2)})`,
+        `alas rotas (P/W ${fixed(e.powerToWeight, 1000, 2)}${speed})`,
       );
       expect(texts(canyon, e.lane)).toContain("replan 1 (broken): ninguno (exhausted)");
     }
@@ -536,11 +543,18 @@ describe("why", () => {
       if (L.energyLeft > 0) expect(line).toContain(`energía sin usar ${tenths(L.energyLeft)}`);
       const broke = eventsOf(canyon.log, "durabilityBroken").find((e) => e.lane === r.lane);
       const pw = canyon.log.entries[r.lane]?.powerToWeight ?? 0;
-      if (broke)
+      const speedPm = canyon.log.derived[r.lane]?.brokenSpeedPm ?? 1000;
+      if (broke) {
+        const costs = [
+          ...(broke.powerToWeight === pw
+            ? []
+            : [`P/W ${fixed(pw, 1000, 2)} → ${fixed(broke.powerToWeight, 1000, 2)}`]),
+          ...(speedPm === 1000 ? [] : [`velocidad ×${fixed(speedPm, 1000, 2)}`]),
+        ];
         expect(line).toContain(
-          `alas rotas en ${fixed(broke.posMm, 1000, 0)} m (P/W ${fixed(pw, 1000, 2)} → ${fixed(broke.powerToWeight, 1000, 2)})`,
+          `alas rotas en ${fixed(broke.posMm, 1000, 0)} m${costs.length > 0 ? ` (${costs.join(", ")})` : ""}`,
         );
-      else expect(line).not.toContain("alas rotas");
+      } else expect(line).not.toContain("alas rotas");
     });
     expect(canyon.lines.filter((l) => l.includes("alas rotas en "))).not.toEqual([]);
     const ridge = sinks("ridge");
@@ -623,10 +637,45 @@ describe("why", () => {
         ? { events: log.events.filter((e) => e.kind !== "durabilityBroken" || e.lane !== lane) }
         : {}),
     });
-    expect(sinksOf(broken(canyon, 0))).toContain("alas rotas desde la salida");
+    expect(sinksOf(broken(canyon, 0))).toMatch(/alas rotas desde la salida( ·|$)/);
     const { events: _events, frames: _frames, ...results } = canyon;
     const noEvents: RaceLog = { ...results, detail: "results" };
     expect(sinksOf(broken(noEvents, 50))).toMatch(/alas rotas( ·|$)/);
+    // v1 breaks wings through `derived.brokenSpeedPm` (ADR-0003 D56): both cases name the factor
+    expect(sinksOf(slowBroken(broken(canyon, 0), 750))).toContain(
+      "alas rotas desde la salida (velocidad ×0.75)",
+    );
+    expect(sinksOf(slowBroken(broken(noEvents, 50), 750))).toMatch(
+      /alas rotas \(velocidad ×0\.75\)( ·|$)/,
+    );
+  });
+
+  it("names the broken-wing speed factor of `derived` when the PW does not change (v1, ADR-0003 D56)", () => {
+    const canyon = loadRaceFixture("canyon");
+    const e = eventsOf(canyon, "durabilityBroken")[0];
+    if (!e) throw new Error("the canyon fixture has a break");
+    const pw = canyon.entries[e.lane]?.powerToWeight ?? 0;
+    // the v1 shape: the event keeps the PW (durabilityZeroPowerMult 1000), the factor does the cost
+    const v1 = slowBroken(
+      {
+        ...canyon,
+        events: (canyon.events ?? []).map((x) => (x === e ? { ...e, powerToWeight: pw } : x)),
+      },
+      750,
+    );
+    expect(texts(v1, e.lane)).toContain(`alas rotas (P/W ${fixed(pw, 1000, 2)}, velocidad ×0.75)`);
+    const line = renderRace(v1, labels).filter((l) => l.startsWith("     pérdidas "))[
+      v1.results.findIndex((r) => r.lane === e.lane)
+    ];
+    expect(line).toContain(`alas rotas en ${fixed(e.posMm, 1000, 0)} m (velocidad ×0.75)`);
+    // both routes at once: PW before → after, then the factor
+    const both = slowBroken(canyon, 750);
+    const bothLine = renderRace(both, labels).filter((l) => l.startsWith("     pérdidas "))[
+      both.results.findIndex((r) => r.lane === e.lane)
+    ];
+    expect(bothLine).toContain(
+      `(P/W ${fixed(pw, 1000, 2)} → ${fixed(e.powerToWeight, 1000, 2)}, velocidad ×0.75)`,
+    );
   });
 });
 

@@ -1,10 +1,10 @@
 # ADR-0005: Primera pasada de balance del motor de carrera (D14)
 
 - Estado: **aceptado** para los cambios de constantes y de contenido dentro de rango; las secciones
-  «Propuestas para el dueño» quedan **propuestas**. Excepción: `pwCruiseWeight` 1000 → 5 (métrica
-  2) y lo que depende de él (las turbinas de la métrica 5) quedan **propuestos**. El valor sigue en
-  `constants.ts` y todas las cifras del lote lo suponen, pero deja casi inertes el PW en crucero y
-  las alas rotas (BRIEF §1 pilar 3 y §5): lo decide el dueño (propuesta 5 de «Métricas 2 y 5»).
+  «Propuestas para el dueño» quedan **propuestas** salvo las que marcan la decisión del dueño.
+  `pwCruiseWeight` 1000 → 5 (métrica 2) y lo que depende de él (las turbinas de la métrica 5):
+  **aceptado (dueño, 2026-10-28)**, con las alas rotas fuera del peso de PW (propuestas 3 y 5 de
+  «Métricas 2 y 5»; sección «Pasada 2»).
 - Fecha: 2026-10-28
 - Alcance: `packages/sim/src/rulesets/v1/constants.ts`, `packages/content/` (bastidores, piezas,
   habilidades)
@@ -52,7 +52,7 @@ y sus celdas salen idénticas bit a bit.
 
 | Constante o contenido                            | Antes | Después | Por qué                                                                                                                                     |
 | ------------------------------------------------ | ----- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pwCruiseWeight`                                 | 1000  | 5       | **Propuesto** (propuesta 5): 0,7-1,4 vale ±0,2 % de crucero (`pwc` 998 / 1002) y romper las alas, ≈ 0,2 %.                                  |
+| `pwCruiseWeight`                                 | 1000  | 5       | **Aceptado (dueño, 2026-10-28)**: 0,7-1,4 vale ±0,2 % de crucero (`pwc` 998 / 1002); las alas rotas, aparte («Pasada 2»).                   |
 | `pwBoostWeight`                                  | 1000  | 250     | El PW sigue siendo «potencia de boost»: empuje ×0,925 a PW 0,7 y ×1,10 a 1,4.                                                               |
 | `regenPerTick` (Lumière)                         | 500   | 100     | R9, paso 3 de §25.3: con 500, Lumière gana el 84 % del sprint con PW plano.                                                                 |
 | `pulseBiomePm.desert` (Kōryū)                    | 1150  | 1450    | Casa desierto: ráfaga ×1,45 en el desierto.                                                                                                 |
@@ -89,9 +89,9 @@ picada en los descensos).
 
 Métrica 5 con estas constantes: las turbinas pasan sin tocar su contenido (`steinhaus-turbine`
 87,5 / 87,1 / 87,5 → 0,5 / 0,3 / 0,3 puntos; `lumiere-turbine` 76,8 / 74,2 / 79,2 → 0,4 / 0,1 / 0,4
-en sprint / ridge / cañón; igual con alt1). Este resultado es **propuesto** con `pwCruiseWeight` 5:
-las turbinas pasan porque el PW ya casi no mueve el crucero, no porque su contenido mida lo que
-pide §25.3 (+0,01-0,02 de PW o una perilla de PW propia de las piezas).
+en sprint / ridge / cañón; igual con alt1). Con `pwCruiseWeight` 5 (aceptado por el dueño el
+2026-10-28) las turbinas pasan porque el PW ya casi no mueve el crucero, no porque su contenido
+mida lo que pide §25.3 (+0,01-0,02 de PW o una perilla de PW propia de las piezas).
 
 Efectos en métricas de otros dueños (informados, no ajustados):
 
@@ -138,8 +138,9 @@ hay que volver a medirlas (R18).
 
 ### Propuestas para el dueño
 
-Estado: **propuesto**. Las cifras de las alternativas (PW 0, aire de descenso 1200) salen del arnés
-del lote en proceso (mismas semillas y conteo que `sim:batch`, perfil `full`, 600 carreras por pista).
+Estado: **propuesto**, salvo las propuestas 3 y 5: **aceptado (dueño, 2026-10-28)**. Las cifras de
+las alternativas (PW 0, aire de descenso 1200) salen del arnés del lote en proceso (mismas semillas
+y conteo que `sim:batch`, perfil `full`, 600 carreras por pista).
 
 1. **Boneyard en el ridge queda inconclusa en `full`** (33,0-33,7 %, cota baja 29,4-30,0 %). El
    término de Boneyard ya está en su tope (`repairableRuggedPm` 0) y su energía en el tope del
@@ -158,26 +159,30 @@ del lote en proceso (mismas semillas y conteo que `sim:batch`, perfil `full`, 60
    ×2,5 porque el plan no lee `airPm` (R13): con 1200 Kōryū cae al 26,2 % del ridge y falla. Opción
    de código: que el plan o el controlador pesen las ráfagas por `airPm` (gastar en los descensos),
    con lo que un factor de descenso de ≈ 1,2-1,5 haría la casilla desde la regla.
-3. **El PW casi no mueve el crucero** (±0,2 % entre 0,7 y 1,4). BRIEF §5 dice que el PW «escala
-   crucero y aceleración». Con `kE` 1000 la energía vale ≈ 0,2 m por unidad, así que ningún
-   presupuesto de bastidor paga un PW literal. Si el dueño quiere niveles de PW que se noten:
-   (a) el juego de energía (`kE` ↓, §25.3 paso 2) y un re-presupuesto de bastidores donde energía y
-   disipación paguen el PW (mueve las métricas 1, 3, 4 y 6, de otros dueños); (b) dejarlo así: el PW
-   es potencia de boost (empuje ×0,925-1,10). Es la misma decisión que la propuesta 5, que la
-   amplía con la durabilidad a cero.
+3. **El PW casi no mueve el crucero** (±0,2 % entre 0,7 y 1,4). **Aceptado (dueño, 2026-10-28),
+   opción (b)**: el PW sigue comprimido (5 / 250) para que los bastidores SSR no aplasten el
+   campo. BRIEF §5 dice que el PW «escala crucero y aceleración». Con `kE` 1000 la energía vale
+   ≈ 0,2 m por unidad, así que ningún presupuesto de bastidor paga un PW literal. Si el dueño quiere
+   niveles de PW que se noten: (a) el juego de energía (`kE` ↓, §25.3 paso 2) y un re-presupuesto
+   de bastidores donde energía y disipación paguen el PW (mueve las métricas 1, 3, 4 y 6, de otros
+   dueños); (b) dejarlo así: el PW es potencia de boost (empuje ×0,925-1,10). Es la misma decisión
+   que la propuesta 5, que la amplía con la durabilidad a cero.
 4. **Las piezas dentro de 3 puntos valen 2-3 m o menos** (baterías +6 / +8, estabilizador −3 % de
    la penalización de curvas, turbinas ≈ 0,4 m). Si el dueño quiere piezas que se sientan:
    (a) objetivo: subir el tope de la métrica 5 con un ADR (por ejemplo 5 puntos); (b) código: una
    perilla de peso de PW propia de las piezas (§25.3), para dimensionar turbinas sin tocar los
    bastidores; (c) contenido: piezas de compromiso que ganen en un tipo de pista y pierdan en otro
    (la métrica 5 sigue limitando la mejor pista).
-5. **`pwCruiseWeight` 5 deja casi sin costo las alas rotas (BRIEF §1 pilar 3 y §5).** BRIEF §5:
-   «si `durability` llega a 0, `powerToWeight` se reduce un 25 % el resto de la carrera»; el pilar 3
-   cuenta la durabilidad entre los presupuestos de la carrera. El motor arma la tabla de alas rotas
-   con `PW × durabilityZeroPowerMult` (750) y le aplica después los pesos de PW (`powerVariant` y
-   `weightedPower` en `state.ts`), así que con 5 / 250 un bastidor PW 1,0 roto corre con `pwc` 998
-   (−0,2 % de crucero) y `pwb` 937 (−6,3 % de empuje); con 1000 / 1000 eran 750 y 750. Medido con
-   los scripts locales de la verificación (`.work/balance/verify/broken.ts` y `steinhaus.ts`):
+5. **`pwCruiseWeight` 5 deja casi sin costo las alas rotas (BRIEF §1 pilar 3 y §5).**
+   **Aceptado (dueño, 2026-10-28), opción (a)**: `brokenSpeedPm` 750 con `durabilityZeroPowerMult`
+   1000 (ADR-0003 D56; cifras en «Pasada 2»). El resto de esta propuesta describe el estado previo.
+   BRIEF §5: «si `durability` llega a 0, `powerToWeight` se reduce un 25 % el resto de la carrera»;
+   el pilar 3 cuenta la durabilidad entre los presupuestos de la carrera. El motor arma la tabla de
+   alas rotas con `PW × durabilityZeroPowerMult` (750) y le aplica después los pesos de PW
+   (`powerVariant` y `weightedPower` en `state.ts`), así que con 5 / 250 un bastidor PW 1,0 roto
+   corre con `pwc` 998 (−0,2 % de crucero) y `pwb` 937 (−6,3 % de empuje); con 1000 / 1000 eran 750
+   y 750. Medido con los scripts locales de la verificación (`.work/balance/verify/broken.ts` y
+   `steinhaus.ts`):
 
    | Caso (mismas semillas, intacto contra roto desde la salida)                       | v1 (5 / 250)         | `SPEC_RULESET` (1000 / 1000) |
    | --------------------------------------------------------------------------------- | -------------------- | ---------------------------- |
@@ -444,8 +449,8 @@ de cada base):
 | 7   | temporadas ≥ B ≥ 60 %      | **fail** 0/3/0                  | **fail** 0/3/0 (30,0 / 26,7 / 36,7 %; alt1 36,7 / 25,0 / 36,7 %)   |
 | 8   | la inteligencia no resta   | inconclusa 3/0/1                | inconclusa 3/0/1, idéntica                                         |
 
-Las filas 2 y 5 suponen `pwCruiseWeight` 5, que queda propuesto (propuesta 5 de «Métricas 2 y 5»):
-sin él las dos vuelven a fallar.
+Las filas 2 y 5 suponen `pwCruiseWeight` 5 (aceptado por el dueño el 2026-10-28, propuesta 3 de
+«Métricas 2 y 5»): sin él las dos vuelven a fallar.
 
 Tests y documentos del mismo cambio: `modifiers.test.ts` (traits de los dos pasivos; el test de la
 tabla `f` suma `scrap-armor`), `entry.test.ts` (factores a mano de caracara-signature y Peregrina),
@@ -688,7 +693,8 @@ Estado: **propuesto**.
    nunca, 0 de 3311 carreras objetivo empiezan o terminan con las alas rotas (300 temporadas por
    Falconess). Si se rompieran, con `pwCruiseWeight` 5 costarían ≈ 0,2 % de tiempo en vez de ≈ 30 %
    (propuesta 5 de «Métricas 2 y 5»). Para que reparar sea una decisión hacen falta las dos cosas:
-   más desgaste y un castigo real de alas rotas.
+   más desgaste y un castigo real de alas rotas. El castigo volvió con la «Pasada 2» (≈ 30 %); el
+   desgaste sigue sin cambio y la propuesta sigue abierta.
 4. **Las carreras objetivo son casi automáticas para la referencia** (sección «Puesto en las
    carreras objetivo»): gana el 73-80 % y el 33-40 % de sus temporadas gana las cuatro. BRIEF §12
    solo pone un piso a la métrica 7, y ni el brief ni la especificación dicen cuánto debe ganar la
@@ -737,3 +743,93 @@ Los doce logs de `tests/golden/v1` (ADR-0004) se regeneraron el 2026-10-28 tras 
 dos corridas idénticas byte a byte. Cambian porque cambiaron las constantes y el contenido de
 arriba; el motor no cambió. Si el dueño decide distinto en las propuestas pendientes (peso de PW,
 dificultad de temporada), los golden se vuelven a generar con una línea en este ADR.
+
+## Pasada 2 (decisiones del dueño, 2026-10-28)
+
+### Alas rotas fuera del peso de PW (decisión 1)
+
+Estado: **aceptado (dueño, 2026-10-28)**: propuesta 5 de «Métricas 2 y 5», opción (a), con la
+propuesta 3, opción (b). El dueño mantiene el PW comprimido (`pwCruiseWeight` 5, `pwBoostWeight`
+250, para que los bastidores SSR no aplasten el campo) y pide que las alas rotas vuelvan a costar
+lo que dice BRIEF §5 (durabilidad 0 → ≈ −25 % de potencia el resto de la carrera) con un cambio de
+código independiente de los pesos de PW. Regla del motor: ADR-0003 D56 (`docs/race-engine.md` §3.3
+y §8.4).
+
+| Constante, código o log           | Antes              | Después   | Por qué                                                                                                      |
+| --------------------------------- | ------------------ | --------- | ------------------------------------------------------------------------------------------------------------ |
+| `brokenSpeedPm` (nueva)           | — (1000 implícito) | 750       | Multiplica el PW pesado de la variante rota: crucero, aceleración, `vMin` y empuje ×0,75 con cualquier peso. |
+| `durabilityZeroPowerMult`         | 750                | 1000      | Con los pesos 5 / 250 el corte de PW daba `pwc` 998 y `pwb` 937; sumado al factor, el empuje caería ×0,70.   |
+| `SPEC_RULESET.brokenSpeedPm`      | —                  | 1000      | Neutro: los tests de física siguen fijados al prototipo (que rompe con `durabilityZeroPowerMult` 750).       |
+| `RaceLog.derived[].brokenSpeedPm` | —                  | 750 en v1 | El log explica la pérdida sin eventos (roto desde la salida, detalle `results`).                             |
+| PW 1,0 roto: `pwc` / `pwb`        | 998 / 937          | 750 / 750 | Lo mismo que con los pesos del brief (1000 / 1000).                                                          |
+
+Coste de unas alas rotas en carrera (mismas semillas y scripts que la propuesta 5,
+`.work/balance/verify/broken.ts` y `steinhaus.ts`; v1 antes y después, intacto contra roto desde la
+salida):
+
+| Caso                                                                    | Antes (v1)           | Después (v1)         | `SPEC_RULESET`       |
+| ----------------------------------------------------------------------- | -------------------- | -------------------- | -------------------- |
+| Campo S1 (8 neutros, stats 600): coste de tiempo sprint / ridge / cañón | 0,27 / 0,22 / 0,17 % | 29,7 / 30,7 / 29,6 % | 29,7 / 30,7 / 29,6 % |
+| Campo S1: victorias del roto (intacto 8,5 / 9,0 / 12,0 %; 200 semillas) | 7,0 / 6,5 / 8,5 %    | 0 / 0 / 0 %          | 0 / 0 / 0 %          |
+| Campo real de 8 bastidores, erzherzog roto (100 semillas por pista)     | 0,23 / 0,22 / 0,20 % | 29,0 / 30,7 / 29,3 % | —                    |
+| En solitario, velocidad media rota / intacta (PW 0,7, 1,0 y 1,4)        | 0,997-0,999          | 0,761-0,771          | 0,761-0,771 (PW 1,0) |
+
+En el campo S1 v1 da ahora lo mismo que `SPEC_RULESET` carrera por carrera (a PW 1,0 las dos vías
+construyen las mismas tablas). La velocidad media cae algo menos que el 25 % porque la salida
+(`vStart`, `kStartDash`) y el presupuesto de energía no se escalan; el crucero y el empuje caen
+exactamente ×0,75 (test de v1 en `mechanics.test.ts`).
+
+Lote: `pnpm sim:batch -- --runs 10000` y `--profile full`, semilla por defecto y alt1, contra el
+`HEAD` previo (`a152900`; informes en `.work/balance/p2-broken/`). Las 88 celdas de `pr` y las 180
+de `full` quedan idénticas en las dos bases, y también los diagnósticos: ningún escenario del lote
+llega a romper un bastidor (S1-S6 y S8 corren con la durabilidad completa; las piezas de S5 mueven
+el máximo, no lo agotan; S7, ver abajo).
+
+| #   | Métrica                    | Antes = después, `pr` por defecto / alt1              | Antes = después, `full` por defecto / alt1            |
+| --- | -------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| 2   | casa 30-45 %, débil ≤ 15 % | inconclusa 7/0/3 / 7/0/3                              | inconclusa 9/0/1 / 9/0/1                              |
+| 5   | piezas ≤ 3 puntos          | pass 24/0/0 (máx. 2,3 puntos) / pass (máx. 2,3)       | pass 24/0/0 (máx. 1,9 puntos) / pass (máx. 2,1)       |
+| 7   | temporadas ≥ B ≥ 60 %      | pass 83,3 / 78,3 / 86,7 % / pass 75,0 / 80,0 / 80,0 % | pass 83,0 / 78,0 / 83,8 % / pass 80,0 / 74,4 / 83,6 % |
+
+Temporada: `pnpm sim:season-batch -- --runs 500` sale idéntico antes y después (≥ B 80 / 75 / 85 %,
+victorias 73 / 76 / 80 %). Arnés local (`broken-season.mts`, scratch; semillas `batch-0` …
+`batch-499`, la política de referencia y una variante que nunca repara; cada carrera objetivo se
+vuelve a correr desde el estado de la carrera y reproduce el puesto y la durabilidad del estado en
+las 11 072 carreras), Caracara / Cernícala / Peregrina:
+
+| Medida                                                                 | Referencia           | Sin reparar nunca    |
+| ---------------------------------------------------------------------- | -------------------- | -------------------- |
+| Carreras objetivo que empiezan o terminan con las alas rotas           | 0 de 5524            | 0 de 5548            |
+| Rivales con las alas rotas al terminar                                 | 0 de 38 668          | 0 de 38 836          |
+| Temporadas en que la regla de reparación se dispara (una vez cada una) | 0 / 11,6 / 11,0 %    | —                    |
+| Durabilidad mínima al empezar una carrera objetivo (‰ del máximo)      | 625 / 500 / 500      | 625 / 300 / 300      |
+| Durabilidad media al terminar una carrera objetivo (‰ del máximo)      | 958 / 871 / 899      | 958 / 843 / 876      |
+| ≥ B                                                                    | 79,8 / 75,2 / 84,8 % | 79,8 / 75,4 / 85,4 % |
+
+Todo es idéntico antes y después del cambio: la regla de reparación se dispara en las mismas
+temporadas (Cernícala y Peregrina, cuando una carrera deja el bastidor bajo la mitad), y reparar
+sigue sin pagar el turno porque ninguna carrera llega a romper las alas. El castigo ya es real
+(≈ 30 % de tiempo, el roto no gana), pero en la temporada queda latente: una carrera objetivo
+termina de media con el 87-96 % del máximo (84-96 % sin reparar) y ninguna Falconess empieza una
+por debajo del 30 %. Para que
+reparar sea una decisión falta la otra mitad de la propuesta 3 de «Métrica 7» (más desgaste de
+temporada: constantes de durabilidad o contenido de pistas), que sigue abierta.
+
+Tests: `physics.test.ts` (`variantPower`), `state.test.ts` (con `SPEC_RULESET` cambiado a
+`brokenSpeedPm` 750 y `durabilityZeroPowerMult` 1000, las tablas rotas son idénticas a las del
+spec en las tres pistas; ×0,75 con los pesos 5 / 250), `mechanics.test.ts` (la misma carrera
+del cañón con las dos vías: solo cambia el PW del evento; el crucero de un PW 1,4 roto es 0,75 del
+intacto; con `RULESET_V1`, el evento conserva el PW, el crucero cae a 264 375 vu y la velocidad
+media rota queda en 0,74-0,79 de la intacta en las tres pistas para PW 0,7, 1,0 y 1,4),
+`units.test.ts` (producto del factor), `race.test.ts` de schema (campo nuevo, rechaza > 1000) y
+los de la CLI (`render-race.test.ts`: «alas rotas en X m (velocidad ×0.75)»). Los fixtures de la
+CLI (`apps/cli/src/race/__fixtures__/logs`) son anteriores a esta pasada y no se regeneran: llevan
+`brokenSpeedPm` 1000 a mano, el neutro del motor que los escribió. Documentos: `docs/race-engine.md`
+(§1.5, §3.3, §8.4, §20.3, §20.4, §20.6, §26), `docs/formulas.md` («Durabilidad a cero», estado de
+`pwCruiseWeight`) y ADR-0003 D56.
+
+Golden: los doce de `tests/golden/v1` quedan desactualizados. g01-g09 solo cambian por el campo
+nuevo de `derived`; g10-g12 cambian además de física (bastidores rotos: el carril 7 en los tres y
+el 2 en g12). Los regenera el líder (ADR-0004); hasta entonces la suite corre sin `golden.test.ts`.
+Corridas de esta sección: 8 de `sim:batch` (`pr` y `full` antes y después, en las dos bases), 2 de
+`sim:season-batch` y 4 del arnés de temporada.

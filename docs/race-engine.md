@@ -203,6 +203,7 @@ reaches; no product changes side).
 | --- | --- |
 | `vA × pwc × f × stylePace` (cruise) | 4.75e5 × 1600 × 1500 × 1200 = 1.37e15 |
 | `kAcc × (600 + T) × pwc × f` | 4e2 × 2600 × 1600 × 1500 = 2.5e12 (×10 if `kAcc` is raised to 4000) |
+| weighted PW × `kb` (broken variant, 3.3, ADR-0003 D56) | 1600 × 1000 = 1.6e6; `brokenSpeedPm ≤ 1000` keeps every broken table under its intact bound |
 | `kHp × 1000 × 1.2e6 × fat` | 1e6 × 1.2e6 × 1500 = 1.8e15 |
 | `rPm × rPm × dK` (drain) | 6667² × 1.5e6 = 6.7e13 |
 | `s × Ep × Bon` (plan gain) | 1.1e5 × 2e5 × 1.1e5 = 2.4e15 |
@@ -354,12 +355,13 @@ disabled skill, so season logs and goldens never contain one.
 
 Built from entry + geometry + ruleset + the pre-drawn block (section 17). Never stored; their key
 values are copied to `log.derived` (20.3). Two PW variants `b ∈ {0 intact, 1 broken}` with
-`PW₀ = PW`, `PW₁ = fl(PW × R.durabilityZeroPowerMult, 1000)`; three pace phases `ph`.
+`PW₀ = PW`, `PW₁ = fl(PW × R.durabilityZeroPowerMult, 1000)` and the broken speed factor
+`kb[0] = 1000`, `kb[1] = R.brokenSpeedPm` (8.4, ADR-0003 D56); three pace phases `ph`.
 
 | Table | Formula | 600-balanced, PW 1000, flat, noise off |
 | --- | --- | --- |
-| `pwc[b]` | `1000 + fl(R.pwCruiseWeight × (PW_b − 1000), 1000)` | 1000 |
-| `pwb[b]` | `1000 + fl(R.pwBoostWeight × (PW_b − 1000), 1000)` | 1000 |
+| `pwc[b]` | `fl((1000 + fl(R.pwCruiseWeight × (PW_b − 1000), 1000)) × kb[b], 1000)` | 1000 |
+| `pwb[b]` | `fl((1000 + fl(R.pwBoostWeight × (PW_b − 1000), 1000)) × kb[b], 1000)` | 1000 |
 | `vA` | `fl(VBASE × (1 200 000 + R.kA × A), 1 200 000)` | 352 500 vu (23.5 m/s) |
 | `f[s]` | section 7 (per runner: curves use A; Boneyard curves term of 13.1) | 1000 |
 | `vC[b][ph][s]` | `fl(fl(vA × pwc[b] × f[s] × stylePace[style][ph], 10^9) × (1000 + pace[ph]), 1000)` | 352 500 |
@@ -668,10 +670,33 @@ immuneUntil = traits.heatImmuneUntilMm == null ? INF : traits.heatImmuneUntilMm 
 - `dmgTick` = 1000 md per overheated tick (Steinhaus ×2 = 2000; ground ×0.5) unless a
   `durabilityGuard` is active.
 - **Durability 0:** the first time `dur` reaches 0 → `broken = 1` for the rest of the race, event
-  `durabilityBroken {powerToWeight: PW₁}`, `b = 1` (every PW table switches to `PW × 0.75`:
+  `durabilityBroken {powerToWeight: PW₁}`, `b = 1` (every PW table switches to its broken variant:
   `vC`, `acc`, `vMin`, `B`, `Bp`, `Bpc`, `capFinal`, `groundLevel`), an active plan is recomputed.
   `vCore` is not changed (it decelerates to the new target). Repairs (Boneyard) raise `dur` but
   never clear `broken`. A runner that starts at durability 0 starts broken.
+- **What the broken variant costs (ADR-0003 D56).** BRIEF §5: durability 0 → PW −25 % for the
+  rest of the race. The broken variant has two factors, each neutral in one of the two rulesets:
+  - the **PW cut** `PW₁ = fl(PW × R.durabilityZeroPowerMult, 1000)` enters the PW weights like any
+    PW (3.3). It is the brief's sentence read literally, the prototype's rule and what the physics
+    tests pin (`SPEC_RULESET`: 750, weights 1000 / 1000: a PW 1.0 frame runs with `pwc` = `pwb` =
+    750). Through compressed weights it is nearly inert: at the v1 weights 5 / 250 (ADR-0005) the
+    same cut leaves `pwc` 998 and `pwb` 937, ≈ 0.2 % of time;
+  - the **speed factor** `kb[1] = R.brokenSpeedPm` multiplies the weighted `pwc[1]` and `pwb[1]`
+    (3.3), so cruise, acceleration, `vMin` and every thrust (`B`, `Bp`, `Bpc`, and through them
+    `Bon`, `capFinal`, `groundLevel`) keep `brokenSpeedPm` ‰ whatever the PW weights. v1 breaks
+    wings with it: `brokenSpeedPm` 750 and `durabilityZeroPowerMult` 1000 (ADR-0005 «Pasada 2»),
+    i.e. the brief's PW × 0.75 as it costs at full weight, independent of the PW compression.
+  At weights 1000 / 1000 the two factors build bit-identical tables (`fl(PW × 750, 1000)` either
+  way); only the event's `powerToWeight` differs (unit tests in `state.test.ts` and
+  `mechanics.test.ts`). They are kept apart instead of folded into one constant because the spec
+  ruleset must keep matching the prototype and its event PW, and because v1 must not stack both:
+  750 on both would add the weights' share (thrust ×0.937 more at `pwBoostWeight` 250) and tie the
+  cost to a later PW-weight decision (ADR-0005, proposal 3). Measured with v1 (ADR-0005 «Pasada
+  2»): a neutral PW 1.0 frame broken from the start takes 29.6-30.7 % longer in an S1 field and
+  never wins (as under the spec), and racing alone its mean speed is 0.76-0.77 of intact for PW
+  0.7, 1.0 and 1.4 (the start speed and the energy budget are not scaled). The log explains the
+  loss without events: `derived.brokenSpeedPm` (20.3) carries the factor (a frame broken from the
+  start has no event, and detail "results" has none).
 - **Clamps:** `energy ∈ [0, Emax]`, `heat ≥ 0` (telemetry `≤ D`), `hp ∈ [0, hpMax]`,
   `dur ∈ [0, durMax]`, `vCore ≥ 0`, `vOut ≥ 0`, `pos` non-decreasing. Every update uses `sub0` or
   `addCap`; the gates guarantee a paid boost tick never needs the clamp (property P4).
@@ -1651,6 +1676,7 @@ RunnerDerived = {
   airPm: Int[] /* per segment, 1000 if not a pulse frame */,
   boostMms, pulseMms /* 0 if not a pulse frame */, chainMms,
   liftPm, jumpNeed: Int[] /* me, per jump */, capFinal /* me */, groundLevelMms,
+  brokenSpeedPm /* ‰ ≤ 1000: cruise, accel, vMin and thrust kept once broken (8.4, ADR-0003 D56) */,
   segments: [{ fPm, cruiseMms: [Int, Int, Int] /* per phase */, accelMms2, vMinMms: [Int, Int, Int],
                jumpReserve /* me */ }]                           // intact PW table
 }
@@ -1693,7 +1719,7 @@ RaceEvent = discriminated union on `kind`; every member has { tick: Int, lane: I
   waterHit     { damage: Int }
   overheat     { on: boolean, heat: Int }
   hpEmpty      { }
-  durabilityBroken { powerToWeight: Int }
+  durabilityBroken { powerToWeight: Int }                              // PW₁ (8.4); the speed factor is derived.brokenSpeedPm
   landing      { speedLossMms: Int }                                  // 14.2
   repair       { amount: Int }
   heatToEnergy { heat: Int, energy: Int }
@@ -1743,7 +1769,8 @@ stats and frame give on each terrain), `derived.pace` and `planErrPm` (judgement
 was on), frame `boost` counts (how much), `overheat`, `hpEmpty` position, `jumpOk`/`jumpFail`
 (lift vs required), `landing` (speed lost, 14.2), the `drafting` flag and `draftTicks` (hover
 slipstream), `derived.stoopPm`/`airPm`/`landPm`/`detourPm` (style and rule terms, 9.8 and 13.1),
-`skill`/`skillMiss` (p vs u). `pnpm sim:race` prints exactly these per runner
+`skill`/`skillMiss` (p vs u), the `broken` flag with `durabilityBroken` (where, `PW₁`) and
+`derived.brokenSpeedPm` (what broken wings cost, 8.4). `pnpm sim:race` prints exactly these per runner
 (ROADMAP D14 CLI timeline).
 
 ## 21. Field generation and season wiring (item 21)
@@ -2529,7 +2556,8 @@ export const RACE = {
   massThrustDurMult: 2_000, // ‰, new: Steinhaus "durability ×2"
   groundDamagePm: 500, // ‰, new: ground "resiste daño", every durability loss × 0.5
   overheatFloorPm: 250, // ‰ of durabilityMax, new: the overheat licence never projects durability below it
-  durabilityZeroPowerMult: 750, // ‰ PW once durability reaches 0
+  durabilityZeroPowerMult: 750, // ‰ PW once durability reaches 0, before the PW weights (v1 1000 since ADR-0005 pass 2)
+  brokenSpeedPm: 1_000, // ‰, new (ADR-0003 D56): cruise, accel, vMin and thrust once durability reaches 0, after the PW weights; 1000 = the PW cut alone (v1 750, ADR-0005 pass 2)
   surplusHeatPm: 800, // ‰ of capLim, new: heat limit of SURPLUS mode
   regenOverflowHeatPm: 900, // ‰ of capLim, new: heat limit of REGEN mode
   freeBoostMaxTicks: 12, // ticks, new: free-first-boost length on continuous frames

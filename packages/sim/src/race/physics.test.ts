@@ -40,6 +40,7 @@ import {
   segmentFactors,
   staminaDivisor,
   styleDamagePm,
+  variantPower,
   waterHitMd,
   weightedPower,
 } from "./physics.js";
@@ -231,6 +232,27 @@ describe("PW, cruise, exhaustion and thrust tables (docs/race-engine.md 3.3, 5, 
     expect(weightedPower(1000, 750)).toBe(750);
     expect(weightedPower(500, 750)).toBe(875);
     expect(weightedPower(0, 1600)).toBe(1000);
+  });
+
+  it("variant power: the weighted PW, × brokenSpeedPm on the broken variant (8.4, ADR-0003 D56)", () => {
+    // spec: brokenSpeedPm 1000 is neutral, broken wings go through PW₁ alone
+    expect(R.brokenSpeedPm).toBe(1000);
+    expect(variantPower(R, 1000, 1400, 0)).toBe(1400);
+    expect(variantPower(R, 1000, 1050, 1)).toBe(1050);
+    expect(variantPower(R, 250, 500, 1)).toBe(weightedPower(250, 500));
+    // overridden to 750: ×0.75 after the weights, whatever they are
+    const R750 = { ...R, brokenSpeedPm: 750 };
+    expect(variantPower(R750, 1000, 1400, 0)).toBe(1400); // intact never scales
+    expect(variantPower(R750, 1000, 1400, 1)).toBe(1050); // = PW₁ of the spec's PW route
+    expect(variantPower(R750, 1000, 1000, 1)).toBe(750);
+    expect(variantPower(R750, 5, 1400, 1)).toBe(751); // fl(1002 × 750, 1000)
+    expect(variantPower(R750, 250, 1400, 1)).toBe(825); // fl(1100 × 750, 1000)
+    expect(variantPower(R750, 250, 700, 1)).toBe(693); // fl(925 × 750, 1000)
+    // at full weight the two routes build the same pwc / pwb for every PW the validator allows
+    for (let pw = 500; pw <= 1600; pw++)
+      expect(variantPower(R750, 1000, pw, 1)).toBe(
+        variantPower(R, 1000, powerVariant(R, pw, 1), 1),
+      );
   });
 
   it("vA = 352 500 vu at A 600 (23.5 m/s); 300 087 at A 1; 475 000 at A 2000", () => {

@@ -409,6 +409,7 @@ export function buildDerived(
       jumpNeed,
       capFinal: T.capFinal[ib(i, 0)] ?? 0,
       groundLevelMms: mms(T.groundLevel[ib(i, 0)] ?? 0),
+      brokenSpeedPm: R.brokenSpeedPm,
       segments,
     });
   });

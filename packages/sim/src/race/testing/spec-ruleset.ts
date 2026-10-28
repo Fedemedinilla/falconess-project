@@ -80,6 +80,7 @@ const SPEC_RACE = deepFreeze<RaceConstants>({
   groundDamagePm: 500,
   overheatFloorPm: 250,
   durabilityZeroPowerMult: 750,
+  brokenSpeedPm: 1_000, // added with ADR-0003 D56 at its neutral value: the spec breaks wings through the PW
   surplusHeatPm: 800,
   regenOverflowHeatPm: 900,
   freeBoostMaxTicks: 12,

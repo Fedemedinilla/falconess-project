@@ -244,6 +244,11 @@ export const RunnerDerived = z.strictObject({
   /** me */
   capFinal: Nat,
   groundLevelMms: Nat,
+  /**
+   * ‰ of cruise, acceleration, vMin and thrust kept once the wings break (8.4, ADR-0003 D56), on
+   * top of the `durabilityBroken` event's PW; `segments` and the thrusts above are the intact table.
+   */
+  brokenSpeedPm: Pm,
   segments: z.array(DerivedSegment).min(1).max(24),
 });
 export type RunnerDerived = z.infer<typeof RunnerDerived>;

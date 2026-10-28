@@ -30,7 +30,7 @@ import {
   segmentFactor,
   staminaDivisor,
   styleDamagePm,
-  weightedPower,
+  variantPower,
 } from "./physics.js";
 import {
   engineUnits,
@@ -664,7 +664,8 @@ export function buildTables(
     T.planErrWindow[i] = We;
     T.planErr[i] = uRange(A.U[i * block + 3] ?? 0, -We, We);
 
-    // PW variants, cruise, acceleration, exhaustion speed, thrust
+    // PW variants (broken: PW × durabilityZeroPowerMult, then × brokenSpeedPm after the weights,
+    // 8.4), cruise, acceleration, exhaustion speed, thrust
     T.pwBroken[i] = powerVariant(R, e.powerToWeight, 1);
     const vA = agilityCruiseVu(R, VBASE, agility);
     T.vA[i] = vA;
@@ -672,8 +673,8 @@ export function buildTables(
     const sp = R.stylePace[e.style];
     for (let b = 0; b < 2; b++) {
       const pw = powerVariant(R, e.powerToWeight, b);
-      const pwc = weightedPower(R.pwCruiseWeight, pw);
-      const pwb = weightedPower(R.pwBoostWeight, pw);
+      const pwc = variantPower(R, R.pwCruiseWeight, pw, b);
+      const pwb = variantPower(R, R.pwBoostWeight, pw, b);
       T.pwc[ib(i, b)] = pwc;
       T.pwb[ib(i, b)] = pwb;
       for (let s = 0; s < G.S; s++) {

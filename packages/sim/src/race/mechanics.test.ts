@@ -2,7 +2,7 @@ import { loadContent } from "@falconess/content";
 import type { Course, RaceEntry, RaceEvent, RaceSkill, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import type { Ruleset } from "../rulesets/index.js";
+import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
 import { KEY_FINISHED, rankSnapshot } from "./controller.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeSkill } from "./entry.js";
@@ -361,6 +361,115 @@ describe("overheat, durability and broken wings (docs/race-engine.md 8)", () => 
     expect(at(rows, k).b).toBe(1);
     expect(at(log.results, 0).durabilityEnd).toBe(0);
     expect(at(log.results, 0).ledger.durabilityLost).toBe(3000);
+  });
+});
+
+describe("brokenSpeedPm (docs/race-engine.md 8.4, ADR-0003 D56)", () => {
+  /** The spec's broken wings moved from the PW cut to the speed factor. */
+  const SPEED: Ruleset = {
+    ...QUIET,
+    race: { ...QUIET.race, durabilityZeroPowerMult: 1000, brokenSpeedPm: 750 },
+  };
+
+  it("overridden to 750 with a neutral PW cut it runs the spec's race; only the event's PW changes", () => {
+    const canyon = content.getCourse("desert-canyon");
+    const field = [
+      fixture("glide", 0, { durabilityStart: 3 }), // breaks in the water
+      fixture("hover", 1, { durabilityStart: 0 }), // broken from the start
+      fixture("dive", 2, { powerToWeight: 1400, durabilityStart: 3 }),
+      fixture("ground", 3, { durabilityStart: 5 }), // ground halves the water hit: breaks too
+      fixture("hover", 4, { powerToWeight: 700 }),
+    ];
+    const spec = simulateRace(QUIET, field, canyon, "d56");
+    const speed = simulateRace(SPEED, field, canyon, "d56");
+    const brokenLanes = speed.results.filter((r) => r.broken).map((r) => r.lane);
+    expect(brokenLanes.sort()).toEqual([0, 1, 2, 3]);
+    const pwOf = (log: RaceLog) =>
+      (log.events ?? [])
+        .flatMap((e) => (e.kind === "durabilityBroken" ? [[e.lane, e.powerToWeight]] : []))
+        .sort((a, b) => (a[0] ?? 0) - (b[0] ?? 0));
+    expect(pwOf(spec)).toEqual([
+      [0, 750],
+      [2, 1050],
+      [3, 750],
+    ]);
+    expect(pwOf(speed)).toEqual([
+      [0, 1000],
+      [2, 1400],
+      [3, 1000],
+    ]);
+    expect(spec.derived.map((d) => d.brokenSpeedPm)).toEqual([1000, 1000, 1000, 1000, 1000]);
+    expect(speed.derived.map((d) => d.brokenSpeedPm)).toEqual([750, 750, 750, 750, 750]);
+    // everything else is the same log: results, frames, every other event and derived value
+    const rest = (log: RaceLog) => ({
+      ...log,
+      derived: log.derived.map(({ brokenSpeedPm: _, ...d }) => d),
+      events: (log.events ?? []).map((e) =>
+        e.kind === "durabilityBroken" ? { ...e, powerToWeight: 0 } : e,
+      ),
+    });
+    expect(rest(speed)).toEqual(rest(spec));
+  });
+
+  it("overridden to 750 at the spec's weights a broken PW 1.4 frame cruises at 0.75 of its intact cruise", () => {
+    const pw14 = fixture("hover", 0, { powerToWeight: 1400, durabilityStart: 1 });
+    const breakAt = (t: number, A: RaceArena) => {
+      if (t === 600) A.state.heat[0] = 200_000; // one overheated tick: −1000 md, broken
+    };
+    const noBoost: Ruleset = { ...SPEED, race: { ...SPEED.race, kE: 1_000_000 } };
+    const { rows } = trace(noBoost, [pw14], LONG_FLAT, "pw14", 0, breakAt);
+    const intactCruise = at(rows, 599).vCore;
+    expect(intactCruise).toBe(493_500); // 352 500 × 1.4
+    expect((at(rows, 601).flags & F_BROKEN) !== 0).toBe(true);
+    expect(at(rows, 900).vCore).toBe(370_125); // 352 500 × 1.05
+    expect(at(rows, 900).vCore * 1000).toBe(intactCruise * 750);
+  });
+});
+
+describe("broken wings under the live ruleset (RULESET_V1; ADR-0005 pass 2, ADR-0003 D56)", () => {
+  const V1_QUIET: Ruleset = {
+    ...RULESET_V1,
+    race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  };
+
+  it("v1 breaks wings with the speed factor, not the PW cut", () => {
+    expect(RULESET_V1.race.durabilityZeroPowerMult).toBe(1000);
+    expect(RULESET_V1.race.brokenSpeedPm).toBe(750);
+  });
+
+  it("a frame broken mid-race keeps its PW in the event and cruises 25 % slower from the break on", () => {
+    const e = fixture("hover", 0, { durabilityStart: 1 });
+    const breakAt = (t: number, A: RaceArena) => {
+      if (t === 400) A.state.heat[0] = 200_000; // one overheated tick: −1000 md, broken
+    };
+    const noBoost: Ruleset = { ...V1_QUIET, race: { ...V1_QUIET.race, kE: 1_000_000 } };
+    const { log, rows } = trace(noBoost, [e], LONG_FLAT, "v1", 0, breakAt);
+    expect(events(log, "durabilityBroken").map((x) => x.powerToWeight)).toEqual([1000]);
+    expect(at(log.derived, 0).brokenSpeedPm).toBe(750);
+    expect(at(rows, 399).vCore).toBe(352_500);
+    expect(at(rows, 700).vCore).toBe(264_375); // ×0.75 with the v1 weights 5 / 250
+  });
+
+  it("a broken frame loses about 25 % of its mean speed on every v1 course, for PW 0.7, 1.0 and 1.4", () => {
+    for (const courseId of ["desert-sprint", "desert-ridge", "desert-canyon"]) {
+      const course = content.getCourse(courseId);
+      for (const powerToWeight of [700, 1000, 1400]) {
+        const e = fixture("hover", 0, { powerToWeight });
+        const intact = at(simulateRace(RULESET_V1, [e], course, "live").results, 0);
+        const broken = at(
+          simulateRace(RULESET_V1, [{ ...e, durabilityStart: 0 }], course, "live").results,
+          0,
+        );
+        expect(broken.broken).toBe(true);
+        // mean speed broken / intact: 0.75 of cruise and thrust, a little more for the start
+        const ratio = (intact.finishMilli ?? 0) / (broken.finishMilli ?? 1);
+        expect([courseId, powerToWeight, ratio > 0.74 && ratio < 0.79]).toEqual([
+          courseId,
+          powerToWeight,
+          true,
+        ]);
+      }
+    }
   });
 });
 

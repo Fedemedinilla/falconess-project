@@ -781,6 +781,7 @@
       "jumpNeed": [],
       "capFinal": 16800,
       "groundLevelMms": 0,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -865,6 +866,7 @@
       "jumpNeed": [],
       "capFinal": 76000,
       "groundLevelMms": 0,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -949,6 +951,7 @@
       "jumpNeed": [],
       "capFinal": 228000,
       "groundLevelMms": 0,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -1033,6 +1036,7 @@
       "jumpNeed": [],
       "capFinal": 24000,
       "groundLevelMms": 0,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -1117,6 +1121,7 @@
       "jumpNeed": [],
       "capFinal": 297000,
       "groundLevelMms": 78,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -1201,6 +1206,7 @@
       "jumpNeed": [],
       "capFinal": 22800,
       "groundLevelMms": 0,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -1285,6 +1291,7 @@
       "jumpNeed": [],
       "capFinal": 237000,
       "groundLevelMms": 0,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,
@@ -1369,6 +1376,7 @@
       "jumpNeed": [],
       "capFinal": 141000,
       "groundLevelMms": 131,
+      "brokenSpeedPm": 1000,
       "segments": [
         {
           "fPm": 1000,

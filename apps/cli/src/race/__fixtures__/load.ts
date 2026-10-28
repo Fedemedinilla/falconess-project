@@ -10,6 +10,9 @@ import { RaceLog } from "@falconess/schema";
  *
  *   pnpm exec tsx apps/cli/src/race/__fixtures__/generate.ts
  *   pnpm exec vitest run --project cli -u
+ *
+ * The logs predate ADR-0003 D56: `derived[].brokenSpeedPm` was added by hand as 1000, the neutral
+ * factor of the engine that wrote them (its broken wings went through the PW alone).
  */
 export const RACE_FIXTURES = {
   /** desert-sprint, player field: Peregrina at 600 with three actives against turn-46 rivals. */

@@ -476,3 +476,28 @@ constante de `rulesets/v1`):
   estima §20.4.
 - **D55 [hueco, extensión de D34] `geometry.biome`** en el RaceLog, para que la presentación no
   tenga que leer el contenido.
+
+## Addendum 2 (2026-10-28): alas rotas fuera del peso de PW
+
+El dueño decidió sobre la propuesta 5 de «Métricas 2 y 5» de ADR-0005 (opción (a)): el PW sigue
+comprimido (`pwCruiseWeight` 5, `pwBoostWeight` 250) y las alas rotas vuelven a costar lo que dice
+BRIEF §5 con una regla del motor independiente de los pesos de PW. Cifras y medición: ADR-0005,
+sección «Pasada 2».
+
+- **D56 [desviación: BRIEF §5, extensión de §8.4] Factor de alas rotas:** la variante rota de las
+  tablas de PW (spec §3.3) multiplica el PW pesado por `kb[1] = R.brokenSpeedPm`:
+  `pwc[1] = fl((1000 + fl(pwCruiseWeight × (PW₁ − 1000), 1000)) × brokenSpeedPm, 1000)`, igual
+  `pwb[1]` con `pwBoostWeight`. Crucero, aceleración, `vMin` y todo empuje (`B`, `Bp`, `Bpc`, y por
+  ellos `Bon`, `capFinal`, `groundLevel`) son lineales en `pwc` y `pwb`, así que pierden
+  `1000 − brokenSpeedPm` ‰ sea cual sea el peso del PW. `durabilityZeroPowerMult` conserva su papel
+  (el `PW₁` que entra en los pesos y que informa el evento `durabilityBroken`): cada ruleset rompe
+  por una de las dos vías y deja la otra neutra. `SPEC_RULESET`: `durabilityZeroPowerMult` 750 y
+  `brokenSpeedPm` 1000, así que los tests de física siguen en el prototipo; v1: 1000 y 750. A pesos
+  1000 / 1000 las dos vías dan tablas idénticas bit a bit y solo cambia el PW del evento. El
+  `RaceLog` suma `derived[].brokenSpeedPm` (spec §20.3), para que el log explique la pérdida también
+  sin eventos (bastidor roto desde la salida, detalle `results`). Razón: con los pesos comprimidos
+  el corte de PW del brief costaba ≈ 0,2 % de tiempo (ADR-0005); un factor después de los pesos es
+  el PW × 0,75 del brief tal como cuesta a peso completo y no depende de cómo se decida el PW en
+  crucero. Descartado: 750 en las dos constantes de v1 (el empuje caería ×0,70 y el coste volvería
+  a depender de `pwBoostWeight`) y fundir las dos en una (`SPEC_RULESET` dejaría de reproducir el
+  `PW₁` del prototipo en el evento).

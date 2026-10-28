@@ -373,7 +373,18 @@ function timeline(log: RaceLog, runners: readonly Runner[], labels: RaceLabels):
 /** `milli`: when it happened in milli-ticks (`tick × 1000`, the exact `finishMilli` for a finish). */
 type EventLine = { tick: number; milli: number; posMm: number; text: string };
 
-function describeEvent(e: RaceEvent, labels: RaceLabels, all: readonly RaceEvent[]): string | null {
+/** ` · velocidad ×0.75`: the broken-wing speed factor of `derived` (8.4), empty when neutral. */
+function brokenSpeedText(log: RaceLog, lane: number): string {
+  const pm = log.derived[lane]?.brokenSpeedPm ?? 1000;
+  return pm === 1000 ? "" : `velocidad ×${fixed(pm, 1000, 2)}`;
+}
+
+function describeEvent(
+  e: RaceEvent,
+  labels: RaceLabels,
+  all: readonly RaceEvent[],
+  log: RaceLog,
+): string | null {
   switch (e.kind) {
     case "skill":
       return `habilidad ${labels.skillName(e.skillId)} (p ${e.p} > u ${e.u})${e.activation > 1 ? ` #${e.activation}` : ""}`;
@@ -404,8 +415,10 @@ function describeEvent(e: RaceEvent, labels: RaceLabels, all: readonly RaceEvent
     }
     case "hpEmpty":
       return "hp agotada: sin boost, a velocidad mínima";
-    case "durabilityBroken":
-      return `alas rotas (P/W ${fixed(e.powerToWeight, 1000, 2)})`;
+    case "durabilityBroken": {
+      const speed = brokenSpeedText(log, e.lane);
+      return `alas rotas (P/W ${fixed(e.powerToWeight, 1000, 2)}${speed ? `, ${speed}` : ""})`;
+    }
     case "repair":
       return `reparación +${milliUnits(e.amount)} durabilidad`;
     case "heatToEnergy":
@@ -459,7 +472,7 @@ export function runnerEvents(log: RaceLog, lane: number, labels: RaceLabels): Ev
       pulses.push(e);
       continue;
     }
-    const text = describeEvent(e, labels, all);
+    const text = describeEvent(e, labels, all, log);
     if (text === null) continue;
     flush();
     // A finisher ends its tick past the line; the event reads better at the line itself.
@@ -555,8 +568,9 @@ function skillsLine(log: RaceLog, r: Runner, labels: RaceLabels): string {
 
 /**
  * Broken wings as a time sink (20.4 flag 256, 8.4): where they broke and the PW before and after,
- * from the `durabilityBroken` event; a frame that starts at durability 0 is broken from the start
- * (no event); without events (`detail: "results"`) only the fact.
+ * from the `durabilityBroken` event (the PW only when it changed); a frame that starts at
+ * durability 0 is broken from the start (no event); without events (`detail: "results"`) only the
+ * fact. Every case adds the speed factor of `derived.brokenSpeedPm` when it is not neutral.
  */
 function brokenSink(log: RaceLog, entry: RaceEntry): string {
   const pw = (pm: number) => fixed(pm, 1000, 2);
@@ -564,9 +578,14 @@ function brokenSink(log: RaceLog, entry: RaceEntry): string {
     (x): x is RaceEvent & { kind: "durabilityBroken" } =>
       x.lane === entry.laneIndex && x.kind === "durabilityBroken",
   );
-  if (e)
-    return `alas rotas en ${metres(e.posMm)} m (P/W ${pw(entry.powerToWeight)} → ${pw(e.powerToWeight)})`;
-  return entry.durabilityStart === 0 ? "alas rotas desde la salida" : "alas rotas";
+  const costs: string[] = [];
+  if (e && e.powerToWeight !== entry.powerToWeight)
+    costs.push(`P/W ${pw(entry.powerToWeight)} → ${pw(e.powerToWeight)}`);
+  const speed = brokenSpeedText(log, entry.laneIndex);
+  if (speed) costs.push(speed);
+  const cost = costs.length > 0 ? ` (${costs.join(", ")})` : "";
+  if (e) return `alas rotas en ${metres(e.posMm)} m${cost}`;
+  return `${entry.durabilityStart === 0 ? "alas rotas desde la salida" : "alas rotas"}${cost}`;
 }
 
 /** One label column for every block: the longest label, "habilidades". */
