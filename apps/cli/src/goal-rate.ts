@@ -24,7 +24,11 @@ export function goalFlagged(passed: number, reached: number): boolean {
  * more if a place beyond it shows up.
  */
 export function placeCounts(places: readonly number[], fieldSize = 8): number[] {
-  const counts = new Array<number>(Math.max(fieldSize, ...places)).fill(0);
+  // A loop, not Math.max(...places): a long batch collects hundreds of thousands of places, and
+  // spreading them into a call overflows the stack.
+  let size = fieldSize;
+  for (const p of places) if (p > size) size = p;
+  const counts = new Array<number>(size).fill(0);
   for (const p of places) counts[p - 1] = (counts[p - 1] ?? 0) + 1;
   return counts;
 }

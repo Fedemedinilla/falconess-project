@@ -177,22 +177,25 @@ Tareas, en orden (cada día cierra con un test de propiedad nuevo):
 - [x] D14 · `pnpm sim:batch -- --runs 10000 --report out/balance.json` con las 7 métricas del brief
   §12 y diff contra línea base. Job de CI que pega el reporte en el PR. Opcional: verificación
   Node = Deno con `deno run` sobre el bundle ESM de `sim` (una semilla, un hash).
-- [ ] D14 · `apps/cli`: `pnpm sim:race -- --seed <n> --course <id> --entries <archivo>` imprime la
+- [x] D14 · `apps/cli`: `pnpm sim:race -- --seed <n> --course <id> --entries <archivo>` imprime la
   clasificación, los eventos y una línea de tiempo ASCII por corredora (posición cada 10 % de la
   pista). `pnpm play` ya corre carreras reales. Banco de pruebas de **PT1**.
-- [ ] D14 · Subagente `balance-analyst.md` y comando `/balance-report`. Primera pasada de balance
+- [x] D14 · Subagente `balance-analyst.md` y comando `/balance-report`. Primera pasada de balance
   (un día como máximo; lo que no entre en rango lleva ADR con el objetivo movido).
 
 **Criterio de aceptación (brief §14, semana 2):** 10.000 carreras en < 60 s; métricas dentro de rango
 o con ADR; determinismo Node = Deno verificado; benchmark < 5 ms; 12 golden idénticos.
 
-**Estado (2026-10-28): motor completo, balance pendiente.** Diseño en `docs/race-engine.md` con
-ADR-0003 aceptada (D1-D55). `simulateRace` reproduce el prototipo del spec; 8 corredoras en
-3000 m tardan ≈ 3 ms (p95 3,1 ms). La temporada corre carreras reales con `generateField`; el stub
-está borrado. `sim:race`, `sim:batch` (8 escenarios, 7 métricas, CI que comenta en el PR) y 12
-golden (ADR-0004) están en verde. Falta la primera pasada de balance (D14): la puerta D12 de
-temporada falla para las tres Falconess (B o mejor: Caracara 41 %, Peregrina 30 %, Cernícala 9 %),
-y el subagente `balance-analyst` con `/balance-report`. La verificación Node = Deno sigue opcional.
+**Estado (2026-10-28): fase 2 completa.** Diseño en `docs/race-engine.md` con ADR-0003 aceptada
+(D1-D56). `simulateRace` reproduce el prototipo del spec; 8 corredoras en 3000 m tardan ≈ 3 ms
+(p95 3,1 ms). La temporada corre carreras reales con `generateField`. `sim:race`, `sim:batch` (8
+escenarios, 7 métricas, CI que comenta en el PR) y 12 golden (ADR-0004) en verde. Dos pasadas de
+balance (ADR-0005) con decisiones del dueño: potencia comprimida con alas rotas al 75 %, temporada
+más exigente (≈ 49 % de carreras objetivo ganadas) y estadística de la métrica 3 sin falsos
+fallos. Perfil completo: ninguna métrica falla (2, 3 y 5 con una casilla en el borde). Pendientes
+para el dueño en ADR-0005: Peregrina gana más que las otras dos, la política de referencia no
+llega a aprender habilidades y el desgaste de durabilidad casi no pesa en la temporada. La
+verificación Node = Deno sigue opcional.
 
 **Riesgo a vigilar desde D8:** rendimiento. Si al D10 una carrera supera 5 ms, se detiene la fase
 y se optimiza (sin asignaciones por tick, arrays tipados, log muestreado y no por tick completo).

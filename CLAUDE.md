@@ -62,3 +62,6 @@ Detalle de cada comando: docs/commands.md.
 - El loader de tsx no pasa a los worker threads: los workers del lote arrancan con `worker-boot.mjs`, que registra `tsx/esm/api`.
 - Commits con la identidad configurada del entorno (firma incluida); nunca pasar `-c user.email`. Los worktrees de agentes pueden nacer de `main`: resetearlos a la rama de trabajo antes de empezar.
 - El prototipo del spec (`.work/proto`, local, no versionado) fue el oráculo del motor: con la misma entrada da el mismo resultado; útil para depurar diferencias.
+- Agregar un campo al RaceLog hace fallar todos los golden y los fixtures de la CLI por el esquema estricto: regenerarlos con su ADR en el mismo cambio.
+- Con conteos chicos (S3 en pr) el intervalo normal de la media colapsa: usar intervalos de puntuación.
+- Antes de suponer que la política de referencia gasta puntos de habilidad, medirlo: con la economía v1 nunca llega a 60.
