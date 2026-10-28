@@ -2,6 +2,9 @@ import type { RunInput } from "@falconess/schema";
 import { useEffect, useRef, useState } from "react";
 import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useGame } from "../game/useGame";
+import { PlayerAdviceNote } from "../race/AdviceNote";
+import { ADVICE_FROM_PLACE } from "../race/advice";
+import { pageLabels } from "../race/RaceReplay";
 import { formatSeconds } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
@@ -11,6 +14,7 @@ import { SeasonStrip } from "../ui/SeasonStrip";
 import { scrollBehavior } from "../ui/useMedia";
 import { type ActionKind, actionPreview } from "./model/actions";
 import { freshRace, goalStatuses, nextGoal, recentWeeks } from "./model/season";
+import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { useViewRace } from "./shared/useViewRace";
 import s from "./Turn.module.css";
 import { TurnActions } from "./TurnActions";
@@ -53,16 +57,20 @@ export function Turn() {
   };
   const viewRace = useViewRace();
   const run = snap.run;
+  const ctx = game.context();
+  const fresh = run && freshRace(ctx, run.state);
+  // a goal race finished 3rd or worse: the result card says what to train (Umamusume)
+  const adviceLog = useGoalRaceLog(
+    fresh?.result && fresh.result.place >= ADVICE_FROM_PLACE ? fresh.goal.turn : undefined,
+  );
   if (!run) return null;
 
-  const ctx = game.context();
   const state = run.state;
   const turns = ctx.ruleset.season.turns;
   const falconess = ctx.content.getFalconess(state.falconessId);
   const sponsor = ctx.content.getManufacturer(falconess.sponsor);
   const goals = goalStatuses(ctx, state);
   const next = nextGoal(ctx, state);
-  const fresh = freshRace(ctx, state);
   const preview = previewKind && actionPreview(ctx, state, previewKind);
 
   // the run this render shows: a click meant for it is ignored once the run has moved on
@@ -177,6 +185,14 @@ export function Turn() {
           >
             {ui("ui.race.view")}
           </Button>
+          {adviceLog && (
+            <PlayerAdviceNote
+              log={adviceLog}
+              labels={pageLabels()}
+              id="turno-consejo"
+              className={s.resultAdvice}
+            />
+          )}
         </section>
       )}
 

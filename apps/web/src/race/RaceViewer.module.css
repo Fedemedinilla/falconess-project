@@ -662,6 +662,11 @@
   color: var(--ink-3);
 }
 
+/* the tip after the race, first thing in the "why" */
+.whyAdvice {
+  margin-bottom: var(--space-3);
+}
+
 /* the "why" in plain words, read before the numbers */
 .whySummary {
   display: grid;

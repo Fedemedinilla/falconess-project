@@ -4,12 +4,13 @@ import { advanceSeason, RULESET_V1, type SimContext, startSeason } from "@falcon
 import { describe, expect, it } from "vitest";
 import { goalRaceLog, goalRaceView } from "./goal-race-view.js";
 import { lowestStatPolicy, REFERENCE_HANGAR } from "./policy.js";
+import { ADVICE_FROM_PLACE, NO_ADVICE } from "./race/render-race.js";
 
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 
 /** The first goal race of a reference season: the state before it, its input and the result. */
-function firstGoalRace(falconessId: string) {
-  let s: SeasonState = startSeason(ctx, `view-${falconessId}`, {
+function firstGoalRace(falconessId: string, seed = `view-${falconessId}`) {
+  let s: SeasonState = startSeason(ctx, seed, {
     kind: "start",
     falconessId,
     hangar: [...REFERENCE_HANGAR],
@@ -49,6 +50,23 @@ describe("pnpm play goal-race view", () => {
     for (const row of ["fases", "ganancias", "pérdidas"])
       expect(lines.some((l) => l.trimStart().startsWith(row))).toBe(true);
     expect(lines.some((l) => l.trimStart().startsWith("tramos"))).toBe(false);
+  });
+
+  it("tells the player what to train after a goal race she finished 3rd or worse", () => {
+    const tip = /^ {2}¡.+! Quizás deberías (entrenar|pasar por el) /;
+    const lost = firstGoalRace("caracara", "a");
+    expect(lost.result.place).toBeGreaterThanOrEqual(ADVICE_FROM_PLACE);
+    const lines = goalRaceView(ctx, lost.before, lost.input);
+    expect(lines.filter((l) => tip.test(l)).length).toBeGreaterThan(0);
+    // a 4th place with better stats than the winner: nothing a stat would fix
+    const unlucky = firstGoalRace("peregrina");
+    expect(unlucky.result.place).toBeGreaterThanOrEqual(ADVICE_FROM_PLACE);
+    expect(goalRaceView(ctx, unlucky.before, unlucky.input).at(-1)).toBe(`  ${NO_ADVICE}`);
+    const won = firstGoalRace("caracara");
+    expect(won.result.place).toBeLessThan(ADVICE_FROM_PLACE);
+    const quiet = goalRaceView(ctx, won.before, won.input).join("\n");
+    expect(quiet).not.toContain("Quizás deberías");
+    expect(quiet).not.toContain(NO_ADVICE);
   });
 
   it("prints nothing for a step without a goal race", () => {

@@ -14,12 +14,15 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm lint:fix`: Biome with `--write`; review `git diff docs/` afterwards (it formats Markdown).
 - `pnpm content:validate`: parse every content JSON and check the cross references.
 - `pnpm sim -- --seed 42 --falconess peregrina`: one season with the reference policy, turn by turn.
-- `pnpm play -- --seed 42 --falconess peregrina`: interactive text season (PT0).
-- `pnpm sim:race -- --seed 1 --course desert-ridge`: one race, classification, timeline and events.
+- `pnpm play -- --seed 42 --falconess peregrina`: interactive text season (PT0); after a goal race
+  finished 3rd or worse it says what to train (race-view's `raceAdvice`).
+- `pnpm sim:race -- --seed 1 --course desert-ridge`: one race, classification, timeline and events;
+  the "why" of each runner ends with what to train ("consejo").
 - `pnpm sim:batch -- --runs 10000`: balance batch of BRIEF §12 (docs/balance-batch.md).
 - `pnpm sim:season-batch -- --runs 500`: seasons with the reference policy, stat curve and grades,
   goal races won and by place, goal pass rates.
 - `pnpm dev`: the web tester app (apps/web) on the Vite dev server, with hot reload.
 - `pnpm web:build`: apps/web to dist/ and the single-file tester page to dist-artifact/.
 - `pnpm web:e2e`: both builds of apps/web, then its browser tests in Chromium (apps/web/README.md):
-  seasons played by clicks, goal-race replays, copy and load, free race, the published page.
+  seasons played by clicks, goal-race replays, copy and load, free race, the post-race tips, the
+  published page.

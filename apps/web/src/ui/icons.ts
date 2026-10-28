@@ -115,6 +115,11 @@ export const ICONS = {
   trouble: "⚠️",
   dnf: "❌",
 
+  // the tip after a race (race-view's advice): the tip itself, a slower runner, her pace judgement
+  advice: "💡",
+  "advice.slow": "🐢",
+  "advice.pace": "⏱️",
+
   // races and the season
   goalRace: "🏁",
   finish: "🏁",

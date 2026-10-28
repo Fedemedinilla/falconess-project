@@ -4,6 +4,15 @@
  * what a race shows (docs/race-engine.md 20.6). Nothing here recomputes physics: every number is
  * the log's, or a difference of the log's numbers. Words belong to each reader.
  */
+export {
+  ADVICE_MAX,
+  ADVICE_MIN_MILLI,
+  type AdviceItem,
+  type AdviceReason,
+  type AdviceStat,
+  adviceCauses,
+  raceAdvice,
+} from "./advice.js";
 export type {
   EntryInput,
   GenerateFieldArgs,

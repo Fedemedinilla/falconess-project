@@ -1773,6 +1773,18 @@ slipstream), `derived.stoopPm`/`airPm`/`landPm`/`detourPm` (style and rule terms
 `derived.brokenSpeedPm` (what broken wings cost, 8.4). `pnpm sim:race` prints exactly these per runner
 (ROADMAP D14 CLI timeline).
 
+**What to train (`@falconess/race-view` `raceAdvice`).** The viewers' post-race tip reads the same
+fields against the winner and names the stat that governs each loss in this spec: hp empty before
+the winner's (stamina, 6; courage when she emptied in the final with the winner's reserve and a
+heavier final fatigue), the share of cruise that agility gives (cruise ÷ `vMin` cancels every
+other term, 3.3) over the middle phase and the curves (agility, 5.1, 7), a slower start phase with
+a lower technique and acceleration (5.1), failed jumps and landings (technique, 14.2-14.3),
+overheat and a heat-held boost under a cap courage moves (8.2, 9.3), a pace judgement below the
+winner's from a lower window centre (intelligence, 10.2), energy the sprint plan did not see
+(10.3), missed skills (15.2), broken or worn wings (the workshop, 8.4). Each is timed from the log
+where it can be (ledger ticks, the log's distances at the `derived` speeds) and ranked by that
+time; nothing is simulated again.
+
 ## 21. Field generation and season wiring (item 21)
 
 ### 21.1 `generateField`

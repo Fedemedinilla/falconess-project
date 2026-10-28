@@ -102,7 +102,7 @@ EVENTOS
     135.8 s  2954 m  hp agotada: sin boost, a velocidad mínima
     138.2 s  3000 m  meta 6º
 
-POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
+POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger, y qué entrenar
   1º rival-3  106.01 s
      fases        salida 20.47 s · medio 44.93 s · final 40.67 s
      ganancias    boost 126/225/16 ticks · 1 habilidad(es)
@@ -138,6 +138,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/33.0 · / 0.96/30.4 · | 0.90/28.4 · _ 1.00/31.6 · | 1.15/37.1 · ~ 0.80/25.8 · _ 1.00/32.3  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 0 · durabilidad -8.0 +0.0 → 0.0
+     consejo      Agilidad · crucero más lento: agilidad 600 contra 640 · ≈0.49 s
+     consejo      Taller · alas rotas en 2401 m
   4º rival-1  127.57 s  (+21.56 s)
      fases        salida 22.00 s (+1.53) · medio 60.13 s (+15.20) · final 45.47 s (+4.80)
      ganancias    boost 49/0/70 ticks · 1 habilidad(es)
@@ -149,6 +151,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 119.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 1.0
      cuerpo       hp final 0 · durabilidad -10.0 +0.0 → 130.0
      habilidades  ✓ Pulmones de cuesta (p 857 > u 805)
+     consejo      Agilidad · crucero más lento: agilidad 620 contra 640 · ≈0.29 s
   5º rival-2  136.44 s  (+30.43 s)
      fases        salida 23.40 s (+2.93) · medio 69.60 s (+24.67) · final 43.47 s (+2.80)
      ganancias    boost 66/35/104 ticks · 2 habilidad(es)
@@ -160,6 +163,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 205.0 · lift 0.0 · regen +0.0 · reembolso +10.0 · calor +35.0 · queda 0.0
      cuerpo       hp final 84 · durabilidad -10.0 +0.0 → 90.0
      habilidades  ✓ Sentido del cañón (p 1000 > u 648) · ✓ Segundo aliento (p 1000 > u 977)
+     consejo      Agilidad · crucero más lento: agilidad 600 contra 640 · ≈0.69 s
   6º rival-7  138.22 s  (+32.21 s)
      fases        salida 22.93 s (+2.47) · medio 70.13 s (+25.20) · final 45.20 s (+4.53)
      ganancias    boost 15/46/39 ticks · 2 habilidad(es)
@@ -171,6 +175,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
      cuerpo       hp final 0 · durabilidad -5.0 +0.0 → 155.0
      habilidades  ✓ Salida limpia (p 846 > u 374) · ✓ Rasante de agua (p 846 > u 808)
+     consejo      Agilidad · crucero más lento: agilidad 600 contra 640 · ≈0.69 s
+     consejo      Coraje · sobrecalor 5 ticks con tope de calor 51.5
   7º Cernícala  149.99 s  (+43.97 s)
      fases        salida 25.00 s (+4.53) · medio 75.87 s (+30.93) · final 49.13 s (+8.47)
      ganancias    boost 125/255/180 ticks · 1 habilidad(es)
@@ -192,7 +198,9 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/16.4 · / 0.96/14.9 · | 0.90/14.0 · _ 1.00/15.5 · | 1.15/18.2 · ~ 1.00/15.8 · _ 1.00/15.8  (f / crucero m/s)
      energía      gastada 645.0 · lift 0.0 · regen +521.0 · reembolso +0.0 · calor +0.0 · queda 1.0
      cuerpo       hp final 431 · durabilidad -5.0 +4.0 → 11.0
-     habilidades  ✓ Alas de hierro (p 831 > u 43)"
+     habilidades  ✓ Alas de hierro (p 831 > u 43)
+     consejo      Agilidad · crucero más lento: agilidad 548 contra 640 · ≈2.31 s
+     consejo      Inteligencia · ritmo +9/-44/-24 ‰ contra -43/+37/0 ‰, peor en el medio; centro -2 contra 0 ‰ · ≈0.37 s"
 `;
 
 exports[`renderRace snapshots > renders the results fixture 1`] = `
@@ -218,7 +226,7 @@ LÍNEA DE TIEMPO
 EVENTOS
   (sin eventos: detail "results")
 
-POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
+POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger, y qué entrenar
   1º rival-6  42.66 s
      fases        salida 9.67 s · medio 21.07 s · final 11.93 s
      ganancias    boost 49/106/68 ticks
@@ -239,6 +247,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 11 · durabilidad -0.0 +0.0 → 100.0
      habilidades  ✓ Trazadora de curvas · ✗ Último suspiro
+     consejo      Agilidad · crucero más lento: agilidad 630 contra 722 (0.27 s en el medio, 0.47 s en curvas) · ≈0.74 s
+     consejo      Inteligencia · no se activó Último suspiro (p 857 ‰)
   3º rival-4  43.28 s  (+0.62 s)
      fases        salida 9.27 s (-0.40) · medio 22.27 s (+1.20) · final 11.80 s (-0.13)
      ganancias    boost 48/0/35 ticks · 7 pulsos · 1 habilidad(es)
@@ -258,6 +268,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/34.3 · ) 0.91/30.0 · _ 1.00/32.8 · ) 0.91/29.4 · _ 1.00/32.2  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     consejo      Agilidad · crucero más lento: agilidad 679 contra 722 (0.13 s en el medio, 0.21 s en curvas) · ≈0.34 s
   5º rival-3  43.36 s  (+0.71 s)
      fases        salida 9.67 s (+0.00) · medio 21.07 s (+0.00) · final 12.67 s (+0.73)
      ganancias    boost 49/107/65 ticks · 2 habilidad(es)
@@ -268,6 +279,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 221.0 · lift 0.0 · regen +215.0 · reembolso +2.0 · calor +0.0 · queda 56.0
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
      habilidades  ✓ Sombra del pelotón · ✓ Guardia de punta
+     consejo      Agilidad · crucero más lento: agilidad 614 contra 722 (0.32 s en el medio, 0.54 s en curvas) · ≈0.86 s
+     consejo      Resistencia · sin físico a los 1102 m (en el final), 98 m a velocidad mínima; la ganadora aguantó hasta 1120 m · ≈0.21 s
   6º rival-7  44.11 s  (+1.46 s)
      fases        salida 9.67 s (+0.00) · medio 21.33 s (+0.27) · final 13.13 s (+1.20)
      ganancias    boost 49/107/71 ticks
@@ -277,6 +290,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/32.4 · ) 0.89/27.4 · _ 1.00/30.8 · ) 0.89/28.7 · _ 1.00/32.3  (f / crucero m/s)
      energía      gastada 227.0 · lift 0.0 · regen +217.5 · reembolso +0.0 · calor +0.0 · queda 50.5
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     consejo      Agilidad · crucero más lento: agilidad 531 contra 722 (0.60 s en el medio, 0.99 s en curvas) · ≈1.59 s
+     consejo      Resistencia · sin físico a los 1095 m (en el final), 105 m a velocidad mínima; la ganadora aguantó hasta 1120 m · ≈0.27 s
   7º rival-2  44.61 s  (+1.96 s)
      fases        salida 9.20 s (-0.47) · medio 22.27 s (+1.20) · final 13.20 s (+1.27)
      ganancias    boost 48/12/24 ticks · 7 pulsos · 2 habilidad(es)
@@ -287,6 +302,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +8.0 · calor +0.0 · queda 7.2
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
      habilidades  ✓ Salida limpia · ✓ Guardia de punta
+     consejo      Agilidad · crucero más lento: agilidad 534 contra 722 (0.57 s en el medio, 0.95 s en curvas) · ≈1.52 s
+     consejo      Resistencia · sin físico a los 1098 m (en el final), 102 m a velocidad mínima; la ganadora aguantó hasta 1120 m · ≈0.24 s
   8º rival-5  44.69 s  (+2.03 s)
      fases        salida 9.33 s (-0.33) · medio 22.40 s (+1.33) · final 13.00 s (+1.07)
      ganancias    boost 48/0/24 ticks · 6 pulsos
@@ -295,7 +312,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
      tramos       _ 1.00/32.4 · ) 0.90/30.2 · _ 1.00/33.5 · ) 0.90/29.2 · _ 1.00/32.4  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
-     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0"
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     consejo      Agilidad · crucero más lento: agilidad 607 contra 722 (0.33 s en el medio, 0.56 s en curvas) · ≈0.89 s"
 `;
 
 exports[`renderRace snapshots > renders the ridge fixture 1`] = `
@@ -392,7 +410,7 @@ EVENTOS
      68.1 s  1805 m  hp agotada: sin boost, a velocidad mínima
      77.2 s  2000 m  meta 2º
 
-POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
+POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger, y qué entrenar
   1º rival-4  71.05 s
      fases        salida 15.13 s · medio 32.00 s · final 23.93 s
      ganancias    boost 24/0/24 ticks · 4 pulsos
@@ -417,6 +435,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 329.0 · lift 35.0 · regen +364.0 · reembolso +0.0 · calor +0.0 · queda 60.0
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 80.0
      habilidades  ✓ Salida limpia (p 857 > u 751)
+     consejo      Agilidad · crucero más lento: agilidad 600 contra 651 · ≈0.44 s
+     consejo      Inteligencia · ritmo +8/-37/-14 ‰ contra -18/-7/-6 ‰, peor en el medio; centro +1 contra +3 ‰ · ≈0.13 s
   3º rival-3  86.58 s  (+15.53 s)
      fases        salida 16.13 s (+1.00) · medio 42.20 s (+10.20) · final 28.27 s (+4.33)
      ganancias    boost 17/44/39 ticks
@@ -428,6 +448,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/23.1 · \\ 1.03/24.1 · ^ 1.00/23.4 · _ 1.00/23.4 · \\ 1.02/23.9 · ^ 1.00/23.5 · _ 1.00/23.5  (f / crucero m/s)
      energía      gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
      cuerpo       hp final 26 · durabilidad -16.0 +0.0 → 124.0
+     consejo      Agilidad · crucero más lento: agilidad 600 contra 651 · ≈0.53 s
+     consejo      Coraje · sobrecalor 16 ticks con tope de calor 51.5
   4º rival-2  102.03 s  (+30.99 s)
      fases        salida 17.47 s (+2.33) · medio 51.27 s (+19.27) · final 33.33 s (+9.40)
      ganancias    boost 12/0/73 ticks · rebufo 51.3 s · 1 habilidad(es)
@@ -440,6 +462,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 85.0 · lift 35.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
      cuerpo       hp final 321 · durabilidad -0.0 +0.0 → 100.0
      habilidades  ✓ Sombra del pelotón (p 1000 > u 105)
+     consejo      Técnica · salida lenta: aceleración 0.29 contra 0.56 m/s² · ≈2.33 s
+     consejo      Agilidad · crucero más lento: agilidad 600 contra 651 · ≈0.64 s
   5º rival-1  118.40 s  (+47.35 s)
      fases        salida 21.20 s (+6.07) · medio 57.60 s (+25.60) · final 39.67 s (+15.73)
      ganancias    boost 12/0/63 ticks · 1 habilidad(es)
@@ -452,6 +476,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 75.0 · lift 35.0 · regen +0.0 · reembolso +10.0 · calor +0.0 · queda 0.0
      cuerpo       hp final 348 · durabilidad -0.0 +0.0 → 180.0
      habilidades  ✗ Amiga de la gravedad (u 958 ≥ p 857) · ✓ Segundo aliento (p 857 > u 14)
+     consejo      Agilidad · crucero más lento: agilidad 620 contra 651 · ≈0.43 s
+     consejo      Inteligencia · no se activó Amiga de la gravedad (p 857 ‰)
   6º Caracara  121.00 s  (+49.96 s)
      fases        salida 20.67 s (+5.53) · medio 60.60 s (+28.60) · final 39.80 s (+15.87)
      ganancias    boost 21/62/57 ticks · 2 habilidad(es)
@@ -463,7 +489,9 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/16.6 · \\ 1.03/16.7 · ^ 1.00/16.2 · _ 1.00/16.2 · \\ 1.02/16.9 · ^ 1.00/16.6 · _ 1.00/16.6  (f / crucero m/s)
      energía      gastada 140.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
      cuerpo       hp final 393 · durabilidad -0.0 +4.0 → 64.0
-     habilidades  ✓ Alas de hierro (p 841 > u 221) · ✓ Zancada carroñera (p 841 > u 382)"
+     habilidades  ✓ Alas de hierro (p 841 > u 221) · ✓ Zancada carroñera (p 841 > u 382)
+     consejo      Agilidad · crucero más lento: agilidad 588 contra 651 · ≈0.94 s
+     consejo      Taller · alas gastadas: 64 de 170 de durabilidad"
 `;
 
 exports[`renderRace snapshots > renders the sprint fixture 1`] = `
@@ -560,7 +588,7 @@ EVENTOS
      40.1 s  1095 m  hp agotada: sin boost, a velocidad mínima
      44.1 s  1200 m  meta 6º
 
-POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
+POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger, y qué entrenar
   1º rival-6  42.66 s
      fases        salida 9.67 s · medio 21.07 s · final 11.93 s
      ganancias    boost 49/106/68 ticks
@@ -585,6 +613,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 11 · durabilidad -0.0 +0.0 → 100.0
      habilidades  ✓ Trazadora de curvas (p 857 > u 312) · ✗ Último suspiro (u 970 ≥ p 785)
+     consejo      Agilidad · crucero más lento: agilidad 630 contra 722 (0.27 s en el medio, 0.47 s en curvas) · ≈0.74 s
   3º rival-4  43.28 s  (+0.62 s)
      fases        salida 9.27 s (-0.40) · medio 22.27 s (+1.20) · final 11.80 s (-0.13)
      ganancias    boost 48/0/35 ticks · 7 pulsos · 1 habilidad(es)
@@ -608,6 +637,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/34.3 · ) 0.91/30.0 · _ 1.00/32.8 · ) 0.91/29.4 · _ 1.00/32.2  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     consejo      Agilidad · crucero más lento: agilidad 679 contra 722 (0.13 s en el medio, 0.21 s en curvas) · ≈0.34 s
   5º rival-3  43.36 s  (+0.71 s)
      fases        salida 9.67 s (+0.00) · medio 21.07 s (+0.00) · final 12.67 s (+0.73)
      ganancias    boost 49/107/65 ticks · 2 habilidad(es)
@@ -620,6 +650,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 221.0 · lift 0.0 · regen +215.0 · reembolso +2.0 · calor +0.0 · queda 56.0
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
      habilidades  ✓ Sombra del pelotón (p 787 > u 206) · ✓ Guardia de punta (p 787 > u 169)
+     consejo      Agilidad · crucero más lento: agilidad 614 contra 722 (0.32 s en el medio, 0.54 s en curvas) · ≈0.86 s
+     consejo      Resistencia · sin físico a los 1102 m (en el final), 98 m a velocidad mínima; la ganadora aguantó hasta 1120 m · ≈0.21 s
   6º rival-7  44.11 s  (+1.46 s)
      fases        salida 9.67 s (+0.00) · medio 21.33 s (+0.27) · final 13.13 s (+1.20)
      ganancias    boost 49/107/71 ticks
@@ -631,6 +663,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/32.4 · ) 0.89/27.4 · _ 1.00/30.8 · ) 0.89/28.7 · _ 1.00/32.3  (f / crucero m/s)
      energía      gastada 227.0 · lift 0.0 · regen +217.5 · reembolso +0.0 · calor +0.0 · queda 50.5
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     consejo      Agilidad · crucero más lento: agilidad 531 contra 722 (0.60 s en el medio, 0.99 s en curvas) · ≈1.59 s
+     consejo      Resistencia · sin físico a los 1095 m (en el final), 105 m a velocidad mínima; la ganadora aguantó hasta 1120 m · ≈0.27 s
   7º rival-2  44.61 s  (+1.96 s)
      fases        salida 9.20 s (-0.47) · medio 22.27 s (+1.20) · final 13.20 s (+1.27)
      ganancias    boost 48/12/24 ticks · 7 pulsos · 2 habilidad(es)
@@ -643,6 +677,8 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +8.0 · calor +0.0 · queda 7.2
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
      habilidades  ✓ Salida limpia (p 796 > u 593) · ✓ Guardia de punta (p 796 > u 647)
+     consejo      Agilidad · crucero más lento: agilidad 534 contra 722 (0.57 s en el medio, 0.95 s en curvas) · ≈1.52 s
+     consejo      Resistencia · sin físico a los 1098 m (en el final), 102 m a velocidad mínima; la ganadora aguantó hasta 1120 m · ≈0.24 s
   8º rival-5  44.69 s  (+2.03 s)
      fases        salida 9.33 s (-0.33) · medio 22.40 s (+1.33) · final 13.00 s (+1.07)
      ganancias    boost 48/0/24 ticks · 6 pulsos
@@ -653,5 +689,6 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
      tramos       _ 1.00/32.4 · ) 0.90/30.2 · _ 1.00/33.5 · ) 0.90/29.2 · _ 1.00/32.4  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
-     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0"
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     consejo      Agilidad · crucero más lento: agilidad 607 contra 722 (0.33 s en el medio, 0.56 s en curvas) · ≈0.89 s"
 `;

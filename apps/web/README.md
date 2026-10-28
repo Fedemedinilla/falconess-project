@@ -104,6 +104,14 @@ goal's consequence, the crews' note, the race legend) follow the default.
   "Por qué" leads with a few plain lines for testers (`whySummary`: the gap and the phases where
   it went, the mishaps in player terms, energy left over), keeps phases, losses, gains and skills
   in view and folds the engine's numbers into a closed "Detalle técnico". hp is "Físico" on screen.
+- Umamusume's tip after a race (`race/advice.ts`, `AdviceNote.tsx`): race-view's `raceAdvice`
+  (up to two causes the log shows, the costliest first, each naming the stat that governs it in
+  the engine or the workshop) worded with `ui.advice.*` keys, the cause's and the stat's emoji
+  around the words: "¡Peregrina se quedó sin físico a los 1589 m! Quizás deberías entrenar
+  Resistencia.", the log's numbers below (brief, or full with what the stat does). It opens the
+  "Por qué" of any runner but the winner; after a goal race finished 3rd or worse it is also on
+  the week's result card and, when that race ended the season, on SeasonEnd. A runner 3rd or
+  worse with nothing to train is told so.
 - A goal race does not give itself away: the place the season recorded shows once the replay
   reaches the finish, and the call of the winner sits above the controls until the replay starts.
 - `playback.ts` interpolates the sampled frames for the animation; `clock.ts` moves race time by
@@ -138,6 +146,9 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   stats and fatigue, and the loaded run plays on identically; "Continuar" after a reload; undo;
   storage blocked and the copy fallback (the text is selected).
 - `free-race.spec.ts`: the default race, another course and seed, the neutral field.
+- `advice.spec.ts`: a loaded run whose T12 race ends 7th: the tip on the result card (brief and
+  full), the same tip atop the replay's "Por qué", none for the winner; a resting run whose T24
+  race ends the season: the tip on SeasonEnd.
 - `explain.spec.ts`: one card's «Breve | Completo», then «Explicaciones» for every card; the
   default survives a reload and the card's own choice does not; the card in view stays put when
   the default changes; on a phone the switches open with «Ver detalle», the default sits at the

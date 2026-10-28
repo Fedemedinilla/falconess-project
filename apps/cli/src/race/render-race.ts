@@ -7,11 +7,13 @@
  * worded here; margins are the log's `marginMm`.
  */
 import {
+  type AdviceItem,
   type Compressed,
   compressRuns,
   crossingMilliTicks,
   type EventItem,
   type Runner,
+  raceAdvice,
   runnerEventLines,
   runnersInPlaceOrder,
   type SprintPlanEvent,
@@ -26,6 +28,7 @@ import {
   whyModel,
 } from "@falconess/race-view";
 import type { SegmentType } from "@falconess/schema";
+import { adviceEvidence, adviceHeadline } from "./advice-text.js";
 import type { RaceLabels } from "./labels.js";
 import type { RaceGeometry, RaceLog, RaceResult } from "./log-view.js";
 
@@ -399,6 +402,11 @@ function termText(term: WhyTerm): string {
   }
 }
 
+/** A tip's row: what it points to and what the log shows. */
+function adviceRow(item: AdviceItem, labels: RaceLabels): string {
+  return `${labels.adviceStatName(item.stat)} · ${adviceEvidence(item, labels, fixed)}`;
+}
+
 /** One label column for every block: the longest label, "habilidades". */
 const WHY_LABEL_WIDTH = 11;
 
@@ -414,7 +422,8 @@ type WhyRow =
   | "tramos"
   | "energía"
   | "cuerpo"
-  | "habilidades";
+  | "habilidades"
+  | "consejo";
 
 /** The rows of the compact summary: phases against the winner, gains and time sinks. */
 const SUMMARY_ROWS: ReadonlySet<WhyRow> = new Set(["fases", "ganancias", "pérdidas"]);
@@ -515,6 +524,8 @@ function whyBlock(
     })
     .join(" · ");
   if (skills) lines.push(["habilidades", skills]);
+  for (const item of raceAdvice(log, entry.laneIndex))
+    lines.push(["consejo", adviceRow(item, labels)]);
 
   return [
     `  ${result.place}º ${labels.runnerName(entry)}  ${formatTime(result)}${gap}`,
@@ -528,17 +539,39 @@ function why(log: RaceLog, runners: readonly Runner[], labels: RaceLabels): stri
   const winner = runners[0];
   if (!winner) return [];
   return [
-    "POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger",
+    "POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger, y qué entrenar",
     ...runners.flatMap((r) => whyBlock(log, r, winner, labels)),
   ];
 }
 
 // --- entry points -------------------------------------------------------------------------------
 
+/** From this place on, `pnpm play` tells the player what to train after a goal race. */
+export const ADVICE_FROM_PLACE = 3;
+
+/** What `pnpm play` says when the log shows no cause a stat or the workshop would fix. */
+export const NO_ADVICE = "La carrera no muestra una causa que se corrija entrenando.";
+
+/**
+ * Umamusume's post-race tip for the runner in `lane`, one per cause the log shows (race-view's
+ * `raceAdvice`): "¡Peregrina se quedó sin físico a los 1589 m! Quizás deberías entrenar
+ * Resistencia.", then its evidence indented below.
+ */
+export function renderAdvice(log: RaceLog, lane: number, labels: RaceLabels): string[] {
+  const entry = log.entries[lane];
+  if (!entry) return [];
+  const name = labels.runnerName(entry);
+  return raceAdvice(log, lane).flatMap((item) => [
+    adviceHeadline(item, name, labels, fixed),
+    `  ${adviceEvidence(item, labels, fixed)}`,
+  ]);
+}
+
 /**
  * The compact view of a race (`pnpm play` after a goal race): the classification, then the
- * player's phases against the winner, her gains and her time sinks ("pérdidas"). Works on either
- * detail; without the player (a field of rivals or fixtures) only the classification.
+ * player's phases against the winner, her gains and her time sinks ("pérdidas"), and when she
+ * finished 3rd or worse what to train (`renderAdvice`), or that the log shows nothing to train. Works on either detail; without the
+ * player (a field of rivals or fixtures) only the classification.
  */
 export function renderRaceSummary(log: RaceLog, labels: RaceLabels): string[] {
   const runners = runnersInPlaceOrder(log);
@@ -546,6 +579,10 @@ export function renderRaceSummary(log: RaceLog, labels: RaceLabels): string[] {
   const player = runners.find((r) => r.entry.kind === "player");
   const lines = classification(runners, labels);
   if (winner && player) lines.push(...whyBlock(log, player, winner, labels, SUMMARY_ROWS));
+  if (player && player.result.place >= ADVICE_FROM_PLACE) {
+    const advice = renderAdvice(log, player.entry.laneIndex, labels);
+    lines.push(...(advice.length > 0 ? advice : [NO_ADVICE]));
+  }
   return lines;
 }
 

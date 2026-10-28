@@ -3,6 +3,9 @@ import { useMemo, useRef, useState } from "react";
 import { copyOrSelect, markCopied } from "../app/copy";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
+import { PlayerAdviceNote } from "../race/AdviceNote";
+import { ADVICE_FROM_PLACE } from "../race/advice";
+import { pageLabels } from "../race/RaceReplay";
 import { formatInt, formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
@@ -20,6 +23,7 @@ import { goalStatuses } from "./model/season";
 import s from "./SeasonEnd.module.css";
 import { Bar } from "./shared/Bar";
 import { Letter } from "./shared/Letter";
+import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { useViewRace } from "./shared/useViewRace";
 
 type CopyStatus = "idle" | "copied" | "selected";
@@ -57,6 +61,14 @@ export function SeasonEnd() {
         ? seasonSummary(game.context(), run.state, run.seed, run.inputs)
         : undefined,
     [game, run],
+  );
+  // the race that ended the season, when she finished it 3rd or worse: what to train (Umamusume)
+  const failed =
+    run && summary?.failedTurn !== undefined
+      ? goalStatuses(game.context(), run.state).find((g) => g.goal.turn === summary.failedTurn)
+      : undefined;
+  const failedLog = useGoalRaceLog(
+    failed?.result && failed.result.place >= ADVICE_FROM_PLACE ? failed.goal.turn : undefined,
   );
   if (!run || !summary) return null;
 
@@ -166,6 +178,8 @@ export function SeasonEnd() {
           ))}
         </ol>
       </header>
+
+      {failedLog && <PlayerAdviceNote log={failedLog} labels={pageLabels()} id="fin-consejo" />}
 
       <div className={s.grid}>
         <Panel title={ui("ui.end.races")} icon="goalRace" flush className={s.races}>

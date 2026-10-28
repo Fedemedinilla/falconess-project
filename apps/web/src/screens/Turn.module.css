@@ -202,6 +202,12 @@
   font-size: var(--fs-lg);
 }
 
+/* the tip after a goal race finished 3rd or worse, across the whole card */
+.resultAdvice {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+}
+
 @media (max-width: 52rem) {
   .result {
     grid-template-columns: minmax(0, 1fr);

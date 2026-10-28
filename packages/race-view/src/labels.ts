@@ -1,4 +1,5 @@
 import type { ContentIndex, RaceEntry, SegmentType, Style } from "@falconess/schema";
+import type { AdviceStat } from "./advice.js";
 
 /** A manufacturer's livery (content `palette`): the identity of its frames and runners. */
 export type Livery = { readonly primary: string; readonly secondary: string };
@@ -22,6 +23,8 @@ export type RaceLabels = {
   styleName(style: Style): string;
   segmentName(type: SegmentType): string;
   skillName(skillId: string): string;
+  /** What a tip points to (advice.ts): a stat's name, or the workshop's. */
+  adviceStatName(stat: AdviceStat): string;
   /** The manufacturer's palette; undefined for one content does not know. */
   livery(manufacturerId: string): Livery | undefined;
 };
@@ -44,6 +47,7 @@ export function contentLabels(content: ContentIndex): RaceLabels {
     styleName: (style) => content.t(`style.${style}`),
     segmentName: (type) => content.t(`segment.${type}`),
     skillName: (id) => named(content.skills, id),
+    adviceStatName: (stat) => content.t(stat === "workshop" ? "action.workshop" : `stat.${stat}`),
     livery: (id) => content.manufacturers.get(id)?.palette,
   };
 }

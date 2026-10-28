@@ -20,6 +20,7 @@ import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
 import { Table } from "../ui/Table";
+import { AdviceNote } from "./AdviceNote";
 import type { ReplayClock } from "./clock";
 import s from "./RaceViewer.module.css";
 import { cellRuns, type RaceView, type RunnerView } from "./view";
@@ -356,6 +357,14 @@ export function RunnerReport({ view, idPrefix }: { view: RaceView; idPrefix: str
         }
         className={s.whyPanel}
       >
+        <AdviceNote
+          log={view.log}
+          lane={r.lane}
+          labels={view.labels}
+          id={`${idPrefix}-consejo`}
+          detail={detail}
+          className={s.whyAdvice}
+        />
         <p className={s.whyHead}>
           <RunnerCell r={r} />
           <span className={s.whyHeadText}>{head}</span>

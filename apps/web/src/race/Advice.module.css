@@ -1,0 +1,71 @@
+/* Umamusume's tip after a race: what cost her the race and what to train */
+.advice {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--warn);
+  background: var(--warn-soft);
+  color: var(--ink);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: 2px;
+}
+
+.line {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+}
+
+.lead {
+  font-weight: 700;
+}
+
+.target {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.why,
+.none {
+  margin: 0;
+  padding-left: 1.5em;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.none {
+  padding-left: 0;
+  font-size: var(--fs-md);
+  color: var(--ink);
+}

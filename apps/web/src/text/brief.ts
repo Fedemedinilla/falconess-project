@@ -13,6 +13,17 @@ export type Detail = "brief" | "full";
 /** The interface texts that have a `.brief` variant. */
 export const BRIEF_UI_KEYS = [
   "ui.action.workshop.note",
+  "ui.advice.why.cruise",
+  "ui.advice.why.cruise.curves",
+  "ui.advice.why.heatCapped",
+  "ui.advice.why.hpEmpty",
+  "ui.advice.why.hpEmpty.held",
+  "ui.advice.why.landings",
+  "ui.advice.why.pace",
+  "ui.advice.why.plan",
+  "ui.advice.why.stall",
+  "ui.advice.why.start",
+  "ui.advice.why.worn",
   "ui.frame.crew.text",
   "ui.frame.quirks.random",
   "ui.freeRace.neutral.note",
