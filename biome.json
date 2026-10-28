@@ -30,6 +30,10 @@
           }
         }
       }
+    },
+    {
+      "includes": ["docs/race-engine.md"],
+      "formatter": { "enabled": false }
     }
   ]
 }
