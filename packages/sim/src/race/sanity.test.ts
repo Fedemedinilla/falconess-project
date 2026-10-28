@@ -1,10 +1,12 @@
+import { readFileSync } from "node:fs";
 import { loadContent } from "@falconess/content";
 import type { Course, EntryInput, RaceEntry, SprintPlanReason, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
-import { simulateRace } from "./engine.js";
+import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
+import { buildCourseGeometry } from "./geometry.js";
 
 /**
  * Sanity numbers of docs/race-engine.md 25.4: every build of the three desert tables (neutral
@@ -151,4 +153,93 @@ describe("sanity numbers of docs/race-engine.md 25.4 (solo, 600 stats, noise off
     expect(s(TABLE["desert-canyon"]?.[0])).toBe("135.94");
     expect(s(TABLE["desert-sprint"]?.[1])).toBe("54.47");
   });
+});
+
+/**
+ * The 25.4 tables as printed in docs/race-engine.md, every cell: the engine's run of each build is
+ * formatted exactly as the prototype's table generator printed it (.work/proto/proto2/table.mjs:
+ * time, phase splits at the crossing milli-tick, boost ticks, pulses, first plan with its start,
+ * energy left, hp end or hp-empty point, overheat ticks and durability), and the row must equal the
+ * spec's line. A change to an agreed number then fails here until the spec table is regenerated.
+ */
+describe("the 25.4 tables of docs/race-engine.md, cell by cell", () => {
+  const doc = readFileSync(new URL("../../../../docs/race-engine.md", import.meta.url), "utf8");
+  const from = doc.indexOf("### 25.4 Sanity numbers");
+  const to = doc.indexOf("**Other measured anchors", from);
+  const rows: Record<string, string[]> = {};
+  let current = "";
+  for (const line of doc.slice(from, to).split("\n")) {
+    const head = /^\*\*(desert-[a-z]+)\*\*$/.exec(line.trim());
+    if (head?.[1]) {
+      current = head[1];
+      rows[current] = [];
+    } else if (
+      current &&
+      line.startsWith("| ") &&
+      !line.startsWith("| Build") &&
+      !line.startsWith("| ---")
+    )
+      rows[current]?.push(line.trim());
+  }
+
+  it("the spec holds 3 tables of 17 builds", () => {
+    expect(Object.keys(rows)).toEqual(["desert-sprint", "desert-ridge", "desert-canyon"]);
+    for (const list of Object.values(rows)) expect(list).toHaveLength(17);
+  });
+
+  /** One row in the format of table.mjs, from a solo run with the probe (phase splits, first plan). */
+  function printedRow(e: RaceEntry, course: Course): string {
+    const G = buildCourseGeometry(QUIET, course);
+    const split = [-1, -1];
+    let planLevel = 0;
+    let planStart = 0;
+    const log = simulateRaceProbed(QUIET, [e], course, "sanity", (t, A) => {
+      const S = A.state;
+      const prev = S.prevPos[0] ?? 0;
+      const pos = S.pos[0] ?? 0;
+      const disp = S.disp[0] ?? 0;
+      for (const [k, x] of [G.startEnd, G.finalStart].entries())
+        if (split[k] === -1 && pos >= x)
+          split[k] = t * 1000 + Math.floor(((x - prev) * 1000) / disp);
+      if (planLevel === 0 && (S.planCount[0] ?? 0) === 1 && planStart === 0) {
+        planLevel = S.planLevel[0] ?? 0;
+        planStart = S.planStartPos[0] ?? 0;
+      }
+    });
+    const r = log.results[0];
+    const d = log.derived[0];
+    const plan = (log.events ?? []).find((x) => x.kind === "sprintPlan");
+    if (!r || !d || plan?.kind !== "sprintPlan" || r.finishMilli === null)
+      throw new Error("no run");
+    const fin = r.finishMilli;
+    const [s1 = 0, s2 = 0] = split;
+    const label =
+      e.frameId === "fixture-neutral"
+        ? `neutral ${e.style}`
+        : `${e.frameId} (${e.style}, ${e.rule}, PW ${(e.powerToWeight / 1000).toFixed(2)})`;
+    const level = Math.floor(planLevel / 15);
+    const planText =
+      level > 0
+        ? `${(level / 1000).toFixed(2)} m/s from ${Number((planStart / 225_000).toFixed(1)).toFixed(0)} m${plan.reason === "hp-limited" ? " (hp-limited)" : ""}`
+        : plan.reason;
+    const hp =
+      r.ledger.hpEmptyMm !== null
+        ? `empty at ${(r.ledger.hpEmptyMm / 1000).toFixed(0)} m`
+        : `${Math.floor(r.hpEnd / 1000)} / ${d.hpMax / 1000} hp`;
+    const splits = [s1, s2 - s1, fin - s2].map((x) => (x / 15_000).toFixed(2)).join("/");
+    return `| ${label} | ${(fin / 15_000).toFixed(2)} s | ${splits} | ${r.ledger.boostTicks.join("/")} | ${r.ledger.pulses || "-"} | ${planText} | ${(r.energyEnd / 1000).toFixed(1)} | ${hp} | ${r.ledger.overheatTicks} / ${r.durabilityEnd / 1000} |`;
+  }
+
+  for (const courseId of ["desert-sprint", "desert-ridge", "desert-canyon"])
+    it(`${courseId}: the engine prints the spec's rows`, () => {
+      const course = content.getCourse(courseId);
+      const printed = (rows[courseId] ?? []).map((line) => {
+        const label = line.slice(2, line.indexOf(" |"));
+        const name = label.startsWith("neutral ")
+          ? label.replace(" ", "-")
+          : (label.split(" ")[0] ?? "");
+        return printedRow(entryOf(name, course), course);
+      });
+      expect(printed).toEqual(rows[courseId]);
+    });
 });
