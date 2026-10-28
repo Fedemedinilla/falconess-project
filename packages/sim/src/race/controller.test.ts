@@ -1,5 +1,5 @@
 import { loadContent } from "@falconess/content";
-import { Rng } from "@falconess/rng";
+import { ceilDiv, Rng } from "@falconess/rng";
 import type { Course, RaceEntry, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
@@ -710,23 +710,70 @@ describe("Kōryū through the controller (docs/race-engine.md 12, 13.1)", () => 
   });
 });
 
-describe("PREHEAT through simulateRace (docs/race-engine.md 9.4, 16 #12)", () => {
-  it("a heat-to-energy holder boosts every tick from the preheat point and converts the heat at final entry", () => {
-    const holder = withTraits(fixture("glide"), { heatToEnergyPm: 500 });
+describe("PREHEAT through simulateRace (docs/race-engine.md 9.4, 16 #12, ADR-0003 D51)", () => {
+  /**
+   * A solo heat-to-energy holder: the tick-start heat and position where PREHEAT begins, the
+   * PREHEAT ticks (consecutive, each boosting) and the heat converted at final entry.
+   */
+  function preheat(entry: RaceEntry, course: Course) {
+    let prevHeat = 0;
+    let prevPos = 0;
+    let h0 = -1;
+    let p0 = -1;
     const ticks: number[] = [];
-    const log = simulateRaceProbed(QUIET, [holder], SPRINT, "pre", (_t, A) => {
-      if (A.state.mode[0] === MODE_PREHEAT) ticks.push(A.state.boostOn[0] ?? 0);
+    let boosts = 0;
+    const log = simulateRaceProbed(QUIET, [entry], course, "pre", (t, A) => {
+      const S = A.state;
+      if (S.mode[0] === MODE_PREHEAT) {
+        if (ticks.length === 0) {
+          h0 = prevHeat;
+          p0 = prevPos;
+        }
+        ticks.push(t);
+        boosts += S.boostOn[0] ?? 0;
+      }
+      prevHeat = S.heat[0] ?? 0;
+      prevPos = S.pos[0] ?? 0;
     });
     const ev = (log.events ?? []).find((e) => e.kind === "heatToEnergy");
-    expect(ticks.length).toBeGreaterThan(20);
-    expect(ticks.every((b) => b === 1)).toBe(true);
-    // the entry condition counts ticks at cruise; boosting moves faster, so the runner arrives
-    // after fewer ticks than the heat room allows: 31 × 2000 of the 35 × 2000 room
-    expect(ev?.kind === "heatToEnergy" && [ev.heat, ev.energy]).toEqual([
-      ticks.length * 2000,
-      ticks.length * 1000,
-    ]);
-    expect(ticks.length).toBe(31);
+    if (ev?.kind !== "heatToEnergy") throw new Error("no heat-to-energy at final entry");
+    return { h0, p0, ticks, boosts, ev, derived: at(log.derived, 0) };
+  }
+
+  it("the sprint glide arrives with the heat the 9.4 formula projects: 31 boosts, 62 000, not capLim − kH", () => {
+    const G = buildCourseGeometry(QUIET, SPRINT);
+    const run = preheat(withTraits(fixture("glide"), { heatToEnergyPm: 500 }), SPRINT);
+    const { capLim } = run.derived;
+    // entry: from cold, 69 000 mh of room / kH 2000 = 35 ticks priced at the flat cruise
+    expect([run.h0, capLim]).toEqual([0, 69_000]);
+    expect(G.finalStart - run.p0).toBeLessThanOrEqual(35 * 352_500);
+    expect(G.finalStart - (run.p0 - 352_500)).toBeGreaterThan(35 * 352_500);
+    // projection: PREHEAT boosts every tick, so the runner covers the distance at cruise + B
+    // (352 500 + 45 000 vu) and arrives after ceilDiv(d, 397 500) = 31 ticks with 31 × kH of heat
+    expect(run.boosts).toBe(run.ticks.length);
+    expect(run.ticks.length).toBe(ceilDiv(G.finalStart - run.p0, 352_500 + 45_000));
+    expect(run.ticks.length).toBe(31);
+    expect([run.ev.heat, run.ev.energy]).toEqual([62_000, 31_000]);
+    // ADR-0003 D51: the price at cruise is kept; the arrival heat sits below capLim − kH
+    expect(run.ev.heat).toBeLessThan(capLim - RULESET_V1.race.kH);
+  });
+
+  it("every style on the three courses: consecutive boost ticks up to final entry, heat h0 + kH × ticks, within the room", () => {
+    const kH = RULESET_V1.race.kH;
+    for (const course of [SPRINT, RIDGE, content.getCourse("desert-canyon")])
+      for (const style of ["dive", "hover", "glide", "ground"] as const) {
+        const run = preheat(withTraits(fixture(style), { heatToEnergyPm: 500 }), course);
+        const n = run.ticks.length;
+        const where = `${style} on ${course.id}`;
+        expect(n, where).toBeGreaterThan(0);
+        expect(run.ticks, where).toEqual(
+          Array.from({ length: n }, (_, k) => (run.ticks[0] ?? 0) + k),
+        );
+        expect(run.ev.tick, where).toBe((run.ticks[0] ?? 0) + n); // the next tick enters the final
+        expect(run.boosts, where).toBe(n);
+        expect(run.ev.heat, where).toBe(run.h0 + kH * n);
+        expect(n, where).toBeLessThanOrEqual(ceilDiv(run.derived.capLim - run.h0, kH));
+      }
   });
 });
 

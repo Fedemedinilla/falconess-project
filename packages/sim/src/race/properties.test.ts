@@ -23,7 +23,7 @@ import { createRaceArena, drawRaceBlock, ib, ibps, ips, is, type RaceArena } fro
 /**
  * Properties of docs/race-engine.md 24.2 with fast-check: P1 determinism, P2 symmetry (exact with
  * noise off, statistical with noise), P3 agility monotonicity in the three tiers of ADR-0003 D41
- * (and P9 for stamina), P4 bounds on every tick, P5 log consistency, P6 RNG accounting and
+ * with tier (a) as D52 narrows it (and P9 for stamina), P4 bounds on every tick, P5 log consistency, P6 RNG accounting and
  * isolation (P6b ablation alignment) and P7 options invariance. Every property runs the 500 cases
  * 24.2 asks for (`RUNS`); every case is a full race.
  */
@@ -347,7 +347,10 @@ function solo(ruleset: Ruleset, e: RaceEntry, course: Course) {
   return { milli: r.finishMilli ?? Number.MAX_SAFE_INTEGER, exhausted: r.exhausted, q };
 }
 
-/** The three tiers of ADR-0003 D41 for one stat raised by d (solo, flat, noise off, no actives). */
+/**
+ * The three tiers of ADR-0003 D41 for one stat raised by d (solo, flat, noise off, no actives),
+ * tier (a) as ADR-0003 D52 narrows it.
+ */
 function monotone(statName: "agility" | "stamina", tiers: "a" | "bc") {
   const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kBoost: 0, kH: 0 } };
   const ruleset = tiers === "a" ? NO_BOOST : QUIET;
@@ -357,15 +360,14 @@ function monotone(statName: "agility" | "stamina", tiers: "a" | "bc") {
     const raised = { ...base, [statName]: base[statName] + d };
     const hi = solo(ruleset, frameEntry(frameId, raised, course), course);
     if (tiers === "a") {
-      // strict without exhaustion. Spec 24.2 says strict with exhaustion too, but both engines
-      // break it (open issue for the lead, review item R1-R1-3): when hp runs out, the tick that
-      // crosses finalStart is charged at the drain rate of its start phase and exhaustion is
-      // whole-tick, so the faster runner can empty hp earlier and crawl longer at vMin. Measured
-      // over 12 000 pairs of every frame: 42 inversions in 3579 exhausted pairs, worst +1333 mt
-      // (0.07 %, caracara-signature), so not even one tick holds; until the lead rules, exhausted
-      // pairs get the spec's tier (c) bound and the two measured cases are pinned below
+      // ADR-0003 D52: strict only when neither run exhausts; an exhausted no-boost pair gets the
+      // tier (c) bound of 0.5 %. When hp runs out, the tick that crosses finalStart is charged at
+      // the drain rate of its start phase and exhaustion is whole-tick, so the faster runner can
+      // empty hp earlier and crawl longer at vMin: over 12 000 pairs of every frame, 42 inversions
+      // in 3579 exhausted pairs, worst +1333 mt (0.07 %, caracara-signature), both engines alike.
+      // The two measured cases are pinned below
       if (!lo.exhausted && !hi.exhausted) expect(hi.milli).toBeLessThanOrEqual(lo.milli);
-      else expect(hi.milli * 1000).toBeLessThanOrEqual(lo.milli * 1005);
+      else expect(hi.milli * 1000).toBeLessThanOrEqual(lo.milli * 1005); // tier (c), D52
     } else if (!lo.exhausted && !hi.exhausted)
       expect(hi.milli).toBeLessThanOrEqual(lo.milli + 1000 * lo.q); // tier (b)
     else expect(hi.milli * 1000).toBeLessThanOrEqual(lo.milli * 1005); // tier (c)
@@ -373,7 +375,7 @@ function monotone(statName: "agility" | "stamina", tiers: "a" | "bc") {
 }
 
 describe("P3 agility monotonicity, three tiers (ADR-0003 D41)", () => {
-  it("(a) boost neutralised (kBoost = kH = 0): strict without exhaustion, tier (c) with it (open issue)", () => {
+  it("(a) boost neutralised (kBoost = kH = 0): strict when neither run exhausts, tier (c) otherwise (ADR-0003 D52)", () => {
     fc.assert(monotone("agility", "a"), { numRuns: RUNS });
   });
 
@@ -642,7 +644,7 @@ describe("generated builds really exercise the controller", () => {
   });
 });
 
-describe("P3 tier (a) with exhaustion: the measured counterexamples (open issue R1-R1-3)", () => {
+describe("P3 tier (a) with exhaustion: the measured counterexamples behind ADR-0003 D52", () => {
   it("erzherzog A 1003 → 1004 (St 133, T 50, C 354, I 50), 2456 m flat, no boost: +324 mt, as in the prototype", () => {
     const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kBoost: 0, kH: 0 } };
     const course = testCourse([{ type: "flat", length: 2456 }], "flat-mono");
@@ -657,6 +659,7 @@ describe("P3 tier (a) with exhaustion: the measured counterexamples (open issue 
       true,
       true,
     ]);
+    expect(hi.milli * 1000).toBeLessThanOrEqual(lo.milli * 1005); // within tier (c), D52
   });
 
   it("caracara-signature A 1151 → 1152 (St 50, T 50, C 50, I 50), 2386 m flat, no boost: +1209 mt (more than a tick), as in the prototype", () => {
@@ -677,5 +680,6 @@ describe("P3 tier (a) with exhaustion: the measured counterexamples (open issue 
       true,
       true,
     ]);
+    expect(hi.milli * 1000).toBeLessThanOrEqual(lo.milli * 1005); // within tier (c), D52
   });
 });
