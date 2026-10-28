@@ -242,10 +242,24 @@ con v1, 4,3 % con v2 (en su propia semilla, B con 5 fallos y una lesión).
 Del motor (esta implementación):
 
 - v1 sin cambios: `v1-invariance.test.ts` (partida del dueño entrada por entrada y 30 temporadas
-  mixtas contra `5f0fd65`).
-- v2 igual al prototipo del estudio: las mismas temporadas jugadas con el prototipo
-  (`sim-scratch.diff` sobre `5f0fd65`, constantes de v2) y con este motor dan estados idénticos sin
-  el log (comparación local, ver el informe de la etapa A, `.work/impl2/stage-a.md`).
+  mixtas contra `5f0fd65`), y `pnpm sim:season-batch -- --runs 500 --ruleset v1` imprime byte a byte
+  lo mismo que `5f0fd65`.
+- v2 igual al prototipo del estudio: 240 temporadas (política mixta y una de referencia con
+  salidas, 11 269 entradas) jugadas con el prototipo (`sim-scratch.diff` sobre `5f0fd65`, palancas
+  en los valores de v2) y con este motor dan el mismo estado sin el log después de cada entrada
+  (comparación local, `.work/impl2/stage-a.md`).
+- La política de referencia (`pnpm sim:season-batch`, 500 temporadas por Falconess):
+
+  | Ruleset                                                      | ≥ B (media; Caracara / Cernícala / Peregrina) | Gana   |
+  | ------------------------------------------------------------ | --------------------------------------------- | ------ |
+  | v1                                                           | 76,5 % (72,8 / 72,0 / 84,8)                   | 50,1 % |
+  | v2 tal como está (`0b6cdfc`)                                 | 34,3 % (29,2 / 25,4 / 48,4)                   | 22,8 % |
+  | v2 con el simulador del estudio (fatiga −5)                  | 40,6 % (35,6 / 30,2 / 56,0)                   | 25,5 % |
+  | v2 con el simulador del estudio y los umbrales de nota de v1 | **44,5 %** (37,0 / 33,4 / 63,2)               | 25,5 % |
+
+  La última fila es exactamente la referencia del estudio con rivales 60 + 11 (§8: 44,5 % y 25,2 %
+  de victorias): el motor reproduce el estudio; lo que falta es la constante del simulador
+  («Pendiente»).
 - Tests de v2 (`packages/sim/src/season/v2.test.ts`): la tabla de la curva, sin descanso forzado,
   simulador a mitad de curva, lesión con vigor ≤ 20 y en el vuelo de riesgo, reparto del descanso
   (solo v2 sortea), salida, deriva por racha, ánimo por carrera mala en el 6.º, multiplicador de
@@ -282,9 +296,10 @@ eventos mueven la dificultad, aquí van los ajustes y su lote._
 
 - **Simulador.** El estudio (§9) pide `fatigueCost["train:simulator"]` −5 (vigor +5: el simulador
   como entrenamiento «seguro» de los turnos cansados, +5 puntos de B para la cuidadosa y +12 para la
-  referencia). El commit `0b6cdfc` escribió `5` (vigor −5). El motor lee la constante tal como está;
-  corregirla es una línea en `rulesets/v2/constants.ts` y la decide el líder (CLAUDE.md: los rulesets
-  no se editan sin aprobación).
+  referencia). El commit `0b6cdfc` escribió `5` (vigor −5). El motor lee la constante tal como está:
+  con `5` la referencia queda 6,3 puntos de B y 2,7 de victorias por debajo («Evidencia»).
+  Corregirla es una línea en `rulesets/v2/constants.ts` y la decide el líder (CLAUDE.md: los
+  rulesets no se editan sin aprobación); los tests de v2 leen la constante y no cambian.
 - **Semana lesionada.** v2 recupera 50 (la media del descanso elegido); el estudio la midió con 40.
   Las lesiones son ≈ 0,2 por temporada en la cuidadosa: efecto chico, a confirmar en el lote de la
   etapa C.

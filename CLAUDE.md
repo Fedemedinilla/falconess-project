@@ -65,3 +65,4 @@ Detalle de cada comando: docs/commands.md.
 - Agregar un campo al RaceLog hace fallar todos los golden y los fixtures de la CLI por el esquema estricto: regenerarlos con su ADR en el mismo cambio.
 - Con conteos chicos (S3 en pr) el intervalo normal de la media colapsa: usar intervalos de puntuación.
 - Antes de suponer que la política de referencia gasta puntos de habilidad, medirlo: con la economía v1 nunca llega a 60.
+- Una regla nueva de temporada va detrás de constantes cuyo valor viejo no sortea (una opción, probabilidad 0): `v1-invariance.test.ts` compara v1 con los digests de `5f0fd65`, y un estado solo avanza con el ruleset con el que empezó.
