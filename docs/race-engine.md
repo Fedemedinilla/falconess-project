@@ -192,18 +192,23 @@ product of 1.5 below 2^53 and all content is ≤ 3 km); `1 ≤ segments ≤ 24`.
 Worst case under the validator: stats ≤ 2000, PW ≤ 1600 ‰, f ≤ 1500 ‰, stylePace ≤ 1200 ‰,
 pace ≤ +65 ‰ (`paceHalfWidth + paceCentreSpan/2`), style and rule multipliers (`diveStoopPm`,
 `pulseAirPm`, `pulseBiomePm`, `hoverDraftPm`, `glideStartAccelPm`, `telemetry*Pm`) ≤ 2000 ‰ each,
-applied one floor at a time, energy ≤ 200 000 me, speeds ≤ 1.5e6 vu (100 m/s), L ≤ 2.25e9 pu.
+applied one floor at a time, energy ≤ 200 000 me, speeds ≤ 2e6 vu (≈ 133 m/s), L ≤ 2.25e9 pu.
+The moved speed is cruise + thrust + skill speed: under v1 the fastest is 1 949 680 vu (dive
+cruise 1 214 100 at A 2000, PW 1600, f 1500, pace +65; + the chained pulse burst on a desert
+descent with the stoop, 375 580; + 8 skills × 45 000), and every speed product below stays more
+than 100 times under 2^53 (implementation review erratum: the bound read 1.5e6 vu, below what v1
+reaches; no product changes side).
 
 | Product | Bound |
 | --- | --- |
 | `vA × pwc × f × stylePace` (cruise) | 4.75e5 × 1600 × 1500 × 1200 = 1.37e15 |
 | `kAcc × (600 + T) × pwc × f` | 4e2 × 2600 × 1600 × 1500 = 2.5e12 (×10 if `kAcc` is raised to 4000) |
 | `kHp × 1000 × 1.2e6 × fat` | 1e6 × 1.2e6 × 1500 = 1.8e15 |
-| `rPm × rPm × dK` (drain) | 5000² × 1.5e6 = 3.75e13 |
+| `rPm × rPm × dK` (drain) | 6667² × 1.5e6 = 6.7e13 |
 | `s × Ep × Bon` (plan gain) | 1.1e5 × 2e5 × 1.1e5 = 2.4e15 |
 | `Ep × Bon` (plan ticks) | 2e5 × 1.1e5 = 2.2e10 |
-| `(L − prevPos) × 1000` (finish) | 1.5e6 × 1e3 = 1.5e9 |
-| `disp × fA` (margins) | 1.5e6 × 1000 = 1.5e9 |
+| `(L − prevPos) × 1000` (finish) | 2e6 × 1e3 = 2e9 |
+| `disp × fA` (margins) | 2e6 × 1000 = 2e9 |
 | `u32 × 1000`, `u32 × (2W + 1)` (draws) | 4.3e9 × 1001 = 4.3e12 |
 | `energy × liftF` (lift) | 2e5 × 2700 = 5.4e8 |
 | `thrust × multiplier` (stoop, air, biome; one floor each) | 1.5e5 × 2000 = 3e8 |

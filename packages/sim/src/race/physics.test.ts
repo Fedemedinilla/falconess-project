@@ -44,7 +44,7 @@ import {
   waterHitMd,
   weightedPower,
 } from "./physics.js";
-import { SEG_CURVES, SEG_JUMP } from "./units.js";
+import { engineUnits, SEG_CURVES, SEG_JUMP } from "./units.js";
 
 const content = loadContent();
 const R = RULESET_V1.race;
@@ -408,20 +408,99 @@ describe("finish helpers (docs/race-engine.md 19)", () => {
   });
 });
 
-describe("2^53 bounds of docs/race-engine.md 1.5", () => {
-  it("every product stays a safe integer at the validator's maxima", () => {
-    const products = [
-      475_000 * 1600 * 1500 * 1200, // cruise
-      400 * 2600 * 1600 * 1500, // accel
-      1000 * 1000 * 1_200_000 * 1500, // drain coefficient
-      5000 * 5000 * 1_500_000, // drain
-      1_500_000 * 1000 * 1000, // finish
-      200_000 * 2700, // lift
-      1_500_000 * 2000, // landing, draft
-    ];
-    for (const p of products) expect(Number.isSafeInteger(p)).toBe(true);
-    expect(cruiseVu(475_000, 1600, 1500, 1200, 65)).toBe(
-      Math.floor((Math.floor((475_000 * 1600 * 1500 * 1200) / 1e9) * 1065) / 1000),
+describe("2^53 bounds of docs/race-engine.md 1.5: the helpers at the maxima", () => {
+  // Each helper runs at the validator's maxima (1.4) and the v1 constants, and must return the
+  // exact floor computed with BigInt, every intermediate product of its formula at most 2^53 − 1.
+  // A helper whose product order pushed an intermediate past 2^53 would round and miss the floor.
+  const SAFE = BigInt(Number.MAX_SAFE_INTEGER);
+  const n = (x: number) => BigInt(x);
+  /** floor(a / b) of non-negative BigInts, with the 2^53 check on the dividend. */
+  function fl(a: bigint, b: bigint): bigint {
+    expect(a <= SAFE, `${a} exceeds 2^53 − 1`).toBe(true);
+    return a / b;
+  }
+  const VBASE = engineUnits(R).vBase; // 300 000 vu
+  const KBOOST = engineUnits(R).kBoost; // 45 000 vu
+  const PW = 1600;
+  const F = R.segFactorMax; // 1500
+  const PACE = 65; // paceHalfWidth + paceCentreSpan / 2, rounded up (1.5)
+  const STYLE_PACE = 1200; // the 1.5 bound of stylePace (v1: 1000)
+  const L = R.maxCourseMeters * 1000 * 225; // 2.25e9 pu
+  const T_MAX = R.dnfTicksPerMeter * R.maxCourseMeters + R.dnfTicksBase; // 82 400 ticks
+
+  // the fastest moved speed under v1: dive cruise at A, PW and f maxima + the chained pulse burst
+  // on a desert descent with the stoop + eight +3 m/s skills (1 949 680 vu ≈ 130 m/s; 1.5: < 2e6)
+  const vA = agilityCruiseVu(R, VBASE, R.maxEffectiveStat);
+  const vC = cruiseVu(vA, weightedPower(R.pwCruiseWeight, PW), F, 1000, PACE);
+  const Bpc = chainThrustVu(pulseThrustVu(R, KBOOST, weightedPower(R.pwBoostWeight, PW)), 1000);
+  const air = Math.max(...compileRule(R, "pulse", "desert").pulseAirPm);
+  const burst = Math.floor((Math.floor((Bpc * air) / 1000) * R.style.diveStoopPm) / 1000);
+  const V_MAX = vC + burst + R.maxSkills * 3000 * engineUnits(R).velPerMms;
+  const [, DK_MAX] = drainCoefficients(R, 1, 0, { drainPm: 1000 });
+
+  it("the speed and drain maxima the products below use", () => {
+    expect([vA, vC, Bpc, air, burst, V_MAX, DK_MAX]).toEqual([
+      475_000, 1_214_100, 194_400, 1380, 375_580, 1_949_680, 1_498_501,
+    ]);
+    expect(V_MAX).toBeLessThan(2_000_000);
+  });
+
+  it("cruise, exhaustion, acceleration and thrust tables at PW 1600, f 1500, stats 2000", () => {
+    expect(cruiseVu(vA, PW, F, STYLE_PACE, PACE)).toBe(
+      Number(fl(fl(n(vA) * n(PW) * n(F) * n(STYLE_PACE), n(1e9)) * n(1000 + PACE), n(1000))),
     );
+    expect(exhaustSpeedVu(R, VBASE, PW, F, PACE)).toBe(
+      Number(
+        fl(fl(n(VBASE) * n(R.exhaustSpeedPm) * n(PW) * n(F), n(1e9)) * n(1000 + PACE), n(1000)),
+      ),
+    );
+    const acc = fl(n(R.kAcc) * n(600 + R.maxEffectiveStat) * n(PW) * n(F), n(1_200_000_000));
+    expect(accelVu(R, R.maxEffectiveStat, PW, F, { accelPm: 2000 })).toBe(
+      Number(fl(acc * n(2000), n(1000))),
+    );
+    expect(pulseThrustVu(R, KBOOST, PW)).toBe(
+      Number(fl(n(KBOOST) * n(PW) * n(R.pulseBoostMult), n(1_000_000))),
+    );
+    expect(boostThrustVu(KBOOST, PW)).toBe(Number(fl(n(KBOOST) * n(PW), n(1000))));
+  });
+
+  it("hp: drain coefficients at stamina 1 and courage 0, drain at the fastest speed", () => {
+    const stamDiv = n(staminaDivisor(R, 1));
+    const coef = n(R.kHp) * n(1000) * n(1_200_000);
+    expect(drainCoefficients(R, 1, 0, { drainPm: 1000 })).toEqual([
+      Number(fl(fl(coef, stamDiv) * n(1000), n(1000))),
+      Number(fl(fl(coef * n(fatiguePm(R, 0)), stamDiv * n(1000)) * n(1000), n(1000))),
+    ]);
+    for (const v of [V_MAX, V_MAX - 1, 1_949_999]) {
+      const rPm = fl(n(v) * n(1000), n(VBASE));
+      for (const dK of [DK_MAX, DK_MAX - 2])
+        expect(drainMicro(v, VBASE, dK)).toBe(Number(fl(rPm * rPm * n(dK), n(1_000_000))));
+    }
+  });
+
+  it("finish and margins of a 10 km course at the fastest move", () => {
+    for (const disp of [V_MAX, 2_000_000]) {
+      // crossed at the very start of the last tick: (L − prevPos) × 1000 at its largest
+      expect(finishMilliOf(T_MAX - 1, L, L - disp, disp)).toBe(
+        Number(n(T_MAX - 1) * n(1000) + fl(n(disp) * n(1000), n(disp))),
+      );
+      expect(finishMilliOf(T_MAX - 1, L, L - disp + 1, disp)).toBe(
+        Number(n(T_MAX - 1) * n(1000) + fl(n(disp - 1) * n(1000), n(disp))),
+      );
+      const prev = L - 2 * disp - 7;
+      for (const fA of [1000, 999])
+        expect(marginGapMm(L, prev, disp, fA, 225)).toBe(
+          Number(fl(n(L) - (n(prev) + fl(n(disp) * n(fA), n(1000))), n(225))),
+        );
+    }
+  });
+
+  it("per-mille terms at the fastest speed, lift and jump need at the maxima", () => {
+    expect(penalisedVu(R, V_MAX)).toBe(Number(fl(n(V_MAX) * n(R.heatPenaltyMult), n(1000))));
+    expect(detourDisp(V_MAX, 1000)).toBe(V_MAX);
+    expect(detourDisp(V_MAX, 1050)).toBe(Number(fl(n(V_MAX) * n(1000), n(1050))));
+    const liftF = liftFactorPm(R.maxEffectiveStat, 1000); // 4333
+    expect(liftMe(200_000, liftF)).toBe(Number(fl(n(200_000) * n(liftF), n(1000))));
+    expect(jumpNeedMe(60, 1)).toBe(60_000_000);
   });
 });
