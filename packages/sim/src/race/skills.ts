@@ -85,8 +85,9 @@ export function requestReplan(S: RaceState, i: number, cause: number): void {
 /**
  * Step B3 for runner i: every skill in id order. Eligible means not disabled, fewer activations
  * than its cap (1, or `R.maxSkillActivations` for `once: false`), no effect running and armed; a
- * `once: false` skill re-arms after its trigger has been false on an evaluated tick since its last
- * activation (and fires again only once its previous effect has ended). Instant effects apply now
+ * `once: false` skill re-arms only on an evaluated tick where its trigger is false and its previous
+ * effect has already ended (ADR-0003 D50: a false tick during the effect does not count, so a
+ * trigger that flickers while the effect runs cannot chain activations). Instant effects apply now
  * (an earlier skill's refund can satisfy a later skill's `energyBelow` of the same tick).
  */
 export function runSkills(
@@ -105,7 +106,7 @@ export function runSkills(
     if ((flags & SK_DISABLED) !== 0) continue; // never evaluated (3.2, 15.2)
     const trig = skillTriggerHolds(T, S, i, j, ph, segType);
     if (!trig) {
-      S.armed[k] = 1;
+      if ((S.activeLeft[k] ?? 0) === 0) S.armed[k] = 1;
       continue;
     }
     const acts = S.acts[k] ?? 0;

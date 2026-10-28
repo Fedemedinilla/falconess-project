@@ -1374,8 +1374,8 @@ every skill; `uniqueTo` only gates learning).
 | `once` (default true) | at most one activation |
 
 `once: false`: up to `R.maxSkillActivations` (3) activations; the skill re-arms only after its
-trigger has been false for at least one tick **and** its previous effect has ended; activation k uses
-`u[j][k]`. Skills are not evaluated while stalled or finished. Evaluation order is lane, then id;
+trigger has been false for at least one tick **after** its previous effect has ended (ADR-0003 D50:
+a false tick while the effect still runs does not re-arm it); activation k uses `u[j][k]`. Skills are not evaluated while stalled or finished. Evaluation order is lane, then id;
 because ranks are snapshotted and draws pre-drawn, the order affects only event order (and an
 earlier skill's refund can satisfy a later skill's `energyBelow` of the same runner: deterministic).
 

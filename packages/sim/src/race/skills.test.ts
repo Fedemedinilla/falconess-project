@@ -178,7 +178,7 @@ describe("one evaluation per activation slot (docs/race-engine.md 15.1, 15.3)", 
     expect(s.calls).toEqual(["miss 0 p850 u900", "skill 0 p950 u900 k0"]);
   });
 
-  it("once: false re-arms after a false-trigger tick and the end of its effect, up to 3 activations", () => {
+  it("once: false re-arms on a false-trigger tick after its effect has ended, up to 3 activations (ADR-0003 D50)", () => {
     const s = setup(
       [skill("s", { once: false, energyBelowMilli: 50_000 }, { durationTicks: 5, speedMms: 100 })],
       [[0, 0, 0]],
@@ -192,18 +192,54 @@ describe("one evaluation per activation slot (docs/race-engine.md 15.1, 15.3)", 
     };
     run(40_000, 20); // fires once, never re-arms while the trigger holds
     expect(s.calls).toEqual(["skill 0 p850 u0 k0"]);
-    run(60_000, 1); // trigger false: re-armed
+    run(60_000, 1); // trigger false after the effect ended: re-armed
     run(40_000, 1);
     expect(s.calls).toHaveLength(2);
-    run(60_000, 1); // re-armed during the running effect: fires once the effect has ended
-    run(40_000, 3);
+    run(60_000, 1); // trigger false while the effect still runs: not re-armed
+    run(40_000, 20); // the effect ends with the trigger holding: never fires
     expect(s.calls).toHaveLength(2);
-    run(40_000, 2);
+    expect(S.armed[0]).toBe(0);
+    run(60_000, 1); // false after the end: re-armed
+    run(40_000, 1);
     expect(s.calls).toEqual(["skill 0 p850 u0 k0", "skill 0 p850 u0 k1", "skill 0 p850 u0 k2"]);
-    run(60_000, 1);
+    run(60_000, 10);
     run(40_000, 50); // cap 3
     expect(s.calls).toHaveLength(3);
     expect(S.acts[0]).toBe(3);
+  });
+
+  it("a trigger flickering during the effect never chains activations (ADR-0003 D50 regression)", () => {
+    // the trigger holds on even ticks only; the effect lasts 4 ticks. A false tick inside the
+    // effect (1, 3) does not re-arm, so the skill waits for tick 5 (false, effect over) and fires
+    // at 6, then at 12. The earlier reading (re-armed by any false tick since the activation) fired
+    // at 0, 4 and 8: back to back whenever the trigger flickered while the effect ran
+    const s = setup(
+      [skill("s", { once: false, energyBelowMilli: 50_000 }, { durationTicks: 4, speedMms: 100 })],
+      [[0, 0, 0]],
+    );
+    const fired: number[] = [];
+    for (let t = 0; t < 40; t++) {
+      s.A.state.energy[0] = t % 2 === 0 ? 40_000 : 60_000;
+      const before = s.calls.length;
+      tick(s);
+      if (s.calls.length > before) fired.push(t);
+    }
+    expect(fired).toEqual([0, 6, 12]);
+  });
+
+  it("an instant once: false skill (durationTicks 0) re-arms on the next false tick", () => {
+    const s = setup(
+      [skill("s", { once: false, energyBelowMilli: 50_000 }, { heatCoolMilli: 1000 })],
+      [[0, 0, 0]],
+    );
+    const fired: number[] = [];
+    for (let t = 0; t < 10; t++) {
+      s.A.state.energy[0] = t % 2 === 0 ? 40_000 : 60_000;
+      const before = s.calls.length;
+      tick(s);
+      if (s.calls.length > before) fired.push(t);
+    }
+    expect(fired).toEqual([0, 2, 4]);
   });
 
   it("activation k uses u[j][k]; a miss on a later activation is still logged only once", () => {

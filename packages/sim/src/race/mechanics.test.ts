@@ -639,6 +639,31 @@ describe("water (docs/race-engine.md 14.6)", () => {
   });
 });
 
+describe("once: false re-arm through simulateRace (docs/race-engine.md 15.3, ADR-0003 D50)", () => {
+  it("a heat trigger flickering every tick during a 10-tick effect fires at 1, 13 and 25", () => {
+    // NO_BOOST keeps heat at what the probe writes: 40 000 after even ticks, 0 after odd ones, so
+    // the trigger (read at tick start) holds on odd ticks. Each activation waits for a false tick
+    // after its 10-tick effect has ended (the even tick after it), then fires on the next odd one
+    const flicker = luckySkill(
+      "flicker",
+      { heatAboveMilli: 30_000, once: false },
+      { speedMms: 100, durationTicks: 10 },
+    );
+    const holder = withTraits(fixture("hover", 0, { skills: [flicker] }), {
+      randomSkillGuaranteed: true,
+    });
+    const { log } = trace(NO_BOOST, [holder], LONG_FLAT, "d50", 0, (t, A) => {
+      A.state.heat[0] = t % 2 === 0 ? 40_000 : 0;
+    });
+    expect(events(log, "skill").map((e) => [e.tick, e.activation])).toEqual([
+      [1, 0],
+      [13, 1],
+      [25, 2],
+    ]);
+    expect(at(log.results, 0).ledger.skillsActivated).toEqual(["flicker", "flicker", "flicker"]);
+  });
+});
+
 describe("segment-0 pre-step (docs/race-engine.md 1.3, 18 P4)", () => {
   it("a water start hits at tick 0; a jump start resolves at tick 0; ground logs a detour at tick 0", () => {
     const water = testCourse([
