@@ -20,7 +20,7 @@
     "content:validate": "tsx apps/cli/src/content-validate.ts",
     "sim": "tsx apps/cli/src/sim.ts",
     "play": "tsx apps/cli/src/play.ts",
-    "sim:batch": "tsx apps/cli/src/not-yet.ts sim:batch",
+    "sim:batch": "tsx apps/cli/src/sim-batch.ts",
     "sim:race": "tsx apps/cli/src/sim-race.ts",
     "sim:season-batch": "tsx apps/cli/src/season-batch.ts"
   },

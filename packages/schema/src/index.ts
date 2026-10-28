@@ -1,3 +1,4 @@
+export * from "./balance.js";
 export * from "./blackbox.js";
 export * from "./build.js";
 export * from "./content-index.js";

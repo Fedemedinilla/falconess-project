@@ -13,13 +13,13 @@ import {
   startSeason,
 } from "@falconess/sim";
 import { argString, parseArgs } from "./args.js";
-import { lowestStatPolicy } from "./policy.js";
+import { lowestStatPolicy, REFERENCE_HANGAR } from "./policy.js";
 
 const args = parseArgs(process.argv.slice(2));
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 const runs = Number.parseInt(argString(args, "runs", "500"), 10);
 const who = argString(args, "falconess", "all");
-const hangar = argString(args, "hangar", "shiden,mule,nimbus,falke").split(",");
+const hangar = argString(args, "hangar", REFERENCE_HANGAR.join(",")).split(",");
 const ids = who === "all" ? [...ctx.content.falconess.keys()] : [who];
 
 for (const falconessId of ids) {
