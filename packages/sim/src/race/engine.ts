@@ -96,10 +96,21 @@ type Ctx = {
   readonly sink: SkillSink;
   /** Current tick. */
   t: number;
-  /** Places handed out so far and the last placed runner (dead heats across ticks, 19). */
+  /** Places handed out so far (19). */
   placed: number;
-  lastLane: number;
-  lastFinish: number;
+  /**
+   * The current dead-heat group (equal finishMilli), kept across ticks: a runner landing exactly on
+   * L in tick t has finishMilli 1000 (t + 1), which a crosser of tick t + 1 can equal. The group is
+   * re-sorted by lane whenever it grows, so places always follow (finishMilli, lane).
+   */
+  group: Int32Array;
+  groupCount: number;
+  groupStart: number;
+  groupFinish: number;
+  /** The runner placed just before the current group (−1 = none): its gap gives the margin. */
+  beforeGroup: number;
+  /** Index of each runner's finish event in the event list (−1 = none or detail "results"). */
+  finishEvent: Int32Array;
 };
 
 /**
@@ -177,8 +188,12 @@ function runRace(
     },
     t: 0,
     placed: 0,
-    lastLane: -1,
-    lastFinish: -1,
+    group: new Int32Array(MAX_LANES),
+    groupCount: 0,
+    groupStart: 0,
+    groupFinish: -1,
+    beforeGroup: -1,
+    finishEvent: new Int32Array(MAX_LANES).fill(-1),
   };
   const S = c.S;
 
@@ -607,8 +622,9 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
 
 /**
  * Step C of tick t: gaps of every runner unfinished at the start of the tick at each crosser's
- * instant, then places by (finishMilli, lane); equal finishMilli is a dead heat (margin 0, places
- * still distinct by lane); the k-th finisher's margin is gap[(k − 1)-th][k-th].
+ * instant, then places by (finishMilli, lane); equal finishMilli is a dead heat (`deadHeat` on the
+ * whole group, margin 0, places still distinct by lane); the k-th finisher's margin is
+ * gap[(k − 1)-th][k-th].
  */
 function placeFinishers(c: Ctx, crossers: Int32Array, nCross: number, startUnfinished: number) {
   const { G, S, n, rec } = c;
@@ -643,15 +659,30 @@ function placeFinishers(c: Ctx, crossers: Int32Array, nCross: number, startUnfin
     const A = crossers[a] ?? 0;
     const fm = S.finishMilli[A] ?? 0;
     c.placed += 1;
-    S.place[A] = c.placed;
-    if (c.lastLane >= 0 && fm === c.lastFinish) {
-      S.deadHeat[A] = 1;
-      S.deadHeat[c.lastLane] = 1;
-      S.marginMm[A] = 0;
-    } else S.marginMm[A] = c.lastLane >= 0 ? (S.gap[c.lastLane * MAX_LANES + A] ?? 0) : 0;
-    c.lastLane = A;
-    c.lastFinish = fm;
-    rec.finish(c.t, A, posMm(c, A), fm, c.placed);
+    if (c.groupCount === 0 || fm !== c.groupFinish) {
+      c.beforeGroup = c.groupCount > 0 ? (c.group[c.groupCount - 1] ?? -1) : -1;
+      c.groupCount = 0;
+      c.groupStart = c.placed;
+      c.groupFinish = fm;
+    }
+    // insert A into the group by lane (a no-op append unless the group began in an earlier tick)
+    let k = c.groupCount;
+    while (k > 0 && (c.group[k - 1] ?? 0) > A) {
+      c.group[k] = c.group[k - 1] ?? 0;
+      k--;
+    }
+    c.group[k] = A;
+    c.groupCount += 1;
+    for (let g = 0; g < c.groupCount; g++) {
+      const lane = c.group[g] ?? 0;
+      const place = c.groupStart + g;
+      S.place[lane] = place;
+      S.deadHeat[lane] = c.groupCount > 1 ? 1 : 0;
+      S.marginMm[lane] =
+        g === 0 && c.beforeGroup >= 0 ? (S.gap[c.beforeGroup * MAX_LANES + lane] ?? 0) : 0;
+      if (lane !== A) rec.patchFinishPlace(c.finishEvent[lane] ?? -1, place);
+    }
+    c.finishEvent[A] = rec.finish(c.t, A, posMm(c, A), fm, S.place[A] ?? 0);
   }
 }
 

@@ -709,3 +709,47 @@ describe("real content passives in the loop (docs/race-engine.md 16)", () => {
     expect(at(log.derived, 0).segments[5]?.fPm).toBe(1000);
   });
 });
+
+describe("finish placing (docs/race-engine.md 19)", () => {
+  it("a dead heat that spans two ticks is placed by lane; both carry deadHeat and margin 0", () => {
+    const L = 2000 * M;
+    const entries = [fixture("hover", 0), fixture("hover", 1)];
+    // at cruise (352 500 vu), lane 1 lands exactly on L in tick 501 (finishMilli 502 000) and
+    // lane 0 crosses from L − 1 at the very start of tick 502 (finishMilli 502 000 too)
+    const log = simulateRaceProbed(QUIET, entries, LONG_FLAT, "dh", (t, A) => {
+      if (t === 500) {
+        A.state.pos[1] = L - 352_500;
+        A.state.pos[0] = L - 352_500 - 1;
+      }
+    });
+    expect(RaceLog.parse(log)).toEqual(log);
+    expect(
+      log.results.map((r) => [r.lane, r.place, r.finishMilli, r.deadHeat, r.marginMm]),
+    ).toEqual([
+      [0, 1, 502_000, true, 0],
+      [1, 2, 502_000, true, 0],
+    ]);
+    const finishes = (log.events ?? []).filter((e) => e.kind === "finish");
+    expect(finishes.map((e) => (e.kind === "finish" ? [e.tick, e.lane, e.place] : []))).toEqual([
+      [501, 1, 2],
+      [502, 0, 1],
+    ]);
+  });
+
+  it("a later finisher after a dead heat takes its margin from the last runner of the group", () => {
+    const L = 2000 * M;
+    const entries = [fixture("hover", 0), fixture("hover", 1), fixture("hover", 2)];
+    const log = simulateRaceProbed(QUIET, entries, LONG_FLAT, "dh3", (t, A) => {
+      if (t === 500) {
+        A.state.pos[0] = L - 352_500;
+        A.state.pos[1] = L - 352_500;
+        A.state.pos[2] = L - 352_500 - 225_000; // 1 m behind
+      }
+    });
+    expect(log.results.map((r) => [r.lane, r.place, r.deadHeat, r.marginMm])).toEqual([
+      [0, 1, true, 0],
+      [1, 2, true, 0],
+      [2, 3, false, 1000],
+    ]);
+  });
+});

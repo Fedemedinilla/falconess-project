@@ -214,8 +214,17 @@ export class RaceRecorder {
     if (this.full) this.events.push({ kind: "heatToEnergy", tick, lane, posMm, heat, energy });
   }
 
-  finish(tick: number, lane: number, posMm: number, finishMilli: number, place: number): void {
-    if (this.full) this.events.push({ kind: "finish", tick, lane, posMm, finishMilli, place });
+  /** Returns the event's index (−1 with detail "results") so a later dead heat can re-place it. */
+  finish(tick: number, lane: number, posMm: number, finishMilli: number, place: number): number {
+    if (!this.full) return -1;
+    this.events.push({ kind: "finish", tick, lane, posMm, finishMilli, place });
+    return this.events.length - 1;
+  }
+
+  /** A dead heat that spans two ticks re-sorts its group by lane (19): fix the earlier event. */
+  patchFinishPlace(index: number, place: number): void {
+    const e = this.events[index];
+    if (e !== undefined && e.kind === "finish") e.place = place;
   }
 
   dnf(tick: number, lane: number, posMm: number): void {

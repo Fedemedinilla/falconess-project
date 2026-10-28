@@ -73,11 +73,12 @@ export function skillTriggerHolds(
   return true;
 }
 
-/** Ask for a sprint replan; a replan already pending this tick keeps its first cause (11.1). */
+/**
+ * `replan = 1 (cause X)` (11.1): sets the flag and the cause; a later request before the plan runs
+ * overwrites the cause, as the sequential assignments of the spec read.
+ */
 export function requestReplan(S: RaceState, i: number, cause: number): void {
-  const f = S.flags[i] ?? 0;
-  if ((f & F_REPLAN) !== 0) return;
-  S.flags[i] = f | F_REPLAN;
+  S.flags[i] = (S.flags[i] ?? 0) | F_REPLAN;
   S.replanCause[i] = cause;
 }
 

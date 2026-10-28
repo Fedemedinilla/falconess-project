@@ -327,7 +327,7 @@ describe("skill effects (docs/race-engine.md 15.4)", () => {
     expect(s.calls).toEqual(["skill 0 p850 u0 k0"]);
   });
 
-  it("a refund while the plan is active asks for a replan (cause refund); a pending cause is kept", () => {
+  it("a refund while the plan is active asks for a replan (cause refund); the last cause wins", () => {
     const s = setup([skill("a", {}, { energyRefundMilli: 1000 })]);
     const S = s.A.state;
     S.energy[0] = 0;
@@ -342,7 +342,7 @@ describe("skill effects (docs/race-engine.md 15.4)", () => {
     const q = setup([]);
     requestReplan(q.A.state, 0, CAUSE_PHASE);
     requestReplan(q.A.state, 0, CAUSE_REFUND);
-    expect(q.A.state.replanCause[0]).toBe(CAUSE_PHASE);
+    expect(q.A.state.replanCause[0]).toBe(CAUSE_REFUND);
   });
 
   it("a disabled skill is never evaluated: no fire, no miss, no effect", () => {
