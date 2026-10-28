@@ -34,6 +34,9 @@ importers:
       "@falconess/content":
         specifier: workspace:*
         version: link:../../packages/content
+      "@falconess/race-view":
+        specifier: workspace:*
+        version: link:../../packages/race-view
       "@falconess/rng":
         specifier: workspace:*
         version: link:../../packages/rng
@@ -46,6 +49,9 @@ importers:
 
   apps/web:
     dependencies:
+      "@falconess/race-view":
+        specifier: workspace:*
+        version: link:../../packages/race-view
       "@falconess/rng":
         specifier: workspace:*
         version: link:../../packages/rng
@@ -89,6 +95,19 @@ importers:
       "@falconess/schema":
         specifier: workspace:*
         version: link:../schema
+
+  packages/race-view:
+    dependencies:
+      "@falconess/schema":
+        specifier: workspace:*
+        version: link:../schema
+      "@falconess/sim":
+        specifier: workspace:*
+        version: link:../sim
+    devDependencies:
+      "@falconess/content":
+        specifier: workspace:*
+        version: link:../content
 
   packages/rng: {}
 

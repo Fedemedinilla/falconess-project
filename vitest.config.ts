@@ -17,6 +17,7 @@ export default defineConfig({
         },
       },
       { test: { name: "content", root: "packages/content" } },
+      { test: { name: "race-view", root: "packages/race-view" } },
       { test: { name: "cli", root: "apps/cli" } },
       {
         // pure helpers of the web app, in node (no DOM): content loader, controller, formats,

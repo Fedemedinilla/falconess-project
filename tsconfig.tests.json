@@ -22,6 +22,7 @@
     { "path": "packages/schema" },
     { "path": "packages/sim" },
     { "path": "packages/content" },
+    { "path": "packages/race-view" },
     { "path": "apps/cli" },
     { "path": "apps/web/tsconfig.app.json" },
     { "path": "apps/web/tsconfig.node.json" }

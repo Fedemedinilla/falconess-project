@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@falconess/content": "workspace:*",
+    "@falconess/race-view": "workspace:*",
     "@falconess/rng": "workspace:*",
     "@falconess/schema": "workspace:*",
     "@falconess/sim": "workspace:*"

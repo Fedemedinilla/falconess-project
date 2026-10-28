@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@falconess/race-view": "workspace:*",
     "@falconess/rng": "workspace:*",
     "@falconess/schema": "workspace:*",
     "@falconess/sim": "workspace:*",

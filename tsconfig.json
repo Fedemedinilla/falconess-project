@@ -5,6 +5,7 @@
     { "path": "packages/schema" },
     { "path": "packages/sim" },
     { "path": "packages/content" },
+    { "path": "packages/race-view" },
     { "path": "apps/cli" },
     { "path": "apps/web" }
   ]

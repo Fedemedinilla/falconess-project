@@ -1,0 +1,71 @@
+/**
+ * @falconess/race-view: the RaceLog read for people. Pure, text-free view models that `pnpm
+ * sim:race` and the web's race screens share, so the terminal and the browser never disagree on
+ * what a race shows (docs/race-engine.md 20.6). Nothing here recomputes physics: every number is
+ * the log's, or a difference of the log's numbers. Words belong to each reader.
+ */
+export type {
+  EntryInput,
+  GenerateFieldArgs,
+  NeutralFixtureArgs,
+  RaceEnginePort,
+  SimulateOptions,
+} from "./engine-port.js";
+export {
+  type EventItem,
+  type EventLine,
+  type OverheatSpan,
+  type PlainEvent,
+  type PulseGroup,
+  runnerEventLines,
+} from "./events.js";
+export {
+  buildField,
+  FIELD_LIMITS,
+  FieldError,
+  type FieldSpec,
+  learnableSkills,
+  type PlayerFieldSpec,
+  playerEntryInput,
+  signatureFrameOf,
+  uniformStats,
+} from "./field.js";
+export {
+  crossingMilliTicks,
+  overheatSpans,
+  PHASES,
+  type PhaseName,
+  phaseIndexAt,
+  type Runner,
+  roundDiv,
+  runnersInPlaceOrder,
+  SEGMENT_ORDER,
+  segmentTypesPresent,
+  TICK_HZ,
+} from "./log.js";
+export {
+  secondsPerColumn,
+  TIMELINE_CELLS,
+  type TimelineCell,
+  timelineCells,
+  timelineColumns,
+} from "./timeline.js";
+export {
+  boostModes,
+  type Compressed,
+  compressRuns,
+  type ModeSpan,
+  type SprintPlanEvent,
+  type WhyBody,
+  type WhyEnergy,
+  type WhyGains,
+  type WhyJudgement,
+  type WhyModel,
+  type WhyPhase,
+  type WhyPlan,
+  type WhySegment,
+  type WhySink,
+  type WhySkill,
+  type WhyTerm,
+  whyModel,
+} from "./why.js";

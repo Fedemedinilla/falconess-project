@@ -2,22 +2,35 @@
  * Text view of a RaceLog for `pnpm sim:race` (ROADMAP D14, docs/race-engine.md 20.6).
  *
  * Pure and deterministic: no IO, no clock, no randomness, integer arithmetic for every number it
- * prints. It reads the log only and never recomputes physics: crossing times interpolate the
- * sampled frames, margins are the log's `marginMm`, the "why" block subtracts ledger values.
+ * prints. It reads the log only and never recomputes physics: the timeline, the events and the
+ * "why" block are the shared view models of `@falconess/race-view` (the web reads the same ones),
+ * worded here; margins are the log's `marginMm`.
  */
+import {
+  type Compressed,
+  compressRuns,
+  crossingMilliTicks,
+  type EventItem,
+  type Runner,
+  runnerEventLines,
+  runnersInPlaceOrder,
+  type SprintPlanEvent,
+  secondsPerColumn,
+  segmentTypesPresent,
+  TICK_HZ,
+  type TimelineCell,
+  timelineCells,
+  timelineColumns,
+  type WhySink,
+  type WhyTerm,
+  whyModel,
+} from "@falconess/race-view";
 import type { SegmentType } from "@falconess/schema";
 import type { RaceLabels } from "./labels.js";
-import {
-  RACE_FRAME_FLAGS,
-  type RaceEntry,
-  type RaceEvent,
-  type RaceGeometry,
-  type RaceLog,
-  type RaceResult,
-  type RunnerDerived,
-} from "./log-view.js";
+import type { RaceGeometry, RaceLog, RaceResult } from "./log-view.js";
 
-const TICK_HZ = 15;
+export { crossingMilliTicks };
+
 const PHASES = ["salida", "medio", "final"] as const;
 
 export const SEGMENT_CHAR: Readonly<Record<SegmentType, string>> = {
@@ -29,18 +42,9 @@ export const SEGMENT_CHAR: Readonly<Record<SegmentType, string>> = {
   canyon: "|",
   curves: ")",
 };
-const SEGMENT_ORDER: readonly SegmentType[] = [
-  "flat",
-  "climb",
-  "descent",
-  "jump",
-  "water",
-  "canyon",
-  "curves",
-];
 
 /** Bar characters, highest precedence first (one char per time slice and runner). */
-export const BAR = {
+export const BAR: Readonly<Record<TimelineCell, string>> = {
   finish: "|",
   dnf: "X",
   stalled: "x",
@@ -54,7 +58,7 @@ export const BAR = {
   drafting: "=",
   normal: "-",
   after: " ",
-} as const;
+};
 
 const STRIP_MAX_CHARS = 60;
 const STRIP_UNITS_M = [25, 50, 100, 200, 250, 500, 1000] as const;
@@ -114,26 +118,6 @@ function padTable(rows: readonly (readonly string[])[], rightAligned: readonly n
   );
 }
 
-// --- lookups ------------------------------------------------------------------------------------
-
-type Runner = { entry: RaceEntry; derived: RunnerDerived | undefined; result: RaceResult };
-
-function runnersInPlaceOrder(log: RaceLog): Runner[] {
-  const entryByLane = new Map(log.entries.map((e) => [e.laneIndex, e]));
-  const derivedByLane = new Map(log.derived.map((d) => [d.lane, d]));
-  return log.results.map((result) => {
-    const entry = entryByLane.get(result.lane);
-    if (!entry) throw new Error(`RaceLog has a result for lane ${result.lane} but no entry`);
-    return { entry, derived: derivedByLane.get(result.lane), result };
-  });
-}
-
-function phaseIndexAt(geometry: RaceGeometry, mm: number): 0 | 1 | 2 {
-  if (mm < geometry.startEndMm) return 0;
-  if (mm < geometry.finalStartMm) return 1;
-  return 2;
-}
-
 // --- 1. header ----------------------------------------------------------------------------------
 
 /** Segment strip, one char per segment type, scaled to length. */
@@ -156,8 +140,9 @@ function loggedBiome(g: RaceGeometry): string | undefined {
 function header(log: RaceLog, labels: RaceLabels): string[] {
   const g = log.geometry;
   const { strip, unitM } = segmentStrip(g);
-  const present = SEGMENT_ORDER.filter((t) => g.segments.some((s) => s.type === t));
-  const legend = present.map((t) => `${SEGMENT_CHAR[t]} ${labels.segmentName(t)}`).join("  ");
+  const legend = segmentTypesPresent(g)
+    .map((t) => `${SEGMENT_CHAR[t]} ${labels.segmentName(t)}`)
+    .join("  ");
   return [
     `${labels.courseName(log.courseId)} · ${metres(g.lengthMm)} m · ${labels.biomeName(log.courseId, loggedBiome(g))} · semilla ${log.seed} · ruleset ${log.rulesetVersion} · motor ${log.engine}`,
     `pista  [${strip}]  1 car = ${unitM} m`,
@@ -201,129 +186,16 @@ function classification(runners: readonly Runner[], labels: RaceLabels): string[
 
 // --- 3. timeline --------------------------------------------------------------------------------
 
-/**
- * Milli-ticks at which the runner crossed 10 %, 20 % … 100 % of the course: linear interpolation
- * between the two sampled frame rows around each mark; the 100 % mark is the log's exact
- * `finishMilli`. `null` for a mark the runner never reached (DNF).
- */
-export function crossingMilliTicks(log: RaceLog, lane: number): (number | null)[] {
-  const frames = log.frames;
-  const pos = frames?.runners[lane]?.posMm;
-  if (!frames || !pos) return [];
-  const result = log.results.find((r) => r.lane === lane);
-  const out: (number | null)[] = [];
-  for (let k = 1; k <= 10; k++) {
-    if (k === 10 && result && result.finishMilli !== null) {
-      out.push(result.finishMilli);
-      continue;
-    }
-    const mark = Math.floor((k * log.geometry.lengthMm) / 10);
-    const i = pos.findIndex((p) => p >= mark);
-    const t1 = frames.tick[i];
-    const p1 = pos[i];
-    if (i < 0 || t1 === undefined || p1 === undefined) {
-      out.push(null);
-      continue;
-    }
-    const t0 = frames.tick[i - 1];
-    const p0 = pos[i - 1];
-    if (i === 0 || t0 === undefined || p0 === undefined || p1 === p0) {
-      out.push(t1 * 1000);
-      continue;
-    }
-    out.push(roundDiv(1000 * (t0 * (p1 - p0) + (mark - p0) * (t1 - t0)), p1 - p0));
-  }
-  return out;
-}
-
-/** Overheat spans `[onTick, offTick)` of one runner, from the `overheat` events. */
-function overheatSpans(
-  events: readonly RaceEvent[],
-  lane: number,
-  endTick: number,
-): [number, number][] {
-  const spans: [number, number][] = [];
-  let on: number | null = null;
-  for (const e of events) {
-    if (e.lane !== lane || e.kind !== "overheat") continue;
-    if (e.on && on === null) on = e.tick;
-    else if (!e.on && on !== null) {
-      spans.push([on, e.tick]);
-      on = null;
-    }
-  }
-  if (on !== null) spans.push([on, endTick]);
-  return spans;
-}
-
 /** Seconds per bar column: whole seconds, so columns align with the 15-tick sampling. */
 export function barSecondsPerColumn(ticks: number): number {
-  return Math.max(1, Math.ceil(Math.ceil(ticks / TICK_HZ) / BAR_MAX_COLS));
+  return secondsPerColumn(ticks, BAR_MAX_COLS);
 }
 
-/**
- * One char per time slice of `secondsPerColumn` seconds, from the frame rows whose tick falls in
- * the slice (or, between sparse rows, the next row, whose `boost` count covers the slice): flags
- * OR-ed, `boost` on-ticks summed against the ticks those rows cover (`>` at least half of them,
- * `+` fewer, `*` any for a pulse frame). Overheat spans also come from the events, because a short
- * span can fall between two sampled rows.
- */
+/** One char per time slice of the runner (the shared `timelineCells`, see BAR). */
 export function timelineBar(log: RaceLog, lane: number): string {
-  const frames = log.frames;
-  const col = frames?.runners[lane];
-  if (!frames || !col) return "";
-  const colTicks = barSecondsPerColumn(log.ticks) * TICK_HZ;
-  const nCols = Math.max(1, Math.ceil(log.ticks / colTicks));
-  const pulseFrame = (log.derived.find((d) => d.lane === lane)?.pulseMms ?? 0) > 0;
-  const spans = overheatSpans(log.events ?? [], lane, log.ticks);
-  const finishRow = col.flags.findIndex((f) => (f & RACE_FRAME_FLAGS.finished) !== 0);
-  const finishTick = finishRow >= 0 ? frames.tick[finishRow] : undefined;
-  const finishCol =
-    finishTick === undefined ? nCols : Math.max(0, Math.ceil(finishTick / colTicks) - 1);
-  let bar = "";
-  for (let c = 0; c < nCols; c++) {
-    if (c > finishCol) {
-      bar += BAR.after;
-      continue;
-    }
-    if (c === finishCol) {
-      bar += BAR.finish;
-      continue;
-    }
-    const a = c * colTicks;
-    const b = a + colTicks;
-    let rows: number[] = [];
-    frames.tick.forEach((t, i) => {
-      if (t > a && t <= b) rows.push(i);
-    });
-    if (rows.length === 0) {
-      const next = frames.tick.findIndex((t) => t > b);
-      rows = [next >= 0 ? next : frames.tick.length - 1];
-    }
-    let flags = 0;
-    let boost = 0;
-    let covered = 0;
-    for (const i of rows) {
-      flags |= col.flags[i] ?? 0;
-      boost += col.boost[i] ?? 0;
-      covered += (frames.tick[i] ?? 0) - (frames.tick[i - 1] ?? 0);
-    }
-    // A runner overheated during ticks [on, off) shows it in rows on + 1 … off.
-    const hot = spans.some(([on, off]) => on + 1 <= b && off > a);
-    const boosted =
-      boost > 0 || (flags & (RACE_FRAME_FLAGS.boosting | RACE_FRAME_FLAGS.pulseBurst)) !== 0;
-    if (flags & RACE_FRAME_FLAGS.dnf) bar += BAR.dnf;
-    else if (flags & RACE_FRAME_FLAGS.stalled) bar += BAR.stalled;
-    else if (flags & RACE_FRAME_FLAGS.broken) bar += BAR.broken;
-    else if (flags & RACE_FRAME_FLAGS.airborne) bar += BAR.airborne;
-    else if (hot || flags & RACE_FRAME_FLAGS.overheated) bar += BAR.overheated;
-    else if (flags & RACE_FRAME_FLAGS.exhausted) bar += BAR.exhausted;
-    else if (boosted && (pulseFrame || flags & RACE_FRAME_FLAGS.pulseBurst)) bar += BAR.pulse;
-    else if (boosted) bar += 2 * boost >= covered ? BAR.boost : BAR.lightBoost;
-    else if (flags & RACE_FRAME_FLAGS.drafting) bar += BAR.drafting;
-    else bar += BAR.normal;
-  }
-  return bar;
+  return timelineCells(log, lane, barSecondsPerColumn(log.ticks))
+    .map((cell) => BAR[cell])
+    .join("");
 }
 
 function timeline(log: RaceLog, runners: readonly Runner[], labels: RaceLabels): string[] {
@@ -336,7 +208,7 @@ function timeline(log: RaceLog, runners: readonly Runner[], labels: RaceLabels):
     ),
   ]);
   const spc = barSecondsPerColumn(log.ticks);
-  const nCols = Math.max(1, Math.ceil(log.ticks / (spc * TICK_HZ)));
+  const nCols = timelineColumns(log, spc);
   const nameWidth = Math.max(...runners.map((r) => labels.runnerName(r.entry).length));
   let ruler = "";
   for (let c = 0; c < nCols; c += 10) ruler += `${c * spc}s`.padEnd(Math.min(10, nCols - c));
@@ -373,67 +245,57 @@ function timeline(log: RaceLog, runners: readonly Runner[], labels: RaceLabels):
 /** `milli`: when it happened in milli-ticks (`tick × 1000`, the exact `finishMilli` for a finish). */
 type EventLine = { tick: number; milli: number; posMm: number; text: string };
 
-/** ` · velocidad ×0.75`: the broken-wing speed factor of `derived` (8.4), empty when neutral. */
-function brokenSpeedText(log: RaceLog, lane: number): string {
-  const pm = log.derived[lane]?.brokenSpeedPm ?? 1000;
-  return pm === 1000 ? "" : `velocidad ×${fixed(pm, 1000, 2)}`;
+/** `velocidad ×0.75`: the broken-wing speed factor (8.4); empty when neutral. */
+function brokenSpeedText(speedPm: number | null): string {
+  return speedPm === null || speedPm === 1000 ? "" : `velocidad ×${fixed(speedPm, 1000, 2)}`;
 }
 
-function describeEvent(
-  e: RaceEvent,
-  labels: RaceLabels,
-  all: readonly RaceEvent[],
-  log: RaceLog,
-): string | null {
-  switch (e.kind) {
-    case "skill":
-      return `habilidad ${labels.skillName(e.skillId)} (p ${e.p} > u ${e.u})${e.activation > 1 ? ` #${e.activation}` : ""}`;
-    case "skillMiss":
-      return `falla ${labels.skillName(e.skillId)} (u ${e.u} ≥ p ${e.p})`;
-    case "freeBoost":
-      return `boost gratis en ${labels.segmentName(e.segment)}`;
-    case "sprintPlan":
-      return `${planName(e.index)} (${e.cause}): ${describePlan(e)}`;
-    case "jumpOk":
-      return `salto OK (lift ${milliUnits(e.lift)} ≥ ${milliUnits(e.required)})`;
-    case "jumpFail":
-      return `salto FALLIDO (lift ${milliUnits(e.lift)} < ${milliUnits(e.required)}) · -${milliUnits(e.damage)} durabilidad · ${ticksText(e.stallTicks)} detenida`;
-    case "landing":
-      return `aterrizaje -${mps(e.speedLossMms)} m/s`;
-    case "detour":
-      return `desvío por tierra (tramo ${e.segment + 1})`;
-    case "waterHit":
-      return e.damage === 0 ? "agua sin daño" : `agua -${milliUnits(e.damage)} durabilidad`;
-    case "overheat": {
-      if (!e.on) return null;
-      const off = all.find(
-        (o) => o.kind === "overheat" && o.lane === e.lane && !o.on && o.tick > e.tick,
-      );
-      return off && off.kind === "overheat"
-        ? `sobrecalentada ${ticksText(off.tick - e.tick)} (calor ${milliUnits(e.heat)} → ${milliUnits(off.heat)})`
-        : `sobrecalentada hasta el final (calor ${milliUnits(e.heat)})`;
+function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: RaceLog): string {
+  switch (item.kind) {
+    case "pulses": {
+      const until = item.count > 1 ? ` hasta ${seconds(item.lastTick, 1)} s` : "";
+      return `pulso${item.count > 1 ? `s ×${item.count}` : ""}${until} · cadena máx ${item.chainMax}${item.free > 0 ? ` · ${item.free} gratis` : ""}`;
     }
+    case "overheatSpan":
+      return item.offTick !== null && item.offHeat !== null
+        ? `sobrecalentada ${ticksText(item.offTick - tick)} (calor ${milliUnits(item.heat)} → ${milliUnits(item.offHeat)})`
+        : `sobrecalentada hasta el final (calor ${milliUnits(item.heat)})`;
+    case "skill":
+      return `habilidad ${labels.skillName(item.skillId)} (p ${item.p} > u ${item.u})${item.activation > 1 ? ` #${item.activation}` : ""}`;
+    case "skillMiss":
+      return `falla ${labels.skillName(item.skillId)} (u ${item.u} ≥ p ${item.p})`;
+    case "freeBoost":
+      return `boost gratis en ${labels.segmentName(item.segment)}`;
+    case "sprintPlan":
+      return `${planName(item.index)} (${item.cause}): ${describePlan(item)}`;
+    case "jumpOk":
+      return `salto OK (lift ${milliUnits(item.lift)} ≥ ${milliUnits(item.required)})`;
+    case "jumpFail":
+      return `salto FALLIDO (lift ${milliUnits(item.lift)} < ${milliUnits(item.required)}) · -${milliUnits(item.damage)} durabilidad · ${ticksText(item.stallTicks)} detenida`;
+    case "landing":
+      return `aterrizaje -${mps(item.speedLossMms)} m/s`;
+    case "detour":
+      return `desvío por tierra (tramo ${item.segment + 1})`;
+    case "waterHit":
+      return item.damage === 0 ? "agua sin daño" : `agua -${milliUnits(item.damage)} durabilidad`;
     case "hpEmpty":
       return "hp agotada: sin boost, a velocidad mínima";
     case "durabilityBroken": {
-      const speed = brokenSpeedText(log, e.lane);
-      return `alas rotas (P/W ${fixed(e.powerToWeight, 1000, 2)}${speed ? `, ${speed}` : ""})`;
+      const speed = brokenSpeedText(log.derived[item.lane]?.brokenSpeedPm ?? 1000);
+      return `alas rotas (P/W ${fixed(item.powerToWeight, 1000, 2)}${speed ? `, ${speed}` : ""})`;
     }
     case "repair":
-      return `reparación +${milliUnits(e.amount)} durabilidad`;
+      return `reparación +${milliUnits(item.amount)} durabilidad`;
     case "heatToEnergy":
-      return `calor a energía: ${milliUnits(e.heat)} calor → +${milliUnits(e.energy)} energía`;
+      return `calor a energía: ${milliUnits(item.heat)} calor → +${milliUnits(item.energy)} energía`;
     case "finish":
-      return `meta ${e.place}º`;
+      return `meta ${item.place}º`;
     case "dnf":
       return "DNF";
-    case "boostMode":
-    case "pulse":
-      return null; // modes go to the "why" block; pulses are grouped by `runnerEvents`
   }
 }
 
-function describePlan(e: RaceEvent & { kind: "sprintPlan" }): string {
+function describePlan(e: SprintPlanEvent): string {
   if (e.levelMms === 0) return `ninguno (${e.reason})`;
   return [
     `${mps(e.levelMms)} m/s de ${metres(e.startMm)} m a ${metres(e.endMm)} m`,
@@ -447,41 +309,12 @@ function describePlan(e: RaceEvent & { kind: "sprintPlan" }): string {
 
 /** Key events of one runner in emission (time) order; consecutive pulses become one line. */
 export function runnerEvents(log: RaceLog, lane: number, labels: RaceLabels): EventLine[] {
-  const all = log.events ?? [];
-  const lines: EventLine[] = [];
-  let pulses: (RaceEvent & { kind: "pulse" })[] = [];
-  const flush = () => {
-    const first = pulses[0];
-    const last = pulses[pulses.length - 1];
-    if (first && last) {
-      const chain = Math.max(...pulses.map((p) => p.chain));
-      const free = pulses.filter((p) => p.free).length;
-      const until = pulses.length > 1 ? ` hasta ${seconds(last.tick, 1)} s` : "";
-      lines.push({
-        tick: first.tick,
-        milli: first.tick * 1000,
-        posMm: first.posMm,
-        text: `pulso${pulses.length > 1 ? `s ×${pulses.length}` : ""}${until} · cadena máx ${chain}${free > 0 ? ` · ${free} gratis` : ""}`,
-      });
-    }
-    pulses = [];
-  };
-  for (const e of all) {
-    if (e.lane !== lane) continue;
-    if (e.kind === "pulse") {
-      pulses.push(e);
-      continue;
-    }
-    const text = describeEvent(e, labels, all, log);
-    if (text === null) continue;
-    flush();
-    // A finisher ends its tick past the line; the event reads better at the line itself.
-    const posMm = e.kind === "finish" ? Math.min(e.posMm, log.geometry.lengthMm) : e.posMm;
-    const milli = e.kind === "finish" ? e.finishMilli : e.tick * 1000;
-    lines.push({ tick: e.tick, milli, posMm, text });
-  }
-  flush();
-  return lines;
+  return runnerEventLines(log, lane).map((l) => ({
+    tick: l.tick,
+    milli: l.milli,
+    posMm: l.posMm,
+    text: describeEvent(l.item, l.tick, labels, log),
+  }));
 }
 
 function eventsSection(log: RaceLog, runners: readonly Runner[], labels: RaceLabels): string[] {
@@ -501,12 +334,10 @@ function eventsSection(log: RaceLog, runners: readonly Runner[], labels: RaceLab
 
 // --- 5. why -------------------------------------------------------------------------------------
 
-const MODE_MAX_PERIOD = 4;
-const MODE_MAX_PARTS = 12;
-
-function sameBlock(items: readonly string[], a: number, b: number, length: number): boolean {
-  for (let k = 0; k < length; k++) if (items[a + k] !== items[b + k]) return false;
-  return true;
+function compressedText(part: Compressed<string>): string {
+  if (part.kind === "more") return `… ${part.count} más`;
+  const text = part.items.length === 1 ? (part.items[0] ?? "") : `(${part.items.join(" → ")})`;
+  return part.reps > 1 ? `${text} ×${part.reps}` : text;
 }
 
 /**
@@ -515,77 +346,57 @@ function sameBlock(items: readonly string[], a: number, b: number, length: numbe
  * `(a → b) ×2`, `c`. More than 12 parts keep the first 7 and the last 4 around an ellipsis.
  */
 export function compressSequence(items: readonly string[]): string[] {
-  const out: string[] = [];
-  let i = 0;
-  while (i < items.length) {
-    let period = 1;
-    let reps = 1;
-    for (let p = 1; p <= MODE_MAX_PERIOD && i + 2 * p <= items.length; p++) {
-      let r = 1;
-      while (i + (r + 1) * p <= items.length && sameBlock(items, i, i + r * p, p)) r++;
-      if (r >= 2 && r * p > reps * period) {
-        period = p;
-        reps = r;
-      }
-    }
-    const block = items.slice(i, i + period);
-    const text = period === 1 ? (block[0] ?? "") : `(${block.join(" → ")})`;
-    out.push(reps > 1 ? `${text} ×${reps}` : text);
-    i += period * reps;
-  }
-  if (out.length <= MODE_MAX_PARTS) return out;
-  return [...out.slice(0, 7), `… ${out.length - 11} más`, ...out.slice(-4)];
-}
-
-/** The runner's boost modes other than "off", in order (`plan 1.20`: level modes carry m/s). */
-function modeSequence(log: RaceLog, lane: number): string {
-  const labels: string[] = [];
-  for (const e of log.events ?? []) {
-    if (e.lane !== lane || e.kind !== "boostMode" || e.mode === "off") continue;
-    labels.push(e.levelMms > 0 ? `${e.mode} ${mps(e.levelMms)}` : e.mode);
-  }
-  return compressSequence(labels).join(" → ");
-}
-
-function skillsLine(log: RaceLog, r: Runner, labels: RaceLabels): string {
-  if (log.events) {
-    return log.events
-      .filter((e) => e.lane === r.entry.laneIndex)
-      .flatMap((e) => {
-        if (e.kind === "skill") return [`✓ ${labels.skillName(e.skillId)} (p ${e.p} > u ${e.u})`];
-        if (e.kind === "skillMiss")
-          return [`✗ ${labels.skillName(e.skillId)} (u ${e.u} ≥ p ${e.p})`];
-        return [];
-      })
-      .join(" · ");
-  }
-  const { skillsActivated, skillsMissed } = r.result.ledger;
-  return [
-    ...skillsActivated.map((id) => `✓ ${labels.skillName(id)}`),
-    ...skillsMissed.map((id) => `✗ ${labels.skillName(id)}`),
-  ].join(" · ");
+  return compressRuns(items, (s) => s).map(compressedText);
 }
 
 /**
- * Broken wings as a time sink (20.4 flag 256, 8.4): where they broke and the PW before and after,
- * from the `durabilityBroken` event (the PW only when it changed); a frame that starts at
- * durability 0 is broken from the start (no event); without events (`detail: "results"`) only the
- * fact. Every case adds the speed factor of `derived.brokenSpeedPm` when it is not neutral.
+ * Broken wings as a time sink (20.4 flag 256, 8.4): where they broke and the PW before and after
+ * (the PW only when it changed); from the start for a frame that starts at durability 0; without
+ * events only the fact. Every case adds the speed factor when it is not neutral.
  */
-function brokenSink(log: RaceLog, entry: RaceEntry): string {
+function brokenText(sink: WhySink & { kind: "broken" }): string {
   const pw = (pm: number) => fixed(pm, 1000, 2);
-  const e = (log.events ?? []).find(
-    (x): x is RaceEvent & { kind: "durabilityBroken" } =>
-      x.lane === entry.laneIndex && x.kind === "durabilityBroken",
-  );
   const costs: string[] = [];
-  if (e && e.powerToWeight !== entry.powerToWeight)
-    costs.push(`P/W ${pw(entry.powerToWeight)} → ${pw(e.powerToWeight)}`);
-  const speed = brokenSpeedText(log, entry.laneIndex);
+  if (sink.pw) costs.push(`P/W ${pw(sink.pw.before)} → ${pw(sink.pw.after)}`);
+  const speed = brokenSpeedText(sink.speedPm);
   if (speed) costs.push(speed);
   const cost = costs.length > 0 ? ` (${costs.join(", ")})` : "";
-  if (e) return `alas rotas en ${metres(e.posMm)} m${cost}`;
-  return `${entry.durabilityStart === 0 ? "alas rotas desde la salida" : "alas rotas"}${cost}`;
+  if (sink.atMm !== null) return `alas rotas en ${metres(sink.atMm)} m${cost}`;
+  return `${sink.fromStart ? "alas rotas desde la salida" : "alas rotas"}${cost}`;
+}
+
+function sinkText(sink: WhySink): string {
+  switch (sink.kind) {
+    case "stall":
+      return `detenida ${seconds(sink.ticks, 2)} s${sink.jumpsFailed > 0 ? ` (${sink.jumpsFailed} salto(s) fallido(s))` : ""}`;
+    case "hpEmpty":
+      return `agotada en ${metres(sink.atMm)} m (${metres(sink.restMm)} m a velocidad mínima)`;
+    case "landings":
+      return `${sink.count} aterrizaje(s) -${mps(sink.lossMms)} m/s en total`;
+    case "detours":
+      return `${sink.count} desvío(s) por tierra`;
+    case "overheat":
+      return `sobrecalor ${ticksText(sink.ticks)}`;
+    case "broken":
+      return brokenText(sink);
+    case "dnf":
+      return "DNF";
+    case "energyLeft":
+      return `energía sin usar ${milliUnits(sink.energy)}`;
+  }
+}
+
+function termText(term: WhyTerm): string {
+  switch (term.kind) {
+    case "stoop":
+      return `picada ${term.pm} ‰`;
+    case "landing":
+      return `aterrizaje ${term.pm} ‰`;
+    case "detour":
+      return `desvío ${term.pm} ‰`;
+    case "air":
+      return `aire ${term.segments.map((s) => `${SEGMENT_CHAR[s.type]}${s.pm}`).join(" ")}`;
+  }
 }
 
 /** One label column for every block: the longest label, "habilidades". */
@@ -615,119 +426,94 @@ function whyBlock(
   labels: RaceLabels,
   only?: ReadonlySet<WhyRow>,
 ): string[] {
-  const { entry, derived, result } = r;
-  const L = result.ledger;
-  const W = winner.result.ledger;
-  const g = log.geometry;
-  const isWinner = r === winner;
+  const m = whyModel(log, r, winner);
+  const { entry, result } = r;
   const lines: [WhyRow, string][] = [];
 
-  const gap =
-    !isWinner && result.finishMilli !== null && winner.result.finishMilli !== null
-      ? `  (${signed(result.finishMilli - winner.result.finishMilli, 1000 * TICK_HZ, 2)} s)`
-      : "";
+  const gap = m.gapMilli === null ? "" : `  (${signed(m.gapMilli, 1000 * TICK_HZ, 2)} s)`;
   lines.push([
     "fases",
-    PHASES.map((name, i) => {
-      const t = L.phaseTicks[i] ?? 0;
-      const delta =
-        isWinner || result.dnf ? "" : ` (${signed(t - (W.phaseTicks[i] ?? 0), TICK_HZ, 2)})`;
-      return `${name} ${seconds(t, 2)} s${delta}`;
-    }).join(" · "),
+    m.phases
+      .map((p, i) => {
+        const delta = p.deltaTicks === null ? "" : ` (${signed(p.deltaTicks, TICK_HZ, 2)})`;
+        return `${PHASES[i] ?? ""} ${seconds(p.ticks, 2)} s${delta}`;
+      })
+      .join(" · "),
   ]);
 
-  const gains = [`boost ${L.boostTicks.join("/")} ticks`];
-  if (L.pulses > 0) gains.push(`${L.pulses} pulsos`);
-  if (L.draftTicks > 0) gains.push(`rebufo ${seconds(L.draftTicks, 1)} s`);
-  if (L.skillsActivated.length > 0) gains.push(`${L.skillsActivated.length} habilidad(es)`);
+  const G = m.gains;
+  const gains = [`boost ${G.boostTicks.join("/")} ticks`];
+  if (G.pulses > 0) gains.push(`${G.pulses} pulsos`);
+  if (G.draftTicks > 0) gains.push(`rebufo ${seconds(G.draftTicks, 1)} s`);
+  if (G.skillsActivated > 0) gains.push(`${G.skillsActivated} habilidad(es)`);
   lines.push(["ganancias", gains.join(" · ")]);
 
-  const sinks: string[] = [];
-  if (L.stallTicks > 0)
-    sinks.push(
-      `detenida ${seconds(L.stallTicks, 2)} s${L.jumpsFailed > 0 ? ` (${L.jumpsFailed} salto(s) fallido(s))` : ""}`,
-    );
-  if (L.hpEmptyMm !== null)
-    sinks.push(
-      `agotada en ${metres(L.hpEmptyMm)} m (${metres(g.lengthMm - L.hpEmptyMm)} m a velocidad mínima)`,
-    );
-  if (L.jumpsOk > 0)
-    sinks.push(`${L.jumpsOk} aterrizaje(s) -${mps(L.landingLossMms)} m/s en total`);
-  if (L.detours > 0) sinks.push(`${L.detours} desvío(s) por tierra`);
-  if (L.overheatTicks > 0) sinks.push(`sobrecalor ${ticksText(L.overheatTicks)}`);
-  if (result.broken) sinks.push(brokenSink(log, entry));
-  if (result.dnf) sinks.push("DNF");
-  if (L.energyLeft > 0) sinks.push(`energía sin usar ${milliUnits(L.energyLeft)}`);
-  lines.push(["pérdidas", sinks.length > 0 ? sinks.join(" · ") : "—"]);
+  lines.push(["pérdidas", m.sinks.length > 0 ? m.sinks.map(sinkText).join(" · ") : "—"]);
 
-  if (derived) {
+  if (m.judgement) {
+    const j = m.judgement;
     lines.push([
       "juicio",
-      `ritmo ${derived.pace.map(pmSigned).join("/")} ‰ · error de plan ${pmSigned(derived.planErrPm)} ‰ (±${derived.planErrWindowPm})`,
+      `ritmo ${j.pace.map(pmSigned).join("/")} ‰ · error de plan ${pmSigned(j.planErrPm)} ‰ (±${j.planErrWindowPm})`,
     ]);
   }
 
-  const plans = (log.events ?? []).filter(
-    (e): e is RaceEvent & { kind: "sprintPlan" } =>
-      e.lane === entry.laneIndex && e.kind === "sprintPlan",
-  );
-  const firstPlan = plans[0];
-  const lastPlan = plans[plans.length - 1];
-  if (firstPlan && lastPlan) {
-    const last =
-      lastPlan.levelMms === 0
-        ? `ninguno (${lastPlan.reason})`
-        : `${mps(lastPlan.levelMms)} m/s de ${metres(lastPlan.startMm)} m`;
+  if (m.plan) {
+    const { first, last, count } = m.plan;
+    const lastText =
+      last.levelMms === 0
+        ? `ninguno (${last.reason})`
+        : `${mps(last.levelMms)} m/s de ${metres(last.startMm)} m`;
     lines.push([
       "plan",
-      `${describePlan(firstPlan)}${plans.length > 1 ? ` · ${plans.length - 1} replan, el último (${lastPlan.cause}): ${last}` : ""}`,
+      `${describePlan(first)}${count > 1 ? ` · ${count - 1} replan, el último (${last.cause}): ${lastText}` : ""}`,
     ]);
   }
 
-  const modes = modeSequence(log, entry.laneIndex);
+  const modes = compressSequence(
+    m.modes.map((s) => (s.levelMms > 0 ? `${s.mode} ${mps(s.levelMms)}` : s.mode)),
+  ).join(" → ");
   if (modes) lines.push(["modos", modes]);
 
-  if (derived) {
-    const terms: string[] = [];
-    if (derived.stoopPm !== 1000) terms.push(`picada ${derived.stoopPm} ‰`);
-    const jumps = g.segments.some((s) => s.type === "jump");
-    if (jumps && derived.detourPm === 0) terms.push(`aterrizaje ${derived.landPm} ‰`);
-    if (jumps && derived.detourPm > 0) terms.push(`desvío ${derived.detourPm} ‰`);
-    if (derived.pulseMms > 0)
-      terms.push(
-        `aire ${g.segments.map((s, i) => `${SEGMENT_CHAR[s.type]}${derived.airPm[i] ?? 1000}`).join(" ")}`,
-      );
-    if (terms.length > 0) lines.push(["términos", terms.join(" · ")]);
+  if (m.terms && m.terms.length > 0) lines.push(["términos", m.terms.map(termText).join(" · ")]);
 
+  if (m.segments) {
     lines.push([
       "tramos",
-      `${g.segments
-        .map((s, i) => {
-          const row = derived.segments[i];
-          if (!row) return SEGMENT_CHAR[s.type];
-          const cruise = row.cruiseMms[phaseIndexAt(g, Math.floor((s.startMm + s.endMm) / 2))];
-          return `${SEGMENT_CHAR[s.type]} ${fixed(row.fPm, 1000, 2)}/${mps(cruise ?? 0, 1)}`;
-        })
+      `${m.segments
+        .map((s) =>
+          s.fPm === null
+            ? SEGMENT_CHAR[s.type]
+            : `${SEGMENT_CHAR[s.type]} ${fixed(s.fPm, 1000, 2)}/${mps(s.cruiseMms ?? 0, 1)}`,
+        )
         .join(" · ")}  (f / crucero m/s)`,
     ]);
   }
 
+  const E = m.energy;
   lines.push([
     "energía",
     [
-      `gastada ${milliUnits(L.energySpent)}`,
-      `lift ${milliUnits(L.energyLift)}`,
-      `regen +${milliUnits(L.energyRegen)}`,
-      `reembolso +${milliUnits(L.energyRefunded)}`,
-      `calor +${milliUnits(L.energyFromHeat)}`,
-      `queda ${milliUnits(L.energyLeft)}`,
+      `gastada ${milliUnits(E.spent)}`,
+      `lift ${milliUnits(E.lift)}`,
+      `regen +${milliUnits(E.regen)}`,
+      `reembolso +${milliUnits(E.refunded)}`,
+      `calor +${milliUnits(E.fromHeat)}`,
+      `queda ${milliUnits(E.left)}`,
     ].join(" · "),
   ]);
+  const B = m.body;
   lines.push([
     "cuerpo",
-    `hp final ${fixed(result.hpEnd, 1000, 0)} · durabilidad -${milliUnits(L.durabilityLost)} +${milliUnits(L.durabilityRepaired)} → ${milliUnits(result.durabilityEnd)}`,
+    `hp final ${fixed(B.hpEnd, 1000, 0)} · durabilidad -${milliUnits(B.durabilityLost)} +${milliUnits(B.durabilityRepaired)} → ${milliUnits(B.durabilityEnd)}`,
   ]);
-  const skills = skillsLine(log, r, labels);
+  const skills = m.skills
+    .map((s) => {
+      const name = labels.skillName(s.skillId);
+      if (s.p === null || s.u === null) return `${s.fired ? "✓" : "✗"} ${name}`;
+      return s.fired ? `✓ ${name} (p ${s.p} > u ${s.u})` : `✗ ${name} (u ${s.u} ≥ p ${s.p})`;
+    })
+    .join(" · ");
   if (skills) lines.push(["habilidades", skills]);
 
   return [

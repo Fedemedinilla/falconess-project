@@ -1,3 +1,4 @@
+import { FIELD_LIMITS } from "@falconess/race-view";
 import { parseArgs } from "../args.js";
 
 export const RACE_USAGE = `pnpm sim:race -- --seed <s> --course <courseId> [field] [--detail full|results] [--json]
@@ -62,8 +63,8 @@ const PLAYER_KEYS = ["falconess", "frame", "parts", "skills", "turn"] as const;
 // `pnpm sim:race -- --seed 1` may pass the bare `--` through; parseArgs records it as key "".
 const KNOWN = new Set<string>(["", ...VALUE_KEYS, ...FLAG_KEYS]);
 
-const MAX_STAT = 1200;
-const MAX_TURN = 48;
+const MAX_STAT = FIELD_LIMITS.maxStat;
+const MAX_TURN = FIELD_LIMITS.maxTurn;
 
 function intInRange(raw: string, key: string, min: number, max: number): number {
   if (!/^\d+$/.test(raw)) throw new RaceArgsError(`--${key} expects an integer, got "${raw}"`);
@@ -121,7 +122,7 @@ export function parseRaceArgs(argv: readonly string[]): RaceCliOptions {
   } else if (neutral) {
     if (playerKeys.length > 0)
       throw new RaceArgsError(`--neutral cannot be combined with --${playerKeys.join(", --")}`);
-    field = { kind: "neutral", stats: stats ?? 600 };
+    field = { kind: "neutral", stats: stats ?? FIELD_LIMITS.neutralStats };
   } else {
     const turnRaw = value("turn");
     field = {
