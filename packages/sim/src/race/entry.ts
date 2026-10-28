@@ -14,9 +14,6 @@ import type { Ruleset } from "../rulesets/index.js";
 import { effectiveStats } from "../stats.js";
 import { compileTraits, statDeltas } from "./modifiers.js";
 
-/** Lanes of a race field (`R.maxRunners` = 8). */
-const MAX_LANES = 8;
-
 /**
  * Freeze one active skill for the race (docs/race-engine.md 3.2). Content decimals become ‰ or
  * milli-units here, with `toPermille` as the only rounding: `positionRange` → ‰; `heatAbove`,
@@ -78,8 +75,9 @@ export function freezeEntry(
   course: Course,
   laneIndex: number,
 ): RaceEntry {
-  if (!Number.isInteger(laneIndex) || laneIndex < 0 || laneIndex >= MAX_LANES)
-    throw new Error(`laneIndex ${laneIndex} outside 0..${MAX_LANES - 1}`);
+  const lanes = ruleset.race.maxRunners;
+  if (!Number.isInteger(laneIndex) || laneIndex < 0 || laneIndex >= lanes)
+    throw new Error(`laneIndex ${laneIndex} outside 0..${lanes - 1}`);
 
   // 1. frame build (telemetry PW cap, power-cap, clamps)
   const fb = resolveFrameBuild(content, input.frameId, input.parts, input.quirks);
@@ -103,7 +101,7 @@ export function freezeEntry(
   const ids = [...new Set(input.learnedSkills)].sort(compareIds);
   if (ids.length > ruleset.race.maxSkills)
     throw new Error(
-      `${input.runnerId}: ${ids.length} actives, at most ${ruleset.race.maxSkills} race`,
+      `${input.runnerId}: ${ids.length} actives, at most ${ruleset.race.maxSkills} per race`,
     );
   const skills = ids.map((id) => {
     const s = freezeSkill(content, id);

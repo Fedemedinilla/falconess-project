@@ -6,6 +6,7 @@ import type {
   RaceModifier,
   Style,
 } from "@falconess/schema";
+import { RULESET_V1 } from "./rulesets/index.js";
 
 /**
  * A frame with its parts and quirks resolved into one flat, engine-ready description.
@@ -35,8 +36,8 @@ const LIMITS = {
   durability: [20, 260],
 } as const;
 
-/** PW cap of the telemetry rule (`RACE.telemetryPowerCap`), applied here so every consumer agrees. */
-const TELEMETRY_PW_CAP = 1100;
+/** PW cap of the telemetry rule, applied here so every consumer agrees (v1: 1100). */
+const TELEMETRY_PW_CAP = RULESET_V1.race.telemetryPowerCap;
 
 /** Frame values before parts and quirks; PW in per-mille, the rest in content units. */
 export type BuildBase = {
