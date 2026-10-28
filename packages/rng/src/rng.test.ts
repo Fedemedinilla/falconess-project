@@ -105,7 +105,10 @@ describe("Rng", () => {
   it("pickWeighted respects weights and ignores zero weights", () => {
     const rng = new Rng("weights");
     const counts = [0, 0, 0];
-    for (let i = 0; i < 9000; i++) counts[rng.pickWeighted("events", [1, 0, 2])] += 1;
+    for (let i = 0; i < 9000; i++) {
+      const k = rng.pickWeighted("events", [1, 0, 2]);
+      counts[k] = (counts[k] ?? 0) + 1;
+    }
     expect(counts[1]).toBe(0);
     expect((counts[2] ?? 0) / (counts[0] ?? 1)).toBeGreaterThan(1.7);
     expect((counts[2] ?? 0) / (counts[0] ?? 1)).toBeLessThan(2.3);

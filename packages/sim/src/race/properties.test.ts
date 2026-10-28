@@ -316,7 +316,9 @@ function frameEntry(frameId: string, stats: RaceEntry["stats"], course: Course):
 
 /** Solo run on `course`: finish time, exhaustion, and (for pulse frames) the one-burst slack q. */
 function solo(ruleset: Ruleset, e: RaceEntry, course: Course) {
-  let tables: RaceArena["tables"] | null = null;
+  // the probe hands the tables out through a box: a `let` assigned in the callback would stay
+  // narrowed to its initial null at the read below
+  const box: { tables?: RaceArena["tables"] } = {};
   let q = 1;
   const log = simulateRaceProbed(
     ruleset,
@@ -324,12 +326,12 @@ function solo(ruleset: Ruleset, e: RaceEntry, course: Course) {
     course,
     "mono",
     (t, A) => {
-      if (t === 0) tables = A.tables;
+      if (t === 0) box.tables = A.tables;
     },
     { detail: "results" },
   );
-  const T: RaceArena["tables"] | null = tables;
-  if (T !== null && T.pulseFrame[0] === 1) {
+  const T = box.tables;
+  if (T !== undefined && T.pulseFrame[0] === 1) {
     // q = 1 + ceilDiv(pulseTicks × BpMax, vC0): one burst of the largest pulse thrust at the
     // slowest flat cruise (the course is a single flat segment)
     let air = 0;

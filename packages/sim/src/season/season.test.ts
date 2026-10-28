@@ -11,7 +11,8 @@ import { startSeason } from "./start.js";
 import { trainingGain } from "./training.js";
 
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
-const START: RunInput = {
+type StartInput = Extract<RunInput, { kind: "start" }>;
+const START: StartInput = {
   kind: "start",
   falconessId: "peregrina",
   hangar: ["shiden", "mule", "nimbus", "falke"],
@@ -69,10 +70,8 @@ describe("startSeason", () => {
   });
 
   it("rejects unknown frames and duplicate hangar entries", () => {
-    expect(() => startSeason(ctx, "1", { ...START, hangar: ["nope"] } as RunInput)).toThrow(
-      /unknown frame/,
-    );
-    expect(() => startSeason(ctx, "1", { ...START, hangar: ["mule", "mule"] } as RunInput)).toThrow(
+    expect(() => startSeason(ctx, "1", { ...START, hangar: ["nope"] })).toThrow(/unknown frame/);
+    expect(() => startSeason(ctx, "1", { ...START, hangar: ["mule", "mule"] })).toThrow(
       /duplicate/,
     );
   });
@@ -97,12 +96,8 @@ describe("startSeason", () => {
       seed: "x",
       inputsHash: "00000000",
     };
-    const a = startSeason(ctx, "7", { ...START, parents: [parent] } as RunInput & {
-      kind: "start";
-    });
-    const b = startSeason(ctx, "7", { ...START, parents: [parent] } as RunInput & {
-      kind: "start";
-    });
+    const a = startSeason(ctx, "7", { ...START, parents: [parent] });
+    const b = startSeason(ctx, "7", { ...START, parents: [parent] });
     expect(a.stats.stamina).toBe(80 + 21);
     expect(a).toEqual(b);
   });

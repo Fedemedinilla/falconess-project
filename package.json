@@ -10,7 +10,7 @@
   "packageManager": "pnpm@10.28.0",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b tsconfig.json tsconfig.tests.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:golden": "vitest run --project sim tests/golden",
