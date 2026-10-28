@@ -730,3 +730,10 @@ Estado: **propuesto**.
    siempre; la dificultad queda para las políticas descuidadas (propuesta 2) y para las notas
    altas (A o mejor en 0,6-4 % de las temporadas). Este ADR y `docs/formulas.md` ya lo describen
    así: aceptarla cierra la propuesta.
+
+## Golden
+
+Los doce logs de `tests/golden/v1` (ADR-0004) se regeneraron el 2026-10-28 tras esta pasada, con
+dos corridas idénticas byte a byte. Cambian porque cambiaron las constantes y el contenido de
+arriba; el motor no cambió. Si el dueño decide distinto en las propuestas pendientes (peso de PW,
+dificultad de temporada), los golden se vuelven a generar con una línea en este ADR.
