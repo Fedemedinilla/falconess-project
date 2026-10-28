@@ -98,6 +98,13 @@ for (const vp of VIEWPORTS)
           await document.fonts.ready;
           await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         });
+        // every form control carries a stable id (not one of React's generated «r1» ids)
+        const loose = await page.evaluate(() =>
+          [...document.querySelectorAll("input, select, textarea")]
+            .filter((el) => !el.id || /[:«»]/.test(el.id))
+            .map((el) => el.outerHTML.slice(0, 120)),
+        );
+        expect(loose, `${name}: form controls without a stable id`).toEqual([]);
         if (phone) {
           const { scroll, client } = await page.evaluate(() => ({
             scroll: document.documentElement.scrollWidth,

@@ -25,7 +25,8 @@
     "sim:race": "tsx apps/cli/src/sim-race.ts",
     "sim:season-batch": "tsx apps/cli/src/season-batch.ts",
     "dev": "pnpm --filter @falconess/web dev",
-    "web:build": "pnpm --filter @falconess/web build && pnpm --filter @falconess/web build:artifact"
+    "web:build": "pnpm --filter @falconess/web build && pnpm --filter @falconess/web build:artifact",
+    "web:e2e": "pnpm --filter @falconess/web test:e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

@@ -8,6 +8,9 @@ pnpm dev                                   # Vite dev server
 pnpm --filter @falconess/web build         # standard build, dist/
 pnpm --filter @falconess/web build:artifact  # dist-artifact/falconess-playtest.html
 pnpm web:build                             # both
+pnpm --filter @falconess/web test:e2e       # both builds, then the browser tests (Chromium)
+pnpm --filter @falconess/web test:e2e:dev   # the app tests on the dev server (React warnings fail)
+pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/shots/
 ```
 
 ## Layout
@@ -57,3 +60,32 @@ Fonts stylesheet, the inlined `<style>`, the root div and the inlined module scr
 html, head or body tags; no other external load; under 16 MB. Hash routes are plain names
 (`#inicio`, `#temporada`, `#carrera`, `#carrera-libre`, `#fin`); no alert, confirm, prompt or print;
 storage is optional.
+
+## Browser tests (`e2e/`)
+
+`@playwright/test` with Chromium. Playwright's own browser is used when installed
+(`pnpm --filter @falconess/web exec playwright install chromium`, as CI does); otherwise the one
+preinstalled in the cloud containers (`/opt/pw-browsers/chromium`). Behind `HTTPS_PROXY` the
+browser goes through the proxy. Any console error or uncaught exception fails a test.
+
+- `season.spec.ts`: a whole season of each Falconess with seed `pt-e2e-1`, played by clicks with a
+  simple policy (`play.ts`: first event option, rest from fatigue 60, else train the lowest stat).
+  The T12 goal race is replayed at ×8 to the finish and its classification must give the place the
+  season recorded; SeasonEnd opens it again. Each season writes its timing to
+  `.work/ui/timing/<falconess>.json`: about 4,4 s per season (60–65 decisions, ~70 ms each, the
+  slowest ~110 ms, a race week included) with one worker on the production build.
+- `run.spec.ts`: "Copiar partida" → "Cargar partida" in a fresh browser gives the same week,
+  stats and fatigue, and the loaded run plays on identically; "Continuar" after a reload; undo;
+  storage blocked and the copy fallback (the text is selected).
+- `free-race.spec.ts`: the default race, another course and seed, the neutral field.
+- `artifact.spec.ts`: the built fragment against the page contract, then wrapped the way the host
+  does it with every request but Google Fonts blocked, at the top level and inside a sandboxed
+  iframe at 400 px (no storage, no clipboard, no horizontal scroll).
+- `shots.spec.ts` (only with `test:e2e:shots`): Home, NewSeason, Turn with a crew, the workshop,
+  an event, the T12 replay mid-race and at the finish, the free race and SeasonEnd, at 1280×800
+  and 400×860, light and dark, full page with real fonts. Each shot also checks that every form
+  control has a stable id and, on the phone, that the page does not scroll sideways.
+
+The app tests answer Google Fonts with an empty stylesheet (the fallback stacks show), so they
+need no network. Failures leave traces and screenshots in `.work/ui/e2e-results/`
+(`pnpm --filter @falconess/web exec playwright show-trace <trace.zip>`).

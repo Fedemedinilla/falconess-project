@@ -21,3 +21,5 @@ this list and the scripts in sync). Arguments after `--` go to the script.
   goal races won and by place, goal pass rates.
 - `pnpm dev`: the web tester app (apps/web) on the Vite dev server, with hot reload.
 - `pnpm web:build`: apps/web to dist/ and the single-file tester page to dist-artifact/.
+- `pnpm web:e2e`: both builds of apps/web, then its browser tests in Chromium (apps/web/README.md):
+  seasons played by clicks, goal-race replays, copy and load, free race, the published page.

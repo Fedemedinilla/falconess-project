@@ -9,6 +9,10 @@
 # - batch-smoke: the CI smoke of docs/race-engine.md 24.4, 1000 mixed races of the real batch in
 #   under 6 s (`--max-wall-ms 6000`; it also fails on any DNF). It times the harness the bench
 #   does not: workers, cached geometry and arena, the seasons of S7.
+# - e2e: the tester page in Chromium (apps/web/e2e, `pnpm --filter @falconess/web test:e2e`): three
+#   seasons played by clicks with their T12 replays, copy and load, the free race, and the
+#   published single-file page wrapped like the host does. Any console error fails it. Traces and
+#   screenshots of a failure, and the season timings, are uploaded.
 # - The 10 000-race balance batch lives in balance.yml (report only, 60-s budget).
 name: ci
 
@@ -68,3 +72,30 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm sim:batch -- --runs 1000 --report out/smoke.json --max-wall-ms 6000
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @falconess/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @falconess/web test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: .work/ui/e2e-results
+          retention-days: 7
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-season-timing
+          path: .work/ui/timing
+          retention-days: 14
+          if-no-files-found: ignore
