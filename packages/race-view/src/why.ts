@@ -74,6 +74,8 @@ export type WhyTerm =
 
 /** One course segment of the intact table: terrain factor and cruise in the segment's phase. */
 export type WhySegment = {
+  /** The segment's index on the course. */
+  readonly index: number;
   readonly type: SegmentType;
   /** Null when `derived` has no row for the segment. */
   readonly fPm: number | null;
@@ -103,6 +105,8 @@ export type WhySkill = {
   readonly fired: boolean;
   readonly p: number | null;
   readonly u: number | null;
+  /** When it was drawn; null without events. */
+  readonly tick: number | null;
 };
 
 export type WhyModel = {
@@ -195,11 +199,11 @@ function segments(log: RaceLog, r: Runner): WhySegment[] | null {
   const d = r.derived;
   if (!d) return null;
   const g = log.geometry;
-  return g.segments.map((s, i) => {
-    const row = d.segments[i];
-    if (!row) return { type: s.type, fPm: null, cruiseMms: null };
+  return g.segments.map((s, index) => {
+    const row = d.segments[index];
+    if (!row) return { index, type: s.type, fPm: null, cruiseMms: null };
     const cruise = row.cruiseMms[phaseIndexAt(g, Math.floor((s.startMm + s.endMm) / 2))];
-    return { type: s.type, fPm: row.fPm, cruiseMms: cruise ?? 0 };
+    return { index, type: s.type, fPm: row.fPm, cruiseMms: cruise ?? 0 };
   });
 }
 
@@ -208,15 +212,17 @@ function skills(log: RaceLog, r: Runner): WhySkill[] {
     return log.events
       .filter((e) => e.lane === r.entry.laneIndex)
       .flatMap((e): WhySkill[] => {
-        if (e.kind === "skill") return [{ skillId: e.skillId, fired: true, p: e.p, u: e.u }];
-        if (e.kind === "skillMiss") return [{ skillId: e.skillId, fired: false, p: e.p, u: e.u }];
+        if (e.kind === "skill")
+          return [{ skillId: e.skillId, fired: true, p: e.p, u: e.u, tick: e.tick }];
+        if (e.kind === "skillMiss")
+          return [{ skillId: e.skillId, fired: false, p: e.p, u: e.u, tick: e.tick }];
         return [];
       });
   }
   const { skillsActivated, skillsMissed } = r.result.ledger;
   return [
-    ...skillsActivated.map((skillId) => ({ skillId, fired: true, p: null, u: null })),
-    ...skillsMissed.map((skillId) => ({ skillId, fired: false, p: null, u: null })),
+    ...skillsActivated.map((skillId) => ({ skillId, fired: true, p: null, u: null, tick: null })),
+    ...skillsMissed.map((skillId) => ({ skillId, fired: false, p: null, u: null, tick: null })),
   ];
 }
 

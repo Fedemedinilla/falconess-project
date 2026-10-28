@@ -1,0 +1,296 @@
+/* the lane chart: an HTML label column next to the SVG plot, rows aligned by --lane-h */
+.chart {
+  display: grid;
+  grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr);
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.labels {
+  margin: 0;
+  padding: var(--head-h) 0 0;
+  list-style: none;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--lane-h);
+  padding: 0 var(--space-2);
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.label:nth-child(even) {
+  background: var(--surface-2);
+}
+
+.playerLabel,
+.playerLabel:nth-child(even) {
+  background: var(--accent-soft);
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.laneNo {
+  flex: none;
+  width: 1ch;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.noLivery {
+  flex: none;
+  width: 1.125rem;
+  height: 0.625rem;
+  border: 1px dashed var(--line-strong);
+}
+
+.labelName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plot {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  font-family: var(--font-display);
+}
+
+/* --- header --------------------------------------------------------------------------------- */
+
+.phaseName {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  fill: var(--ink-3);
+}
+
+.phaseLine {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.segment {
+  stroke: none;
+}
+
+.segmentEdge {
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
+.scaleTick {
+  stroke: var(--line-strong);
+}
+
+.scaleText {
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.reserveLine {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.reserveText {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  fill: var(--accent-text);
+}
+
+.finishLine {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+/* --- lanes ---------------------------------------------------------------------------------- */
+
+.lane {
+  fill: var(--surface);
+}
+
+.laneAlt {
+  fill: var(--surface-2);
+}
+
+.lanePlayer {
+  fill: var(--accent-soft);
+}
+
+.baseline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.pin {
+  stroke-width: 1.2;
+}
+
+.pin-skill {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.pin-miss {
+  fill: var(--surface);
+  stroke: var(--ink-3);
+}
+
+.pin-trouble {
+  fill: var(--bad);
+  stroke: var(--bad);
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  fill: var(--ink-2);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* --- runners: what the flags draw (data-flags on the group) -------------------------------- */
+
+.runner {
+  --duty: 0;
+}
+
+.chevron {
+  fill: var(--livery-primary);
+  stroke: var(--livery-secondary);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.playerChevron {
+  stroke-width: 2;
+}
+
+.player .body {
+  filter: drop-shadow(0 0 1.5px var(--accent));
+}
+
+.trail,
+.draft,
+.shadow,
+.pulse,
+.heat,
+.crack,
+.stall {
+  display: none;
+}
+
+.trail {
+  fill: var(--accent);
+  opacity: calc(0.35 + 0.65 * var(--duty));
+}
+
+.draft {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+}
+
+.shadow {
+  fill: var(--ink-3);
+  opacity: 0.45;
+}
+
+.pulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.heat {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.crack {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.stall {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.runner[data-flags~="boost"] .trail,
+.runner[data-flags~="drafting"] .draft,
+.runner[data-flags~="airborne"] .shadow,
+.runner[data-flags~="pulse"] .pulse,
+.runner[data-flags~="overheated"] .heat,
+.runner[data-flags~="broken"] .crack,
+.runner[data-flags~="stalled"] .stall {
+  display: inline;
+}
+
+.runner[data-flags~="airborne"] .body {
+  transform: translateY(-6px);
+}
+
+.runner[data-flags~="exhausted"] .chevron {
+  fill-opacity: 0.35;
+  stroke-dasharray: 2 2;
+}
+
+.runner[data-flags~="finished"] .chevron {
+  fill-opacity: 0.85;
+}
+
+@media (max-width: 40rem) {
+  .chart {
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+  }
+
+  .label {
+    gap: var(--space-1);
+    padding: 0 var(--space-1);
+  }
+
+  .labelName {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

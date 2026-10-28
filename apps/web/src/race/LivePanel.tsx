@@ -1,0 +1,119 @@
+import { useMemo } from "react";
+import { ui } from "../text/ui";
+import { cx } from "../ui/cx";
+import { Livery } from "../ui/Livery";
+import { Panel } from "../ui/Panel";
+import { RUNNER_FLAGS, sampleAt, standings } from "./playback";
+import s from "./RaceViewer.module.css";
+import type { RaceView, RunnerView } from "./view";
+import { metres, mps, secsMilli, withSign } from "./words";
+
+function Gauge({
+  label,
+  value,
+  max,
+  tone,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  tone: string;
+}) {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return (
+    <span className={s.gauge} title={`${label} ${Math.round(pct)} %`}>
+      <span className={s.gaugeLabel}>{label}</span>
+      <span className={s.gaugeTrack} aria-hidden="true">
+        <span className={cx(s.gaugeFill, s[tone])} style={{ width: `${pct}%` }} />
+      </span>
+    </span>
+  );
+}
+
+export type LivePanelProps = {
+  view: RaceView;
+  /** Race time in whole ticks. */
+  tick: number;
+};
+
+/** The order at the moment the replay shows: gap, speed, gauges and what each runner is doing. */
+export function LivePanel({ view, tick }: LivePanelProps) {
+  const rows = useMemo(() => {
+    const samples = sampleAt(view.log, tick, view.spans);
+    return standings(view.log, samples);
+  }, [view, tick]);
+  const byLane = useMemo(() => new Map(view.runners.map((r) => [r.lane, r])), [view]);
+  return (
+    <Panel title={ui("ui.race.live.title")} meta={ui("ui.race.live.meta")} flush className={s.live}>
+      <ol className={s.liveList}>
+        {rows.map(({ sample, order, gapMm, behindMilli }) => {
+          const r: RunnerView | undefined = byLane.get(sample.lane);
+          if (!r) return null;
+          const flags = RUNNER_FLAGS.filter((f) => sample.flags.has(f));
+          return (
+            <li key={sample.lane} className={cx(s.liveRow, r.isPlayer && s.liveRowPlayer)}>
+              <span className={s.liveOrder}>{order}</span>
+              <span className={s.liveName}>
+                {r.livery ? (
+                  <Livery palette={r.livery} size="sm" />
+                ) : (
+                  <span className={s.noLivery} aria-hidden="true" />
+                )}
+                <span className={s.liveNameText}>{r.name}</span>
+              </span>
+              <span className={s.liveGap}>
+                {sample.finished
+                  ? order === 1
+                    ? ui("ui.race.live.finished")
+                    : behindMilli === null || behindMilli === 0
+                      ? ui("ui.race.margin.deadHeat")
+                      : ui("ui.race.live.behindTime", { s: withSign(secsMilli(behindMilli, 2)) })
+                  : gapMm === null || gapMm < 500
+                    ? order === 1
+                      ? ui("ui.race.live.leader")
+                      : ui("ui.race.live.level")
+                    : ui("ui.race.live.behind", { m: metres(gapMm, 0) })}
+              </span>
+              <span className={s.liveSpeed}>
+                {sample.finished ? "" : ui("ui.race.live.speed", { v: mps(sample.vMms, 1) })}
+              </span>
+              <span className={s.liveGauges}>
+                <Gauge
+                  label={ui("ui.race.gauge.hp")}
+                  value={sample.hp}
+                  max={r.max.hp}
+                  tone="toneHp"
+                />
+                <Gauge
+                  label={ui("ui.race.gauge.energy")}
+                  value={sample.energy}
+                  max={r.max.energy}
+                  tone="toneEnergy"
+                />
+                <Gauge
+                  label={ui("ui.race.gauge.heat")}
+                  value={sample.heat}
+                  max={r.max.heat}
+                  tone="toneHeat"
+                />
+                <Gauge
+                  label={ui("ui.race.gauge.durability")}
+                  value={sample.durability}
+                  max={r.max.durability}
+                  tone="toneDurability"
+                />
+              </span>
+              <span className={s.liveFlags}>
+                {flags.map((f) => (
+                  <span key={f} className={cx(s.flag, s[`flag-${f}`])}>
+                    {ui(`ui.race.flag.${f}`)}
+                  </span>
+                ))}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </Panel>
+  );
+}

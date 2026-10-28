@@ -30,6 +30,7 @@ export {
   signatureFrameOf,
   uniformStats,
 } from "./field.js";
+export { contentLabels, type Livery, type RaceLabels } from "./labels.js";
 export {
   crossingMilliTicks,
   overheatSpans,
