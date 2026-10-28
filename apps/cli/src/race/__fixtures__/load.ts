@@ -10,9 +10,6 @@ import { RaceLog } from "@falconess/schema";
  *
  *   pnpm exec tsx apps/cli/src/race/__fixtures__/generate.ts
  *   pnpm exec vitest run --project cli -u
- *
- * `sprint` uses the default player field, which still comes from the TEMPORARY
- * `interimGenerateField`: regenerate once the real `generateField` is wired.
  */
 export const RACE_FIXTURES = {
   /** desert-sprint, player field: Peregrina at 600 with three actives against turn-46 rivals. */

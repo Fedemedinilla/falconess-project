@@ -6,8 +6,7 @@ field (one of):
   --falconess <id> [--frame <frameId>] [--parts a,b] [--skills x,y] [--stats <n>] [--turn <t>]
       the player plus class-matched rivals on generic frames of her PW class (default: peregrina
       on her signature frame, base stats, turn 1; --stats gives every stat the same value; the
-      rivals' level follows --turn: 95 + 9 × turn per stat). Until generateField lands the
-      rivals come from an interim field without noise (apps/cli/src/race/interim-field.ts)
+      rivals' level follows --turn: 95 + 9 × turn per stat; generateField, docs/race-engine.md 21.1)
   --entries <file.json>
       a JSON array of 1..8 EntryInput objects (docs/race-engine.md 3.1), lane = array index
   --neutral [--stats <n>]

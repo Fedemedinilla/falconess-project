@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadContent } from "@falconess/content";
 import { RaceLog } from "@falconess/schema";
-import { RULESET_V1, type SimContext } from "@falconess/sim";
+import { generateField, RULESET_V1, type SimContext } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { runSimRace } from "../sim-race.js";
 import { fakeEngine } from "./__fixtures__/fake-engine.js";
 import { FIXTURE_DIR, loadRaceFixture } from "./__fixtures__/load.js";
 import { createRaceEngine } from "./engine-adapter.js";
-import { interimRivalPool } from "./interim-field.js";
+import { playerEntryInput } from "./field.js";
 import { contentLabels } from "./labels.js";
 import { RACE_USAGE } from "./options.js";
 import { renderRace } from "./render-race.js";
@@ -123,13 +123,21 @@ describe("pnpm sim:race on the real engine", () => {
     for (const r of rivals) expect(["etoile", "shiden"]).toContain(r.frameId);
   });
 
-  it("matches the class pools of docs/race-engine.md 21.1 in the interim field", () => {
-    const pool = (frameId: string) =>
-      interimRivalPool(RULESET_V1, ctx.content, frameId).map((f) => f.id);
-    expect(pool("peregrina-signature")).toEqual(["etoile", "shiden"]);
-    expect(pool("hayate")).toEqual(["hayate", "sylphe"]);
-    expect(pool("falke")).toEqual(["erzherzog", "falke", "horizon"]);
-    expect(pool("cernicala-signature")).toEqual(["nimbus"]);
-    expect(pool("caracara-signature")).toEqual(["kite", "mule"]);
+  it("builds the player field with the engine's generateField (21.1)", () => {
+    const args = ["--seed", "7", "--course", "desert-canyon", "--stats", "500", "--turn", "30"];
+    const log = RaceLog.parse(JSON.parse(runSimRace([...args, "--json"], real)));
+    const course = ctx.content.getCourse("desert-canyon");
+    const player = playerEntryInput(ctx.content, {
+      kind: "player",
+      falconessId: "peregrina",
+      frameId: null,
+      parts: [],
+      skills: [],
+      stats: 500,
+      turn: 30,
+    });
+    expect(log.entries).toEqual(
+      generateField(RULESET_V1, ctx.content, { course, turn: 30, raceSeed: "7", player }),
+    );
   });
 });
