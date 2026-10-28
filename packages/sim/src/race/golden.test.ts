@@ -3,10 +3,18 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadContent } from "@falconess/content";
-import { ManufacturerRule, RaceEvent, RaceLog, Style } from "@falconess/schema";
+import {
+  type EntryInput,
+  ManufacturerRule,
+  type RaceEntry,
+  RaceEvent,
+  RaceLog,
+  Style,
+} from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { RULESET_V1 } from "../rulesets/index.js";
 import { simulateRace } from "./engine.js";
+import { generateField, rivalPool } from "./field.js";
 import { buildCourseGeometry } from "./geometry.js";
 import {
   canonicalJson,
@@ -100,6 +108,56 @@ describe("golden scenarios (docs/race-engine.md 24.3)", () => {
       );
       expect(new Set(field.map((e) => e.rule)), s.name).toEqual(new Set(ManufacturerRule.options));
       expect(new Set(field.map((e) => e.style)), s.name).toEqual(new Set(Style.options));
+    }
+  });
+
+  it("build (b) and (c) with generateField around the player, the scenario seed as raceSeed", () => {
+    const goal = GOLDEN_SCENARIOS.filter((g) => g.field === "turn-24" || g.field === "turn-46");
+    expect(goal).toHaveLength(6);
+    const rivalsOf = (entries: readonly RaceEntry[]) =>
+      canonicalJson(entries.filter((e) => e.kind === "rival"));
+    for (const s of goal) {
+      const turn = s.field === "turn-24" ? 24 : 46;
+      const course = content.getCourse(s.courseId);
+      const entries = goldenEntries(content, s);
+      const player = entries.find((e) => e.kind === "player");
+      if (player === undefined) throw new Error(`${s.name}: no player`);
+      expect(
+        entries.map((e) => e.laneIndex),
+        s.name,
+      ).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+      expect(content.getFrame(player.frameId).signatureOf, s.name).toBe(player.falconessId);
+      const pool = rivalPool(RULESET_V1, content, player.frameId).map((f) => f.id);
+      for (const e of entries.filter((x) => x.kind === "rival")) {
+        expect(pool, `${s.name} ${e.runnerId}`).toContain(e.frameId);
+        expect([e.parts, e.quirks], `${s.name} ${e.runnerId}`).toEqual([[], []]);
+        expect(e.skills, `${s.name} ${e.runnerId}`).toHaveLength(
+          Math.min(3, Math.floor(turn / 12)),
+        );
+      }
+      // generateField's rivals and lane depend on the player only through her frame: the same
+      // call around any player on that frame must give the golden rivals byte for byte ...
+      const probe: EntryInput = {
+        runnerId: "player",
+        kind: "player",
+        falconessId: player.falconessId,
+        baseStats: { agility: 300, stamina: 300, technique: 300, courage: 300, intelligence: 300 },
+        mood: 0,
+        biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
+        styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+        frameId: player.frameId,
+        parts: [],
+        quirks: [],
+        learnedSkills: [],
+        durability: null,
+      };
+      const args = { course, turn, raceSeed: s.seed, player: probe };
+      const generated = generateField(RULESET_V1, content, args);
+      expect(rivalsOf(generated), s.name).toBe(rivalsOf(entries));
+      expect(generated.find((e) => e.kind === "player")?.laneIndex, s.name).toBe(player.laneIndex);
+      // ... so a change of FIELD (here the rival curve) moves the golden input
+      const moved = { ...RULESET_V1, field: { ...RULESET_V1.field, rivalPerTurn: 10 } };
+      expect(rivalsOf(generateField(moved, content, args)), s.name).not.toBe(rivalsOf(entries));
     }
   });
 

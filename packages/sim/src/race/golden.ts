@@ -2,6 +2,7 @@ import { clamp, floorDiv } from "@falconess/rng";
 import type {
   BiomeAptitudes,
   ContentIndex,
+  Course,
   EntryInput,
   FalconessStats,
   Mood,
@@ -14,6 +15,7 @@ import type {
 import { RULESET_V1 } from "../rulesets/index.js";
 import { simulateRace } from "./engine.js";
 import { compareIds, freezeEntry } from "./entry.js";
+import { generateField, PLAYER_RUNNER_ID } from "./field.js";
 
 /**
  * The golden races of docs/race-engine.md 24.3 (ROADMAP D13): 3 courses × 4 fields, each run with
@@ -21,22 +23,22 @@ import { compareIds, freezeEntry } from "./entry.js";
  * `tests/golden/v1/<name>.json` (`pnpm golden:update -- --yes` writes them, with an ADR;
  * `pnpm test:golden` compares them).
  *
- * The fields are plain `EntryInput` data frozen here (stats, letters, frames, parts, quirks,
- * skills, durability) and built with `freezeEntry` only: a golden race never holds `rule: "none"`
- * or a disabled skill (ADR-0003 D42, D49), and it never reads `FIELD` or `generateField`, so a
- * balance change of the rival curve does not move a golden input.
+ * Fields (a) and (d) are plain `EntryInput` data frozen here (stats, letters, frames, parts,
+ * quirks, skills, durability) with `freezeEntry`; fields (b) and (c) are `generateField`'s output
+ * around a hand-built player, so a change of `generateField` or of `FIELD` moves g04-g09 and
+ * `pnpm test:golden` catches it (24.3). A golden race never holds `rule: "none"` or a disabled
+ * skill (ADR-0003 D42, D49).
  *
  * - (a) `generic`: 8 different generic frames, every stat 600, letters B, 4 actives each. Each
  *   course leaves out a different pair of the 10 generic frames (never both of one manufacturer),
  *   so every field holds the 5 manufacturer rules and the 4 styles, and every frame races twice
  *   or three times.
- * - (b) `turn-24` and (c) `turn-46`: a Falconess on her signature frame among 7 rivals of her
- *   frame's PW class (sprint: Caracara, ridge: Peregrina, canyon: Cernícala; each one's turn-24
- *   goal course). Hand-built stand-ins for `generateField` (21.1): rival frames from the class pool
- *   of 21.1, stats on the v1 rival curve (5 × (95 + 9 t) split by the style weights, with a fixed
- *   spread instead of the draws), `fl(t, 12)` actives (at most 3), no parts or quirks, letters
- *   A on the frame's style and B elsewhere; the Falconess at par with her own letters, unique skill,
- *   parts and a worn frame at turn 46.
+ * - (b) `turn-24` and (c) `turn-46`: `generateField` (21.1) at that turn around a Falconess on her
+ *   signature frame (sprint: Caracara, ridge: Peregrina, canyon: Cernícala; each one's turn-24
+ *   goal course), with the scenario's seed as `raceSeed`: 7 rivals of her frame's PW class, her
+ *   lane drawn by the field. The player is fixed data: stats at par on the v1 rival curve
+ *   (`5 × (95 + 9 t)` split by her frame style's v1 weights, no draws), her own letters, unique
+ *   skill and learned actives, parts, mood and, at turn 46, a worn frame.
  * - (d) `edge`: Boneyard frames with lucky-bolt, stutter, hot-head, glider-tape and mud-runner; an
  *   Intelligence-100 runner; a Stamina-150 runner (exhaustion); a Steinhaus frame driven into its
  *   overheat licence (low courage, low dissipation, big tank); a pulse frame at mood −2; worn
@@ -56,9 +58,18 @@ export type GoldenScenario = {
   readonly field: "generic" | "turn-24" | "turn-46" | "edge" | "duel";
   /** One line for test names and the generator's output. */
   readonly summary: string;
-  /** The field in lane order (lane = index). */
-  readonly entries: (content: ContentIndex) => EntryInput[];
+  /** The frozen field on `course` in lane order (`laneIndex` = index); `seed` is the race seed. */
+  readonly entries: (content: ContentIndex, course: Course, seed: string) => RaceEntry[];
 };
+
+/** A field builder of `GoldenScenario.entries`. */
+type FieldBuilder = GoldenScenario["entries"];
+
+/** Freeze hand-built `EntryInput` data on the course, lane = index. */
+function byLane(inputs: (content: ContentIndex) => EntryInput[]): FieldBuilder {
+  return (content, course) =>
+    inputs(content).map((input, lane) => freezeEntry(RULESET_V1, content, input, course, lane));
+}
 
 /** [agility, stamina, technique, courage, intelligence] */
 type Stats5 = readonly [number, number, number, number, number];
@@ -99,14 +110,16 @@ function rival(runnerId: string, frameId: Slug, o: RunnerOpts = {}): EntryInput 
 }
 
 /** (a) eight generic frames, every stat 600, letters B; runner ids follow the lanes. */
-function genericField(rows: readonly (readonly [Slug, readonly Slug[]])[]): () => EntryInput[] {
-  return () =>
-    rows.map(([frameId, skills], lane) => rival(`rival-${lane + 1}`, frameId, { skills }));
+function genericField(rows: readonly (readonly [Slug, readonly Slug[]])[]): FieldBuilder {
+  return byLane(() =>
+    rows.map(([frameId, skills], lane) => rival(`rival-${lane + 1}`, frameId, { skills })),
+  );
 }
 
 /**
  * The v1 rival weights (‰ of a total per stat, FIELD.rivalWeights at the time the goldens were
- * frozen; copied so a balance change of FIELD never moves a golden input).
+ * frozen), for the player's par stats only: copied so a balance change of FIELD moves the rivals
+ * of `generateField` (which the goldens must catch) but never the hand-built player.
  */
 const WEIGHTS: Record<Style, Stats5> = {
   glide: [240, 210, 170, 180, 200],
@@ -115,34 +128,17 @@ const WEIGHTS: Record<Style, Stats5> = {
   ground: [200, 230, 220, 190, 160],
 };
 
-/** Rival-curve stats: `fl(5 × (95 + 9 t) × (1000 + spread) × w, 10^6)`, clamped to [1, 1200]. */
-function curveStats(turn: number, style: Style, spreadPm: number): Stats5 {
-  const total = 5 * (95 + 9 * turn) * (1000 + spreadPm);
+/** Par stats on the v1 rival curve: `fl(5 × (95 + 9 t) × 1000 × w, 10^6)`, clamped to [1, 1200]. */
+function parStats(turn: number, style: Style): Stats5 {
+  const total = 5 * (95 + 9 * turn) * 1000;
   const w = WEIGHTS[style];
   const at = (k: number) => clamp(floorDiv(total * (w[k] ?? 0), 1_000_000), 1, 1200);
   return [at(0), at(1), at(2), at(3), at(4)];
 }
 
-/** The fixed spread of the seven rivals' total power, ‰ (21.1 draws it within ±200). */
-const SPREAD: readonly number[] = [-150, -90, -40, 0, 30, 80, 140];
-
-/** Actives of the seven rivals (generic pool of 21.1); each takes the first `fl(t, 12)`, ≤ 3. */
-const RIVAL_SKILLS: readonly (readonly Slug[])[] = [
-  ["clean-start", "last-gasp", "pack-shadow"],
-  ["corner-carver", "second-wind", "hill-lungs"],
-  ["lead-guard", "cool-head", "canyon-sense"],
-  ["gravity-friend", "water-skimmer", "clean-start"],
-  ["pack-shadow", "iron-wings", "last-gasp"],
-  ["second-wind", "canyon-sense", "corner-carver"],
-  ["hill-lungs", "lead-guard", "gravity-friend"],
-];
-
 type FalconessSetup = {
   readonly id: Slug;
   readonly frameId: Slug;
-  /** The generic frames of her frame's PW class (21.1 pools); rivals cycle through them. */
-  readonly pool: readonly Slug[];
-  readonly lane: { readonly 24: number; readonly 46: number };
   readonly skills: { readonly 24: readonly Slug[]; readonly 46: readonly Slug[] };
   readonly parts: { readonly 24: readonly Slug[]; readonly 46: readonly Slug[] };
   /** Season durability carried into the race (null = full). */
@@ -153,8 +149,6 @@ type FalconessSetup = {
 const CARACARA: FalconessSetup = {
   id: "caracara",
   frameId: "caracara-signature",
-  pool: ["kite", "mule"],
-  lane: { 24: 3, 46: 6 },
   skills: {
     24: ["clean-start", "corner-carver", "scavenger-stride"],
     46: ["clean-start", "corner-carver", "last-gasp", "pack-shadow", "scavenger-stride"],
@@ -167,8 +161,6 @@ const CARACARA: FalconessSetup = {
 const PEREGRINA: FalconessSetup = {
   id: "peregrina",
   frameId: "peregrina-signature",
-  pool: ["etoile", "shiden"],
-  lane: { 24: 1, 46: 4 },
   skills: {
     24: ["gravity-friend", "last-gasp", "stoop-strike"],
     46: ["clean-start", "gravity-friend", "iron-wings", "last-gasp", "stoop-strike"],
@@ -181,8 +173,6 @@ const PEREGRINA: FalconessSetup = {
 const CERNICALA: FalconessSetup = {
   id: "cernicala",
   frameId: "cernicala-signature",
-  pool: ["nimbus"],
-  lane: { 24: 7, 46: 0 },
   skills: {
     24: ["canyon-sense", "hill-lungs", "wind-hover"],
     46: ["canyon-sense", "cool-head", "hill-lungs", "water-skimmer", "wind-hover"],
@@ -192,45 +182,34 @@ const CERNICALA: FalconessSetup = {
   mood: { 24: -1, 46: 1 },
 };
 
-/** (b), (c): the Falconess at par on her signature frame among 7 rivals of her PW class. */
-function goalField(f: FalconessSetup, turn: 24 | 46): (content: ContentIndex) => EntryInput[] {
-  return (content) => {
-    const falconess = content.getFalconess(f.id);
-    const style = content.getFrame(f.frameId).style;
-    const nSkills = Math.min(3, Math.floor(turn / 12));
-    const field: EntryInput[] = [];
-    let k = 0;
-    for (let lane = 0; lane < 8; lane++) {
-      if (lane === f.lane[turn]) {
-        field.push({
-          runnerId: "player",
-          kind: "player",
-          falconessId: f.id,
-          baseStats: stats(curveStats(turn, style, 0)),
-          mood: f.mood[turn],
-          biomeAptitude: { ...falconess.biomeAptitude },
-          styleAptitude: { ...falconess.styleAptitude },
-          frameId: f.frameId,
-          parts: [...f.parts[turn]],
-          quirks: [],
-          learnedSkills: [...f.skills[turn]],
-          durability: f.durability[turn],
-        });
-        continue;
-      }
-      const frameId = f.pool[k % f.pool.length] ?? f.pool[0] ?? f.frameId;
-      const rivalStyle = content.getFrame(frameId).style;
-      field.push(
-        rival(`rival-${k + 1}`, frameId, {
-          stats: curveStats(turn, rivalStyle, SPREAD[k] ?? 0),
-          skills: (RIVAL_SKILLS[k] ?? []).slice(0, nSkills),
-          styleAptitude: { ...STYLE_B, [rivalStyle]: "A" },
-        }),
-      );
-      k += 1;
-    }
-    return field;
+/** The Falconess of (b), (c): at par on her signature frame, with her setup at that turn. */
+function goalPlayer(content: ContentIndex, f: FalconessSetup, turn: 24 | 46): EntryInput {
+  const falconess = content.getFalconess(f.id);
+  return {
+    runnerId: PLAYER_RUNNER_ID,
+    kind: "player",
+    falconessId: f.id,
+    baseStats: stats(parStats(turn, content.getFrame(f.frameId).style)),
+    mood: f.mood[turn],
+    biomeAptitude: { ...falconess.biomeAptitude },
+    styleAptitude: { ...falconess.styleAptitude },
+    frameId: f.frameId,
+    parts: [...f.parts[turn]],
+    quirks: [],
+    learnedSkills: [...f.skills[turn]],
+    durability: f.durability[turn],
   };
+}
+
+/** (b), (c): `generateField` at `turn` around the Falconess, `raceSeed` = the scenario's seed. */
+function goalField(f: FalconessSetup, turn: 24 | 46): FieldBuilder {
+  return (content, course, seed) =>
+    generateField(RULESET_V1, content, {
+      course,
+      turn,
+      raceSeed: seed,
+      player: goalPlayer(content, f, turn),
+    });
 }
 
 /** (d) the edge field, the same eight runners on every course. */
@@ -303,8 +282,8 @@ const GENERIC_CANYON = genericField([
 
 const SUMMARY: Record<GoldenScenario["field"], string> = {
   generic: "(a) 8 generic frames, every stat 600, letters B, 4 actives each",
-  "turn-24": "(b) a Falconess on her signature frame among 7 rivals of her PW class, turn 24",
-  "turn-46": "(c) a Falconess on her signature frame among 7 rivals of her PW class, turn 46",
+  "turn-24": "(b) generateField at turn 24 around a Falconess on her signature frame",
+  "turn-46": "(c) generateField at turn 46 around a Falconess on her signature frame",
   edge: "(d) quirks, I 100, St 150, Steinhaus licence, pulse frame, worn and broken frames",
   duel: "a 2-runner race (the S3 shape)",
 };
@@ -329,31 +308,31 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = [
   scenario("g07-sprint-caracara-t46", "desert-sprint", "turn-46", goalField(CARACARA, 46)),
   scenario("g08-ridge-peregrina-t46", "desert-ridge", "turn-46", goalField(PEREGRINA, 46)),
   scenario("g09-canyon-cernicala-t46", "desert-canyon", "turn-46", goalField(CERNICALA, 46)),
-  scenario("g10-sprint-edge", "desert-sprint", "edge", edgeField),
-  scenario("g11-ridge-edge", "desert-ridge", "edge", edgeField),
-  scenario("g12-canyon-edge", "desert-canyon", "edge", edgeField),
+  scenario("g10-sprint-edge", "desert-sprint", "edge", byLane(edgeField)),
+  scenario("g11-ridge-edge", "desert-ridge", "edge", byLane(edgeField)),
+  scenario("g12-canyon-edge", "desert-canyon", "edge", byLane(edgeField)),
 ];
 
 /**
  * Extra races of the determinism test only (never golden files): Peregrina's turn-46 build
- * against one of its shiden rivals, a 2-runner race like every S3 race of the batch.
+ * against the first rival of her generated field, a 2-runner race like every S3 race of the batch.
  */
 export const DETERMINISM_EXTRAS: readonly GoldenScenario[] = [
-  scenario("x01-ridge-duel", "desert-ridge", "duel", (content) => {
-    const field = goalField(PEREGRINA, 46)(content);
+  scenario("x01-ridge-duel", "desert-ridge", "duel", (content, course, seed) => {
+    const field = goalField(PEREGRINA, 46)(content, course, seed);
     const player = field.find((e) => e.kind === "player");
-    const shiden = field.find((e) => e.frameId === "shiden");
-    if (player === undefined || shiden === undefined) throw new Error("x01: no duel in the field");
-    return [{ ...shiden, runnerId: "rival-1" }, player];
+    const rival = field.find((e) => e.kind === "rival");
+    if (player === undefined || rival === undefined) throw new Error("x01: no duel in the field");
+    return [
+      { ...rival, laneIndex: 0 },
+      { ...player, laneIndex: 1 },
+    ];
   }),
 ];
 
 /** Freeze a scenario's field on its course (lane = index). */
 export function goldenEntries(content: ContentIndex, s: GoldenScenario): RaceEntry[] {
-  const course = content.getCourse(s.courseId);
-  return s
-    .entries(content)
-    .map((input, lane) => freezeEntry(RULESET_V1, content, input, course, lane));
+  return s.entries(content, content.getCourse(s.courseId), s.seed);
 }
 
 /** Run a scenario under ruleset v1 with `detail: "full"`. */
