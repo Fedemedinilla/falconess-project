@@ -92,6 +92,7 @@ describe("buildCourseGeometry (docs/race-engine.md 2)", () => {
     const G = buildCourseGeometry(R, content.getCourse("desert-canyon"));
     const g = logGeometry(R, G);
     expect(RaceGeometry.parse(g)).toEqual(g);
+    expect(g.biome).toBe("desert"); // ADR-0003 D55
     expect(g.lengthMm).toBe(3_000_000);
     expect(g.segments.map((s) => [s.type, s.startMm, s.endMm, s.param])).toEqual([
       ["flat", 0, 400_000, 0],
@@ -119,6 +120,13 @@ describe("buildCourseGeometry (docs/race-engine.md 2)", () => {
       expect(G.reserveAt).toBe(G.reserveAtMm * POS_PER_MM);
       const g = logGeometry(R, G);
       expect(RaceGeometry.safeParse(g).success).toBe(true);
+    }
+  });
+
+  it("logs the course biome, so the viewer never reads content (ADR-0003 D55)", () => {
+    for (const biome of ["desert", "mountain", "coast", "urban", "tundra"] as const) {
+      const course: Course = { ...content.getCourse("desert-sprint"), biome };
+      expect(logGeometry(R, buildCourseGeometry(R, course)).biome).toBe(biome);
     }
   });
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   Aptitude,
+  Biome,
   BiomeAptitudes,
   FalconessStats,
   Mood,
@@ -453,6 +454,8 @@ export type RaceResult = z.infer<typeof RaceResult>;
 
 /** Course geometry as logged (20.1); `param` is grade‰, drag‰, wind‰, radius or liftRequired. */
 export const RaceGeometry = z.strictObject({
+  /** The course biome, so a viewer never reads content to draw the race (ADR-0003 D55). */
+  biome: Biome,
   lengthMm: Nat,
   /**
    * The five boundaries of section 2 (20.1). `reserveAtMm = max(0, Lmm − 60 000)` is clamped at 0

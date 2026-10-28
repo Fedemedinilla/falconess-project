@@ -1620,7 +1620,9 @@ RaceLog = z.strictObject({
   rulesetVersion: RulesetVersion, engine: z.literal("v1"), seed: z.string().min(1),
   courseId: Slug, courseVersion: Int, tickHz: z.literal(15),
   detail: z.enum(["full", "results"]), ticks: Int /* ticks simulated */, maxTicks: Int,
-  geometry: { lengthMm, startEndMm, finalStartMm, hoverAttackMm, reserveAtMm, denseFromMm: Int,
+  geometry: { biome: Biome,             // ADR-0003 D55: the viewer never reads content for it
+              lengthMm, startEndMm, finalStartMm, hoverAttackMm, reserveAtMm, denseFromMm: Int,
+              // reserveAtMm ≥ 0 (ADR-0003 D53, section 2)
               segments: [{ type: SegmentType, startMm: Int, endMm: Int, param: Int }] },
               // param: grade‰ (climb, descent), drag‰ (water), wind‰ signed (canyon), radius (curves), liftRequired (jump), 0 (flat)
   entries: RaceEntry[1..8],             // lane order (3.1)

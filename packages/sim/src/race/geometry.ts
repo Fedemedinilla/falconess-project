@@ -155,7 +155,7 @@ export function phaseOf(G: CourseGeometry, x: number): number {
   return x < G.startEnd ? PH_START : x < G.finalStart ? PH_MIDDLE : PH_FINAL;
 }
 
-/** The `geometry` block of a `RaceLog` (20.1), in public units. */
+/** The `geometry` block of a `RaceLog` (20.1), in public units, with the biome (ADR-0003 D55). */
 export function logGeometry(ruleset: Ruleset, G: CourseGeometry): RaceGeometry {
   const { posPerMm } = engineUnits(ruleset.race);
   const segments: RaceGeometry["segments"] = [];
@@ -171,6 +171,7 @@ export function logGeometry(ruleset: Ruleset, G: CourseGeometry): RaceGeometry {
     });
   }
   return {
+    biome: G.biome,
     lengthMm: G.lengthMm,
     startEndMm: G.startEndMm,
     finalStartMm: G.finalStartMm,

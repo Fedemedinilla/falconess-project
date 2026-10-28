@@ -184,6 +184,7 @@ function minimalLog(): RaceLog {
     ticks: 818,
     maxTicks: 12_000,
     geometry: {
+      biome: "desert",
       lengthMm: 1_200_000,
       startEndMm: 200_000,
       finalStartMm: 800_000,
@@ -376,6 +377,25 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       ["u out of range", (l) => ({ ...l, derived: [{ ...derived, u: [[1000, 0, 0]] }] })],
       ["dnf with a finish time", (l) => ({ ...l, results: [{ ...result, dnf: true }] })],
       ["finisher without a time", (l) => ({ ...l, results: [{ ...result, timeTicks: null }] })],
+      [
+        "geometry without a biome (ADR-0003 D55)",
+        (l) => {
+          const { biome: _drop, ...rest } = l.geometry;
+          return { ...l, geometry: rest };
+        },
+      ],
+      [
+        "geometry of an unknown biome",
+        (l) => ({ ...l, geometry: { ...l.geometry, biome: "moon" } }),
+      ],
+      [
+        "negative reserveAtMm (ADR-0003 D53)",
+        (l) => ({ ...l, geometry: { ...l.geometry, reserveAtMm: -10_000 } }),
+      ],
+      [
+        "negative kickAtMm (ADR-0003 D53)",
+        (l) => ({ ...l, derived: [{ ...derived, kickAtMm: -1 }] }),
+      ],
       [
         "geometry segment of unknown type",
         (l) => ({

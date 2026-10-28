@@ -204,6 +204,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
       short([{ type: "water", length: 50, drag: 0.2 }]),
     ]) {
       const log = simulateRace(RULESET_V1, neutralField(), c, "short");
+      expect(log.geometry.biome).toBe("desert");
       expect(log.geometry.reserveAtMm).toBe(0);
       expect(log.geometry.denseFromMm).toBe(25_000);
       expect(log.derived.map((d) => d.kickAtMm)).toEqual(new Array(8).fill(0));
