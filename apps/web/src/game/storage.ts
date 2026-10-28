@@ -13,6 +13,8 @@ export type KeyValueStore = {
 
 export const RUN_KEY = "falconess.pruebas.partida";
 export const THEME_KEY = "falconess.pruebas.tema";
+/** "brief" or "full": how much the cards explain by default (app/explain.ts). */
+export const EXPLAIN_KEY = "falconess.pruebas.explicaciones";
 
 /** `localStorage` when the browser lets the page use it, else undefined. */
 export function browserStore(): KeyValueStore | undefined {
