@@ -7,13 +7,42 @@ import { buildCourseGeometry } from "./geometry.js";
 import { compileTraits, defaultTraits } from "./modifiers.js";
 import {
   accelVu,
+  activationPm,
+  agilityCruiseVu,
+  approachVu,
   baseSegmentFactor,
+  boostThrustVu,
+  chainThrustVu,
   coolTick,
+  crashDamageMd,
+  cruiseVu,
+  dashEnds,
+  detourDisp,
   drainCoefficients,
+  drainMicro,
+  exhaustSpeedVu,
+  fatiguePm,
+  finishMilliOf,
   groundDetourPm,
+  heatCapMh,
+  heatTolerancePm,
+  hpMaxMicro,
+  jumpNeedMe,
   landingKeepPm,
+  liftFactorPm,
+  liftMe,
+  marginGapMm,
   overheatDamage,
+  paceCentrePm,
+  penalisedVu,
+  planErrWindowPm,
+  powerVariant,
+  pulseThrustVu,
   segmentFactors,
+  staminaDivisor,
+  styleDamagePm,
+  waterHitMd,
+  weightedPower,
 } from "./physics.js";
 import { SEG_CURVES, SEG_JUMP } from "./units.js";
 
@@ -185,5 +214,214 @@ describe("scalar helpers of table 3.3 with the rule terms of 13.1", () => {
     const d = defaultTraits();
     factors(content.getCourse("desert-sprint"));
     expect(defaultTraits()).toEqual(d);
+  });
+});
+
+const VBASE = 300_000;
+const KBOOST = 45_000;
+
+describe("PW, cruise, exhaustion and thrust tables (docs/race-engine.md 3.3, 5, 6)", () => {
+  it("PW variants: intact and broken ×0.75; weighted PW (1000 = brief)", () => {
+    expect([powerVariant(R, 1000, 0), powerVariant(R, 1000, 1)]).toEqual([1000, 750]);
+    expect([powerVariant(R, 1400, 1), powerVariant(R, 500, 1), powerVariant(R, 1600, 1)]).toEqual([
+      1050, 375, 1200,
+    ]);
+    expect(weightedPower(1000, 1400)).toBe(1400);
+    expect(weightedPower(250, 1400)).toBe(1100);
+    expect(weightedPower(1000, 750)).toBe(750);
+    expect(weightedPower(500, 750)).toBe(875);
+    expect(weightedPower(0, 1600)).toBe(1000);
+  });
+
+  it("vA = 352 500 vu at A 600 (23.5 m/s); 300 087 at A 1; 475 000 at A 2000", () => {
+    expect(agilityCruiseVu(R, VBASE, 600)).toBe(352_500);
+    expect(agilityCruiseVu(R, VBASE, 1)).toBe(300_087);
+    expect(agilityCruiseVu(R, VBASE, 2000)).toBe(475_000);
+  });
+
+  it("vC: 352 500 on flat, 317 250 on curves (f 900), pace ±65 ‰ around it", () => {
+    expect(cruiseVu(352_500, 1000, 1000, 1000, 0)).toBe(352_500);
+    expect(cruiseVu(352_500, 1000, 900, 1000, 0)).toBe(317_250);
+    expect(cruiseVu(352_500, 1000, 1000, 1000, 65)).toBe(375_412);
+    expect(cruiseVu(352_500, 1000, 1000, 1000, -65)).toBe(329_587);
+    expect(cruiseVu(352_500, 750, 1000, 1000, 0)).toBe(264_375); // broken table
+    expect(cruiseVu(352_500, 700, 1000, 1000, 0)).toBe(246_750); // PW 0.7 frame
+  });
+
+  it("vMin: 255 000 vu (17 m/s) at PW 1.0 on flat, broken 191 250, water 204 000", () => {
+    expect(exhaustSpeedVu(R, VBASE, 1000, 1000, 0)).toBe(255_000);
+    expect(exhaustSpeedVu(R, VBASE, 750, 1000, 0)).toBe(191_250);
+    expect(exhaustSpeedVu(R, VBASE, 1000, 800, 0)).toBe(204_000);
+    expect(exhaustSpeedVu(R, VBASE, 1000, 1000, 43)).toBe(265_965);
+  });
+
+  it("thrust: B 45 000, Bp 60 750, Bpc 72 900 (third-pulse); PW 1.4: 63 000 / 85 050; PW 1.2 Bp 72 900", () => {
+    expect(boostThrustVu(KBOOST, 1000)).toBe(45_000);
+    expect(boostThrustVu(KBOOST, 750)).toBe(33_750);
+    expect(boostThrustVu(KBOOST, 1400)).toBe(63_000);
+    expect(pulseThrustVu(R, KBOOST, 1000)).toBe(60_750);
+    expect(pulseThrustVu(R, KBOOST, 1400)).toBe(85_050);
+    expect(pulseThrustVu(R, KBOOST, 1200)).toBe(72_900);
+    expect(chainThrustVu(60_750, 200)).toBe(72_900);
+    expect(chainThrustVu(60_750, 0)).toBe(60_750);
+  });
+
+  it("every table is monotone non-decreasing in its inputs (property P3 needs it)", () => {
+    let prev = -1;
+    for (let a = 1; a <= 2000; a += 13) {
+      const v = cruiseVu(agilityCruiseVu(R, VBASE, a), 1000, 1000, 1000, 0);
+      expect(v).toBeGreaterThanOrEqual(prev);
+      prev = v;
+    }
+    prev = -1;
+    for (let pw = 500; pw <= 1600; pw += 7) {
+      const v = exhaustSpeedVu(R, VBASE, weightedPower(1000, pw), 1000, 0);
+      expect(v).toBeGreaterThanOrEqual(prev);
+      prev = v;
+    }
+  });
+});
+
+describe("hp, heat and resource helpers (docs/race-engine.md 4, 6, 8)", () => {
+  it("hpMax 915 / 1235 / 1635 hp on the sprint, ridge and canyon", () => {
+    expect(hpMaxMicro(R, 1_200_000)).toBe(915_000_000);
+    expect(hpMaxMicro(R, 2_000_000)).toBe(1_235_000_000);
+    expect(hpMaxMicro(R, 3_000_000)).toBe(1_635_000_000);
+  });
+
+  it("stamDiv 1 920 000 at St 600; fatigue 1300 at C 600, floor 1000 from C 1500", () => {
+    expect(staminaDivisor(R, 600)).toBe(1_920_000);
+    expect(fatiguePm(R, 0)).toBe(1500);
+    expect(fatiguePm(R, 600)).toBe(1300);
+    expect(fatiguePm(R, 1500)).toBe(1000);
+    expect(fatiguePm(R, 2000)).toBe(1000);
+  });
+
+  it("drain at cruise: 862 890 µhp (non-final) and 1 121 757 µhp (final) per tick", () => {
+    expect(drainMicro(352_500, VBASE, 625_000)).toBe(862_890);
+    expect(drainMicro(352_500, VBASE, 812_500)).toBe(1_121_757);
+    expect(drainMicro(352_500, VBASE, 612_500)).toBe(845_632); // glide lead ×0.98
+    expect(drainMicro(0, VBASE, 625_000)).toBe(0);
+    expect(drainMicro(VBASE, VBASE, 625_000)).toBe(625_000);
+  });
+
+  it("courage tolerance 1150 ‰ at C 600 → heatCap 69 000 mh at dissipation 60", () => {
+    expect(heatTolerancePm(R, 600)).toBe(1150);
+    expect(heatTolerancePm(R, 0)).toBe(1000);
+    expect(heatCapMh(60, 1150)).toBe(69_000);
+    expect(heatCapMh(20, 1000)).toBe(20_000);
+  });
+
+  it("heat penalty ×0.92 on the moved speed only", () => {
+    expect(penalisedVu(R, 352_500)).toBe(324_300);
+    expect(penalisedVu(R, 0)).toBe(0);
+  });
+
+  it("style damage: ground ×0.5, every other style ×1", () => {
+    expect(styleDamagePm(R, "ground")).toBe(500);
+    for (const s of ["dive", "hover", "glide"] as const) expect(styleDamagePm(R, s)).toBe(1000);
+  });
+});
+
+describe("speed helpers (docs/race-engine.md 5)", () => {
+  it("dash ends at 0.85 × min(vBase, target): 255 000 at PW 1.0, 209 737 at PW 0.7", () => {
+    expect(dashEnds(R, VBASE, 254_999, 352_500)).toBe(false);
+    expect(dashEnds(R, VBASE, 255_000, 352_500)).toBe(true);
+    expect(dashEnds(R, VBASE, 209_736, 246_750)).toBe(false);
+    expect(dashEnds(R, VBASE, 209_737, 246_750)).toBe(true);
+  });
+
+  it("approach: up by `up`, down by kDecel, never past the target, never a negative step", () => {
+    expect(approachVu(45_000, 352_500, 24_400, 3000)).toBe(69_400);
+    expect(approachVu(352_300, 352_500, 400, 3000)).toBe(352_500);
+    expect(approachVu(352_500, 317_250, 400, 3000)).toBe(349_500);
+    expect(approachVu(318_000, 317_250, 400, 3000)).toBe(317_250);
+    expect(approachVu(352_500, 352_500, 400, 3000)).toBe(352_500);
+    expect(approachVu(100, 200, -50, 3000)).toBe(100);
+  });
+});
+
+describe("jump, water and detour helpers (docs/race-engine.md 14)", () => {
+  it("liftF 1000 ‰ at T 600 (500 at T 0, 1500 at T 1200, glider-tape 1100)", () => {
+    expect(liftFactorPm(600, 0)).toBe(1000);
+    expect(liftFactorPm(0, 0)).toBe(500);
+    expect(liftFactorPm(1200, 0)).toBe(1500);
+    expect(liftFactorPm(600, 100)).toBe(1100);
+    expect(liftMe(100_000, 1000)).toBe(100_000);
+    expect(liftMe(20_000, 1500)).toBe(30_000);
+  });
+
+  it("jump need: 20 000 / 15 000 me at T 600 (ridge), 26 667 at T 300, 18 182 with glider-tape", () => {
+    expect(jumpNeedMe(20, 1000)).toBe(20_000);
+    expect(jumpNeedMe(15, 1000)).toBe(15_000);
+    expect(jumpNeedMe(20, 750)).toBe(26_667);
+    expect(jumpNeedMe(20, 1100)).toBe(18_182);
+  });
+
+  it("crash 25 000 md (ground 12 500); water hit 10 000 md at drag 0.2 (ground 5000)", () => {
+    expect(crashDamageMd(R, 1000)).toBe(25_000);
+    expect(crashDamageMd(R, 500)).toBe(12_500);
+    expect(waterHitMd(R, 200, 1000)).toBe(10_000);
+    expect(waterHitMd(R, 200, 500)).toBe(5000);
+  });
+
+  it("ground detour progress: fl(vOut × 1000, detour)", () => {
+    expect(detourDisp(352_500, 1100)).toBe(320_454);
+    expect(detourDisp(352_500, 1050)).toBe(335_714);
+    expect(detourDisp(352_500, 1000)).toBe(352_500);
+  });
+});
+
+describe("Intelligence and skill helpers (docs/race-engine.md 10, 15.2)", () => {
+  it("pace centre −21 / −11 / −3 / 0 / +1 / +14 / +22 at I 0 / 300 / 510 / 600 / 630 / 1000 / 1200", () => {
+    const at = (i: number) => paceCentrePm(R, i);
+    expect([0, 300, 510, 600, 630, 1000, 1200, 2000].map(at)).toEqual([
+      -21, -11, -3, 0, 1, 14, 22, 22,
+    ]);
+    expect(paceCentrePm({ ...R, paceCentreSpan: 0 }, 1000)).toBe(0);
+  });
+
+  it("plan perception half-width 150 → 0 (I 600: 75)", () => {
+    expect([0, 600, 1200, 2000].map((i) => planErrWindowPm(R, i))).toEqual([150, 75, 0, 0]);
+  });
+
+  it("activation 850 at I 600, 700 at I 300, 900 at I 900, floor 200 at I ≤ 112", () => {
+    expect([600, 300, 900, 112, 100, 1].map((i) => activationPm(R, i))).toEqual([
+      850, 700, 900, 200, 200, 200,
+    ]);
+    expect(activationPm(R, 113)).toBe(203);
+  });
+});
+
+describe("finish helpers (docs/race-engine.md 19)", () => {
+  it("finishMilli lies in [1000 t, 1000 t + 1000] (both interval ends)", () => {
+    expect(finishMilliOf(10, 1000, 500, 1000)).toBe(10_500);
+    expect(finishMilliOf(10, 1000, 0, 1000)).toBe(11_000); // pos lands exactly on L
+    expect(finishMilliOf(10, 1000, 999, 5000)).toBe(10_000); // crossed at the start of the tick
+  });
+
+  it("margin gap: B's position at A's crossing instant, in mm, never negative", () => {
+    const L = 225_000 * 100;
+    expect(marginGapMm(L, L - 225_000, 0, 500, 225)).toBe(1000); // stalled 1 m behind
+    expect(marginGapMm(L, L - 450_000, 450_000, 500, 225)).toBe(1000); // half its move done
+    expect(marginGapMm(L, L - 10, 450_000, 1000, 225)).toBe(0);
+  });
+});
+
+describe("2^53 bounds of docs/race-engine.md 1.5", () => {
+  it("every product stays a safe integer at the validator's maxima", () => {
+    const products = [
+      475_000 * 1600 * 1500 * 1200, // cruise
+      400 * 2600 * 1600 * 1500, // accel
+      1000 * 1000 * 1_200_000 * 1500, // drain coefficient
+      5000 * 5000 * 1_500_000, // drain
+      1_500_000 * 1000 * 1000, // finish
+      200_000 * 2700, // lift
+      1_500_000 * 2000, // landing, draft
+    ];
+    for (const p of products) expect(Number.isSafeInteger(p)).toBe(true);
+    expect(cruiseVu(475_000, 1600, 1500, 1200, 65)).toBe(
+      Math.floor((Math.floor((475_000 * 1600 * 1500 * 1200) / 1e9) * 1065) / 1000),
+    );
   });
 });
