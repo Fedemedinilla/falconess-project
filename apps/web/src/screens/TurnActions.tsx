@@ -123,7 +123,11 @@ function ActionCard({
           id={id}
           className={s.hit}
           disabled={disabled}
-          onClick={onClick}
+          onClick={(e) => {
+            // the second click of a double click lands on the next week's card: ignore it
+            if (e.detail > 1) return;
+            onClick();
+          }}
           onFocus={() => onPreview(kind)}
           onBlur={() => onPreview(undefined)}
           aria-describedby={descId}

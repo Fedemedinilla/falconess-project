@@ -46,7 +46,7 @@ export function Dialog({ open, onClose, title, footer, size = "md", id, children
         <h2 className={s.title} id={headingId}>
           {title}
         </h2>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+        <Button id={id ? `${id}-cerrar` : undefined} variant="ghost" size="sm" onClick={onClose}>
           {ui("ui.dialog.close")}
         </Button>
       </header>

@@ -1,5 +1,5 @@
 import { expect, stubFonts, t, test, watchErrors } from "./fixtures";
-import { decide, playUntil, readTurn, startSeason, statsOf } from "./play";
+import { decide, playUntil, RUN_KEY, readTurn, startSeason, statsOf } from "./play";
 
 /**
  * A run is seed + inputs: "Copiar partida" copies it, "Cargar partida" replays it elsewhere,
@@ -118,4 +118,22 @@ test("the page works with storage blocked, and copying falls back to selecting t
   });
   expect(JSON.parse(selection)).toMatchObject({ seed: "pt-e2e-sin-guardar" });
   expect(JSON.parse(selection).inputs).toHaveLength(2);
+});
+
+test("a double click on an action spends one week, not two", async ({ page }) => {
+  await startSeason(page, "peregrina", "pt-e2e-doble");
+  const before = await readTurn(page);
+  await page.dblclick("#accion-train-agility");
+  await page.waitForFunction(
+    ([key, n]) => {
+      const saved = JSON.parse(localStorage.getItem(String(key)) ?? "null");
+      return Array.isArray(saved?.inputs) && saved.inputs.length > Number(n);
+    },
+    [RUN_KEY, before.inputs],
+  );
+  // give a second input every chance to land before reading the run
+  await page.waitForTimeout(300);
+  const after = await readTurn(page);
+  expect(after.inputs).toBe(before.inputs + 1);
+  expect(after.week === 2 || after.eventOpen).toBe(true);
 });

@@ -103,6 +103,18 @@ describe("GameController", () => {
     expect(game.getSnapshot().run).toBeUndefined();
   });
 
+  it("ignores an input chosen on a run that has moved on since (a double click)", () => {
+    const game = started();
+    expect(game.act({ kind: "train:agility" }, 1)).toBe(true);
+    // the second click of the gesture was meant for the run of length 1
+    expect(game.act({ kind: "train:agility" }, 1)).toBe(false);
+    expect(game.getSnapshot().run?.inputs).toHaveLength(2);
+    expect(game.getSnapshot().error).toBeUndefined();
+    const state = game.getSnapshot().run?.state;
+    if (!state) throw new Error("no run");
+    expect(game.act(policy(state), 2)).toBe(true);
+  });
+
   it("undoes the last input by replaying without it, never the start", () => {
     const game = started();
     const first = game.getSnapshot().run?.state;

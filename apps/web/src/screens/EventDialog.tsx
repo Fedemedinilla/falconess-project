@@ -20,10 +20,12 @@ export function EventDialog() {
   const options = pending ? game.context().content.getEvent(pending.eventId).options.length : 0;
   const open = pending !== undefined && hiddenFor !== key;
 
-  // keys 1–3 answer while the dialog is open
-  const chooseRef = useRef((option: number) => {
-    game.act({ kind: "event:choose", option });
-  });
+  // keys 1–3 answer while the dialog is open; the answer is for the run this dialog showed
+  const inputs = snap.run?.inputs.length;
+  const chooseRef = useRef<(option: number) => void>(() => undefined);
+  chooseRef.current = (option: number) => {
+    game.act({ kind: "event:choose", option }, inputs);
+  };
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -94,7 +96,11 @@ export function EventDialog() {
                   type="button"
                   id={`evento-opcion-${i}`}
                   className={s.option}
-                  onClick={() => choose(i)}
+                  onClick={(e) => {
+                    // a dialog that opened under a double click must not take its second click
+                    if (e.detail > 1) return;
+                    choose(i);
+                  }}
                 >
                   <span className={s.optionKey} aria-hidden="true">
                     {i + 1}

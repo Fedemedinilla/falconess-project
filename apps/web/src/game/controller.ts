@@ -122,10 +122,15 @@ export class GameController {
   /**
    * Apply one input. A workshop order the sim refuses, or an input that does not fit the state
    * (an event is pending, the season ended), leaves the run as it was and sets `error`.
+   *
+   * `expectInputs` is the length of the run the screen showed when the player chose: when the
+   * run has moved on since (the second click of a double click, already applied), the input is
+   * ignored without an error, so one gesture never spends two weeks.
    */
-  act(input: RunInput): boolean {
+  act(input: RunInput, expectInputs?: number): boolean {
     const run = this.#snap.run;
     if (!run) return false;
+    if (expectInputs !== undefined && run.inputs.length !== expectInputs) return false;
     try {
       const after = advanceSeason(this.#ctx(run.rulesetVersion), run.state, input);
       this.#setRun(

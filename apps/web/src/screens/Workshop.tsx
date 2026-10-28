@@ -71,7 +71,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   };
   const confirm = () => {
     if (report.ops.length === 0 || report.blocked) return;
-    if (game.act({ kind: "workshop", ops: [...report.ops] })) onDone();
+    if (game.act({ kind: "workshop", ops: [...report.ops] }, run.inputs.length)) onDone();
   };
 
   const full = report.ops.length >= MAX_WORKSHOP_OPS;

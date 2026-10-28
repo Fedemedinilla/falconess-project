@@ -85,6 +85,9 @@ export function artifactProblems(page: string): string[] {
     problems.push("page must end with the inlined module script");
   for (const call of ["window.alert", "window.confirm", "window.prompt", "window.print"])
     if (page.includes(call)) problems.push(`page calls ${call}`);
+  // the page loads nothing: no fetch (Vite's modulepreload polyfill has one), XHR or beacon
+  for (const call of ["fetch(", "XMLHttpRequest", "sendBeacon"])
+    if (page.includes(call)) problems.push(`page can load with ${call}`);
   // a route written as #/path (JSON Schema refs such as "#/definitions" in zod are not routes)
   if (
     /href="#\//.test(markup) ||

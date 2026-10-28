@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => {
       outDir: artifact ? "dist-artifact" : "dist",
       emptyOutDir: true,
       target: "es2022",
+      // no modulepreload polyfill: the page has one script and must not fetch anything
+      modulePreload: { polyfill: false },
     },
   };
 });

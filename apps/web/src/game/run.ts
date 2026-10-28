@@ -35,7 +35,7 @@ export type ParseRunResult =
 function issues(error: z.ZodError): string {
   return error.issues
     .slice(0, 3)
-    .map((i) => `${i.path.join(".") || "<raíz>"}: ${i.message}`)
+    .map((i) => `$${i.path.length > 0 ? `.${i.path.join(".")}` : ""}: ${i.message}`)
     .join("; ");
 }
 

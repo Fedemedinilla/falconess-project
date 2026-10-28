@@ -54,6 +54,9 @@ describe("artifact page", () => {
     expect(artifactProblems(page.replace("console.log", "window.alert"))).toEqual([
       "page calls window.alert",
     ]);
+    expect(artifactProblems(page.replace("console.log", "fetch"))).toEqual([
+      "page can load with fetch(",
+    ]);
     expect(artifactProblems(page.replace("const a", 'location.hash = "#/x"; const a'))).toEqual([
       "hash routes must be plain names, never #/path",
     ]);

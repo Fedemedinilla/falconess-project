@@ -54,9 +54,11 @@ export function Turn() {
   const fresh = freshRace(ctx, state);
   const preview = previewKind && actionPreview(ctx, state, previewKind);
 
+  // the run this render shows: a click meant for it is ignored once the run has moved on
+  const inputsShown = run.inputs.length;
   const act = (input: RunInput) => {
     setUndone(false);
-    if (game.act(input)) setPreviewKind(undefined);
+    if (game.act(input, inputsShown)) setPreviewKind(undefined);
   };
   const undo = () => {
     setWorkshopOpen(false);
