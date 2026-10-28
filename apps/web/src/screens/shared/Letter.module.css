@@ -1,0 +1,35 @@
+.letter {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink-2);
+}
+
+.top {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.good {
+  border-color: var(--good);
+  color: var(--good);
+  background: var(--good-soft);
+}
+
+.weak {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.bad {
+  border-color: var(--bad);
+  color: var(--bad);
+}

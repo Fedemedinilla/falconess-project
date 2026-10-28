@@ -1,0 +1,271 @@
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* --- header: the week as a timing board --------------------------------------------------------- */
+
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "week who tools"
+    "strip strip strip";
+  align-items: end;
+  gap: var(--space-3) var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.week {
+  grid-area: week;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  align-items: end;
+  column-gap: var(--space-1);
+}
+
+.weekLabel {
+  grid-column: 1 / -1;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.weekNum {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 2.4rem + 2.4vw, 4.5rem);
+  font-weight: 700;
+  line-height: 0.85;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+}
+
+.weekOf {
+  padding-bottom: 0.15em;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+.who {
+  grid-area: who;
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--fs-3xl);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.seed {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+}
+
+.tools {
+  grid-area: tools;
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+}
+
+.undone {
+  min-height: 1.2em;
+  font-size: var(--fs-xs);
+  color: var(--good);
+}
+
+.strip {
+  grid-area: strip;
+  min-width: 0;
+}
+
+@media (max-width: 40rem) {
+  .head {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "week who"
+      "strip strip"
+      "tools tools";
+  }
+
+  .tools {
+    justify-items: start;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+/* --- goal race result --------------------------------------------------------------------------- */
+
+.result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--accent);
+  background: var(--surface);
+}
+
+.resultHead {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.resultEyebrow {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.resultCourse {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.resultNums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.resultNums div {
+  display: grid;
+  gap: 2px;
+}
+
+.resultNums dt {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.resultNums dd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.resultOf {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.resultNums dd.resultGoal {
+  align-items: center;
+  font-size: var(--fs-lg);
+}
+
+@media (max-width: 52rem) {
+  .result {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+}
+
+/* --- board --------------------------------------------------------------------------------------- */
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.left,
+.right {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* one column: the panels in the order a turn reads them */
+@media (max-width: 64rem) {
+  .board {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .left,
+  .right,
+  .pair {
+    display: contents;
+  }
+
+  .status {
+    order: 1;
+  }
+
+  .actions {
+    order: 2;
+  }
+
+  .goals {
+    order: 3;
+  }
+
+  .hangar {
+    order: 4;
+  }
+
+  .log {
+    order: 5;
+  }
+}

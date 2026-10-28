@@ -1,0 +1,199 @@
+.status {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.gauges {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.gauge {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 7.5rem) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.gaugeLabel,
+.aptLabel,
+.statsHead {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.mood {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.moodStep {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+}
+
+.moodOn {
+  background: var(--ink-3);
+  border-color: var(--ink-3);
+}
+
+.moodNow {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.gaugeValue {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  text-align: end;
+}
+
+.gaugeNote {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.fatigue {
+  display: grid;
+  gap: 2px;
+}
+
+.threshold {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  text-align: end;
+}
+
+.resources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.resources div {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+}
+
+.resources dt {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.resources dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.injured {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--bad);
+  background: var(--bad-soft);
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+.stats {
+  display: grid;
+  gap: 2px;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.statsHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.delta {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  color: var(--ink-3);
+}
+
+.up {
+  color: var(--good);
+}
+
+.down {
+  color: var(--bad);
+}
+
+.aptitudes,
+.skills {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.letters li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.skillList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skillList li {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--line-strong);
+  font-size: var(--fs-sm);
+}
