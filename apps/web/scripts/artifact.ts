@@ -7,7 +7,7 @@
  */
 
 export const ARTIFACT_FILE = "falconess-playtest.html";
-export const ARTIFACT_TITLE = "<title>Falconess · Pruebas</title>";
+export const ARTIFACT_TITLE = "<title>Prueba jugable Falconess</title>";
 export const VIEWPORT_FIT_META = '<meta name="claude:viewport-fit-sides" content="cover">';
 export const MAX_ARTIFACT_BYTES = 16 * 1024 * 1024;
 const FONT_HOST = "https://fonts.googleapis.com/";
