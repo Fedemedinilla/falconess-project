@@ -35,7 +35,9 @@ function RunStatus() {
   const turns = ctx.ruleset.season.turns;
   return (
     <p className={s.status}>
-      <Livery palette={sponsor.palette} size="sm" />
+      <span className={s.swatch}>
+        <Livery palette={sponsor.palette} size="sm" />
+      </span>
       <span className={s.runner}>{gameText(falconess.textKey)}</span>
       {run.state.status === "ended" ? (
         <Pill tone="neutral">{ui("ui.top.ended")}</Pill>

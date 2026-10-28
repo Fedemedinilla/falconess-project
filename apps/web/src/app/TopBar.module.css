@@ -92,6 +92,10 @@
   min-width: 0;
 }
 
+.swatch {
+  display: inline-flex;
+}
+
 .runner {
   font-family: var(--font-display);
   font-size: var(--fs-lg);
@@ -174,16 +178,27 @@
     font-size: var(--fs-lg);
   }
 
+  /* the name gives way first; the week and a waiting event always show */
   .status {
     flex-wrap: nowrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--space-1);
+    overflow: hidden;
   }
 
-  .runner {
+  .status > * {
+    flex: none;
+  }
+
+  .status > .runner {
+    flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .status > .swatch {
+    display: none;
   }
 }
