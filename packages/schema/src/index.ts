@@ -9,5 +9,6 @@ export * from "./frame.js";
 export * from "./gacha.js";
 export * from "./manufacturer.js";
 export * from "./modifiers.js";
+export * from "./race.js";
 export * from "./season.js";
 export * from "./skill.js";
