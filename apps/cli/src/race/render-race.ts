@@ -44,6 +44,7 @@ export const BAR = {
   finish: "|",
   dnf: "X",
   stalled: "x",
+  broken: "#",
   airborne: "^",
   overheated: "!",
   exhausted: "_",
@@ -313,6 +314,7 @@ export function timelineBar(log: RaceLog, lane: number): string {
       boost > 0 || (flags & (RACE_FRAME_FLAGS.boosting | RACE_FRAME_FLAGS.pulseBurst)) !== 0;
     if (flags & RACE_FRAME_FLAGS.dnf) bar += BAR.dnf;
     else if (flags & RACE_FRAME_FLAGS.stalled) bar += BAR.stalled;
+    else if (flags & RACE_FRAME_FLAGS.broken) bar += BAR.broken;
     else if (flags & RACE_FRAME_FLAGS.airborne) bar += BAR.airborne;
     else if (hot || flags & RACE_FRAME_FLAGS.overheated) bar += BAR.overheated;
     else if (flags & RACE_FRAME_FLAGS.exhausted) bar += BAR.exhausted;
@@ -347,6 +349,7 @@ function timeline(log: RaceLog, runners: readonly Runner[], labels: RaceLabels):
     `${BAR.exhausted} agotada`,
     `${BAR.overheated} sobrecalentada`,
     `${BAR.stalled} detenida`,
+    `${BAR.broken} alas rotas`,
     `${BAR.normal} crucero`,
     `${BAR.finish} meta`,
     `${BAR.dnf} DNF`,
@@ -550,6 +553,22 @@ function skillsLine(log: RaceLog, r: Runner, labels: RaceLabels): string {
   ].join(" · ");
 }
 
+/**
+ * Broken wings as a time sink (20.4 flag 256, 8.4): where they broke and the PW before and after,
+ * from the `durabilityBroken` event; a frame that starts at durability 0 is broken from the start
+ * (no event); without events (`detail: "results"`) only the fact.
+ */
+function brokenSink(log: RaceLog, entry: RaceEntry): string {
+  const pw = (pm: number) => fixed(pm, 1000, 2);
+  const e = (log.events ?? []).find(
+    (x): x is RaceEvent & { kind: "durabilityBroken" } =>
+      x.lane === entry.laneIndex && x.kind === "durabilityBroken",
+  );
+  if (e)
+    return `alas rotas en ${metres(e.posMm)} m (P/W ${pw(entry.powerToWeight)} → ${pw(e.powerToWeight)})`;
+  return entry.durabilityStart === 0 ? "alas rotas desde la salida" : "alas rotas";
+}
+
 /** One label column for every block: the longest label, "habilidades". */
 const WHY_LABEL_WIDTH = 11;
 
@@ -617,6 +636,7 @@ function whyBlock(
     sinks.push(`${L.jumpsOk} aterrizaje(s) -${mps(L.landingLossMms)} m/s en total`);
   if (L.detours > 0) sinks.push(`${L.detours} desvío(s) por tierra`);
   if (L.overheatTicks > 0) sinks.push(`sobrecalor ${ticksText(L.overheatTicks)}`);
+  if (result.broken) sinks.push(brokenSink(log, entry));
   if (result.dnf) sinks.push("DNF");
   if (L.energyLeft > 0) sinks.push(`energía sin usar ${milliUnits(L.energyLeft)}`);
   lines.push(["pérdidas", sinks.length > 0 ? sinks.join(" · ") : "—"]);

@@ -345,6 +345,25 @@ describe("timeline", () => {
       "x",
     );
     expect(timelineBar({ ...log, frames: stalled(12, RACE_FRAME_FLAGS.dnf) }, lane)[12]).toBe("X");
+    // broken wings: `#`, under stalled and DNF
+    expect(timelineBar({ ...log, frames: stalled(14, RACE_FRAME_FLAGS.broken) }, lane)[14]).toBe(
+      "#",
+    );
+    const both = stalled(16, RACE_FRAME_FLAGS.broken | RACE_FRAME_FLAGS.stalled);
+    expect(timelineBar({ ...log, frames: both }, lane)[16]).toBe("x");
+  });
+
+  it("draws broken wings with `#` from the break to the line, and lists `#` in the legend", () => {
+    const canyon = loadRaceFixture("canyon");
+    const e = eventsOf(canyon, "durabilityBroken")[0];
+    if (!e) throw new Error("the canyon fixture has a break");
+    const colTicks = barSecondsPerColumn(canyon.ticks) * 15;
+    const bar = timelineBar(canyon, e.lane);
+    const firstBroken = bar.indexOf("#");
+    expect(firstBroken).toBeGreaterThan(0);
+    expect(firstBroken).toBeLessThanOrEqual(Math.ceil((e.tick + 1) / colTicks));
+    expect(bar.slice(firstBroken)).toMatch(/^#+\| *$/);
+    expect(renderRace(canyon, labels).join("\n")).toContain("# alas rotas");
   });
 });
 
@@ -515,7 +534,15 @@ describe("why", () => {
         );
       if (L.overheatTicks > 0) expect(line).toContain(`sobrecalor ${L.overheatTicks} tick`);
       if (L.energyLeft > 0) expect(line).toContain(`energía sin usar ${tenths(L.energyLeft)}`);
+      const broke = eventsOf(canyon.log, "durabilityBroken").find((e) => e.lane === r.lane);
+      const pw = canyon.log.entries[r.lane]?.powerToWeight ?? 0;
+      if (broke)
+        expect(line).toContain(
+          `alas rotas en ${fixed(broke.posMm, 1000, 0)} m (P/W ${fixed(pw, 1000, 2)} → ${fixed(broke.powerToWeight, 1000, 2)})`,
+        );
+      else expect(line).not.toContain("alas rotas");
     });
+    expect(canyon.lines.filter((l) => l.includes("alas rotas en "))).not.toEqual([]);
     const ridge = sinks("ridge");
     ridge.log.results.forEach((r, k) => {
       const line = ridge.lines[k] ?? "";
@@ -581,6 +608,25 @@ describe("why", () => {
       ];
       if (list.length > 0) expect(lines).toContain(`     habilidades  ${list.join(" · ")}`);
     }
+  });
+
+  it("names broken wings without a break event: from the start, or without events", () => {
+    const canyon = loadRaceFixture("canyon");
+    const lane = canyon.results[0]?.lane ?? 0;
+    const sinksOf = (log: RaceLog) =>
+      renderRace(log, labels).filter((l) => l.startsWith("     pérdidas "))[0] ?? "";
+    const broken = (log: RaceLog, durabilityStart: number): RaceLog => ({
+      ...log,
+      entries: log.entries.map((e) => (e.laneIndex === lane ? { ...e, durabilityStart } : e)),
+      results: log.results.map((r) => (r.lane === lane ? { ...r, broken: true } : r)),
+      ...(log.events
+        ? { events: log.events.filter((e) => e.kind !== "durabilityBroken" || e.lane !== lane) }
+        : {}),
+    });
+    expect(sinksOf(broken(canyon, 0))).toContain("alas rotas desde la salida");
+    const { events: _events, frames: _frames, ...results } = canyon;
+    const noEvents: RaceLog = { ...results, detail: "results" };
+    expect(sinksOf(broken(noEvents, 50))).toMatch(/alas rotas( ·|$)/);
   });
 });
 

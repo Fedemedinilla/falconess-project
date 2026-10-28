@@ -29,11 +29,11 @@ LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
   rival-4    18.5  37.1  56.6  77.4  98.3  117.4  136.0  151.9  169.9  188.1
 
   1 columna = 4 s
-  > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  - crucero  | meta  X DNF
+  > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  # alas rotas  - crucero  | meta  X DNF
              0s        40s       80s       120s      160s
   rival-3    >++++++++++++++++_________|                     
   Peregrina  ***--------------*_________|                    
-  rival-5    ***---------------*__________|                  
+  rival-5    ***---------------*_#########|                  
   rival-1    +++-----------------+++++______|                
   rival-2    >+--------------------++-----+++++|             
   rival-7    ++++++++++++++++++++++++-------++!|             
@@ -130,7 +130,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
   3º rival-5  118.90 s  (+12.89 s)
      fases        salida 20.60 s (+0.13) · medio 50.40 s (+5.47) · final 47.93 s (+7.27)
      ganancias    boost 60/0/12 ticks · 6 pulsos
-     pérdidas     agotada en 2273 m (727 m a velocidad mínima) · energía sin usar 13.6
+     pérdidas     agotada en 2273 m (727 m a velocidad mínima) · alas rotas en 2401 m (P/W 1.40 → 1.05) · energía sin usar 13.6
      juicio       ritmo +2/-40/-19 ‰ · error de plan -20 ‰ (±71)
      plan         2.61 m/s de 2018 m a 2230 m · hp-limited · limpio · E 28.0 (percibe 27.4) · hp 297 (percibe 291) · 27 cand. · 1 replan, el último (broken): ninguno (exhausted)
      modos        surplus → plan 2.61 → hold → kick
@@ -323,7 +323,7 @@ LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
   Caracara  12.7  24.6  36.4  48.7  61.0  73.2  85.2  97.4  109.4  121.0
 
   1 columna = 3 s
-  > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  - crucero  | meta  X DNF
+  > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  # alas rotas  - crucero  | meta  X DNF
             0s        30s       60s       90s       120s
   rival-4   **-------^------*^_____|                 
   rival-5   +++++++++^++++++++^^>>___|               
@@ -495,7 +495,7 @@ LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
   rival-5    5.9  11.1  16.1  20.8  25.1  29.1  33.0  36.9  40.6  44.7
 
   1 columna = 1 s
-  > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  - crucero  | meta  X DNF
+  > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  # alas rotas  - crucero  | meta  X DNF
              0s        10s       20s       30s       40s
   rival-6    +++++++++++++++++++++++++++++++>>>>>>>+___|  
   Peregrina  *-**-**--------------------------**-*--*--|  
