@@ -106,13 +106,13 @@ piezas se reduce hasta que la mayor ganancia de la portadora quede bajo 3 puntos
 también en `full`. Las dos baterías se escalan por el mismo factor (≈ 0,3), así la de Boneyard sigue
 dando más energía a cambio de durabilidad. El estabilizador toma el valor de §25.3 (≈ 0,97).
 
-| Pieza                | Antes                      | Después    | v1 sprint / ridge / cañón (puntos) | Después`pr`     | Después`pr` alt1 | `full` peor celda (Δ victorias, 95 %) | `full` alt1       |
-| -------------------- | -------------------------- | ---------- | ---------------------------------- | --------------- | ---------------- | ------------------------------------- | ----------------- |
-| `lumiere-stabilizer` | `curves-penalty-scale` 0,5 | 0,97       | **51,4** / 0 / 0                   | 2,3 / 0 / 0     | 2,3 / 0 / 0      | sprint 1,73 [1,07; 2,39]              | 2,07 [1,35; 2,79] |
-| `altair-battery`     | energy +20                 | +6         | **4,9** / 2,7 / 1,5                | 1,3 / 0,8 / 0,4 | 1,2 / 0,8 / 0,4  | sprint 1,13 [0,60; 1,67]              | 1,33 [0,75; 1,91] |
-| `boneyard-battery`   | energy +25, durability −10 | +8, −10    | **5,9** / **4,3** / 1,8            | 1,8 / 1,1 / 0,6 | 1,8 / 1,1 / 0,6  | sprint 1,87 [1,16; 2,58]              | 2,07 [1,32; 2,81] |
-| `steinhaus-turbine`  | PW +0,1, dissipation −10   | sin cambio | **87,5** / **87,1** / **87,5**     | 0,5 / 0,3 / 0,3 | 0,4 / 0,2 / 0,3  | sprint 0,40 [0,03; 0,77]              | 0,60 [0,21; 0,99] |
-| `lumiere-turbine`    | PW +0,05, dissipation +10  | sin cambio | **76,8** / **74,2** / **79,2**     | 0,4 / 0,1 / 0,4 | 0,3 / 0,1 / 0,2  | sprint 0,53 [0,16; 0,90]              | 0,87 [0,40; 1,34] |
+| Pieza                | Antes                      | Después    | v1 sprint / ridge / cañón (puntos) | Después (`pr`)  | Después (`pr`, alt1) | `full` peor celda (Δ victorias, 95 %) | `full` alt1       |
+| -------------------- | -------------------------- | ---------- | ---------------------------------- | --------------- | -------------------- | ------------------------------------- | ----------------- |
+| `lumiere-stabilizer` | `curves-penalty-scale` 0,5 | 0,97       | **51,4** / 0 / 0                   | 2,3 / 0 / 0     | 2,3 / 0 / 0          | sprint 1,73 [1,07; 2,39]              | 2,07 [1,35; 2,79] |
+| `altair-battery`     | energy +20                 | +6         | **4,9** / 2,7 / 1,5                | 1,3 / 0,8 / 0,4 | 1,2 / 0,8 / 0,4      | sprint 1,13 [0,60; 1,67]              | 1,33 [0,75; 1,91] |
+| `boneyard-battery`   | energy +25, durability −10 | +8, −10    | **5,9** / **4,3** / 1,8            | 1,8 / 1,1 / 0,6 | 1,8 / 1,1 / 0,6      | sprint 1,87 [1,16; 2,58]              | 2,07 [1,32; 2,81] |
+| `steinhaus-turbine`  | PW +0,1, dissipation −10   | sin cambio | **87,5** / **87,1** / **87,5**     | 0,5 / 0,3 / 0,3 | 0,4 / 0,2 / 0,3      | sprint 0,40 [0,03; 0,77]              | 0,60 [0,21; 0,99] |
+| `lumiere-turbine`    | PW +0,05, dissipation +10  | sin cambio | **76,8** / **74,2** / **79,2**     | 0,4 / 0,1 / 0,4 | 0,3 / 0,1 / 0,2      | sprint 0,53 [0,16; 0,90]              | 0,87 [0,40; 1,34] |
 
 Métrica 5: `pr` **fail** (14/10/0) → **pass** (24/0/0) en las dos bases de semillas; `full` (S5 con
 1500 semillas por celda, Δ de victorias medido directo) pasa en las dos (cota alta máxima 2,81
@@ -125,8 +125,8 @@ hay que volver a medirlas (R18).
 
 ### Propuestas para el dueño
 
-Estado: **propuesto**. Medido con el arnés del lote en proceso (mismas semillas y conteo que
-`sim:batch`, perfil `full`, 600 carreras por pista).
+Estado: **propuesto**. Las cifras de las alternativas (PW 0, aire de descenso 1200) salen del arnés
+del lote en proceso (mismas semillas y conteo que `sim:batch`, perfil `full`, 600 carreras por pista).
 
 1. **Boneyard en el ridge queda inconclusa en `full`** (33,0-33,7 %, cota baja 29,4-30,0 %). El
    término de Boneyard ya está en su tope (`repairableRuggedPm` 0) y su energía en el tope del
