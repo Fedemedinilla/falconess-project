@@ -379,7 +379,8 @@ describe("log consistency (properties P5, P8)", () => {
             L.energyFromHeat,
         ).toBe(r.energyEnd);
         expect(L.energyLeft).toBe(r.energyEnd);
-        expect(L.phaseTicks.reduce((a, b) => a + b, 0)).toBe(tt);
+        // stalled ticks are booked in stallTicks only (18 B11, stalledTick)
+        expect(L.phaseTicks.reduce((a, b) => a + b, 0) + L.stallTicks).toBe(tt);
       }
       const f = log.frames;
       if (f === undefined) throw new Error("full log without frames");

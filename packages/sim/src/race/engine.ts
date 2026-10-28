@@ -306,7 +306,6 @@ function runnerTick(c: Ctx, i: number): boolean {
   // B1. phase; final entry (heat-to-energy); plan point
   const pos = S.pos[i] ?? 0;
   const ph = phaseOf(G, pos);
-  S.phaseTicks[i * 3 + ph] = (S.phaseTicks[i * 3 + ph] ?? 0) + 1;
   if (ph === PH_FINAL && !flag(S, i, F_FINAL_ENTERED)) {
     setFlag(S, i, F_FINAL_ENTERED);
     heatToEnergy(c, i);
@@ -435,6 +434,8 @@ function runnerTick(c: Ctx, i: number): boolean {
   S.pos[i] = newPos;
   S.disp[i] = disp;
   S.vOutPrev[i] = vOut;
+  // ledger phase ticks here, in B11: a stalled tick (B2, or a failed jump at B4) never reaches it
+  S.phaseTicks[i * 3 + ph] = (S.phaseTicks[i * 3 + ph] ?? 0) + 1;
   const mode = S.mode[i] ?? 0;
   const tickFlags =
     (boostOn ? FL.boosting : 0) |

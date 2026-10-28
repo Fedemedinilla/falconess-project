@@ -461,6 +461,32 @@ describe("jumps (docs/race-engine.md 14)", () => {
     expect(stalled.length).toBeGreaterThan(0);
   });
 
+  it("stalled ticks are not phase ticks (18 B11): phaseTicks + stallTicks = timeTicks", () => {
+    // found by the differential harness against the prototype (.work/impl/diff): ticks lost to a
+    // failed jump were counted twice, in phaseTicks (B1) and in stallTicks
+    const G = buildCourseGeometry(NO_BOOST, JUMP_COURSE);
+    const weak = fixture("hover", 0, { energy: 20, stats: { ...S600, technique: 1 } });
+    const armored = withTraits(weak, { obstacleArmor: true, obstacleArmorExtraTicks: 10 });
+    for (const [e, stall] of [
+      [weak, 20],
+      [armored, 30],
+    ] as const) {
+      const { log, rows } = trace(NO_BOOST, [e], JUMP_COURSE, "phase-ticks");
+      const r = at(log.results, 0);
+      const tf = at(events(log, "jumpFail"), 0).tick;
+      const want = [0, 0, 0];
+      for (let t = 0; t < (r.timeTicks ?? 0); t++) {
+        if (t >= tf && t < tf + stall) continue;
+        const start = t === 0 ? 0 : at(rows, t - 1).pos;
+        const ph = start < G.startEnd ? 0 : start < G.finalStart ? 1 : 2;
+        want[ph] = at(want, ph) + 1;
+      }
+      expect(r.ledger.stallTicks).toBe(stall);
+      expect(r.ledger.phaseTicks).toEqual(want);
+      expect(r.ledger.phaseTicks.reduce((a, b) => a + b, 0) + stall).toBe(r.timeTicks);
+    }
+  });
+
   it("stalled ticks cool and regenerate (and count skill timers), but never drain hp", () => {
     const weak = withTraits(fixture("hover", 0, { energy: 30, stats: { ...S600, technique: 1 } }), {
       regenMe: 250,
