@@ -1,13 +1,49 @@
-import { floorDiv } from "@falconess/rng";
+import { ceilDiv, floorDiv } from "@falconess/rng";
+import { createPulseOutput, type PulseInput, type PulseOutput, pulseStep } from "../rules/index.js";
 import type { RaceConstants } from "../rulesets/index.js";
-import { F_FINISHED, type RaceState } from "./state.js";
-import { MODE_OFF } from "./units.js";
+import type { CourseGeometry } from "./geometry.js";
+import {
+  F_AIRBORNE,
+  F_EXHAUSTED,
+  F_FINISHED,
+  F_PLAN_ACTIVE,
+  IMMUNE_WHOLE_RACE,
+  ib,
+  ibps,
+  ips,
+  is,
+  type RaceState,
+  type RaceTables,
+} from "./state.js";
+import {
+  MODE_DIVE_DESCENT,
+  MODE_GLIDE_CHASE,
+  MODE_GROUND_CONSTANT,
+  MODE_HOLD,
+  MODE_HOVER_CATCHUP,
+  MODE_KICK,
+  MODE_OFF,
+  MODE_PLAN,
+  MODE_PREHEAT,
+  MODE_REGEN,
+  MODE_SURPLUS,
+  PH_FINAL,
+  RULE_MASS_THRUST,
+  SEG_DESCENT,
+  SEG_JUMP,
+  STYLE_DIVE,
+  STYLE_GLIDE,
+  STYLE_GROUND,
+  STYLE_HOVER,
+} from "./units.js";
 
 /**
- * Controller of docs/race-engine.md 9. This stage holds only the rank snapshot (9.1) and a
- * placeholder decision that never boosts, so races run end to end; the next stage replaces
- * `decide` and `planSprint` with modes, gates, the licence, the accumulator, pulses and the sprint
- * plan (9.2-9.6, 11, 12).
+ * Rank and style controllers of docs/race-engine.md 9 (step B7): the rank snapshot (9.1), the
+ * reserves and keeps (9.2), the gates and the overheat licence (9.3), the modes and their
+ * precedence with the style table and the style hold (9.4), the integer level accumulator (9.5)
+ * and the continuous decision (9.6); pulse frames hand the decision to `pulseStep` (12). A pure
+ * function of the runner's own state, its tables and the rank snapshot; never draws randomness and
+ * never allocates.
  */
 
 /** Finished runners rank ahead of every unfinished runner, by finish time (9.1). */
@@ -40,26 +76,307 @@ export function inPack(R: RaceConstants, S: RaceState, i: number): boolean {
   return pf >= R.style.packLo && pf <= R.style.packHi;
 }
 
+/** What the controller reports to the log (events of 20.4); the engine adds tick and position. */
+export type ControllerSink = {
+  /** The (mode, level) pair changed (9.5); level in vu. */
+  boostMode(i: number, mode: number, level: number): void;
+  /** A free-first-boost bit was spent on this segment type (9.6, 12). */
+  freeBoost(i: number, segType: number): void;
+  /** A pulse fired: its chain count, moved thrust (vu, air and stoop included), free flag, cooldown. */
+  pulse(i: number, chain: number, thrust: number, free: boolean, cooldown: number): void;
+};
+
+/** Per-race scratch of the controller: reused every tick, never allocated in the loop. */
+export type Controller = {
+  readonly sink: ControllerSink;
+  readonly pin: PulseInput;
+  readonly pout: PulseOutput;
+  /** `selectMode` outputs: the mode's level (vu) and whether it wants boost before the accumulator. */
+  level: number;
+  want: boolean;
+};
+
+export function createController(sink: ControllerSink): Controller {
+  return {
+    sink,
+    pin: {
+      t: 0,
+      want: false,
+      gatesOk: false,
+      canThrust: false,
+      levelMode: false,
+      segType: 0,
+      bp: 0,
+      bpc: 0,
+      unit: 1,
+    },
+    pout: createPulseOutput(),
+    level: 0,
+    want: false,
+  };
+}
+
+/** Energy one boost decision commits (9.2): a whole burst for pulse frames, `kE` otherwise. */
+export function costBoost(R: RaceConstants, T: RaceTables, i: number): number {
+  return T.pulseFrame[i] === 1 ? R.pulseTicks * (T.costOn[i] ?? 0) : R.kE;
+}
+
+/** `keepOk(keepPm) = energy − costBoost − jr[seg] ≥ fl(Emax × keepPm, 1000)` (9.2). */
+export function keepOk(
+  R: RaceConstants,
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  keepPm: number,
+): boolean {
+  const jr = T.jr[is(i, S.seg[i] ?? 0)] ?? 0;
+  return (S.energy[i] ?? 0) - costBoost(R, T, i) - jr >= floorDiv((T.Emax[i] ?? 0) * keepPm, 1000);
+}
+
 /**
- * Placeholder of step B7 (9.6): fixes the tick's decision with no boost at all (`boostOn`,
- * `isPulseTick`, `freeTick`, `burstChain` = 0) and mode OFF. Replaced by the controller stage.
+ * Mode of 9.4, first match wins: KICK, PLAN, HOLD, PREHEAT, SURPLUS, REGEN, the style row, OFF.
+ * Writes the mode's level and its want into `ctl` (a level mode's want comes from the
+ * accumulator, 9.5) and sets the style hold of hover and glide on continuous frames when their
+ * intent fires. `seg`, `ph` and `b` are the runner's tick-start segment, phase and PW variant.
  */
-export function decide(S: RaceState, i: number): void {
+export function selectMode(
+  R: RaceConstants,
+  G: CourseGeometry,
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  ph: number,
+  ctl: Controller,
+): number {
+  ctl.level = 0;
+  ctl.want = false;
+  const pos = S.pos[i] ?? 0;
+  if (ph === PH_FINAL && pos >= (T.kickAt[i] ?? 0)) {
+    ctl.want = true;
+    return MODE_KICK;
+  }
+  if (((S.flags[i] ?? 0) & F_PLAN_ACTIVE) !== 0) {
+    const level = S.planLevel[i] ?? 0;
+    if (level > 0 && (S.planStartPos[i] ?? 0) <= pos && pos < (S.planEndPos[i] ?? 0)) {
+      ctl.level = level;
+      return MODE_PLAN;
+    }
+    return MODE_HOLD;
+  }
+  const seg = S.seg[i] ?? 0;
+  const b = S.b[i] ?? 0;
+  const energy = S.energy[i] ?? 0;
+  const Emax = T.Emax[i] ?? 0;
+  const jr = T.jr[is(i, seg)] ?? 0;
+  if (ph !== PH_FINAL) {
+    if ((T.heatToEnergyPm[i] ?? 0) > 0) {
+      const room = Math.max(0, (T.capLim[i] ?? 0) - (S.heat[i] ?? 0));
+      if (G.finalStart - pos <= ceilDiv(room, R.kH) * (T.vC[ibps(i, b, ph, seg)] ?? 0)) {
+        ctl.want = true;
+        return MODE_PREHEAT;
+      }
+    }
+    if (energy - jr - (T.capFinal[ib(i, b)] ?? 0) >= costBoost(R, T, i)) {
+      ctl.want = true;
+      return MODE_SURPLUS;
+    }
+    const regen = T.regenTick[i] ?? 0;
+    if (regen > 0 && energy + 2 * regen >= Emax) {
+      ctl.want = true;
+      return MODE_REGEN;
+    }
+  }
+
+  // 7. style row
+  const style = T.style[i] ?? 0;
+  if ((style === STYLE_HOVER || style === STYLE_GLIDE) && (S.holdLeft[i] ?? 0) > 0) {
+    ctl.want = true; // style hold: intent and keep ignored, gates still apply
+    return style === STYLE_HOVER ? MODE_HOVER_CATCHUP : MODE_GLIDE_CHASE;
+  }
+  let mode = MODE_OFF;
+  switch (style) {
+    case STYLE_DIVE:
+      if (ph !== PH_FINAL && G.segType[seg] === SEG_DESCENT) {
+        mode = MODE_DIVE_DESCENT;
+        ctl.want = keepOk(R, T, S, i, R.style.diveKeep);
+      }
+      break;
+    case STYLE_HOVER:
+      if ((S.posFrac[i] ?? 0) > R.style.packHi) {
+        mode = MODE_HOVER_CATCHUP;
+        ctl.want = keepOk(R, T, S, i, R.style.hoverKeep);
+      }
+      break;
+    case STYLE_GLIDE:
+      if (ph !== PH_FINAL && (S.ahead[i] ?? 0) > 0) {
+        mode = MODE_GLIDE_CHASE;
+        ctl.want = keepOk(R, T, S, i, R.style.glideKeep);
+      }
+      break;
+    case STYLE_GROUND:
+      if (
+        ph !== PH_FINAL &&
+        energy - jr >= floorDiv(Emax * (1000 - R.style.groundPreShare), 1000)
+      ) {
+        mode = MODE_GROUND_CONSTANT;
+        ctl.level = T.groundLevel[ib(i, b)] ?? 0;
+      }
+      break;
+    default:
+      break;
+  }
+  if (
+    ctl.want &&
+    (mode === MODE_HOVER_CATCHUP || mode === MODE_GLIDE_CHASE) &&
+    T.pulseFrame[i] !== 1
+  )
+    S.holdLeft[i] = R.style.styleHoldTicks;
+  return mode;
+}
+
+/**
+ * The overheat licence of 9.3: a licensed runner (mass-thrust, or a heat-immunity holder of any
+ * rule but telemetry) may boost past the heat gate while its projected durability after the
+ * cooling tail stays above `overheatFloorPm` of durabilityMax; an immunity holder only if the tail
+ * also ends inside its window. So a licensed runner never breaks its own wings.
+ */
+export function licenceOk(
+  R: RaceConstants,
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  over: boolean,
+): boolean {
+  if (T.licensed[i] !== 1) return false;
+  const heat = S.heat[i] ?? 0;
+  const heatCap = T.heatCap[i] ?? 0;
+  const cool = T.coolTick[i] ?? 1;
+  const projTicks =
+    T.pulseFrame[i] === 1
+      ? R.pulseTicks + ceilDiv(Math.max(0, heat + R.pulseTicks * R.kH - heatCap), cool)
+      : ceilDiv(Math.max(0, heat + R.kH - heatCap), cool);
+  const dmg = T.dmgTick[i] ?? 0;
+  const durAfter = (S.dur[i] ?? 0) - (over ? dmg : 0) - dmg * projTicks;
+  if (!(durAfter > floorDiv((T.durMax[i] ?? 0) * R.overheatFloorPm, 1000))) return false;
+  if (T.rule[i] === RULE_MASS_THRUST) return true;
+  const until = T.immuneUntil[i] ?? IMMUNE_WHOLE_RACE;
+  if (until === IMMUNE_WHOLE_RACE) return true;
+  return (S.pos[i] ?? 0) + (projTicks + 1) * Math.max(1, S.vOutPrev[i] ?? 0) < until;
+}
+
+/**
+ * Step B7 for runner i at tick t (9.6, 12): select the mode, reset the accumulator and log a
+ * `boostMode` event when (mode, level) changes, accrue the accumulator in level modes (not on
+ * jump-blocked ticks), apply the gates of 9.3 (true values, never perceived), then either run the
+ * Kōryū state machine or take the continuous decision with free-first-boost. Writes the tick's
+ * `boostOn`, `isPulseTick`, `freeTick`, `burstChain`; the speed step applies thrust, air and stoop.
+ * `over` is the tick's overheat flag (step B5).
+ */
+export function decide(
+  R: RaceConstants,
+  G: CourseGeometry,
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  t: number,
+  ph: number,
+  over: boolean,
+  ctl: Controller,
+): void {
   S.boostOn[i] = 0;
   S.isPulseTick[i] = 0;
   S.freeTick[i] = 0;
   S.burstChain[i] = 0;
-  S.mode[i] = MODE_OFF;
-  S.modeLevel[i] = 0;
-}
 
-/**
- * Placeholder of step B6 (11.3): counts the plan and leaves no spurt (`planLevel` 0, so the
- * runner would hold until the kick). Replaced by the sprint-plan stage.
- */
-export function planSprint(S: RaceState, i: number): void {
-  S.planCount[i] = (S.planCount[i] ?? 0) + 1;
-  S.planLevel[i] = 0;
-  S.planStartPos[i] = S.pos[i] ?? 0;
-  S.planEndPos[i] = S.pos[i] ?? 0;
+  const mode = selectMode(R, G, T, S, i, ph, ctl);
+  const level = ctl.level;
+  let want = ctl.want;
+  if (mode >= MODE_KICK && mode <= MODE_REGEN) S.holdLeft[i] = 0;
+  const P = S.pulse;
+  if (mode !== S.mode[i] || level !== S.modeLevel[i]) {
+    P.acc[i] = 0;
+    S.mode[i] = mode;
+    S.modeLevel[i] = level;
+    ctl.sink.boostMode(i, mode, level);
+  }
+
+  const seg = S.seg[i] ?? 0;
+  const segType = G.segType[seg] ?? 0;
+  const b = S.b[i] ?? 0;
+  const style = T.style[i] ?? 0;
+  const flags = S.flags[i] ?? 0;
+  const airborne = (flags & F_AIRBORNE) !== 0;
+  const onJump = segType === SEG_JUMP && style !== STYLE_GROUND;
+  const unit = T.unit[ib(i, b)] ?? 1;
+  const levelMode = mode === MODE_PLAN || mode === MODE_GROUND_CONSTANT;
+  if (levelMode) {
+    // 9.5: no accrual on jump-blocked ticks; the cap is unit + level, so no overflow is lost
+    if (!airborne && !onJump) P.acc[i] = Math.min(unit + level, (P.acc[i] ?? 0) + level);
+    want = (P.acc[i] ?? 0) >= unit;
+  }
+
+  // gates (9.3)
+  const pulseFrame = T.pulseFrame[i] === 1;
+  const canThrust = (flags & F_EXHAUSTED) === 0 && !airborne && !onJump;
+  const bit = 1 << segType;
+  const freeLeft = S.freeLeft[i] ?? 0;
+  const freeAvail = freeLeft > 0 || ((P.freeMask[i] ?? 0) & bit) !== 0;
+  const energyOk = freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= (T.jr[is(i, seg)] ?? 0);
+  let gatesOk = false;
+  if (want && canThrust && energyOk) {
+    const capLim = T.capLim[i] ?? 0;
+    const capMode =
+      mode === MODE_SURPLUS
+        ? floorDiv(capLim * R.surplusHeatPm, 1000)
+        : mode === MODE_REGEN
+          ? floorDiv(capLim * R.regenOverflowHeatPm, 1000)
+          : capLim;
+    const heatAdd = pulseFrame ? R.pulseTicks * R.kH : R.kH;
+    const licMode =
+      mode === MODE_KICK ||
+      mode === MODE_PLAN ||
+      (T.heatImmune[i] === 1 && mode >= MODE_DIVE_DESCENT);
+    gatesOk = (S.heat[i] ?? 0) + heatAdd <= capMode || (licMode && licenceOk(R, T, S, i, over));
+  }
+
+  if (pulseFrame) {
+    const pin = ctl.pin;
+    pin.t = t;
+    pin.want = want;
+    pin.gatesOk = gatesOk;
+    pin.canThrust = canThrust;
+    pin.levelMode = levelMode;
+    pin.segType = segType;
+    pin.bp = T.Bp[ib(i, b)] ?? 0;
+    pin.bpc = T.Bpc[ib(i, b)] ?? 0;
+    pin.unit = unit;
+    const out = ctl.pout;
+    pulseStep(R, P, i, pin, out);
+    S.boostOn[i] = out.boostOn ? 1 : 0;
+    S.isPulseTick[i] = out.isPulseTick ? 1 : 0;
+    S.freeTick[i] = out.freeTick ? 1 : 0;
+    S.burstChain[i] = out.burstChain ? 1 : 0;
+    if (out.fired) {
+      S.pulses[i] = (S.pulses[i] ?? 0) + 1;
+      if (out.freeTick) ctl.sink.freeBoost(i, segType);
+      const air = floorDiv(out.thrust * (T.airPm[is(i, seg)] ?? 1000), 1000);
+      const moved = floorDiv(air * (T.stoop[ips(i, ph, seg)] ?? 1000), 1000);
+      ctl.sink.pulse(i, P.chain[i] ?? 1, moved, out.freeTick, P.cdFire[i] ?? 0);
+    }
+    return;
+  }
+
+  if (!(want && gatesOk)) return;
+  S.boostOn[i] = 1;
+  if (freeLeft > 0) {
+    S.freeTick[i] = 1;
+    S.freeLeft[i] = freeLeft - 1;
+  } else if (((P.freeMask[i] ?? 0) & bit) !== 0) {
+    P.freeMask[i] = (P.freeMask[i] ?? 0) & ~bit;
+    S.freeLeft[i] = R.freeBoostMaxTicks - 1;
+    S.freeSeg[i] = seg;
+    S.freeTick[i] = 1;
+    ctl.sink.freeBoost(i, segType);
+  }
+  if (levelMode) P.acc[i] = (P.acc[i] ?? 0) - unit;
 }

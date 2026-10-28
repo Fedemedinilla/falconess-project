@@ -11,7 +11,7 @@ import { createRaceArena, F_FINISHED, type RaceArena } from "./state.js";
 
 /**
  * simulateRace end to end (docs/race-engine.md 18-20, 24.2): smoke runs on the three content
- * courses, the cross-check against the spec prototype with boost disabled, determinism, the log
+ * courses, the cross-check against the spec prototype, determinism, the log
  * schema, symmetry, bounds on every tick, log consistency and options invariance.
  */
 
@@ -82,17 +82,17 @@ function byLane(log: RaceLog) {
   return [...log.results].sort((a, b) => a.lane - b.lane);
 }
 
-describe("cross-check with the spec prototype, boost disabled (docs/race-engine.md 25.4)", () => {
-  // .work/proto/proto2/engine.mjs with its boost decision switched off, seed "ref-seed".
+describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () => {
+  // .work/proto/proto2/engine.mjs (written from spec revision 2), seed "ref-seed"
   const QUIET_MILLI: Record<string, number[]> = {
-    "desert-sprint": [830_352, 830_352, 827_773, 830_352],
-    "desert-ridge": [1_315_209, 1_315_209, 1_312_308, 1_309_573],
-    "desert-canyon": [2_051_580, 2_051_580, 2_037_932, 2_051_580],
+    "desert-sprint": [811_731, 817_093, 814_407, 817_402],
+    "desert-ridge": [1_303_652, 1_306_911, 1_304_010, 1_296_912],
+    "desert-canyon": [2_039_108, 2_042_391, 2_028_014, 2_043_225],
   };
   const NOISY_MILLI: Record<string, number[]> = {
-    "desert-sprint": [833_651, 833_651, 831_478, 833_651],
-    "desert-ridge": [1_323_076, 1_323_076, 1_320_256, 1_317_469],
-    "desert-canyon": [2_064_007, 2_064_007, 2_051_031, 2_064_007],
+    "desert-sprint": [815_547, 820_687, 818_367, 820_408],
+    "desert-ridge": [1_311_738, 1_314_973, 1_312_152, 1_304_771],
+    "desert-canyon": [2_052_085, 2_054_727, 2_041_527, 2_055_678],
   };
 
   for (const id of COURSES)
@@ -110,26 +110,15 @@ describe("cross-check with the spec prototype, boost disabled (docs/race-engine.
       expect(noisy).toEqual(NOISY_MILLI[id]);
     });
 
-  it("a non-boosting neutral dive lands within 3 % of the boosting prototype times (54.12 / 86.91 / 135.94 s)", () => {
-    // no boost (and so no stoop) costs ≈ 1.2 s on the sprint; on the canyon hp binds either way
-    const ref = { "desert-sprint": 54.12, "desert-ridge": 86.91, "desert-canyon": 135.94 };
-    for (const id of COURSES) {
-      const r = at(byLane(simulateRace(QUIET, [fixture("dive", 0)], course(id), "dive")), 0);
-      const s = (r.finishMilli ?? 0) / 15_000;
-      expect(s).toBeGreaterThan(ref[id]);
-      expect(s).toBeLessThan(ref[id] * 1.03);
-    }
-  });
-
   it("an eight-runner field of real frames with actives matches the prototype (finish, skills)", () => {
     const want: Record<string, { milli: number[]; skills: string[] }> = {
       "desert-sprint": {
-        milli: [837_819, 838_147, 726_981, 661_960, 660_578, 723_680, 939_040, 817_889],
+        milli: [822_021, 824_890, 690_784, 626_683, 640_368, 708_147, 923_593, 795_707],
         skills: [
           "corner-carver+last-gasp",
           "",
-          "",
-          "",
+          "cool-head",
+          "second-wind",
           "clean-start",
           "iron-wings",
           "pack-shadow",
@@ -138,13 +127,13 @@ describe("cross-check with the spec prototype, boost disabled (docs/race-engine.
       },
       "desert-ridge": {
         milli: [
-          1_333_471, 1_324_043, 1_213_196, 1_113_813, 1_084_270, 1_164_678, 1_504_389, 1_295_648,
+          1_322_759, 1_311_267, 1_179_542, 1_075_128, 1_075_772, 1_153_680, 1_493_352, 1_278_080,
         ],
         skills: [
           "last-gasp",
           "",
-          "",
-          "",
+          "cool-head",
+          "second-wind",
           "clean-start",
           "iron-wings",
           "pack-shadow",
@@ -153,13 +142,13 @@ describe("cross-check with the spec prototype, boost disabled (docs/race-engine.
       },
       "desert-canyon": {
         milli: [
-          2_068_243, 2_069_811, 1_822_068, 1_648_617, 1_663_682, 1_817_552, 2_321_091, 1_990_140,
+          2_056_408, 2_060_669, 1_780_218, 1_610_097, 1_650_306, 1_803_154, 2_305_539, 1_968_370,
         ],
         skills: [
           "last-gasp",
           "hill-lungs",
-          "",
-          "",
+          "cool-head",
+          "second-wind",
           "clean-start+water-skimmer",
           "iron-wings+canyon-sense",
           "pack-shadow",
@@ -205,8 +194,9 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
         ground ? [0, 0, 2] : [2, 0, 0],
       );
       expect(r.ledger.energyLift).toBe(ground ? 0 : 35_000);
-      expect(r.energyEnd).toBe(ground ? 100_000 : 65_000);
       expect(r.ledger.landingLossMms > 0).toBe(!ground);
+      // every runner spends its tank (the jump reserve kept the lift energy until each jump)
+      expect(r.energyEnd).toBe(0);
     }
   });
 });

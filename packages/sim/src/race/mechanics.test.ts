@@ -21,8 +21,9 @@ import {
 /**
  * Mechanics of docs/race-engine.md 5-8, 13, 14, 16 and 19 through simulateRace, with the test-only
  * probe of 24.2 (P4) reading the state after every tick. Where a mechanic needs a state the
- * no-boost controller never reaches (heat above the cap, energy below the tank), the probe sets it
- * between two ticks.
+ * controller never reaches (heat above the cap, energy below the tank), the probe sets it between
+ * two ticks; where boost would blur the mechanic under test, `NO_BOOST` prices a boost tick above
+ * any tank, so every gate refuses it (the controller still runs).
  */
 
 const content = loadContent();
@@ -31,6 +32,8 @@ const QUIET: Ruleset = {
   ...RULESET_V1,
   race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
+/** A boost tick costs more than any tank (200 energy): the energy gate refuses every boost. */
+const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kE: 1_000_000 } };
 const M = 225_000; // pu per metre
 
 function at<T>(arr: readonly T[] | undefined, i: number): T {
@@ -298,7 +301,7 @@ describe("overheat, durability and broken wings (docs/race-engine.md 8)", () => 
 
   it("Steinhaus: no speed penalty, ×2 durability, desert cooling 500", () => {
     const mt = fixture("hover", 0, { rule: "mass-thrust" });
-    const { log, rows } = trace(QUIET, [mt], LONG_FLAT, "mt", 0, heatAt(400, 79_000));
+    const { log, rows } = trace(NO_BOOST, [mt], LONG_FLAT, "mt", 0, heatAt(400, 79_000));
     expect(rows.filter((r) => r.t > 400 && r.t <= 420).every((r) => r.vOut === r.vCore)).toBe(true);
     expect(at(log.results, 0).ledger.overheatTicks).toBe(20);
     expect(at(log.results, 0).durabilityEnd).toBe(60_000);
@@ -396,7 +399,7 @@ describe("jumps (docs/race-engine.md 14)", () => {
   ]);
 
   it("success: resolved the tick after entry, lift on true energy, speed held at cruise, landing ×0.86", () => {
-    const { log, rows } = trace(QUIET, [fixture("hover")], JUMP_COURSE);
+    const { log, rows } = trace(NO_BOOST, [fixture("hover")], JUMP_COURSE);
     const ok = events(log, "jumpOk");
     expect(ok.map((e) => [e.lift, e.required, e.energyBefore])).toEqual([
       [100_000, 20_000, 100_000],
@@ -433,7 +436,7 @@ describe("jumps (docs/race-engine.md 14)", () => {
 
   it("failure: no lift spent, −25 durability, ×0.4, exactly 20 frozen ticks, then the recovery dash", () => {
     const weak = fixture("hover", 0, { energy: 20, stats: { ...S600, technique: 1 } });
-    const { log, rows } = trace(QUIET, [weak], JUMP_COURSE);
+    const { log, rows } = trace(NO_BOOST, [weak], JUMP_COURSE);
     const fail = events(log, "jumpFail");
     expect(fail.map((e) => [e.lift, e.required, e.energyBefore, e.damage, e.stallTicks])).toEqual([
       [10_000, 20_000, 20_000, 25_000, 20],
@@ -507,7 +510,7 @@ describe("jumps (docs/race-engine.md 14)", () => {
 
   it("ground detours at 1.10 × the length (Boneyard 1.05): no lift, no landing, a detour event", () => {
     const ticksOnJump = (e: RaceEntry) => {
-      const { log, rows } = trace(QUIET, [e], JUMP_COURSE);
+      const { log, rows } = trace(NO_BOOST, [e], JUMP_COURSE);
       return { log, n: rows.filter((r) => r.seg === 1).length };
     };
     const flyer = ticksOnJump(fixture("hover"));
@@ -525,7 +528,7 @@ describe("jumps (docs/race-engine.md 14)", () => {
     expect(flags.some((f) => (f & RACE_FRAME_FLAGS.detour) !== 0)).toBe(true);
   });
 
-  it("the sprint plan is (re)asked at the plan point and on each jump exit inside it (placeholder counts)", () => {
+  it("the sprint plan is (re)asked at the plan point and on each jump exit inside it", () => {
     const ridge = content.getCourse("desert-ridge");
     const count = (style: Style) => {
       const { rows } = trace(QUIET, [fixture(style)], ridge);
@@ -603,10 +606,10 @@ describe("segment-0 pre-step (docs/race-engine.md 1.3, 18 P4)", () => {
 describe("heat-to-energy (docs/race-engine.md 16 #12)", () => {
   it("on the first tick of the final phase: gained = min(Emax − energy, heat × ratio), heat → 0", () => {
     const sprint = content.getCourse("desert-sprint");
-    const G = buildCourseGeometry(QUIET, sprint);
+    const G = buildCourseGeometry(NO_BOOST, sprint);
     const holder = withTraits(fixture("glide"), { heatToEnergyPm: 500 });
     let primed = false;
-    const { log } = trace(QUIET, [holder], sprint, "h2e", 0, (_t, A) => {
+    const { log } = trace(NO_BOOST, [holder], sprint, "h2e", 0, (_t, A) => {
       const pos = A.state.pos[0] ?? 0;
       if (!primed && pos < G.finalStart && pos + 400_000 >= G.finalStart) {
         primed = true;
@@ -617,7 +620,7 @@ describe("heat-to-energy (docs/race-engine.md 16 #12)", () => {
     const ev = events(log, "heatToEnergy");
     expect(ev.map((e) => [e.heat, e.energy])).toEqual([[39_000, 19_500]]);
     expect(at(log.results, 0).ledger.energyFromHeat).toBe(19_500);
-    const none = simulateRace(QUIET, [fixture("glide")], sprint, "h2e");
+    const none = simulateRace(NO_BOOST, [fixture("glide")], sprint, "h2e");
     expect(events(none, "heatToEnergy")).toEqual([]);
   });
 });
@@ -716,7 +719,7 @@ describe("finish placing (docs/race-engine.md 19)", () => {
     const entries = [fixture("hover", 0), fixture("hover", 1)];
     // at cruise (352 500 vu), lane 1 lands exactly on L in tick 501 (finishMilli 502 000) and
     // lane 0 crosses from L − 1 at the very start of tick 502 (finishMilli 502 000 too)
-    const log = simulateRaceProbed(QUIET, entries, LONG_FLAT, "dh", (t, A) => {
+    const log = simulateRaceProbed(NO_BOOST, entries, LONG_FLAT, "dh", (t, A) => {
       if (t === 500) {
         A.state.pos[1] = L - 352_500;
         A.state.pos[0] = L - 352_500 - 1;
@@ -739,7 +742,7 @@ describe("finish placing (docs/race-engine.md 19)", () => {
   it("a later finisher after a dead heat takes its margin from the last runner of the group", () => {
     const L = 2000 * M;
     const entries = [fixture("hover", 0), fixture("hover", 1), fixture("hover", 2)];
-    const log = simulateRaceProbed(QUIET, entries, LONG_FLAT, "dh3", (t, A) => {
+    const log = simulateRaceProbed(NO_BOOST, entries, LONG_FLAT, "dh3", (t, A) => {
       if (t === 500) {
         A.state.pos[0] = L - 352_500;
         A.state.pos[1] = L - 352_500;
@@ -766,7 +769,7 @@ describe("instantaneous terms and rule regen (docs/race-engine.md 5, 8.1, 13)", 
     expect(rows.slice(0, 40).map((r) => r.vCore)).toEqual(plain.slice(0, 40).map((r) => r.vCore));
   });
 
-  it("broken wings inside the plan window ask for a replan (placeholder count +1)", () => {
+  it("broken wings inside the plan window ask for a replan (plan count +1)", () => {
     const canyon = content.getCourse("desert-canyon");
     const { rows } = trace(QUIET, [fixture("glide", 0, { durabilityStart: 3 })], canyon);
     // plan at the final (2000 m), then the water hit at 2400 m breaks the wings
@@ -777,7 +780,7 @@ describe("instantaneous terms and rule regen (docs/race-engine.md 5, 8.1, 13)", 
 
   it("Lumière regenerates 500 me on every non-boost tick: the ridge lifts are refilled", () => {
     const ridge = content.getCourse("desert-ridge");
-    const { log, rows } = trace(QUIET, [fixture("hover", 0, { rule: "regen" })], ridge);
+    const { log, rows } = trace(NO_BOOST, [fixture("hover", 0, { rule: "regen" })], ridge);
     const ok = events(log, "jumpOk");
     expect(ok).toHaveLength(2);
     const after = at(rows, at(ok, 0).tick);

@@ -1,9 +1,9 @@
 import { floorDiv, Rng, scale } from "@falconess/rng";
-import type { Course, RaceEntry, RaceLog } from "@falconess/schema";
-import { RACE_FRAME_FLAGS } from "@falconess/schema";
+import type { Course, RaceEntry, RaceLog, SprintPlanCause } from "@falconess/schema";
+import { SprintPlanCause as PlanCauses, RACE_FRAME_FLAGS } from "@falconess/schema";
 import { endBurst } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
-import { decide, inPack, planSprint, rankSnapshot } from "./controller.js";
+import { type Controller, createController, decide, inPack, rankSnapshot } from "./controller.js";
 import { buildCourseGeometry, type CourseGeometry, logGeometry, phaseOf } from "./geometry.js";
 import { buildDerived, buildResults, RaceRecorder } from "./log.js";
 import {
@@ -19,6 +19,7 @@ import {
   waterHitMd,
 } from "./physics.js";
 import { requestReplan, runSkills, type SkillSink, tickSkillTimers } from "./skills.js";
+import { createPlanReport, type PlanReport, planSprint } from "./sprint.js";
 import {
   buildTables,
   CAUSE_BROKEN,
@@ -56,6 +57,7 @@ import {
   engineUnits,
   MODE_KICK,
   MODE_PLAN,
+  modeName,
   PH_FINAL,
   PH_MIDDLE,
   PH_START,
@@ -94,6 +96,10 @@ type Ctx = {
   readonly velPerMms: number;
   readonly pulseCostMe: number;
   readonly sink: SkillSink;
+  /** Controller scratch and its event sink (9, 12). */
+  readonly ctl: Controller;
+  /** Scratch of the sprint plan (11.3). */
+  readonly plan: PlanReport;
   /** Current tick. */
   t: number;
   /** Places handed out so far (19). */
@@ -186,6 +192,14 @@ function runRace(
       onSkill: (i, j, p, u, k) => rec.skill(c.t, i, posMm(c, i), j, p, u, k),
       onMiss: (i, j, p, u) => rec.skillMiss(c.t, i, posMm(c, i), j, p, u),
     },
+    ctl: createController({
+      boostMode: (i, mode, level) =>
+        rec.boostMode(c.t, i, posMm(c, i), modeName(mode), floorDiv(level, c.velPerMms)),
+      freeBoost: (i, segType) => rec.freeBoost(c.t, i, posMm(c, i), segType),
+      pulse: (i, chain, thrust, free, cooldown) =>
+        rec.pulse(c.t, i, posMm(c, i), chain, floorDiv(thrust, c.velPerMms), free, cooldown),
+    }),
+    plan: createPlanReport(),
     t: 0,
     placed: 0,
     group: new Int32Array(MAX_LANES),
@@ -328,14 +342,14 @@ function runnerTick(c: Ctx, i: number): boolean {
     rec.overheat(t, i, posMm(c, i), over, heat0);
   }
 
-  // B6. sprint plan (placeholder until the sprint-plan stage)
+  // B6. sprint plan: the first at the plan point, then at most maxReplans replans (11.1)
   if (flag(S, i, F_REPLAN)) {
     clearFlag(S, i, F_REPLAN);
-    if ((S.planCount[i] ?? 0) <= R.maxReplans) planSprint(S, i);
+    if ((S.planCount[i] ?? 0) <= R.maxReplans) sprintPlan(c, i);
   }
 
-  // B7. decision (placeholder: never boosts)
-  decide(S, i);
+  // B7. decision: mode, accumulator, gates, licence, free boost, pulse state machine (9, 12)
+  decide(R, G, T, S, i, t, ph, over, c.ctl);
 
   // B8. speed (5)
   const b = S.b[i] ?? 0;
@@ -466,6 +480,30 @@ function runnerTick(c: Ctx, i: number): boolean {
   S.holdLeft[i] = sub0(S.holdLeft[i] ?? 0, 1);
   S.tickFlags[i] = tickFlags | stateFlags(c, i);
   return false;
+}
+
+/** Step B6: plan (or replan) the final sprint and log the `sprintPlan` event (11, 20.4). */
+function sprintPlan(c: Ctx, i: number): void {
+  const { R, G, T, S, plan: p } = c;
+  planSprint(R, G, T, S, i, p);
+  if (!c.rec.full) return;
+  const cause: SprintPlanCause = PlanCauses.options[S.replanCause[i] ?? 0] ?? "phase";
+  c.rec.sprintPlan(c.t, i, posMm(c, i), {
+    cause,
+    index: (S.planCount[i] ?? 1) - 1,
+    reason: p.reason,
+    energy: S.energy[i] ?? 0,
+    energyPerceived: p.energyPerceived,
+    hp: floorDiv(S.hp[i] ?? 0, 1000),
+    hpPerceived: floorDiv(p.hpPerceived, 1000),
+    jumpReserve: p.jumpReserve,
+    startMm: floorDiv(p.startPos, c.posPerMm),
+    endMm: floorDiv(p.endPos, c.posPerMm),
+    levelMms: floorDiv(p.level, c.velPerMms),
+    candidates: p.candidates,
+    onTicks: p.onTicks,
+    clean: p.clean,
+  });
 }
 
 /** Frame flags that read the runner's state after its tick (20.4). */
