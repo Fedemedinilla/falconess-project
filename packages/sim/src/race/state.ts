@@ -1,0 +1,839 @@
+import { floorDiv, U32_RANGE, uPm, uRange } from "@falconess/rng";
+import type { Course, RaceEntry, RacePhase, SegmentType } from "@falconess/schema";
+import { RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
+import { compileRule, createPulseState, initPulseLane, type PulseState } from "../rules/index.js";
+import type { Ruleset } from "../rulesets/index.js";
+import { type CourseGeometry, MAX_SEGMENTS } from "./geometry.js";
+import {
+  accelVu,
+  activationPm,
+  agilityCruiseVu,
+  boostThrustVu,
+  chainThrustVu,
+  coolTick,
+  cruiseVu,
+  drainCoefficients,
+  exhaustSpeedVu,
+  fatiguePm,
+  groundDetourPm,
+  heatCapMh,
+  heatTolerancePm,
+  hpMaxMicro,
+  jumpNeedMe,
+  landingKeepPm,
+  liftFactorPm,
+  overheatDamage,
+  paceCentrePm,
+  planErrWindowPm,
+  powerVariant,
+  pulseThrustVu,
+  segmentFactor,
+  staminaDivisor,
+  styleDamagePm,
+  weightedPower,
+} from "./physics.js";
+import {
+  engineUnits,
+  MODE_OFF,
+  PH_FINAL,
+  ruleCode,
+  SEG_DESCENT,
+  SEG_JUMP,
+  STYLE_DIVE,
+  STYLE_GLIDE,
+  STYLE_GROUND,
+  STYLE_HOVER,
+  styleCode,
+} from "./units.js";
+
+/**
+ * Race state as struct of arrays (docs/race-engine.md 1.2, 3.3, 22). One arena is sized once for
+ * the maxima of the schema (8 lanes, 24 segments, 8 skills) and reused through `opts.arena`;
+ * `reset` zero-fills it. Every per-runner scalar lives in a typed array indexed by lane; anything
+ * that can exceed 2^31 (positions, hp, accumulators, plan positions, finish times) lives in a
+ * Float64Array, where integers are exact below 2^53. Internal TS types, not data formats.
+ */
+
+/** Arena capacity: the schema's lane bound. */
+export const MAX_LANES = 8;
+/** Arena capacity: the schema's active-skill bound (`RaceEntry.skills`). */
+export const MAX_SKILLS = 8;
+/** Pre-drawn `u` values per skill (activations k = 0..2, section 17.1). */
+export const ACTIVATION_SLOTS = 3;
+/** Draw slots before the skill slots: three pace phases and the plan error (17.1). */
+export const SKILL_SLOT_BASE = 4;
+/** An immunity without `untilMeters` covers the whole race (8.3 `INF`). */
+export const IMMUNE_WHOLE_RACE = Number.MAX_SAFE_INTEGER;
+
+// --- runner flag bits (1.2) ------------------------------------------------------------------------
+export const F_EXHAUSTED = 1;
+export const F_BROKEN = 2;
+export const F_AIRBORNE = 4;
+export const F_PENDING_JUMP = 8;
+export const F_DASH = 16;
+export const F_FINISHED = 32;
+export const F_DNF = 64;
+export const F_FINAL_ENTERED = 128;
+export const F_PLAN_ACTIVE = 256;
+export const F_REPLAN = 512;
+/** The tick's single overheat flag (8.3), kept until the next non-stalled tick recomputes it. */
+export const F_OVER = 1024;
+
+// --- replan causes, `SprintPlanCause` order (11.1) -------------------------------------------------
+export const CAUSE_PHASE = 0;
+export const CAUSE_REFUND = 1;
+export const CAUSE_JUMP = 2;
+export const CAUSE_BROKEN = 3;
+
+// --- frozen skill column bits (15) -----------------------------------------------------------------
+export const SK_ONCE = 1;
+export const SK_DISABLED = 2;
+export const SK_GUARD = 4;
+export const SK_HAS_SEGMENT = 8;
+export const SK_HAS_POSITION = 16;
+export const SK_HAS_HEAT = 32;
+export const SK_HAS_ENERGY = 64;
+/** `trigger.phase` code: start, middle, final as `PH_*`, `any` = 3. */
+export const SK_PHASE_ANY = 3;
+
+/** Drain coefficient variants `dK[q]` (section 6): q = (final ? 2 : 0) + (glide lead ? 1 : 0). */
+export const DK_LEAD = 1;
+export const DK_FINAL = 2;
+
+// --- flat index helpers ----------------------------------------------------------------------------
+/** Index of (lane, PW variant b). */
+export function ib(i: number, b: number): number {
+  return i * 2 + b;
+}
+/** Index of (lane, segment). */
+export function is(i: number, s: number): number {
+  return i * MAX_SEGMENTS + s;
+}
+/** Index of (lane, PW variant b, segment). */
+export function ibs(i: number, b: number, s: number): number {
+  return (i * 2 + b) * MAX_SEGMENTS + s;
+}
+/** Index of (lane, PW variant b, phase, segment). */
+export function ibps(i: number, b: number, ph: number, s: number): number {
+  return ((i * 2 + b) * 3 + ph) * MAX_SEGMENTS + s;
+}
+/** Index of (lane, phase, segment). */
+export function ips(i: number, ph: number, s: number): number {
+  return (i * 3 + ph) * MAX_SEGMENTS + s;
+}
+/** Index of (lane, skill j). */
+export function ik(i: number, j: number): number {
+  return i * MAX_SKILLS + j;
+}
+/** Index of (lane, skill j, activation k). */
+export function ikk(i: number, j: number, k: number): number {
+  return (i * MAX_SKILLS + j) * ACTIVATION_SLOTS + k;
+}
+
+const N = MAX_LANES;
+const NS = MAX_LANES * MAX_SEGMENTS;
+const NK = MAX_LANES * MAX_SKILLS;
+
+/** Per-race tables of docs/race-engine.md 3.3, built before tick 0 and read-only in the loop. */
+export type RaceTables = {
+  readonly style: Int32Array;
+  readonly rule: Int32Array;
+  /** `PW₁` (‰), for the `durabilityBroken` event. */
+  readonly pwBroken: Int32Array;
+  readonly pwc: Int32Array;
+  readonly pwb: Int32Array;
+  readonly vA: Int32Array;
+  readonly f: Int32Array;
+  readonly vC: Int32Array;
+  readonly vMin: Int32Array;
+  readonly acc: Int32Array;
+  /** Glide's launch (9.8): acceleration in the start phase; equals `acc` for other styles. */
+  readonly accStart: Int32Array;
+  readonly B: Int32Array;
+  readonly Bp: Int32Array;
+  readonly Bpc: Int32Array;
+  readonly Bon: Float64Array;
+  readonly unit: Float64Array;
+  readonly sMax: Float64Array;
+  readonly costOn: Int32Array;
+  /** Next stage (9.3): energy the final plan window can spend; 0 until the controller lands. */
+  readonly capFinal: Int32Array;
+  /** Next stage (9.3): ground's constant level; 0 until the controller lands. */
+  readonly groundLevel: Int32Array;
+  readonly hpMax: Float64Array;
+  readonly stamDiv: Int32Array;
+  readonly fat: Int32Array;
+  readonly dK: Int32Array;
+  readonly tol: Int32Array;
+  readonly D: Int32Array;
+  readonly heatCap: Int32Array;
+  readonly capLim: Int32Array;
+  readonly coolTick: Int32Array;
+  readonly dmgTick: Int32Array;
+  readonly regenTick: Int32Array;
+  readonly Emax: Int32Array;
+  readonly durMax: Int32Array;
+  readonly liftF: Int32Array;
+  readonly landPm: Int32Array;
+  /** Ground only (table 3.3); 1000 for every other style (they never detour). */
+  readonly detour: Int32Array;
+  readonly kickAt: Float64Array;
+  /** Where the first plan is made: `finalStart`, hover `hoverAttack` (11.1). */
+  readonly planPoint: Float64Array;
+  /** Energy a jump segment needs (`need[j]`), 0 on other segments. */
+  readonly need: Int32Array;
+  /** Next stage (14.4): jump reserve per segment; 0 until the controller lands. */
+  readonly jr: Int32Array;
+  readonly pulseFrame: Uint8Array;
+  readonly airPm: Int32Array;
+  readonly stoop: Int32Array;
+  readonly styleDmg: Int32Array;
+  /** `RuleTerms.heatPenalty` (8.3): false for mass-thrust. */
+  readonly heatPenalty: Uint8Array;
+  /** Telemetry's defensive clamp `heat ≤ D` (8.1). */
+  readonly clampHeat: Uint8Array;
+  /** Overheat licence holder (9.3). */
+  readonly licensed: Uint8Array;
+  readonly heatImmune: Uint8Array;
+  readonly immuneUntil: Float64Array;
+  readonly armor: Uint8Array;
+  readonly armorExtra: Int32Array;
+  readonly packRegen: Int32Array;
+  readonly heatToEnergyPm: Int32Array;
+  readonly repairMd: Int32Array;
+  /** Activation bonus per phase (15.2): phase trait + `any` trait + the rule's bonus (telemetry). */
+  readonly actBonus: Int32Array;
+  readonly pace: Int32Array;
+  readonly paceCentre: Int32Array;
+  readonly planErrWindow: Int32Array;
+  readonly planErr: Int32Array;
+  readonly pAct: Int32Array;
+  readonly pSkill: Int32Array;
+  readonly u: Int32Array;
+  readonly luckyIdx: Int32Array;
+  readonly nSkills: Int32Array;
+  readonly skFlags: Int32Array;
+  readonly skPhase: Int32Array;
+  readonly skSeg: Int32Array;
+  readonly skPosLo: Int32Array;
+  readonly skPosHi: Int32Array;
+  readonly skHeat: Float64Array;
+  readonly skEnergy: Float64Array;
+  /** `speedMms × 15` vu. */
+  readonly skSpeed: Int32Array;
+  readonly skAccel: Int32Array;
+  readonly skRefund: Int32Array;
+  readonly skCool: Int32Array;
+  readonly skDur: Int32Array;
+};
+
+/** Dynamic per-runner state of docs/race-engine.md 1.2 plus the ledger of 20.5. */
+export type RaceState = {
+  readonly pos: Float64Array;
+  readonly prevPos: Float64Array;
+  readonly disp: Float64Array;
+  readonly vCore: Int32Array;
+  readonly vOut: Int32Array;
+  /** `vOut` of the previous non-stalled tick (9.3 licence projection). */
+  readonly vOutPrev: Int32Array;
+  readonly hp: Float64Array;
+  readonly energy: Int32Array;
+  readonly heat: Int32Array;
+  readonly dur: Int32Array;
+  readonly seg: Int32Array;
+  readonly stall: Int32Array;
+  readonly flags: Uint16Array;
+  readonly replanCause: Int32Array;
+  /** Pulse state, the shared free-first-boost mask and the level accumulator (12, 9.5). */
+  readonly pulse: PulseState;
+  readonly mode: Int32Array;
+  readonly modeLevel: Int32Array;
+  readonly holdLeft: Int32Array;
+  readonly planLevel: Int32Array;
+  readonly planStartPos: Float64Array;
+  readonly planEndPos: Float64Array;
+  readonly planCount: Int32Array;
+  readonly freeLeft: Int32Array;
+  readonly freeSeg: Int32Array;
+  readonly guardLeft: Int32Array;
+  readonly skillSpeed: Int32Array;
+  readonly skillAccel: Int32Array;
+  /** Skill effects still running (frame flag `skill effect active`). */
+  readonly activeSkills: Int32Array;
+  readonly acts: Int32Array;
+  readonly activeLeft: Int32Array;
+  readonly armed: Uint8Array;
+  readonly missLogged: Uint8Array;
+  readonly finishMilli: Float64Array;
+  readonly b: Uint8Array;
+  // the decision of the current tick (step B7)
+  readonly boostOn: Uint8Array;
+  readonly isPulseTick: Uint8Array;
+  readonly freeTick: Uint8Array;
+  readonly burstChain: Uint8Array;
+  /** Frame flags of the runner's last tick (20.4). */
+  readonly tickFlags: Uint16Array;
+  /** Boost on-ticks since the previous frame row. */
+  readonly boostRow: Int32Array;
+  // rank snapshot (9.1)
+  readonly key: Float64Array;
+  readonly ahead: Int32Array;
+  readonly posFrac: Int32Array;
+  // results (19)
+  readonly place: Int32Array;
+  readonly deadHeat: Uint8Array;
+  readonly timeTicks: Int32Array;
+  /** mm; −1 = none yet. */
+  readonly marginMm: Float64Array;
+  readonly vFinishMms: Int32Array;
+  /** gap[A × 8 + B] (mm) at the instant A crossed (19). */
+  readonly gap: Float64Array;
+  // ledger (20.5)
+  readonly phaseTicks: Int32Array;
+  readonly boostTicks: Int32Array;
+  readonly pulses: Int32Array;
+  readonly stallTicks: Int32Array;
+  readonly energySpent: Float64Array;
+  readonly energyRegen: Float64Array;
+  readonly energyRefunded: Float64Array;
+  readonly energyFromHeat: Float64Array;
+  readonly energyLift: Float64Array;
+  readonly overheatTicks: Int32Array;
+  readonly durabilityLost: Float64Array;
+  readonly durabilityRepaired: Float64Array;
+  /** mm; −1 = never emptied. */
+  readonly hpEmptyMm: Float64Array;
+  readonly draftTicks: Int32Array;
+  readonly landingLossMms: Int32Array;
+  readonly jumpsOk: Int32Array;
+  readonly jumpsFailed: Int32Array;
+  readonly detours: Int32Array;
+};
+
+/**
+ * Preallocated memory for one race (docs/race-engine.md 22). `reset(n, G)` zero-fills it and
+ * returns it ready for `n` runners on `G`; `simulateRace` then builds the tables and the initial
+ * state. Reusing one arena never changes a result (property P7).
+ */
+export type RaceArena = {
+  readonly tables: RaceTables;
+  readonly state: RaceState;
+  /** The pre-drawn block (17.1): `n × R.rngBlock` u32 values, lane by lane, slot by slot. */
+  U: Float64Array;
+  n: number;
+  reset(n: number, G: CourseGeometry): RaceArena;
+};
+
+function i32(len: number): Int32Array {
+  return new Int32Array(len);
+}
+function f64(len: number): Float64Array {
+  return new Float64Array(len);
+}
+function u8(len: number): Uint8Array {
+  return new Uint8Array(len);
+}
+
+function createTables(): RaceTables {
+  const NPS = NS * 3;
+  return {
+    style: i32(N),
+    rule: i32(N),
+    pwBroken: i32(N),
+    pwc: i32(N * 2),
+    pwb: i32(N * 2),
+    vA: i32(N),
+    f: i32(NS),
+    vC: i32(NPS * 2),
+    vMin: i32(NPS * 2),
+    acc: i32(NS * 2),
+    accStart: i32(NS * 2),
+    B: i32(N * 2),
+    Bp: i32(N * 2),
+    Bpc: i32(N * 2),
+    Bon: f64(N * 2),
+    unit: f64(N * 2),
+    sMax: f64(N * 2),
+    costOn: i32(N),
+    capFinal: i32(N * 2),
+    groundLevel: i32(N * 2),
+    hpMax: f64(N),
+    stamDiv: i32(N),
+    fat: i32(N),
+    dK: i32(N * 4),
+    tol: i32(N),
+    D: i32(N),
+    heatCap: i32(N),
+    capLim: i32(N),
+    coolTick: i32(N),
+    dmgTick: i32(N),
+    regenTick: i32(N),
+    Emax: i32(N),
+    durMax: i32(N),
+    liftF: i32(N),
+    landPm: i32(N),
+    detour: i32(N),
+    kickAt: f64(N),
+    planPoint: f64(N),
+    need: i32(NS),
+    jr: i32(NS),
+    pulseFrame: u8(N),
+    airPm: i32(NS),
+    stoop: i32(NPS),
+    styleDmg: i32(N),
+    heatPenalty: u8(N),
+    clampHeat: u8(N),
+    licensed: u8(N),
+    heatImmune: u8(N),
+    immuneUntil: f64(N),
+    armor: u8(N),
+    armorExtra: i32(N),
+    packRegen: i32(N),
+    heatToEnergyPm: i32(N),
+    repairMd: i32(N),
+    actBonus: i32(N * 3),
+    pace: i32(N * 3),
+    paceCentre: i32(N),
+    planErrWindow: i32(N),
+    planErr: i32(N),
+    pAct: i32(N),
+    pSkill: i32(NK),
+    u: i32(NK * ACTIVATION_SLOTS),
+    luckyIdx: i32(N),
+    nSkills: i32(N),
+    skFlags: i32(NK),
+    skPhase: i32(NK),
+    skSeg: i32(NK),
+    skPosLo: i32(NK),
+    skPosHi: i32(NK),
+    skHeat: f64(NK),
+    skEnergy: f64(NK),
+    skSpeed: i32(NK),
+    skAccel: i32(NK),
+    skRefund: i32(NK),
+    skCool: i32(NK),
+    skDur: i32(NK),
+  };
+}
+
+function createState(): RaceState {
+  return {
+    pos: f64(N),
+    prevPos: f64(N),
+    disp: f64(N),
+    vCore: i32(N),
+    vOut: i32(N),
+    vOutPrev: i32(N),
+    hp: f64(N),
+    energy: i32(N),
+    heat: i32(N),
+    dur: i32(N),
+    seg: i32(N),
+    stall: i32(N),
+    flags: new Uint16Array(N),
+    replanCause: i32(N),
+    pulse: createPulseState(N),
+    mode: i32(N),
+    modeLevel: i32(N),
+    holdLeft: i32(N),
+    planLevel: i32(N),
+    planStartPos: f64(N),
+    planEndPos: f64(N),
+    planCount: i32(N),
+    freeLeft: i32(N),
+    freeSeg: i32(N),
+    guardLeft: i32(N),
+    skillSpeed: i32(N),
+    skillAccel: i32(N),
+    activeSkills: i32(N),
+    acts: i32(NK),
+    activeLeft: i32(NK),
+    armed: u8(NK),
+    missLogged: u8(NK),
+    finishMilli: f64(N),
+    b: u8(N),
+    boostOn: u8(N),
+    isPulseTick: u8(N),
+    freeTick: u8(N),
+    burstChain: u8(N),
+    tickFlags: new Uint16Array(N),
+    boostRow: i32(N),
+    key: f64(N),
+    ahead: i32(N),
+    posFrac: i32(N),
+    place: i32(N),
+    deadHeat: u8(N),
+    timeTicks: i32(N),
+    marginMm: f64(N),
+    vFinishMms: i32(N),
+    gap: f64(N * N),
+    phaseTicks: i32(N * 3),
+    boostTicks: i32(N * 3),
+    pulses: i32(N),
+    stallTicks: i32(N),
+    energySpent: f64(N),
+    energyRegen: f64(N),
+    energyRefunded: f64(N),
+    energyFromHeat: f64(N),
+    energyLift: f64(N),
+    overheatTicks: i32(N),
+    durabilityLost: f64(N),
+    durabilityRepaired: f64(N),
+    hpEmptyMm: f64(N),
+    draftTicks: i32(N),
+    landingLossMms: i32(N),
+    jumpsOk: i32(N),
+    jumpsFailed: i32(N),
+    detours: i32(N),
+  };
+}
+
+type Fillable = { fill(value: number): unknown };
+
+function isTypedArray(v: unknown): v is Fillable {
+  return ArrayBuffer.isView(v) && !(v instanceof DataView);
+}
+
+function zeroAll(obj: Readonly<Record<string, unknown>>): void {
+  for (const v of Object.values(obj)) if (isTypedArray(v)) v.fill(0);
+}
+
+/** A fresh arena for up to 8 runners and 24 segments (docs/race-engine.md 22, 23). */
+export function createRaceArena(): RaceArena {
+  const arena: RaceArena = {
+    tables: createTables(),
+    state: createState(),
+    U: f64(N * 32),
+    n: 0,
+    reset(n: number, G: CourseGeometry): RaceArena {
+      if (n < 1 || n > MAX_LANES) throw new Error(`arena holds 1..${MAX_LANES} runners, got ${n}`);
+      if (G.S > MAX_SEGMENTS) throw new Error(`arena holds ${MAX_SEGMENTS} segments, got ${G.S}`);
+      zeroAll(arena.tables);
+      zeroAll(arena.state);
+      zeroAll(arena.state.pulse);
+      arena.U.fill(0);
+      arena.n = n;
+      return arena;
+    },
+  };
+  return arena;
+}
+
+// --- validator (1.4) -------------------------------------------------------------------------------
+
+function checkInt(what: string, v: number, lo: number, hi: number): void {
+  if (!Number.isInteger(v) || v < lo || v > hi)
+    throw new Error(`simulateRace: ${what} = ${v} outside the integers ${lo}..${hi}`);
+}
+
+/**
+ * Preconditions of `simulateRace` (docs/race-engine.md 1.4). Throws: a violation is a programming
+ * error, never a game branch. Also checks that the pre-drawn block holds every skill slot.
+ */
+export function validateRace(
+  ruleset: Ruleset,
+  entries: readonly RaceEntry[],
+  course: Course,
+  seed: string,
+): void {
+  const R = ruleset.race;
+  if (typeof seed !== "string" || seed.length === 0)
+    throw new Error("simulateRace: the seed is an empty string");
+  const n = entries.length;
+  checkInt("runner count", n, 1, Math.min(R.maxRunners, MAX_LANES));
+  const lanes = new Set<number>();
+  const ids = new Set<string>();
+  const maxSkills = Math.min(R.maxSkills, MAX_SKILLS);
+  for (const e of entries) {
+    const who = `entry ${e.runnerId}`;
+    checkInt(`${who} laneIndex`, e.laneIndex, 0, n - 1);
+    if (lanes.has(e.laneIndex)) throw new Error(`simulateRace: lane ${e.laneIndex} is repeated`);
+    lanes.add(e.laneIndex);
+    if (ids.has(e.runnerId)) throw new Error(`simulateRace: runnerId ${e.runnerId} is repeated`);
+    ids.add(e.runnerId);
+    if (!RACE_RULES.includes(e.rule)) throw new Error(`simulateRace: ${who} has rule ${e.rule}`);
+    if (!STYLES.includes(e.style)) throw new Error(`simulateRace: ${who} has style ${e.style}`);
+    for (const [k, v] of Object.entries(e.stats)) checkInt(`${who} ${k}`, v, 1, R.maxEffectiveStat);
+    checkInt(`${who} powerToWeight`, e.powerToWeight, 500, 1600);
+    checkInt(`${who} energy`, e.energy, 20, 200);
+    checkInt(`${who} dissipation`, e.dissipation, 20, 120);
+    checkInt(`${who} durabilityMax`, e.durabilityMax, 20, 260);
+    checkInt(`${who} durabilityStart`, e.durabilityStart, 0, e.durabilityMax);
+    checkInt(`${who} skill count`, e.skills.length, 0, maxSkills);
+    for (let j = 1; j < e.skills.length; j++) {
+      const prev = e.skills[j - 1];
+      const cur = e.skills[j];
+      if (prev && cur && !(prev.id < cur.id))
+        throw new Error(`simulateRace: ${who} skills are not unique and id-sorted`);
+    }
+    if (SKILL_SLOT_BASE + ACTIVATION_SLOTS * e.skills.length > R.rngBlock)
+      throw new Error(`simulateRace: rngBlock ${R.rngBlock} cannot hold ${who}'s skill slots`);
+  }
+  checkInt("segment count", course.segments.length, 1, MAX_SEGMENTS);
+  let meters = 0;
+  for (const s of course.segments) meters += s.length;
+  if (meters > R.maxCourseMeters)
+    throw new Error(`simulateRace: course ${course.id} is ${meters} m (max ${R.maxCourseMeters})`);
+}
+
+// --- pre-drawn block (17.1, 16 #15) ----------------------------------------------------------------
+
+/** What the draws need from the RNG: `Rng.nextU32` of `@falconess/rng`. */
+export type U32Source = { nextU32(stream: "race" | "quirks"): number };
+
+/**
+ * P1 and P2 of section 18: `n × R.rngBlock` u32 from stream `race`, lane by lane and slot by slot,
+ * then one u32 from stream `quirks` per `random-skill-guaranteed` holder in lane order (drawn even
+ * with no active skill). The lucky index counts every active, disabled ones included. Nothing else
+ * ever draws: the tick loop has zero draws.
+ */
+export function drawRaceBlock(
+  ruleset: Ruleset,
+  E: readonly RaceEntry[],
+  rng: U32Source,
+  A: RaceArena,
+): void {
+  const block = ruleset.race.rngBlock;
+  const n = E.length;
+  if (A.U.length < n * block) A.U = new Float64Array(MAX_LANES * block);
+  for (let i = 0; i < n; i++)
+    for (let slot = 0; slot < block; slot++) A.U[i * block + slot] = rng.nextU32("race");
+  for (let i = 0; i < n; i++) {
+    const e = E[i];
+    A.tables.luckyIdx[i] = -1;
+    if (e === undefined || !e.traits.randomSkillGuaranteed) continue;
+    const x = rng.nextU32("quirks");
+    const nActive = e.skills.length;
+    if (nActive > 0) A.tables.luckyIdx[i] = floorDiv(x * nActive, U32_RANGE);
+  }
+}
+
+// --- per-race tables (3.3) -------------------------------------------------------------------------
+
+const PHASE_CODE: Readonly<Record<RacePhase, number>> = {
+  start: 0,
+  middle: 1,
+  final: 2,
+  any: SK_PHASE_ANY,
+};
+
+function segCode(type: SegmentType): number {
+  return SEGMENT_TYPES.indexOf(type);
+}
+
+/**
+ * Every table of docs/race-engine.md 3.3 for every runner, from its entry, the geometry, the ruleset
+ * and the pre-drawn block. Style terms (9.8) and rule terms (13.1) are folded in here, so the loop
+ * reads one scalar per term and never branches on a manufacturer name. The jump reserve (14.4),
+ * `capFinal` and `groundLevel` (9.3) belong to the controller stage and stay 0 here.
+ */
+export function buildTables(
+  ruleset: Ruleset,
+  E: readonly RaceEntry[],
+  G: CourseGeometry,
+  A: RaceArena,
+): void {
+  const R = ruleset.race;
+  const T = A.tables;
+  const { vBase: VBASE, kBoost: KBOOST, posPerMm, velPerMms } = engineUnits(R);
+  const block = R.rngBlock;
+  const W0 = R.paceHalfWidth;
+  const pulseCostMe = floorDiv(R.kE * R.pulseCostMult, 1000);
+
+  for (let i = 0; i < E.length; i++) {
+    const e = E[i];
+    if (e === undefined) continue;
+    const tr = e.traits;
+    const terms = compileRule(R, e.rule, G.biome);
+    const st = styleCode(e.style);
+    const rc = ruleCode(e.rule);
+    const { agility, stamina, technique, courage, intelligence } = e.stats;
+    T.style[i] = st;
+    T.rule[i] = rc;
+
+    // Intelligence: pace judgement per phase and plan perception (10), from slots 0..3
+    const c = paceCentrePm(R, intelligence);
+    T.paceCentre[i] = c;
+    for (let ph = 0; ph < 3; ph++)
+      T.pace[i * 3 + ph] = uRange(A.U[i * block + ph] ?? 0, c - W0, c + W0);
+    const We = planErrWindowPm(R, intelligence);
+    T.planErrWindow[i] = We;
+    T.planErr[i] = uRange(A.U[i * block + 3] ?? 0, -We, We);
+
+    // PW variants, cruise, acceleration, exhaustion speed, thrust
+    T.pwBroken[i] = powerVariant(R, e.powerToWeight, 1);
+    const vA = agilityCruiseVu(R, VBASE, agility);
+    T.vA[i] = vA;
+    for (let s = 0; s < G.S; s++) T.f[is(i, s)] = segmentFactor(R, G, s, agility, tr, terms);
+    const sp = R.stylePace[e.style];
+    for (let b = 0; b < 2; b++) {
+      const pw = powerVariant(R, e.powerToWeight, b);
+      const pwc = weightedPower(R.pwCruiseWeight, pw);
+      const pwb = weightedPower(R.pwBoostWeight, pw);
+      T.pwc[ib(i, b)] = pwc;
+      T.pwb[ib(i, b)] = pwb;
+      for (let s = 0; s < G.S; s++) {
+        const f = T.f[is(i, s)] ?? 1000;
+        for (let ph = 0; ph < 3; ph++) {
+          const pace = T.pace[i * 3 + ph] ?? 0;
+          T.vC[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, pace);
+          T.vMin[ibps(i, b, ph, s)] = exhaustSpeedVu(R, VBASE, pwc, f, pace);
+        }
+        const a = accelVu(R, technique, pwc, f, terms);
+        T.acc[ibs(i, b, s)] = a;
+        T.accStart[ibs(i, b, s)] =
+          st === STYLE_GLIDE ? floorDiv(a * R.style.glideStartAccelPm, 1000) : a;
+      }
+      const B = boostThrustVu(KBOOST, pwb);
+      const Bp = pulseThrustVu(R, KBOOST, pwb);
+      T.B[ib(i, b)] = B;
+      T.Bp[ib(i, b)] = Bp;
+      T.Bpc[ib(i, b)] = chainThrustVu(Bp, tr.pulseChainBonusPm);
+    }
+
+    // hp (4, 6)
+    T.hpMax[i] = hpMaxMicro(R, G.lengthMm);
+    T.stamDiv[i] = staminaDivisor(R, stamina);
+    T.fat[i] = fatiguePm(R, courage);
+    const [dkN, dkF] = drainCoefficients(R, stamina, courage, terms);
+    T.dK[i * 4] = dkN;
+    T.dK[i * 4 + DK_LEAD] = floorDiv(dkN * R.glideLeadDrainPm, 1000);
+    T.dK[i * 4 + DK_FINAL] = dkF;
+    T.dK[i * 4 + DK_FINAL + DK_LEAD] = floorDiv(dkF * R.glideLeadDrainPm, 1000);
+
+    // heat and durability (8)
+    const tol = heatTolerancePm(R, courage);
+    const D = e.dissipation * 1000;
+    const heatCap = heatCapMh(e.dissipation, tol);
+    T.tol[i] = tol;
+    T.D[i] = D;
+    T.heatCap[i] = heatCap;
+    T.capLim[i] = terms.capLimRaw ? D : heatCap;
+    T.coolTick[i] = coolTick(R, G.biome, e.dissipation, terms);
+    T.dmgTick[i] = overheatDamage(R, e.style, terms);
+    T.regenTick[i] = terms.regenMe + tr.regenMe;
+    T.Emax[i] = e.energy * 1000;
+    T.durMax[i] = e.durabilityMax * 1000;
+    T.styleDmg[i] = styleDamagePm(R, e.style);
+    T.heatPenalty[i] = terms.heatPenalty ? 1 : 0;
+    T.clampHeat[i] = terms.clampHeatAtD ? 1 : 0;
+    T.licensed[i] =
+      terms.licence === "always" || (terms.licence === "immunity" && tr.heatImmune) ? 1 : 0;
+    T.heatImmune[i] = tr.heatImmune ? 1 : 0;
+    T.immuneUntil[i] =
+      tr.heatImmuneUntilMm === null ? IMMUNE_WHOLE_RACE : tr.heatImmuneUntilMm * posPerMm;
+    T.armor[i] = tr.obstacleArmor ? 1 : 0;
+    T.armorExtra[i] = tr.obstacleArmorExtraTicks;
+    T.packRegen[i] = tr.packRegenMultPm;
+    T.heatToEnergyPm[i] = tr.heatToEnergyPm;
+    T.repairMd[i] = terms.repairMd;
+
+    // jumps, landing, detour (14)
+    const liftF = liftFactorPm(technique, tr.liftBonusPm);
+    T.liftF[i] = liftF;
+    T.landPm[i] = landingKeepPm(R, technique, terms);
+    T.detour[i] = st === STYLE_GROUND ? groundDetourPm(R, terms) : 1000;
+    for (let s = 0; s < G.S; s++)
+      T.need[is(i, s)] = G.segType[s] === SEG_JUMP ? jumpNeedMe(G.liftReq[s] ?? 0, liftF) : 0;
+    let kickAt = G.reserveAt;
+    if (st !== STYLE_GROUND)
+      for (let s = 0; s < G.S; s++)
+        if (G.segType[s] === SEG_JUMP && (G.segEnd[s] ?? 0) > G.reserveAt) {
+          kickAt = Math.min(G.reserveAt, G.segStart[s] ?? 0);
+          break;
+        }
+    T.kickAt[i] = kickAt;
+    T.planPoint[i] = st === STYLE_HOVER ? G.hoverAttack : G.finalStart;
+
+    // style and rule thrust terms (9.8, 13.1) and the plan's thrust quantities (3.3)
+    const pulseFrame = terms.pulses && !tr.noPulse;
+    T.pulseFrame[i] = pulseFrame ? 1 : 0;
+    for (let s = 0; s < G.S; s++) {
+      const type = G.segType[s] ?? 0;
+      T.airPm[is(i, s)] = pulseFrame ? (terms.pulseAirPm[type] ?? 1000) : 1000;
+      for (let ph = 0; ph < 3; ph++)
+        T.stoop[ips(i, ph, s)] =
+          st === STYLE_DIVE && (type === SEG_DESCENT || ph === PH_FINAL)
+            ? R.style.diveStoopPm
+            : 1000;
+    }
+    const stoopPlan = st === STYLE_DIVE ? R.style.diveStoopPm : 1000;
+    T.costOn[i] = pulseFrame ? pulseCostMe : R.kE;
+    for (let b = 0; b < 2; b++) {
+      const base = pulseFrame
+        ? floorDiv((T.Bp[ib(i, b)] ?? 0) * terms.pulseBiomePm, 1000)
+        : (T.B[ib(i, b)] ?? 0);
+      const Bon = floorDiv(base * stoopPlan, 1000);
+      const unit = pulseFrame ? Bon * R.pulseTicks : Bon;
+      T.Bon[ib(i, b)] = Bon;
+      T.unit[ib(i, b)] = unit;
+      T.sMax[ib(i, b)] = pulseFrame ? floorDiv(unit, R.pulseTicks + R.pulseCooldownTicks) : Bon;
+    }
+
+    // skills (15): activation, per-phase bonus, pre-drawn u, frozen columns
+    const pAct = activationPm(R, intelligence);
+    T.pAct[i] = pAct;
+    const ab = tr.activationBonusPm;
+    T.actBonus[i * 3] = ab.start + ab.any + terms.activationBonusPm;
+    T.actBonus[i * 3 + 1] = ab.middle + ab.any + terms.activationBonusPm;
+    T.actBonus[i * 3 + 2] = ab.final + ab.any + terms.activationBonusPm;
+    T.nSkills[i] = e.skills.length;
+    e.skills.forEach((sk, j) => {
+      const k = ik(i, j);
+      const trg = sk.trigger;
+      const ef = sk.effect;
+      T.pSkill[k] = sk.disabled ? 0 : floorDiv(pAct * sk.activationBasePm, 1000);
+      for (let a = 0; a < ACTIVATION_SLOTS; a++)
+        T.u[ikk(i, j, a)] = uPm(A.U[i * block + SKILL_SLOT_BASE + ACTIVATION_SLOTS * j + a] ?? 0);
+      T.skFlags[k] =
+        (trg.once ? SK_ONCE : 0) |
+        (sk.disabled ? SK_DISABLED : 0) |
+        (ef.durabilityGuard ? SK_GUARD : 0) |
+        (trg.segment !== null ? SK_HAS_SEGMENT : 0) |
+        (trg.posLoPm !== null ? SK_HAS_POSITION : 0) |
+        (trg.heatAboveMilli !== null ? SK_HAS_HEAT : 0) |
+        (trg.energyBelowMilli !== null ? SK_HAS_ENERGY : 0);
+      T.skPhase[k] = PHASE_CODE[trg.phase];
+      T.skSeg[k] = trg.segment !== null ? segCode(trg.segment) : -1;
+      T.skPosLo[k] = trg.posLoPm ?? 0;
+      T.skPosHi[k] = trg.posHiPm ?? 0;
+      T.skHeat[k] = trg.heatAboveMilli ?? 0;
+      T.skEnergy[k] = trg.energyBelowMilli ?? 0;
+      T.skSpeed[k] = ef.speedMms * velPerMms;
+      T.skAccel[k] = ef.accelMms2;
+      T.skRefund[k] = ef.energyRefundMilli;
+      T.skCool[k] = ef.heatCoolMilli;
+      T.skDur[k] = ef.durationTicks;
+    });
+  }
+}
+
+// --- initial state (1.3) ---------------------------------------------------------------------------
+
+/**
+ * The state before tick 0 (docs/race-engine.md 1.3): at the gun, `vStart` with the start dash, full
+ * hp and energy, cold, durability from the entry (0 = broken from the start), segment 0, every
+ * timer 0. The segment-0 pre-step (water hit, pending jump, detour event) is the engine's (P4).
+ */
+export function initState(ruleset: Ruleset, E: readonly RaceEntry[], A: RaceArena): void {
+  const R = ruleset.race;
+  const T = A.tables;
+  const S = A.state;
+  const { vStart } = engineUnits(R);
+  for (let i = 0; i < E.length; i++) {
+    const e = E[i];
+    if (e === undefined) continue;
+    const dur = e.durabilityStart * 1000;
+    S.vCore[i] = vStart;
+    S.hp[i] = T.hpMax[i] ?? 0;
+    S.energy[i] = T.Emax[i] ?? 0;
+    S.dur[i] = dur;
+    S.flags[i] = F_DASH | (dur === 0 ? F_BROKEN : 0);
+    S.b[i] = dur === 0 ? 1 : 0;
+    S.mode[i] = MODE_OFF;
+    S.marginMm[i] = -1;
+    S.hpEmptyMm[i] = -1;
+    initPulseLane(R, S.pulse, i, e.traits);
+    for (let j = 0; j < MAX_SKILLS; j++) S.armed[ik(i, j)] = 1;
+  }
+}

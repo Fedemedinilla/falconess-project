@@ -2,12 +2,16 @@ export { type FrameBuild, installPart, resolveFrameBuild } from "./frame-build.j
 export {
   buildCourseGeometry,
   type CourseGeometry,
+  createRaceArena,
   disableSkill,
   type FixtureBuild,
   fixtureBuild,
   freezeEntry,
   freezeSkill,
   neutralFixtureEntry,
+  type RaceArena,
+  type SimulateOptions,
+  simulateRace,
 } from "./race/index.js";
 export { raceStub } from "./race/stub.js";
 export { getRuleset, RULESET_V1, type Ruleset } from "./rulesets/index.js";
