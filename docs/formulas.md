@@ -16,13 +16,14 @@ Redondeo: floor, salvo que se diga otra cosa.
 
 Intención: una sola conversión de stats base a stats "del día" antes de entrenar o correr.
 `S_eff = floor(S_base × m_mood × a_aptitud / 1000 / 1000)` con `m_mood ∈ {1100,1050,1000,980,950}`
-para ánimo +2…−2 y `a_aptitud` por letra S…G = 1100, 1050, 1000, 950, 900, 850, 800, 700.
+(v1; v2 en "Temporada v2") para ánimo +2…−2 y `a_aptitud` por letra S…G = 1100, 1050, 1000, 950, 900, 850, 800, 700.
 La aptitud de bioma multiplica `agility`; la de estilo multiplica `intelligence`. Rango: 1–1320.
 
 ### Ganancia de entrenamiento
 
 Intención: el nivel de pista (1–5) fija la base, el ánimo y las cuadrillas presentes la escalan.
-`gain = floor(base[level] × (1000 + Σ crewBonus) × m_mood × (1000 + growth) / 10^9)`, un solo
+`gain = floor(base[level] × (1000 + Σ crewBonus) × m_mood × (1000 + growth) / 10^9)` (`m_mood` de
+entrenamiento: `trainMoodMult`, en v1 igual a la tabla de carrera), un solo
 redondeo al final, con `base = [44, 52, 60, 68, 76]` (el brief proponía 8–14; con 48 turnos esa
 base deja la temporada en ~135 por stat, lejos del objetivo 550–800, así que se recalibró en la
 primera pasada y queda pendiente de `sim:season-batch` con el motor real) y `growth` el multiplicador
@@ -31,12 +32,13 @@ Cada entrenamiento simple sube además una stat secundaria al 50 % (`agility→t
 `stamina→courage`, `technique→agility`, `simulator→technique`); `risk-flight` da `courage ×1.5` y
 `agility ×0.5`; `simulator` da `intelligence` y +5 puntos de habilidad. Rango por sesión: 5–30.
 
-### Fallo de entrenamiento
+### Fallo de entrenamiento (v1)
 
 `p_fail = 50 + floor(fatigue / 4)` per-mille para entrenamientos simples; `risk-flight` 120 con 30
-de fallo grave (lesión: 2 turnos). Fallo = −(gain/2) en la stat y ánimo −1.
+de fallo grave (lesión: 2 turnos). Fallo = −(gain/2) en la stat y ánimo −1. En el código es
+`failModel` "linear" (v2 usa la curva: ver "Temporada v2").
 
-### Fatiga
+### Fatiga (v1)
 
 Costos: entrenamientos simples +20, `risk-flight` +30, `simulator` +10, `workshop` +5, `rest` −40,
 `outing` −10. `fatigue ≥ 80` fuerza `rest`. Rango 0–100.
@@ -45,6 +47,77 @@ Costos: entrenamientos simples +20, `risk-flight` +30, `simulator` +10, `worksho
 
 Cada turno, cada fabricante del hangar aparece en los entrenamientos de sus stats con probabilidad
 `350 + 50 × bondLevel` per-mille, `bondLevel = floor(bond / 20)`, bond 0–100.
+
+### Temporada v2 (ADR-0006)
+
+Decisión del dueño tras el playtest 1: el vigor se vacía al entrenar y se llena al descansar, no hay
+descanso forzado, el riesgo de fallar sube cuando el vigor baja y el ánimo pesa más. Constantes en
+`packages/sim/src/rulesets/v2/constants.ts`; v1 lleva los mismos campos con valores que reproducen
+v1 exactamente (columna "v1"). Todo en enteros; un solo `floor` al final de cada producto.
+
+**Vigor (solo presentación).** Intención: una barra que se vacía, como la energía de Umamusume, sin
+cambiar el estado. `vigor = fatigueMax − fatigue` (0–100); el campo del estado y de los eventos sigue
+siendo `fatigue`. Un costo de fatiga +20 se muestra como vigor −20. Helper: `vigor(ruleset, fatigue)`.
+
+**Curva de fallo.** Intención: entrenar fresca no falla; con poco vigor fallar es cada vez más
+probable y el jugador lo ve en el botón. Con `failModel` "curve" y la fatiga **antes** de entrenar:
+`x = max(0, fatigue − failCurveStart)`, `span = fatigueMax − failCurveStart`,
+`curva = floor(failCurveMax × x × x / (span × span))` ‰. Simple: `curva`. Vuelo de riesgo:
+`riskFlightFail + curva`. Simulador: `floor(failCurveMax × simulatorFailPm × x × x / (span × span ×
+1000))` (la mitad de la curva, un solo floor). Tope 1000. Rango (v2: start 40, max 600; simple):
+vigor ≥ 60 → 0; 50 → 16; 40 → 66; 30 → 150; 20 → 266; 10 → 416; 0 → 600 ‰. Vuelo de riesgo
+120-720, simulador 0-300. v1: `failModel` "linear" (la fórmula de arriba). Helper:
+`trainingRisk(ruleset, fatigue, kind)`.
+
+**Lesión.** Intención: entrenar agotada puede costar semanas, no solo stats. Curva: un fallo es
+lesión (`injuryTurns` 2 semanas) con `injuryPm = floor(p_fail × injuryShareOfFail / 1000)` cuando
+es un vuelo de riesgo o cuando `fatigue ≥ injuryFromFatigue` (v2 80, vigor ≤ 20; v1 101, nunca).
+Una sola tirada: `roll < injuryPm` lesión, `roll < p_fail` fallo. Rango v2: simple con vigor 20 →
+66 ‰ de lesión, con vigor 0 → 150 ‰; vuelo de riesgo fresco 30 ‰ (lo mismo que v1), con vigor 0
+180 ‰. Costo del fallo, igual en v1 y v2: `max(1, floor(gain × failLossPm / 1000))` en cada stat
+entrenada (`failLossPm` 500) y ánimo −`failMoodLoss` (1).
+
+**Descanso.** Intención: descansar es una decisión con resultado variable, como en Umamusume.
+Descanso elegido: recupera `restRecovery[i]` de vigor con `i` sorteado por `restRecoveryWeights`
+(stream `training`); con una sola opción no hay sorteo (v1: 40). v2: +30 / +50 / +70 con 25 / 50 /
+25 % (media 50). Después, ánimo +1 con `restMoodUpChance` (v1 500, v2 250). Una semana lesionada
+recupera `−fatigueCost.rest` (v1 40, v2 50) sin sorteo. Descanso forzado con `fatigue ≥
+forcedRestAt` (v1 80; v2 101: nunca). Helper: `restOptions(ruleset)`.
+
+**Salida y simulador (v2).** Salida: vigor +20 (`fatigueCost.outing` −20; v1 −10) y ánimo +1.
+Simulador: `fatigueCost["train:simulator"]` (v1 +10; el estudio pide vigor +5, ver ADR-0006
+«Pendiente»).
+
+**Ánimo al entrenar.** Intención: el ánimo pesa en lo que rinde cada semana (×0,80 … ×1,20 como en
+Umamusume) y poco en la carrera. La ganancia usa `trainMoodMult[ánimo + 2]` en lugar de
+`moodMult`: `gain = floor(base × (1000 + Σ crewBonus) × trainMoodMult × (1000 + growth) / 10^9)`.
+v2 [800, 900, 1000, 1100, 1200]; v1 la tabla de carrera. Rango v2 (base 44, sin cuadrilla ni
+crecimiento): 35 / 39 / 44 / 48 / 52. Ánimo en carrera (`moodMult`, stats efectivas): v2 [960, 980,
+1000, 1020, 1040]; v1 [950, 980, 1000, 1050, 1100]. Helpers: `trainingMoodMultiplier`,
+`moodMultiplier`.
+
+**Deriva del ánimo.** Intención: entrenar semana tras semana cansa la cabeza; el ánimo se gasta
+solo y se recompra con salidas. En cada semana de entrenamiento (después de la tirada de fallo,
+stream `training`), ánimo −1 con `p = moodDriftBase + moodDriftPerStreak × max(0, racha −
+moodDriftFreeStreak)` ‰, donde `racha` = semanas de entrenamiento seguidas contando esta (una semana
+lesionada, un descanso forzado, un descanso, una salida o el taller la cortan; elegir un evento no).
+Con base y pendiente 0 no hay sorteo (v1). v2: 1.ª y 2.ª 20 ‰, 3.ª 60, 4.ª 100, 5.ª 140 … (tope
+1000). Helpers: `trainingStreak(state)`, `moodDriftPm(ruleset, racha)`,
+`nextTrainingDriftPm(ruleset, state)` (la próxima semana de entrenamiento).
+
+**Carrera mala.** Intención: perder feo desanima. Una carrera objetivo terminada en el puesto
+`raceLossMoodAt` o peor (DNF = último) cuesta ánimo −1 después de la carrera. v2 6.º; v1 9 (nunca
+con 8 corredoras). Helper: `raceLossCostsMood(ruleset, puesto)`.
+
+**Rivales y nota (v2).** Media por stat de los rivales `60 + 11 × turno` (192 / 324 / 456 / 566 en
+T12 / T24 / T36 / T46; v1 75 + 9). Umbrales de nota ×1,1: SS 4950, S 4510, A 4070, B 3190, C 2750,
+D 2310, E 1870, F 1430.
+
+Rango esperado de la temporada con v2 (estudio, `.work/design2/fatiga-animo.md` §8-§9, 500
+temporadas por Falconess y política): la jugadora cuidadosa (descansa o sale antes de que el fallo
+suba, sale con ánimo < +1) llega a B o mejor en 74-75 % y gana 38-40 % de sus carreras objetivo;
+la que nunca sale, 45 %; la que descansa con vigor 20, 30 %; la que descansa con vigor 0, 7 %; el
+spam de un solo entrenamiento, 0-0,1 %. Stat media final de la cuidadosa ≈ 710.
 
 ## Carrera
 
