@@ -51,8 +51,9 @@ export const ICONS = {
   "mood.1": "🙂",
   "mood.2": "😄",
 
-  // the Falconess's season resources
+  // the Falconess's season resources (vigor = fatigueMax − fatigue: the bar that drains)
   fatigue: "🥱",
+  vigor: "💪",
   skillPoints: "⭐",
   scrap: "🔩",
   feathers: "🦚",
@@ -129,6 +130,10 @@ export const ICONS = {
   "place.3": "🥉",
   grade: "🏆",
   explain: "📖",
+
+  // how a week's training went («Lo que pasó»); a failure shares the DNF's cross
+  "outcome.ok": "✅",
+  "outcome.fail": "❌",
 } as const satisfies Families;
 
 export type IconName = keyof typeof ICONS;
@@ -145,6 +150,7 @@ export const SHARED_ICONS: readonly (readonly IconName[])[] = [
   ["goalRace", "finish"],
   ["risk", "skillMiss"],
   ["mood", "mood.0"],
+  ["dnf", "outcome.fail"],
 ];
 
 export const statIcon = (stat: StatName): IconName => `stat.${stat}`;
