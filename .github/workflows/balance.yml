@@ -1,0 +1,188 @@
+# Balance batch (BRIEF §12, docs/race-engine.md §25.2.1, docs/balance-batch.md).
+#
+# - Pull requests that touch sim, content or the batch itself run the `pr` profile (10 000 races),
+#   diff it against the latest `balance-pr` artifact of main and post the Markdown as one sticky
+#   PR comment (found by its `<!-- falconess-balance-report -->` marker) and as the job summary.
+# - Pushes to main run the same batch and upload `balance-pr`: that artifact is the baseline.
+# - The nightly schedule (and a manual dispatch with profile=full) runs the `full` profile and
+#   uploads `balance-full`.
+# - Report only: metric verdicts never fail the job. Set the repository variable
+#   BALANCE_GATE=enforce to apply §25.2.1's blocking rule (a fail, or a fail in the last
+#   `balance-full` of main, fails the PR job) once the D14 balance pass lands.
+# - Until the race engine is wired into apps/cli/src/batch/engine-adapter.ts the batch exits with
+#   code 2 and the job reports "skipped" without failing.
+name: balance
+
+on:
+  pull_request:
+    paths:
+      - "packages/sim/**"
+      - "packages/content/**"
+      - "packages/schema/src/balance.ts"
+      - "apps/cli/src/sim-batch.ts"
+      - "apps/cli/src/batch/**"
+      - ".github/workflows/balance.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/sim/**"
+      - "packages/content/**"
+      - "packages/schema/src/balance.ts"
+      - "apps/cli/src/sim-batch.ts"
+      - "apps/cli/src/batch/**"
+      - ".github/workflows/balance.yml"
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "pr (10 000 races, uploads balance-pr) or full (nightly sample sizes, uploads balance-full)"
+        type: choice
+        options: [pr, full]
+        default: full
+
+permissions:
+  contents: read
+
+concurrency:
+  group: balance-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-batch:
+    name: sim:batch (pr profile)
+    if: >-
+      github.event_name == 'pull_request' || github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.profile == 'pr')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read # download artifacts of earlier runs on main
+      pull-requests: write # sticky PR comment
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Fetch the baseline and the last full report of main
+        if: github.event_name == 'pull_request'
+        run: |
+          download() {
+            local name="$1" dir="$2"
+            mkdir -p "$dir"
+            for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow balance.yml --branch main \
+                --status success --limit 30 --json databaseId --jq '.[].databaseId'); do
+              if gh run download "$id" --repo "$GITHUB_REPOSITORY" --name "$name" --dir "$dir" 2>/dev/null; then
+                echo "$name: run $id"
+                return 0
+              fi
+            done
+            echo "$name: none on main yet"
+          }
+          download balance-pr out/baseline
+          download balance-full out/full
+
+      - name: Run the balance batch
+        id: batch
+        env:
+          BALANCE_GATE: ${{ vars.BALANCE_GATE }}
+        run: |
+          set +e
+          args=(--runs 10000 --report out/balance.json --markdown out/balance.md)
+          if [ -f out/baseline/balance.json ]; then args+=(--baseline out/baseline/balance.json); fi
+          if [ "$BALANCE_GATE" = "enforce" ]; then
+            args+=(--fail-on-verdict)
+            if [ -f out/full/balance.json ]; then args+=(--gate-report out/full/balance.json); fi
+          fi
+          pnpm sim:batch -- "${args[@]}"
+          code=$?
+          if [ "$code" -eq 2 ]; then
+            {
+              echo "## Balance report: skipped"
+              echo
+              echo "The race engine is not wired into \`apps/cli/src/batch/engine-adapter.ts\` yet."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit "$code"
+
+      - name: Job summary
+        if: always() && hashFiles('out/balance.md') != ''
+        run: cat out/balance.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Sticky PR comment
+        if: >-
+          always() && github.event_name == 'pull_request' && hashFiles('out/balance.md') != '' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          marker='<!-- falconess-balance-report -->'
+          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" \
+            | tail -n 1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@out/balance.md > /dev/null
+            echo "updated comment $id"
+          else
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file out/balance.md
+          fi
+
+      - name: Upload the report
+        if: always() && hashFiles('out/balance.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-pr
+          path: |
+            out/balance.json
+            out/balance.md
+          retention-days: 90
+
+  full-batch:
+    name: sim:batch (full profile)
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.profile == 'full')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run the full balance batch
+        run: |
+          set +e
+          pnpm sim:batch -- --profile full --report out/balance.json --markdown out/balance.md
+          code=$?
+          if [ "$code" -eq 2 ]; then
+            echo "## Balance report (full): skipped, race engine not wired yet" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit "$code"
+
+      - name: Job summary
+        if: always() && hashFiles('out/balance.md') != ''
+        run: cat out/balance.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        if: always() && hashFiles('out/balance.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-full
+          path: |
+            out/balance.json
+            out/balance.md
+          retention-days: 90

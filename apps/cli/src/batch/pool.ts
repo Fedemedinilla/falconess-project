@@ -83,6 +83,8 @@ export function createWorkerPoolExecutor(opts: ExecutorOptions): Executor {
   );
   let failure: Error | undefined;
   let onFailure: ((e: Error) => void) | undefined;
+  let closing = false;
+  const exited = new Set<Worker>();
   const fail = (e: Error) => {
     failure ??= e;
     onFailure?.(e);
@@ -91,6 +93,10 @@ export function createWorkerPoolExecutor(opts: ExecutorOptions): Executor {
     w.on("error", (e) => fail(e instanceof Error ? e : new Error(String(e))));
     w.on("message", (m: unknown) => {
       if (isFromWorker(m) && m.type === "error") fail(new Error(`worker: ${m.message}`));
+    });
+    w.on("exit", (code) => {
+      exited.add(w);
+      if (!closing) fail(new Error(`sim:batch worker exited early with code ${code}`));
     });
   }
 
@@ -138,11 +144,14 @@ export function createWorkerPoolExecutor(opts: ExecutorOptions): Executor {
       if (jobs.length === 0) finish();
     });
 
+  /** Asks every live worker for its timing; a worker that already died contributes nothing. */
   const close = async (): Promise<Timing> => {
+    closing = true;
     const timings = await Promise.all(
       workers.map(
         (w) =>
-          new Promise<Timing>((resolve, reject) => {
+          new Promise<Timing>((resolve) => {
+            if (exited.has(w)) return resolve(emptyTiming());
             const listener = (m: unknown) => {
               if (isFromWorker(m) && m.type === "timing") {
                 w.off("message", listener);
@@ -150,9 +159,7 @@ export function createWorkerPoolExecutor(opts: ExecutorOptions): Executor {
               }
             };
             w.on("message", listener);
-            w.once("exit", (code) => {
-              if (code !== 0) reject(new Error(`worker exited with code ${code}`));
-            });
+            w.once("exit", () => resolve(emptyTiming()));
             const msg: ToWorker = { type: "close" };
             w.postMessage(msg);
           }),
