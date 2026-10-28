@@ -1,0 +1,379 @@
+.end {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* --- header -------------------------------------------------------------------------------------- */
+
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "grade who numbers"
+    "ladder ladder ladder";
+  align-items: end;
+  gap: var(--space-3) var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.grade {
+  grid-area: grade;
+  display: grid;
+  justify-items: center;
+  min-width: 6rem;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--accent);
+  background: var(--surface);
+}
+
+.gradeLabel {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gradeValue {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 2.8rem + 3vw, 5.5rem);
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--accent-text);
+}
+
+.who {
+  grid-area: who;
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.title {
+  font-size: var(--fs-3xl);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.sub strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.numbers {
+  grid-area: numbers;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.numbers div {
+  display: grid;
+  gap: 2px;
+}
+
+.numbers dt {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.numbers dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ladder {
+  grid-area: ladder;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rung {
+  display: grid;
+  justify-items: center;
+  padding: var(--space-1) 0;
+  border-top: 3px solid var(--surface-3);
+  background: var(--surface);
+}
+
+.rungNow {
+  border-top-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.rungCapped {
+  opacity: 0.4;
+}
+
+.rungGrade {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.rungMin {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+.capNote {
+  font-size: var(--fs-sm);
+  color: var(--bad);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+@media (max-width: 48rem) {
+  .head {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "grade who"
+      "numbers numbers"
+      "ladder ladder";
+  }
+}
+
+/* --- board --------------------------------------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.races {
+  grid-column: 1 / span 7;
+}
+
+.stats {
+  grid-column: 8 / span 5;
+  grid-row: span 2;
+}
+
+.box {
+  grid-column: 1 / span 7;
+}
+
+.run {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 60rem) {
+  .races,
+  .stats,
+  .box,
+  .run {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.note {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+.statList {
+  display: grid;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+
+.skillsLabel {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skills li {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--line-strong);
+  font-size: var(--fs-sm);
+}
+
+/* --- black box ----------------------------------------------------------------------------------- */
+
+.factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+
+.factor {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--ink-3);
+}
+
+/* the three factor colors of the brief (blue stat, red aptitude, green skills) are state tokens */
+.blue {
+  border-left-color: var(--seg-water);
+}
+
+.red {
+  border-left-color: var(--bad);
+}
+
+.green {
+  border-left-color: var(--good);
+}
+
+.factor dt {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.factor dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+}
+
+.factorValue {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-weight: 600;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.starOn {
+  color: var(--accent);
+}
+
+.starOff {
+  color: var(--surface-3);
+}
+
+.boxId {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+/* --- run ----------------------------------------------------------------------------------------- */
+
+.jsonLabel {
+  display: block;
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.json {
+  width: 100%;
+  margin-top: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  resize: vertical;
+}
+
+.status {
+  min-height: 1.5em;
+  font-size: var(--fs-sm);
+  color: var(--good);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.confirm {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+  font-size: var(--fs-sm);
+}

@@ -1,0 +1,353 @@
+.workshop {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.workshop:focus {
+  outline: none;
+}
+
+.lead {
+  max-width: 70ch;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.legend {
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* a fieldset's legend sits on the border: give it the same room as the other sections */
+fieldset.section > .legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+fieldset.section > .legend + * {
+  clear: both;
+}
+
+.hint {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.warn,
+.error {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.warn {
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+}
+
+.error {
+  display: grid;
+  gap: var(--space-1);
+  border-left: 3px solid var(--bad);
+  background: var(--bad-soft);
+}
+
+.detail {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+  color: var(--ink-2);
+}
+
+/* --- frame --------------------------------------------------------------------------------------- */
+
+.frames {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.frame,
+.skill {
+  display: grid;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease-out,
+    border-color var(--dur-fast) ease-out;
+}
+
+.frame {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+
+.frame:hover,
+.skill:hover:not(.off) {
+  background: var(--surface-2);
+}
+
+.checked {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.off {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.radio,
+.skill input,
+.check input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.frameName {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.frameText {
+  display: grid;
+  min-width: 0;
+}
+
+.frameMeta {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- parts --------------------------------------------------------------------------------------- */
+
+.parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.part {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+}
+
+.partLabel {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.select {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.partDesc {
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+
+/* --- build ---------------------------------------------------------------------------------------- */
+
+.build {
+  width: 100%;
+  max-width: 28rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.build th,
+.build td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--line);
+  text-align: end;
+}
+
+.build th:first-child {
+  text-align: start;
+}
+
+.build thead th {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.build tbody th {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.build td {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.up {
+  color: var(--good);
+}
+
+.down {
+  color: var(--bad);
+}
+
+/* --- repair -------------------------------------------------------------------------------------- */
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+/* --- quirks -------------------------------------------------------------------------------------- */
+
+.rerolls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reroll {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+}
+
+.rerollHead,
+.rerollActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.quirkList {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.quirkList li {
+  display: grid;
+}
+
+.quirkList span {
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+
+/* --- skills -------------------------------------------------------------------------------------- */
+
+.skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  height: 100%;
+}
+
+.skillName {
+  font-weight: 600;
+}
+
+.skillCost {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+.skillDesc {
+  grid-column: 2 / -1;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+
+/* --- order --------------------------------------------------------------------------------------- */
+
+.order {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+}
+
+.ops {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--fs-sm);
+}
+
+.ops li::first-letter {
+  text-transform: uppercase;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
