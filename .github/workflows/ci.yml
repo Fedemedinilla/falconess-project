@@ -6,7 +6,10 @@
 # - bench: `pnpm bench` in its own job, so timing noise never hides the verify results. The bench
 #   writes the ms per race to the job summary and fails only on its own gate: the desert-canyon
 #   p95 over 5 ms (packages/sim/bench/race.bench.ts).
-# - The balance batch lives in balance.yml (report only).
+# - batch-smoke: the CI smoke of docs/race-engine.md 24.4, 1000 mixed races of the real batch in
+#   under 6 s (`--max-wall-ms 6000`; it also fails on any DNF). It times the harness the bench
+#   does not: workers, cached geometry and arena, the seasons of S7.
+# - The 10 000-race balance batch lives in balance.yml (report only, 60-s budget).
 name: ci
 
 on:
@@ -52,3 +55,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # writes its table to $GITHUB_STEP_SUMMARY before checking the p95 gate
       - run: pnpm bench
+
+  batch-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm sim:batch -- --runs 1000 --report out/smoke.json --max-wall-ms 6000

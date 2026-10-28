@@ -13,8 +13,22 @@ pnpm sim:batch -- --runs 1000 --engine fake            # development stand-in, n
 pnpm sim:batch -- --engine fake --fake-cost-ms 5        # time the 60-s budget with a 5 ms engine
 ```
 
-Exit codes: 0 done, 1 verdict fail with `--fail-on-verdict` (or a fail in `--gate-report`) or any
-DNF (an engine bug, §19), 64 usage error.
+Exit codes: 0 done; 1 on any DNF (an engine bug, §19), on a wall time at or over `--max-wall-ms`
+(the budgets of `docs/race-engine.md` 24.4: 6000 for the `--runs 1000` CI smoke, 60000 for
+`--runs 10000`) and, with `--fail-on-verdict`, on a fail verdict or a fail cell of
+`--gate-report` that this report neither passes nor re-targets; 64 usage error. A `--baseline` or
+`--gate-report` this revision cannot read (another `BalanceReport` schema, a damaged file) is a
+warning: the report and the Markdown are still written, without the diff (the Markdown says so)
+or without the gate. `--baseline-from TEXT` names the baseline's source (run, commit) in the diff
+header.
+
+**Gate report (§25.2.1, `batch/gate.ts`).** Each fail cell of the gate report (the last `full`
+of `main`) is matched to this report by metric id and cell id. It is lifted when this report's
+cell passes (the PR fixed the metric), when this report's target for it differs and the gate's
+interval no longer fails under that target (the PR moved the target, with its ADR), or when this
+report ran the scenario and no longer has the cell. An inconclusive cell does not lift it: every
+PR that leaves a marginal fail alone reads inconclusive at `pr` size. The Markdown lists every
+gate cell with its status.
 
 ## Engine port
 
@@ -89,21 +103,31 @@ which registers tsx (the parent's TypeScript loader does not reach worker thread
 
 ## CI (`.github/workflows/balance.yml`)
 
-- **Pull requests** touching `packages/sim/**`, `packages/content/**`, the batch or the workflow:
-  `pnpm sim:batch -- --runs 10000 --report out/balance.json --markdown out/balance.md`, with
-  `--baseline` when a baseline exists. The Markdown goes to the job summary and to one sticky PR
+- **Pull requests** touching an input of the metrics (`packages/sim/**`, `packages/content/**`,
+  `packages/rng/**`, `packages/schema/src/**`, the batch, the S7 reference policy
+  `apps/cli/src/policy.ts`, `apps/cli/src/goal-rate.ts` or the workflow; the push list is the
+  same): `pnpm sim:batch -- --runs 10000 --report out/balance.json --markdown out/balance.md
+  --max-wall-ms 60000`, with `--baseline` and `--baseline-from` when a baseline exists. The Markdown goes to the job summary and to one sticky PR
   comment (the comment whose body starts with `<!-- falconess-balance-report -->` is edited, else
   `gh pr comment` creates it; skipped for forks). The report is uploaded as `balance-pr`.
 - **Baseline:** every push to `main` that touches those paths runs the same job and uploads the
-  `balance-pr` artifact (90 days). A PR job walks the latest successful `balance.yml` runs on `main`
-  (`gh run list --branch main`) and downloads the first `balance-pr` it finds with
-  `gh run download` (needs `actions: read`). No artifact yet: the report has no diff section. To
-  refresh it by hand, dispatch the workflow on `main` with `profile: pr`.
+  `balance-pr` artifact (90 days); a push run never fails on a verdict, since `main` produces the
+  baseline. A PR job walks the latest finished `balance.yml` runs on `main`
+  (`gh run list --branch main --status completed`, whatever their conclusion: a run can fail on a
+  DNF or the time budget after uploading its report) and downloads the first `balance-pr` it
+  finds with `gh run download` (needs `actions: read`); the diff header names that run and its
+  commit. No artifact yet: the report has no diff section. To refresh it by hand, dispatch the
+  workflow on `main` with `profile: pr`.
 - **Nightly `full`:** a schedule (and a manual dispatch with `profile: full`) runs
   `--profile full` and uploads `balance-full`.
 - **Gate:** report only for now; metric verdicts never fail the job. The repository variable
-  `BALANCE_GATE=enforce` turns on §25.2.1's rule: `--fail-on-verdict`, plus `--gate-report` with
-  the last `balance-full` of `main`, so a fail in either fails the PR job.
+  `BALANCE_GATE=enforce` turns on §25.2.1's rule for pull requests: `--fail-on-verdict`, plus
+  `--gate-report` with the last `balance-full` of `main`, so a fail in the PR's report, or a gate
+  fail cell the PR neither fixes nor re-targets, fails the PR job. The label `balance-adr` (a PR
+  that attaches an ADR moving a target, BRIEF §12, or a fix the `pr` sample cannot show) runs the
+  job without `--fail-on-verdict`; adding or removing the label re-runs it.
+- **Time budget:** the PR job passes `--max-wall-ms 60000` (24.4); the 1000-race smoke under 6 s
+  is the `batch-smoke` job of `ci.yml`, on every push and pull request.
 - Any DNF exits 1 and fails the job: it is an engine bug (§19), not balance. S7 counts the
   player's DNFs in its goal races (recorded with the course's `maxTicks`); the season keeps no
   rival results, so rival DNFs in goal races are not checked.
