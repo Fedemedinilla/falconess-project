@@ -1,8 +1,8 @@
-import { floorDiv, U32_RANGE, uPm, uRange } from "@falconess/rng";
+import { ceilDiv, floorDiv, U32_RANGE, uPm, uRange } from "@falconess/rng";
 import type { Course, RaceEntry, RacePhase, SegmentType } from "@falconess/schema";
 import { RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
 import { compileRule, createPulseState, initPulseLane, type PulseState } from "../rules/index.js";
-import type { Ruleset } from "../rulesets/index.js";
+import type { RaceConstants, Ruleset } from "../rulesets/index.js";
 import { type CourseGeometry, MAX_SEGMENTS } from "./geometry.js";
 import {
   accelVu,
@@ -156,10 +156,12 @@ export type RaceTables = {
   readonly unit: Float64Array;
   readonly sMax: Float64Array;
   readonly costOn: Int32Array;
-  /** Next stage (9.3): energy the final plan window can spend; 0 until the controller lands. */
-  readonly capFinal: Int32Array;
-  /** Next stage (9.3): ground's constant level; 0 until the controller lands. */
-  readonly groundLevel: Int32Array;
+  /** Energy the final plan window can actually spend, me, per PW variant (9.3; `SURPLUS`). */
+  readonly capFinal: Float64Array;
+  /** Ground's constant level, vu, per PW variant (9.3; 0 for other styles). */
+  readonly groundLevel: Float64Array;
+  /** Where hpMax runs out at cruise from the gun, pu, per PW variant (9.3 `exhaust0`). */
+  readonly exhaust0: Float64Array;
   readonly hpMax: Float64Array;
   readonly stamDiv: Int32Array;
   readonly fat: Int32Array;
@@ -182,7 +184,7 @@ export type RaceTables = {
   readonly planPoint: Float64Array;
   /** Energy a jump segment needs (`need[j]`), 0 on other segments. */
   readonly need: Int32Array;
-  /** Next stage (14.4): jump reserve per segment; 0 until the controller lands. */
+  /** Jump reserve per segment, me (14.4): what the jumps still ahead need; 0 for ground. */
   readonly jr: Int32Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
@@ -355,8 +357,9 @@ function createTables(): RaceTables {
     unit: f64(N * 2),
     sMax: f64(N * 2),
     costOn: i32(N),
-    capFinal: i32(N * 2),
-    groundLevel: i32(N * 2),
+    capFinal: f64(N * 2),
+    groundLevel: f64(N * 2),
+    exhaust0: f64(N * 2),
     hpMax: f64(N),
     stamDiv: i32(N),
     fat: i32(N),
@@ -625,8 +628,8 @@ function segCode(type: SegmentType): number {
 /**
  * Every table of docs/race-engine.md 3.3 for every runner, from its entry, the geometry, the ruleset
  * and the pre-drawn block. Style terms (9.8) and rule terms (13.1) are folded in here, so the loop
- * reads one scalar per term and never branches on a manufacturer name. The jump reserve (14.4),
- * `capFinal` and `groundLevel` (9.3) belong to the controller stage and stay 0 here.
+ * reads one scalar per term and never branches on a manufacturer name. Last come the tables that
+ * read the others: the jump reserve (14.4), `exhaust0`, `capFinal` and `groundLevel` (9.3).
  */
 export function buildTables(
   ruleset: Ruleset,
@@ -771,6 +774,10 @@ export function buildTables(
       T.sMax[ib(i, b)] = pulseFrame ? floorDiv(unit, R.pulseTicks + R.pulseCooldownTicks) : Bon;
     }
 
+    // reserves and budgets that read the tables above (14.4, 9.3)
+    jumpReserve(G, T, i);
+    for (let b = 0; b < 2; b++) budgetTables(R, G, T, i, b, VBASE, pulseCostMe);
+
     // skills (15): activation, per-phase bonus, pre-drawn u, frozen columns
     const pAct = activationPm(R, intelligence);
     T.pAct[i] = pAct;
@@ -807,6 +814,142 @@ export function buildTables(
       T.skDur[k] = ef.durationTicks;
     });
   }
+}
+
+// --- reserves and budgets (14.4, 9.3) ----------------------------------------------------------------
+
+/**
+ * Distance `d` (pu) of segment s in the runner's route coordinates (11.3 `route`): a ground runner
+ * detours a jump segment at `detour` ‰ of its length; everything else is the distance itself.
+ */
+export function routeDist(G: CourseGeometry, T: RaceTables, i: number, s: number, d: number) {
+  return T.style[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
+    ? floorDiv(d * (T.detour[i] ?? 1000), 1000)
+    : d;
+}
+
+/**
+ * Whether the runner can thrust on segment s (11.3 `thrustable`): never on a jump segment unless
+ * it is a ground runner (airborne, or on foot after a crash).
+ */
+export function thrustable(G: CourseGeometry, T: RaceTables, i: number, s: number): boolean {
+  return !(G.segType[s] === SEG_JUMP && T.style[i] !== STYLE_GROUND);
+}
+
+/**
+ * Jump reserve of 14.4, a backward pass over the jumps (non-ground runners only):
+ * `R_j = need_j > Emax ? R_{j+1} : max(need_j, liftReq_j × 1000 + R_{j+1})` (a jump the tank can
+ * never make is skipped: it fails anyway and a failure spends no lift energy), and `jr[s]` is the
+ * `R_j` of the first jump whose segment index is above s (0 if none).
+ */
+function jumpReserve(G: CourseGeometry, T: RaceTables, i: number): void {
+  if (T.style[i] === STYLE_GROUND) return; // zero-filled by reset
+  const Emax = T.Emax[i] ?? 0;
+  let ahead = 0;
+  for (let s = G.S - 1; s >= 0; s--) {
+    T.jr[is(i, s)] = ahead;
+    if (G.segType[s] !== SEG_JUMP) continue;
+    const need = T.need[is(i, s)] ?? 0;
+    if (need <= Emax) ahead = Math.max(need, (G.liftReq[s] ?? 0) * 1000 + ahead);
+  }
+}
+
+/** hp drained per tick at constant speed v (section 6): `fl(r × r × dK, 10^6)`, `r = fl(v × 1000, VBASE)`. */
+function drainAt(v: number, vBase: number, dK: number): number {
+  const r = floorDiv(v * 1000, vBase);
+  return floorDiv(r * r * dK, 1_000_000);
+}
+
+/**
+ * 9.3 for PW variant b: `exhaust0` (where hpMax runs out at cruise from the gun, walking the
+ * pieces of the course split at segment boundaries, `startEnd` and `finalStart`), then
+ * `capFinal` (energy the final window `[planPoint, min(kickAt, exhaust0))` can absorb over its
+ * thrust-capable ticks: heat-aware from cold for continuous frames, max cadence for pulse frames)
+ * and, for ground runners, `groundLevel` (the level that spends `groundPreShare` of the tank evenly
+ * before the final).
+ */
+function budgetTables(
+  R: RaceConstants,
+  G: CourseGeometry,
+  T: RaceTables,
+  i: number,
+  b: number,
+  vBase: number,
+  pulseCostMe: number,
+): void {
+  const ground = T.style[i] === STYLE_GROUND;
+  const hpMax = T.hpMax[i] ?? 0;
+  const dkN = T.dK[i * 4] ?? 0;
+  const dkF = T.dK[i * 4 + DK_FINAL] ?? 0;
+
+  // exhaust0
+  let exhaust = G.L;
+  let h = 0;
+  walk: for (let s = 0; s < G.S; s++) {
+    const s0 = G.segStart[s] ?? 0;
+    const s1 = G.segEnd[s] ?? 0;
+    for (let ph = 0; ph < 3; ph++) {
+      const p0 = ph === 0 ? 0 : ph === 1 ? G.startEnd : G.finalStart;
+      const p1 = ph === 0 ? G.startEnd : ph === 1 ? G.finalStart : G.L;
+      const a = Math.max(s0, p0);
+      const z = Math.min(s1, p1);
+      if (z <= a) continue;
+      const v = T.vC[ibps(i, b, ph, s)] ?? 1;
+      const dr = drainAt(v, vBase, ph === PH_FINAL ? dkF : dkN);
+      const tk = ceilDiv(routeDist(G, T, i, s, z - a), v);
+      if (h + tk * dr > hpMax) {
+        const k = floorDiv(hpMax - h, Math.max(1, dr));
+        const adv =
+          ground && G.segType[s] === SEG_JUMP ? floorDiv(k * v * 1000, T.detour[i] ?? 1000) : k * v;
+        exhaust = Math.min(z, a + adv);
+        break walk;
+      }
+      h += tk * dr;
+    }
+  }
+  T.exhaust0[ib(i, b)] = exhaust;
+
+  // capFinal over the thrust-capable ticks of the final window
+  const x0 = T.planPoint[i] ?? 0;
+  const x1 = Math.min(T.kickAt[i] ?? 0, exhaust);
+  let cap = 0;
+  if (x1 > x0) {
+    let fin = 0;
+    for (let s = 0; s < G.S; s++) {
+      if (!thrustable(G, T, i, s)) continue;
+      const a = Math.max(x0, G.segStart[s] ?? 0);
+      const z = Math.min(x1, G.segEnd[s] ?? 0);
+      if (z <= a) continue;
+      fin += ceilDiv(routeDist(G, T, i, s, z - a), T.vC[ibps(i, b, PH_FINAL, s)] ?? 1);
+    }
+    if (T.pulseFrame[i] === 1)
+      cap = floorDiv(fin * R.pulseTicks, R.pulseTicks + R.pulseCooldownTicks) * pulseCostMe;
+    else {
+      const cool = T.coolTick[i] ?? 1;
+      const heatOn = floorDiv((T.capLim[i] ?? 0) + fin * cool, R.kH + cool);
+      cap = Math.min(fin, heatOn) * R.kE;
+    }
+  }
+  T.capFinal[ib(i, b)] = cap;
+
+  // groundLevel over the pieces of [0, finalStart)
+  if (!ground) return;
+  let pre = 0;
+  for (let s = 0; s < G.S; s++) {
+    const s0 = G.segStart[s] ?? 0;
+    const s1 = G.segEnd[s] ?? 0;
+    for (let ph = 0; ph < 2; ph++) {
+      const a = Math.max(s0, ph === 0 ? 0 : G.startEnd);
+      const z = Math.min(s1, ph === 0 ? G.startEnd : G.finalStart);
+      if (z <= a) continue;
+      pre += ceilDiv(routeDist(G, T, i, s, z - a), T.vC[ibps(i, b, ph, s)] ?? 1);
+    }
+  }
+  const share = floorDiv((T.Emax[i] ?? 0) * R.style.groundPreShare, 1000);
+  T.groundLevel[ib(i, b)] = Math.min(
+    T.sMax[ib(i, b)] ?? 0,
+    floorDiv((T.Bon[ib(i, b)] ?? 0) * share, Math.max(1, pre) * (T.costOn[i] ?? 1)),
+  );
 }
 
 // --- initial state (1.3) ---------------------------------------------------------------------------

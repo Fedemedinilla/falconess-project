@@ -472,3 +472,76 @@ describe("arena (docs/race-engine.md 22)", () => {
     expect(() => arena.reset(9, buildCourseGeometry(RULESET_V1, SPRINT))).toThrow();
   });
 });
+
+describe("reserves and budgets (docs/race-engine.md 14.4, 9.3)", () => {
+  const capOf = (A: RaceArena, i = 0, b = 0) => A.tables.capFinal[ib(i, b)];
+  const exhaustM = (A: RaceArena, i = 0) => Math.floor((A.tables.exhaust0[ib(i, 0)] ?? 0) / 22_500);
+
+  it("ridge jump reserve at T 600: 35 000 before jump 1, 15 000 up to jump 2, 0 after; ground 0", () => {
+    const A = tablesOf([fixture("dive"), fixture("ground", {}, 1)], RIDGE);
+    const jr = (i: number) => Array.from({ length: 7 }, (_, s) => A.tables.jr[is(i, s)]);
+    expect(jr(0)).toEqual([35_000, 35_000, 15_000, 15_000, 15_000, 0, 0]);
+    expect(jr(1)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it("a jump the tank can never make is skipped by the reserve", () => {
+    const c = flatCourse([
+      { type: "flat", length: 300 },
+      { type: "jump", length: 80, liftRequired: 30 },
+      { type: "flat", length: 300 },
+      { type: "jump", length: 80, liftRequired: 10 },
+      { type: "flat", length: 300 },
+    ]);
+    // energy 20, T 600: need 30 000 > Emax 20 000 → skipped; the second needs 10 000
+    const A = tablesOf([fixture("hover", { energy: 20 })], c);
+    expect(Array.from({ length: 5 }, (_, s) => A.tables.jr[is(0, s)])).toEqual([
+      10_000, 10_000, 10_000, 0, 0,
+    ]); // on a jump segment only the jumps after it count
+    // a high-technique flyer needs less than liftRequired, but the spent energy is liftRequired
+    const hiT = tablesOf([fixture("hover", { stats: { ...S600, technique: 1200 } })], c);
+    // need 30 000 × 1000 / 1500 = 20 000 → R_1 = max(20 000, 30 000 + 10 000)
+    expect(hiT.tables.jr[is(0, 0)]).toBe(40_000);
+  });
+
+  it("capFinal: neutral dive sprint 99 000, ridge 134 000 (jump 2 skipped), canyon 188 000 (cut at 2778.6 m)", () => {
+    expect(capOf(tablesOf([fixture("dive")], SPRINT))).toBe(99_000);
+    expect(capOf(tablesOf([fixture("dive")], RIDGE))).toBe(134_000);
+    const canyon = tablesOf([fixture("dive")], CANYON);
+    expect(capOf(canyon)).toBe(188_000);
+    expect(exhaustM(canyon)).toBe(27_786);
+    // hover plans from 70 %: a shorter window
+    expect(capOf(tablesOf([fixture("hover")], SPRINT))).toBe(90_000);
+    // broken wings: a slower cruise gives more final ticks, still bounded by the heat budget
+    const A = tablesOf([fixture("dive")], SPRINT);
+    expect(capOf(A, 0, 1)).toBeGreaterThanOrEqual(capOf(A, 0, 0) ?? 0);
+  });
+
+  it("capFinal of a pulse frame counts max cadence (12/42): shiden 52 800 / 25 200 / 16 800", () => {
+    const sh = (c: Course) => tablesOf([frozen("shiden", c)], c);
+    const sprint = sh(SPRINT);
+    const ridge = sh(RIDGE);
+    const canyon = sh(CANYON);
+    expect([capOf(sprint), capOf(ridge), capOf(canyon)]).toEqual([52_800, 25_200, 16_800]);
+    expect([exhaustM(sprint), exhaustM(ridge), exhaustM(canyon)]).toEqual([11_232, 15_197, 21_286]);
+  });
+
+  it("an empty final window gives capFinal 0", () => {
+    // St 1 on the canyon empties long before the final
+    const A = tablesOf([fixture("dive", { stats: { ...S600, stamina: 1 } })], CANYON);
+    expect(A.tables.exhaust0[ib(0, 0)]).toBeLessThan(buildCourseGeometry(QUIET, CANYON).finalStart);
+    expect(capOf(A)).toBe(0);
+  });
+
+  it("groundLevel spends 60 % of the tank evenly before the final, capped at sMax; 0 for flyers", () => {
+    const A = tablesOf([fixture("ground"), fixture("dive", {}, 1)], SPRINT);
+    const T = A.tables;
+    const level = T.groundLevel[ib(0, 0)] ?? 0;
+    expect(level).toBe(5133); // 342.2 mm/s
+    expect(T.groundLevel[ib(1, 0)]).toBe(0);
+    // the level × pre-final ticks ≈ 60 % of Emax in thrust units
+    expect(level).toBeLessThanOrEqual(T.sMax[ib(0, 0)] ?? 0);
+    const hay = tablesOf([frozen("hayate", SPRINT)], SPRINT).tables;
+    expect(hay.groundLevel[ib(0, 0)]).toBe(9526);
+    expect(hay.groundLevel[ib(0, 0)]).toBeLessThanOrEqual(hay.sMax[ib(0, 0)] ?? 0);
+  });
+});
