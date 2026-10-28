@@ -1,7 +1,9 @@
 /**
- * `pnpm play -- --seed 42 --falconess peregrina [--hangar a,b,c,d]`
+ * `pnpm play -- --seed 42 --falconess peregrina [--hangar a,b,c,d] [--ruleset v2]`
  * Interactive text season for PT0. It owns no game state: every choice becomes a RunInput and the
- * state comes back from advanceSeason. On exit it prints seed + inputs so the run can be replayed.
+ * state comes back from advanceSeason. The ruleset defaults to `CURRENT_RULESET` (ADR-0006). On
+ * exit it prints the run in the web's save format (ruleset version, seed and inputs) so it can be
+ * replayed or loaded in the tester page.
  */
 
 import { stdin, stdout } from "node:process";
@@ -9,27 +11,29 @@ import { createInterface } from "node:readline/promises";
 import { loadContent } from "@falconess/content";
 import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
 import {
+  actionBlock,
   advanceSeason,
   blackBoxFor,
-  RULESET_V1,
   rerollCost,
+  restOptions,
   type SimContext,
   startSeason,
   WorkshopError,
 } from "@falconess/sim";
-import { argString, parseArgs } from "./args.js";
+import { argRuleset, argString, parseArgs } from "./args.js";
 import { goalRaceView } from "./goal-race-view.js";
 import {
   finalSummary,
   frameLine,
   headerLine,
+  pmPercent,
   statsLine,
   trainingMenu,
   turnSummary,
 } from "./render.js";
 
 const args = parseArgs(process.argv.slice(2));
-const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
+const ctx: SimContext = { ruleset: argRuleset(args), content: loadContent() };
 const c = ctx.content;
 const seed = argString(args, "seed", String(Math.floor(Math.random() * 1_000_000)));
 const falconessId = argString(args, "falconess", "peregrina");
@@ -97,10 +101,16 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
     console.log(
       `  (lesionada: ${s.injuryTurns} turno(s) de recuperación; cualquier acción descansa)`,
     );
-  if (s.fatigue >= ctx.ruleset.season.forcedRestAt)
-    console.log("  (fatiga alta: entrenar se convierte en descanso)");
+  if (actionBlock(ctx.ruleset, s, "train:agility") === "forced-rest")
+    console.log("  (vigor bajo: entrenar se convierte en descanso)");
   for (const line of trainingMenu(ctx, s)) console.log(line);
-  console.log("6. Taller   7. Descansar   8. Salida   (x salir)");
+  const S = ctx.ruleset.season;
+  const rest = restOptions(ctx.ruleset)
+    .map((o) => (o.chancePm < 1000 ? `+${o.recovery} ${pmPercent(o.chancePm)}` : `+${o.recovery}`))
+    .join(" / ");
+  console.log(
+    `6. Taller (vigor ${-S.fatigueCost.workshop})   7. Descansar (vigor ${rest}; ánimo +1 ${pmPercent(S.restMoodUpChance)})   8. Salida (vigor +${-S.fatigueCost.outing}, ánimo +1)   (x salir)`,
+  );
   for (;;) {
     const a = await ask("acción> ");
     if (a === "x") throw new Error("quit");
@@ -123,7 +133,7 @@ async function main(): Promise<void> {
   let state = startSeason(ctx, seed, start);
   const inputs: RunInput[] = [start];
   console.log(
-    `Falconess · temporada en texto · seed ${seed} · ${c.t(c.getFalconess(falconessId).textKey)}`,
+    `Falconess · temporada en texto · seed ${seed} · ruleset ${ctx.ruleset.version} · ${c.t(c.getFalconess(falconessId).textKey)}`,
   );
   try {
     while (state.status === "active") {
@@ -145,7 +155,8 @@ async function main(): Promise<void> {
   } catch (e) {
     if (!(e instanceof Error && e.message === "quit")) throw e;
   } finally {
-    console.log(`\nreplay: ${JSON.stringify({ seed, inputs })}`);
+    const save = { schemaVersion: 1, rulesetVersion: ctx.ruleset.version, seed, inputs };
+    console.log(`\nreplay: ${JSON.stringify(save)}`);
     closed = true;
     rl.close();
   }

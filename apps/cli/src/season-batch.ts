@@ -1,25 +1,25 @@
 /**
- * `pnpm sim:season-batch -- --runs 500 [--falconess peregrina] [--hangar a,b,c,d]`
+ * `pnpm sim:season-batch -- --runs 500 [--falconess peregrina] [--hangar a,b,c,d] [--ruleset v2]`
  * Plays N seasons per Falconess with the reference policy and reports what docs/race-engine.md
  * 21.1 asks of D12: the completion rate, the grade distribution and the share graded B or better
  * (the gate: ≥ 60 % per Falconess), the mean `seasonScore` split into stat total, skills and race
  * bonuses, the mean final stats, the goal races' win rate and place distribution (ADR-0005
  * «Pasada 2») and the goal pass-rate table (per goal: the share of the seasons that reached the
  * race and passed it, flagged under 80 % as a diagnostic, the share of them that won it, plus the
- * share of all seasons that reached and that passed it). Seeds `batch-0` … `batch-(N−1)`.
+ * share of all seasons that reached and that passed it). Seeds `batch-0` … `batch-(N−1)`. The
+ * ruleset defaults to `CURRENT_RULESET` (ADR-0006); `--ruleset v1` measures the old rules.
  */
 import { loadContent } from "@falconess/content";
 import type { Grade, RunInput, SeasonGoal } from "@falconess/schema";
 import {
   advanceSeason,
-  RULESET_V1,
   type SimContext,
   STAT_ORDER,
   seasonScore,
   startSeason,
   statTotal,
 } from "@falconess/sim";
-import { argString, parseArgs } from "./args.js";
+import { argRuleset, argString, parseArgs } from "./args.js";
 import { goalFlagged, placeCounts } from "./goal-rate.js";
 import { lowestStatPolicy, REFERENCE_HANGAR } from "./policy.js";
 
@@ -149,8 +149,9 @@ const isMain =
   process.argv[1]?.endsWith("season-batch.ts") || process.argv[1]?.endsWith("season-batch.js");
 if (isMain) {
   const args = parseArgs(process.argv.slice(2));
-  const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
+  const ctx: SimContext = { ruleset: argRuleset(args), content: loadContent() };
   const runs = Number.parseInt(argString(args, "runs", "500"), 10);
+  console.log(`ruleset ${ctx.ruleset.version}`);
   const who = argString(args, "falconess", "all");
   const hangar = argString(args, "hangar", REFERENCE_HANGAR.join(",")).split(",");
   const ids = who === "all" ? [...ctx.content.falconess.keys()] : [who];

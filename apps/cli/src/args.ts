@@ -1,3 +1,5 @@
+import { CURRENT_RULESET, getRuleset, type Ruleset } from "@falconess/sim";
+
 /** Tiny `--key value` / `--flag` parser; no dependency needed. */
 export function parseArgs(argv: readonly string[]): Record<string, string | true> {
   const out: Record<string, string | true> = {};
@@ -21,4 +23,15 @@ export function argString(
 ): string {
   const v = args[key];
   return typeof v === "string" ? v : fallback;
+}
+
+/**
+ * `--ruleset vN`: the ruleset a new run starts on (ADR-0006 D1). Default `CURRENT_RULESET`; an
+ * unknown version throws.
+ */
+export function argRuleset(
+  args: Record<string, string | true>,
+  fallback: string = CURRENT_RULESET.version,
+): Ruleset {
+  return getRuleset(argString(args, "ruleset", fallback));
 }

@@ -2,10 +2,13 @@ import type { ContentIndex, RunInput, SeasonState, TrainingKind } from "@falcone
 import {
   facilityLevel,
   goalForTurn,
+  nextTrainingDriftPm,
   resolveFrameBuild,
   type SimContext,
   STAT_ORDER,
-  trainingGain,
+  trainingGains,
+  trainingRisk,
+  vigor,
 } from "@falconess/sim";
 
 const TRAININGS: readonly TrainingKind[] = [
@@ -44,7 +47,7 @@ export function headerLine(ctx: SimContext, s: SeasonState): string {
   const goalTxt = goal
     ? `  CARRERA: ${c.t(c.getCourse(goal.courseId).textKey)} (min. ${goal.minPlace}º)`
     : "";
-  return `T${String(s.turn).padStart(2, "0")}/48  ${c.t(f.textKey)}  ánimo ${c.t(`mood.${s.mood}`)}  fatiga ${s.fatigue}  SP ${s.skillPoints}  chatarra ${s.wallet.scrap}${goalTxt}`;
+  return `T${String(s.turn).padStart(2, "0")}/48  ${c.t(f.textKey)}  ánimo ${c.t(`mood.${s.mood}`)}  vigor ${vigor(ctx.ruleset, s.fatigue)}  SP ${s.skillPoints}  chatarra ${s.wallet.scrap}${goalTxt}`;
 }
 
 export function frameLine(ctx: SimContext, s: SeasonState): string {
@@ -63,27 +66,36 @@ export function frameLine(ctx: SimContext, s: SeasonState): string {
   return `alas: ${c.t(c.getFrame(s.equippedFrame).textKey)} [${c.t(c.getManufacturer(b.manufacturer).textKey)} · ${c.t(`style.${b.style}`)}]  P/W ${(b.powerToWeight / 1000).toFixed(2)}  E ${b.energy}  D ${b.dissipation}  dur ${dur}/${b.durabilityMax}${parts ? `  piezas: ${parts}` : ""}${quirks ? `  peculiaridades: ${quirks}` : ""}`;
 }
 
+/** A per-mille chance as a percent with at most one decimal ("1.6 %", "12 %"). */
+export function pmPercent(pm: number): string {
+  return `${(pm / 10).toFixed(1).replace(/\.0$/, "")} %`;
+}
+
+/**
+ * The five trainings with what a success gives, the vigor it costs and its risk, all from the
+ * sim's helpers (`trainingGains`, `trainingRisk`, `nextTrainingDriftPm`; ADR-0006 D9).
+ */
 export function trainingMenu(ctx: SimContext, s: SeasonState): string[] {
   const c = ctx.content;
+  const S = ctx.ruleset.season;
+  const drift = nextTrainingDriftPm(ctx.ruleset, s);
   return TRAININGS.map((k, i) => {
-    const stat = ctx.ruleset.trainingStat[k];
-    const gain = trainingGain(ctx, s as Parameters<typeof trainingGain>[1], k, stat);
+    const gains = trainingGains(ctx, s, k)
+      .map(({ stat, gain }) => `+${gain} ${c.t(`stat.${stat}`)}`)
+      .join(" ");
     const crews = (s.crewPresence[k] ?? []).map((m) => c.t(c.getManufacturer(m).crew.textKey));
     const lvl = facilityLevel(ctx, s.facilityUses[k]);
-    const S = ctx.ruleset.season;
-    let shown = `+${gain} ${c.t(`stat.${stat}`)}`;
-    if (k === "train:risk-flight") {
-      const cou = Math.floor((gain * S.riskFlightCourage) / 1000);
-      const agi = Math.floor((gain * S.riskFlightAgility) / 1000);
-      shown = `+${cou} ${c.t("stat.courage")} +${agi} ${c.t("stat.agility")} (riesgo ${S.riskFlightFail / 10} %)`;
-    } else {
-      const sec = ctx.ruleset.trainingSecondary[k];
-      if (sec)
-        shown += ` +${Math.max(1, Math.floor((gain * S.secondaryGain) / 1000))} ${c.t(`stat.${sec}`)}`;
-      if (k === "train:simulator") shown += ` +${S.simulatorSkillPoints} SP`;
-    }
+    const sp = k === "train:simulator" ? ` +${S.simulatorSkillPoints} SP` : "";
+    const cost = -S.fatigueCost[k];
+    const { failPm, injuryPm } = trainingRisk(ctx.ruleset, s.fatigue, k);
+    const risk = [
+      `vigor ${cost > 0 ? "+" : ""}${cost}`,
+      `fallo ${pmPercent(failPm)}`,
+      ...(injuryPm > 0 ? [`lesión ${pmPercent(injuryPm)}`] : []),
+      ...(drift > 0 ? [`ánimo -1 ${pmPercent(drift)}`] : []),
+    ].join(", ");
     const crewTxt = crews.length ? `  ← ${crews.join(", ")}` : "";
-    return `${i + 1}. ${c.t(`action.${k}`)} nv${lvl}  ${shown}${crewTxt}`;
+    return `${i + 1}. ${c.t(`action.${k}`)} nv${lvl}  ${gains}${sp}  (${risk})${crewTxt}`;
   });
 }
 
@@ -96,7 +108,10 @@ export function turnSummary(ctx: SimContext, s: SeasonState, prev: SeasonState):
       .filter(([, v]) => v !== 0)
       .map(([k, v]) => `${c.t(`stat.${k}`)} ${v > 0 ? "+" : ""}${v}`);
     const notes = last.notes.map((n) => (c.text.has(n) ? c.t(n) : n));
-    lines.push(`  → ${[...notes, ...deltas].join(" · ")}`);
+    const mood = last.moodDelta ? [`ánimo ${last.moodDelta > 0 ? "+" : ""}${last.moodDelta}`] : [];
+    const vig = last.fatigueDelta ? -last.fatigueDelta : 0;
+    const vigorTxt = vig ? [`vigor ${vig > 0 ? "+" : ""}${vig}`] : [];
+    lines.push(`  → ${[...notes, ...deltas, ...mood, ...vigorTxt].join(" · ")}`);
   }
   const race = s.raceResults.at(-1);
   if (race && race.turn === prev.turn && s.raceResults.length > prev.raceResults.length) {
