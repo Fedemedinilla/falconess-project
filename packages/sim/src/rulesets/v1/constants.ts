@@ -142,8 +142,8 @@ const RACE_V1 = {
   kStartDash: 24_000, // mm/s², new: start dash, also after a failed jump (recovery dash)
   dashUntilPm: 850, // ‰ of min(vBase, target), new: the dash ends at this speed
   kDecel: 3_000, // mm/s², new: rate limit when the target drops
-  pwCruiseWeight: 1_000, // ‰, new knob: weight of (PW − 1) in cruise, accel and vMin; 1000 = brief
-  pwBoostWeight: 1_000, // ‰, new knob: weight of (PW − 1) in boost thrust; 1000 = brief
+  pwCruiseWeight: 5, // ‰, new knob: weight of (PW − 1) in cruise, accel and vMin; 1000 = brief (ADR-0005: 1000 → 5)
+  pwBoostWeight: 250, // ‰, new knob: weight of (PW − 1) in boost thrust; 1000 = brief (ADR-0005: 1000 → 250)
   stylePace: {
     // ‰ per phase [start, middle, final], new knob; 1000 = neutral (balance-pass lever, metric 1)
     dive: [1_000, 1_000, 1_000],
@@ -206,19 +206,19 @@ const RACE_V1 = {
   landTechPm: 120, // ‰ added at technique 1200: landPm = 800 + 120·min(T, 1200)/1200 (T 600 → 860)
 
   // manufacturer rules (BRIEF §7)
-  regenPerTick: 500, // me per tick without boost (Lumière 0.5)
+  regenPerTick: 100, // me per tick without boost (Lumière; brief 0.5, ADR-0005: 500 → 100)
   repairablePerFlatSegment: 2, // durability per flat segment entered (Boneyard)
   telemetryActivationBonus: 150, // ‰ added to every skill check (Altair +15 %)
   telemetryPowerCap: 1_100, // ‰ PW cap (applied by resolveFrameBuild)
 
   // rule terms (new, revision 2; numeric, BRIEF §7 deviation; section 13.1, ADR-0003 D45)
-  massThrustCoolPm: { desert: 500, mountain: 1_250, coast: 1_000, urban: 500, tundra: 1_250 }, // ‰ of coolTick, Steinhaus
+  massThrustCoolPm: { desert: 50, mountain: 1_250, coast: 1_000, urban: 50, tundra: 1_250 }, // ‰ of coolTick, Steinhaus (ADR-0005: desert, urban 500 → 50)
   regenLandLossPm: 2_000, // ‰ of the landing loss, Lumière (light airframe)
-  pulseAirPm: [1_000, 1_000, 1_200, 1_000, 600, 1_000, 1_000], // ‰ burst thrust per segment type (SEGMENT_TYPES order), Kōryū
-  pulseBiomePm: { desert: 1_150, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰ burst thrust per biome, Kōryū
-  telemetryDrainPm: 900, // ‰ of hp drain, Altair
-  telemetryAccelPm: 850, // ‰ of acceleration, Altair
-  repairableRuggedPm: 500, // ‰ of the landing loss and of the detour's extra length, Boneyard
+  pulseAirPm: [1_000, 1_000, 2_500, 1_000, 600, 1_000, 1_000], // ‰ burst thrust per segment type (SEGMENT_TYPES order), Kōryū (ADR-0005: descent 1200 → 2500)
+  pulseBiomePm: { desert: 1_450, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰ burst thrust per biome, Kōryū (ADR-0005: desert 1150 → 1450)
+  telemetryDrainPm: 950, // ‰ of hp drain, Altair (ADR-0005: 900 → 950)
+  telemetryAccelPm: 800, // ‰ of acceleration, Altair (ADR-0005: 850 → 800)
+  repairableRuggedPm: 0, // ‰ of the landing loss and of the detour's extra length, Boneyard (ADR-0005: 500 → 0)
   repairableCurvesPm: 1_500, // ‰ of the curve penalty, Boneyard
 
   // skills (BRIEF §6)

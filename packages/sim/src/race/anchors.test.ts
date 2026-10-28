@@ -238,7 +238,7 @@ describe("17.3 / 25.4 same-build dispersion: σ/mean over 300 seeds (disp.mjs se
 });
 
 describe("25.4 agility monotonicity (mono.mjs: 1500 random frame builds on flat courses, noise off)", () => {
-  it("no boost 0 / 1500; boost without exhaustion 15 / 977, worst 121 mt continuous and 1106 mt (pulse); with exhaustion 3 / 523, worst 0.05 %", {
+  it("no boost 0 / 1500; boost without exhaustion 15 / 976, worst 121 mt continuous and 1106 mt (pulse); with exhaustion 3 / 524, worst 0.05 %", {
     timeout: 30_000,
   }, () => {
     let seed = 12_345;
@@ -297,9 +297,9 @@ describe("25.4 agility monotonicity (mono.mjs: 1500 random frame builds on flat 
         }
       }
     }
-    expect([tiers.a, tiers.b, continuousWorst]).toEqual([[1500, 0, 0], [977, 15, 1106], 121]);
+    expect([tiers.a, tiers.b, continuousWorst]).toEqual([[1500, 0, 0], [976, 15, 1106], 121]);
     expect([tiers.c[0], tiers.c[1], (100 * (tiers.c[2] ?? 0)).toFixed(2)]).toEqual([
-      523,
+      524,
       3,
       "0.05",
     ]);

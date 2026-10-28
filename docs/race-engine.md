@@ -2027,9 +2027,9 @@ planErrorMax = 0`.
   ≈ 4 ticks for shiden; a faster runner can lose its last whole burst to the line);
   (c) either run exhausts: `≤ finishMilli(A) × 1005 / 1000` (a genuine plan/exhaustion
   interaction). Spec-prototype measurement (revision 2 constants): 0 inversions in 1500 pairs for
-  (a); (b) 15 inversions in 977 pairs, worst 121 mt for continuous frames and 1106 mt for one
+  (a); (b) 15 inversions in 976 pairs, worst 121 mt for continuous frames and 1106 mt for one
   shiden pair (one burst: the stoop and the desert air make a PW 1.4 dive burst worth 7 m);
-  (c) 3 in 523, worst 0.05 % (judge 1 measured up to 1.19 % with thrust allowed after exhaustion,
+  (c) 3 in 524, worst 0.05 % (judge 1 measured up to 1.19 % with thrust allowed after exhaustion,
   which this spec disables). Revision 1 measured worst 140 mt for (b) before the stoop existed. If
   a tier fails, investigate before loosening it (ADR).
 - **P4 bounds on every tick** (test-only probe exported from `engine.ts`, not from `index.ts`):
@@ -2351,11 +2351,11 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | hayate (ground, pulse, PW 1.20) | 47.39 s | 9.79/22.74/14.86 | 28/32/12 | 6 | 1.60 m/s from 987 m | 13.6 | 114 / 915 hp | 0 / 60 |
 | nimbus (hover, telemetry, PW 0.85) | 62.35 s | 10.65/31.46/20.24 | 15/0/105 | - | 1.15 m/s from 841 m | 0.0 | 375 / 915 hp | 0 / 100 |
 | horizon (glide, telemetry, PW 1.00) | 54.09 s | 10.17/26.80/17.11 | 37/35/103 | - | 1.30 m/s from 801 m | 0.0 | 301 / 915 hp | 0 / 100 |
-| mule (ground, repairable, PW 0.70) | 77.70 s | 12.72/38.80/26.17 | 14/46/40 | - | 1.20 m/s from 1063 m | 0.0 | 433 / 915 hp | 0 / 180 |
-| kite (glide, repairable, PW 0.70) | 77.61 s | 12.79/39.20/25.61 | 0/0/100 | - | 0.80 m/s from 860 m | 0.0 | 442 / 915 hp | 0 / 180 |
+| mule (ground, repairable, PW 0.70) | 77.34 s | 12.58/38.71/26.05 | 31/54/55 | - | 1.00 m/s from 1016 m | 0.0 | 431 / 915 hp | 0 / 180 |
+| kite (glide, repairable, PW 0.70) | 77.23 s | 12.69/39.20/25.34 | 12/0/128 | - | 0.80 m/s from 801 m | 0.0 | 440 / 915 hp | 0 / 180 |
 | peregrina-signature (dive, pulse, PW 1.40) | 42.81 s | 9.39/21.21/12.21 | 36/0/36 | 6 | 2.61 m/s from 800 m | 13.6 | 4 / 915 hp | 0 / 100 |
 | cernicala-signature (hover, telemetry, PW 0.85) | 60.97 s | 10.41/30.41/20.15 | 43/120/115 | - | 1.15 m/s from 841 m | 19.3 | 363 / 915 hp | 0 / 100 |
-| caracara-signature (ground, repairable, PW 0.70) | 77.70 s | 12.72/38.80/26.17 | 14/46/40 | - | 1.20 m/s from 1063 m | 0.0 | 433 / 915 hp | 0 / 180 |
+| caracara-signature (ground, repairable, PW 0.70) | 77.34 s | 12.58/38.71/26.05 | 31/54/55 | - | 1.00 m/s from 1016 m | 0.0 | 431 / 915 hp | 0 / 180 |
 
 **desert-ridge**
 
@@ -2373,11 +2373,11 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | hayate (ground, pulse, PW 1.20) | 77.25 s | 15.33/35.64/26.28 | 36/24/12 | 6 | 1.60 m/s from 1591 m (hp-limited) | 13.6 | empty at 1768 m | 0 / 60 |
 | nimbus (hover, telemetry, PW 0.85) | 100.67 s | 17.43/50.08/33.16 | 0/0/85 | - | 1.25 m/s from 1695 m | 0.0 | 308 / 1235 hp | 0 / 100 |
 | horizon (glide, telemetry, PW 1.00) | 86.87 s | 16.46/42.40/28.01 | 0/35/105 | - | 1.30 m/s from 1459 m | 0.0 | 175 / 1235 hp | 0 / 100 |
-| mule (ground, repairable, PW 0.70) | 120.93 s | 20.78/59.92/40.23 | 15/45/40 | - | 1.20 m/s from 1857 m | 0.0 | 373 / 1235 hp | 0 / 180 |
-| kite (glide, repairable, PW 0.70) | 120.91 s | 20.86/60.13/39.92 | 0/0/65 | - | 0.90 m/s from 1765 m | 0.0 | 397 / 1235 hp | 0 / 180 |
+| mule (ground, repairable, PW 0.70) | 120.59 s | 20.73/59.78/40.09 | 21/62/57 | - | 1.00 m/s from 1801 m | 0.0 | 370 / 1235 hp | 0 / 180 |
+| kite (glide, repairable, PW 0.70) | 120.57 s | 20.86/60.13/39.58 | 0/0/105 | - | 0.80 m/s from 1622 m | 0.0 | 394 / 1235 hp | 0 / 180 |
 | peregrina-signature (dive, pulse, PW 1.40) | 71.11 s | 15.09/32.19/23.82 | 24/0/24 | 4 | 2.61 m/s from 1335 m (hp-limited) | 7.4 | empty at 1644 m | 0 / 100 |
 | cernicala-signature (hover, telemetry, PW 0.85) | 98.29 s | 16.99/48.76/32.54 | 52/159/157 | - | 1.05 m/s from 1401 m | 11.8 | 285 / 1235 hp | 0 / 100 |
-| caracara-signature (ground, repairable, PW 0.70) | 120.93 s | 20.78/59.92/40.23 | 15/45/40 | - | 1.20 m/s from 1857 m | 0.0 | 373 / 1235 hp | 0 / 180 |
+| caracara-signature (ground, repairable, PW 0.70) | 120.59 s | 20.73/59.78/40.09 | 21/62/57 | - | 1.00 m/s from 1801 m | 0.0 | 370 / 1235 hp | 0 / 180 |
 
 **desert-canyon**
 
@@ -2395,11 +2395,11 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | hayate (ground, pulse, PW 1.20) | 120.47 s | 21.70/56.02/42.74 | 36/24/12 | 6 | 1.60 m/s from 2224 m (hp-limited) | 13.6 | empty at 2431 m | 0 / 55 |
 | nimbus (hover, telemetry, PW 0.85) | 155.87 s | 25.98/79.54/50.35 | 0/0/120 | - | 1.05 m/s from 2538 m | 0.0 | 281 / 1635 hp | 0 / 90 |
 | horizon (glide, telemetry, PW 1.00) | 133.59 s | 23.71/67.36/42.53 | 0/35/140 | - | 1.20 m/s from 2364 m | 0.0 | 81 / 1635 hp | 0 / 90 |
-| mule (ground, repairable, PW 0.70) | 188.79 s | 31.19/96.05/61.56 | 14/46/40 | - | 1.20 m/s from 2858 m | 0.0 | 393 / 1635 hp | 0 / 177 |
-| kite (glide, repairable, PW 0.70) | 188.76 s | 31.26/96.46/61.05 | 0/0/100 | - | 0.80 m/s from 2638 m | 0.0 | 416 / 1635 hp | 0 / 172 |
+| mule (ground, repairable, PW 0.70) | 188.46 s | 31.14/95.88/61.45 | 20/64/56 | - | 1.00 m/s from 2804 m | 0.0 | 390 / 1635 hp | 0 / 177 |
+| kite (glide, repairable, PW 0.70) | 188.35 s | 31.26/96.46/60.64 | 0/0/140 | - | 0.80 m/s from 2518 m | 0.0 | 414 / 1635 hp | 0 / 172 |
 | peregrina-signature (dive, pulse, PW 1.40) | 108.74 s | 20.61/48.59/39.55 | 60/0/12 | 6 | 2.61 m/s from 2000 m (hp-limited) | 13.6 | empty at 2231 m | 0 / 90 |
 | cernicala-signature (hover, telemetry, PW 0.85) | 152.01 s | 25.32/77.22/49.48 | 77/260/219 | - | 0.95 m/s from 2179 m | 0.0 | 244 / 1635 hp | 0 / 90 |
-| caracara-signature (ground, repairable, PW 0.70) | 184.94 s | 31.19/96.05/57.71 | 14/46/40 | - | 1.20 m/s from 2853 m | 0.0 | 366 / 1635 hp | 0 / 180 |
+| caracara-signature (ground, repairable, PW 0.70) | 184.60 s | 31.14/95.88/57.59 | 20/64/56 | - | 1.00 m/s from 2797 m | 0.0 | 364 / 1635 hp | 0 / 180 |
 
 **Other measured anchors (same prototype):**
 
@@ -2416,7 +2416,7 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | S1 style win rates (neutral fixtures, 2 per style, 800 races per course) | sprint dive 35 / hover 31 / glide 23 / ground 11 %; ridge 20 / 19 / 23 / **38** %; canyon 22 / 29 / 33 / 16 %; desert mean **25.6 / 26.3 / 26.2 / 22.0 %** (revision 1: 25.3 / 27.6 / 33.9 / 13.2 %; with the brief's detour 1.25 and every other revision-2 term, ground falls to 11.1 % and wins 6 % of the ridge) |
 | S1 mean phase splits, start / middle / final (s) | sprint: dive 10.44 / 26.95 / **16.76**, hover 10.35 / **26.51** / 17.28, glide **10.04** / 26.83 / 17.49, ground 10.28 / 26.56 / 17.66; ridge: dive 16.15 / 42.62 / **28.25**, hover 16.17 / 42.27 / 28.50, glide **16.04** / 42.61 / 28.36, ground 16.19 / **42.07** / 28.29; canyon: dive 23.59 / 67.64 / **44.80**, hover 23.45 / **66.73** / 45.45, glide **23.01** / 67.64 / 45.27, ground 23.47 / 67.19 / 45.63 (bold = fastest: glide the start, hover the middle except on the obstacle course, dive the final) |
 | S8 Intelligence (one runner in 8 equal hovers; win %) | sprint I 300 / 510 / 600 / 630 / 1000: 4.3 / 8.8 / 11.1 / 12.3 / 31.3; ridge 4.5 / 8.9 / 11.0 / 11.6 / 31.3; canyon 4.2 / 8.6 / 10.5 / 11.3 / 32.5 (revision 1: sprint 15.1 / 12.6 / 11.2 / 10.6 / 6.9) |
-| Agility monotonicity (flat, solo, noise off, random builds) | no boost: 0 inversions in 1500 pairs; boost, no exhaustion: 15 in 977 pairs, worst 121 mt (continuous) and 1106 mt (one shiden burst, P3 (b) bound for pulse frames); with exhaustion: 3 in 523, worst 0.05 % |
+| Agility monotonicity (flat, solo, noise off, random builds) | no boost: 0 inversions in 1500 pairs; boost, no exhaustion: 15 in 976 pairs, worst 121 mt (continuous) and 1106 mt (one shiden burst, P3 (b) bound for pulse frames); with exhaustion: 3 in 524, worst 0.05 % (mule and kite at energy 140, ADR-0005; 977 and 523 pairs at energy 100) |
 | Symmetry | identical builds (noise off) tie exactly on the 3 courses for every style |
 | Cost | 4.4 ms (revision 1 code) and 5.3 ms (revision 2 code) per 8-runner mixed canyon race with 4 skills each in the object-based prototype on the same machine (closures and per-tick arrays; the new terms cost one multiply each); the SoA implementation of section 22 targets 1-2 ms |
 

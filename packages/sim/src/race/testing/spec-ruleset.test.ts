@@ -13,12 +13,8 @@ function frozenDeep(value: unknown, path: string, out: string[] = []): string[] 
 }
 
 describe("SPEC_RULESET (physics tests pin to it; balance tunes rulesets/v1)", () => {
-  // Delete this test in the first balance commit (docs/decisions/ADR-0005-balance-pass-1.md):
-  // from then on SPEC_RULESET keeps the ADR-0003 constants and RULESET_V1 moves away on purpose.
-  it("SPEC_RULESET matches v1 until the first balance change", () => {
-    expect(SPEC_RULESET).toStrictEqual(RULESET_V1);
-  });
-
+  // The equality test with RULESET_V1 was deleted by the first balance commit (ADR-0005): from then
+  // on SPEC_RULESET keeps the ADR-0003 constants and RULESET_V1 moves away on purpose.
   it("is deep-frozen except the shared live season, which it does not copy", () => {
     const { season, ...copied } = SPEC_RULESET;
     expect(Object.isFrozen(SPEC_RULESET)).toBe(true);

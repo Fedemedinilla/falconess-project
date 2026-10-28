@@ -77,8 +77,9 @@ energía, calor y durabilidad en milésimas. Las constantes y el log usan las un
 Intención: la agilidad y la relación peso-potencia fijan el ritmo; el terreno lo modula.
 `vC = fl(fl(vA × pwc × f_seg × stylePace[fase], 10^9) × (1000 + pace[fase]), 1000)` vu, con
 `vA = fl(VBASE × (1 200 000 + kA × A), 1 200 000)` y `pwc = 1000 + fl(pwCruiseWeight × (PW − 1000), 1000)`
-(PW en ‰; `pwCruiseWeight` 1000 = brief literal). Rango: A 600, PW 1,0, llano = 23,5 m/s; 16,5–37 m/s
-según PW y terreno. Rebufo de hover (término de estilo): en la fase media, mientras está en el
+(PW en ‰; `pwCruiseWeight` 1000 = brief literal; v1 5, ADR-0005: el PW mueve el crucero ±0,2 %,
+`pwc` 998 a PW 0,7 y 1002 a PW 1,4). Rango: A 600, PW 1,0, llano = 23,5 m/s; el terreno lo mueve
+entre ×0,8 (agua 0,2) y ×1,15. Rebufo de hover (término de estilo): en la fase media, mientras está en el
 pelotón medio, su objetivo de velocidad ×`hoverDraftPm` (1020; nunca agotada, nunca en solitario).
 Constantes: `vBase` 20 000 mm/s, `kA` 350 ‰, `pwCruiseWeight`, `stylePace` (1000 neutro),
 `style.hoverDraftPm` 1020.
@@ -90,21 +91,22 @@ Intención: la técnica gobierna cuánto tarda en alcanzar el crucero; la salida
 en mm/s²). Salida: `v0 = vStart`; mientras `vCore < fl(min(VBASE, objetivo) × dashUntilPm, 1000)` se
 suma `kStartDash`; el mismo sprint se reactiva tras un salto fallido. Si el objetivo baja,
 `vCore` baja a `kDecel` por tick. Glide en la fase de salida acelera ×`glideStartAccelPm` (1100;
-"toma la punta"); Altair acelera ×`telemetryAccelPm` (850; término de regla). Rango: 0,40 m/s² a
+"toma la punta"); Altair acelera ×`telemetryAccelPm` (800; término de regla). Rango: 0,40 m/s² a
 T 600 (0,3–0,5 entre T 300 y 900); 17 m/s en 9 ticks, crucero en ~15 s a T 600. Constantes: `kAcc`
 400 mm/s², `vStart` 3000 mm/s, `kStartDash` 24 000 mm/s², `dashUntilPm` 850, `kDecel` 3000 mm/s²,
-`style.glideStartAccelPm` 1100, `telemetryAccelPm` 850.
+`style.glideStartAccelPm` 1100, `telemetryAccelPm` 800.
 
 ### Velocidad movida
 
 Intención: el boost y las habilidades son instantáneos (`v += k_boost·PW`).
 `vOut = penalizado ? fl(vTot × heatPenaltyMult, 1000) : vTot`, `vTot = max(0, vCore + empuje + skillSpeed)`;
 empuje `B = fl(KBOOST × pwb, 1000)` (pulso: `Bp = fl(KBOOST × pwb × pulseBoostMult, 10^6)`), con
-`pwb = 1000 + fl(pwBoostWeight × (PW − 1000), 1000)`. El empuje de un tick de pulso pasa además por
+`pwb = 1000 + fl(pwBoostWeight × (PW − 1000), 1000)` (v1 `pwBoostWeight` 250, ADR-0005: `pwb` 925 a
+PW 0,7 y 1100 a PW 1,4). El empuje de un tick de pulso pasa además por
 el aire de Kōryū (`airPm`, ver "Términos de regla"), y el de dive por la picada: ×`diveStoopPm`
 (1400) en descensos y en la fase final ("gasta todo en descensos y en el sprint final"). Rango:
-+3 m/s (PW 1,0; dive en la final 4,2), pulso +4,05 m/s (4,66 en el desierto). Constantes: `kBoost`
-3000 mm/s, `pwBoostWeight`, `heatPenaltyMult` 920, `style.diveStoopPm` 1400.
++3 m/s (PW 1,0; dive en la final 4,2), pulso +4,05 m/s (5,87 en el desierto; 14,7 en un descenso
+del desierto). Constantes: `kBoost` 3000 mm/s, `pwBoostWeight` 250, `heatPenaltyMult` 920, `style.diveStoopPm` 1400.
 
 ### hp máximo
 
@@ -119,9 +121,9 @@ reduce la fatiga de la fase final. `drain = fl(r × r × dK, 10^6)` µhp por tic
 (el cuadrado como producto entero); `dK = fl(kHp × 1000 × 1 200 000, stamDiv)` antes de la final y
 `fl(kHp × 1000 × 1 200 000 × fat, stamDiv × 1000)` en la final, `stamDiv = 1 200 000 + kS × St`,
 `fat = max(1000, fatigueBase − fl(fatigueCourage × C, 1200))`; glide en punta ×`glideLeadDrainPm`;
-Altair ×`telemetryDrainPm` (900; término de regla). Rango: 0,86 / 1,12 hp por tick a 23,5 m/s con
+Altair ×`telemetryDrainPm` (950; término de regla). Rango: 0,86 / 1,12 hp por tick a 23,5 m/s con
 St y C 600. Constantes: `kHp` 1000, `kS` 1200, `fatigueBase` 1500, `fatigueCourage` 400,
-`glideLeadDrainPm` 980 (revisión 2; era 950), `telemetryDrainPm` 900.
+`glideLeadDrainPm` 980 (revisión 2; era 950), `telemetryDrainPm` 950.
 
 ### Agotamiento
 
@@ -147,9 +149,9 @@ Intención: el boost gasta energía y calienta; sin boost se enfría y, si el ba
 regenera. Por tick con boost: `energía −= kE` (pulso `fl(kE × pulseCostMult, 1000)`), `calor += kH`;
 sin boost: `calor −= coolTick`, `energía += regenTick` (×multiplicador en el pelotón medio), con
 `coolTick = fl(kCool × biomeCool × dissF, 10^6)` (neutro = `kCool`), ×`massThrustCoolPm[bioma]` en
-Steinhaus (desierto 500; término de regla). Ninguna cantidad baja de 0 ni pasa su máximo. Rango:
+Steinhaus (desierto 50; término de regla). Ninguna cantidad baja de 0 ni pasa su máximo. Rango:
 100 de energía ≈ 100 ticks ≈ 20 m a PW 1,0. Constantes: `kE` 1000, `kH` 2000, `kCool` 1000,
-`regenPerTick` 500, `coolDissWeight` 0, `dissRef` 60, `biomeCool` 1000, `massThrustCoolPm`.
+`regenPerTick` 100 (brief 0,5 por tick; ADR-0005), `coolDissWeight` 0, `dissRef` 60, `biomeCool` 1000, `massThrustCoolPm`.
 
 ### Umbral de sobrecalentamiento y gobernador
 
@@ -184,7 +186,7 @@ máximo; 4,05 m/s × 12 ticks = 3,24 m por pulso a PW 1,0 (3,73 m en llano del d
 Intención: la técnica multiplica la energía disponible para despegar. `liftF = fl((600 + T) × (1000 + liftBonus), 1200)`,
 `lift = fl(energía × liftF, 1000)`; éxito si `lift ≥ liftRequired × 1000`: gasta `min(energía, req)` y
 cruza a velocidad de crucero; al aterrizar conserva `landPm = landBasePm + fl(landTechPm × min(T, 1200), 1200)`
-‰ de la velocidad (T 600: 860; Lumière pierde el doble, Boneyard la mitad: términos de regla) y
+‰ de la velocidad (T 600: 860; Lumière pierde el doble, Boneyard nada: términos de regla) y
 vuelve a acelerar; fallo: `durability −= kCrash × 1000` (0 con guardia o blindaje) y
 `kJumpPenaltyTicks` ticks parada; sin blindaje además `v = fl(v × crashSpeedMult, 1000)` y sprint de
 recuperación; con `obstacle-armor` conserva la velocidad y la parada suma `extraTicks`; quien cae no
@@ -239,8 +241,8 @@ Bastidores de pulsos (una sola definición, la de `docs/race-engine.md` §3.3):
 `costOn = fl(kE × pulseCostMult, 1000)`, `unit = Bon × pulseTicks`,
 `sMax = fl(unit, pulseTicks + pulseCooldownTicks)` (cadencia máxima 12/42). Rango (dive con picada):
 1,8 m/s desde 801 m en el sprint; 2,6 m/s desde 1800 m en el ridge (hover: 1,3 m/s desde 841 m y
-1,5 m/s desde 1723 m); nivel máximo de pulsos en el desierto: shiden 39 122 vu (2,61 m/s), hayate
-23 952 vu (1,60 m/s). Constantes: `finalSprintReserveMeters` 60, `sprintLevelStepMms` 100,
+1,5 m/s desde 1723 m); nivel máximo de pulsos en el desierto: shiden 38 758 vu (2,58 m/s), hayate
+26 426 vu (1,76 m/s) (`pwBoostWeight` 250, `pulseBiomePm` 1450). Constantes: `finalSprintReserveMeters` 60, `sprintLevelStepMms` 100,
 `maxReplans` 4, `pulseTicks`, `pulseCooldownTicks`, `pulseBiomePm`, `style.diveStoopPm`.
 
 ### Controladores de estilo
@@ -264,27 +266,30 @@ un término numérico que se compila con su `RuleSpec`. Son bonificaciones numé
 de BRIEF §7 («no como bonificación numérica»; ADR-0003 D45).
 
 - Dentro del mecanismo de su regla, ligados a un bioma o a un tipo de segmento:
-  - Steinhaus: `coolTick × massThrustCoolPm[bioma]` (desierto y urbano 500, tundra y montaña
-    1250). Ninguna stat lo iguala; en el tope de calor, el ciclo de boost gobernado baja de 1/3 a
-    1/5.
+  - Steinhaus: `coolTick × massThrustCoolPm[bioma]` (desierto y urbano 50, tundra y montaña
+    1250; ADR-0005). Ninguna stat lo iguala; en el desierto enfría 0,05 por tick: el ciclo de boost
+    gobernado en el tope de calor baja de 1/3 a 1/41 y el tanque no se vacía en ninguna pista
+    (≈ 46 / 58 / 77 ticks de boost en sprint / ridge / cañón).
   - Kōryū: empuje de ráfaga × `airPm = fl(pulseAirPm[segmento] × pulseBiomePm[bioma], 1000)`
-    (descenso 1200, agua 600; desierto 1150). Es el empuje de +0,15 de PW en el desierto, con el
-    crucero igual.
+    (descenso 2500, agua 600; desierto 1450; ADR-0005). Una ráfaga empuja ×1,45 en el desierto y
+    ×3,625 en un descenso del desierto (agua del desierto ×0,87), con el crucero igual.
 - Fuera del mecanismo de su regla:
   - Lumière: pérdida de aterrizaje × `regenLandLossPm` (2000). ≈ 54 m por aterrizaje en vez de
     13,5 m a T 600; ninguna técnica lo iguala.
-  - Boneyard: pérdida de aterrizaje y alargue del desvío × `repairableRuggedPm` (500), que
-    equivale a T 1300 al aterrizar y a −9 m de desvío en el ridge; penalización de curvas ×
-    `repairableCurvesPm` (1500), la de A 300 en las curvas.
+  - Boneyard: pérdida de aterrizaje y alargue del desvío × `repairableRuggedPm` (0; ADR-0005):
+    aterriza sin perder velocidad y su ruta de suelo mide lo mismo que el salto (−18 m de desvío en
+    el ridge); penalización de curvas × `repairableCurvesPm` (1500), la de A 300 en las curvas.
   - Altair, global (todo segmento de toda pista, sin clave de segmento ni de bioma): drenaje ×
-    `telemetryDrainPm` (900) y aceleración × `telemetryAccelPm` (850). Equivale a ≈ +178 de
-    stamina y −180 de técnica a 600 / 600: `St' = (1000 + St) / 0,9 − 1000` y `T' = 0,85 T − 90`.
+    `telemetryDrainPm` (950) y aceleración × `telemetryAccelPm` (800; ADR-0005). Equivale a ≈ +84
+    de stamina y −240 de técnica a 600 / 600: `St' = (1000 + St) / 0,95 − 1000` y `T' = 0,8 T − 120`.
     Sus casillas salen del largo de la pista.
 
-Ninguna regla lee un rasgo de pista. Rango (PW y estilo iguales, v1): Altair +0,77 % en el sprint
-y −1,22 % en el cañón; Boneyard +2,89 % en el sprint y −0,99 % en el ridge; Lumière +0,60 % en el
-ridge frente a −2,93 % en el sprint; Kōryū y Steinhaus < 0,2 % hasta que baje `kE` (paso 2 de
-D14). Constantes: las nombradas.
+Ninguna regla lee un rasgo de pista. Rango (PW y estilo iguales, constantes de ADR-0003): Altair
++0,77 % en el sprint y −1,22 % en el cañón; Boneyard +2,89 % en el sprint y −0,99 % en el ridge;
+Lumière +0,60 % en el ridge frente a −2,93 % en el sprint; Kōryū y Steinhaus < 0,2 % con `kE` 1000.
+Con los valores de ADR-0005 (bastidores reales, S2 `full`, 600 carreras por pista): Kōryū 35 % del
+sprint y del ridge, Boneyard 33-34 % del ridge, Altair 36 % del cañón; Steinhaus ≤ 10 %, Lumière 0 %
+del ridge, Altair 5-6 % y Boneyard 0 % del sprint. Constantes: las nombradas.
 
 ### Llegada y márgenes
 

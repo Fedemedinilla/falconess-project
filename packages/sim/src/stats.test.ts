@@ -106,7 +106,7 @@ describe("frame build (variety seam)", () => {
 
   it("Boneyard frames carry quirk mods and modifiers instead of a passive", () => {
     const b = resolveFrameBuild(content, "mule", [], ["cheap-fuel", "stutter"]);
-    expect(b.energy).toBe(115);
+    expect(b.energy).toBe(155);
     expect(b.dissipation).toBe(35);
     expect(b.modifiers).toEqual([{ kind: "no-pulse" }]);
     expect(b.rule).toBe("repairable");
