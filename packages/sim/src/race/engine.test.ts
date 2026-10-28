@@ -186,6 +186,25 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
       }
     });
 
+  it("a 50 m course (the shortest Course) logs a negative reserveAt and kickAt and parses (20.1 Int)", () => {
+    // section 2: reserveAtMm = Lmm − 60 000 < 0 below 60 m, and kickAt = reserveAt (9.4); the log
+    // types the boundaries Int (20.1), so a valid course never yields a log RaceLog rejects
+    const short: Course = {
+      id: "short-flat",
+      version: 1,
+      biome: "desert",
+      traits: [],
+      entries: 8,
+      segments: [{ type: "flat", length: 50 }],
+      textKey: "course.short",
+    };
+    const log = simulateRace(RULESET_V1, neutralField().slice(0, 4), short, "short");
+    expect(log.geometry.reserveAtMm).toBe(-10_000);
+    expect(log.derived.map((d) => d.kickAtMm)).toEqual([-10_000, -10_000, -10_000, -10_000]);
+    expect(RaceLog.parse(log)).toEqual(log);
+    expect(log.results.every((r) => !r.dnf)).toBe(true);
+  });
+
   it("the ridge flyers lift twice (35 energy) and land twice; ground detours both jumps", () => {
     const log = simulateRace(RULESET_V1, neutralField(), course("desert-ridge"), "ridge");
     for (const r of log.results) {
