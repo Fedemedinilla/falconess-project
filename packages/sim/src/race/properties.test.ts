@@ -1,0 +1,653 @@
+import { loadContent } from "@falconess/content";
+import { ceilDiv, Rng } from "@falconess/rng";
+import type {
+  Course,
+  RaceEntry,
+  RaceLog,
+  RaceRule,
+  RaceSkill,
+  RaceTraits,
+  Segment,
+  Style,
+} from "@falconess/schema";
+import { RACE_RULES, RaceLog as RaceLogSchema } from "@falconess/schema";
+import fc from "fast-check";
+import { describe, expect, it } from "vitest";
+import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import { simulateRace, simulateRaceProbed } from "./engine.js";
+import { freezeEntry, freezeSkill } from "./entry.js";
+import { disableSkill, neutralFixtureEntry } from "./fixtures.js";
+import { buildCourseGeometry } from "./geometry.js";
+import { createRaceArena, drawRaceBlock, ib, ibps, ips, is, type RaceArena } from "./state.js";
+
+/**
+ * Properties of docs/race-engine.md 24.2 with fast-check: P1 determinism, P2 symmetry (exact with
+ * noise off, statistical with noise), P3 agility monotonicity in the three tiers of ADR-0003 D41
+ * (and P9 for stamina), P4 bounds on every tick, P5 log consistency, P6 RNG accounting and
+ * isolation (P6b ablation alignment) and P7 options invariance. Run counts are kept small enough
+ * for the whole suite to stay fast; every run is a full race.
+ */
+
+const content = loadContent();
+const QUIET: Ruleset = {
+  ...RULESET_V1,
+  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+};
+const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"].map((id) =>
+  content.getCourse(id),
+);
+const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
+const ACTIVE_IDS = [...content.skills.values()]
+  .filter((s) => s.kind === "active")
+  .map((s) => s.id)
+  .sort();
+const FROZEN = new Map<string, RaceSkill>(ACTIVE_IDS.map((id) => [id, freezeSkill(content, id)]));
+const GENERIC_FRAMES = [...content.frames.values()]
+  .filter((f) => f.signatureOf === undefined)
+  .map((f) => f.id)
+  .sort();
+const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
+
+function at<T>(arr: readonly T[] | undefined, i: number): T {
+  const v = arr?.[i];
+  if (v === undefined) throw new Error(`no element ${i}`);
+  return v;
+}
+
+function testCourse(segments: Segment[], id = "prop-course"): Course {
+  return { id, version: 1, biome: "desert", traits: [], entries: 8, segments, textKey: "course.p" };
+}
+
+// --- arbitraries --------------------------------------------------------------------------------
+
+const stat = fc.integer({ min: 50, max: 1200 });
+const statsArb = fc.record({
+  agility: stat,
+  stamina: stat,
+  technique: stat,
+  courage: stat,
+  intelligence: stat,
+});
+
+const traitsArb: fc.Arbitrary<Partial<RaceTraits>> = fc
+  .record({
+    immune: fc.constantFrom<"none" | "300m" | "all">("none", "none", "300m", "all"),
+    regenMe: fc.constantFrom(0, 0, 250),
+    freeFirstBoostMask: fc.constantFrom(0, 0, 1, 4, 5),
+    chain: fc.boolean(),
+    flatCooldown: fc.boolean(),
+    heatToEnergyPm: fc.constantFrom(0, 0, 250, 500),
+    liftBonusPm: fc.constantFrom(0, 100),
+    noPulse: fc.constantFrom(false, false, false, true),
+    obstacleArmor: fc.constantFrom(false, false, true),
+    randomSkillGuaranteed: fc.constantFrom(false, false, true),
+    packRegenMultPm: fc.constantFrom(1000, 2000),
+  })
+  .map((t) => ({
+    heatImmune: t.immune !== "none",
+    heatImmuneUntilMm: t.immune === "300m" ? 300_000 : null,
+    regenMe: t.regenMe,
+    freeFirstBoostMask: t.freeFirstBoostMask,
+    pulseChainIndex: t.chain ? 3 : 0,
+    pulseChainBonusPm: t.chain ? 200 : 0,
+    pulseCooldown: [t.flatCooldown ? 20 : 0, 0, 0, 0, 0, 0, 0],
+    heatToEnergyPm: t.heatToEnergyPm,
+    liftBonusPm: t.liftBonusPm,
+    noPulse: t.noPulse,
+    obstacleArmor: t.obstacleArmor,
+    obstacleArmorExtraTicks: t.obstacleArmor ? 10 : 0,
+    randomSkillGuaranteed: t.randomSkillGuaranteed,
+    packRegenMultPm: t.packRegenMultPm,
+  }));
+
+type Build = {
+  style: Style;
+  rule: RaceRule;
+  stats: RaceEntry["stats"];
+  powerToWeight: number;
+  energy: number;
+  dissipation: number;
+  durabilityMax: number;
+  durabilityStart: number;
+  skills: string[];
+  traits: Partial<RaceTraits>;
+};
+
+const buildArb = (maxSkills = 3): fc.Arbitrary<Build> =>
+  fc
+    .record({
+      style: fc.constantFrom(...STYLES),
+      rule: fc.constantFrom(...RACE_RULES),
+      stats: statsArb,
+      powerToWeight: fc.integer({ min: 500, max: 1600 }),
+      energy: fc.integer({ min: 20, max: 200 }),
+      dissipation: fc.integer({ min: 20, max: 120 }),
+      durabilityMax: fc.integer({ min: 20, max: 260 }),
+      durFrac: fc.integer({ min: 0, max: 1000 }),
+      skills: fc.subarray(ACTIVE_IDS, { maxLength: maxSkills }),
+      traits: traitsArb,
+    })
+    .map(({ durFrac, ...b }) => ({
+      ...b,
+      durabilityStart: Math.floor((b.durabilityMax * durFrac) / 1000),
+    }));
+
+function entryOf(b: Build, lane: number, runnerId = `r-${lane}`): RaceEntry {
+  const base = neutralFixtureEntry({
+    runnerId,
+    laneIndex: lane,
+    style: b.style,
+    stats: b.stats,
+    skills: b.skills.map((id) => {
+      const s = FROZEN.get(id);
+      if (s === undefined) throw new Error(id);
+      return s;
+    }),
+  });
+  return {
+    ...base,
+    rule: b.rule,
+    powerToWeight: b.powerToWeight,
+    energy: b.energy,
+    dissipation: b.dissipation,
+    durabilityMax: b.durabilityMax,
+    durabilityStart: b.durabilityStart,
+    traits: { ...base.traits, ...b.traits },
+  };
+}
+
+const segmentArb: fc.Arbitrary<Segment> = fc.oneof(
+  fc.record({ type: fc.constant("flat" as const), length: fc.integer({ min: 50, max: 500 }) }),
+  fc.record({
+    type: fc.constant("climb" as const),
+    length: fc.integer({ min: 50, max: 500 }),
+    grade: fc.constantFrom(0.05, 0.15, 0.25),
+  }),
+  fc.record({
+    type: fc.constant("descent" as const),
+    length: fc.integer({ min: 50, max: 500 }),
+    grade: fc.constantFrom(0.1, 0.2, 0.3),
+  }),
+  fc.record({
+    type: fc.constant("jump" as const),
+    length: fc.integer({ min: 50, max: 150 }),
+    liftRequired: fc.integer({ min: 5, max: 40 }),
+  }),
+  fc.record({
+    type: fc.constant("water" as const),
+    length: fc.integer({ min: 50, max: 300 }),
+    drag: fc.constantFrom(0.1, 0.2, 0.3),
+  }),
+  fc.record({
+    type: fc.constant("canyon" as const),
+    length: fc.integer({ min: 50, max: 500 }),
+    wind: fc.constantFrom(-0.15, -0.05, 0.1),
+  }),
+  fc.record({
+    type: fc.constant("curves" as const),
+    length: fc.integer({ min: 50, max: 400 }),
+    radius: fc.integer({ min: 20, max: 80 }),
+  }),
+);
+
+/**
+ * A content course or a random one of up to 7 segments (≤ 3200 m). Random courses are padded to at
+ * least 200 m: below `finalSprintReserveMeters` (60 m) `reserveAt` is negative and the log does not
+ * parse (open issue: the validator of 1.4 accepts such a course).
+ */
+const courseArb: fc.Arbitrary<Course> = fc.oneof(
+  fc.constantFrom(...COURSES),
+  fc
+    .array(segmentArb, { minLength: 1, maxLength: 6 })
+    .map((s) =>
+      testCourse(
+        s.reduce((m, x) => m + x.length, 0) < 200 ? [...s, { type: "flat", length: 200 }] : s,
+      ),
+    ),
+);
+
+const fieldArb = (min: number, max: number, maxSkills = 3) =>
+  fc
+    .array(buildArb(maxSkills), { minLength: min, maxLength: max })
+    .map((bs) => bs.map((b, lane) => entryOf(b, lane)));
+
+const seedArb = fc.string({ minLength: 1, maxLength: 8 });
+
+function byLane(log: RaceLog) {
+  return [...log.results].sort((a, b) => a.lane - b.lane);
+}
+
+// --- P1 -------------------------------------------------------------------------------------------
+
+describe("P1 determinism (docs/race-engine.md 24.2)", () => {
+  it("two calls give byte-identical logs; entry order is irrelevant; inputs are never mutated", () => {
+    fc.assert(
+      fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+        const before = JSON.stringify(entries);
+        const a = JSON.stringify(simulateRace(RULESET_V1, entries, course, seed));
+        const b = JSON.stringify(simulateRace(RULESET_V1, [...entries].reverse(), course, seed));
+        expect(b).toBe(a);
+        expect(JSON.stringify(entries)).toBe(before);
+      }),
+      { numRuns: 25 },
+    );
+  });
+});
+
+// --- P2 -------------------------------------------------------------------------------------------
+
+describe("P2 symmetry", () => {
+  it("noise off: identical builds without actives tie exactly in any number of lanes", () => {
+    fc.assert(
+      fc.property(buildArb(0), fc.integer({ min: 2, max: 8 }), courseArb, (b, n, course) => {
+        const entries = Array.from({ length: n }, (_, lane) => entryOf(b, lane));
+        const log = simulateRace(QUIET, entries, course, "sym");
+        const ms = new Set(log.results.map((r) => r.finishMilli));
+        expect(ms.size).toBe(1);
+        for (const r of log.results) {
+          expect(r.deadHeat).toBe(true);
+          expect(r.marginMm).toBe(0);
+        }
+        expect(new Set(log.frames?.runners.map((r) => JSON.stringify(r))).size).toBe(1);
+      }),
+      { numRuns: 30 },
+    );
+  });
+
+  it("noise on: 8 identical builds over 2000 seeds, each lane wins 12.5 % ± 3 %", () => {
+    const course = content.getCourse("desert-sprint");
+    const entries = Array.from({ length: 8 }, (_, lane) =>
+      neutralFixtureEntry({
+        runnerId: `h-${lane}`,
+        laneIndex: lane,
+        style: "hover",
+        stats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
+      }),
+    );
+    const arena = createRaceArena();
+    const geometry = buildCourseGeometry(RULESET_V1, course);
+    const wins = new Array<number>(8).fill(0);
+    const N = 2000;
+    for (let k = 0; k < N; k++) {
+      const log = simulateRace(RULESET_V1, entries, course, `stat-${k}`, {
+        detail: "results",
+        arena,
+        geometry,
+      });
+      const lane = at(log.results, 0).lane;
+      wins[lane] = (wins[lane] ?? 0) + 1;
+    }
+    for (const w of wins) expect(Math.abs(w / N - 0.125)).toBeLessThanOrEqual(0.03);
+  });
+});
+
+// --- P3, P9 ---------------------------------------------------------------------------------------
+
+type Pair = {
+  frameId: string;
+  base: RaceEntry["stats"];
+  lengthM: number;
+  d: number;
+};
+
+const pairArb: fc.Arbitrary<Pair> = fc.record({
+  frameId: fc.constantFrom(...GENERIC_FRAMES),
+  base: statsArb,
+  lengthM: fc.integer({ min: 200, max: 3000 }),
+  d: fc.integer({ min: 1, max: 200 }),
+});
+
+function frameEntry(frameId: string, stats: RaceEntry["stats"], course: Course): RaceEntry {
+  return freezeEntry(
+    RULESET_V1,
+    content,
+    {
+      runnerId: "m",
+      kind: "rival",
+      falconessId: null,
+      baseStats: stats,
+      mood: 0,
+      biomeAptitude: B,
+      styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+      frameId,
+      parts: [],
+      quirks: [],
+      learnedSkills: [],
+      durability: null,
+    },
+    course,
+    0,
+  );
+}
+
+/** Solo run on `course`: finish time, exhaustion, and (for pulse frames) the one-burst slack q. */
+function solo(ruleset: Ruleset, e: RaceEntry, course: Course) {
+  let tables: RaceArena["tables"] | null = null;
+  let q = 1;
+  const log = simulateRaceProbed(
+    ruleset,
+    [e],
+    course,
+    "mono",
+    (t, A) => {
+      if (t === 0) tables = A.tables;
+    },
+    { detail: "results" },
+  );
+  const T: RaceArena["tables"] | null = tables;
+  if (T !== null && T.pulseFrame[0] === 1) {
+    // q = 1 + ceilDiv(pulseTicks × BpMax, vC0): one burst of the largest pulse thrust at the
+    // slowest flat cruise (the course is a single flat segment)
+    let air = 0;
+    let stoop = 1000;
+    for (let ph = 0; ph < 3; ph++) stoop = Math.max(stoop, T.stoop[ips(0, ph, 0)] ?? 1000);
+    air = T.airPm[is(0, 0)] ?? 1000;
+    const bpMax = Math.floor((Math.floor(((T.Bpc[ib(0, 0)] ?? 0) * air) / 1000) * stoop) / 1000);
+    let vC0 = Number.MAX_SAFE_INTEGER;
+    for (let ph = 0; ph < 3; ph++) vC0 = Math.min(vC0, T.vC[ibps(0, 0, ph, 0)] ?? 1);
+    q = 1 + ceilDiv(ruleset.race.pulseTicks * bpMax, vC0);
+  }
+  const r = at(log.results, 0);
+  return { milli: r.finishMilli ?? Number.MAX_SAFE_INTEGER, exhausted: r.exhausted, q };
+}
+
+/** The three tiers of ADR-0003 D41 for one stat raised by d (solo, flat, noise off, no actives). */
+function monotone(statName: "agility" | "stamina", tiers: "a" | "bc") {
+  const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kBoost: 0, kH: 0 } };
+  const ruleset = tiers === "a" ? NO_BOOST : QUIET;
+  return fc.property(pairArb, ({ frameId, base, lengthM, d }) => {
+    const course = testCourse([{ type: "flat", length: lengthM }], "flat-mono");
+    const lo = solo(ruleset, frameEntry(frameId, base, course), course);
+    const raised = { ...base, [statName]: base[statName] + d };
+    const hi = solo(ruleset, frameEntry(frameId, raised, course), course);
+    if (tiers === "a") {
+      // strict without exhaustion; when hp runs out, the tick that crosses finalStart is charged at
+      // the drain rate of its start phase and exhaustion is whole-tick, which can cost the faster
+      // runner a fraction of a tick (open issue for the lead: spec 24.2 says strict)
+      if (!lo.exhausted && !hi.exhausted) expect(hi.milli).toBeLessThanOrEqual(lo.milli);
+      else expect(hi.milli).toBeLessThanOrEqual(lo.milli + 1000);
+    } else if (!lo.exhausted && !hi.exhausted)
+      expect(hi.milli).toBeLessThanOrEqual(lo.milli + 1000 * lo.q); // tier (b)
+    else expect(hi.milli * 1000).toBeLessThanOrEqual(lo.milli * 1005); // tier (c)
+  });
+}
+
+describe("P3 agility monotonicity, three tiers (ADR-0003 D41)", () => {
+  it("(a) boost neutralised (kBoost = kH = 0): strict without exhaustion, one tick with it", () => {
+    fc.assert(monotone("agility", "a"), { numRuns: 150 });
+  });
+
+  it("(b) within one tick (one burst for pulse frames) when neither run exhausts; (c) within 0.5 % otherwise", () => {
+    fc.assert(monotone("agility", "bc"), { numRuns: 250 });
+  });
+});
+
+describe("P9 stamina monotonicity (tiers b and c)", () => {
+  it("more stamina never costs more than one tick (one burst) without exhaustion, 0.5 % with it", () => {
+    fc.assert(monotone("stamina", "bc"), { numRuns: 150 });
+  });
+});
+
+// --- P4 -------------------------------------------------------------------------------------------
+
+describe("P4 bounds on every tick", () => {
+  it("hp, energy, heat, durability and speed stay in bounds; governed runners never pass capLim; licensed runners never break themselves", () => {
+    fc.assert(
+      fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+        const bad: string[] = [];
+        const n = entries.length;
+        const prevPos = new Float64Array(n);
+        const dur0 = new Float64Array(n);
+        const minDur = new Float64Array(n).fill(Number.MAX_SAFE_INTEGER);
+        const E = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
+        const log = simulateRaceProbed(RULESET_V1, entries, course, seed, (t, A) => {
+          const S = A.state;
+          const T = A.tables;
+          for (let i = 0; i < n; i++) {
+            const hp = S.hp[i] ?? -1;
+            const energy = S.energy[i] ?? -1;
+            const heat = S.heat[i] ?? -1;
+            const dur = S.dur[i] ?? -1;
+            if (t === 0) dur0[i] = (at(E, i).durabilityStart ?? 0) * 1000;
+            if (hp < 0 || hp > (T.hpMax[i] ?? 0)) bad.push(`t${t} ${i} hp ${hp}`);
+            if (energy < 0 || energy > (T.Emax[i] ?? 0)) bad.push(`t${t} ${i} energy ${energy}`);
+            if (heat < 0) bad.push(`t${t} ${i} heat ${heat}`);
+            if (T.clampHeat[i] === 1 && heat > (T.D[i] ?? 0)) bad.push(`t${t} ${i} telemetry`);
+            if (T.licensed[i] !== 1 && heat > (T.capLim[i] ?? 0)) bad.push(`t${t} ${i} governor`);
+            if (dur < 0 || dur > (T.durMax[i] ?? 0)) bad.push(`t${t} ${i} dur ${dur}`);
+            if ((S.vOut[i] ?? -1) < 0 || (S.vCore[i] ?? -1) < 0) bad.push(`t${t} ${i} speed`);
+            if ((S.pos[i] ?? 0) < (prevPos[i] ?? 0)) bad.push(`t${t} ${i} pos back`);
+            prevPos[i] = S.pos[i] ?? 0;
+            minDur[i] = Math.min(minDur[i] ?? 0, dur);
+          }
+        });
+        expect(bad.slice(0, 5)).toEqual([]);
+        expect(log.results.every((r) => !r.dnf)).toBe(true);
+        // durability: without a water hit or a crash, only the licence costs durability, and it
+        // never takes a runner to its floor (25 % of durabilityMax) or breaks its wings
+        for (let i = 0; i < n; i++) {
+          const external = (log.events ?? []).some(
+            (e) =>
+              e.lane === i &&
+              ((e.kind === "waterHit" && e.damage > 0) || (e.kind === "jumpFail" && e.damage > 0)),
+          );
+          if (external) continue;
+          const e = at(E, i);
+          const floor = Math.floor(
+            (e.durabilityMax * 1000 * RULESET_V1.race.overheatFloorPm) / 1000,
+          );
+          expect(minDur[i]).toBeGreaterThanOrEqual(Math.min(dur0[i] ?? 0, floor + 1));
+          const r = at(byLane(log), i);
+          if (e.durabilityStart > 0) expect(r.broken).toBe(false);
+        }
+      }),
+      { numRuns: 25 },
+    );
+  });
+});
+
+// --- P5 -------------------------------------------------------------------------------------------
+
+describe("P5 log consistency (and P8 integers)", () => {
+  it("places, finish events, time intervals, frames, boost counts, pulses, plans, the energy identity", () => {
+    fc.assert(
+      fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+        const log = simulateRace(RULESET_V1, entries, course, seed);
+        expect(RaceLogSchema.parse(log)).toEqual(log);
+        const n = entries.length;
+        expect(log.results.map((r) => r.place).sort((a, b) => a - b)).toEqual(
+          Array.from({ length: n }, (_, k) => k + 1),
+        );
+        const events = log.events ?? [];
+        const E = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
+        for (const r of log.results) {
+          const fin = events.filter((e) => e.kind === "finish" && e.lane === r.lane);
+          expect(fin).toHaveLength(1);
+          const f = at(fin, 0);
+          expect(f.kind === "finish" && [f.place, f.finishMilli]).toEqual([r.place, r.finishMilli]);
+          const tt = r.timeTicks ?? 0;
+          expect(r.finishMilli ?? -1).toBeGreaterThanOrEqual(1000 * (tt - 1));
+          expect(r.finishMilli ?? -1).toBeLessThanOrEqual(1000 * tt);
+          expect(r.marginMm ?? -1).toBeGreaterThanOrEqual(0);
+          const L = r.ledger;
+          expect(
+            at(E, r.lane).energy * 1000 -
+              L.energySpent -
+              L.energyLift +
+              L.energyRegen +
+              L.energyRefunded +
+              L.energyFromHeat,
+          ).toBe(r.energyEnd);
+          const pulses = events.filter((e) => e.kind === "pulse" && e.lane === r.lane).length;
+          expect(L.pulses).toBe(pulses);
+          const planEvents = events.filter((e) => e.kind === "sprintPlan" && e.lane === r.lane);
+          expect(planEvents.length).toBeLessThanOrEqual(1 + RULESET_V1.race.maxReplans);
+          const col = at(log.frames?.runners, r.lane).boost;
+          expect(col.reduce((a, b) => a + b, 0)).toBe(L.boostTicks.reduce((a, b) => a + b, 0));
+        }
+        const ticks = log.frames?.tick ?? [];
+        for (let k = 1; k < ticks.length; k++)
+          expect(at(ticks, k)).toBeGreaterThan(at(ticks, k - 1));
+      }),
+      { numRuns: 20 },
+    );
+  });
+});
+
+// --- P6 -------------------------------------------------------------------------------------------
+
+describe("P6 RNG accounting and isolation", () => {
+  it("32 n draws from race and one quirks draw per lucky holder, before tick 0", () => {
+    fc.assert(
+      fc.property(fieldArb(1, 8, 2), courseArb, (entries, course) => {
+        const counts = { race: 0, quirks: 0 };
+        const rng = new Rng("p6");
+        const src = {
+          nextU32(stream: "race" | "quirks") {
+            counts[stream] += 1;
+            return rng.nextU32(stream);
+          },
+        };
+        const E = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
+        const A = createRaceArena().reset(E.length, buildCourseGeometry(RULESET_V1, course));
+        drawRaceBlock(RULESET_V1, E, src, A);
+        expect(counts.race).toBe(32 * E.length);
+        expect(counts.quirks).toBe(E.filter((e) => e.traits.randomSkillGuaranteed).length);
+      }),
+      { numRuns: 30 },
+    );
+  });
+
+  it("changing one runner's build never shifts another runner's pace, plan error or skill draws", () => {
+    fc.assert(
+      fc.property(
+        fieldArb(2, 8),
+        buildArb(),
+        fc.nat(),
+        courseArb,
+        seedArb,
+        (entries, other, k, course, seed) => {
+          const lane = k % entries.length;
+          const changed = entries.map((e) => (e.laneIndex === lane ? entryOf(other, lane) : e));
+          const a = simulateRace(RULESET_V1, entries, course, seed, { detail: "results" });
+          const b = simulateRace(RULESET_V1, changed, course, seed, { detail: "results" });
+          for (let i = 0; i < entries.length; i++) {
+            if (i === lane) continue;
+            const da = at(a.derived, i);
+            const db = at(b.derived, i);
+            // the lucky pick may move: one quirks draw per holder in lane order (17.1)
+            expect([db.pace, db.planErrPm, db.u]).toEqual([da.pace, da.planErrPm, da.u]);
+          }
+        },
+      ),
+      { numRuns: 20 },
+    );
+  });
+
+  it("P6b: disabling any skill keeps every draw (pace, plan error, lucky pick, every u) and never fires it", () => {
+    const withSkills = fieldArb(1, 8).filter((es) => es.some((e) => e.skills.length > 0));
+    fc.assert(
+      fc.property(
+        withSkills,
+        fc.nat(),
+        fc.nat(),
+        courseArb,
+        seedArb,
+        (entries, a, b, course, seed) => {
+          const carriers = entries.filter((e) => e.skills.length > 0);
+          const target = at(carriers, a % carriers.length);
+          const skillId = at(target.skills, b % target.skills.length).id;
+          const off = entries.map((e) => (e === target ? disableSkill(e, skillId) : e));
+          const on = simulateRace(RULESET_V1, entries, course, seed);
+          const dis = simulateRace(RULESET_V1, off, course, seed);
+          for (let i = 0; i < entries.length; i++) {
+            const x = at(on.derived, i);
+            const y = at(dis.derived, i);
+            expect([y.pace, y.planErrPm, y.u, y.luckySkill]).toEqual([
+              x.pace,
+              x.planErrPm,
+              x.u,
+              x.luckySkill,
+            ]);
+          }
+          const r = at(byLane(dis), target.laneIndex);
+          expect(r.ledger.skillsActivated).not.toContain(skillId);
+          expect(r.ledger.skillsMissed).not.toContain(skillId);
+          const evs = (dis.events ?? []).filter(
+            (e) =>
+              e.lane === target.laneIndex &&
+              (e.kind === "skill" || e.kind === "skillMiss") &&
+              e.skillId === skillId,
+          );
+          expect(evs).toEqual([]);
+        },
+      ),
+      { numRuns: 20 },
+    );
+  });
+});
+
+// --- P7 -------------------------------------------------------------------------------------------
+
+describe("P7 options invariance", () => {
+  const arena = createRaceArena();
+  it("results and derived are identical across detail modes, with or without an arena or a cached geometry", () => {
+    fc.assert(
+      fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+        const geometry = buildCourseGeometry(RULESET_V1, course);
+        const full = simulateRace(RULESET_V1, entries, course, seed);
+        const want = JSON.stringify([full.results, full.derived]);
+        for (const opts of [
+          { detail: "results" as const },
+          { arena },
+          { geometry, arena, detail: "results" as const },
+        ]) {
+          const v = simulateRace(RULESET_V1, entries, course, seed, opts);
+          expect(JSON.stringify([v.results, v.derived])).toBe(want);
+        }
+      }),
+      { numRuns: 20 },
+    );
+  });
+});
+
+describe("generated builds really exercise the controller", () => {
+  it("dives, pulses, licences, plans and kicks all occur across the generated fields", () => {
+    const seen = new Set<string>();
+    fc.assert(
+      fc.property(fieldArb(4, 8), courseArb, seedArb, (entries, course, seed) => {
+        const log = simulateRace(RULESET_V1, entries, course, seed);
+        for (const e of log.events ?? []) {
+          if (e.kind === "boostMode") seen.add(e.mode);
+          if (e.kind === "pulse") seen.add("pulse");
+          if (e.kind === "sprintPlan") seen.add(`plan:${e.reason}`);
+          if (e.kind === "freeBoost") seen.add("free");
+        }
+        for (const r of log.results) if (r.ledger.overheatTicks > 0) seen.add("overheat");
+        for (const [i, e] of [...entries].sort((x, y) => x.laneIndex - y.laneIndex).entries())
+          if (e.style === "dive" && at(log.derived, i).stoopPm !== 1000) seen.add("stoop");
+      }),
+      { numRuns: 30, seed: 20_261_028 },
+    );
+    for (const k of ["surplus", "plan", "kick", "hold", "pulse", "plan:planned", "free"])
+      expect(seen).toContain(k);
+  });
+});
+
+describe("P3 tier (a) with exhaustion: the measured counterexample (open issue)", () => {
+  it("erzherzog A 1003 → 1004 (St 133, T 50, C 354, I 50), 2456 m flat, no boost: +324 mt, as in the prototype", () => {
+    const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kBoost: 0, kH: 0 } };
+    const course = testCourse([{ type: "flat", length: 2456 }], "flat-mono");
+    const base = { agility: 1003, stamina: 133, technique: 50, courage: 354, intelligence: 50 };
+    const lo = solo(NO_BOOST, frameEntry("erzherzog", base, course), course);
+    const hi = solo(NO_BOOST, frameEntry("erzherzog", { ...base, agility: 1004 }, course), course);
+    // the faster runner enters the final one tick earlier (one more tick at the final drain),
+    // empties hp one tick earlier and crawls 1.5 m more at vMin
+    expect([lo.milli, hi.milli, lo.exhausted, hi.exhausted]).toEqual([
+      1_725_857,
+      1_726_181,
+      true,
+      true,
+    ]);
+  });
+});

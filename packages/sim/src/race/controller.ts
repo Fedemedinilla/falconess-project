@@ -171,7 +171,12 @@ export function selectMode(
   if (ph !== PH_FINAL) {
     if ((T.heatToEnergyPm[i] ?? 0) > 0) {
       const room = Math.max(0, (T.capLim[i] ?? 0) - (S.heat[i] ?? 0));
-      if (G.finalStart - pos <= ceilDiv(room, R.kH) * (T.vC[ibps(i, b, ph, seg)] ?? 0)) {
+      // kH = 0 (a test ruleset of 24.2 P3) never fills the room: the ticks it allows are unbounded
+      const near =
+        R.kH > 0
+          ? G.finalStart - pos <= ceilDiv(room, R.kH) * (T.vC[ibps(i, b, ph, seg)] ?? 0)
+          : room > 0;
+      if (near) {
         ctl.want = true;
         return MODE_PREHEAT;
       }
