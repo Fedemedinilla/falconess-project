@@ -2972,7 +2972,10 @@ prototype agree. No rule and no constant changed; each number is pinned by a tes
   `heatToleranceCourage`, `fatigueCourage`, `paceCentreSpan`, activation constants; report "metres per
   +100 stat" in `out/balance.json`.
 - **R4 Content out of band or inert:** iron-wings, gravity-friend, stutter, erzherzog's armor on
-  jumps, lead-guard for runners that never lead, clean-start (≈ 5-6 m, near the cap).
+  jumps, lead-guard for runners that never lead, clean-start (≈ 5-6 m, near the cap). Balance pass 1
+  (ADR-0005, "Métricas 3 y 4") re-valued cool-head, iron-wings, scavenger-stride, lead-guard and
+  gravity-friend: every S4 cell now passes 0.5-8 m on both seed bases (lowest last-gasp on the
+  canyon, 0.62 m; highest clean-start on the ridge, 7.11 m).
 - **R5 Canyon exhaustion:** a 600-balanced runner empties hp at ≈ 2.8 km; PW ≥ 1.2 frames empty on
   the ridge (1.6-1.75 km) and the canyon (2.2-2.4 km); mid-season canyon goals are stamina races.
   Knobs `hpBase`/`hpPerKm`.
@@ -3042,6 +3045,9 @@ prototype agree. No rule and no constant changed; each number is pinned by a tes
   one verdict per (pair, course) cell, and the table above is measured with exactly that build. If
   the owner wants learned generic actives in the gate, the list is fixed in 25.2 with an ADR line
   (D47) and the table is re-measured. Knob: `regen` trait values are content, not `regenPerTick`.
+  Balance pass 1 (ADR-0005, "Métricas 3 y 4") did (a)-(c) at v1 constants: still-air regen 0.014,
+  scrap-armor armor + regen 0.015, talon-lock + pulse chain every 2nd +30 %, descent × 1.005 and
+  canyon × 1.004; the full S3 puts the signature at 52.9-53.8 % in all nine cells.
 - **R15 Manufacturer cells (BRIEF §7 home/weak, §12 metric 2) at v1.** Counted as in 25.2 (one
   designated entry per manufacturer, fair share 12.5 %). The rule terms of 13.1 (numeric, a BRIEF §7
   deviation, D45) point
