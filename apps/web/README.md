@@ -36,7 +36,8 @@ pnpm web:build                             # both
 
 - `RaceViewer({ log, labels })` replays a `RaceLog`; without a log it is the `#carrera` screen,
   which finds the run's goal races by replaying it (`goal-races.ts`) and rebuilds the chosen one
-  with detail `"full"` (`game/goal-race.ts`, P7). `FreeRace` is `#carrera-libre`: the field of
+  with detail `"full"` (`game/goal-race.ts`, P7). It opens on the race a season screen picked
+  ("Ver carrera", `game/race-pick.ts`), else on the last step's, else on the latest. `FreeRace` is `#carrera-libre`: the field of
   `pnpm sim:race` (`buildField` of `@falconess/race-view`), run at rest with sensible defaults.
 - What a race shows comes from `@falconess/race-view`, the package `pnpm sim:race` prints from:
   runners in place order, 10 % splits, timeline cells, grouped events and the structured "why"

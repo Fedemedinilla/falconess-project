@@ -11,6 +11,8 @@ import {
   type SimContext,
   startSeason,
 } from "@falconess/sim";
+import type { ActiveRun } from "../game/controller";
+import type { RacePick } from "../game/race-pick";
 
 export type GoalRaceStep = {
   /** The season week of the race. */
@@ -23,6 +25,22 @@ export type GoalRaceStep = {
   readonly before: SeasonState;
   readonly input: RunInput;
 };
+
+/**
+ * The week a season screen picked with "Ver carrera" (game/race-pick.ts), if the pick is a race of
+ * this very run: same seed and ruleset, and the run still has the input that ran it.
+ */
+export function pickedTurn(
+  pick: RacePick | undefined,
+  run: ActiveRun | undefined,
+): number | undefined {
+  if (!pick || !run) return undefined;
+  const same =
+    pick.seed === run.seed &&
+    pick.rulesetVersion === run.rulesetVersion &&
+    run.inputs[pick.index] === pick.step.input;
+  return same ? pick.turn : undefined;
+}
 
 /** Every goal race the run has run so far, in season order. */
 export function goalRaceSteps(

@@ -3,7 +3,8 @@ import { PLAYER_RUNNER_ID, replaySeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { simContext } from "../content/load";
 import { goalRaceLog } from "../game/goal-race";
-import { goalRaceSteps } from "./goal-races";
+import { findRacePick } from "../game/race-pick";
+import { goalRaceSteps, pickedTurn } from "./goal-races";
 
 const ctx = simContext();
 const seed = "gr-1";
@@ -60,6 +61,19 @@ describe("goalRaceSteps", () => {
       expect(mine?.place).toBe(recorded?.place);
       expect(mine?.timeTicks).toBe(recorded?.timeTicks);
     }
+  });
+
+  it("opens the race a season screen picked, only for the run it came from", () => {
+    const run = { seed, rulesetVersion: ctx.ruleset.version, inputs, state };
+    const pick = findRacePick(ctx, run, firstGoal);
+    expect(pick).toBeDefined();
+    expect(pickedTurn(pick, run)).toBe(firstGoal);
+    expect(pickedTurn(pick, { ...run, seed: "another" })).toBeUndefined();
+    // the same decisions loaded again are other objects: the pick no longer names this run's race
+    const reloaded = { ...run, inputs: inputs.map((i) => ({ ...i })) };
+    expect(pickedTurn(pick, reloaded)).toBeUndefined();
+    expect(pickedTurn(undefined, run)).toBeUndefined();
+    expect(pickedTurn(pick, undefined)).toBeUndefined();
   });
 
   it("has no race before the first goal week, and none without a start", () => {

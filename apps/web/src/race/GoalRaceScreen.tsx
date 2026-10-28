@@ -2,11 +2,12 @@ import { PLAYER_RUNNER_ID } from "@falconess/sim";
 import { useMemo, useState } from "react";
 import { navigate } from "../app/useRoute";
 import { goalRaceLog } from "../game/goal-race";
+import { type RacePick, usePickedRace } from "../game/race-pick";
 import { useGame } from "../game/useGame";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Pill } from "../ui/Pill";
-import { type GoalRaceStep, goalRaceSteps } from "./goal-races";
+import { type GoalRaceStep, goalRaceSteps, pickedTurn } from "./goal-races";
 import { Replay } from "./RaceReplay";
 import s from "./RaceViewer.module.css";
 
@@ -34,22 +35,29 @@ function Empty({ hasRun }: { hasRun: boolean }) {
 /**
  * #carrera: a goal race of the run in play, replayed. The run is replayed once by the sim to find
  * its goal races; the one shown is rebuilt with detail "full" on the same state, field and seed
- * (P7: the same places and times the season recorded). It opens on the race of the last step, or
- * on the latest one.
+ * (P7: the same places and times the season recorded). It opens on the race a season screen
+ * picked ("Ver carrera", game/race-pick.ts), else on the race of the last step, else on the latest.
  */
 export function GoalRaceScreen() {
   const { game, snap } = useGame();
   const run = snap.run;
   const ctx = game.context();
+  const pick = usePickedRace();
   // the run changes identity with every input, and with it the context (its ruleset)
   const steps = useMemo(
     () => (run ? goalRaceSteps(game.context(), run.seed, run.inputs) : []),
     [game, run],
   );
   const lastIndex = snap.lastStep && run ? run.inputs.length - 1 : -1;
-  const initial = steps.find((st) => st.index === lastIndex) ?? steps[steps.length - 1];
-  const [chosen, setChosen] = useState<number | undefined>(undefined);
-  const step: GoalRaceStep | undefined = steps.find((st) => st.turn === chosen) ?? initial;
+  const picked = pickedTurn(pick, run);
+  const initial =
+    steps.find((st) => st.turn === picked) ??
+    steps.find((st) => st.index === lastIndex) ??
+    steps[steps.length - 1];
+  // the tester's own choice on this screen holds until a season screen picks another race
+  const [chosen, setChosen] = useState<{ turn: number; pick: RacePick | undefined }>();
+  const choice = chosen !== undefined && chosen.pick === pick ? chosen.turn : undefined;
+  const step: GoalRaceStep | undefined = steps.find((st) => st.turn === choice) ?? initial;
   const log = useMemo(
     () => (step ? goalRaceLog(game.context(), step.before, step.input) : undefined),
     [game, step],
@@ -88,7 +96,7 @@ export function GoalRaceScreen() {
             <select
               id="carrera-elegir"
               value={step.turn}
-              onChange={(e) => setChosen(Number(e.currentTarget.value))}
+              onChange={(e) => setChosen({ turn: Number(e.currentTarget.value), pick })}
             >
               {steps.map((st) => {
                 const c = ctx.content.courses.get(st.courseId);
