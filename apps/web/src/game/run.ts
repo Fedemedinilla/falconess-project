@@ -82,3 +82,22 @@ export function serializeRun(run: SavedRun): string {
     inputs: run.inputs,
   });
 }
+
+/**
+ * A short id of a run at its current length: ruleset, seed, number of inputs and a 32-bit FNV-1a
+ * hash of the inputs. Two runs that differ in any input get different ids (up to hash collisions,
+ * harmless here: the id only decides whether «Lo que pasó» opens again after a reload).
+ */
+export function runFingerprint(run: {
+  readonly rulesetVersion: string;
+  readonly seed: string;
+  readonly inputs: readonly RunInput[];
+}): string {
+  const text = JSON.stringify(run.inputs);
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `${run.rulesetVersion}|${run.seed}|${run.inputs.length}|${hash.toString(16).padStart(8, "0")}`;
+}

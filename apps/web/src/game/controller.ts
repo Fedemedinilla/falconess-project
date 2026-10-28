@@ -17,8 +17,14 @@ import {
   startSeason,
   WorkshopError,
 } from "@falconess/sim";
-import { parseSavedRun, SAVE_SCHEMA_VERSION, type SavedRun, serializeRun } from "./run";
-import { type KeyValueStore, RUN_KEY, readKey, writeKey } from "./storage";
+import {
+  parseSavedRun,
+  runFingerprint,
+  SAVE_SCHEMA_VERSION,
+  type SavedRun,
+  serializeRun,
+} from "./run";
+import { type KeyValueStore, RUN_KEY, readKey, SEEN_KEY, writeKey } from "./storage";
 
 /** What went wrong, for the screen: `ui.error.<kind>` names it, `detail` is the technical part. */
 export const GAME_ERROR_KINDS = [
@@ -45,8 +51,9 @@ export type ActiveRun = {
 };
 
 /**
- * The step `act` just applied. `before` + `input` rebuild that turn's goal race with detail
- * "full" (game/goal-race.ts) and give the turn summary its "before" numbers.
+ * The step `act` just applied (after a load: the run's last input). `before` + `input` rebuild
+ * that turn's goal race with detail "full" (game/goal-race.ts) and give «Lo que pasó»
+ * (screens/WeekDialog.tsx) its "before" numbers.
  */
 export type Step = {
   readonly before: SeasonState;
@@ -57,12 +64,23 @@ export type Step = {
 export type GameSnapshot = {
   readonly run: ActiveRun | undefined;
   readonly lastStep: Step | undefined;
+  /**
+   * Whether the player has read `lastStep` in «Lo que pasó» (true when there is none): false
+   * right after `act`; after a load, true only when this browser already saw that run's last week.
+   */
+  readonly lastStepSeen: boolean;
   readonly error: GameError | undefined;
   /** The run in play is in this browser's storage (false when storage is blocked). */
   readonly saved: boolean;
 };
 
-const EMPTY: GameSnapshot = { run: undefined, lastStep: undefined, error: undefined, saved: false };
+const EMPTY: GameSnapshot = {
+  run: undefined,
+  lastStep: undefined,
+  lastStepSeen: true,
+  error: undefined,
+  saved: false,
+};
 
 function message(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -108,10 +126,7 @@ export class GameController {
     const ctx = this.#ctx(RULESET_V1.version);
     try {
       const state = startSeason(ctx, seed, input);
-      this.#setRun(
-        { seed, rulesetVersion: ctx.ruleset.version, inputs: [input], state },
-        undefined,
-      );
+      this.#setRun({ seed, rulesetVersion: ctx.ruleset.version, inputs: [input], state });
       return true;
     } catch (e) {
       this.#fail("start", e);
@@ -136,6 +151,7 @@ export class GameController {
       this.#setRun(
         { ...run, inputs: [...run.inputs, input], state: after },
         { before: run.state, input, after },
+        false,
       );
       return true;
     } catch (e) {
@@ -146,14 +162,19 @@ export class GameController {
     }
   }
 
-  /** Testers' undo: replay the run without its last input. The start input cannot be undone. */
+  /**
+   * Testers' undo: replay the run without its last input. The start input cannot be undone. The
+   * week it goes back to was read when it was played: «Lo que pasó» does not open for it again.
+   */
   undoLast(): boolean {
     const run = this.#snap.run;
     if (!run || run.inputs.length <= 1) return false;
     const inputs = run.inputs.slice(0, -1);
     try {
       const state = replaySeason(this.#ctx(run.rulesetVersion), run.seed, inputs);
-      this.#setRun({ ...run, inputs, state }, undefined);
+      const back = { ...run, inputs, state };
+      writeKey(this.#store, SEEN_KEY, runFingerprint(back));
+      this.#setRun(back);
       return true;
     } catch (e) {
       this.#fail("unexpected", e);
@@ -168,6 +189,23 @@ export class GameController {
 
   clearError(): void {
     if (this.#snap.error) this.#emit({ ...this.#snap, error: undefined });
+  }
+
+  /**
+   * The player has read «Lo que pasó» for the last step: it closes, and this browser remembers
+   * it (`SEEN_KEY`, guarded storage) so a reload does not open it again.
+   */
+  acknowledgeStep(): void {
+    const run = this.#snap.run;
+    if (!run || this.#snap.lastStepSeen) return;
+    writeKey(this.#store, SEEN_KEY, runFingerprint(run));
+    this.#emit({ ...this.#snap, lastStepSeen: true });
+  }
+
+  /** Open «Lo que pasó» for the last step again (the recap line above the actions). */
+  showStepAgain(): void {
+    if (!this.#snap.lastStep || !this.#snap.lastStepSeen) return;
+    this.#emit({ ...this.#snap, lastStepSeen: false });
   }
 
   // --- save, load, copy ------------------------------------------------------------------------
@@ -236,11 +274,23 @@ export class GameController {
       return false;
     }
     try {
-      const state = replaySeason(ctx, save.seed, save.inputs);
-      this.#setRun(
-        { seed: save.seed, rulesetVersion: save.rulesetVersion, inputs: save.inputs, state },
-        undefined,
-      );
+      // the run without its last input, then that input: the same replay, plus the last step for
+      // «Lo que pasó» (which opens unless this browser already saw that week of this very run)
+      const last = save.inputs.at(-1);
+      let state: SeasonState;
+      let step: Step | undefined;
+      if (save.inputs.length > 1 && last) {
+        const before = replaySeason(ctx, save.seed, save.inputs.slice(0, -1));
+        state = advanceSeason(ctx, before, last);
+        step = { before, input: last, after: state };
+      } else state = replaySeason(ctx, save.seed, save.inputs);
+      const run = {
+        seed: save.seed,
+        rulesetVersion: save.rulesetVersion,
+        inputs: save.inputs,
+        state,
+      };
+      this.#setRun(run, step, readKey(this.#store, SEEN_KEY) === runFingerprint(run));
       return true;
     } catch (e) {
       this.#fail("load-replay", e);
@@ -249,9 +299,10 @@ export class GameController {
   }
 
   /** Install a run and save it (autosave after every change). */
-  #setRun(run: ActiveRun, lastStep: Step | undefined): void {
+  #setRun(run: ActiveRun, lastStep?: Step, seen = true): void {
     const saved = writeKey(this.#store, RUN_KEY, serializeRun(this.#toSave(run)));
-    this.#emit({ run, lastStep, error: undefined, saved });
+    const lastStepSeen = lastStep === undefined || seen;
+    this.#emit({ run, lastStep, lastStepSeen, error: undefined, saved });
   }
 
   #fail(kind: GameErrorKind, e: unknown): void {

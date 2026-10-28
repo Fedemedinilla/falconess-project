@@ -15,6 +15,11 @@ export const RUN_KEY = "falconess.pruebas.partida";
 export const THEME_KEY = "falconess.pruebas.tema";
 /** "brief" or "full": how much the cards explain by default (app/explain.ts). */
 export const EXPLAIN_KEY = "falconess.pruebas.explicaciones";
+/**
+ * The run whose last week the player has already read in «Lo que pasó» (`runFingerprint`), so a
+ * reload does not show it again. Kept apart from the run: the save format stays seed + inputs.
+ */
+export const SEEN_KEY = "falconess.pruebas.vista";
 
 /** `localStorage` when the browser lets the page use it, else undefined. */
 export function browserStore(): KeyValueStore | undefined {

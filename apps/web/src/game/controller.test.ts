@@ -3,8 +3,8 @@ import { RULESET_V1, replaySeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../content/load";
 import { GameController } from "./controller";
-import { parseSavedRun } from "./run";
-import { type KeyValueStore, RUN_KEY } from "./storage";
+import { parseSavedRun, runFingerprint } from "./run";
+import { type KeyValueStore, RUN_KEY, SEEN_KEY } from "./storage";
 
 const HANGAR = ["shiden", "mule", "nimbus", "falke"] as const;
 const content = getContent();
@@ -174,6 +174,83 @@ describe("GameController", () => {
     expect(game.getSnapshot().error?.kind).toBe("load-replay");
     // a failed load keeps the run that was in play
     expect(game.getSnapshot().run?.state).toEqual(source.getSnapshot().run?.state);
+  });
+
+  it("opens «Lo que pasó» after each input until it is read, and remembers it across a reload", () => {
+    const store = memoryStore();
+    const game = started(store);
+    expect(game.getSnapshot().lastStepSeen).toBe(true);
+    game.act({ kind: "train:agility" });
+    expect(game.getSnapshot().lastStepSeen).toBe(false);
+
+    // a reload before reading it: the last step is rebuilt and still waits
+    const early = new GameController(content, store);
+    expect(early.continueSaved()).toBe(true);
+    const rebuilt = early.getSnapshot();
+    expect(rebuilt.lastStepSeen).toBe(false);
+    expect(rebuilt.lastStep?.input).toEqual({ kind: "train:agility" });
+    expect(rebuilt.lastStep?.after).toBe(rebuilt.run?.state);
+    expect(rebuilt.lastStep?.before).toEqual(
+      replaySeason(ctx, "web-42", rebuilt.run?.inputs.slice(0, 1) ?? []),
+    );
+
+    // read: closed here, and closed after a reload of the same run
+    let calls = 0;
+    const stop = game.subscribe(() => {
+      calls += 1;
+    });
+    game.acknowledgeStep();
+    game.acknowledgeStep();
+    expect(calls).toBe(1);
+    stop();
+    expect(game.getSnapshot().lastStepSeen).toBe(true);
+    const run = game.getSnapshot().run;
+    if (!run) throw new Error("no run");
+    expect(store.data.get(SEEN_KEY)).toBe(runFingerprint(run));
+    const later = new GameController(content, store);
+    expect(later.continueSaved()).toBe(true);
+    expect(later.getSnapshot().lastStepSeen).toBe(true);
+    expect(later.getSnapshot().lastStep?.input).toEqual({ kind: "train:agility" });
+
+    // the recap line opens it again; another browser (no mark) shows it on load
+    game.showStepAgain();
+    expect(game.getSnapshot().lastStepSeen).toBe(false);
+    const elsewhere = new GameController(content, memoryStore());
+    expect(elsewhere.loadText(game.exportText() ?? "")).toBe(true);
+    expect(elsewhere.getSnapshot().lastStepSeen).toBe(false);
+
+    // undo goes back to a week already read: nothing to show, now or after a reload
+    game.acknowledgeStep();
+    game.act({ kind: "rest" });
+    expect(game.undoLast()).toBe(true);
+    expect(game.getSnapshot().lastStep).toBeUndefined();
+    expect(game.getSnapshot().lastStepSeen).toBe(true);
+    const afterUndo = new GameController(content, store);
+    expect(afterUndo.continueSaved()).toBe(true);
+    expect(afterUndo.getSnapshot().lastStepSeen).toBe(true);
+  });
+
+  it("keeps «Lo que pasó» working without storage: shown after each input, closed when read", () => {
+    const game = started(brokenStore);
+    game.act({ kind: "rest" });
+    expect(game.getSnapshot().lastStepSeen).toBe(false);
+    game.acknowledgeStep();
+    expect(game.getSnapshot().lastStepSeen).toBe(true);
+  });
+
+  it("tells runs apart by their inputs, not only by seed and length", () => {
+    const base = { rulesetVersion: "v1", seed: "s" };
+    const start: RunInput = {
+      kind: "start",
+      falconessId: "peregrina",
+      hangar: [...HANGAR],
+      parents: [],
+    };
+    const a = runFingerprint({ ...base, inputs: [start, { kind: "rest" }] });
+    const b = runFingerprint({ ...base, inputs: [start, { kind: "train:agility" }] });
+    expect(a).not.toBe(b);
+    expect(a).toBe(runFingerprint({ ...base, inputs: [start, { kind: "rest" }] }));
+    expect(a.startsWith("v1|s|2|")).toBe(true);
   });
 
   it("leaves the run for a new season and notifies subscribers once per change", () => {
