@@ -447,3 +447,32 @@ pide el ADR aceptado entero, huecos incluidos (CLAUDE.md: "preguntar antes de de
 - Llamar a los términos de regla «parte del mecanismo de la regla»: es falso para Lumière,
   Boneyard y Altair, cuyo término es global; D45 los declara bonificaciones numéricas, en
   desviación de BRIEF §7.
+
+## Addendum 1 (2026-10-28): decisiones del líder tras la implementación
+
+La implementación reproduce el prototipo en 28 080 de 28 172 escenarios. La revisión dejó cuatro
+puntos que el spec no resuelve y dos mejoras del log. El líder decide (sin cambiar ninguna
+constante de `rulesets/v1`):
+
+- **D50 [hueco] Rearme de `once: false`** (spec §15.3): la habilidad se rearma solo cuando su
+  disparador estuvo falso al menos un tick **después** de que terminó su efecto. Razón: "rearmar"
+  es un nuevo flanco tras el efecto; impide encadenar activaciones si el disparador parpadea durante
+  el efecto, y coincide con el prototipo (cierra los 92 escenarios divergentes). El contenido v1 no
+  tiene habilidades `once: false`.
+- **D51 [hueco] PREHEAT** (spec §9.4 y §24.1): se mantiene la fórmula de entrada de §9.4 (precio a
+  velocidad de crucero), con la que se midieron los números de §25.4 y R7. La propiedad de §24.1
+  pasa a "el portador llega a la final con el calor que la fórmula de §9.4 proyecta", no
+  "`calor ≥ capLim − kH`" (llega ≈ 13 % por debajo; ≈ 2,5 de energía con razón 0,5).
+- **D52 [desviación: §24.2 nivel (a) de D41] Monotonía:** el nivel (a) es estricto solo cuando
+  ninguna corredora del par se agota; los pares sin boost con agotamiento caen en el nivel (c)
+  (0,5 %). Medido: 42 inversiones en 3579 pares agotados, peor caso 0,07 %, por el drenaje del tick
+  que cruza el inicio de la final.
+- **D53 [hueco] Pistas más cortas que la reserva de sprint:** `reserveAtMm` y `kickAtMm` se acotan a
+  0. El validador de §1.4 sigue aceptando cualquier pista válida por esquema.
+- **D54 [hueco, extensión de D34] Eventos `boostMode` con histéresis:** un modo se registra solo si
+  se mantiene al menos `R.log.sampleEveryTicks` ticks (1 s), con el tick en que empezó. La física no
+  cambia. Razón: los bastidores con regeneración alternan REGEN/OFF cada 2-3 ticks y producían
+  300-670 eventos por corredora (95 % de los eventos, logs de 136-203 KB) frente a los 30-60 que
+  estima §20.4.
+- **D55 [hueco, extensión de D34] `geometry.biome`** en el RaceLog, para que la presentación no
+  tenga que leer el contenido.
