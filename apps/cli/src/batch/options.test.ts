@@ -41,6 +41,10 @@ describe("sim:batch command line", () => {
       "--fail-on-verdict",
       "--gate-report",
       "full.json",
+      "--max-wall-ms",
+      "6000",
+      "--baseline-from",
+      "run 42 (abc1234)",
     ]);
     expect(o.config).toEqual({
       profile: "pr",
@@ -56,7 +60,12 @@ describe("sim:batch command line", () => {
       engine: { kind: "fake" },
       failOnVerdict: true,
       gateReportPath: "full.json",
+      maxWallMs: 6000,
+      baselineFrom: "run 42 (abc1234)",
     });
+    expect(parseBatchArgs([]).maxWallMs).toBeUndefined();
+    expect(() => parseBatchArgs(["--max-wall-ms", "0"])).toThrow(/positive integer/);
+    expect(() => parseBatchArgs(["--max-wall-ms"])).toThrow(/needs a value/);
   });
 
   it("passes --fake-cost-ms to the fake engine only", () => {

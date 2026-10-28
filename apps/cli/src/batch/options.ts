@@ -16,11 +16,16 @@ export const USAGE = `pnpm sim:batch -- [options]
   --workers N          worker threads (default min(4, cpus - 1)); 1 runs in process
   --engine real|fake   fake is a deterministic stand-in for development (default real)
   --fake-cost-ms MS    with --engine fake, busy-wait MS per 8-runner race (time the budget)
+  --baseline-from TEXT where the baseline comes from (run id, commit), shown in the diff header
   --fail-on-verdict    exit 1 when the report's verdict is fail
-  --gate-report PATH   with --fail-on-verdict, also exit 1 when that report (last full of main) fails
+  --gate-report PATH   with --fail-on-verdict, also exit 1 while a fail cell of that report (the
+                       last full of main) is neither passing nor re-targeted in this report
+  --max-wall-ms MS     exit 1 when the batch's wall time reaches MS (the 24.4 budgets: 6000 for
+                       --runs 1000, 60000 for --runs 10000)
   --help               this text
 
-Exit codes: 0 done, 1 verdict fail (with --fail-on-verdict) or DNF, 2 engine not available, 64 usage.`;
+Exit codes: 0 done, 1 verdict or gate fail (with --fail-on-verdict), DNF or over --max-wall-ms,
+2 engine not available, 64 usage. An unreadable --baseline or --gate-report is a warning.`;
 
 export class UsageError extends Error {
   constructor(message: string) {
@@ -35,9 +40,11 @@ export type BatchOptions = {
   engine: EngineChoice;
   reportPath: string;
   baselinePath: string | undefined;
+  baselineFrom: string | undefined;
   markdownPath: string | undefined;
   failOnVerdict: boolean;
   gateReportPath: string | undefined;
+  maxWallMs: number | undefined;
   help: boolean;
 };
 
@@ -48,12 +55,14 @@ const KNOWN = new Set([
   "seed",
   "report",
   "baseline",
+  "baseline-from",
   "markdown",
   "workers",
   "engine",
   "fake-cost-ms",
   "fail-on-verdict",
   "gate-report",
+  "max-wall-ms",
   "help",
 ]);
 
@@ -123,6 +132,7 @@ export function parseBatchArgs(argv: readonly string[]): BatchOptions {
 
   const runsArg = str("runs");
   const workersArg = str("workers");
+  const wallArg = str("max-wall-ms");
   return {
     config: {
       profile,
@@ -134,9 +144,11 @@ export function parseBatchArgs(argv: readonly string[]): BatchOptions {
     engine,
     reportPath: str("report") ?? "out/balance.json",
     baselinePath: str("baseline"),
+    baselineFrom: str("baseline-from"),
     markdownPath: str("markdown"),
     failOnVerdict: flag("fail-on-verdict"),
     gateReportPath: str("gate-report"),
+    maxWallMs: wallArg === undefined ? undefined : positiveInt("max-wall-ms", wallArg),
     help: flag("help"),
   };
 }

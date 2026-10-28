@@ -109,6 +109,8 @@ function renderTable(t: BalanceTable): string {
 
 export type MarkdownOptions = {
   diff?: BaselineDiff;
+  /** Quoted lines under the summary: a skipped baseline or gate report, the gate's cells. */
+  notices?: readonly string[];
   /** GitHub comments hold 65 536 characters; diagnostics are dropped first when over this. */
   maxLength?: number;
 };
@@ -151,6 +153,7 @@ function render(report: BalanceReport, opts: MarkdownOptions, diagnostics: boole
     "",
     "_Verdicts (§25.2.1): pass = the 95 % interval lies inside the target; fail = entirely outside; inconclusive = straddles an edge (the next `full` run decides)._",
   );
+  if (opts.notices && opts.notices.length > 0) out.push("", ...opts.notices.map((n) => `> ${n}`));
   if (opts.diff) out.push("", renderDiffMarkdown(opts.diff));
   for (const x of report.metrics) {
     out.push("", `### ${x.number}. ${x.title} (${x.scenario}): ${formatVerdict(x.verdict)}`, "");

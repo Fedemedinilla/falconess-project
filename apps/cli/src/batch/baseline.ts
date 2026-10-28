@@ -44,7 +44,15 @@ export function verdictChange(r: DiffRow): string {
   return `${r.baselineVerdict} → ${r.currentVerdict}`;
 }
 
-export function diffReports(baseline: BalanceReport, current: BalanceReport): BaselineDiff {
+/**
+ * `source` says where the baseline comes from (`--baseline-from`, e.g. the CI run and commit of
+ * main), so a diff against an older baseline than expected is visible in its header.
+ */
+export function diffReports(
+  baseline: BalanceReport,
+  current: BalanceReport,
+  source?: string,
+): BaselineDiff {
   const warnings: string[] = [];
   const b = baseline.metadata;
   const c = current.metadata;
@@ -98,7 +106,7 @@ export function diffReports(baseline: BalanceReport, current: BalanceReport): Ba
     metrics,
     rows,
     warnings,
-    baselineSummary: `\`${b.profile}\` · ${formatInt(b.races)} races · ruleset \`${b.rulesetVersion}\` · engine \`${b.engine}\``,
+    baselineSummary: `\`${b.profile}\` · ${formatInt(b.races)} races · ruleset \`${b.rulesetVersion}\` · engine \`${b.engine}\`${source === undefined ? "" : ` · from ${source}`}`,
   };
 }
 

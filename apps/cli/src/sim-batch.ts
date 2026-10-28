@@ -1,7 +1,8 @@
 /**
  * `pnpm sim:batch -- --runs 10000 [--profile pr|full] [--scenarios S1,S3] [--seed base]
- *   [--report out/balance.json] [--baseline out/baseline.json] [--markdown out/balance.md]
- *   [--workers N]`
+ *   [--report out/balance.json] [--baseline out/baseline.json [--baseline-from TEXT]]
+ *   [--markdown out/balance.md] [--workers N] [--fail-on-verdict [--gate-report PATH]]
+ *   [--max-wall-ms MS]`
  *
  * The balance batch of BRIEF §12 with the scenarios, run budget and verdicts of
  * docs/race-engine.md §25.2 (ADR-0003 D40, D47, D48, D49). The race engine sits behind the port
@@ -10,9 +11,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { loadContent } from "@falconess/content";
-import { BalanceReport } from "@falconess/schema";
+import type { BalanceReport } from "@falconess/schema";
 import { RULESET_V1 } from "@falconess/sim";
 import { type BaselineDiff, diffReports, renderDiffMarkdown } from "./batch/baseline.js";
+import { exitDecision, parseReportText, type ReportRead } from "./batch/gate.js";
 import { parseBatchArgs, USAGE, UsageError } from "./batch/options.js";
 import { PlanError } from "./batch/plan.js";
 import { createPort } from "./batch/pool.js";
@@ -22,8 +24,14 @@ import { runBatch } from "./batch/run.js";
 /** GitHub caps a comment at 65 536 characters. */
 const COMMENT_LIMIT = 60_000;
 
-function readReport(path: string): BalanceReport {
-  return BalanceReport.parse(JSON.parse(readFileSync(path, "utf8")));
+function readReport(path: string): ReportRead {
+  let text: string;
+  try {
+    text = readFileSync(path, "utf8");
+  } catch (e) {
+    return { ok: false, reason: `unreadable (${e instanceof Error ? e.message : String(e)})` };
+  }
+  return parseReportText(text);
 }
 
 function write(path: string, text: string): void {
@@ -70,39 +78,52 @@ async function main(argv: readonly string[]): Promise<number> {
   console.log(renderSummary(report));
   console.log(`report: ${opts.reportPath}`);
 
+  const notices: string[] = [];
   let diff: BaselineDiff | undefined;
   if (opts.baselinePath !== undefined) {
-    diff = diffReports(readReport(opts.baselinePath), report);
-    console.log(`\n${renderDiffMarkdown(diff)}\n`);
+    const baseline = readReport(opts.baselinePath);
+    if (baseline.ok) {
+      diff = diffReports(baseline.report, report, opts.baselineFrom);
+      console.log(`\n${renderDiffMarkdown(diff)}\n`);
+    } else {
+      const from = opts.baselineFrom === undefined ? "" : ` (${opts.baselineFrom})`;
+      const line = `Baseline ${opts.baselinePath}${from} skipped, ${baseline.reason}: no diff in this report.`;
+      console.warn(`sim:batch: warning: ${line}`);
+      notices.push(line);
+    }
   }
+
+  const gate =
+    opts.failOnVerdict && opts.gateReportPath !== undefined
+      ? readReport(opts.gateReportPath)
+      : undefined;
+  const decision = exitDecision(report, {
+    failOnVerdict: opts.failOnVerdict,
+    maxWallMs: opts.maxWallMs,
+    gate,
+    ...(opts.gateReportPath === undefined ? {} : { gatePath: opts.gateReportPath }),
+  });
+  if (gate !== undefined && !gate.ok)
+    notices.push(`Gate report ${opts.gateReportPath} skipped, ${gate.reason}.`);
+  if (decision.gate !== undefined && decision.gate.length > 0)
+    notices.push(
+      `Gate (fail cells of the last full report of main, §25.2.1): ${decision.gate
+        .map((g) => `${g.number}. ${g.metric} \`${g.cell}\` ${g.status} (${g.reason})`)
+        .join("; ")}.`,
+    );
+
   if (opts.markdownPath !== undefined) {
     const md = renderMarkdown(report, {
       ...(diff ? { diff } : {}),
+      notices,
       maxLength: COMMENT_LIMIT,
     });
     write(opts.markdownPath, md.startsWith(REPORT_MARKER) ? md : `${REPORT_MARKER}\n${md}`);
     console.log(`markdown: ${opts.markdownPath}`);
   }
 
-  if (report.metadata.dnf > 0) {
-    console.error(
-      `sim:batch: ${report.metadata.dnf} DNF results: an engine bug (§19), not balance`,
-    );
-    return 1;
-  }
-  if (opts.failOnVerdict) {
-    if (report.verdict === "fail") {
-      console.error("sim:batch: verdict fail (BRIEF §12: a metric out of range blocks the merge)");
-      return 1;
-    }
-    if (opts.gateReportPath !== undefined && readReport(opts.gateReportPath).verdict === "fail") {
-      console.error(
-        `sim:batch: the gate report ${opts.gateReportPath} holds a fail (§25.2.1: fix the metric or attach an ADR)`,
-      );
-      return 1;
-    }
-  }
-  return 0;
+  for (const line of decision.lines) console.error(line);
+  return decision.code;
 }
 
 main(process.argv.slice(2)).then(
