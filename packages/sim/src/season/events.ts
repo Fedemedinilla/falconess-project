@@ -3,6 +3,7 @@ import type { EventEffects, GameEvent } from "@falconess/schema";
 import { STAT_ORDER } from "../stats.js";
 import { addDelta, type Draft, note, type SimContext } from "./context.js";
 import { addBond, hangarManufacturers } from "./hangar.js";
+import { learnCap, maxDurability } from "./workshop.js";
 
 function sourceMatches(ctx: SimContext, d: Draft, e: GameEvent): boolean {
   switch (e.source.kind) {
@@ -61,6 +62,12 @@ export function rollEvent(ctx: SimContext, d: Draft, rng: Rng): void {
   if (chosen) d.pendingEvent = { eventId: chosen.id, turn: d.turn };
 }
 
+/**
+ * Apply one effect block. Durability moves within [0, the equipped build's maximum] from the
+ * value a race would start with (a stored value above the maximum counts as the maximum): durability
+ * persists between races (ADR-0003 D35), so an excess would be a hidden buffer against later damage.
+ * `learnSkill` respects the learn cap (ADR-0003 D36): at the cap the skill is not learned.
+ */
 export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void {
   const S = ctx.ruleset.season;
   for (const stat of STAT_ORDER) {
@@ -77,11 +84,16 @@ export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void 
   d.wallet.scrap = Math.max(0, d.wallet.scrap + fx.scrap);
   d.wallet.feathers = Math.max(0, d.wallet.feathers + fx.feathers);
   if (fx.durability !== 0) {
-    const cur = d.frameDurability[d.equippedFrame] ?? 0;
-    d.frameDurability[d.equippedFrame] = Math.max(0, cur + fx.durability);
+    const max = maxDurability(ctx, d, d.equippedFrame);
+    const cur = Math.min(max, d.frameDurability[d.equippedFrame] ?? max);
+    d.frameDurability[d.equippedFrame] = Math.max(0, Math.min(max, cur + fx.durability));
   }
   if (fx.injuryTurns > 0) d.injuryTurns = Math.max(d.injuryTurns, fx.injuryTurns);
-  if (fx.learnSkill !== undefined && !d.learnedSkills.includes(fx.learnSkill))
+  if (
+    fx.learnSkill !== undefined &&
+    !d.learnedSkills.includes(fx.learnSkill) &&
+    d.learnedSkills.length < learnCap(ctx, d)
+  )
     d.learnedSkills.push(fx.learnSkill);
 }
 

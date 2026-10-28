@@ -1,5 +1,5 @@
 import { loadContent } from "@falconess/content";
-import type { RunInput, SeasonState } from "@falconess/schema";
+import { EventEffects, type RunInput, type SeasonState } from "@falconess/schema";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { simulateRace } from "../race/engine.js";
@@ -7,11 +7,13 @@ import { goalRaceSetup } from "../race/field.js";
 import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
 import { lowestStat } from "../stats.js";
 import { advanceSeason, goalRaceState, InvalidInputError } from "./advance.js";
-import type { SimContext } from "./context.js";
+import { draft, type SimContext } from "./context.js";
+import { applyEffects } from "./events.js";
 import { goalForTurn } from "./goals.js";
 import { blackBoxFor, replaySeason } from "./replay.js";
 import { startSeason } from "./start.js";
 import { trainingGain } from "./training.js";
+import { learnCap, maxDurability, WorkshopError } from "./workshop.js";
 
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 type StartInput = Extract<RunInput, { kind: "start" }>;
@@ -441,5 +443,96 @@ describe("goal races on the race engine (docs/race-engine.md 21.2)", () => {
     const seven = learn(firmware, generic.slice(0, cap));
     expect(seven.learnedSkills).toHaveLength(cap + 1);
     expect(() => learn(firmware, generic.slice(0, cap + 1))).toThrow(/skill limit 7/);
+  });
+
+  it("never lets a build change drop the learn cap under the skills already learned (D36)", () => {
+    const rich = { ...startSeason(ctx, "cap-swap", START), skillPoints: 10_000 };
+    const generic = [...ctx.content.skills.values()]
+      .filter((k) => k.kind === "active" && k.uniqueTo === undefined)
+      .map((k) => k.id)
+      .sort()
+      .slice(0, RULESET_V1.season.maxLearnedSkills);
+    const learnSix = generic.map((skillId) => ({ op: "learn-skill" as const, skillId }));
+    // one input: altair-firmware, a 7th skill on its slot, then koryu-firmware in the same slot
+    const swap: RunInput = {
+      kind: "workshop",
+      ops: [
+        { op: "install-part", partId: "altair-firmware" },
+        ...learnSix,
+        { op: "install-part", partId: "koryu-firmware" },
+      ],
+    };
+    expect(() => advanceSeason(ctx, rich, swap)).toThrow(WorkshopError);
+    expect(() => advanceSeason(ctx, rich, swap)).toThrow(/7 skills learned .* hold 6/);
+    const seven = advanceSeason(ctx, rich, {
+      kind: "workshop",
+      ops: [{ op: "install-part", partId: "altair-firmware" }, ...learnSix],
+    });
+    expect(seven.learnedSkills).toHaveLength(7);
+    const remove: RunInput = {
+      kind: "workshop",
+      ops: [{ op: "remove-part", partId: "altair-firmware" }],
+    };
+    expect(() => advanceSeason(ctx, seven, remove)).toThrow(/skill slots in use/);
+    // with a free slot the firmware swaps freely
+    const six = advanceSeason(ctx, rich, {
+      kind: "workshop",
+      ops: [{ op: "install-part", partId: "altair-firmware" }, ...learnSix.slice(1)],
+    });
+    const swapped = advanceSeason(ctx, six, {
+      kind: "workshop",
+      ops: [{ op: "install-part", partId: "koryu-firmware" }],
+    });
+    expect(swapped.installedParts).toEqual(["koryu-firmware"]);
+    expect(swapped.learnedSkills).toHaveLength(6);
+  });
+
+  it("an event's learnSkill respects the learn cap (D36)", () => {
+    const d = draft(startSeason(ctx, "cap-event", START));
+    const free = [...ctx.content.skills.values()]
+      .filter((k) => k.kind === "active" && k.uniqueTo === undefined)
+      .map((k) => k.id)
+      .sort();
+    const cap = learnCap(ctx, d);
+    d.learnedSkills = free.slice(0, cap);
+    applyEffects(ctx, d, EventEffects.parse({ learnSkill: free[cap] }));
+    expect(d.learnedSkills).toHaveLength(cap);
+    d.learnedSkills = free.slice(0, cap - 1);
+    applyEffects(ctx, d, EventEffects.parse({ learnSkill: free[cap] }));
+    expect(d.learnedSkills).toEqual([...free.slice(0, cap - 1), free[cap]]);
+  });
+
+  it("keeps event durability within [0, the build's maximum] (D35)", () => {
+    const d = draft(startSeason(ctx, "dur-event", START));
+    const frame = d.equippedFrame;
+    const max = maxDurability(ctx, d, frame);
+    expect(d.frameDurability[frame]).toBe(max);
+    applyEffects(ctx, d, EventEffects.parse({ durability: 30 })); // boneyard-botch-1 at full
+    expect(d.frameDurability[frame]).toBe(max);
+    applyEffects(ctx, d, EventEffects.parse({ durability: -20 }));
+    expect(d.frameDurability[frame]).toBe(max - 20);
+    // a stored value above the maximum (a durability part removed) counts as the maximum
+    d.frameDurability[frame] = max + 20;
+    applyEffects(ctx, d, EventEffects.parse({ durability: -20 }));
+    expect(d.frameDurability[frame]).toBe(max - 20);
+    applyEffects(ctx, d, EventEffects.parse({ durability: -80 }));
+    applyEffects(ctx, d, EventEffects.parse({ durability: -80 }));
+    expect(d.frameDurability[frame]).toBe(0);
+  });
+
+  it("rejects unknown content ids in the workshop as a WorkshopError, the state unchanged", () => {
+    const s = { ...startSeason(ctx, "typo", START), skillPoints: 10_000 };
+    for (const op of [
+      { op: "learn-skill", skillId: "typo-skill" },
+      { op: "install-part", partId: "typo-part" },
+      { op: "remove-part", partId: "typo-part" },
+      { op: "equip-frame", frameId: "typo-frame" },
+      { op: "reroll-quirks", frameId: "typo-frame" },
+    ] as const) {
+      const input: RunInput = { kind: "workshop", ops: [op] };
+      expect(() => advanceSeason(ctx, s, input), op.op).toThrow(WorkshopError);
+      expect(() => advanceSeason(ctx, s, input), op.op).toThrow(/typo-/);
+    }
+    expect(s.inputsApplied).toBe(1);
   });
 });

@@ -36,7 +36,24 @@ export function learnCap(ctx: SimContext, d: Draft): number {
   );
 }
 
+/**
+ * A workshop input the season rejects (the whole input, with the state unchanged): an id that is
+ * not in the content or the hangar, a missing resource, or a limit.
+ */
 export class WorkshopError extends Error {}
+
+/**
+ * After an op that changes the build (frame or parts): the skills already learned must still fit
+ * the learn cap (ADR-0003 D36), else removing or replacing `altair-firmware` would keep its extra
+ * skill on a build without the slot (and free the firmware slot for a second firmware).
+ */
+function checkSkillsFit(ctx: SimContext, d: Draft, op: string): void {
+  const cap = learnCap(ctx, d);
+  if (d.learnedSkills.length > cap)
+    throw new WorkshopError(
+      `${op}: ${d.learnedSkills.length} skills learned and the build would hold ${cap} (skill slots in use)`,
+    );
+}
 
 export function applyWorkshop(
   ctx: SimContext,
@@ -51,16 +68,20 @@ export function applyWorkshop(
         if (!d.hangar.includes(op.frameId))
           throw new WorkshopError(`frame ${op.frameId} is not in the hangar`);
         d.equippedFrame = op.frameId;
+        checkSkillsFit(ctx, d, `equip ${op.frameId}`);
         break;
       }
       case "install-part": {
+        if (!ctx.content.parts.has(op.partId)) throw new WorkshopError(`unknown part ${op.partId}`);
         d.installedParts = installPart(ctx.content, d.installedParts, op.partId, S.maxParts);
+        checkSkillsFit(ctx, d, `install ${op.partId}`);
         break;
       }
       case "remove-part": {
         if (!d.installedParts.includes(op.partId))
           throw new WorkshopError(`part ${op.partId} is not installed`);
         d.installedParts = d.installedParts.filter((p) => p !== op.partId);
+        checkSkillsFit(ctx, d, `remove ${op.partId}`);
         break;
       }
       case "repair": {
@@ -68,9 +89,9 @@ export function applyWorkshop(
         break;
       }
       case "reroll-quirks": {
-        const frame = ctx.content.getFrame(op.frameId);
         if (!d.hangar.includes(op.frameId))
           throw new WorkshopError(`frame ${op.frameId} is not in the hangar`);
+        const frame = ctx.content.getFrame(op.frameId);
         if (frame.quirkSlots === 0)
           throw new WorkshopError(`frame ${op.frameId} has no quirk slots`);
         const cost = rerollCost(ctx, d);
@@ -82,7 +103,8 @@ export function applyWorkshop(
         break;
       }
       case "learn-skill": {
-        const skill = ctx.content.getSkill(op.skillId);
+        const skill = ctx.content.skills.get(op.skillId);
+        if (skill === undefined) throw new WorkshopError(`unknown skill ${op.skillId}`);
         if (skill.kind !== "active")
           throw new WorkshopError(`${op.skillId} is a passive; it comes with a frame`);
         if (skill.uniqueTo !== undefined && skill.uniqueTo !== d.falconessId)
