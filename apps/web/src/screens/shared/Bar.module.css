@@ -57,7 +57,7 @@
   bottom: -1px;
   width: 2px;
   margin-left: -1px;
-  background: var(--bad);
+  background: var(--bar-mark, var(--bad));
 }
 
 .value {

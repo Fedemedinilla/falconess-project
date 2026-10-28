@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
 import { formatSeconds, formatSigned } from "../text/format";
-import { gameText, ui } from "../text/ui";
+import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Icon, WithIcon } from "../ui/Icon";
@@ -17,14 +17,17 @@ import {
   type ActionKind,
   actionBlock,
   type CrewBonus,
+  driftPreview,
   isTraining,
   outingPreview,
+  type RiskLevel,
   restPreview,
   trainingPreview,
-  workshopFatigue,
+  workshopVigor,
 } from "./model/actions";
 import { formatChance } from "./model/describe";
 import type { NextGoal, WeekLog } from "./model/season";
+import { vigorScale } from "./model/vigor";
 import { durabilityOf } from "./model/workshop";
 import s from "./TurnActions.module.css";
 import { describeInput, InputMark } from "./TurnSide";
@@ -45,6 +48,9 @@ export type TurnActionsProps = {
   onPreview: (kind: ActionKind | undefined) => void;
   className?: string | undefined;
 };
+
+/** "+30 (25 %), +50 (50 %) o +70 (25 %)". */
+const disjunction = new Intl.ListFormat("es", { style: "long", type: "disjunction" });
 
 const SHORTCUT: Readonly<Record<ActionKind, number>> = Object.fromEntries(
   ACTION_KINDS.map((k, i) => [k, i + 1]),
@@ -107,6 +113,8 @@ type CardProps = {
   onClick: () => void;
   onPreview: (kind: ActionKind | undefined) => void;
   extra?: ReactNode;
+  /** A training's failure chance, loud from "high" on (the card's edge takes its color). */
+  risk?: RiskLevel | undefined;
 };
 
 /**
@@ -125,12 +133,20 @@ function ActionCard({
   onClick,
   onPreview,
   extra,
+  risk,
 }: CardProps) {
   const descId = useId();
   const id = actionButtonId(kind);
   return (
     <li
-      className={cx(s.card, block !== undefined && s.blocked, disabled && s.disabled)}
+      className={cx(
+        s.card,
+        block !== undefined && s.blocked,
+        disabled && s.disabled,
+        block === undefined && risk === "high" && s.cardHigh,
+        block === undefined && risk === "danger" && s.cardDanger,
+      )}
+      data-risk={risk}
       onPointerEnter={() => onPreview(kind)}
       onPointerLeave={() => onPreview(undefined)}
     >
@@ -261,6 +277,16 @@ export function TurnActions({
   const injured = state.injuryTurns > 0;
   const rest = restPreview(ctx);
   const outing = outingPreview(ctx, state);
+  const drift = driftPreview(ctx, state);
+  const S = ctx.ruleset.season;
+  const scale = vigorScale(ctx.ruleset);
+  const restValue =
+    rest.vigorMin === rest.vigorMax
+      ? formatSigned(rest.vigorMin)
+      : ui("ui.action.vigorRange", {
+          min: formatSigned(rest.vigorMin),
+          max: formatSigned(rest.vigorMax),
+        });
   // the crew the player picked for an outing; until then, the equipped frame's
   const [crew, setCrew] = useState<string | undefined>();
   const crewChoice =
@@ -318,7 +344,7 @@ export function TurnActions({
           <span>
             {kind === "workshop"
               ? ui("ui.action.injured.workshop")
-              : ui("ui.action.injured.note", { fatigue: formatSigned(rest.fatigue) })}
+              : ui("ui.action.injured.note", { vigor: formatSigned(rest.injuredVigor) })}
           </span>
         </p>
       );
@@ -330,8 +356,8 @@ export function TurnActions({
           </Pill>
           <span>
             {ui("ui.action.forcedRest.note", {
-              at: ctx.ruleset.season.forcedRestAt,
-              fatigue: formatSigned(rest.fatigue),
+              at: scale.forcedAt ?? 0,
+              vigor: restValue,
             })}
           </span>
         </p>
@@ -380,24 +406,25 @@ export function TurnActions({
             </>
           }
           detail={<Crews ctx={ctx} crews={t.crews} />}
+          risk={t.risk}
           footer={
             <>
               {t.failPm === 0 ? (
                 <span>{ui("ui.action.noFail")}</span>
               ) : (
-                <span className={cx(s.risk, t.failPm >= 150 && s.risky)}>
+                <span className={cx(s.risk, s[`risk-${t.risk}`])}>
                   <WithIcon icon="risk">
                     {ui("ui.action.fail", { fail: formatChance(t.failPm) })}
                   </WithIcon>
                   {t.injuryPm > 0 && (
-                    <WithIcon icon="injury">
+                    <WithIcon icon="injury" className={s.injuryChance}>
                       {ui("ui.action.injury", { injury: formatChance(t.injuryPm) })}
                     </WithIcon>
                   )}
                 </span>
               )}
-              <WithIcon icon="fatigue">
-                {ui("ui.action.fatigue", { delta: formatSigned(t.fatigue) })}
+              <WithIcon icon="vigor">
+                {ui("ui.action.vigor", { delta: formatSigned(t.vigor) })}
               </WithIcon>
             </>
           }
@@ -412,17 +439,23 @@ export function TurnActions({
           disabled={pending}
           effects={
             <>
-              <Effect
-                value={formatSigned(rest.fatigue)}
-                label={ui("ui.action.fatigueShort")}
-                icon="fatigue"
-                strong
-              />
+              <Effect value={restValue} label={ui("ui.action.vigorShort")} icon="vigor" strong />
               <Effect value="+1" label={ui("ui.action.moodShort")} icon="mood" />
             </>
           }
           detail={
             <p className={s.note}>
+              {rest.options.length > 1 &&
+                `${ui("ui.action.rest.options", {
+                  options: disjunction.format(
+                    rest.options.map((o) =>
+                      ui("ui.action.rest.option", {
+                        vigor: formatSigned(o.vigor),
+                        chance: formatChance(o.chancePm),
+                      }),
+                    ),
+                  ),
+                })} `}
               {ui("ui.action.rest.note", { chance: formatChance(rest.moodUpPm) })}
             </p>
           }
@@ -445,9 +478,9 @@ export function TurnActions({
                 strong
               />
               <Effect
-                value={formatSigned(outing.fatigue)}
-                label={ui("ui.action.fatigueShort")}
-                icon="fatigue"
+                value={formatSigned(outing.vigor)}
+                label={ui("ui.action.vigorShort")}
+                icon="vigor"
               />
               <Effect
                 value={formatSigned(outing.bond)}
@@ -514,8 +547,8 @@ export function TurnActions({
         footer={
           <>
             <span>{ui("ui.action.noFail")}</span>
-            <WithIcon icon="fatigue">
-              {ui("ui.action.fatigue", { delta: formatSigned(workshopFatigue(ctx)) })}
+            <WithIcon icon="vigor">
+              {ui("ui.action.vigor", { delta: formatSigned(workshopVigor(ctx)) })}
             </WithIcon>
           </>
         }
@@ -546,13 +579,32 @@ export function TurnActions({
         </p>
       )}
       {lastWeek && <LastWeek ctx={ctx} week={lastWeek} onReopen={onReopen} />}
+      {drift.rising && !pending && !injured && (
+        <p className={s.drift} role="status" id="turno-racha">
+          <Icon name="mood" />
+          {ui("ui.turn.drift", {
+            name: gameText(ctx.content.getFalconess(state.falconessId).textKey),
+            weeks: uiCount("ui.count.weeks", drift.streak),
+            chance: formatChance(drift.nextPm),
+          })}
+        </p>
+      )}
       <ul className={s.grid}>{cards}</ul>
       <p className={s.legend}>
-        {uiAt(explain, "ui.turn.actions.legend", {
-          base: formatChance(ctx.ruleset.season.failBase),
-          per: ctx.ruleset.season.failPerFatigue,
-          secondary: formatChance(ctx.ruleset.season.secondaryGain),
-        })}
+        {scale.bands
+          ? uiAt(explain, "ui.turn.actions.legend.v2", {
+              safe: scale.bands.safeFrom,
+              max: formatChance(S.failCurveMax),
+              injury: scale.bands.injuryAt,
+              share: formatChance(S.injuryShareOfFail),
+              free: S.moodDriftFreeStreak,
+              secondary: formatChance(S.secondaryGain),
+            })
+          : uiAt(explain, "ui.turn.actions.legend", {
+              base: formatChance(S.failBase),
+              per: S.failPerFatigue,
+              secondary: formatChance(S.secondaryGain),
+            })}
       </p>
     </Panel>
   );

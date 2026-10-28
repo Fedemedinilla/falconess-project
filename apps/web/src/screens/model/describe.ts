@@ -221,7 +221,8 @@ export function describeEffects(
       add(statIcon(stat), ui("ui.fx.stat", { stat: statName(stat), delta: formatSigned(delta) }));
   }
   if (fx.mood !== 0) add("mood", ui("ui.fx.mood", { delta: formatSigned(fx.mood) }));
-  if (fx.fatigue !== 0) add("fatigue", ui("ui.fx.fatigue", { delta: formatSigned(fx.fatigue) }));
+  // the screen speaks in vigor: an effect's fatigue +10 is vigor −10 (ADR-0006)
+  if (fx.fatigue !== 0) add("vigor", ui("ui.fx.vigor", { delta: formatSigned(-fx.fatigue) }));
   for (const [mfr, delta] of Object.entries(fx.bond))
     if (delta !== 0)
       add("bond", ui("ui.fx.bond", { crew: crewName(mfr), delta: formatSigned(delta) }));

@@ -77,7 +77,8 @@ describe("content in plain words", () => {
       ],
       branches: [
         { chance: "70\u00a0%", effects: [{ icon: "mood", text: "Ánimo +1" }] },
-        { chance: "30\u00a0%", effects: [{ icon: "fatigue", text: "Fatiga +15" }] },
+        // fatigue +15 in content: the screen says vigor −15
+        { chance: "30\u00a0%", effects: [{ icon: "vigor", text: "Vigor −15" }] },
       ],
     });
   });

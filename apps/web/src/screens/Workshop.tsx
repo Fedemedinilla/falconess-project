@@ -14,7 +14,7 @@ import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
 import { scrollBehavior } from "../ui/useMedia";
-import { workshopFatigue } from "./model/actions";
+import { workshopVigor } from "./model/actions";
 import { describeActiveSkill, describeSource } from "./model/describe";
 import {
   durabilityOf,
@@ -149,7 +149,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
       meta={ui("ui.workshop.meta", {
         n: report.ops.length,
         max: MAX_WORKSHOP_OPS,
-        fatigue: formatSigned(workshopFatigue(ctx)),
+        vigor: formatSigned(workshopVigor(ctx)),
       })}
       actions={
         <Button id="taller-volver" size="sm" variant="ghost" onClick={onClose}>

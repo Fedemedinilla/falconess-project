@@ -6,7 +6,7 @@ import { gameText, ui, uiCount } from "../text/ui";
 import { Livery } from "../ui/Livery";
 import { Pill } from "../ui/Pill";
 import { SeasonStrip } from "../ui/SeasonStrip";
-import { type ActionKind, actionPreview } from "./model/actions";
+import { type ActionKind, actionBlock, actionPreview } from "./model/actions";
 import { goalStatuses, nextGoal, recentWeeks } from "./model/season";
 import { useViewRace } from "./shared/useViewRace";
 import s from "./Turn.module.css";
@@ -81,7 +81,7 @@ export function Turn() {
                 {ui("ui.action.injured")}
               </Pill>
             )}
-            {state.fatigue >= ctx.ruleset.season.forcedRestAt && (
+            {actionBlock(ctx, state, "train:agility") === "forced-rest" && (
               <Pill tone="warn" solid icon="action.rest">
                 {ui("ui.action.forcedRest")}
               </Pill>

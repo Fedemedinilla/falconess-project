@@ -6,15 +6,108 @@ import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
 import { biomeIcon, moodIcon, statIcon, styleIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
+import { Pill } from "../ui/Pill";
 import { StatBar } from "../ui/StatBar";
-import { type ActionPreview, moodPm, previewFatigue, previewGain } from "./model/actions";
+import {
+  type ActionPreview,
+  previewGain,
+  previewVigor,
+  raceMoodPm,
+  trainMoodPm,
+  vigorOf,
+} from "./model/actions";
 import { seasonStatScale } from "./model/new-season";
 import { lastClosedTurn, turnDeltas } from "./model/season";
+import {
+  type VigorBand,
+  type VigorTone,
+  vigorBand,
+  vigorMarks,
+  vigorScale,
+  vigorTone,
+} from "./model/vigor";
 import { Bar } from "./shared/Bar";
 import { Letter } from "./shared/Letter";
 import s from "./TurnStatus.module.css";
 
 const MOODS = [-2, -1, 0, 1, 2] as const;
+
+const TONE_COLOR: Readonly<Record<VigorTone, string>> = {
+  good: "var(--good)",
+  warn: "var(--warn)",
+  bad: "var(--bad)",
+  neutral: "var(--ink-2)",
+};
+
+const BAND_PILL: Readonly<Record<VigorBand, "good" | "warn" | "bad">> = {
+  safe: "good",
+  low: "warn",
+  high: "bad",
+  injury: "bad",
+};
+
+/**
+ * Vigor, the bar that drains with training and fills with rest (`fatigueMax − fatigue`), colored
+ * by its risk band (v2) or by how near v1's forced rest is, with the action under the pointer
+ * previewed on it ("→ 40", or "→ 70 a 100" for a drawn rest).
+ */
+function VigorGauge({
+  ctx,
+  state,
+  preview,
+}: {
+  ctx: SimContext;
+  state: SeasonState;
+  preview: ActionPreview | undefined;
+}) {
+  const scale = vigorScale(ctx.ruleset);
+  const now = vigorOf(ctx, state);
+  const to = previewVigor(ctx, state, preview);
+  const band = vigorBand(scale, now);
+  const forced = scale.forcedAt !== undefined && now <= scale.forcedAt;
+  const range =
+    to === undefined
+      ? undefined
+      : to.min === to.max
+        ? formatInt(to.min)
+        : ui("ui.action.vigorRange", { min: formatInt(to.min), max: formatInt(to.max) });
+  let note: string | undefined;
+  if (band && scale.bands) {
+    const { safeFrom, highBelow, injuryAt } = scale.bands;
+    note = ui(`ui.turn.vigor.note.${band}`, { safe: safeFrom, high: highBelow, injury: injuryAt });
+  } else if (scale.forcedAt !== undefined)
+    note = ui("ui.turn.vigor.forced", { at: scale.forcedAt });
+  return (
+    <div className={s.vigor} data-band={band}>
+      <Bar
+        label={ui("ui.turn.vigor")}
+        icon="vigor"
+        value={formatInt(now)}
+        fraction={now / scale.max}
+        meter={{ value: now, max: scale.max }}
+        ghost={to === undefined ? undefined : (to.max - now) / scale.max}
+        mark={vigorMarks(scale)}
+        markColor={scale.bands ? "var(--ink-3)" : undefined}
+        color={TONE_COLOR[vigorTone(scale, now)]}
+        after={range === undefined ? undefined : `→ ${range}`}
+        afterTone={to !== undefined && to.max < now ? "down" : "up"}
+      />
+      <p className={s.vigorNote} id="turno-vigor-nota">
+        {band && (
+          <Pill tone={BAND_PILL[band]} solid={band === "injury"}>
+            {ui(`ui.turn.vigor.band.${band}`)}
+          </Pill>
+        )}
+        {forced && (
+          <Pill tone="warn" solid icon="action.rest">
+            {ui("ui.action.forcedRest")}
+          </Pill>
+        )}
+        {note !== undefined && <span>{note}</span>}
+      </p>
+    </div>
+  );
+}
 
 export type TurnStatusProps = {
   ctx: SimContext;
@@ -24,11 +117,10 @@ export type TurnStatusProps = {
   className?: string | undefined;
 };
 
-/** The Falconess this week: mood, fatigue, resources and stats with last week's changes. */
+/** The Falconess this week: mood, vigor, resources and stats with last week's changes. */
 export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) {
   const S = ctx.ruleset.season;
   const deltas = turnDeltas(state, lastClosedTurn(state));
-  const fatigueTo = previewFatigue(ctx, state, preview);
   return (
     <Panel
       title={ui("ui.turn.status")}
@@ -63,35 +155,14 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
               {gameText(`mood.${state.mood}`)}
               <span className={s.gaugeNote}>
                 {ui("ui.turn.mood.mult", {
-                  mult: formatFixed(moodPm(ctx, state), 1000, 2),
+                  train: formatFixed(trainMoodPm(ctx, state), 1000, 2),
+                  race: formatFixed(raceMoodPm(ctx, state), 1000, 2),
                 })}
               </span>
             </span>
           </div>
 
-          <div className={s.fatigue}>
-            <Bar
-              label={ui("ui.turn.fatigue")}
-              icon="fatigue"
-              value={formatInt(state.fatigue)}
-              fraction={state.fatigue / S.fatigueMax}
-              meter={{ value: state.fatigue, max: S.fatigueMax }}
-              ghost={
-                fatigueTo === undefined ? undefined : (fatigueTo - state.fatigue) / S.fatigueMax
-              }
-              mark={S.forcedRestAt / S.fatigueMax}
-              color={
-                state.fatigue >= S.forcedRestAt
-                  ? "var(--bad)"
-                  : state.fatigue >= S.forcedRestAt - 20
-                    ? "var(--warn)"
-                    : "var(--ink-2)"
-              }
-              after={fatigueTo === undefined ? undefined : `→ ${formatInt(fatigueTo)}`}
-              afterTone={fatigueTo !== undefined && fatigueTo > state.fatigue ? "down" : "up"}
-            />
-            <p className={s.threshold}>{ui("ui.turn.fatigue.threshold", { at: S.forcedRestAt })}</p>
-          </div>
+          <VigorGauge ctx={ctx} state={state} preview={preview} />
 
           <dl className={s.resources}>
             <div>

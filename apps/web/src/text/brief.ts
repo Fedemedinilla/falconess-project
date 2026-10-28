@@ -42,6 +42,7 @@ export const BRIEF_UI_KEYS = [
   "ui.race.guess.hint",
   "ui.race.legend.reserve",
   "ui.turn.actions.legend",
+  "ui.turn.actions.legend.v2",
   "ui.workshop.parts.hint",
   "ui.workshop.quirks.hint",
   "ui.workshop.skills.hint",

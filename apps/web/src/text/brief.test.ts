@@ -50,6 +50,7 @@ const KEPT_TERMS: readonly { name: string; full: RegExp; brief: RegExp }[] = [
   { name: "the missing boost", full: /no hay boost/i, brief: /no hay boost/i },
   { name: "the halved gain", full: /\bresta\b/i, brief: /\bresta\b/i },
   { name: "the lower mood", full: /baja el ánimo/i, brief: /ánimo/i },
+  { name: "the injury", full: /\blesi[oó]n/i, brief: /\blesi[oó]n|lesiona/i },
   { name: "the rising cost", full: /cada vez más/i, brief: /cuesta más|cada vez más|más caro/i },
   {
     name: "the season ending",

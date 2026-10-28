@@ -8,7 +8,7 @@
  * training and the stat it raises, Resistencia and the Físico it enlarges, a goal race and its
  * finish line, durability on a frame and in a race. `icons.test.ts` keeps any other pair apart.
  *
- * Emojis render with the viewer's system font. Most are from Unicode 6–11; 🪂 🪁 🥱 🧊 🩹 are
+ * Emojis render with the viewer's system font. Most are from Unicode 6–11; 🪂 🪁 🧊 🩹 are
  * 12.0, which Windows 10 draws since 2019. Nothing from 13.0 or later: Windows 10 shows those as empty
  * boxes (the feather 🪶 was one; Plumas use the peacock).
  */
@@ -51,8 +51,8 @@ export const ICONS = {
   "mood.1": "🙂",
   "mood.2": "😄",
 
-  // the Falconess's season resources (vigor = fatigueMax − fatigue: the bar that drains)
-  fatigue: "🥱",
+  // the Falconess's season resources. Vigor = fatigueMax − fatigue, the bar that drains (ADR-0006):
+  // the screen never shows fatigue, in any ruleset; 🔋 is the race's energy, so vigor is the arm
   vigor: "💪",
   skillPoints: "⭐",
   scrap: "🔩",

@@ -213,8 +213,26 @@
   font-variant-numeric: tabular-nums;
 }
 
-.risky {
+/* a training's failure chance: amber from one in ten, red from one in four (model/actions.ts) */
+.risk-high {
+  color: var(--warn);
+}
+
+.risk-danger {
   color: var(--bad);
+}
+
+.injuryChance {
+  color: var(--bad);
+}
+
+.cardHigh {
+  border-left-color: var(--warn);
+}
+
+.cardDanger {
+  border-left-color: var(--bad);
+  background: color-mix(in srgb, var(--bad-soft) 45%, var(--surface));
 }
 
 /* controls inside the card sit above the stretched hit area */
@@ -247,7 +265,8 @@
 /* --- notices ------------------------------------------------------------------------------------ */
 
 .alert,
-.raceWeek {
+.raceWeek,
+.drift {
   margin-bottom: var(--space-3);
   padding: var(--space-2) var(--space-3);
   font-size: var(--fs-sm);
@@ -258,7 +277,8 @@
   background: var(--accent-soft);
 }
 
-.raceWeek {
+.raceWeek,
+.drift {
   border-left: 3px solid var(--warn);
   background: var(--warn-soft);
 }
