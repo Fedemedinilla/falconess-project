@@ -40,12 +40,16 @@ export function orderedFrames(content: ContentIndex): Frame[] {
   );
 }
 
-/** Top of the base-stat bars: the roster's highest base stat, rounded up to a multiple of 50. */
-export function statScale(content: ContentIndex): number {
-  let max = 0;
-  for (const f of content.falconess.values())
-    for (const stat of STAT_ORDER) max = Math.max(max, f.baseStats[stat]);
-  return Math.max(50, Math.ceil(max / 50) * 50);
+/**
+ * One scale for the stat bars of every season screen (NewSeason, Turn, SeasonEnd), so a stat
+ * reads the same everywhere: a season ends around 630–660 per stat, so 800 leaves room at the top
+ * and an early training (+40) is still a visible step. Never above the ruleset's statMax; a stat
+ * past it fills the bar (its number is printed anyway).
+ */
+export const SEASON_STAT_SCALE = 800;
+
+export function seasonStatScale(statMax: number): number {
+  return Math.min(statMax, SEASON_STAT_SCALE);
 }
 
 export type StatCoverage = {

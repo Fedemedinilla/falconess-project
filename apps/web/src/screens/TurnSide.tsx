@@ -52,6 +52,7 @@ export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: G
               <span>{ui("ui.goals.field", { n: course.entries })}</span>
               <span className={s.need}>{ui("ui.goals.need", { place: next.goal.minPlace })}</span>
             </p>
+            <p className={s.consequence}>{ui("ui.goals.consequence")}</p>
             <CourseStrip courseId={course.id} legend />
           </div>
         ) : (

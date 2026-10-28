@@ -323,14 +323,6 @@
   color: var(--surface-3);
 }
 
-.boxId {
-  margin-top: var(--space-3);
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  overflow-wrap: anywhere;
-}
-
 /* --- run ----------------------------------------------------------------------------------------- */
 
 .jsonLabel {
@@ -376,4 +368,57 @@
   border: 1px solid var(--warn);
   background: var(--warn-soft);
   font-size: var(--fs-sm);
+}
+
+/* phones: one block per goal race, the replay a full-width button */
+.raceList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.raceItem {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.raceItem:first-child {
+  border-top: 0;
+}
+
+.raceMissed {
+  box-shadow: inset 3px 0 0 var(--bad);
+  background: var(--bad-soft);
+}
+
+.raceTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.raceWeek {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+.raceFacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.raceView {
+  width: 100%;
+  min-height: 2.75rem;
 }

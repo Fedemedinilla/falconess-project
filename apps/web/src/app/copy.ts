@@ -49,3 +49,16 @@ export async function copyOrSelect(
     return select();
   }
 }
+
+/** The last text this page copied to the clipboard, so a notice can tell a run is safe. */
+let lastCopied: string | undefined;
+
+/** Remember that `text` went to the clipboard (a selection the viewer copies is not known). */
+export function markCopied(text: string): void {
+  lastCopied = text;
+}
+
+/** Whether this page copied exactly `text` to the clipboard. */
+export function wasCopied(text: string): boolean {
+  return lastCopied === text;
+}

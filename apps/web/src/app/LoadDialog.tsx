@@ -5,6 +5,7 @@ import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import s from "./LoadDialog.module.css";
+import { SavedRunNotice } from "./SavedRunNotice";
 import { navigate } from "./useRoute";
 
 export type LoadDialogProps = { open: boolean; onClose: () => void };
@@ -60,6 +61,7 @@ export function LoadDialog({ open, onClose }: LoadDialogProps) {
           aria-invalid={error ? true : undefined}
           spellCheck={false}
         />
+        <SavedRunNotice idPrefix="cargar" action="load" />
         {error && (
           <p className={s.error} role="alert">
             {ui(`ui.error.${error.kind}`)}

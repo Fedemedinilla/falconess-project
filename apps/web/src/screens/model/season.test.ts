@@ -55,6 +55,36 @@ describe("season views", () => {
     expect(next?.weeksLeft).toBe((goals[1]?.turn ?? 0) - after.turn);
   });
 
+  it("reads a missed goal from the sim's outcome, while its week is open and after the end", () => {
+    // resting every week falls short of the first goal, which ends the season
+    let s = startSeason(ctx, "season-fail", {
+      kind: "start",
+      falconessId: "caracara",
+      hangar: ["shiden", "mule", "nimbus", "falke"],
+      parents: [],
+    });
+    const seen: SeasonState[] = [];
+    while (s.status === "active") {
+      s = advanceSeason(
+        ctx,
+        s,
+        s.pendingEvent ? { kind: "event:choose", option: 0 } : { kind: "rest" },
+      );
+      if (s.raceResults.length > 0) seen.push(s);
+    }
+    expect(s.endReason).toBe("goal-failed");
+    const failed = s.raceResults.at(-1);
+    if (!failed) throw new Error("no race");
+    for (const state of seen) {
+      const status = goalStatuses(ctx, state).find((g) => g.goal.turn === failed.turn);
+      expect(status?.met).toBe(false);
+      expect(failed.place).toBeGreaterThan(status?.goal.minPlace ?? 99);
+    }
+    expect(goalStatuses(ctx, s).filter((g) => g.result !== undefined && g.met)).toEqual(
+      goalStatuses(ctx, s).filter((g) => g.result !== undefined && g.goal.turn !== failed.turn),
+    );
+  });
+
   it("shows the race that just ran in the week after it, or while its event waits", () => {
     expect(freshRace(ctx, before)).toBeUndefined();
     expect(freshRace(ctx, after)?.goal.turn).toBe(first?.turn);

@@ -302,3 +302,9 @@
 .down {
   color: var(--bad);
 }
+
+.consequence {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--warn);
+}

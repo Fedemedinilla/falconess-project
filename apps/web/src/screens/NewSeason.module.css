@@ -285,10 +285,6 @@
   border-color: var(--ink-3);
 }
 
-.full {
-  opacity: 0.7;
-}
-
 .full .hitArea {
   cursor: not-allowed;
 }
@@ -302,6 +298,11 @@
   height: 1.125rem;
   margin: 0;
   accent-color: var(--accent);
+}
+
+/* a full hangar keeps every card readable: only the box says it cannot be ticked */
+.full .frameCheck {
+  opacity: 0.45;
 }
 
 /* make room for the checkbox at the right of the frame's head */
@@ -359,6 +360,22 @@
   border-top: 2px solid var(--accent);
   background: var(--surface);
   box-shadow: 0 -8px 24px rgb(var(--shadow-rgb) / 0.12);
+}
+
+.startNotice {
+  flex: 1 1 100%;
+}
+
+.startNotice:empty {
+  display: none;
+}
+
+.fullHint {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  font-size: var(--fs-sm);
+  font-weight: 600;
 }
 
 .summary {

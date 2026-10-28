@@ -114,9 +114,22 @@ fieldset.section > .legend + * {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* a skill that cannot be added keeps its text readable; the box dims and the reason shows */
 .off {
   cursor: not-allowed;
-  opacity: 0.55;
+}
+
+.off input {
+  opacity: 0.45;
+}
+
+.skillReason {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+  text-align: end;
 }
 
 .radio,

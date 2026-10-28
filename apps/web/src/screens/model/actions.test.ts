@@ -95,6 +95,68 @@ describe("action previews", () => {
     expect(notes).toContain("log.rest.forced");
   });
 
+  it("previews a risk flight injury as the sim applies it: half lost, then injured weeks", () => {
+    const S = RULESET_V1.season;
+    let checked = false;
+    for (let n = 0; n < 400 && !checked; n++) {
+      const s = start(`injury-${n}`, "peregrina");
+      const preview = trainingPreview(ctx, s, "train:risk-flight");
+      expect(preview.injuryPm).toBe(S.riskFlightInjury);
+      const next = advanceSeason(ctx, s, { kind: "train:risk-flight" });
+      const entry = next.log.find(
+        (e) => e.turn === s.turn && e.input?.kind === "train:risk-flight",
+      );
+      if (!entry?.notes.includes("log.train.injury")) continue;
+      for (const g of preview.gains)
+        expect(entry.deltas[g.stat]).toBe(-Math.max(1, Math.floor(g.gain / 2)));
+      expect(next.injuryTurns).toBe(S.injuryTurns);
+      let after = next;
+      while (after.pendingEvent)
+        after = advanceSeason(ctx, after, { kind: "event:choose", option: 0 });
+      for (const kind of ACTION_KINDS) expect(actionBlock(ctx, after, kind)).toBe("injured");
+      // the injured week rests whatever the input, with the rest's fatigue
+      const rested = advanceSeason(ctx, after, { kind: "train:agility" });
+      const notes = rested.log.filter((e) => e.turn === after.turn).flatMap((e) => e.notes);
+      expect(notes).toContain("log.injured");
+      expect(rested.fatigue).toBe(
+        previewFatigue(ctx, after, actionPreview(ctx, after, "train:agility")),
+      );
+      checked = true;
+    }
+    expect(checked, "no seed gave a risk flight injury").toBe(true);
+  });
+
+  it("trains right below the forced-rest threshold, with the fatigue's fail chance", () => {
+    const S = RULESET_V1.season;
+    const s = { ...start("edge", "peregrina"), fatigue: S.forcedRestAt - 1 };
+    expect(actionBlock(ctx, s, "train:stamina")).toBeUndefined();
+    const p = trainingPreview(ctx, s, "train:stamina");
+    expect(p.failPm).toBe(S.failBase + Math.floor((S.forcedRestAt - 1) / S.failPerFatigue));
+    const next = advanceSeason(ctx, s, { kind: "train:stamina" });
+    const notes = next.log.filter((e) => e.turn === s.turn).flatMap((e) => e.notes);
+    expect(notes.some((n) => n === "log.train.ok" || n === "log.train.fail")).toBe(true);
+    expect(notes).not.toContain("log.rest.forced");
+    expect(next.fatigue).toBe(previewFatigue(ctx, s, actionPreview(ctx, s, "train:stamina")));
+  });
+
+  it("caps a previewed gain at statMax, as the sim does", () => {
+    const S = RULESET_V1.season;
+    let checked = false;
+    for (let n = 0; n < 50 && !checked; n++) {
+      const base = start(`cap-${n}`, "peregrina");
+      const s = { ...base, stats: { ...base.stats, agility: S.statMax - 1 } };
+      const p = trainingPreview(ctx, s, "train:agility");
+      expect(p.gains[0]).toEqual({ stat: "agility", gain: 1 });
+      const next = advanceSeason(ctx, s, { kind: "train:agility" });
+      const entry = next.log.find((e) => e.turn === s.turn && e.input?.kind === "train:agility");
+      if (!entry?.notes.includes("log.train.ok")) continue;
+      for (const g of p.gains) expect(entry.deltas[g.stat] ?? 0).toBe(g.gain);
+      expect(next.stats.agility).toBe(S.statMax);
+      checked = true;
+    }
+    expect(checked, "no seed gave a successful training").toBe(true);
+  });
+
   it("previews the outing with the hangar's crews, the equipped frame's first", () => {
     const s = start("outing", "peregrina");
     const o = outingPreview(ctx, s);

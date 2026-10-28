@@ -6,6 +6,7 @@ import { cx } from "../ui/cx";
 import { Panel } from "../ui/Panel";
 import { StatBar } from "../ui/StatBar";
 import { type ActionPreview, moodPm, previewFatigue, previewGain } from "./model/actions";
+import { seasonStatScale } from "./model/new-season";
 import { lastClosedTurn, turnDeltas } from "./model/season";
 import { Bar } from "./shared/Bar";
 import { Letter } from "./shared/Letter";
@@ -120,7 +121,7 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
                 <StatBar
                   label={gameText(`stat.${stat}`)}
                   value={state.stats[stat]}
-                  max={S.statMax}
+                  max={seasonStatScale(S.statMax)}
                   {...(gain === undefined ? {} : { preview: gain })}
                   size="sm"
                 />

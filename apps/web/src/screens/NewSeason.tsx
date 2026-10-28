@@ -2,6 +2,7 @@ import type { RunInput } from "@falconess/schema";
 import { BIOMES, STYLES } from "@falconess/schema";
 import { STAT_ORDER, startSeason } from "@falconess/sim";
 import { type FormEvent, useMemo, useState } from "react";
+import { SavedRunNotice } from "../app/SavedRunNotice";
 import { navigate } from "../app/useRoute";
 import { randomSeed } from "../game/seed";
 import { useGame } from "../game/useGame";
@@ -12,6 +13,7 @@ import { cx } from "../ui/cx";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
+import { useNarrow } from "../ui/useMedia";
 import { describeActiveSkill, describeModifier, formatFraction } from "./model/describe";
 import {
   crewCoverage,
@@ -19,12 +21,12 @@ import {
   defaultHangar,
   HANGAR_SIZE,
   orderedFrames,
-  statScale,
+  seasonStatScale,
   toggleFrame,
 } from "./model/new-season";
 import s from "./NewSeason.module.css";
 import { Bar } from "./shared/Bar";
-import { FrameCard } from "./shared/FrameCard";
+import { Fold, FrameCard } from "./shared/FrameCard";
 import { Letter } from "./shared/Letter";
 
 /**
@@ -37,13 +39,14 @@ export function NewSeason() {
   const content = ctx.content;
   const roster = [...content.falconess.values()];
   const frames = useMemo(() => orderedFrames(content), [content]);
-  const scale = useMemo(() => statScale(content), [content]);
+  const scale = seasonStatScale(ctx.ruleset.season.statMax);
   const [falconessId, setFalconessId] = useState(
     content.falconess.has(DEFAULT_FALCONESS) ? DEFAULT_FALCONESS : (roster[0]?.id ?? ""),
   );
   const [hangar, setHangar] = useState<readonly string[]>(() => defaultHangar(content));
   const [seed, setSeed] = useState(randomSeed);
   const seedOk = seed.trim() !== "";
+  const narrow = useNarrow();
 
   // the frame the season starts with, as the sim picks it
   const equipped = useMemo(() => {
@@ -86,6 +89,7 @@ export function NewSeason() {
       <Panel title={ui("ui.new.runner")} meta={ui("ui.new.runner.meta", { n: roster.length })}>
         <fieldset className={s.fieldset}>
           <legend className="visually-hidden">{ui("ui.new.runner")}</legend>
+          <p className={s.hint}>{ui("ui.new.runner.hint")}</p>
           <div className={s.runners}>
             {roster.map((f) => {
               const sponsor = content.getManufacturer(f.sponsor);
@@ -150,62 +154,64 @@ export function NewSeason() {
                     })}
                   </div>
 
-                  <span className={s.aptitudes}>
-                    <span className={s.aptRow}>
-                      <span className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</span>
-                      {BIOMES.map((b) => (
-                        <span key={b} className={s.apt}>
-                          {gameText(`biome.${b}`)} <Letter letter={f.biomeAptitude[b] ?? "G"} />
-                        </span>
-                      ))}
-                    </span>
-                    <span className={s.aptRow}>
-                      <span className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</span>
-                      {STYLES.map((st) => (
-                        <span
-                          key={st}
-                          className={cx(s.apt, st === f.preferredStyle && s.preferred)}
-                        >
-                          {gameText(`style.${st}`)} <Letter letter={f.styleAptitude[st] ?? "G"} />
-                        </span>
-                      ))}
-                    </span>
-                    <span className={s.prefers}>
-                      {ui("ui.new.preferred", { style: gameText(`style.${f.preferredStyle}`) })}
-                    </span>
-                  </span>
-
-                  {f.uniqueSkills.map((id) => {
-                    const skill = content.getSkill(id);
-                    return (
-                      <span key={id} className={s.unique}>
-                        <span className={s.aptLabel}>{ui("ui.new.unique")}</span>
-                        <strong>{gameText(skill.textKey)}</strong>
-                        <span className={s.uniqueDesc}>
-                          {skill.kind === "active"
-                            ? describeActiveSkill(skill)
-                            : skill.modifiers.map(describeModifier).join(" · ")}
-                        </span>
+                  <Fold id={narrow ? `${id}-detalle` : undefined} label={ui("ui.new.runner.more")}>
+                    <span className={s.aptitudes}>
+                      <span className={s.aptRow}>
+                        <span className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</span>
+                        {BIOMES.map((b) => (
+                          <span key={b} className={s.apt}>
+                            {gameText(`biome.${b}`)} <Letter letter={f.biomeAptitude[b] ?? "G"} />
+                          </span>
+                        ))}
                       </span>
-                    );
-                  })}
-
-                  <span className={s.goals}>
-                    <span className={s.aptLabel}>{ui("ui.new.goals")}</span>
-                    {[...f.seasonGoals]
-                      .sort((a, b) => a.turn - b.turn)
-                      .map((g) => (
-                        <span key={g.turn} className={s.goal}>
-                          <span className={s.goalWeek}>
-                            {ui("ui.goals.week", { turn: g.turn })}
+                      <span className={s.aptRow}>
+                        <span className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</span>
+                        {STYLES.map((st) => (
+                          <span
+                            key={st}
+                            className={cx(s.apt, st === f.preferredStyle && s.preferred)}
+                          >
+                            {gameText(`style.${st}`)} <Letter letter={f.styleAptitude[st] ?? "G"} />
                           </span>
-                          <span>{gameText(content.getCourse(g.courseId).textKey)}</span>
-                          <span className={s.goalPlace}>
-                            {ui("ui.goals.need", { place: g.minPlace })}
+                        ))}
+                      </span>
+                      <span className={s.prefers}>
+                        {ui("ui.new.preferred", { style: gameText(`style.${f.preferredStyle}`) })}
+                      </span>
+                    </span>
+
+                    {f.uniqueSkills.map((id) => {
+                      const skill = content.getSkill(id);
+                      return (
+                        <span key={id} className={s.unique}>
+                          <span className={s.aptLabel}>{ui("ui.new.unique")}</span>
+                          <strong>{gameText(skill.textKey)}</strong>
+                          <span className={s.uniqueDesc}>
+                            {skill.kind === "active"
+                              ? describeActiveSkill(skill)
+                              : skill.modifiers.map(describeModifier).join(" · ")}
                           </span>
                         </span>
-                      ))}
-                  </span>
+                      );
+                    })}
+
+                    <span className={s.goals}>
+                      <span className={s.aptLabel}>{ui("ui.new.goals")}</span>
+                      {[...f.seasonGoals]
+                        .sort((a, b) => a.turn - b.turn)
+                        .map((g) => (
+                          <span key={g.turn} className={s.goal}>
+                            <span className={s.goalWeek}>
+                              {ui("ui.goals.week", { turn: g.turn })}
+                            </span>
+                            <span>{gameText(content.getCourse(g.courseId).textKey)}</span>
+                            <span className={s.goalPlace}>
+                              {ui("ui.goals.need", { place: g.minPlace })}
+                            </span>
+                          </span>
+                        ))}
+                    </span>
+                  </Fold>
                 </div>
               );
             })}
@@ -213,7 +219,33 @@ export function NewSeason() {
         </fieldset>
       </Panel>
 
-      {/* 2 · hangar ------------------------------------------------------------------------- */}
+      {/* 2 · seed --------------------------------------------------------------------------- */}
+      <Panel title={ui("ui.new.seed")}>
+        <div className={s.seedRow}>
+          <label htmlFor="nueva-semilla" className={s.seedLabel}>
+            {ui("ui.new.seed.label")}
+          </label>
+          <input
+            id="nueva-semilla"
+            className={s.seedInput}
+            value={seed}
+            onChange={(e) => setSeed(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+            inputMode="text"
+            aria-describedby="nueva-semilla-ayuda"
+            aria-invalid={seedOk ? undefined : true}
+          />
+          <Button id="nueva-semilla-otra" onClick={() => setSeed(randomSeed())}>
+            {ui("ui.new.seed.random")}
+          </Button>
+        </div>
+        <p className={s.hint} id="nueva-semilla-ayuda">
+          {ui("ui.new.seed.hint")}
+        </p>
+      </Panel>
+
+      {/* 3 · hangar ------------------------------------------------------------------------- */}
       <Panel
         title={ui("ui.new.hangar")}
         meta={ui("ui.new.hangar.count", { n: hangar.length, max: HANGAR_SIZE })}
@@ -221,6 +253,11 @@ export function NewSeason() {
         <fieldset className={s.fieldset}>
           <legend className="visually-hidden">{ui("ui.new.hangar")}</legend>
           <p className={s.hint}>{ui("ui.new.hangar.hint", { max: HANGAR_SIZE })}</p>
+          {hangar.length >= HANGAR_SIZE && (
+            <p className={s.fullHint} role="status">
+              {ui("ui.new.hangar.full")}
+            </p>
+          )}
           <div className={s.coverage}>
             <span className={s.aptLabel}>{ui("ui.new.coverage")}</span>
             <ul className={s.coverageList}>
@@ -267,6 +304,7 @@ export function NewSeason() {
                   <FrameCard
                     frameId={frame.id}
                     headingId={`${id}-nombre`}
+                    foldId={`${id}-detalle`}
                     tag={
                       checked ? (
                         <Pill tone="accent" solid>
@@ -282,34 +320,11 @@ export function NewSeason() {
         </fieldset>
       </Panel>
 
-      {/* 3 · seed --------------------------------------------------------------------------- */}
-      <Panel title={ui("ui.new.seed")}>
-        <div className={s.seedRow}>
-          <label htmlFor="nueva-semilla" className={s.seedLabel}>
-            {ui("ui.new.seed.label")}
-          </label>
-          <input
-            id="nueva-semilla"
-            className={s.seedInput}
-            value={seed}
-            onChange={(e) => setSeed(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-            inputMode="text"
-            aria-describedby="nueva-semilla-ayuda"
-            aria-invalid={seedOk ? undefined : true}
-          />
-          <Button id="nueva-semilla-otra" onClick={() => setSeed(randomSeed())}>
-            {ui("ui.new.seed.random")}
-          </Button>
-        </div>
-        <p className={s.hint} id="nueva-semilla-ayuda">
-          {ui("ui.new.seed.hint")}
-        </p>
-      </Panel>
-
       {/* start bar -------------------------------------------------------------------------- */}
       <div className={s.startBar}>
+        <div className={s.startNotice}>
+          <SavedRunNotice idPrefix="nueva" action="start" />
+        </div>
         <p className={s.summary}>
           {chosen && <strong>{gameText(chosen.textKey)}</strong>}
           <span className={hangar.length === 0 ? undefined : s.summaryHangar}>

@@ -1,4 +1,4 @@
-import { STAT_ORDER } from "@falconess/sim";
+import { RULESET_V1, STAT_ORDER } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../../content/load";
 import {
@@ -6,7 +6,8 @@ import {
   defaultHangar,
   HANGAR_SIZE,
   orderedFrames,
-  statScale,
+  SEASON_STAT_SCALE,
+  seasonStatScale,
   toggleFrame,
 } from "./new-season";
 
@@ -29,11 +30,12 @@ describe("new season choices", () => {
     expect(frames.slice(firstSignature).every((f) => f.signatureOf !== undefined)).toBe(true);
   });
 
-  it("scales the base-stat bars above the roster's highest stat", () => {
-    const scale = statScale(content);
+  it("draws every season screen's stat bars on one scale, within statMax", () => {
+    const scale = seasonStatScale(RULESET_V1.season.statMax);
+    expect(scale).toBe(SEASON_STAT_SCALE);
+    expect(seasonStatScale(500)).toBe(500);
     for (const f of content.falconess.values())
-      for (const stat of STAT_ORDER) expect(f.baseStats[stat]).toBeLessThanOrEqual(scale);
-    expect(scale % 50).toBe(0);
+      for (const stat of STAT_ORDER) expect(f.baseStats[stat]).toBeLessThan(scale / 4);
   });
 
   it("names which hangar crews train each stat", () => {

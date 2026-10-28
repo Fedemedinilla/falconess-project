@@ -1,9 +1,19 @@
 /**
  * The week's eight actions as the Turn screen shows them before a click: what each one trains,
  * by how much, with whom, at what risk and fatigue. Gains come from the sim's `trainingGain` and
- * `facilityLevel`; the split into a secondary stat (and risk flight's two stats) and the risk and
- * fatigue numbers are read from the ruleset with the same `scale` the sim uses, so they are the
- * numbers `advanceSeason` applies on a success (actions.test.ts checks that against the sim).
+ * `facilityLevel`.
+ *
+ * KNOWN EXCEPTION to "the UI never computes a rule" (temporary, test-guarded): the split into a
+ * secondary stat (and risk flight's two stats), the cap at statMax, the fail and injury chances,
+ * the injured and forced-rest blocks, the outing's default crew and the fatigue clamp mirror
+ * `applyTraining` / `applyAction` (packages/sim/src/season/training.ts and advance.ts) line for
+ * line. They cannot come from running `advanceSeason` as a preview: its per-input draw would tell
+ * whether the training succeeds. The fix is to extract those rules in the sim as pure functions
+ * (`trainingGains`, `trainingRisk`, `actionResolution`) that `applyTraining` and the UI both call;
+ * that is a sim change and waits for the owner's approval (CLAUDE.md). Until then
+ * actions.test.ts compares every preview with what `advanceSeason` applies, including the risk
+ * flight injury, fatigue at the forced-rest threshold and the statMax cap, so a change to these
+ * rules in the sim fails the web tests instead of showing wrong numbers.
  */
 import { scale } from "@falconess/rng";
 import type { SeasonState, StatName, TrainingKind } from "@falconess/schema";
@@ -79,18 +89,23 @@ export function trainingPreview(
 ): TrainingPreview {
   const S = ctx.ruleset.season;
   const primary = ctx.ruleset.trainingStat[kind];
+  // what a success adds: the gain, up to the stat's cap (applyStat clamps at statMax)
+  const gain = (stat: StatName, g: number): StatGain => ({
+    stat,
+    gain: Math.max(0, Math.min(g, S.statMax - state.stats[stat])),
+  });
   const gains: StatGain[] = [];
   if (kind === "train:risk-flight") {
     const g = trainingGain(ctx, state, kind, "courage");
     gains.push(
-      { stat: "courage", gain: scale(g, S.riskFlightCourage) },
-      { stat: "agility", gain: scale(g, S.riskFlightAgility) },
+      gain("courage", scale(g, S.riskFlightCourage)),
+      gain("agility", scale(g, S.riskFlightAgility)),
     );
   } else {
     const g = trainingGain(ctx, state, kind, primary);
-    gains.push({ stat: primary, gain: g });
+    gains.push(gain(primary, g));
     const secondary = ctx.ruleset.trainingSecondary[kind];
-    if (secondary) gains.push({ stat: secondary, gain: Math.max(1, scale(g, S.secondaryGain)) });
+    if (secondary) gains.push(gain(secondary, Math.max(1, scale(g, S.secondaryGain))));
   }
   const failPm =
     kind === "train:simulator"

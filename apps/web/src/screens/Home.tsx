@@ -34,6 +34,7 @@ function Roster() {
   const frames = [...content.frames.values()];
   return (
     <div className={s.runners}>
+      <p className={s.rosterNote}>{ui("ui.goals.rule")}</p>
       {[...content.falconess.values()].map((f) => {
         const sponsor = content.getManufacturer(f.sponsor);
         const signature = frames.find((fr) => fr.signatureOf === f.id);

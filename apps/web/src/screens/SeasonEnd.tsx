@@ -1,6 +1,6 @@
 import { STAT_ORDER } from "@falconess/sim";
 import { useMemo, useRef, useState } from "react";
-import { copyOrSelect } from "../app/copy";
+import { copyOrSelect, markCopied } from "../app/copy";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { formatInt, formatSeconds, formatSigned } from "../text/format";
@@ -11,7 +11,9 @@ import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
 import { Table } from "../ui/Table";
+import { useNarrow } from "../ui/useMedia";
 import { seasonSummary } from "./model/end";
+import { seasonStatScale } from "./model/new-season";
 import { goalStatuses } from "./model/season";
 import s from "./SeasonEnd.module.css";
 import { Bar } from "./shared/Bar";
@@ -45,6 +47,7 @@ export function SeasonEnd() {
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [copy, setCopy] = useState<CopyStatus>("idle");
   const [confirmNew, setConfirmNew] = useState(false);
+  const narrow = useNarrow();
   const run = snap.run;
   const summary = useMemo(
     () =>
@@ -64,9 +67,16 @@ export function SeasonEnd() {
   const text = game.exportText() ?? "";
   const box = summary.blackBox;
   const affinity = content.getManufacturer(box.factors.frameAffinity);
+  const scale = seasonStatScale(ctx.ruleset.season.statMax);
 
   const onCopy = () => {
-    copyOrSelect(text, textRef.current).then(setCopy, () => setCopy("selected"));
+    copyOrSelect(text, textRef.current).then(
+      (result) => {
+        if (result === "copied") markCopied(text);
+        setCopy(result);
+      },
+      () => setCopy("selected"),
+    );
   };
   const startNew = () => {
     setConfirmNew(false);
@@ -76,9 +86,6 @@ export function SeasonEnd() {
   const onNew = () => {
     if (!snap.saved && copy !== "copied") setConfirmNew(true);
     else startNew();
-  };
-  const undo = () => {
-    if (game.undoLast()) navigate("temporada");
   };
 
   const aptitude = box.factors.aptitude;
@@ -154,63 +161,114 @@ export function SeasonEnd() {
 
       <div className={s.grid}>
         <Panel title={ui("ui.end.races")} flush className={s.races}>
-          <Table
-            caption={ui("ui.end.races")}
-            dense
-            columns={[
-              { key: "turn", label: ui("ui.end.col.turn"), align: "end" },
-              { key: "course", label: ui("ui.end.col.course") },
-              { key: "place", label: ui("ui.end.col.place"), align: "end" },
-              { key: "goal", label: ui("ui.end.col.goal"), align: "end" },
-              { key: "time", label: ui("ui.end.col.time"), align: "end" },
-              { key: "frame", label: ui("ui.end.col.frame") },
-              { key: "view", label: ui("ui.end.col.view"), align: "end" },
-            ]}
-            rows={goals.map((g) => ({
-              key: String(g.goal.turn),
-              highlight: g.met === false,
-              cells: [
-                ui("ui.goals.week", { turn: g.goal.turn }),
-                gameText(content.getCourse(g.goal.courseId).textKey),
-                g.result ? (
-                  <Pill key="place" tone={g.met ? "good" : "bad"}>
-                    {ui("ui.goals.place", { place: g.result.place, field: g.result.fieldSize })}
-                  </Pill>
-                ) : (
-                  <span key="place" className={s.muted}>
-                    {ui("ui.end.notRun")}
-                  </span>
-                ),
-                <span key="goal" className={s.nowrap}>
-                  {ui("ui.goals.need", { place: g.goal.minPlace })}
-                </span>,
-                g.result ? (
-                  <span key="time" className={s.nowrap}>
-                    {ui("ui.end.time", { time: formatSeconds(g.result.timeTicks) })}
-                  </span>
-                ) : (
-                  ""
-                ),
-                g.result ? gameText(content.getFrame(g.result.frameId).textKey) : "",
-                g.result ? (
-                  <Button
-                    key="view"
-                    id={`fin-ver-${g.goal.turn}`}
-                    size="sm"
-                    onClick={() => viewRace(g.goal.turn)}
-                    aria-label={ui("ui.race.view.aria", {
-                      course: gameText(content.getCourse(g.goal.courseId).textKey),
-                      turn: g.goal.turn,
-                    })}
-                  >
-                    {ui("ui.race.view")}
-                  </Button>
-                ) : (
-                  ""
-                ),
-              ],
-            }))}
-          />
+          {narrow ? (
+            <ol className={s.raceList}>
+              {goals.map((g) => {
+                const course = gameText(content.getCourse(g.goal.courseId).textKey);
+                return (
+                  <li key={g.goal.turn} className={cx(s.raceItem, g.met === false && s.raceMissed)}>
+                    <p className={s.raceTitle}>
+                      <span className={s.raceWeek}>
+                        {ui("ui.goals.week", { turn: g.goal.turn })}
+                      </span>
+                      {course}
+                    </p>
+                    <p className={s.raceFacts}>
+                      {g.result ? (
+                        <Pill tone={g.met ? "good" : "bad"}>
+                          {ui("ui.goals.place", {
+                            place: g.result.place,
+                            field: g.result.fieldSize,
+                          })}
+                        </Pill>
+                      ) : (
+                        <span className={s.muted}>{ui("ui.end.notRun")}</span>
+                      )}
+                      <span>{ui("ui.goals.need", { place: g.goal.minPlace })}</span>
+                      {g.result && (
+                        <span className={s.nowrap}>
+                          {ui("ui.end.time", { time: formatSeconds(g.result.timeTicks) })}
+                        </span>
+                      )}
+                      {g.result && (
+                        <span className={s.muted}>
+                          {gameText(content.getFrame(g.result.frameId).textKey)}
+                        </span>
+                      )}
+                    </p>
+                    {g.result && (
+                      <Button
+                        id={`fin-ver-${g.goal.turn}`}
+                        className={s.raceView}
+                        onClick={() => viewRace(g.goal.turn)}
+                        aria-label={ui("ui.race.view.aria", { course, turn: g.goal.turn })}
+                      >
+                        {ui("ui.race.view")}
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <Table
+              caption={ui("ui.end.races")}
+              dense
+              columns={[
+                { key: "turn", label: ui("ui.end.col.turn"), align: "end" },
+                { key: "course", label: ui("ui.end.col.course") },
+                { key: "place", label: ui("ui.end.col.place"), align: "end" },
+                { key: "goal", label: ui("ui.end.col.goal"), align: "end" },
+                { key: "time", label: ui("ui.end.col.time"), align: "end" },
+                { key: "frame", label: ui("ui.end.col.frame") },
+                { key: "view", label: ui("ui.end.col.view"), align: "end" },
+              ]}
+              rows={goals.map((g) => ({
+                key: String(g.goal.turn),
+                highlight: g.met === false,
+                cells: [
+                  ui("ui.goals.week", { turn: g.goal.turn }),
+                  gameText(content.getCourse(g.goal.courseId).textKey),
+                  g.result ? (
+                    <Pill key="place" tone={g.met ? "good" : "bad"}>
+                      {ui("ui.goals.place", { place: g.result.place, field: g.result.fieldSize })}
+                    </Pill>
+                  ) : (
+                    <span key="place" className={s.muted}>
+                      {ui("ui.end.notRun")}
+                    </span>
+                  ),
+                  <span key="goal" className={s.nowrap}>
+                    {ui("ui.goals.need", { place: g.goal.minPlace })}
+                  </span>,
+                  g.result ? (
+                    <span key="time" className={s.nowrap}>
+                      {ui("ui.end.time", { time: formatSeconds(g.result.timeTicks) })}
+                    </span>
+                  ) : (
+                    ""
+                  ),
+                  g.result ? gameText(content.getFrame(g.result.frameId).textKey) : "",
+                  g.result ? (
+                    <Button
+                      key="view"
+                      id={`fin-ver-${g.goal.turn}`}
+                      size="sm"
+                      onClick={() => viewRace(g.goal.turn)}
+                      aria-label={ui("ui.race.view.aria", {
+                        course: gameText(content.getCourse(g.goal.courseId).textKey),
+                        turn: g.goal.turn,
+                      })}
+                    >
+                      {ui("ui.race.view")}
+                    </Button>
+                  ) : (
+                    ""
+                  ),
+                ],
+              }))}
+            />
+          )}
         </Panel>
 
         <Panel title={ui("ui.end.stats")} className={s.stats}>
@@ -221,8 +279,8 @@ export function SeasonEnd() {
                 size="sm"
                 label={gameText(`stat.${stat}`)}
                 value={formatInt(state.stats[stat])}
-                fraction={state.stats[stat] / ctx.ruleset.season.statMax}
-                ghost={-(state.stats[stat] - summary.startStats[stat]) / ctx.ruleset.season.statMax}
+                fraction={state.stats[stat] / scale}
+                ghost={-(state.stats[stat] - summary.startStats[stat]) / scale}
                 after={formatSigned(state.stats[stat] - summary.startStats[stat])}
                 afterTone="up"
               />
@@ -278,7 +336,6 @@ export function SeasonEnd() {
               </dd>
             </div>
           </dl>
-          <p className={s.boxId}>{ui("ui.end.box.id", { id: box.id })}</p>
         </Panel>
 
         <Panel title={ui("ui.end.run")} className={s.run}>
@@ -308,9 +365,6 @@ export function SeasonEnd() {
             </Button>
             <Button id="fin-nueva" onClick={onNew}>
               {ui("ui.home.new")}
-            </Button>
-            <Button id="fin-deshacer" variant="ghost" onClick={undo}>
-              {ui("ui.end.undo")}
             </Button>
           </div>
           {confirmNew && (

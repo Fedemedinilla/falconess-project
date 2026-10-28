@@ -19,6 +19,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* what the sticky timing bar covers at the top: an element scrolled into view clears it */
+:root {
+  --sticky-top: 4.5rem;
+}
+
+@media (max-width: 52rem) {
+  :root {
+    --sticky-top: 6.5rem;
+  }
+}
+
+@media (max-width: 37.5rem) {
+  :root {
+    --sticky-top: 3.5rem;
+  }
+}
+
 /* the band above the sticky timing bar, under a phone's status bar */
 body::before {
   content: "";

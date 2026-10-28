@@ -3,7 +3,7 @@ import { useGame } from "../game/useGame";
 import { ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
-import { copyOrSelect } from "./copy";
+import { copyOrSelect, markCopied } from "./copy";
 import s from "./RunDialog.module.css";
 import { navigate } from "./useRoute";
 
@@ -17,7 +17,10 @@ const STATUS_KEY: Readonly<Record<Exclude<Status, "idle">, string>> = {
 
 export type RunDialogProps = { open: boolean; onClose: () => void };
 
-/** The run tools for testers: the run as JSON to copy, undo the last decision, go home. */
+/**
+ * The run tools for testers: the run as JSON to copy, undo the last decision (only here, for a
+ * misclick: an undo leaves no trace in the save, so it is kept out of the way), go home.
+ */
 export function RunDialog({ open, onClose }: RunDialogProps) {
   const { game, snap } = useGame();
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -32,10 +35,20 @@ export function RunDialog({ open, onClose }: RunDialogProps) {
   const text = game.exportText() ?? "";
 
   const copy = () => {
-    copyOrSelect(text, textRef.current).then(setStatus, () => setStatus("selected"));
+    copyOrSelect(text, textRef.current).then(
+      (result) => {
+        if (result === "copied") markCopied(text);
+        setStatus(result);
+      },
+      () => setStatus("selected"),
+    );
   };
   const undo = () => {
-    if (game.undoLast()) setStatus("undone");
+    if (!game.undoLast()) return;
+    setStatus("undone");
+    // undoing the decision that ended the season takes the season screen back
+    if (game.getSnapshot().run?.state.status === "active" && window.location.hash === "#fin")
+      navigate("temporada");
   };
   const goHome = () => {
     onClose();

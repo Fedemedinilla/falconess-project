@@ -47,6 +47,8 @@ for (const falconessId of FALCONESS) {
     await expect(result).toContainText(t("ui.result.eyebrow", { turn: 12 }));
     await expect(result).toContainText(t("ui.result.met"));
     const recorded = parsePlace((await result.locator("dd").first().textContent()) ?? "");
+    // the week of a race takes the page to its result, which sits above the actions
+    if (!afterRace.eventOpen) await expect(result).toBeInViewport();
     if (afterRace.eventOpen) await page.keyboard.press("Escape"); // hide the event, answer later
 
     // "Ver carrera" → the replay of that very race, rebuilt with detail "full"

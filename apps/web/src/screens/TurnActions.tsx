@@ -1,7 +1,7 @@
 import type { RunInput, SeasonState } from "@falconess/schema";
-import { bondLevel, type SimContext } from "@falconess/sim";
+import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { formatSigned } from "../text/format";
+import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Livery } from "../ui/Livery";
@@ -19,15 +19,18 @@ import {
   workshopFatigue,
 } from "./model/actions";
 import { formatChance } from "./model/describe";
-import type { NextGoal } from "./model/season";
+import type { NextGoal, WeekLog } from "./model/season";
 import { durabilityOf } from "./model/workshop";
 import s from "./TurnActions.module.css";
+import { describeInput } from "./TurnSide";
 
 export type TurnActionsProps = {
   ctx: SimContext;
   state: SeasonState;
   /** The next goal race, to warn when it runs this week. */
   next: NextGoal | undefined;
+  /** The last week of the log: what the last decision did, said right above the actions. */
+  lastWeek: WeekLog | undefined;
   /** Apply an action input. */
   onAct: (input: RunInput) => void;
   onOpenWorkshop: () => void;
@@ -148,11 +151,64 @@ function ActionCard({
   );
 }
 
+type Tone = "good" | "bad" | "warn";
+
+/** How the week's action went, from the notes the sim logged. */
+function outcome(notes: readonly string[]): { text: string; tone: Tone } | undefined {
+  if (notes.includes("log.train.injury"))
+    return { text: gameText("log.train.injury"), tone: "bad" };
+  if (notes.includes("log.train.fail")) return { text: ui("ui.turn.feedback.fail"), tone: "bad" };
+  if (notes.includes("log.train.ok")) return { text: ui("ui.turn.feedback.ok"), tone: "good" };
+  if (notes.includes("log.rest.forced"))
+    return { text: ui("ui.turn.feedback.forced"), tone: "warn" };
+  if (notes.includes("log.injured")) return { text: gameText("log.injured"), tone: "warn" };
+  return undefined;
+}
+
+/** "Semana 4: Entrenar resistencia — salió bien · RES +66 · COR +33", from the season log. */
+function LastWeek({ ctx, week }: { ctx: SimContext; week: WeekLog }) {
+  if (!week.input || week.input.kind === "start") return null;
+  const result = outcome(week.notes);
+  const deltas = STAT_ORDER.filter((st) => (week.deltas[st] ?? 0) !== 0);
+  return (
+    <p className={s.feedback} role="status">
+      <span className={s.feedbackLabel}>{ui("ui.turn.feedback.label")}</span>
+      <span className={s.feedbackText}>
+        <strong>
+          {ui("ui.turn.feedback", { turn: week.turn, action: describeInput(ctx, week.input) })}
+        </strong>
+        {result && <span className={s[`feedback-${result.tone}`]}> — {result.text}</span>}
+        {deltas.map((st) => {
+          const d = week.deltas[st] ?? 0;
+          return (
+            <span key={st} className={d < 0 ? s.down : s.up}>
+              {" · "}
+              {ui(`ui.stat.abbr.${st}`)} {formatSigned(d)}
+            </span>
+          );
+        })}
+        {week.race && (
+          <span>
+            {" · "}
+            {ui("ui.log.race", {
+              course: gameText(ctx.content.getCourse(week.race.courseId).textKey),
+              place: week.race.place,
+              field: week.race.fieldSize,
+              time: formatSeconds(week.race.timeTicks),
+            })}
+          </span>
+        )}
+      </span>
+    </p>
+  );
+}
+
 /** The eight actions of the week, each saying what it does before the click (keys 1–8). */
 export function TurnActions({
   ctx,
   state,
   next,
+  lastWeek,
   onAct,
   onOpenWorkshop,
   onPreview,
@@ -415,6 +471,7 @@ export function TurnActions({
           })}
         </p>
       )}
+      {lastWeek && <LastWeek ctx={ctx} week={lastWeek} />}
       <ul className={s.grid}>{cards}</ul>
       <p className={s.legend}>
         {ui("ui.turn.actions.legend", {

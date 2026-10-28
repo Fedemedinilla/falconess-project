@@ -7,6 +7,7 @@ import { gameText, ui } from "../../text/ui";
 import { cx } from "../../ui/cx";
 import { Livery } from "../../ui/Livery";
 import { Pill } from "../../ui/Pill";
+import { useNarrow } from "../../ui/useMedia";
 import { describeModifier, describeSource, formatFraction } from "../model/describe";
 import type { Durability } from "../model/workshop";
 import { Bar } from "./Bar";
@@ -36,8 +37,32 @@ export type FrameCardProps = {
   /** Right of the name: "Equipado", a selection mark. */
   tag?: ReactNode;
   headingId?: string | undefined;
+  /**
+   * On a phone, fold the passive, quirks, rule and crew under "Ver detalle" (a <details> with this
+   * id), leaving the name and the four bars: a list of thirteen frames stays short.
+   */
+  foldId?: string | undefined;
   className?: string | undefined;
 };
+
+/** Its children, or with an id, the same children folded under "Ver detalle". */
+export function Fold({
+  id,
+  label = ui("ui.frame.more"),
+  children,
+}: {
+  id: string | undefined;
+  label?: string;
+  children: ReactNode;
+}) {
+  if (id === undefined) return children;
+  return (
+    <details className={s.fold} id={id}>
+      <summary className={s.foldSummary}>{label}</summary>
+      {children}
+    </details>
+  );
+}
 
 function durabilityColor(d: Durability): string {
   const share = d.max > 0 ? d.current / d.max : 0;
@@ -53,8 +78,10 @@ export function FrameCard({
   variant = "full",
   tag,
   headingId,
+  foldId,
   className,
 }: FrameCardProps) {
+  const narrow = useNarrow();
   const content = getContent();
   const frame = content.getFrame(frameId);
   const maker = content.getManufacturer(frame.manufacturer);
@@ -120,69 +147,71 @@ export function FrameCard({
         )}
       </div>
 
-      <dl className={s.traits}>
-        {passive && (
-          <div className={s.trait}>
-            <dt>{ui("ui.frame.passive")}</dt>
-            <dd>
-              <strong className={s.traitName}>{gameText(passive.textKey)}</strong>
-              <ul className={s.lines}>
-                {passive.modifiers.map((m, i) => (
-                  // modifiers have no id; their order is the content's
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed content order
-                  <li key={i}>{describeModifier(m)}</li>
-                ))}
-              </ul>
-            </dd>
-          </div>
-        )}
-        {frame.quirkSlots > 0 && (
-          <div className={s.trait}>
-            <dt>{ui("ui.frame.quirks")}</dt>
-            <dd>
-              {quirks === undefined ? (
-                <span>{ui("ui.frame.quirks.random", { n: frame.quirkSlots })}</span>
-              ) : (
-                <ul className={s.quirks}>
-                  {quirks.map((q) => {
-                    const quirk = content.getQuirk(q);
-                    return (
-                      <li key={q}>
-                        <strong className={s.traitName}>{gameText(quirk.textKey)}</strong>
-                        <span className={s.lineInline}>{describeSource(quirk).join(" · ")}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </dd>
-          </div>
-        )}
-        {parts.length > 0 && (
-          <div className={s.trait}>
-            <dt>{ui("ui.frame.parts")}</dt>
-            <dd>{parts.map((p) => gameText(content.getPart(p).textKey)).join(", ")}</dd>
-          </div>
-        )}
-        {variant === "full" && (
-          <>
+      <Fold id={narrow ? foldId : undefined}>
+        <dl className={s.traits}>
+          {passive && (
             <div className={s.trait}>
-              <dt>{ui("ui.frame.rule")}</dt>
-              <dd>{gameText(`rule.${maker.rule}`)}</dd>
-            </div>
-            <div className={s.trait}>
-              <dt>{ui("ui.frame.crew")}</dt>
+              <dt>{ui("ui.frame.passive")}</dt>
               <dd>
-                {ui("ui.frame.crew.text", {
-                  crew: gameText(maker.crew.textKey),
-                  stats: maker.crew.stats.map((st) => ui(`ui.stat.abbr.${st}`)).join(" · "),
-                  bonus: formatFraction(maker.crew.trainingBonus),
-                })}
+                <strong className={s.traitName}>{gameText(passive.textKey)}</strong>
+                <ul className={s.lines}>
+                  {passive.modifiers.map((m, i) => (
+                    // modifiers have no id; their order is the content's
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed content order
+                    <li key={i}>{describeModifier(m)}</li>
+                  ))}
+                </ul>
               </dd>
             </div>
-          </>
-        )}
-      </dl>
+          )}
+          {frame.quirkSlots > 0 && (
+            <div className={s.trait}>
+              <dt>{ui("ui.frame.quirks")}</dt>
+              <dd>
+                {quirks === undefined ? (
+                  <span>{ui("ui.frame.quirks.random", { n: frame.quirkSlots })}</span>
+                ) : (
+                  <ul className={s.quirks}>
+                    {quirks.map((q) => {
+                      const quirk = content.getQuirk(q);
+                      return (
+                        <li key={q}>
+                          <strong className={s.traitName}>{gameText(quirk.textKey)}</strong>
+                          <span className={s.lineInline}>{describeSource(quirk).join(" · ")}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </dd>
+            </div>
+          )}
+          {parts.length > 0 && (
+            <div className={s.trait}>
+              <dt>{ui("ui.frame.parts")}</dt>
+              <dd>{parts.map((p) => gameText(content.getPart(p).textKey)).join(", ")}</dd>
+            </div>
+          )}
+          {variant === "full" && (
+            <>
+              <div className={s.trait}>
+                <dt>{ui("ui.frame.rule")}</dt>
+                <dd>{gameText(`rule.${maker.rule}`)}</dd>
+              </div>
+              <div className={s.trait}>
+                <dt>{ui("ui.frame.crew")}</dt>
+                <dd>
+                  {ui("ui.frame.crew.text", {
+                    crew: gameText(maker.crew.textKey),
+                    stats: maker.crew.stats.map((st) => ui(`ui.stat.abbr.${st}`)).join(" · "),
+                    bonus: formatFraction(maker.crew.trainingBonus),
+                  })}
+                </dd>
+              </div>
+            </>
+          )}
+        </dl>
+      </Fold>
     </article>
   );
 }

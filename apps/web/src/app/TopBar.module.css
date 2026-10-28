@@ -1,4 +1,5 @@
 .bar {
+  --topbar-nav-h: 2.5rem;
   position: sticky;
   top: env(safe-area-inset-top, 0px);
   z-index: 5;
@@ -54,6 +55,9 @@
   gap: var(--space-1);
   min-width: 0;
   overflow-x: auto;
+  /* room for the focus ring inside the scroll box, which clips what overflows it */
+  padding: 3px;
+  margin: -3px;
 }
 
 .link {
@@ -130,15 +134,56 @@
   }
 }
 
-@media (max-width: 30rem) {
+/*
+ * Phones: one sticky row (brand, the run, Partida). The sections and the theme sit in a row above
+ * it that scrolls away: the bar sticks with that row's height above the top edge.
+ */
+@media (max-width: 37.5rem) {
+  .bar {
+    top: calc(env(safe-area-inset-top, 0px) - var(--topbar-nav-h));
+  }
+
   .inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: var(--topbar-nav-h) auto;
     grid-template-areas:
-      "brand tools"
-      "nav nav"
-      "status status";
+      "nav nav theme"
+      "brand status run";
+    gap: 0 var(--space-2);
+    min-height: 0;
+    padding-block: 0 var(--space-2);
+  }
+
+  .tools {
+    display: contents;
+  }
+
+  .runTool {
+    grid-area: run;
+  }
+
+  .themeTool {
+    grid-area: theme;
+  }
+
+  .tag {
+    display: none;
+  }
+
+  .name {
+    font-size: var(--fs-lg);
   }
 
   .status {
-    justify-content: flex-start;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: var(--space-1);
+  }
+
+  .runner {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

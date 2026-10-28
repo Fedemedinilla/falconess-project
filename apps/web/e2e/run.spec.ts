@@ -1,4 +1,4 @@
-import { expect, stubFonts, t, test, watchErrors } from "./fixtures";
+import { expect, stubFonts, t, test, textPattern, watchErrors } from "./fixtures";
 import { decide, playUntil, RUN_KEY, readTurn, startSeason, statsOf } from "./play";
 
 /**
@@ -136,4 +136,25 @@ test("a double click on an action spends one week, not two", async ({ page }) =>
   const after = await readTurn(page);
   expect(after.inputs).toBe(before.inputs + 1);
   expect(after.week === 2 || after.eventOpen).toBe(true);
+});
+
+test("starting another season says it replaces the saved one and offers to copy it first", async ({
+  page,
+}) => {
+  await startSeason(page, "caracara", "pt-e2e-reemplazo");
+  await decide(page, "#accion-rest", (await readTurn(page)).inputs);
+  const saved = await page.evaluate((key) => localStorage.getItem(key), RUN_KEY);
+  await page.goto("#inicio");
+  await page.click("#inicio-nueva");
+  const notice = page.getByText(textPattern("ui.saved.replace.start"));
+  await expect(notice).toBeVisible();
+  await page.click("#nueva-copiar-guardada");
+  await expect(page.getByText(t("ui.saved.copied"))).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(JSON.parse(copied)).toEqual(JSON.parse(saved ?? "null"));
+  // the load dialog no longer warns about a run this page already copied
+  await page.goto("#inicio");
+  await page.click("#inicio-cargar");
+  await expect(page.locator("#cargar-dialogo")).toBeVisible();
+  await expect(page.getByText(textPattern("ui.saved.replace.load"))).toHaveCount(0);
 });

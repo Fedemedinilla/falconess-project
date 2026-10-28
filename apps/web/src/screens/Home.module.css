@@ -172,6 +172,14 @@
   flex-direction: column;
 }
 
+.rosterNote {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--warn);
+}
+
 .runner {
   display: grid;
   gap: var(--space-3);

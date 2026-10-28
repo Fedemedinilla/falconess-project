@@ -8,6 +8,7 @@ import { cx } from "../ui/cx";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
+import { scrollBehavior } from "../ui/useMedia";
 import { workshopFatigue } from "./model/actions";
 import { describeActiveSkill, describeSource } from "./model/describe";
 import {
@@ -48,9 +49,11 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   const inputs = run?.inputs.length;
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  // the panel replaces the button that opened it: focus moves into it
+  // the panel replaces the button that opened it: the page goes to its top and focus moves in
   useEffect(() => {
-    bodyRef.current?.focus();
+    const body = bodyRef.current;
+    body?.closest("section")?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    body?.focus({ preventScroll: true });
   }, []);
 
   // a new week (or an undo) starts a new plan
@@ -377,6 +380,14 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
               const room = report.learnedAfter < report.cap;
               const disabled = !checked && (!affordable || !room || full);
               const id = `taller-habilidad-${skill.id}`;
+              // why it cannot be added, said instead of graying the text out
+              const reason = !disabled
+                ? undefined
+                : !affordable
+                  ? ui("ui.workshop.skills.short", { n: skill.cost - report.skillPointsLeft })
+                  : !room
+                    ? ui("ui.workshop.skills.noRoom")
+                    : ui("ui.workshop.skills.orderFull");
               return (
                 <li key={skill.id}>
                   <label
@@ -400,6 +411,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
                     <span className={s.skillName}>{gameText(skill.textKey)}</span>
                     <span className={s.skillCost}>
                       {ui("ui.workshop.skills.cost", { cost: skill.cost })}
+                      {reason && <span className={s.skillReason}>{reason}</span>}
                     </span>
                     <span className={s.skillDesc}>{describeActiveSkill(skill)}</span>
                   </label>

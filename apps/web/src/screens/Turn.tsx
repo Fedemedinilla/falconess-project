@@ -2,11 +2,12 @@ import type { RunInput } from "@falconess/schema";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
 import { formatSeconds } from "../text/format";
-import { gameText, ui } from "../text/ui";
+import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Livery } from "../ui/Livery";
 import { Pill } from "../ui/Pill";
 import { SeasonStrip } from "../ui/SeasonStrip";
+import { scrollBehavior } from "../ui/useMedia";
 import { type ActionKind, actionPreview } from "./model/actions";
 import { freshRace, goalStatuses, nextGoal, recentWeeks } from "./model/season";
 import { useViewRace } from "./shared/useViewRace";
@@ -27,8 +28,17 @@ export function Turn() {
   const { game, snap } = useGame();
   const [previewKind, setPreviewKind] = useState<ActionKind | undefined>();
   const [workshopOpen, setWorkshopOpen] = useState(false);
-  const [undone, setUndone] = useState(false);
   const backToActions = useRef(false);
+  // after a week with a goal race, the page goes to its result (it sits above the actions)
+  const [toResult, setToResult] = useState(false);
+  const resultRef = useRef<HTMLElement>(null);
+  const resultHeadRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!toResult) return;
+    setToResult(false);
+    resultRef.current?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    resultHeadRef.current?.focus({ preventScroll: true });
+  }, [toResult]);
 
   // leaving the workshop puts the focus back on the button that opened it
   useEffect(() => {
@@ -57,12 +67,10 @@ export function Turn() {
   // the run this render shows: a click meant for it is ignored once the run has moved on
   const inputsShown = run.inputs.length;
   const act = (input: RunInput) => {
-    setUndone(false);
-    if (game.act(input, inputsShown)) setPreviewKind(undefined);
-  };
-  const undo = () => {
-    setWorkshopOpen(false);
-    setUndone(game.undoLast());
+    if (!game.act(input, inputsShown)) return;
+    setPreviewKind(undefined);
+    const after = game.getSnapshot().run?.state;
+    if (after && freshRace(ctx, after)?.result) setToResult(true);
   };
 
   return (
@@ -91,20 +99,6 @@ export function Turn() {
             )}
           </p>
         </div>
-        <div className={s.tools}>
-          <Button
-            id="turno-deshacer"
-            size="sm"
-            onClick={undo}
-            disabled={run.inputs.length <= 1}
-            title={ui("ui.turn.undo.title")}
-          >
-            {ui("ui.turn.undo")}
-          </Button>
-          <p className={s.undone} aria-live="polite">
-            {undone ? ui("ui.run.undone") : ""}
-          </p>
-        </div>
         <div className={s.strip}>
           <SeasonStrip
             turns={turns}
@@ -122,13 +116,28 @@ export function Turn() {
             })}
           />
         </div>
+        {next && (
+          <p className={s.next}>
+            {ui("ui.turn.next", {
+              course: gameText(ctx.content.getCourse(next.goal.courseId).textKey),
+              turn: next.goal.turn,
+              when:
+                next.weeksLeft === 0
+                  ? ui("ui.turn.next.thisWeek")
+                  : ui("ui.turn.next.inWeeks", {
+                      weeks: uiCount("ui.count.weeks", next.weeksLeft),
+                    }),
+              place: next.goal.minPlace,
+            })}
+          </p>
+        )}
       </header>
 
       {fresh?.result && (
-        <section className={s.result} aria-labelledby="turno-resultado">
+        <section className={s.result} aria-labelledby="turno-resultado" ref={resultRef}>
           <div className={s.resultHead}>
             <p className={s.resultEyebrow}>{ui("ui.result.eyebrow", { turn: fresh.goal.turn })}</p>
-            <h2 className={s.resultCourse} id="turno-resultado">
+            <h2 className={s.resultCourse} id="turno-resultado" ref={resultHeadRef} tabIndex={-1}>
               {gameText(ctx.content.getCourse(fresh.goal.courseId).textKey)}
             </h2>
           </div>
@@ -183,6 +192,7 @@ export function Turn() {
               ctx={ctx}
               state={state}
               next={next}
+              lastWeek={recentWeeks(state, 1)[0]}
               onAct={act}
               onOpenWorkshop={() => {
                 setPreviewKind(undefined);

@@ -84,7 +84,7 @@ export function TopBar({ route, onOpenRun }: TopBarProps) {
         <RunStatus />
         <div className={s.tools}>
           {snap.run && (
-            <Button id="partida-abrir" size="sm" onClick={onOpenRun}>
+            <Button id="partida-abrir" size="sm" onClick={onOpenRun} className={s.runTool}>
               {ui("ui.top.run")}
             </Button>
           )}
@@ -92,6 +92,7 @@ export function TopBar({ route, onOpenRun }: TopBarProps) {
             id="tema-cambiar"
             size="sm"
             variant="ghost"
+            className={s.themeTool}
             onClick={() => setTheme(next)}
             aria-label={nextLabel}
             title={nextLabel}

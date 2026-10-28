@@ -31,6 +31,14 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
 - No game rule or physics in this package. States come from `startSeason`, `advanceSeason`,
   `replaySeason`; previews from sim functions (`trainingGain`, `rerollCost`, `learnCap`,
   `goalForTurn`); races only from a `RaceLog` (interpolating positions between frames is fine).
+  One known, test-guarded exception: the Turn screen's training previews
+  (`src/screens/model/actions.ts`) mirror the split of the gains, the statMax cap, the fail and
+  injury chances and the forced-rest block of `applyTraining`; `actions.test.ts` checks them
+  against `advanceSeason` until the sim exports those rules as pure functions (a sim change that
+  waits for the owner's approval).
+- One gesture, one decision: action cards and event options ignore the repeated clicks of a
+  double click, and `GameController.act(input, expectInputs)` drops an input meant for a run that
+  has moved on. Undo lives only in the «Partida» dialog (for a misclick; the save keeps no trace).
 - A run is `seed + RunInput[]`, saved as `{ schemaVersion, rulesetVersion, seed, inputs }`.
 - Every visible text is an es.json key (`src/text/keys.test.ts` checks the static ones).
 - Every color is a token of `src/styles/tokens.css`; manufacturer liveries come from content.
@@ -46,6 +54,11 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
   runners in place order, 10 % splits, timeline cells, grouped events and the structured "why"
   (phases, gains, sinks, judgement, plan, modes, terms, terrain, energy, body, skills).
   `words.ts` words them with `ui.race.*` keys; the CLI words the same models, so both agree.
+  "Por qué" leads with a few plain lines for testers (`whySummary`: the gap and the phases where
+  it went, the mishaps in player terms, energy left over), keeps phases, losses, gains and skills
+  in view and folds the engine's numbers into a closed "Detalle técnico". hp is "Físico" on screen.
+- A goal race does not give itself away: the place the season recorded shows once the replay
+  reaches the finish, and the call of the winner sits above the controls until the replay starts.
 - `playback.ts` interpolates the sampled frames for the animation; `clock.ts` moves race time by
   `requestAnimationFrame` (×1/×2/×4/×8). The lane chart (`LaneChart.tsx`) draws itself from the
   clock's frames without React renders; React hears a coarse snapshot for the controls and the

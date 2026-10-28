@@ -8,10 +8,11 @@
 
 .head {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
-    "week who tools"
-    "strip strip strip";
+    "week who"
+    "strip strip"
+    "next next";
   align-items: end;
   gap: var(--space-3) var(--space-5);
   padding-bottom: var(--space-4);
@@ -92,43 +93,26 @@
   color: var(--ink-3);
 }
 
-.tools {
-  grid-area: tools;
-  display: grid;
-  justify-items: end;
-  gap: var(--space-1);
-}
-
-.undone {
-  min-height: 1.2em;
-  font-size: var(--fs-xs);
-  color: var(--good);
-}
-
 .strip {
   grid-area: strip;
   min-width: 0;
 }
 
-@media (max-width: 40rem) {
-  .head {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "week who"
-      "strip strip"
-      "tools tools";
-  }
-
-  .tools {
-    justify-items: start;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-  }
+/* the next goal race in one line, right under the strip that marks it */
+.next {
+  grid-area: next;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
 }
 
 /* --- goal race result --------------------------------------------------------------------------- */
 
 .result {
+  scroll-margin-top: var(--sticky-top);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
@@ -152,6 +136,15 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
+}
+
+.resultCourse:focus {
+  outline: none;
+}
+
+.resultCourse:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .resultCourse {
@@ -226,6 +219,11 @@
   align-content: start;
   gap: var(--space-4);
   min-width: 0;
+}
+
+/* the actions panel, or the workshop in its place, clears the sticky bar when scrolled to */
+.actions {
+  scroll-margin-top: var(--sticky-top);
 }
 
 .pair {
