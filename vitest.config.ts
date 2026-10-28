@@ -5,7 +5,17 @@ export default defineConfig({
     projects: [
       { test: { name: "rng", root: "packages/rng" } },
       { test: { name: "schema", root: "packages/schema" } },
-      { test: { name: "sim", root: "packages/sim", benchmark: { include: [] } } },
+      {
+        // native ES modules (tsx loader): the race loop reads many imported constants, and the
+        // module runner's export getters make it about 15 times slower
+        test: {
+          name: "sim",
+          root: "packages/sim",
+          benchmark: { include: [] },
+          experimental: { viteModuleRunner: false },
+          execArgv: ["--import", "tsx"],
+        },
+      },
       { test: { name: "content", root: "packages/content" } },
       { test: { name: "cli", root: "apps/cli" } },
       {
