@@ -115,7 +115,7 @@ function runSeason(ctx: ExecContext, job: Extract<Job, { scenario: "S7" }>): Sea
     hangar: [...REFERENCE_HANGAR],
     parents: [],
   });
-  while (s.status === "active") s = advanceSeason(sim, s, lowestStatPolicy(s));
+  while (s.status === "active") s = advanceSeason(sim, s, lowestStatPolicy(sim, s));
   ctx.timing.seasonMs += ctx.now() - t0;
   ctx.timing.seasons += 1;
   if (s.grade === undefined) throw new Error(`season ${job.seed} ended without a grade`);

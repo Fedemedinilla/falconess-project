@@ -67,6 +67,11 @@ S1 absorbs the remainder so the budgeted races add up to exactly `--runs` (S7 ru
 goal fails). The allocation is computed over every line, so `--scenarios` never changes a cell's
 seeds or counts. S6 and S5's `pr` verdict pull S1 in.
 
+Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:season-batch`): option
+0 on an event; a workshop `repair` when the equipped frame's durability is below 50 % of the
+build's maximum (`REPAIR_BELOW_PM`; durability persists between goal races, ADR-0003 D35, risk
+R8); rest at fatigue 60 or more; otherwise train the lowest stat.
+
 Verdicts (§25.2.1): pass when the 95 % interval lies inside the target, fail when entirely outside,
 inconclusive otherwise; a metric passes only if every cell passes and fails if any fails, and the
 same rule combines metrics into the report verdict.

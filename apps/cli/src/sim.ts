@@ -33,7 +33,7 @@ export function runSeason(
   const inputs: RunInput[] = [start];
   lines.push(`seed ${seed}  ruleset ${ctx.ruleset.version}`, frameLine(ctx, state), "");
   while (state.status === "active") {
-    const input = lowestStatPolicy(state);
+    const input = lowestStatPolicy(ctx, state);
     inputs.push(input);
     const prev = state;
     state = advanceSeason(ctx, state, input);

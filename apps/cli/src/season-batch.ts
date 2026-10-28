@@ -33,7 +33,7 @@ for (const falconessId of ids) {
   for (let i = 0; i < runs; i++) {
     const start: RunInput = { kind: "start", falconessId, hangar, parents: [] };
     let s = startSeason(ctx, `batch-${i}`, start);
-    while (s.status === "active") s = advanceSeason(ctx, s, lowestStatPolicy(s));
+    while (s.status === "active") s = advanceSeason(ctx, s, lowestStatPolicy(ctx, s));
     grades[s.grade ?? "?"] = (grades[s.grade ?? "?"] ?? 0) + 1;
     for (const k of STAT_ORDER) sums[k] = (sums[k] ?? 0) + s.stats[k];
     if (s.endReason === "completed") completed++;
