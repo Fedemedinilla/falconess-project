@@ -68,7 +68,7 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
 
 `build:artifact` post-processes the single-file build (`scripts/artifact.ts`) and fails when the
 page breaks the contract: one HTML fragment starting with
-`<title>Falconess · Pruebas</title>` and the `claude:viewport-fit-sides` meta, then the Google
+`<title>Prueba jugable Falconess</title>` and the `claude:viewport-fit-sides` meta, then the Google
 Fonts stylesheet, the inlined `<style>`, the root div and the inlined module script; no doctype,
 html, head or body tags; no other external load; under 16 MB. Hash routes are plain names
 (`#inicio`, `#temporada`, `#carrera`, `#carrera-libre`, `#fin`); no alert, confirm, prompt or print;

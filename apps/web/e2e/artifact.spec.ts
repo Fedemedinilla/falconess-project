@@ -91,7 +91,7 @@ test("wrapped like the host does, only fonts reach the network: a season, two we
   const errors = watchErrors(page, { allowFontFailures: true });
   const blocked = await serve(context);
   await page.goto(`${ORIGIN}#inicio`);
-  expect(await page.title()).toBe("Falconess · Pruebas");
+  expect(await page.title()).toBe(ARTIFACT_TITLE.replace(/<\/?title>/g, ""));
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await smoke(page);
   await page.click("#partida-abrir");
