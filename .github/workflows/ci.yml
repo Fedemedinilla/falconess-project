@@ -1,11 +1,31 @@
+# Verify every push to main and every pull request (ROADMAP D2, D13; docs/race-engine.md 22, 24.4).
+#
+# - verify: lint, typecheck (sources and tests), the whole test suite (the golden logs of
+#   tests/golden/v1 and the determinism checks included: packages/sim/src/race/golden.test.ts) and
+#   the content validation.
+# - bench: `pnpm bench` in its own job, so timing noise never hides the verify results. The bench
+#   writes the ms per race to the job summary and fails only on its own gate: the desert-canyon
+#   p95 over 5 ms (packages/sim/bench/race.bench.ts).
+# - The balance batch lives in balance.yml (report only).
 name: ci
+
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -18,11 +38,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm content:validate
-  # docs/race-engine.md 22: the race benchmark fails the build if the canyon p95 exceeds 5 ms
-  # (asserted in packages/sim/bench/race.bench.ts). Its own job, so timing noise never hides the
-  # verify results.
+
   bench:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -31,4 +50,5 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # writes its table to $GITHUB_STEP_SUMMARY before checking the p95 gate
       - run: pnpm bench
