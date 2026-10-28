@@ -59,25 +59,15 @@ export function createPlanReport(): PlanReport {
   };
 }
 
-/** One runner's view of the course for the plan walks (fixed during one plan). */
-type View = {
-  readonly G: CourseGeometry;
-  readonly T: RaceTables;
-  readonly i: number;
-  readonly b: number;
-  readonly vBase: number;
-  readonly dkF: number;
-};
-
 /** `vF[s] = vC[b][PH_FINAL][s]` (vu): every plan walk prices the rest of the race at final cruise. */
-function vF(w: View, s: number): number {
-  return Math.max(1, w.T.vC[ibps(w.i, w.b, PH_FINAL, s)] ?? 1);
+function vF(T: RaceTables, i: number, b: number, s: number): number {
+  return Math.max(1, T.vC[ibps(i, b, PH_FINAL, s)] ?? 1);
 }
 
 /** `drainF(v) = fl(r × r × dK[final], 10^6)`, `r = fl(v × 1000, VBASE)` µhp per tick. */
-function drainF(w: View, v: number): number {
-  const r = floorDiv(v * 1000, w.vBase);
-  return floorDiv(r * r * w.dkF, 1_000_000);
+function drainF(v: number, vBase: number, dkF: number): number {
+  const r = floorDiv(v * 1000, vBase);
+  return floorDiv(r * r * dkF, 1_000_000);
 }
 
 /** `thrustDist(x0, x1)`: route distance (pu) of the thrust-capable overlaps of `[x0, x1)`. */
@@ -99,28 +89,42 @@ export function thrustDist(
 }
 
 /** `thrustTicks(x0, x1)`: Σ `ceilDiv(route(overlap), vF)` over the thrust-capable overlaps. */
-function thrustTicks(w: View, x0: number, x1: number): number {
-  const { G, T, i } = w;
+function thrustTicks(
+  G: CourseGeometry,
+  T: RaceTables,
+  i: number,
+  b: number,
+  x0: number,
+  x1: number,
+): number {
   let tk = 0;
   for (let s = 0; s < G.S; s++) {
     if (!thrustable(G, T, i, s)) continue;
     const a = Math.max(x0, G.segStart[s] ?? 0);
     const z = Math.min(x1, G.segEnd[s] ?? 0);
-    if (z > a) tk += ceilDiv(routeDist(G, T, i, s, z - a), vF(w, s));
+    if (z > a) tk += ceilDiv(routeDist(G, T, i, s, z - a), vF(T, i, b, s));
   }
   return tk;
 }
 
 /** `cruiseHp(x0, x1)`: hp the overlaps of every segment cost at final cruise (jump ticks drain too). */
-function cruiseHp(w: View, x0: number, x1: number): number {
-  const { G, T, i } = w;
+function cruiseHp(
+  G: CourseGeometry,
+  T: RaceTables,
+  i: number,
+  b: number,
+  vBase: number,
+  dkF: number,
+  x0: number,
+  x1: number,
+): number {
   let h = 0;
   for (let s = 0; s < G.S; s++) {
     const a = Math.max(x0, G.segStart[s] ?? 0);
     const z = Math.min(x1, G.segEnd[s] ?? 0);
     if (z <= a) continue;
-    const v = vF(w, s);
-    h += ceilDiv(routeDist(G, T, i, s, z - a), v) * drainF(w, v);
+    const v = vF(T, i, b, s);
+    h += ceilDiv(routeDist(G, T, i, s, z - a), v) * drainF(v, vBase, dkF);
   }
   return h;
 }
@@ -129,15 +133,23 @@ function cruiseHp(w: View, x0: number, x1: number): number {
  * `exhaustPos(x0, budget)`: walking every segment from x0 at final cruise, the position where the
  * hp budget runs out (`L` if never). A ground runner on a jump advances `fl(k × v × 1000, detour)`.
  */
-function exhaustPos(w: View, x0: number, budget: number): number {
-  const { G, T, i } = w;
+function exhaustPos(
+  G: CourseGeometry,
+  T: RaceTables,
+  i: number,
+  b: number,
+  vBase: number,
+  dkF: number,
+  x0: number,
+  budget: number,
+): number {
   let acc = 0;
   for (let s = 0; s < G.S; s++) {
     const a = Math.max(x0, G.segStart[s] ?? 0);
     const z = Math.min(G.L, G.segEnd[s] ?? 0);
     if (z <= a) continue;
-    const v = vF(w, s);
-    const d = drainF(w, v);
+    const v = vF(T, i, b, s);
+    const d = drainF(v, vBase, dkF);
     const h = ceilDiv(routeDist(G, T, i, s, z - a), v) * d;
     if (acc + h > budget) {
       const k = floorDiv(budget - acc, Math.max(1, d));
@@ -235,23 +247,18 @@ export function planSprint(
     return;
   }
 
-  const w: View = {
-    G,
-    T,
-    i,
-    b,
-    vBase: R.vBase * R.ticksPerSecond,
-    dkF: T.dK[i * 4 + DK_FINAL] ?? 0,
-  };
+  const vBase = R.vBase * R.ticksPerSecond;
+  const dkF = T.dK[i * 4 + DK_FINAL] ?? 0;
 
   // 1. window end: cut where the projected hp runs out (thrust is disabled at hp 0)
-  const cbar0 = Math.max(1, floorDiv(Dw0, Math.max(1, thrustTicks(w, pos, kickAt))));
-  const extraHp = floorDiv(Ep, costOn) * Math.max(0, drainF(w, cbar0 + Bon) - drainF(w, cbar0));
-  const hpCruise = cruiseHp(w, pos, G.L);
+  const cbar0 = Math.max(1, floorDiv(Dw0, Math.max(1, thrustTicks(G, T, i, b, pos, kickAt))));
+  const extraHp =
+    floorDiv(Ep, costOn) * Math.max(0, drainF(cbar0 + Bon, vBase, dkF) - drainF(cbar0, vBase, dkF));
+  const hpCruise = cruiseHp(G, T, i, b, vBase, dkF, pos, G.L);
   let wEnd = kickAt;
   let hpLimited = false;
   if (hpCruise + extraHp > hpP) {
-    const xE = exhaustPos(w, pos, Math.max(0, hpP - extraHp));
+    const xE = exhaustPos(G, T, i, b, vBase, dkF, pos, Math.max(0, hpP - extraHp));
     if (xE < wEnd) {
       wEnd = xE;
       hpLimited = true;
@@ -262,11 +269,11 @@ export function planSprint(
     none(S, i, pos, out, "hp-limited");
     return;
   }
-  const cbar = Math.max(1, floorDiv(Dw, Math.max(1, thrustTicks(w, pos, wEnd))));
+  const cbar = Math.max(1, floorDiv(Dw, Math.max(1, thrustTicks(G, T, i, b, pos, wEnd))));
 
   // 2. top-down candidates, 0.1 m/s apart
-  const drainC = drainF(w, cbar);
-  const drainOn = drainF(w, cbar + Bon);
+  const drainC = drainF(cbar, vBase, dkF);
+  const drainOn = drainF(cbar + Bon, vBase, dkF);
   const vMinF = T.vMin[ibps(i, b, PH_FINAL, G.S - 1)] ?? 0;
   const unit = T.unit[ib(i, b)] ?? 1;
   const regen = T.regenTick[i] ?? 0;

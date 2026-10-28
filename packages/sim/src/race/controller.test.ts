@@ -729,3 +729,44 @@ describe("PREHEAT through simulateRace (docs/race-engine.md 9.4, 16 #12)", () =>
     expect(ticks.length).toBe(31);
   });
 });
+
+describe("heat governor (docs/race-engine.md 8.2, 8.4, 24.1 heat row)", () => {
+  /** A boost-wanting loop: KICK every tick with the resource step of 8.1 applied by hand. */
+  function governed(entry: RaceEntry, ticks: number) {
+    const x = setup([entry], FLAT);
+    x.put(x.T.kickAt[0] ?? 0);
+    const cool = x.T.coolTick[0] ?? 0;
+    const heats: number[] = [];
+    let on = 0;
+    for (let t = 0; t < ticks; t++) {
+      x.S.energy[0] = 100_000;
+      const boost = x.step(0, (x.S.heat[0] ?? 0) > (x.T.heatCap[0] ?? 0), t);
+      if (boost) on++;
+      x.S.heat[0] = boost ? (x.S.heat[0] ?? 0) + 2000 : Math.max(0, (x.S.heat[0] ?? 0) - cool);
+      heats.push(x.S.heat[0] ?? 0);
+    }
+    return { heats, on, capLim: x.T.capLim[0] ?? 0 };
+  }
+
+  it("from cold: 34 boosts to 68 000, then the cap holds; duty 1/3 over 10 000 ticks; never above capLim", () => {
+    const { heats, on, capLim } = governed(fixture("dive"), 10_000);
+    expect(capLim).toBe(69_000);
+    expect(heats.slice(0, 34).every((h, k) => h === 2000 * (k + 1))).toBe(true);
+    expect(heats.slice(34, 40)).toEqual([67_000, 69_000, 68_000, 67_000, 69_000, 68_000]);
+    expect(Math.max(...heats)).toBe(capLim);
+    // 34 boosts from cold, one cooling tick, then one boost in every three ticks
+    expect(on).toBe(34 + Math.ceil((10_000 - 35) / 3));
+  });
+
+  it("telemetry is governed at raw dissipation (60 000); Steinhaus's desert cooling makes the duty 1/5", () => {
+    const tel = governed(fixture("dive", { rule: "telemetry" }), 10_000);
+    expect(Math.max(...tel.heats)).toBe(60_000);
+    // Steinhaus in KICK holds a licence: with durability to spare it boosts past the cap until
+    // its projected tail reaches the floor, then it is governed like everyone (cool 500: duty 1/5)
+    const mt = governed(fixture("dive", { rule: "mass-thrust", durabilityStart: 26 }), 3000);
+    const tail = mt.heats.slice(1000);
+    expect(Math.max(...tail)).toBeLessThanOrEqual(69_000);
+    const onTail = tail.filter((h, k) => k > 0 && h > (tail[k - 1] ?? 0)).length;
+    expect(Math.abs(onTail - Math.floor(tail.length / 5))).toBeLessThanOrEqual(2);
+  });
+});
