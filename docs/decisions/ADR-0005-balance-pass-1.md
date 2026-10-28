@@ -1243,6 +1243,34 @@ Veredictos sin cambio (`pr` por defecto y alt1: 1 pass, 2 inconclusa 7/0/3, 3 in
 `.work/balance/p2-broken/post-full-*.json`) y 1 de `sim:season-batch`. Documentos:
 `docs/formulas.md` («Términos de regla»).
 
+**m2: las invariantes del motor también corren sobre `RULESET_V1`.** Desde `26b649d` las
+propiedades de §24.2 (P1-P9) corrían solo sobre `SPEC_RULESET`: un cambio de balance que rompiera
+una invariante del motor en v1 pasaba todos los tests. La suite pasa a
+`packages/sim/tests/support/race-properties.ts`, parametrizada por ruleset y sin números fijados
+(P1 determinismo; P2 simetría exacta y estadística; P3 y P9 monotonía en los tres niveles; P4
+cotas; P5 y P5b consistencia del log; P6 y P6b sorteos; P7 opciones; la cobertura del
+controlador). `properties.test.ts` la corre sobre `SPEC_RULESET`, con los dos contraejemplos de D52
+fijados, y `properties-live.test.ts` sobre `RULESET_V1`, más la tabla de desbordes de §1.5 con las
+constantes vivas (las entradas en los máximos del validador; los términos de estilo y de regla con
+sus valores de v1). Sobre v1 pasan todas (500 casos cada propiedad).
+
+| Máximo de §1.5                   | `SPEC_RULESET`                                  | v1 (constantes vivas)                     |
+| -------------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| velocidad movida más rápida (vu) | 1 949 680                                       | 1 830 186                                 |
+| crucero en los máximos (vu)      | 1 214 100 (`pwc` 1600)                          | 761 088 (`pwc` 1003)                      |
+| ráfaga encadenada con picada     | 375 580 (aire 1380)                             | 709 098 (aire 3625)                       |
+| producto mayor                   | 2,03e15, ganancia del plan continuo (4,4× bajo) | 1,8e15, `kHp × 1000 × 1,2e6 × fat` (5,0×) |
+
+`pulseAirPm` de descenso en 2500 (pasada 1) supera la premisa de §1.5 (multiplicadores de estilo y
+de regla ≤ 2000 ‰ cada uno) y el aire de un descenso del desierto llega a 3625 ‰. Todos los
+productos siguen seguros porque `pwBoostWeight` 250 baja el empuje base (`Bp` 69 862 frente a
+97 200) y la velocidad máxima queda bajo los 2e6 vu con que §1.5 evalúa sus filas. Verificado que
+muerde: con el descenso en 6000 falla la cota de velocidad. Documentos: `docs/race-engine.md` §24
+(párrafo del ruleset fijado) y `docs/balance-batch.md`. La suite sin golden pasa de ≈ 32 s a
+≈ 37-40 s. Cada propiedad lleva ahora un tiempo límite explícito de 120 s: con el de Vitest (5 s)
+la P2 estadística y la P7 de `properties.test.ts` vencieron dos veces con la máquina cargada, la
+primera antes de este cambio.
+
 **m3: los números de §25.4 y §26 son los de la especificación.** `docs/race-engine.md` presentaba
 las tablas de §25.4 y el bloque de §26 como «v1». Cada sección lleva ahora una nota corta (sin
 reformatear el archivo): son `SPEC_RULESET`, y los valores vivos de v1 están en

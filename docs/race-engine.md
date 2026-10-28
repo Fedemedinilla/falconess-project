@@ -2010,7 +2010,10 @@ validation stay on `RULESET_V1`. `SPEC_RULESET.season` is the live `SEASON` (`Ru
 typed as the literal v1 object, so a frozen copy would not typecheck after a season tune). The
 test rulesets of 24.2 are built from `SPEC_RULESET` the same way. The content those tests read
 (the three desert courses, real frames, parts and skills) is not frozen: a content change still
-moves them.
+moves them. The properties of 24.2 pin no number, so they also run on `RULESET_V1`
+(`properties-live.test.ts`; the suite is `packages/sim/tests/support/race-properties.ts`), with
+the 1.5 overflow table evaluated on the live constants (ADR-0005): a balance change that breaks
+an engine invariant or pushes a product past 2^53 fails there.
 
 ### 24.1 Unit tests (Vitest, exact integers)
 

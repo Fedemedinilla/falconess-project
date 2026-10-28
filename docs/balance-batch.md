@@ -41,7 +41,10 @@ the live ruleset: an aptitude multiplier also fails the S3 build test of
 `packages/sim/src/season/season.test.ts` (`trainBase`: the `trainingGain` test). Content is not frozen: a part, frame or course change
 also fails the tests that pin it (parts in `stats.test.ts`, `fixtures.test.ts`, `entry.test.ts`,
 `field.test.ts` and the S5 test of `scenarios.test.ts`; frame stats and course segments, the 25.4
-sanity tables and the prototype cross-checks), which the same commit updates. During the pass:
+sanity tables and the prototype cross-checks), which the same commit updates. The live ruleset
+also runs the engine's number-free invariants (`packages/sim/src/race/properties-live.test.ts`:
+the properties of 24.2 and the 1.5 overflow table on `RULESET_V1`); a constant that fails there
+breaks the engine, not a pinned number, and is not a value to re-pin. During the pass:
 `pnpm vitest run --exclude '**/golden.test.ts'`, `pnpm typecheck`, `pnpm lint`.
 
 ## Engine port
