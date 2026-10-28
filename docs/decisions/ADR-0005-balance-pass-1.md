@@ -707,7 +707,7 @@ Estado: **propuesto**, salvo las propuestas 1 y 4: **aceptado (dueño, 2026-10-2
 4. **Las carreras objetivo son casi automáticas para la referencia** (sección «Puesto en las
    carreras objetivo»). **Aceptado (dueño, 2026-10-28), opción (a)**: `FIELD` 75 / 9 (razón
    0,83-0,86 en cada carrera) y escalera 7 / 6 / 5 / 3 para las tres, sin metas de ganar; la
-   referencia gana el 43-58 % (sección «Pasada 2»). De la opción (b) solo se tomó el informe: el
+   referencia gana el 43-59 % (sección «Pasada 2»). De la opción (b) solo se tomó el informe: el
    lote muestra las victorias y los puestos (tabla `s7-places`) sin juzgarlos. La (c) queda
    descartada. El resto describe el estado previo: gana el 73-80 % y el 33-40 % de sus temporadas
    gana las cuatro. BRIEF §12 solo pone un piso a la métrica 7, y ni el brief ni la
@@ -1047,11 +1047,11 @@ política, 15 de `FIELD` (más 2 con la otra base) y 14 corridas de políticas d
 
 #### Consecuencias
 
-- La referencia gana ≈ la mitad de sus carreras objetivo (48-49 % en S7 `full`; 43-58 % según la
-  Falconess) y el 7-11 % de sus temporadas las gana todas. La métrica 7 pasa en `full` con la cota
+- La referencia gana ≈ la mitad de sus carreras objetivo (48-49 % en S7 `full`; 43-59 % según la
+  Falconess) y el 5-11 % de sus temporadas las gana todas. La métrica 7 pasa en `full` con la cota
   baja ≥ 66,7 % en las dos bases; en `pr` puede salir inconclusa.
 - Ninguna meta pide ganar; la última pide podio. Cernícala sigue siendo la más floja en ≥ B (71-74 %
-  en `full`) y Peregrina gana 11-14 puntos más que las otras dos con la misma escalera.
+  en `full`) y Peregrina gana 11-15 puntos más que las otras dos con la misma escalera.
 - El entrenamiento y la política no cambian, así que las stats de la temporada son las mismas: la
   nota baja por los bonos de carrera (−31 a −44 puntos de media en S7 `full`) y las temporadas en C
   (completas bajo 2900) pasan de 5,0-8,4 % a 4,8-12,4 %.
@@ -1072,7 +1072,7 @@ Estado: **propuesto**.
    `rivalTurnsPerSkill` 24), para que los rivales lleven lo que la jugadora puede pagar; (d) aceptar
    que las habilidades son una inversión que la referencia no hace. Cualquiera de (a)-(c) vuelve a
    medir la razón de `FIELD` con el arnés.
-2. **Peregrina gana más que las otras dos** (56-58 % de sus carreras objetivo contra 43-46 %; ≥ B
+2. **Peregrina gana más que las otras dos** (56-59 % de sus carreras objetivo contra 43-46 %; ≥ B
    83-85 % contra 71-77 %). Viene de los bastidores y del pool de su clase (etoile y shiden, R9), no
    de la temporada. Opciones: (a) contenido: una escalera más estricta para Peregrina, que iguala la
    nota pero no las victorias; (b) balance de bastidores (otra pasada de la métrica 2); (c) dejarlo

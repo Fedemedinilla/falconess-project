@@ -1814,7 +1814,7 @@ curve; it won 73-80 % of its goal races, 29-42 % on the stub curve). The owner t
 more demanding season (ADR-0005 «Pasada 2», decision 2): v1 is `75 + 9 t` (T12 183, T24 291, T36
 399, T46 489 per stat, 0.83-0.86 of the reference policy's stats at each goal race) with the goal
 ladder `minPlace` 7 / 6 / 5 / 3 for every Falconess (no goal asks for a win), and the reference
-policy wins 43-58 % of its goal races. The par table below was measured on the stub curve.
+policy wins 43-59 % of its goal races. The par table below was measured on the stub curve.
 
 Class-matching implements pillar 2's "clase de equipo igualado" for goal races: with literal PW an
 unrestricted pool makes Peregrina (1.4) win everything and Caracara (0.7) nothing (judges'

@@ -314,7 +314,7 @@ Intención: bastidores de la misma clase de PW que la jugadora (banda de PW) y s
 de la curva de la Falconess de referencia (política de la stat más baja, 220 / 339 / 470 / 591 por
 stat en las carreras de T12 / T24 / T36 / T46): razón 0,83-0,86, más cerca al principio de la
 temporada. No es un campo igualado en stats: la referencia gana ≈ la mitad de sus carreras objetivo
-(43-58 % según la Falconess; cuota justa 12,5 %) y las metas piden puesto, no victoria (escalera
+(43-59 % según la Falconess; cuota justa 12,5 %) y las metas piden puesto, no victoria (escalera
 7 / 6 / 5 / 3, decisión del dueño, ADR-0005 «Pasada 2»). Potencia
 `fl(5 × (rivalBase + rivalPerTurn × turno) × (1000 ± rivalNoise), 1000)` repartida por pesos de estilo
 (±`rivalStatJitter`); bastidores genéricos con `|PW − pw0| × 1000 ≤ rivalPwBandPm × pw0`, donde
