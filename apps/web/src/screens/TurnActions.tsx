@@ -5,6 +5,7 @@ import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
 import { formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
+import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Icon, WithIcon } from "../ui/Icon";
 import { actionIcon, type IconName, statIcon } from "../ui/icons";
@@ -33,8 +34,10 @@ export type TurnActionsProps = {
   state: SeasonState;
   /** The next goal race, to warn when it runs this week. */
   next: NextGoal | undefined;
-  /** The last week of the log: what the last decision did, said right above the actions. */
+  /** The last week of the log: what the last decision did, in one line above the actions. */
   lastWeek: WeekLog | undefined;
+  /** Open «Lo que pasó» for the last step again (its button on that line), when there is one. */
+  onReopen?: (() => void) | undefined;
   /** Apply an action input. */
   onAct: (input: RunInput) => void;
   onOpenWorkshop: () => void;
@@ -46,6 +49,11 @@ export type TurnActionsProps = {
 const SHORTCUT: Readonly<Record<ActionKind, number>> = Object.fromEntries(
   ACTION_KINDS.map((k, i) => [k, i + 1]),
 ) as Record<ActionKind, number>;
+
+/** The id of an action's button: `accion-train-agility`, `accion-rest`… */
+export function actionButtonId(kind: ActionKind): string {
+  return `accion-${kind.replace(":", "-")}`;
+}
 
 function Crews({ ctx, crews }: { ctx: SimContext; crews: readonly CrewBonus[] }) {
   if (crews.length === 0) return <p className={s.noCrew}>{ui("ui.action.noCrew")}</p>;
@@ -119,7 +127,7 @@ function ActionCard({
   extra,
 }: CardProps) {
   const descId = useId();
-  const id = `accion-${kind.replace(":", "-")}`;
+  const id = actionButtonId(kind);
   return (
     <li
       className={cx(s.card, block !== undefined && s.blocked, disabled && s.disabled)}
@@ -175,13 +183,24 @@ function outcome(notes: readonly string[]): { text: string; tone: Tone } | undef
   return undefined;
 }
 
-/** "Semana 4: Entrenar resistencia — salió bien · RES +66 · COR +33", from the season log. */
-function LastWeek({ ctx, week }: { ctx: SimContext; week: WeekLog }) {
+/**
+ * "Semana 4: Entrenar resistencia — salió bien · RES +66 · COR +33", from the season log: a
+ * one-line recap of what «Lo que pasó» said (its button opens that again).
+ */
+function LastWeek({
+  ctx,
+  week,
+  onReopen,
+}: {
+  ctx: SimContext;
+  week: WeekLog;
+  onReopen: (() => void) | undefined;
+}) {
   if (!week.input || week.input.kind === "start") return null;
   const result = outcome(week.notes);
   const deltas = STAT_ORDER.filter((st) => (week.deltas[st] ?? 0) !== 0);
   return (
-    <p className={s.feedback} role="status">
+    <div className={s.feedback} id="turno-semana-pasada">
       <span className={s.feedbackLabel}>{ui("ui.turn.feedback.label")}</span>
       <span className={s.feedbackText}>
         <strong>
@@ -210,7 +229,19 @@ function LastWeek({ ctx, week }: { ctx: SimContext; week: WeekLog }) {
           </span>
         )}
       </span>
-    </p>
+      {onReopen && (
+        <Button
+          id="turno-ver-semana"
+          size="sm"
+          variant="ghost"
+          className={s.feedbackAgain}
+          onClick={onReopen}
+          aria-label={ui("ui.week.reopen.aria", { turn: week.turn })}
+        >
+          {ui("ui.week.reopen")}
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -220,6 +251,7 @@ export function TurnActions({
   state,
   next,
   lastWeek,
+  onReopen,
   onAct,
   onOpenWorkshop,
   onPreview,
@@ -513,7 +545,7 @@ export function TurnActions({
           })}
         </p>
       )}
-      {lastWeek && <LastWeek ctx={ctx} week={lastWeek} />}
+      {lastWeek && <LastWeek ctx={ctx} week={lastWeek} onReopen={onReopen} />}
       <ul className={s.grid}>{cards}</ul>
       <p className={s.legend}>
         {uiAt(explain, "ui.turn.actions.legend", {

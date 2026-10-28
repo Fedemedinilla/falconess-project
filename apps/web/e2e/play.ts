@@ -29,6 +29,8 @@ export type TurnView = {
   /** The week in the timing bar, if a season is in play and not ended. */
   readonly week: number | undefined;
   readonly eventOpen: boolean;
+  /** «Lo que pasó» is open (after every input, until it is read; an event waits behind it). */
+  readonly weekOpen: boolean;
   /** Stats by their game name, and fatigue under "Fatiga" (the hidden meters of the Turn screen). */
   readonly meters: Readonly<Record<string, number>>;
   /** Inputs of the saved run (start included); -1 without a save. */
@@ -58,6 +60,7 @@ export async function readTurn(page: Page): Promise<TurnView> {
       hash: location.hash,
       week,
       eventOpen: document.querySelector("#evento-dialogo[open]") !== null,
+      weekOpen: document.querySelector("#semana-dialogo[open]") !== null,
       meters,
       inputs,
     };
@@ -103,9 +106,25 @@ export async function decide(page: Page, selector: string, inputsBefore: number)
   );
 }
 
+/**
+ * Read «Lo que pasó» and close it with Enter (the focus is on «Continuar» when it opens); the
+ * event of the week, if any, opens after it.
+ */
+export async function closeWeek(page: Page): Promise<void> {
+  const dialog = page.locator("#semana-dialogo[open]");
+  await expect(dialog).toBeVisible();
+  await expect(page.locator("#semana-continuar")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(dialog).toHaveCount(0);
+}
+
 /** One decision of the policy. Returns false when the season has ended (#fin). */
 export async function playStep(page: Page): Promise<boolean> {
-  const view = await readTurn(page);
+  let view = await readTurn(page);
+  if (view.weekOpen) {
+    await closeWeek(page);
+    view = await readTurn(page);
+  }
   if (view.hash === "#fin") return false;
   expect(view.hash).toBe("#temporada");
   await decide(page, policyChoice(view), view.inputs);
@@ -113,8 +132,9 @@ export async function playStep(page: Page): Promise<boolean> {
 }
 
 /**
- * Play until `done(view)` holds or the season ends. Returns the number of decisions taken; the
- * milliseconds of each one (read, click, wait for the save) go to `times` when given.
+ * Play until `done(view)` holds or the season ends, reading «Lo que pasó» after every decision
+ * (so `done` never sees it open). Returns the number of decisions taken; the milliseconds of each
+ * one (read, click, wait for the save) go to `times` when given.
  * The season has at most 48 weeks and a few events: 200 decisions is a runaway.
  */
 export async function playUntil(
@@ -124,7 +144,11 @@ export async function playUntil(
 ): Promise<number> {
   for (let steps = 0; steps < 200; steps++) {
     const start = Date.now();
-    const view = await readTurn(page);
+    let view = await readTurn(page);
+    if (view.weekOpen) {
+      await closeWeek(page);
+      view = await readTurn(page);
+    }
     if (view.hash === "#fin" || done(view)) return steps;
     await decide(page, policyChoice(view), view.inputs);
     times?.push(Date.now() - start);

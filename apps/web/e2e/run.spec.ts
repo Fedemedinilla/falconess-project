@@ -1,5 +1,5 @@
 import { expect, stubFonts, t, test, textPattern, watchErrors } from "./fixtures";
-import { decide, playUntil, RUN_KEY, readTurn, startSeason, statsOf } from "./play";
+import { closeWeek, decide, playUntil, RUN_KEY, readTurn, startSeason, statsOf } from "./play";
 
 /**
  * A run is seed + inputs: "Copiar partida" copies it, "Cargar partida" replays it elsewhere,
@@ -50,10 +50,13 @@ test("copy a run and load it in a fresh browser: same week, stats and fatigue", 
   await expect(fresh).toHaveURL(/#temporada$/);
   const loaded = await readTurn(fresh);
   expect(loaded.week).toBe(before.week);
-  expect(loaded.eventOpen).toBe(before.eventOpen);
   expect(statsOf(loaded)).toEqual(statsOf(before));
   expect(loaded.meters).toEqual(before.meters);
   expect(loaded.inputs).toBe(before.inputs);
+  // this browser never saw the run's last week: «Lo que pasó» tells it before anything else
+  expect(loaded.weekOpen).toBe(true);
+  await closeWeek(fresh);
+  expect((await readTurn(fresh)).eventOpen).toBe(before.eventOpen);
   // the loaded run plays on exactly like the original
   await decide(fresh, "#accion-rest", loaded.inputs);
   await decide(page, "#accion-rest", before.inputs);
@@ -73,9 +76,12 @@ test("Continuar replays the stored run after a reload, and undo takes one decisi
   await expect(page.locator("#inicio-continuar")).toBeVisible();
   await page.click("#inicio-continuar");
   await expect(page).toHaveURL(/#temporada$/);
+  await expect(page.locator("#turno-acciones")).toBeVisible();
   const after = await readTurn(page);
   expect(after.week).toBe(before.week);
   expect(after.meters).toEqual(before.meters);
+  // the last week was read before the reload: «Lo que pasó» does not open again
+  expect(after.weekOpen).toBe(false);
 
   await page.click("#partida-abrir");
   await page.click("#partida-deshacer");
@@ -104,6 +110,10 @@ test("the page works with storage blocked, and copying falls back to selecting t
   const week = page.getByTitle(t("ui.top.week.long", { turn: 2, turns: 48 }));
   await page.click("#accion-rest");
   await expect(week).toBeAttached();
+  // «Lo que pasó» works without storage too: it opens, and its button closes it
+  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
+  await page.click("#semana-continuar");
+  await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
 
   await page.click("#partida-abrir");
   const dialog = page.locator("#partida-dialogo");
@@ -135,7 +145,11 @@ test("a double click on an action spends one week, not two", async ({ page }) =>
   await page.waitForTimeout(300);
   const after = await readTurn(page);
   expect(after.inputs).toBe(before.inputs + 1);
-  expect(after.week === 2 || after.eventOpen).toBe(true);
+  // the second click does not close «Lo que pasó», which the first one opened
+  expect(after.weekOpen).toBe(true);
+  await closeWeek(page);
+  const read = await readTurn(page);
+  expect(read.week === 2 || read.eventOpen).toBe(true);
 });
 
 test("starting another season says it replaces the saved one and offers to copy it first", async ({

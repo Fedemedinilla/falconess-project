@@ -1,4 +1,4 @@
-import { expect, t, test } from "./fixtures";
+import { expect, t, test, textPattern } from "./fixtures";
 import { playerPlace } from "./play";
 
 /**
@@ -45,7 +45,7 @@ const RUN = {
 const LEAD = t("ui.advice.lead.cruise", { name: "Caracara" });
 const TRAIN = t("ui.advice.train").split("{stat}")[0]?.trim() ?? "";
 
-test("a goal race finished 7th: the result card and the replay's «Por qué» say what to train", async ({
+test("a goal race finished 7th: «Lo que pasó» and the replay's «Por qué» say what to train", async ({
   page,
 }) => {
   await page.goto("#inicio");
@@ -54,11 +54,13 @@ test("a goal race finished 7th: the result card and the replay's «Por qué» sa
   await page.click("#cargar-enviar");
   await expect(page).toHaveURL(/#temporada$/);
 
-  // the week's result card: 7th, goal met, and the tip
-  const result = page.locator('section[aria-labelledby="turno-resultado"]');
-  await expect(result).toContainText(t("ui.result.eyebrow", { turn: 12 }));
-  await expect(result).toContainText(t("ui.result.met"));
-  const note = result.locator("#turno-consejo");
+  // a loaded run whose last input ran the T12 race: «Lo que pasó» says 7th, goal met, and the tip
+  const result = page.getByRole("dialog", {
+    name: t("ui.week.title.race.met", { place: 7, field: 8 }),
+  });
+  await expect(result).toBeVisible();
+  await expect(result.getByText(textPattern("ui.week.race.context"))).toBeVisible();
+  const note = result.locator("#semana-consejo");
   await expect(note).toHaveAttribute("role", "note");
   await expect(note).toContainText(t("ui.advice.label"));
   const tip = note.locator("li").first();
@@ -70,13 +72,18 @@ test("a goal race finished 7th: the result card and the replay's «Por qué» sa
   // brief by default; the card's own switch adds what agility does
   const why = tip.locator("p").nth(1);
   await expect(why).toHaveText(/^Agilidad \d+ contra \d+: unos [\d,]+ s\.$/);
-  await page.click("#turno-consejo-explicacion-completo");
+  await page.click("#semana-consejo-explicacion-completo");
   await expect(why).toContainText(t("ui.advice.how.cruise"));
-  await page.click("#turno-consejo-explicacion-breve");
+  await page.click("#semana-consejo-explicacion-breve");
   await expect(why).not.toContainText(t("ui.advice.how.cruise"));
+  // the switches are buttons inside the dialog: Enter on them switches, it does not close it
+  await page.focus("#semana-consejo-explicacion-completo");
+  await page.keyboard.press("Enter");
+  await expect(why).toContainText(t("ui.advice.how.cruise"));
+  await expect(result).toBeVisible();
 
   // "Ver carrera": the replay's «Por qué» opens with the same tip, once the race is over
-  await page.click("#turno-ver-carrera");
+  await page.click("#semana-ver-carrera");
   await expect(page).toHaveURL(/#carrera$/);
   await expect(page.locator("#carrera-consejo")).toHaveCount(0);
   await page.click("#carrera-meta");
@@ -96,6 +103,17 @@ test("a goal race finished 7th: the result card and the replay's «Por qué» sa
       .first()
       .or(page.locator("#carrera-consejo").getByText(t("ui.advice.none"))),
   ).toBeVisible();
+
+  // back on the season the week was read: «Lo que pasó» stays closed, also after a reload
+  await page.click("#carrera-temporada");
+  await expect(page).toHaveURL(/#temporada$/);
+  await expect(page.locator("#turno-acciones")).toBeVisible();
+  await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
+  await page.reload();
+  await page.goto("#inicio");
+  await page.click("#inicio-continuar");
+  await expect(page.locator("#turno-acciones")).toBeVisible();
+  await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
 });
 
 /**

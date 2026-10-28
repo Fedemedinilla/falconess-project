@@ -269,16 +269,28 @@
   color: var(--ink-3);
 }
 
-/* what the last decision did, right where the next one is taken */
+/* what the last decision did, in one line where the next one is taken («Lo que pasó» said it) */
 .feedback {
   display: grid;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px var(--space-2);
   margin-bottom: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
   border-left: 3px solid var(--ink-3);
   background: var(--surface-2);
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
+}
+
+.feedbackLabel,
+.feedbackText {
+  grid-column: 1;
+}
+
+.feedbackAgain {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .feedbackLabel {

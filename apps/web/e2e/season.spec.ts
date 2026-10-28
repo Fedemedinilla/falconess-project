@@ -2,10 +2,12 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, t, test, textPattern } from "./fixtures";
 import {
+  closeWeek,
   decide,
   parsePlace,
   playerPlace,
   playReplayToEnd,
+  playStep,
   playUntil,
   readTurn,
   startSeason,
@@ -29,30 +31,26 @@ for (const falconessId of FALCONESS) {
     test.setTimeout(240_000);
     await startSeason(page, falconessId, SEED);
 
-    // weeks 1–12 and the T12 race: until the week after it (or its event, still in week 12)
+    // weeks 1–11, then week 12's action, which runs the T12 race
     const times: number[] = [];
     const t0 = Date.now();
-    const toRace = await playUntil(
-      page,
-      (v) => (v.week ?? 0) > 12 || (v.week === 12 && v.eventOpen),
-      times,
-    );
+    const toRace =
+      (await playUntil(page, (v) => v.week === 12 && !v.eventOpen, times)) +
+      (await playStep(page).then(() => 1));
     const toRaceMs = Date.now() - t0;
     const afterRace = await readTurn(page);
     expect(afterRace.hash, "the season must pass the T12 goal race").toBe("#temporada");
 
-    // the result the season recorded, on the Turn screen
-    const result = page.locator('section[aria-labelledby="turno-resultado"]');
-    await expect(result).toBeVisible();
-    await expect(result).toContainText(t("ui.result.eyebrow", { turn: 12 }));
-    await expect(result).toContainText(t("ui.result.met"));
-    const recorded = parsePlace((await result.locator("dd").first().textContent()) ?? "");
-    // the week of a race takes the page to its result, which sits above the actions
-    if (!afterRace.eventOpen) await expect(result).toBeInViewport();
-    if (afterRace.eventOpen) await page.keyboard.press("Escape"); // hide the event, answer later
+    // «Lo que pasó» opens over the page with the result the season recorded; an event waits
+    const week = page.getByRole("dialog", { name: textPattern("ui.week.title.race.met") });
+    await expect(week).toBeVisible();
+    await expect(week).toContainText(t("ui.week.eyebrow", { turn: 12, action: "" }).trim());
+    const recorded = parsePlace((await week.locator("h2").textContent()) ?? "");
+    expect(afterRace.weekOpen).toBe(true);
+    expect(afterRace.eventOpen).toBe(false);
 
     // "Ver carrera" → the replay of that very race, rebuilt with detail "full"
-    await page.click("#turno-ver-carrera");
+    await page.click("#semana-ver-carrera");
     await expect(page).toHaveURL(/#carrera$/);
     await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: 12 }))).toBeVisible();
     // the recorded place would give the race away: it waits for the finish
@@ -78,13 +76,16 @@ for (const falconessId of FALCONESS) {
     ).toBeVisible();
     await expect(page.getByRole("heading", { name: t("ui.race.why.title") })).toBeVisible();
 
-    // back to the season; the goals panel opens the same race
+    // back to the season: «Lo que pasó» was read and stays closed (a waiting event opens now);
+    // the goals panel opens the same race
     await page.click("#carrera-temporada");
     await expect(page).toHaveURL(/#temporada$/);
     const back = await readTurn(page);
+    expect(back.weekOpen).toBe(false);
     let answered = 0;
     if (back.eventOpen) {
       await decide(page, "#evento-opcion-0", back.inputs);
+      await closeWeek(page);
       answered = 1;
     }
     await page.click("#metas-ver-12");

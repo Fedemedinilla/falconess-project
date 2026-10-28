@@ -1,0 +1,310 @@
+/*
+ * «Lo que pasó»: a modal in the middle of the screen, one headline in the week's tone (good, bad,
+ * warn, neutral) on a tinted band, the changes in two compact lists, the buttons at the foot. A
+ * normal week fits a 390 × 700 phone without scrolling inside it.
+ */
+.dialog {
+  --tone: var(--accent);
+  --tone-soft: var(--surface-2);
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-top: 4px solid var(--tone);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow:
+    0 1px 0 rgb(var(--shadow-rgb) / 0.08),
+    0 24px 64px rgb(var(--shadow-rgb) / 0.35);
+}
+
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: week-in var(--dur-med) ease-out;
+}
+
+.dialog::backdrop {
+  background: var(--backdrop);
+}
+
+.dialog[open]::backdrop {
+  animation: week-fade var(--dur-med) ease-out;
+}
+
+/* the durations are 0 ms under prefers-reduced-motion (global.css): no movement at all */
+@keyframes week-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+}
+
+@keyframes week-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.good {
+  --tone: var(--good);
+  --tone-soft: var(--good-soft);
+}
+
+.bad {
+  --tone: var(--bad);
+  --tone-soft: var(--bad-soft);
+}
+
+.warn {
+  --tone: var(--warn);
+  --tone-soft: var(--warn-soft);
+}
+
+.box {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --- headline ------------------------------------------------------------------------------------ */
+
+.head {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--tone-soft);
+}
+
+.eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.label {
+  color: var(--tone);
+  font-weight: 700;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+
+.titleIcon {
+  flex: none;
+}
+
+.context {
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+/* --- changes ------------------------------------------------------------------------------------- */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-y: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-size: var(--fs-md);
+  line-height: 1.35;
+}
+
+.line-good {
+  color: var(--good);
+  font-weight: 600;
+}
+
+.line-bad {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.line-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.line-neutral {
+  font-weight: 600;
+}
+
+.event {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.note {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.next {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.none {
+  color: var(--ink-3);
+}
+
+/* the stats as chips: up in green, down in red */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-left: 3px solid currentcolor;
+  background: var(--surface-2);
+}
+
+.statName {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.up {
+  color: var(--good);
+}
+
+.down {
+  color: var(--bad);
+}
+
+/* the other changes, one line each: label · value · where it ended · why */
+.rows {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-md);
+}
+
+.row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.rowLabel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  min-width: 9.5rem;
+}
+
+.rowValue {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.value-good {
+  color: var(--good);
+}
+
+.value-bad {
+  color: var(--bad);
+}
+
+.value-warn {
+  color: var(--warn);
+}
+
+.rowTo {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.rowCause {
+  margin-inline-start: auto;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+
+.advice {
+  margin: 0;
+}
+
+/* --- buttons ------------------------------------------------------------------------------------- */
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.continue {
+  min-width: 10rem;
+}
+
+@media (max-width: 40rem) {
+  .title {
+    font-size: var(--fs-xl);
+  }
+
+  .rowLabel {
+    min-width: 0;
+  }
+
+  .foot > * {
+    flex: 1;
+  }
+}

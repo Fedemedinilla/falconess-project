@@ -44,6 +44,14 @@ async function serve(context: BrowserContext): Promise<string[]> {
   return blocked;
 }
 
+/** «Lo que pasó» opened after an input: read it and close it with its button. */
+async function closeWeek(app: Page | Frame): Promise<void> {
+  const dialog = app.locator("#semana-dialogo[open]");
+  await expect(dialog).toBeVisible();
+  await app.locator("#semana-continuar").click();
+  await expect(dialog).toHaveCount(0);
+}
+
 /** Start a season, take two weeks, open the free race and see its result. */
 async function smoke(app: Page | Frame): Promise<void> {
   await app.locator("#inicio-nueva").click();
@@ -51,11 +59,15 @@ async function smoke(app: Page | Frame): Promise<void> {
   await app.locator("#nueva-empezar").click();
   for (const week of [2, 3]) {
     await app.locator("#accion-train-agility").click();
+    await closeWeek(app);
     // the week closes, or first asks for an event's answer
     const next = app.getByTitle(t("ui.top.week.long", { turn: week, turns: 48 }));
     const event = app.locator("#evento-dialogo[open]");
     await expect(next.or(event)).toBeAttached();
-    if ((await event.count()) > 0) await app.locator("#evento-opcion-0").click();
+    if ((await event.count()) > 0) {
+      await app.locator("#evento-opcion-0").click();
+      await closeWeek(app);
+    }
     await expect(next).toBeAttached();
   }
   await app.locator("#nav-carrera-libre").click();

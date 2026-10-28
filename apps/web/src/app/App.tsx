@@ -20,8 +20,9 @@ import { redirect, useRoute } from "./useRoute";
 /**
  * Which screen a route shows, given the run in play:
  * - #inicio: Home.
- * - #temporada: NewSeason without a run; Turn while it is active (with EventDialog over it while
- *   an event waits for its choice; Turn opens Workshop itself); an ended season goes to #fin.
+ * - #temporada: NewSeason without a run; Turn while it is active (Turn opens «Lo que pasó» after
+ *   every input and Workshop itself; EventDialog goes over it while an event waits for its
+ *   choice, once «Lo que pasó» is read); an ended season goes to #fin.
  * - #fin: SeasonEnd of the ended run.
  * - #carrera: RaceViewer (the goal race of `snap.lastStep`, or one the screen picks).
  * - #carrera-libre: FreeRace.

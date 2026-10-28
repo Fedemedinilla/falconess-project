@@ -7,11 +7,13 @@ import { Icon } from "../ui/Icon";
 import { Livery } from "../ui/Livery";
 import s from "./EventDialog.module.css";
 import { describeOption } from "./model/describe";
+import { weekDialogWaiting } from "./WeekDialog";
 
 /**
  * The event waiting for an answer, as a modal built into the page. Each option says what it does,
  * with its chance branches. The event must be answered before the next action: closing the dialog
- * only hides it behind a bar that brings it back.
+ * only hides it behind a bar that brings it back. It waits for «Lo que pasó» (WeekDialog): the
+ * week's result is read first, then the event opens.
  */
 export function EventDialog() {
   const { game, snap } = useGame();
@@ -19,7 +21,8 @@ export function EventDialog() {
   const key = pending ? `${pending.eventId}/${pending.turn}` : "";
   const [hiddenFor, setHiddenFor] = useState<string | undefined>();
   const options = pending ? game.context().content.getEvent(pending.eventId).options.length : 0;
-  const open = pending !== undefined && hiddenFor !== key;
+  const after = weekDialogWaiting(snap);
+  const open = pending !== undefined && hiddenFor !== key && !after;
 
   // keys 1–3 answer while the dialog is open; the answer is for the run this dialog showed
   const inputs = snap.run?.inputs.length;
@@ -77,7 +80,7 @@ export function EventDialog() {
   return (
     <>
       <Dialog
-        open={!hidden}
+        open={open}
         onClose={() => setHiddenFor(key)}
         title={ui("ui.screen.event.title")}
         icon="event"
@@ -155,7 +158,7 @@ export function EventDialog() {
           })}
         </ol>
       </Dialog>
-      {hidden && (
+      {hidden && !after && (
         <div className={s.bar} role="status">
           <p>{ui("ui.event.waiting")}</p>
           <Button

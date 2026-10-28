@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { stubFonts, t, watchErrors } from "./fixtures";
-import { decide, policyChoice, RUN_KEY, readTurn, startSeason } from "./play";
+import { closeWeek, decide, policyChoice, RUN_KEY, readTurn, startSeason } from "./play";
 
 /**
  * Screenshots for review (`pnpm --filter @falconess/web test:e2e:shots`), never committed:
@@ -42,7 +42,11 @@ async function findRuns(browser: Browser): Promise<Runs> {
   const found: Partial<Runs> = {};
   const noCrew = t("ui.action.noCrew");
   for (let i = 0; i < 200; i++) {
-    const view = await readTurn(page);
+    let view = await readTurn(page);
+    if (view.weekOpen) {
+      await closeWeek(page);
+      view = await readTurn(page);
+    }
     if (view.hash === "#fin") break;
     if (view.eventOpen) found.event ??= await savedRun(page);
     else {
@@ -145,6 +149,8 @@ for (const vp of VIEWPORTS)
       // 3, 4 · Turn with a crew at a training, then the workshop with a part, brief and complete
       page = await open(all.crew);
       await expect(page.locator("#turno-acciones")).toBeVisible();
+      // a fresh browser has not read the run's last week: «Lo que pasó» first
+      await closeWeek(page);
       await shot(page, 3, "turn-crew-brief");
       await explain(page, true);
       await shot(page, 3, "turn-crew-full");
@@ -159,13 +165,15 @@ for (const vp of VIEWPORTS)
 
       // 5 · an event waiting for its answer (the modal, as the viewport shows it)
       page = await open(all.event);
+      await closeWeek(page);
       await expect(page.locator("#evento-dialogo")).toBeVisible();
       await shot(page, 5, "event", false);
       await page.context().close();
 
       // 6, 7 · the T12 goal race: mid-race, then at the finish with the why panel
       page = await open(all.afterT12);
-      await page.click("#turno-ver-carrera");
+      await closeWeek(page);
+      await page.click("#metas-ver-12");
       const slider = page.locator("#carrera-tiempo");
       await expect(slider).toBeVisible();
       const max = Number(await slider.getAttribute("max"));
