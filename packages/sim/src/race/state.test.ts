@@ -2,7 +2,7 @@ import { loadContent } from "@falconess/content";
 import { Rng, U32_RANGE } from "@falconess/rng";
 import type { Course, EntryInput, RaceEntry, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace } from "./engine.js";
 import { freezeEntry, freezeSkill } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
@@ -25,6 +25,7 @@ import {
   type RaceArena,
   validateRace,
 } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import { PH_FINAL, PH_MIDDLE, PH_START } from "./units.js";
 
 const content = loadContent();
@@ -33,8 +34,8 @@ const SPRINT = content.getCourse("desert-sprint");
 const CANYON = content.getCourse("desert-canyon");
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 
 /** `arr[i]`, throwing instead of returning undefined (no non-null assertions in this repo). */
@@ -68,7 +69,7 @@ function frozen(frameId: string, course: Course, lane = 0, over: Partial<EntryIn
     durability: null,
     ...over,
   };
-  return freezeEntry(RULESET_V1, content, input, course, lane);
+  return freezeEntry(SPEC_RULESET, content, input, course, lane);
 }
 
 /** Tables of the given entries on `course`, drawn from `seed` (or a hand-set block `U`). */
@@ -253,7 +254,7 @@ describe("per-race tables of docs/race-engine.md 3.3 (600-balanced, PW 1.0, nois
       },
       1,
     );
-    const T = tablesOf([lo, hi], CANYON, RULESET_V1).tables;
+    const T = tablesOf([lo, hi], CANYON, SPEC_RULESET).tables;
     expect(T.vA[0]).toBe(300_087);
     expect(T.vA[1]).toBe(475_000);
     expect(T.acc[ibs(0, 0, 0)]).toBe(100); // 400 × 601 × 500 / 1.2e6
@@ -271,8 +272,8 @@ describe("pace judgement and plan perception from the pre-drawn block (docs/race
   it("pace lies in [c − 43, c + 43] at both ends of uRange; the width is the same for every I", () => {
     for (const I of [1, 300, 600, 1000, 1200, 2000]) {
       const e = fixture("hover", { stats: { ...S600, intelligence: I } });
-      const lo = tablesOf([e], SPRINT, RULESET_V1, block(0)).tables;
-      const hi = tablesOf([e], SPRINT, RULESET_V1, block(MAX)).tables;
+      const lo = tablesOf([e], SPRINT, SPEC_RULESET, block(0)).tables;
+      const hi = tablesOf([e], SPRINT, SPEC_RULESET, block(MAX)).tables;
       const c = lo.paceCentre[0] ?? 0;
       expect(Array.from(lo.pace.slice(0, 3))).toEqual([c - 43, c - 43, c - 43]);
       expect(Array.from(hi.pace.slice(0, 3))).toEqual([c + 43, c + 43, c + 43]);
@@ -280,7 +281,7 @@ describe("pace judgement and plan perception from the pre-drawn block (docs/race
     const top = tablesOf(
       [fixture("hover", { stats: { ...S600, intelligence: 1200 } })],
       SPRINT,
-      RULESET_V1,
+      SPEC_RULESET,
       block(MAX),
     );
     expect(top.tables.pace[0]).toBe(65);
@@ -288,8 +289,8 @@ describe("pace judgement and plan perception from the pre-drawn block (docs/race
 
   it("plan error in [−We, +We] with We 75 at I 600; noise off gives 0 everywhere", () => {
     const e = fixture("hover");
-    expect(tablesOf([e], SPRINT, RULESET_V1, block(0)).tables.planErr[0]).toBe(-75);
-    expect(tablesOf([e], SPRINT, RULESET_V1, block(MAX)).tables.planErr[0]).toBe(75);
+    expect(tablesOf([e], SPRINT, SPEC_RULESET, block(0)).tables.planErr[0]).toBe(-75);
+    expect(tablesOf([e], SPRINT, SPEC_RULESET, block(MAX)).tables.planErr[0]).toBe(75);
     const quiet = tablesOf([e], SPRINT, QUIET, block(MAX)).tables;
     expect([quiet.pace[0], quiet.pace[1], quiet.pace[2], quiet.planErr[0]]).toEqual([0, 0, 0, 0]);
   });
@@ -300,7 +301,7 @@ describe("pace judgement and plan perception from the pre-drawn block (docs/race
     const U = block(0);
     U[4 + 3 * 1 + 2] = MAX; // skill 1, activation 2
     U[4] = Math.ceil(0.5 * U32_RANGE); // skill 0, activation 0 → 500
-    const T = tablesOf([e], SPRINT, RULESET_V1, U).tables;
+    const T = tablesOf([e], SPRINT, SPEC_RULESET, U).tables;
     expect(Array.from(T.u.slice(0, 3))).toEqual([500, 0, 0]);
     expect(Array.from(T.u.slice(3, 6))).toEqual([0, 0, 999]);
     expect([T.pAct[0], T.pSkill[0], T.pSkill[1]]).toEqual([850, 850, 680]);
@@ -310,9 +311,9 @@ describe("pace judgement and plan perception from the pre-drawn block (docs/race
 describe("the pre-drawn RNG block (docs/race-engine.md 17.1, 16 #15)", () => {
   function countDraws(entries: RaceEntry[]) {
     const rng = new Rng("draws");
-    const G = buildCourseGeometry(RULESET_V1, SPRINT);
+    const G = buildCourseGeometry(SPEC_RULESET, SPRINT);
     const A = createRaceArena().reset(entries.length, G);
-    drawRaceBlock(RULESET_V1, entries, rng, A);
+    drawRaceBlock(SPEC_RULESET, entries, rng, A);
     return { race: rng.drawCount("race"), quirks: rng.drawCount("quirks"), A };
   }
   const lucky = (e: RaceEntry): RaceEntry => ({
@@ -342,14 +343,14 @@ describe("the pre-drawn RNG block (docs/race-engine.md 17.1, 16 #15)", () => {
         skills: [at(skills, 0), { ...at(skills, 1), disabled: true }, at(skills, 2)],
       }),
     );
-    const G = buildCourseGeometry(RULESET_V1, SPRINT);
+    const G = buildCourseGeometry(SPEC_RULESET, SPRINT);
     for (const [x, idx] of [
       [0, 0],
       [U32_RANGE / 3, 1],
       [U32_RANGE - 1, 2],
     ] as const) {
       const A = createRaceArena().reset(1, G);
-      drawRaceBlock(RULESET_V1, [e], { nextU32: (s) => (s === "quirks" ? x : 7) }, A);
+      drawRaceBlock(SPEC_RULESET, [e], { nextU32: (s) => (s === "quirks" ? x : 7) }, A);
       expect(A.tables.luckyIdx[0]).toBe(idx);
     }
   });
@@ -369,8 +370,8 @@ describe("the pre-drawn RNG block (docs/race-engine.md 17.1, 16 #15)", () => {
       ),
       at(base, 2),
     ];
-    const a = simulateRace(RULESET_V1, base, SPRINT, "iso", { detail: "results" });
-    const b = simulateRace(RULESET_V1, changed, SPRINT, "iso", { detail: "results" });
+    const a = simulateRace(SPEC_RULESET, base, SPRINT, "iso", { detail: "results" });
+    const b = simulateRace(SPEC_RULESET, changed, SPRINT, "iso", { detail: "results" });
     for (const lane of [0, 2]) {
       const pick = (d: (typeof a.derived)[number]) => [d.pace, d.planErrPm, d.u];
       expect(pick(at(b.derived, lane))).toEqual(pick(at(a.derived, lane)));
@@ -401,7 +402,7 @@ describe("initial state (docs/race-engine.md 1.3)", () => {
 describe("validator (docs/race-engine.md 1.4)", () => {
   const ok = [fixture("dive"), fixture("hover", {}, 1)];
   const check =
-    (entries: RaceEntry[], course: Course = SPRINT, seed = "s", r: Ruleset = RULESET_V1) =>
+    (entries: RaceEntry[], course: Course = SPRINT, seed = "s", r: Ruleset = SPEC_RULESET) =>
     () =>
       validateRace(r, entries, course, seed);
 
@@ -454,7 +455,7 @@ describe("validator (docs/race-engine.md 1.4)", () => {
       Array.from({ length: 25 }, () => ({ type: "flat" as const, length: 50 })),
     );
     expect(check(ok, many24)).toThrow(/segment count/);
-    const tiny: Ruleset = { ...RULESET_V1, race: { ...RULESET_V1.race, rngBlock: 8 } };
+    const tiny: Ruleset = { ...SPEC_RULESET, race: { ...SPEC_RULESET.race, rngBlock: 8 } };
     expect(check([fixture("dive", { skills: [a, b] })], SPRINT, "s", tiny)).toThrow(/rngBlock/);
   });
 });
@@ -463,13 +464,15 @@ describe("arena (docs/race-engine.md 22)", () => {
   it("reset zero-fills; a reused arena gives byte-identical logs", () => {
     const arena = createRaceArena();
     const field = [fixture("dive"), fixture("ground", {}, 1), fixture("glide", {}, 2)];
-    const fresh = JSON.stringify(simulateRace(RULESET_V1, field, RIDGE, "arena"));
-    simulateRace(RULESET_V1, [frozen("shiden", CANYON)], CANYON, "other", { arena });
-    expect(JSON.stringify(simulateRace(RULESET_V1, field, RIDGE, "arena", { arena }))).toBe(fresh);
-    arena.reset(2, buildCourseGeometry(RULESET_V1, SPRINT));
+    const fresh = JSON.stringify(simulateRace(SPEC_RULESET, field, RIDGE, "arena"));
+    simulateRace(SPEC_RULESET, [frozen("shiden", CANYON)], CANYON, "other", { arena });
+    expect(JSON.stringify(simulateRace(SPEC_RULESET, field, RIDGE, "arena", { arena }))).toBe(
+      fresh,
+    );
+    arena.reset(2, buildCourseGeometry(SPEC_RULESET, SPRINT));
     expect(arena.state.pos.every((v) => v === 0)).toBe(true);
     expect(arena.tables.vC.every((v) => v === 0)).toBe(true);
-    expect(() => arena.reset(9, buildCourseGeometry(RULESET_V1, SPRINT))).toThrow();
+    expect(() => arena.reset(9, buildCourseGeometry(SPEC_RULESET, SPRINT))).toThrow();
   });
 });
 

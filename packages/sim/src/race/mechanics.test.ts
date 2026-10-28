@@ -2,7 +2,7 @@ import { loadContent } from "@falconess/content";
 import type { Course, RaceEntry, RaceEvent, RaceSkill, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { KEY_FINISHED, rankSnapshot } from "./controller.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeSkill } from "./entry.js";
@@ -18,6 +18,7 @@ import {
   F_PENDING_JUMP,
   type RaceArena,
 } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 /**
  * Mechanics of docs/race-engine.md 5-8, 13, 14, 16 and 19 through simulateRace, with the test-only
@@ -30,8 +31,8 @@ import {
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 /** A boost tick costs more than any tank (200 energy): the energy gate refuses every boost. */
 const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kE: 1_000_000 } };

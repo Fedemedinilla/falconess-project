@@ -2,14 +2,14 @@ import { loadContent } from "@falconess/content";
 import { type EntryInput, ManufacturerRule, RaceEntry, RaceSkill } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { compileRule } from "../rules/index.js";
-import { RULESET_V1 } from "../rulesets/index.js";
 import { freezeEntry, freezeSkill } from "./entry.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { compileTraits, defaultTraits } from "./modifiers.js";
 import { segmentFactors } from "./physics.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 const content = loadContent();
-const R = RULESET_V1;
+const R = SPEC_RULESET;
 const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"] as const;
 const BONEYARD_FRAMES = new Set(["kite", "mule", "caracara-signature"]);
 

@@ -13,12 +13,13 @@ import type {
 import { RACE_RULES, RaceLog as RaceLogSchema } from "@falconess/schema";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeEntry, freezeSkill } from "./entry.js";
 import { disableSkill, neutralFixtureEntry } from "./fixtures.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { createRaceArena, drawRaceBlock, ib, ibps, ips, is, type RaceArena } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import { MODE_OFF, modeName, POS_PER_MM, VEL_PER_MMS } from "./units.js";
 
 /**
@@ -31,8 +32,8 @@ import { MODE_OFF, modeName, POS_PER_MM, VEL_PER_MMS } from "./units.js";
 
 const content = loadContent();
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"].map((id) =>
   content.getCourse(id),
@@ -219,8 +220,8 @@ describe("P1 determinism (docs/race-engine.md 24.2)", () => {
     fc.assert(
       fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
         const before = JSON.stringify(entries);
-        const a = JSON.stringify(simulateRace(RULESET_V1, entries, course, seed));
-        const b = JSON.stringify(simulateRace(RULESET_V1, [...entries].reverse(), course, seed));
+        const a = JSON.stringify(simulateRace(SPEC_RULESET, entries, course, seed));
+        const b = JSON.stringify(simulateRace(SPEC_RULESET, [...entries].reverse(), course, seed));
         expect(b).toBe(a);
         expect(JSON.stringify(entries)).toBe(before);
       }),
@@ -260,11 +261,11 @@ describe("P2 symmetry", () => {
       }),
     );
     const arena = createRaceArena();
-    const geometry = buildCourseGeometry(RULESET_V1, course);
+    const geometry = buildCourseGeometry(SPEC_RULESET, course);
     const wins = new Array<number>(8).fill(0);
     const N = 2000;
     for (let k = 0; k < N; k++) {
-      const log = simulateRace(RULESET_V1, entries, course, `stat-${k}`, {
+      const log = simulateRace(SPEC_RULESET, entries, course, `stat-${k}`, {
         detail: "results",
         arena,
         geometry,
@@ -294,7 +295,7 @@ const pairArb: fc.Arbitrary<Pair> = fc.record({
 
 function frameEntry(frameId: string, stats: RaceEntry["stats"], course: Course): RaceEntry {
   return freezeEntry(
-    RULESET_V1,
+    SPEC_RULESET,
     content,
     {
       runnerId: "m",
@@ -404,7 +405,7 @@ describe("P4 bounds on every tick", () => {
         const minDur = new Float64Array(n).fill(Number.MAX_SAFE_INTEGER);
         const telemetry = new Uint8Array(n);
         const E = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
-        const log = simulateRaceProbed(RULESET_V1, entries, course, seed, (t, A) => {
+        const log = simulateRaceProbed(SPEC_RULESET, entries, course, seed, (t, A) => {
           const S = A.state;
           const T = A.tables;
           for (let i = 0; i < n; i++) {
@@ -445,7 +446,7 @@ describe("P4 bounds on every tick", () => {
           if (external) continue;
           const e = at(E, i);
           const floor = Math.floor(
-            (e.durabilityMax * 1000 * RULESET_V1.race.overheatFloorPm) / 1000,
+            (e.durabilityMax * 1000 * SPEC_RULESET.race.overheatFloorPm) / 1000,
           );
           expect(minDur[i]).toBeGreaterThanOrEqual(Math.min(dur0[i] ?? 0, floor + 1));
           const r = at(byLane(log), i);
@@ -463,7 +464,7 @@ describe("P5 log consistency (and P8 integers)", () => {
   it("places, finish events, time intervals, frames, boost counts, pulses, plans, the energy identity", () => {
     fc.assert(
       fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
-        const log = simulateRace(RULESET_V1, entries, course, seed);
+        const log = simulateRace(SPEC_RULESET, entries, course, seed);
         expect(RaceLogSchema.parse(log)).toEqual(log);
         const n = entries.length;
         expect(log.results.map((r) => r.place).sort((a, b) => a - b)).toEqual(
@@ -492,7 +493,7 @@ describe("P5 log consistency (and P8 integers)", () => {
           const pulses = events.filter((e) => e.kind === "pulse" && e.lane === r.lane).length;
           expect(L.pulses).toBe(pulses);
           const planEvents = events.filter((e) => e.kind === "sprintPlan" && e.lane === r.lane);
-          expect(planEvents.length).toBeLessThanOrEqual(1 + RULESET_V1.race.maxReplans);
+          expect(planEvents.length).toBeLessThanOrEqual(1 + SPEC_RULESET.race.maxReplans);
           const col = at(log.frames?.runners, r.lane).boost;
           expect(col.reduce((a, b) => a + b, 0)).toBe(L.boostTicks.reduce((a, b) => a + b, 0));
         }
@@ -507,7 +508,7 @@ describe("P5 log consistency (and P8 integers)", () => {
 
 describe("P5b boostMode hysteresis (ADR-0003 D54)", () => {
   it("the log keeps exactly the (mode, level) spans that hold sampleEveryTicks ticks and change the last kept pair, at the tick they began", () => {
-    const minTicks = RULESET_V1.race.log.sampleEveryTicks;
+    const minTicks = SPEC_RULESET.race.log.sampleEveryTicks;
     type Change = { tick: number; lane: number; posMm: number; mode: string; levelMms: number };
     fc.assert(
       fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
@@ -517,7 +518,7 @@ describe("P5b boostMode hysteresis (ADR-0003 D54)", () => {
         const mode = new Int32Array(n).fill(MODE_OFF);
         const level = new Int32Array(n);
         const pos = new Float64Array(n);
-        const log = simulateRaceProbed(RULESET_V1, entries, course, seed, (t, A) => {
+        const log = simulateRaceProbed(SPEC_RULESET, entries, course, seed, (t, A) => {
           const S = A.state;
           for (let i = 0; i < n; i++) {
             const m = S.mode[i] ?? MODE_OFF;
@@ -580,8 +581,8 @@ describe("P6 RNG accounting and isolation", () => {
           },
         };
         const E = [...entries].sort((a, b) => a.laneIndex - b.laneIndex);
-        const A = createRaceArena().reset(E.length, buildCourseGeometry(RULESET_V1, course));
-        drawRaceBlock(RULESET_V1, E, src, A);
+        const A = createRaceArena().reset(E.length, buildCourseGeometry(SPEC_RULESET, course));
+        drawRaceBlock(SPEC_RULESET, E, src, A);
         expect(counts.race).toBe(32 * E.length);
         expect(counts.quirks).toBe(E.filter((e) => e.traits.randomSkillGuaranteed).length);
       }),
@@ -600,8 +601,8 @@ describe("P6 RNG accounting and isolation", () => {
         (entries, other, k, course, seed) => {
           const lane = k % entries.length;
           const changed = entries.map((e) => (e.laneIndex === lane ? entryOf(other, lane) : e));
-          const a = simulateRace(RULESET_V1, entries, course, seed, { detail: "results" });
-          const b = simulateRace(RULESET_V1, changed, course, seed, { detail: "results" });
+          const a = simulateRace(SPEC_RULESET, entries, course, seed, { detail: "results" });
+          const b = simulateRace(SPEC_RULESET, changed, course, seed, { detail: "results" });
           for (let i = 0; i < entries.length; i++) {
             if (i === lane) continue;
             const da = at(a.derived, i);
@@ -629,8 +630,8 @@ describe("P6 RNG accounting and isolation", () => {
           const target = at(carriers, a % carriers.length);
           const skillId = at(target.skills, b % target.skills.length).id;
           const off = entries.map((e) => (e === target ? disableSkill(e, skillId) : e));
-          const on = simulateRace(RULESET_V1, entries, course, seed);
-          const dis = simulateRace(RULESET_V1, off, course, seed);
+          const on = simulateRace(SPEC_RULESET, entries, course, seed);
+          const dis = simulateRace(SPEC_RULESET, off, course, seed);
           for (let i = 0; i < entries.length; i++) {
             const x = at(on.derived, i);
             const y = at(dis.derived, i);
@@ -665,15 +666,15 @@ describe("P7 options invariance", () => {
   it("results and derived are identical across detail modes, with or without an arena or a cached geometry", () => {
     fc.assert(
       fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
-        const geometry = buildCourseGeometry(RULESET_V1, course);
-        const full = simulateRace(RULESET_V1, entries, course, seed);
+        const geometry = buildCourseGeometry(SPEC_RULESET, course);
+        const full = simulateRace(SPEC_RULESET, entries, course, seed);
         const want = JSON.stringify([full.results, full.derived]);
         for (const opts of [
           { detail: "results" as const },
           { arena },
           { geometry, arena, detail: "results" as const },
         ]) {
-          const v = simulateRace(RULESET_V1, entries, course, seed, opts);
+          const v = simulateRace(SPEC_RULESET, entries, course, seed, opts);
           expect(JSON.stringify([v.results, v.derived])).toBe(want);
         }
       }),
@@ -687,7 +688,7 @@ describe("generated builds really exercise the controller", () => {
     const seen = new Set<string>();
     fc.assert(
       fc.property(fieldArb(4, 8), courseArb, seedArb, (entries, course, seed) => {
-        const log = simulateRace(RULESET_V1, entries, course, seed);
+        const log = simulateRace(SPEC_RULESET, entries, course, seed);
         for (const e of log.events ?? []) {
           if (e.kind === "boostMode") seen.add(e.mode);
           if (e.kind === "pulse") seen.add("pulse");

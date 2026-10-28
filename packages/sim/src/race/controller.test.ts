@@ -2,7 +2,7 @@ import { loadContent } from "@falconess/content";
 import { ceilDiv, Rng } from "@falconess/rng";
 import type { Course, RaceEntry, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import {
   type Controller,
   createController,
@@ -27,6 +27,7 @@ import {
   type RaceState,
   type RaceTables,
 } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import {
   MODE_DIVE_DESCENT,
   MODE_GLIDE_CHASE,
@@ -53,8 +54,8 @@ import {
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 const SPRINT = content.getCourse("desert-sprint");
 const RIDGE = content.getCourse("desert-ridge");
@@ -755,11 +756,11 @@ describe("PREHEAT through simulateRace (docs/race-engine.md 9.4, 16 #12, ADR-000
     expect(run.ticks.length).toBe(31);
     expect([run.ev.heat, run.ev.energy]).toEqual([62_000, 31_000]);
     // ADR-0003 D51: the price at cruise is kept; the arrival heat sits below capLim − kH
-    expect(run.ev.heat).toBeLessThan(capLim - RULESET_V1.race.kH);
+    expect(run.ev.heat).toBeLessThan(capLim - SPEC_RULESET.race.kH);
   });
 
   it("every style on the three courses: consecutive boost ticks up to final entry, heat h0 + kH × ticks, within the room", () => {
-    const kH = RULESET_V1.race.kH;
+    const kH = SPEC_RULESET.race.kH;
     for (const course of [SPRINT, RIDGE, content.getCourse("desert-canyon")])
       for (const style of ["dive", "hover", "glide", "ground"] as const) {
         const run = preheat(withTraits(fixture(style), { heatToEnergyPm: 500 }), course);

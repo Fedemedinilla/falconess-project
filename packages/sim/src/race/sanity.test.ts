@@ -2,11 +2,12 @@ import { readFileSync } from "node:fs";
 import { loadContent } from "@falconess/content";
 import type { Course, EntryInput, RaceEntry, SprintPlanReason, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
 import { buildCourseGeometry } from "./geometry.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 /**
  * Sanity numbers of docs/race-engine.md 25.4: every build of the three desert tables (neutral
@@ -20,8 +21,8 @@ import { buildCourseGeometry } from "./geometry.js";
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 

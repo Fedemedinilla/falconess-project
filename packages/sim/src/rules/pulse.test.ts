@@ -1,8 +1,8 @@
 import { RaceModifier } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { compileTraits } from "../race/modifiers.js";
+import { SPEC_RULESET } from "../race/testing/spec-ruleset.js";
 import { SEG_DESCENT, SEG_FLAT, SEG_WATER } from "../race/units.js";
-import { RULESET_V1 } from "../rulesets/index.js";
 import {
   createPulseOutput,
   createPulseState,
@@ -13,7 +13,7 @@ import {
   pulseStep,
 } from "./pulse.js";
 
-const R = RULESET_V1.race;
+const R = SPEC_RULESET.race;
 const BP = 60_750;
 const BPC = 72_900;
 const UNIT = BP * 12;

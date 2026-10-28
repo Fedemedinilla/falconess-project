@@ -2,7 +2,7 @@ import { loadContent } from "@falconess/content";
 import { Rng } from "@falconess/rng";
 import type { Course, RaceEntry, RaceEvent, RaceLog, RaceSkill, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
@@ -20,6 +20,7 @@ import {
   type RaceState,
   type RaceTables,
 } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import { MODE_KICK, MODE_PLAN, SEG_JUMP } from "./units.js";
 
 /**
@@ -32,8 +33,8 @@ import { MODE_KICK, MODE_PLAN, SEG_JUMP } from "./units.js";
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 const SPRINT = content.getCourse("desert-sprint");
 const RIDGE = content.getCourse("desert-ridge");
@@ -341,7 +342,7 @@ describe("candidate rules (docs/race-engine.md 11.3)", () => {
     for (const course of [SPRINT, RIDGE, CANYON])
       for (const st of ["dive", "hover", "glide", "ground"] as const)
         for (const pw of [800, 1000, 1400]) {
-          const log = simulateRace(RULESET_V1, [fixture(st, { powerToWeight: pw })], course, "s");
+          const log = simulateRace(SPEC_RULESET, [fixture(st, { powerToWeight: pw })], course, "s");
           for (const p of plans(log)) {
             expect(p.startMm).toBeGreaterThanOrEqual(p.posMm);
             expect(p.endMm).toBeGreaterThanOrEqual(p.startMm);
@@ -353,14 +354,14 @@ describe("candidate rules (docs/race-engine.md 11.3)", () => {
 describe("perception (docs/race-engine.md 10)", () => {
   it("the plan sees energy and hp × (1000 + planErr); I ≥ 1200 sees true values", () => {
     for (const seed of ["p1", "p2", "p3", "p4"]) {
-      const log = simulateRace(RULESET_V1, [fixture("dive")], SPRINT, seed);
+      const log = simulateRace(SPEC_RULESET, [fixture("dive")], SPRINT, seed);
       const err = at(log.derived, 0).planErrPm;
       expect(Math.abs(err)).toBeLessThanOrEqual(75);
       const p = at(plans(log), 0);
       expect(p.energyPerceived).toBe(Math.floor((p.energy * (1000 + err)) / 1000));
     }
     const sharp = fixture("dive", { stats: { ...S600, intelligence: 1200 } });
-    const p = at(plans(simulateRace(RULESET_V1, [sharp], SPRINT, "p1")), 0);
+    const p = at(plans(simulateRace(SPEC_RULESET, [sharp], SPRINT, "p1")), 0);
     expect([p.energyPerceived, p.hpPerceived]).toEqual([p.energy, p.hp]);
   });
 });

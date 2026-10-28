@@ -1,12 +1,13 @@
 import { loadContent } from "@falconess/content";
 import type { Course, EntryInput, RaceEntry, RaceRule, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
 import { buildCourseGeometry, type CourseGeometry } from "./geometry.js";
 import { createRaceArena } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 /**
  * The measured anchors of docs/race-engine.md 25.4 ("Other measured anchors"), 13.1 (S2 equal PW)
@@ -19,8 +20,8 @@ import { createRaceArena } from "./state.js";
 
 const content = loadContent();
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 /** A boost tick costs more than any tank: the physics without the controller's thrust. */
 const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kE: 1_000_000 } };
@@ -53,7 +54,7 @@ function frame(frameId: string, course: Course, st = stats(), lane = 0): RaceEnt
     learnedSkills: [],
     durability: null,
   };
-  return freezeEntry(RULESET_V1, content, input, course, lane);
+  return freezeEntry(SPEC_RULESET, content, input, course, lane);
 }
 function course(id: string, segments: Course["segments"]): Course {
   return {
@@ -212,7 +213,7 @@ describe("17.3 / 25.4 same-build dispersion: σ/mean over 300 seeds (disp.mjs se
         const e = mk(c);
         const xs: number[] = [];
         for (let k = 0; k < 300; k++)
-          xs.push(run(RULESET_V1, [e], c, `seed-${k}`).results[0]?.finishMilli ?? 0);
+          xs.push(run(SPEC_RULESET, [e], c, `seed-${k}`).results[0]?.finishMilli ?? 0);
         const m = xs.reduce((a, b) => a + b, 0) / xs.length;
         const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) * (b - m), 0) / (xs.length - 1));
         cells.push(((100 * sd) / m).toFixed(2));

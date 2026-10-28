@@ -1,8 +1,8 @@
 import { loadContent } from "@falconess/content";
 import { type Course, RaceGeometry } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1 } from "../rulesets/index.js";
 import { buildCourseGeometry, logGeometry, phaseOf, raceMaxTicks } from "./geometry.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import {
   PH_FINAL,
   PH_MIDDLE,
@@ -15,7 +15,7 @@ import {
 } from "./units.js";
 
 const content = loadContent();
-const R = RULESET_V1;
+const R = SPEC_RULESET;
 const M = 225_000; // pu per metre
 
 /** The table of docs/race-engine.md 2, in mm. */

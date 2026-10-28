@@ -7,15 +7,16 @@ import {
   type SeasonGoal,
 } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { type FieldConstants, RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { FieldConstants, Ruleset } from "../rulesets/index.js";
 import type { SimContext } from "../season/context.js";
 import { startSeason } from "../season/start.js";
 import { STAT_ORDER } from "../stats.js";
 import { freezeEntry } from "./entry.js";
 import { generateField, goalRaceSetup, PLAYER_RUNNER_ID, rivalPool } from "./field.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 const content = loadContent();
-const R = RULESET_V1;
+const R = SPEC_RULESET;
 const ctx: SimContext = { ruleset: R, content };
 const SPRINT = content.getCourse("desert-sprint");
 const CANYON = content.getCourse("desert-canyon");

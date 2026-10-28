@@ -4,13 +4,13 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { applyBuild } from "../frame-build.js";
 import { compileRule } from "../rules/index.js";
-import { RULESET_V1 } from "../rulesets/index.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { compileTraits, defaultTraits, statDeltas } from "./modifiers.js";
 import { segmentFactors } from "./physics.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 const content = loadContent();
-const R = RULESET_V1.race;
+const R = SPEC_RULESET.race;
 const D = defaultTraits();
 
 /** Parse content-shaped modifiers through the schema (defaults filled, as content loads them). */
@@ -254,7 +254,7 @@ describe("the 11 content passives", () => {
     });
 
   it("segment passives act on the f table: no-climb-loss climb 1000, scrap-armor water 1000", () => {
-    const canyon = buildCourseGeometry(RULESET_V1, content.getCourse("desert-canyon"));
+    const canyon = buildCourseGeometry(SPEC_RULESET, content.getCourse("desert-canyon"));
     const stats = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
     const none = compileRule(R, "none", "desert");
     const plain = segmentFactors(R, canyon, { stats, traits: D }, none);

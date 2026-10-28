@@ -1,11 +1,12 @@
 import { loadContent } from "@falconess/content";
 import type { Course, RaceEntry, RaceRule, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
 import { buildCourseGeometry, type CourseGeometry } from "./geometry.js";
 import { createRaceArena } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 /**
  * The batch scenarios S1 (styles) and S2 (equal-PW rule terms) of docs/race-engine.md 25.2 at the
@@ -17,8 +18,8 @@ import { createRaceArena } from "./state.js";
 
 const content = loadContent();
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"].map((id) =>
   content.getCourse(id),
@@ -62,7 +63,7 @@ describe("S1 and S2 of 25.2 at their 25.4 sample sizes (s1.mjs, s2eq.mjs seeds)"
     const splits: string[] = [];
     const mean = [0, 0, 0, 0];
     for (const c of COURSES) {
-      const G = buildCourseGeometry(RULESET_V1, c);
+      const G = buildCourseGeometry(SPEC_RULESET, c);
       const w = [0, 0, 0, 0];
       const sp = STYLES.map(() => [0, 0, 0, 0]);
       const arena = createRaceArena();
@@ -70,7 +71,7 @@ describe("S1 and S2 of 25.2 at their 25.4 sample sizes (s1.mjs, s2eq.mjs seeds)"
         const rot = STYLES.concat(STYLES).map((_, i) => STYLES[(i + k) % 4] as Style);
         const split = rot.map(() => [-1, -1]);
         const log = simulateRaceProbed(
-          RULESET_V1,
+          SPEC_RULESET,
           rot.map((st, lane) => neutral(st, lane)),
           c,
           `s1-${k}`,
@@ -137,7 +138,7 @@ describe("S1 and S2 of 25.2 at their 25.4 sample sizes (s1.mjs, s2eq.mjs seeds)"
       for (let k = 0; k < 600; k++) {
         const rot = field.map((_, i) => field[(i + k) % 8] ?? "none");
         const log = run(
-          RULESET_V1,
+          SPEC_RULESET,
           rot.map((rule, lane) => neutral("hover", lane, stats(), { rule })),
           c,
           `s2-${k}`,

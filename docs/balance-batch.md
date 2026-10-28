@@ -30,6 +30,20 @@ report ran the scenario and no longer has the cell. An inconclusive cell does no
 PR that leaves a marginal fail alone reads inconclusive at `pr` size. The Markdown lists every
 gate cell with its status.
 
+## Tests during a balance pass
+
+Physics tests pin to `SPEC_RULESET`, a frozen copy of the ADR-0003 constants (`docs/race-engine.md`
+24). Changing `packages/sim/src/rulesets/v1/constants.ts` fails only the goldens of
+`tests/golden/v1` (the lead regenerates them once, with an ADR), the test "SPEC_RULESET matches v1
+until the first balance change" (the first balance commit deletes it) and tests whose subject is
+the live ruleset: an aptitude multiplier also fails the S3 build test of
+`apps/cli/src/batch/scenarios.test.ts`, a `SEASON` value tests of
+`packages/sim/src/season/season.test.ts` (`trainBase`: the `trainingGain` test). Content is not frozen: a part, frame or course change
+also fails the tests that pin it (parts in `stats.test.ts`, `fixtures.test.ts`, `entry.test.ts`,
+`field.test.ts` and the S5 test of `scenarios.test.ts`; frame stats and course segments, the 25.4
+sanity tables and the prototype cross-checks), which the same commit updates. During the pass:
+`pnpm vitest run --exclude '**/golden.test.ts'`, `pnpm typecheck`, `pnpm lint`.
+
 ## Engine port
 
 The batch never imports the race engine directly. `batch/engine-port.ts` declares the operations of

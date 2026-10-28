@@ -2,11 +2,11 @@ import { loadContent } from "@falconess/content";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { installPart, resolveFrameBuild } from "./frame-build.js";
-import { RULESET_V1 } from "./rulesets/index.js";
+import { SPEC_RULESET } from "./race/testing/spec-ruleset.js";
 import { effectiveStats, lowestStat, upgradeAptitude } from "./stats.js";
 
 const content = loadContent();
-const R = RULESET_V1;
+const R = SPEC_RULESET;
 const base = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const biomeApt = { desert: "A", mountain: "B", coast: "C", urban: "D", tundra: "G" } as const;
 const styleApt = { dive: "S", hover: "B", glide: "E", ground: "F" } as const;
@@ -113,7 +113,8 @@ describe("frame build (variety seam)", () => {
   });
 
   it("Altair telemetry caps powerToWeight at 1.1 even with turbines", () => {
-    const b = resolveFrameBuild(content, "horizon", ["steinhaus-turbine"], []);
+    const cap = R.race.telemetryPowerCap;
+    const b = resolveFrameBuild(content, "horizon", ["steinhaus-turbine"], [], cap);
     expect(b.powerToWeight).toBe(1100);
     const noCap = resolveFrameBuild(content, "falke", ["steinhaus-turbine"], []);
     expect(noCap.powerToWeight).toBe(1100); // 1.0 + 0.1, coincidentally equal

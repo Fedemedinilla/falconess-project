@@ -11,11 +11,11 @@ import {
   overheatDamage,
   segmentFactors,
 } from "../race/physics.js";
+import { SPEC_RULESET } from "../race/testing/spec-ruleset.js";
 import { RULE_NONE, ruleCode } from "../race/units.js";
-import { RULESET_V1 } from "../rulesets/index.js";
 import { compileRule, neutralTerms, RULES, type RuleTerms } from "./index.js";
 
-const R = RULESET_V1.race;
+const R = SPEC_RULESET.race;
 
 /** Fields of `RuleTerms` that differ from the neutral terms. */
 function changed(terms: RuleTerms): Partial<RuleTerms> {
@@ -129,7 +129,7 @@ describe("one case per rule term of 13.1, through the table helpers", () => {
   it("Boneyard: landing and detour halved (930, 1050), curves ×1.5 (850 at A 600)", () => {
     expect(landingKeepPm(R, 600, t("repairable"))).toBe(930);
     expect(groundDetourPm(R, t("repairable"))).toBe(1050);
-    const sprint = buildCourseGeometry(RULESET_V1, {
+    const sprint = buildCourseGeometry(SPEC_RULESET, {
       id: "c",
       version: 1,
       biome: "desert",

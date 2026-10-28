@@ -1,7 +1,7 @@
 import { floorDiv } from "@falconess/rng";
 import { BOOST_MODES, RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1 } from "../rulesets/index.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import {
   addCap,
   engineUnits,
@@ -41,7 +41,7 @@ import {
   VEL_PER_MMS,
 } from "./units.js";
 
-const R = RULESET_V1.race;
+const R = SPEC_RULESET.race;
 
 describe("engine units (docs/race-engine.md 1.1)", () => {
   it("derives pu and vu from the tick rate", () => {

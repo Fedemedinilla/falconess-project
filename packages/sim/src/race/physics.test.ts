@@ -2,7 +2,6 @@ import { loadContent } from "@falconess/content";
 import { type Course, RaceModifier } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { compileRule } from "../rules/index.js";
-import { RULESET_V1 } from "../rulesets/index.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { compileTraits, defaultTraits } from "./modifiers.js";
 import {
@@ -44,10 +43,11 @@ import {
   waterHitMd,
   weightedPower,
 } from "./physics.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import { engineUnits, SEG_CURVES, SEG_JUMP } from "./units.js";
 
 const content = loadContent();
-const R = RULESET_V1.race;
+const R = SPEC_RULESET.race;
 const NONE = compileRule(R, "none", "desert");
 const stats600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 
@@ -69,7 +69,7 @@ function factors(
 ) {
   const traits = compileTraits((opts.modifiers ?? []).map((m) => RaceModifier.parse(m)));
   const terms = opts.rule ? compileRule(R, opts.rule, "desert") : NONE;
-  const G = buildCourseGeometry(RULESET_V1, c);
+  const G = buildCourseGeometry(SPEC_RULESET, c);
   return Array.from(
     segmentFactors(R, G, { stats: { ...stats600, agility: opts.agility ?? 600 }, traits }, terms),
   );
@@ -409,7 +409,7 @@ describe("finish helpers (docs/race-engine.md 19)", () => {
 });
 
 describe("2^53 bounds of docs/race-engine.md 1.5: the helpers at the maxima", () => {
-  // Each helper runs at the validator's maxima (1.4) and the v1 constants, and must return the
+  // Each helper runs at the validator's maxima (1.4) and the spec constants, and must return the
   // exact floor computed with BigInt, every intermediate product of its formula at most 2^53 − 1.
   // A helper whose product order pushed an intermediate past 2^53 would round and miss the floor.
   const SAFE = BigInt(Number.MAX_SAFE_INTEGER);

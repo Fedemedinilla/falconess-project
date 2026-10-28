@@ -2,6 +2,7 @@ import { loadContent } from "@falconess/content";
 import { RaceModifier } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { applyBuild, resolveFrameBuild } from "./frame-build.js";
+import { RULESET_V1 } from "./rulesets/index.js";
 
 const content = loadContent();
 const base = { powerToWeight: 1000, energy: 100, dissipation: 60, durability: 100 };
@@ -74,7 +75,8 @@ describe("applyBuild: the arithmetic shared by resolveFrameBuild and fixtureBuil
         manufacturer: frame.manufacturer,
         rule,
         style: frame.style,
-        powerToWeight: rule === "telemetry" ? Math.min(pw, 1100) : pw,
+        // the default cap is the live ruleset's, the one the season resolves frames with
+        powerToWeight: rule === "telemetry" ? Math.min(pw, RULESET_V1.race.telemetryPowerCap) : pw,
         energy: frame.stats.energy,
         dissipation: frame.stats.dissipation,
         durabilityMax: frame.stats.durability,

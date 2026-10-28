@@ -2,7 +2,6 @@ import { loadContent } from "@falconess/content";
 import { U32_RANGE, uPm } from "@falconess/rng";
 import type { RaceEntry, RaceSkill, RaceSkillEffect, RaceSkillTrigger } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1 } from "../rulesets/index.js";
 import { simulateRace } from "./engine.js";
 import { freezeSkill } from "./entry.js";
 import { disableSkill, neutralFixtureEntry } from "./fixtures.js";
@@ -24,10 +23,11 @@ import {
   initState,
   type RaceArena,
 } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import { PH_FINAL, PH_MIDDLE, PH_START, SEG_DESCENT, SEG_FLAT, SEG_WATER } from "./units.js";
 
 const content = loadContent();
-const R = RULESET_V1.race;
+const R = SPEC_RULESET.race;
 const SPRINT = content.getCourse("desert-sprint");
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 
@@ -77,7 +77,7 @@ function setup(skills: RaceSkill[], u: number[][] = [], over: Partial<RaceEntry>
     ...neutralFixtureEntry({ runnerId: "fx", laneIndex: 0, style: "hover", stats: S600, skills }),
     ...over,
   };
-  const G = buildCourseGeometry(RULESET_V1, SPRINT);
+  const G = buildCourseGeometry(SPEC_RULESET, SPRINT);
   const A = createRaceArena().reset(1, G);
   const U = new Array<number>(32).fill(0);
   u.forEach((row, j) => {
@@ -86,8 +86,8 @@ function setup(skills: RaceSkill[], u: number[][] = [], over: Partial<RaceEntry>
     });
   });
   A.U.set(U);
-  buildTables(RULESET_V1, [e], G, A);
-  initState(RULESET_V1, [e], A);
+  buildTables(SPEC_RULESET, [e], G, A);
+  initState(SPEC_RULESET, [e], A);
   const calls: string[] = [];
   const sink: SkillSink = {
     onSkill: (_i, j, p, uu, k) => calls.push(`skill ${j} p${p} u${uu} k${k}`),
@@ -403,7 +403,7 @@ describe("skills inside simulateRace (docs/race-engine.md 15, 3.2)", () => {
   });
 
   it("logs skill and skillMiss events with p and u, and the ledger lists them", () => {
-    const log = simulateRace(RULESET_V1, [fixture(0), fixture(1)], SPRINT, "skills-1");
+    const log = simulateRace(SPEC_RULESET, [fixture(0), fixture(1)], SPRINT, "skills-1");
     const evs = (log.events ?? []).filter((e) => e.kind === "skill" || e.kind === "skillMiss");
     expect(evs.length).toBeGreaterThan(0);
     for (const r of log.results) {
@@ -436,8 +436,8 @@ describe("skills inside simulateRace (docs/race-engine.md 15, 3.2)", () => {
   it("disableSkill: p 0 in derived, no event for it, every draw unchanged (P6b)", () => {
     const on = [fixture(0), fixture(1)];
     const off = on.map((e) => disableSkill(e, "corner-carver"));
-    const a = simulateRace(RULESET_V1, on, SPRINT, "abl");
-    const b = simulateRace(RULESET_V1, off, SPRINT, "abl");
+    const a = simulateRace(SPEC_RULESET, on, SPRINT, "abl");
+    const b = simulateRace(SPEC_RULESET, off, SPRINT, "abl");
     for (const lane of [0, 1]) {
       const da = a.derived[lane];
       const db = b.derived[lane];
@@ -459,7 +459,7 @@ describe("skills inside simulateRace (docs/race-engine.md 15, 3.2)", () => {
     const base = fixture(0, { stats: { ...S600, intelligence: 100 } }); // p = 200 or less
     const lucky: RaceEntry = { ...base, traits: { ...base.traits, randomSkillGuaranteed: true } };
     for (const seed of ["l1", "l2", "l3", "l4", "l5", "l6"]) {
-      const log = simulateRace(RULESET_V1, [lucky], SPRINT, seed);
+      const log = simulateRace(SPEC_RULESET, [lucky], SPRINT, seed);
       const id = log.derived[0]?.luckySkill;
       expect(id).not.toBeNull();
       expect(log.results[0]?.ledger.skillsActivated).toContain(id);

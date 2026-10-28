@@ -1965,6 +1965,18 @@ identifier `Date`, no `Math.pow/sqrt`, no float division in race math.
 
 ## 24. Test plan (item 24)
 
+**Pinned ruleset (before balance pass 1).** The tests below that pin numbers measured on the
+section 26 constants (the worked values of 11.4, the tables and anchors of 25.4, the prototype
+cross-checks, the property thresholds, the rule-term tables, the physics and controller unit
+tests) run on `SPEC_RULESET` (`packages/sim/src/race/testing/spec-ruleset.ts`): a deep-frozen copy
+of those constants, test support only and not exported from the package index, so a balance pass
+tunes `rulesets/v1` without moving them. The goldens (24.3), the season, the batch and content
+validation stay on `RULESET_V1`. `SPEC_RULESET.season` is the live `SEASON` (`Ruleset.season` is
+typed as the literal v1 object, so a frozen copy would not typecheck after a season tune). The
+test rulesets of 24.2 are built from `SPEC_RULESET` the same way. The content those tests read
+(the three desert courses, real frames, parts and skills) is not frozen: a content change still
+moves them.
+
 ### 24.1 Unit tests (Vitest, exact integers)
 
 | Area | Cases |

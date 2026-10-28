@@ -2,12 +2,13 @@ import { loadContent } from "@falconess/content";
 import type { Course, EntryInput, RaceEntry, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
+import type { Ruleset } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { createRaceArena, F_FINISHED, type RaceArena } from "./state.js";
+import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 /**
  * simulateRace end to end (docs/race-engine.md 18-20, 24.2): smoke runs on the three content
@@ -21,8 +22,8 @@ const course = (id: string) => content.getCourse(id);
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
 const QUIET: Ruleset = {
-  ...RULESET_V1,
-  race: { ...RULESET_V1.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
+  ...SPEC_RULESET,
+  race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
 
 function at<T>(arr: readonly T[] | undefined, i: number): T {
@@ -54,7 +55,7 @@ function frozen(frameId: string, c: Course, lane: number, learnedSkills: string[
     learnedSkills,
     durability: null,
   };
-  return freezeEntry(RULESET_V1, content, input, c, lane);
+  return freezeEntry(SPEC_RULESET, content, input, c, lane);
 }
 
 /** Two of each style on the neutral fixture frame (the S1 field). */
@@ -104,7 +105,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
       expect(quiet).toEqual(QUIET_MILLI[id]);
       const noisy = STYLES.map(
         (st) =>
-          byLane(simulateRace(RULESET_V1, [fixture(st, 0)], course(id), "ref-seed"))[0]
+          byLane(simulateRace(SPEC_RULESET, [fixture(st, 0)], course(id), "ref-seed"))[0]
             ?.finishMilli,
       );
       expect(noisy).toEqual(NOISY_MILLI[id]);
@@ -157,7 +158,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
       },
     };
     for (const id of COURSES) {
-      const log = simulateRace(RULESET_V1, realField(course(id)), course(id), "s1", {
+      const log = simulateRace(SPEC_RULESET, realField(course(id)), course(id), "s1", {
         detail: "results",
       });
       const rs = byLane(log);
@@ -173,7 +174,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
       const c = course(id);
       const L = c.segments.reduce((m, s) => m + s.length, 0);
       for (const entries of [neutralField(), realField(c)]) {
-        const log = simulateRace(RULESET_V1, entries, c, `smoke-${id}`);
+        const log = simulateRace(SPEC_RULESET, entries, c, `smoke-${id}`);
         expect(RaceLog.parse(log)).toEqual(log);
         expect(log.results.map((r) => r.place)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
         for (const r of log.results) {
@@ -203,7 +204,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
       short([{ type: "jump", length: 50, liftRequired: 5 }]),
       short([{ type: "water", length: 50, drag: 0.2 }]),
     ]) {
-      const log = simulateRace(RULESET_V1, neutralField(), c, "short");
+      const log = simulateRace(SPEC_RULESET, neutralField(), c, "short");
       expect(log.geometry.biome).toBe("desert");
       expect(log.geometry.reserveAtMm).toBe(0);
       expect(log.geometry.denseFromMm).toBe(25_000);
@@ -213,7 +214,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
     }
     // 60 m is the first length with no clamp
     const sixty = simulateRace(
-      RULESET_V1,
+      SPEC_RULESET,
       neutralField(),
       short([{ type: "flat", length: 60 }]),
       "s",
@@ -229,7 +230,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
     expect(e.rule).toBe("regen");
     let changes = 0;
     let prev = 0;
-    const log = simulateRaceProbed(RULESET_V1, [e], c, "d54", (_t, A) => {
+    const log = simulateRaceProbed(SPEC_RULESET, [e], c, "d54", (_t, A) => {
       const key = (A.state.mode[0] ?? 0) * 1_000_000 + (A.state.modeLevel[0] ?? 0);
       if (key !== prev) changes++;
       prev = key;
@@ -244,7 +245,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
   });
 
   it("the ridge flyers lift twice (35 energy) and land twice; ground detours both jumps", () => {
-    const log = simulateRace(RULESET_V1, neutralField(), course("desert-ridge"), "ridge");
+    const log = simulateRace(SPEC_RULESET, neutralField(), course("desert-ridge"), "ridge");
     for (const r of log.results) {
       const ground = at(log.entries, r.lane).style === "ground";
       expect([r.ledger.jumpsOk, r.ledger.jumpsFailed, r.ledger.detours]).toEqual(
@@ -264,19 +265,19 @@ describe("determinism and options (properties P1, P7)", () => {
     const entries = realField(c);
     const before = JSON.stringify(entries);
     const courseBefore = JSON.stringify(c);
-    const a = JSON.stringify(simulateRace(RULESET_V1, entries, c, "det"));
-    const b = JSON.stringify(simulateRace(RULESET_V1, [...entries].reverse(), c, "det"));
+    const a = JSON.stringify(simulateRace(SPEC_RULESET, entries, c, "det"));
+    const b = JSON.stringify(simulateRace(SPEC_RULESET, [...entries].reverse(), c, "det"));
     expect(b).toBe(a);
     expect(JSON.stringify(entries)).toBe(before);
     expect(JSON.stringify(c)).toBe(courseBefore);
-    const other = JSON.stringify(simulateRace(RULESET_V1, entries, c, "det-2"));
+    const other = JSON.stringify(simulateRace(SPEC_RULESET, entries, c, "det-2"));
     expect(other).not.toBe(a);
   });
 
   it("the log never aliases the caller's entries", () => {
     const c = course("desert-sprint");
     const entries = neutralField();
-    const log = simulateRace(RULESET_V1, entries, c, "alias");
+    const log = simulateRace(SPEC_RULESET, entries, c, "alias");
     at(log.entries, 0).skills.push(at(realField(c)[0]?.skills, 0));
     at(log.entries, 0).traits.segMultiplyPm[0] = 1;
     expect(at(entries, 0).skills).toEqual([]);
@@ -287,13 +288,13 @@ describe("determinism and options (properties P1, P7)", () => {
     const arena = createRaceArena();
     for (const id of COURSES) {
       const c = course(id);
-      const geometry = buildCourseGeometry(RULESET_V1, c);
+      const geometry = buildCourseGeometry(SPEC_RULESET, c);
       const entries = realField(c);
-      const full = simulateRace(RULESET_V1, entries, c, "p7");
+      const full = simulateRace(SPEC_RULESET, entries, c, "p7");
       const variants = [
-        simulateRace(RULESET_V1, entries, c, "p7", { detail: "results" }),
-        simulateRace(RULESET_V1, entries, c, "p7", { arena }),
-        simulateRace(RULESET_V1, entries, c, "p7", { geometry, arena, detail: "results" }),
+        simulateRace(SPEC_RULESET, entries, c, "p7", { detail: "results" }),
+        simulateRace(SPEC_RULESET, entries, c, "p7", { arena }),
+        simulateRace(SPEC_RULESET, entries, c, "p7", { geometry, arena, detail: "results" }),
       ];
       for (const v of variants) {
         expect(JSON.stringify(v.results)).toBe(JSON.stringify(full.results));
@@ -308,8 +309,8 @@ describe("determinism and options (properties P1, P7)", () => {
 
   it("rejects a geometry built for another course", () => {
     const sprint = course("desert-sprint");
-    const geometry = buildCourseGeometry(RULESET_V1, course("desert-ridge"));
-    expect(() => simulateRace(RULESET_V1, neutralField(), sprint, "g", { geometry })).toThrow(
+    const geometry = buildCourseGeometry(SPEC_RULESET, course("desert-ridge"));
+    expect(() => simulateRace(SPEC_RULESET, neutralField(), sprint, "g", { geometry })).toThrow(
       /geometry/,
     );
   });
@@ -385,10 +386,10 @@ describe("bounds on every tick (property P4)", () => {
         frozen("sylphe", c, 7, ["second-wind", "lead-guard"]),
       ];
       for (const seed of ["b1", "b2"]) {
-        const log = checkBounds(RULESET_V1, edge, c, seed);
+        const log = checkBounds(SPEC_RULESET, edge, c, seed);
         expect(log.results.every((r) => !r.dnf)).toBe(true);
       }
-      checkBounds(RULESET_V1, realField(c), c, "b3");
+      checkBounds(SPEC_RULESET, realField(c), c, "b3");
     }
   });
 });
@@ -406,7 +407,7 @@ describe("log consistency (properties P5, P8)", () => {
     it(`${id}: places, finish events, time intervals, frames, boost counts, energy identity, integers`, () => {
       const c = course(id);
       const entries = realField(c);
-      const log = simulateRace(RULESET_V1, entries, c, `p5-${id}`);
+      const log = simulateRace(SPEC_RULESET, entries, c, `p5-${id}`);
       const n = entries.length;
       expect([...log.results.map((r) => r.place)].sort((a, b) => a - b)).toEqual(
         Array.from({ length: n }, (_, k) => k + 1),
@@ -493,11 +494,11 @@ describe("race-wide sampling (docs/race-engine.md 20.4)", () => {
   it("rows: T = 0, every tick of the first second, every 15th, finish ticks, last 25 m, last tick", () => {
     const c = course("desert-sprint");
     const entries = [fixture("glide", 0), fixture("hover", 1, { powerToWeight: 900 })];
-    const G = buildCourseGeometry(RULESET_V1, c);
+    const G = buildCourseGeometry(SPEC_RULESET, c);
     const expected = [0];
     const finishedBefore = [false, false];
     let probe: Probe | null = null;
-    const log = simulateRaceProbed(RULESET_V1, entries, c, "rows", (t, arena) => {
+    const log = simulateRaceProbed(SPEC_RULESET, entries, c, "rows", (t, arena) => {
       probe = { arena, t };
       const S = arena.state;
       const T = t + 1;
