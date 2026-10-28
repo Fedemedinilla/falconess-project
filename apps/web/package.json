@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "build:artifact": "vite build --mode artifact",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "vite build && vite build --mode artifact && playwright test",
+    "test:e2e:dev": "E2E_DEV=1 playwright test --project app",
+    "test:e2e:shots": "vite build && E2E_SHOTS=1 playwright test --project shots"
   },
   "dependencies": {
     "@falconess/race-view": "workspace:*",
@@ -20,6 +23,7 @@
   },
   "devDependencies": {
     "@falconess/content": "workspace:*",
+    "@playwright/test": "1.63.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
