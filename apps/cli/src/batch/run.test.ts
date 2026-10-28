@@ -3,7 +3,7 @@ import { BalanceReport } from "@falconess/schema";
 import { RULESET_V1 } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { buildCatalog } from "./catalog.js";
-import { createEngineAdapter, EngineUnavailableError } from "./engine-adapter.js";
+import { createEngineAdapter } from "./engine-adapter.js";
 import type { RaceEnginePort } from "./engine-port.js";
 import { createExecContext, runJob } from "./execute.js";
 import { arenaUses, createFakeEngine } from "./fake-engine.js";
@@ -28,31 +28,31 @@ function withoutTiming(r: BalanceReport): unknown {
 }
 
 describe("engine adapter", () => {
-  it("binds the real engine; generateField throws until @falconess/sim exports it", () => {
+  it("binds the real engine, generateField included", () => {
     const port = createEngineAdapter();
     expect(port.engineId).toBe("v1");
     const course = content.getCourse("desert-sprint");
-    expect(() =>
-      port.generateField(RULESET_V1, content, {
-        course,
-        turn: 1,
-        raceSeed: "s",
-        player: {
-          runnerId: "player",
-          kind: "player",
-          falconessId: "peregrina",
-          baseStats: { agility: 1, stamina: 1, technique: 1, courage: 1, intelligence: 1 },
-          mood: 0,
-          biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
-          styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
-          frameId: "peregrina-signature",
-          parts: [],
-          quirks: [],
-          learnedSkills: [],
-          durability: null,
-        },
-      }),
-    ).toThrow(EngineUnavailableError);
+    const field = port.generateField(RULESET_V1, content, {
+      course,
+      turn: 1,
+      raceSeed: "s",
+      player: {
+        runnerId: "player",
+        kind: "player",
+        falconessId: "peregrina",
+        baseStats: { agility: 1, stamina: 1, technique: 1, courage: 1, intelligence: 1 },
+        mood: 0,
+        biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
+        styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+        frameId: "peregrina-signature",
+        parts: [],
+        quirks: [],
+        learnedSkills: [],
+        durability: null,
+      },
+    });
+    expect(field.map((e) => e.laneIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(field.filter((e) => e.kind === "player")).toHaveLength(1);
   });
 
   it("runs one job of every race scenario on the real engine without a DNF", () => {
@@ -164,7 +164,7 @@ describe("runBatch with the fake engine", () => {
     expect(report.metadata.plannedRaces).toBe(1000);
     expect(report.metadata.races).toBeLessThanOrEqual(1000);
     expect(report.metadata.engine).toBe("fake");
-    expect(report.metadata.seasonEngine).toBe("stub");
+    expect(report.metadata.seasonEngine).toBe("v1");
     expect(report.metrics.map((m) => m.number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     const s1 = report.metadata.budget.find((b) => b.key === "S1");
     expect(s1?.perCell).toEqual([40, 40, 40]);

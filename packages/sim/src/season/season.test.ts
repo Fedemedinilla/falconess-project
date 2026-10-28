@@ -2,10 +2,13 @@ import { loadContent } from "@falconess/content";
 import type { RunInput, SeasonState } from "@falconess/schema";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1 } from "../rulesets/index.js";
+import { simulateRace } from "../race/engine.js";
+import { goalRaceSetup } from "../race/field.js";
+import { RULESET_V1, type Ruleset } from "../rulesets/index.js";
 import { lowestStat } from "../stats.js";
-import { advanceSeason, InvalidInputError } from "./advance.js";
+import { advanceSeason, goalRaceState, InvalidInputError } from "./advance.js";
 import type { SimContext } from "./context.js";
+import { goalForTurn } from "./goals.js";
 import { blackBoxFor, replaySeason } from "./replay.js";
 import { startSeason } from "./start.js";
 import { trainingGain } from "./training.js";
@@ -320,5 +323,123 @@ describe("advanceSeason", () => {
       }),
       { numRuns: 25 },
     );
+  });
+});
+
+/** Every goal race of a season: the input that ran it and the states around it. */
+function goalRaces(seed: string, start: RunInput = START, policy = lowestStatPolicy) {
+  if (start.kind !== "start") throw new Error("bad start");
+  let state = startSeason(ctx, seed, start);
+  const out: { before: SeasonState; input: RunInput; after: SeasonState }[] = [];
+  while (state.status === "active") {
+    const input = policy(state);
+    const after = advanceSeason(ctx, state, input);
+    if (after.raceResults.length > state.raceResults.length)
+      out.push({ before: state, input, after });
+    state = after;
+  }
+  return out;
+}
+
+describe("goal races on the race engine (docs/race-engine.md 21.2)", () => {
+  it("records engine v1 results that a viewer rebuilds exactly from (seed, turn) and the state", () => {
+    for (const who of ["peregrina", "cernicala", "caracara"]) {
+      const races = goalRaces(`viewer-${who}`, { ...START, falconessId: who });
+      expect(races.length).toBeGreaterThanOrEqual(1);
+      for (const { before, input, after } of races) {
+        const result = after.raceResults.at(-1);
+        if (!result) throw new Error("no result");
+        expect(result.engine).toBe("v1");
+        expect(result.fieldSize).toBe(8);
+        expect(result.frameId).toBe(before.equippedFrame);
+        const at = goalRaceState(ctx, before, input);
+        if (!at) throw new Error("no race state");
+        const goal = goalForTurn(ctx, at);
+        if (!goal) throw new Error("no goal");
+        const { course, raceSeed, entries } = goalRaceSetup(ctx, at, goal);
+        expect(raceSeed).toBe(`${before.seed}/race/${result.turn}`);
+        // P7: detail "full" changes nothing in the results
+        const log = simulateRace(ctx.ruleset, entries, course, raceSeed, { detail: "full" });
+        const me = log.results.find((r) => r.runnerId === "player");
+        if (!me) throw new Error("no player result");
+        expect(me.dnf).toBe(false);
+        expect(result.place).toBe(me.place);
+        expect(result.timeTicks).toBe(me.timeTicks);
+        // D35: the frame keeps the durability it ended the race with
+        expect(after.frameDurability[result.frameId]).toBe(Math.floor(me.durabilityEnd / 1000));
+        const entry = entries.find((e) => e.runnerId === "player");
+        expect(entry?.durabilityStart).toBe(
+          Math.min(entry?.durabilityMax ?? 0, at.frameDurability[at.equippedFrame] ?? 0),
+        );
+      }
+    }
+  });
+
+  it("takes no season draw: the race-time state is the input applied, nothing else", () => {
+    const [first] = goalRaces("no-draw");
+    if (!first) throw new Error("no race");
+    const at = goalRaceState(ctx, first.before, first.input);
+    expect(at?.stats).toEqual(first.after.stats);
+    expect(at?.learnedSkills).toEqual(first.after.learnedSkills);
+    expect(at?.mood).toBe(first.after.mood);
+    expect(goalRaceState(ctx, first.after, { kind: "rest" })).toBeUndefined();
+  });
+
+  it("persists durability between races: a worn frame starts its next race worn", () => {
+    let s = startSeason(ctx, "worn", START);
+    while (s.turn < 12) {
+      if (s.pendingEvent) s = advanceSeason(ctx, s, { kind: "event:choose", option: 0 });
+      else s = advanceSeason(ctx, s, { kind: "rest" });
+    }
+    s = { ...s, frameDurability: { ...s.frameDurability, [s.equippedFrame]: 3 } };
+    const at = goalRaceState(ctx, s, { kind: "rest" });
+    const goal = at && goalForTurn(ctx, at);
+    if (!at || !goal) throw new Error("turn 12 has a goal");
+    const player = goalRaceSetup(ctx, at, goal).entries.find((e) => e.kind === "player");
+    expect(player?.durabilityStart).toBe(3);
+    const after = advanceSeason(ctx, s, { kind: "rest" });
+    expect(after.frameDurability[s.equippedFrame]).toBeLessThanOrEqual(3);
+  });
+
+  it("maps a DNF to last place with maxTicks, and fails the goal", () => {
+    const tiny: Ruleset = {
+      ...RULESET_V1,
+      race: { ...RULESET_V1.race, dnfTicksPerMeter: 0, dnfTicksBase: 30 },
+    };
+    const dctx: SimContext = { ruleset: tiny, content: ctx.content };
+    let s = startSeason(dctx, "dnf", START);
+    while (s.turn < 12) {
+      if (s.pendingEvent) s = advanceSeason(dctx, s, { kind: "event:choose", option: 0 });
+      else s = advanceSeason(dctx, s, { kind: "rest" });
+    }
+    const after = advanceSeason(dctx, s, { kind: "rest" });
+    expect(after.raceResults.at(-1)).toMatchObject({ place: 8, timeTicks: 30, engine: "v1" });
+    expect(after.lastRace?.outcome).toBe("goal-failed");
+    expect(after.wallet.scrap - s.wallet.scrap).toBe(RULESET_V1.season.scrapByPlace[7]);
+  });
+
+  it("caps learning at maxLearnedSkills + the build's skillSlots (ADR-0003 D36)", () => {
+    const s0 = startSeason(ctx, "cap", START);
+    const generic = [...ctx.content.skills.values()]
+      .filter((k) => k.kind === "active" && k.uniqueTo === undefined)
+      .map((k) => k.id)
+      .sort();
+    const learn = (s: SeasonState, ids: string[]) =>
+      advanceSeason(ctx, s, {
+        kind: "workshop",
+        ops: ids.map((skillId) => ({ op: "learn-skill" as const, skillId })),
+      });
+    const rich = { ...s0, skillPoints: 10_000 };
+    const cap = RULESET_V1.season.maxLearnedSkills;
+    const six = learn(rich, generic.slice(0, cap - 1));
+    expect(six.learnedSkills).toHaveLength(cap);
+    expect(() => learn(rich, generic.slice(0, cap))).toThrow(/skill limit 6/);
+    const firmware = advanceSeason(ctx, rich, {
+      kind: "workshop",
+      ops: [{ op: "install-part", partId: "altair-firmware" }],
+    });
+    const seven = learn(firmware, generic.slice(0, cap));
+    expect(seven.learnedSkills).toHaveLength(cap + 1);
+    expect(() => learn(firmware, generic.slice(0, cap + 1))).toThrow(/skill limit 7/);
   });
 });

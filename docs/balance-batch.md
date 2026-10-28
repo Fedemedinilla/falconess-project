@@ -36,8 +36,8 @@ The batch never imports the race engine directly. `batch/engine-port.ts` declare
 `batch/engine-types.ts` re-exports the race types of `@falconess/schema` (§3, §20) and the
 internal `RaceArena`, `CourseGeometry`, `FixtureBuild` and `SimulateOptions` of `@falconess/sim`;
 the port's `simulateRace` returns `BatchRaceLog`, the fields of a `RaceLog` the batch reads. The
-adapter (`batch/engine-adapter.ts`) binds the nine operations to `@falconess/sim`; `generateField`
-is a stub that throws until the engine exports it (the batch never calls it).
+adapter (`batch/engine-adapter.ts`) binds the nine operations to `@falconess/sim` (the batch never
+calls `generateField` itself).
 `batch/fake-engine.ts` keeps a deterministic integer stand-in for `simulateRace` for the tests
 (draws depend on `(seed, lane)` only, like §17.1, so paired ablations line up); its content side
 is the real engine's.

@@ -19,6 +19,23 @@ export function maxDurability(ctx: SimContext, d: Draft, frameId: string): numbe
   return resolveFrameBuild(ctx.content, frameId, parts, d.frameQuirks[frameId] ?? []).durabilityMax;
 }
 
+/**
+ * How many skills the Falconess can hold (ADR-0003 D36): `maxLearnedSkills` plus the equipped
+ * build's `skillSlots` (altair-firmware), at most the race's `maxSkills` actives per entry (8).
+ */
+export function learnCap(ctx: SimContext, d: Draft): number {
+  const build = resolveFrameBuild(
+    ctx.content,
+    d.equippedFrame,
+    d.installedParts,
+    d.frameQuirks[d.equippedFrame] ?? [],
+  );
+  return Math.min(
+    ctx.ruleset.race.maxSkills,
+    ctx.ruleset.season.maxLearnedSkills + build.skillSlots,
+  );
+}
+
 export class WorkshopError extends Error {}
 
 export function applyWorkshop(
@@ -72,8 +89,9 @@ export function applyWorkshop(
           throw new WorkshopError(`${op.skillId} is unique to ${skill.uniqueTo}`);
         if (d.learnedSkills.includes(op.skillId))
           throw new WorkshopError(`${op.skillId} already learned`);
-        if (d.learnedSkills.length >= S.maxLearnedSkills)
-          throw new WorkshopError(`skill limit ${S.maxLearnedSkills} reached`);
+        const limit = learnCap(ctx, d);
+        if (d.learnedSkills.length >= limit)
+          throw new WorkshopError(`skill limit ${limit} reached`);
         if (d.skillPoints < skill.cost)
           throw new WorkshopError(`need ${skill.cost} skill points, have ${d.skillPoints}`);
         d.skillPoints -= skill.cost;

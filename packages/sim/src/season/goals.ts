@@ -1,65 +1,49 @@
-import type { Rng } from "@falconess/rng";
-import type { RaceOutcome } from "@falconess/schema";
-import { resolveFrameBuild } from "../frame-build.js";
-import { raceStub } from "../race/stub.js";
-import { effectiveStats } from "../stats.js";
+import type { RaceOutcome, RaceResult, SeasonGoal, SeasonState } from "@falconess/schema";
+import { simulateRace } from "../race/engine.js";
+import { goalRaceSetup, PLAYER_RUNNER_ID } from "../race/field.js";
 import { type Draft, note, type SimContext } from "./context.js";
 
-export function goalForTurn(ctx: SimContext, d: Draft) {
-  return ctx.content.getFalconess(d.falconessId).seasonGoals.find((g) => g.turn === d.turn);
+/** The goal race of the state's turn, if any. */
+export function goalForTurn(
+  ctx: SimContext,
+  s: Pick<SeasonState, "falconessId" | "turn">,
+): SeasonGoal | undefined {
+  return ctx.content.getFalconess(s.falconessId).seasonGoals.find((g) => g.turn === s.turn);
 }
 
-/** Run this turn's goal race (if any). Returns the outcome or undefined when no race was due. */
-export function runGoalRace(ctx: SimContext, d: Draft, rng: Rng): RaceOutcome | undefined {
+/**
+ * Run this turn's goal race (if any) on the race engine (docs/race-engine.md 21.2): the field of
+ * `goalRaceSetup`, seed `${seed}/race/${turn}`, `detail: "results"`. Takes no draw from the
+ * season's per-input Rng. Records the result (a DNF is last place with `maxTicks`), pays scrap by
+ * place, persists the equipped frame's durability (ADR-0003 D35) and maps the outcome. Returns
+ * the outcome, or undefined when no race was due.
+ */
+export function runGoalRace(ctx: SimContext, d: Draft): RaceOutcome | undefined {
   const goal = goalForTurn(ctx, d);
   if (!goal) return undefined;
-  const falconess = ctx.content.getFalconess(d.falconessId);
-  const course = ctx.content.getCourse(goal.courseId);
-  const build = resolveFrameBuild(
-    ctx.content,
-    d.equippedFrame,
-    d.installedParts,
-    d.frameQuirks[d.equippedFrame] ?? [],
-  );
-  const eff = effectiveStats(
-    ctx.ruleset,
-    d.stats,
-    d.mood,
-    d.biomeAptitude,
-    d.styleAptitude,
-    course.biome,
-    build.style,
-  );
-  const res = raceStub(
-    ctx.ruleset,
-    rng,
-    course,
-    d.turn,
-    eff,
-    build,
-    build.style === falconess.preferredStyle,
-  );
+  const { course, raceSeed, entries } = goalRaceSetup(ctx, d, goal);
+  const log = simulateRace(ctx.ruleset, entries, course, raceSeed, { detail: "results" });
+  const me: RaceResult | undefined = log.results.find((r) => r.runnerId === PLAYER_RUNNER_ID);
+  if (!me) throw new Error(`goal race ${raceSeed}: no result for the player`);
+  const fieldSize = entries.length;
+  const place = me.dnf ? fieldSize : me.place;
+  const timeTicks = me.dnf || me.timeTicks === null ? log.maxTicks : me.timeTicks;
 
   d.raceResults.push({
     courseId: course.id,
     turn: d.turn,
-    place: res.place,
-    fieldSize: res.fieldSize,
-    timeTicks: res.timeTicks,
+    place,
+    fieldSize,
+    timeTicks,
     frameId: d.equippedFrame,
-    engine: "stub",
+    engine: "v1",
   });
-  d.wallet.scrap += ctx.ruleset.season.scrapByPlace[res.place - 1] ?? 10;
+  d.frameDurability[d.equippedFrame] = Math.floor(me.durabilityEnd / 1000);
+  d.wallet.scrap += ctx.ruleset.season.scrapByPlace[place - 1] ?? 10;
   note(d, "log.race");
 
   const outcome: RaceOutcome =
-    res.place > goal.minPlace
-      ? "goal-failed"
-      : res.place === 1
-        ? "win"
-        : res.place <= 3
-          ? "podium"
-          : "lose";
+    place > goal.minPlace ? "goal-failed" : place === 1 ? "win" : place <= 3 ? "podium" : "lose";
   d.lastRace = { turn: d.turn, outcome };
   return outcome;
 }

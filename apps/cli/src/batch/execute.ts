@@ -31,7 +31,7 @@ export type SeasonRecord = {
   score: { stats: number; skills: number; races: number; total: number };
   goals: { turn: number; minPlace: number; place: number | null }[];
   goalRaces: number;
-  /** `RaceResultEntry.engine` of the goal races: `stub` until the season is wired. */
+  /** `RaceResultEntry.engine` of the goal races (`v1` since the season runs the race engine, D12). */
   raceEngine: string;
 };
 

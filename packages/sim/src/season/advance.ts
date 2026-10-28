@@ -2,7 +2,7 @@ import type { Rng } from "@falconess/rng";
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { type Draft, draft, note, rngForInput, type SimContext } from "./context.js";
 import { resolveEvent, rollEvent } from "./events.js";
-import { runGoalRace } from "./goals.js";
+import { goalForTurn, runGoalRace } from "./goals.js";
 import { gradeFor } from "./grade.js";
 import { rollCrewPresence } from "./hangar.js";
 import { applyOuting, applyRest, applyTraining } from "./training.js";
@@ -21,7 +21,7 @@ function endSeason(ctx: SimContext, d: Draft, reason: "completed" | "goal-failed
 
 /** Close the turn: race if due, roll an event, and either wait for the choice or move on. */
 function closeTurn(ctx: SimContext, d: Draft, rng: Rng): void {
-  const outcome = runGoalRace(ctx, d, rng);
+  const outcome = runGoalRace(ctx, d);
   rollEvent(ctx, d, rng);
   if (d.pendingEvent) return; // the next input must be event:choose; the turn advances after it
   finishTurn(ctx, d, rng, outcome === "goal-failed");
@@ -62,14 +62,22 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
   }
   if (input.kind === "event:choose") throw new InvalidInputError("no event is pending");
 
+  applyAction(ctx, d, input, rng);
+  closeTurn(ctx, d, rng);
+  return d;
+}
+
+type ActionInput = Exclude<RunInput, { kind: "start" } | { kind: "event:choose" }>;
+
+/** The turn's action: an injured turn rests whatever the input; training at high fatigue rests. */
+function applyAction(ctx: SimContext, d: Draft, input: ActionInput, rng: Rng): void {
   d.log.push({ turn: d.turn, input, notes: [], deltas: {} });
 
   if (d.injuryTurns > 0) {
     d.injuryTurns -= 1;
     d.fatigue = Math.max(0, d.fatigue + ctx.ruleset.season.fatigueCost.rest);
     note(d, "log.injured");
-    closeTurn(ctx, d, rng);
-    return d;
+    return;
   }
 
   const forcedRest =
@@ -94,7 +102,25 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
       applyWorkshop(ctx, d, input.ops, rng);
       break;
   }
+}
 
-  closeTurn(ctx, d, rng);
+/**
+ * The state the goal race of `advanceSeason(ctx, state, input)` runs on: `input` applied by the
+ * same code with the same per-input Rng, stopped before the race. With `goalRaceSetup` it lets a
+ * viewer rebuild that race exactly (docs/race-engine.md 21.2: the race takes no season draw).
+ * Undefined when the input runs no goal race (an event choice, an ended season, no goal this turn).
+ */
+export function goalRaceState(
+  ctx: SimContext,
+  state: SeasonState,
+  input: RunInput,
+): SeasonState | undefined {
+  if (state.status === "ended" || state.pendingEvent) return undefined;
+  if (input.kind === "start" || input.kind === "event:choose") return undefined;
+  const d = draft(state);
+  if (!goalForTurn(ctx, d)) return undefined;
+  const rng = rngForInput(d.seed, d.inputsApplied);
+  d.inputsApplied += 1;
+  applyAction(ctx, d, input, rng);
   return d;
 }

@@ -40,7 +40,7 @@ export function statsLine(s: SeasonState): string {
 export function headerLine(ctx: SimContext, s: SeasonState): string {
   const c = ctx.content;
   const f = c.getFalconess(s.falconessId);
-  const goal = goalForTurn(ctx, s as Parameters<typeof goalForTurn>[1]);
+  const goal = goalForTurn(ctx, s);
   const goalTxt = goal
     ? `  CARRERA: ${c.t(c.getCourse(goal.courseId).textKey)} (min. ${goal.minPlace}º)`
     : "";

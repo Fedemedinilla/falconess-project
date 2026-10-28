@@ -8,14 +8,19 @@ export {
   fixtureBuild,
   freezeEntry,
   freezeSkill,
+  type GenerateFieldArgs,
+  type GoalRaceSetup,
+  generateField,
+  goalRaceSetup,
   neutralFixtureEntry,
+  PLAYER_RUNNER_ID,
   type RaceArena,
+  rivalPool,
   type SimulateOptions,
   simulateRace,
 } from "./race/index.js";
-export { raceStub } from "./race/stub.js";
 export { getRuleset, RULESET_V1, type Ruleset } from "./rulesets/index.js";
-export { advanceSeason, InvalidInputError } from "./season/advance.js";
+export { advanceSeason, goalRaceState, InvalidInputError } from "./season/advance.js";
 export { rngForInput, type SimContext } from "./season/context.js";
 export { eligibleEvents } from "./season/events.js";
 export { goalForTurn } from "./season/goals.js";
@@ -24,7 +29,13 @@ export { bondLevel, hangarManufacturers } from "./season/hangar.js";
 export { blackBoxFor, replaySeason } from "./season/replay.js";
 export { startSeason } from "./season/start.js";
 export { facilityLevel, trainingGain } from "./season/training.js";
-export { maxDurability, rerollCost, rollQuirks, WorkshopError } from "./season/workshop.js";
+export {
+  learnCap,
+  maxDurability,
+  rerollCost,
+  rollQuirks,
+  WorkshopError,
+} from "./season/workshop.js";
 export {
   addStat,
   aptitudeMult,

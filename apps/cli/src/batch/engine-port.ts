@@ -39,7 +39,7 @@ export type RaceEnginePort = {
     course: Course,
     laneIndex: number,
   ): RaceEntry;
-  /** §21.1: the goal-race field. S7 reaches it through the season engine (`goalRaceSetup`). */
+  /** §21.1: the goal-race field; the batch never calls it (S7 races through `goalRaceSetup`). */
   generateField(ruleset: Ruleset, content: ContentIndex, args: GenerateFieldArgs): RaceEntry[];
   /**
    * §23: always called with `detail: "results"`, the worker's arena and the cached geometry. The
