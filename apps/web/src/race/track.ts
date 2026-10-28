@@ -47,7 +47,7 @@ export type ChartGeometry = {
   /** x of the start and of the finish line. */
   readonly x0: number;
   readonly x1: number;
-  /** Rows of the header: phase names, the segment strip, the distance scale. */
+  /** Rows of the header (the whole course): phase names, the segment strip, the distance scale. */
   readonly phaseY: number;
   readonly stripY: number;
   readonly stripH: number;
@@ -55,6 +55,10 @@ export type ChartGeometry = {
   /** Top of the first lane and the height of every lane. */
   readonly lanesY: number;
   readonly laneH: number;
+  /** Under the lanes, in the lanes' scale: the terrain band and its distance marks. */
+  readonly bandY: number;
+  readonly bandH: number;
+  readonly ticksY: number;
 };
 
 export const CHART = {
@@ -63,14 +67,16 @@ export const CHART = {
   /** Room left of the start for a runner's tail and right of the finish for her nose. */
   padL: 14,
   padR: 12,
-  bottom: 6,
+  /** Terrain band and distance marks under the lanes. */
+  footH: 30,
 } as const;
 
 export function chartGeometry(width: number, lanes: number): ChartGeometry {
   const w = Math.max(160, Math.round(width));
+  const lanesEnd = CHART.headH + lanes * CHART.laneH;
   return {
     width: w,
-    height: CHART.headH + lanes * CHART.laneH + CHART.bottom,
+    height: lanesEnd + CHART.footH,
     x0: CHART.padL,
     x1: w - CHART.padR,
     phaseY: 11,
@@ -79,12 +85,61 @@ export function chartGeometry(width: number, lanes: number): ChartGeometry {
     scaleY: 49,
     lanesY: CHART.headH,
     laneH: CHART.laneH,
+    bandY: lanesEnd + 2,
+    bandH: 8,
+    ticksY: lanesEnd + 25,
   };
 }
 
 /** x of a course fraction on the chart. */
 export function xAt(g: ChartGeometry, at: number): number {
   return g.x0 + (g.x1 - g.x0) * Math.max(0, Math.min(1, at));
+}
+
+/** The stretch of course the lanes show, in mm: `a` at the start line's x, `b` at the finish's. */
+export type ChartWindow = { readonly a: number; readonly b: number };
+
+/** x of a course position (mm) in a window; outside the window it runs past the plot. */
+export function xIn(g: ChartGeometry, w: ChartWindow, mm: number): number {
+  return g.x0 + ((g.x1 - g.x0) * (mm - w.a)) / Math.max(1, w.b - w.a);
+}
+
+export const PACK = {
+  /** The narrowest stretch the pack view shows. */
+  minSpanMm: 80_000,
+  /** Room behind the last runner and ahead of the first. */
+  behindMm: 12_000,
+  aheadMm: 12_000,
+} as const;
+
+/**
+ * The pack view: the stretch from just behind the last runner to just ahead of the first, never
+ * narrower than 80 m, starting at the start line while the pack is near it. `span` overrides the
+ * width (the chart eases it from frame to frame).
+ */
+export function packWindow(
+  positions: readonly number[],
+  lengthMm: number,
+  span?: number,
+): ChartWindow & { readonly span: number } {
+  const front = positions.length > 0 ? Math.max(...positions) : 0;
+  const back = positions.length > 0 ? Math.min(...positions) : 0;
+  const wanted = Math.min(
+    lengthMm + PACK.aheadMm,
+    Math.max(PACK.minSpanMm, front - back + PACK.behindMm + PACK.aheadMm),
+  );
+  const width = span ?? wanted;
+  const b = front + PACK.aheadMm;
+  return b - width < 0 ? { a: 0, b: width, span: wanted } : { a: b - width, b, span: wanted };
+}
+
+const TICK_STEPS_M = [10, 20, 25, 50, 100, 200, 250, 500, 1000] as const;
+
+/** A round distance step (mm) giving at most `maxTicks` marks over `spanMm`. */
+export function tickStepMm(spanMm: number, maxTicks: number): number {
+  for (const step of TICK_STEPS_M)
+    if (spanMm <= step * 1000 * Math.max(1, maxTicks)) return step * 1000;
+  return (TICK_STEPS_M[TICK_STEPS_M.length - 1] ?? 1000) * 1000;
 }
 
 export function trackLayout(geometry: RaceGeometry, maxMarks = 6): TrackLayout {

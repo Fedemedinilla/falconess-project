@@ -20,11 +20,9 @@ function Empty({ hasRun }: { hasRun: boolean }) {
         <p className={s.screenLead}>{ui(hasRun ? "ui.goalRace.none.run" : "ui.goalRace.none")}</p>
       </header>
       <div className={s.screenActions}>
-        {hasRun && (
-          <Button id="carrera-temporada" variant="primary" onClick={() => navigate("temporada")}>
-            {ui("ui.goalRace.back")}
-          </Button>
-        )}
+        <Button id="carrera-temporada" variant="primary" onClick={() => navigate("temporada")}>
+          {ui(hasRun ? "ui.goalRace.back" : "ui.goalRace.season")}
+        </Button>
         <Button id="carrera-libre-ir" onClick={() => navigate("carrera-libre")}>
           {ui("ui.goalRace.free")}
         </Button>

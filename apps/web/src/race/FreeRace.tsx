@@ -1,5 +1,5 @@
 import { FIELD_LIMITS } from "@falconess/race-view";
-import type { RaceLog } from "@falconess/schema";
+import type { ContentIndex, RaceLog } from "@falconess/schema";
 import { type FormEvent, useId, useMemo, useState } from "react";
 import { simContext } from "../content/load";
 import { randomSeed } from "../game/seed";
@@ -22,7 +22,7 @@ import {
   skillChoices,
 } from "./free-race";
 import { Replay } from "./RaceReplay";
-import { metres } from "./words";
+import { metres, uiPlural } from "./words";
 
 type Outcome =
   | { readonly ok: true; readonly form: FreeRaceForm; readonly log: RaceLog }
@@ -40,6 +40,37 @@ function run(form: FreeRaceForm): Outcome {
 
 /** The last free race of this page visit: coming back to the screen shows it again. */
 let lastOutcome: Outcome | undefined;
+
+/** The race in one line: course, field, rivals' week and seed. */
+function summary(form: FreeRaceForm, content: ContentIndex): string {
+  const course = content.courses.get(form.courseId);
+  const courseName = course ? gameText(course.textKey) : form.courseId;
+  if (form.field === "neutral")
+    return ui("ui.freeRace.summary.neutral", {
+      course: courseName,
+      stats: form.neutralStats,
+      seed: form.seed,
+    });
+  const falconess = content.falconess.get(form.falconessId);
+  const frameId = form.frameId === "" ? frameChoices(content, form.falconessId)[0] : form.frameId;
+  const frame = frameId === undefined ? undefined : content.frames.get(frameId);
+  const extras = [
+    ...(form.skills.length > 0 ? [uiPlural("ui.freeRace.summary.skills", form.skills.length)] : []),
+    ...(form.parts.length > 0 ? [uiPlural("ui.freeRace.summary.parts", form.parts.length)] : []),
+  ];
+  const text = ui("ui.freeRace.summary.player", {
+    course: courseName,
+    name: falconess ? gameText(falconess.textKey) : form.falconessId,
+    frame: frame ? gameText(frame.textKey) : form.frameId,
+    stats:
+      form.statsMode === "base"
+        ? ui("ui.freeRace.summary.stats.base")
+        : ui("ui.freeRace.summary.stats.uniform", { n: form.stats }),
+    turn: form.turn,
+    seed: form.seed,
+  });
+  return extras.length > 0 ? `${text} · ${extras.join(" · ")}` : text;
+}
 
 function NumberField({
   id,
@@ -149,6 +180,7 @@ export function FreeRace() {
     return lastOutcome;
   });
   const [form, setForm] = useState<FreeRaceForm>(outcome.form);
+  const [editing, setEditing] = useState(!outcome.ok);
   const formKey = useId();
 
   const set = (patch: Partial<FreeRaceForm>) => setForm((f) => ({ ...f, ...patch }));
@@ -158,6 +190,8 @@ export function FreeRace() {
     lastOutcome = next;
     setOutcome(next);
     setForm(next.form);
+    // a race that ran folds the form away so the replay is right under the summary
+    setEditing(!next.ok);
   };
 
   const falconess = content.falconess.get(form.falconessId);
@@ -177,8 +211,33 @@ export function FreeRace() {
         <p className={s.lead}>{ui("ui.freeRace.lead")}</p>
       </header>
 
-      <Panel title={ui("ui.freeRace.form.title")} className={s.formPanel}>
-        <form className={s.form} onSubmit={submit} aria-describedby={`${formKey}-nota`}>
+      <Panel
+        title={ui("ui.freeRace.form.title")}
+        actions={
+          <Button
+            id="libre-cambiar"
+            size="sm"
+            variant={editing ? "ghost" : "secondary"}
+            aria-expanded={editing}
+            aria-controls="libre-form"
+            onClick={() => setEditing((v) => !v)}
+          >
+            {ui(editing ? "ui.freeRace.edit.close" : "ui.freeRace.edit")}
+          </Button>
+        }
+      >
+        <p className={s.summary}>{summary(outcome.form, content)}</p>
+        <p className={s.cli}>
+          <span>{ui("ui.freeRace.cli")}</span>
+          <code>{cliArgs(outcome.form)}</code>
+        </p>
+        <form
+          id="libre-form"
+          className={s.form}
+          onSubmit={submit}
+          aria-describedby={`${formKey}-nota`}
+          hidden={!editing}
+        >
           <div className={s.row}>
             <div className={s.field}>
               <label htmlFor="libre-pista">{ui("ui.freeRace.course")}</label>
@@ -414,13 +473,7 @@ export function FreeRace() {
       </Panel>
 
       {outcome.ok ? (
-        <>
-          <p className={s.cli}>
-            <span>{ui("ui.freeRace.cli")}</span>
-            <code>{cliArgs(outcome.form)}</code>
-          </p>
-          <Replay log={outcome.log} idPrefix="libre" />
-        </>
+        <Replay log={outcome.log} idPrefix="libre" />
       ) : (
         <div className={s.error} role="alert">
           <p>{ui("ui.freeRace.error")}</p>

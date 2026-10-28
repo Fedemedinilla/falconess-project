@@ -1,6 +1,16 @@
 import type { RaceGeometry } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { chartGeometry, scaleStepM, trackLayout, xAt } from "./track";
+import {
+  CHART,
+  chartGeometry,
+  PACK,
+  packWindow,
+  scaleStepM,
+  tickStepMm,
+  trackLayout,
+  xAt,
+  xIn,
+} from "./track";
 
 const ridge: RaceGeometry = {
   biome: "desert",
@@ -64,7 +74,9 @@ describe("chartGeometry", () => {
   it("sizes the plot to its width and one row per lane", () => {
     const g = chartGeometry(400, 8);
     expect(g.width).toBe(400);
-    expect(g.height).toBe(g.lanesY + 8 * g.laneH + 6);
+    expect(g.height).toBe(g.lanesY + 8 * g.laneH + CHART.footH);
+    expect(g.bandY).toBeGreaterThanOrEqual(g.lanesY + 8 * g.laneH);
+    expect(g.ticksY).toBeLessThanOrEqual(g.height);
     expect(xAt(g, 0)).toBe(g.x0);
     expect(xAt(g, 1)).toBe(g.x1);
     expect(xAt(g, 2)).toBe(g.x1);
@@ -73,5 +85,56 @@ describe("chartGeometry", () => {
 
   it("never gets narrower than a phone can draw", () => {
     expect(chartGeometry(20, 8).width).toBe(160);
+  });
+
+  it("maps a window of the course onto the plot", () => {
+    const g = chartGeometry(400, 8);
+    const w = { a: 1_000_000, b: 1_100_000 };
+    expect(xIn(g, w, 1_000_000)).toBe(g.x0);
+    expect(xIn(g, w, 1_100_000)).toBe(g.x1);
+    expect(xIn(g, w, 1_050_000)).toBe((g.x0 + g.x1) / 2);
+    expect(xIn(g, w, 900_000)).toBeLessThan(g.x0);
+  });
+});
+
+describe("packWindow", () => {
+  const L = 2_000_000;
+
+  it("frames the start while the pack is near it", () => {
+    expect(packWindow([0, 0, 0], L)).toEqual({ a: 0, b: PACK.minSpanMm, span: PACK.minSpanMm });
+    expect(packWindow([30_000, 20_000], L).a).toBe(0);
+  });
+
+  it("keeps everyone in view, from just behind the last to just ahead of the first", () => {
+    const w = packWindow([900_000, 1_000_000, 700_000], L);
+    expect(w.b).toBe(1_000_000 + PACK.aheadMm);
+    expect(w.a).toBe(700_000 - PACK.behindMm);
+  });
+
+  it("never gets narrower than the minimum, nor wider than the course", () => {
+    const close = packWindow([1_000_000, 1_001_000], L);
+    expect(close.b - close.a).toBe(PACK.minSpanMm);
+    const spread = packWindow([0, L], L);
+    expect(spread.span).toBe(L + PACK.aheadMm);
+  });
+
+  it("uses an eased width when given one", () => {
+    const w = packWindow([1_000_000, 1_001_000], L, 150_000);
+    expect(w.b - w.a).toBe(150_000);
+    expect(w.span).toBe(PACK.minSpanMm);
+  });
+
+  it("frames the finish once everyone is home", () => {
+    const w = packWindow([L, L, L], L);
+    expect(w.b).toBe(L + PACK.aheadMm);
+  });
+});
+
+describe("tickStepMm", () => {
+  it("picks a round step with at most the asked number of marks", () => {
+    expect(tickStepMm(80_000, 5)).toBe(20_000);
+    expect(tickStepMm(80_000, 8)).toBe(10_000);
+    expect(tickStepMm(2_000_000, 5)).toBe(500_000);
+    expect(tickStepMm(9_000_000, 5)).toBe(1_000_000);
   });
 });

@@ -30,6 +30,25 @@ function Gauge({
   );
 }
 
+/** Where a runner stands: at the start, in front, level, metres behind, or her finish gap. */
+function gapText(
+  tick: number,
+  order: number,
+  finished: boolean,
+  gapMm: number | null,
+  behindMilli: number | null,
+): string {
+  if (finished) {
+    if (order === 1) return ui("ui.race.live.finished");
+    if (behindMilli === null || behindMilli === 0) return ui("ui.race.margin.deadHeat");
+    return ui("ui.race.live.behindTime", { s: withSign(secsMilli(behindMilli, 2)) });
+  }
+  if (tick === 0) return ui("ui.race.live.start");
+  if (gapMm === null || gapMm < 500)
+    return ui(order === 1 ? "ui.race.live.leader" : "ui.race.live.level");
+  return ui("ui.race.live.behind", { m: metres(gapMm, 0) });
+}
+
 export type LivePanelProps = {
   view: RaceView;
   /** Race time in whole ticks. */
@@ -62,17 +81,7 @@ export function LivePanel({ view, tick }: LivePanelProps) {
                 <span className={s.liveNameText}>{r.name}</span>
               </span>
               <span className={s.liveGap}>
-                {sample.finished
-                  ? order === 1
-                    ? ui("ui.race.live.finished")
-                    : behindMilli === null || behindMilli === 0
-                      ? ui("ui.race.margin.deadHeat")
-                      : ui("ui.race.live.behindTime", { s: withSign(secsMilli(behindMilli, 2)) })
-                  : gapMm === null || gapMm < 500
-                    ? order === 1
-                      ? ui("ui.race.live.leader")
-                      : ui("ui.race.live.level")
-                    : ui("ui.race.live.behind", { m: metres(gapMm, 0) })}
+                {gapText(tick, order, sample.finished, gapMm, behindMilli)}
               </span>
               <span className={s.liveSpeed}>
                 {sample.finished ? "" : ui("ui.race.live.speed", { v: mps(sample.vMms, 1) })}

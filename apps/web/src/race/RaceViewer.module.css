@@ -85,6 +85,13 @@
   gap: var(--space-3);
 }
 
+.viewSwitch {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .pending {
   padding: var(--space-4);
   border: 1px dashed var(--line-strong);
@@ -119,10 +126,16 @@
 
 .speeds > button {
   min-width: 2.75rem;
+}
+
+/* joined button groups: speed and the lanes' framing */
+.speeds > button,
+.viewSwitch > button {
   border-radius: 0;
 }
 
-.speeds > button + button {
+.speeds > button + button,
+.viewSwitch > button + button {
   margin-left: -1px;
 }
 

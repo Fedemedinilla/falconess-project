@@ -3,10 +3,11 @@ import type { RaceLog } from "@falconess/schema";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { getContent } from "../content/load";
 import { ui } from "../text/ui";
+import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
 import { Controls } from "./Controls";
 import { ReplayClock } from "./clock";
-import { LaneChart } from "./LaneChart";
+import { type ChartMode, LaneChart } from "./LaneChart";
 import { LivePanel } from "./LivePanel";
 import s from "./RaceViewer.module.css";
 import { Results } from "./Results";
@@ -77,6 +78,7 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
   useEffect(() => () => clock.dispose(), [clock]);
   const snap = useSyncExternalStore(clock.subscribe, clock.getSnapshot, clock.getSnapshot);
   const [revealed, setRevealed] = useState(false);
+  const [mode, setMode] = useState<ChartMode>("pack");
   useEffect(() => {
     if (snap.atEnd) setRevealed(true);
   }, [snap.atEnd]);
@@ -97,9 +99,36 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
       </div>
     );
 
+  const modes: { mode: ChartMode; id: string; key: string }[] = [
+    { mode: "pack", id: `${idPrefix}-vista-peloton`, key: "ui.race.view.pack" },
+    { mode: "course", id: `${idPrefix}-vista-pista`, key: "ui.race.view.course" },
+  ];
+  const viewSwitch = (
+    <fieldset className={s.viewSwitch}>
+      <legend className="visually-hidden">{ui("ui.race.view.label")}</legend>
+      {modes.map((m) => (
+        <Button
+          key={m.mode}
+          id={m.id}
+          size="sm"
+          variant={mode === m.mode ? "primary" : "secondary"}
+          aria-pressed={mode === m.mode}
+          onClick={() => setMode(m.mode)}
+        >
+          {ui(m.key)}
+        </Button>
+      ))}
+    </fieldset>
+  );
+
   return (
     <div className={s.viewer}>
-      <Panel title={labels.courseName(log.courseId)} meta={meta} className={s.trackPanel}>
+      <Panel
+        title={labels.courseName(log.courseId)}
+        meta={meta}
+        actions={viewSwitch}
+        className={s.trackPanel}
+      >
         <div className={s.trackBody}>
           <Controls
             clock={clock}
@@ -110,7 +139,7 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
               setRevealed(true);
             }}
           />
-          <LaneChart view={view} clock={clock} />
+          <LaneChart view={view} clock={clock} mode={mode} />
           <FlagLegend />
         </div>
       </Panel>

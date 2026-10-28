@@ -26,5 +26,7 @@ packages/rng      PRNG determinista (xoshiro128**), streams, punto fijo
 packages/schema   esquemas zod: la única definición de datos
 packages/content  JSON validado del juego + textos (es)
 packages/sim      núcleo puro: stats, temporada, (fase 2) motor de carrera
+packages/race-view  lectura de un RaceLog sin texto (eventos, "por qué", línea de tiempo, campo)
+                  que comparten sim:race y la web
 apps/cli          sim, play, season-batch, content-validate
 ```

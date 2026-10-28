@@ -129,6 +129,42 @@
   stroke-width: 2;
 }
 
+/* the stretch the lanes show, on the whole-course strip (pack view) */
+.window {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+/* --- lanes' own scale: the lines they cross, terrain and distances underneath --------------- */
+
+.mark {
+  stroke-width: 1;
+}
+
+.mark-phase {
+  stroke: var(--line-strong);
+  stroke-dasharray: 2 3;
+}
+
+.mark-reserve {
+  stroke: var(--accent);
+  stroke-dasharray: 4 3;
+}
+
+.mark-finish {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.band {
+  stroke: none;
+}
+
+.footLine {
+  stroke: var(--line-strong);
+}
+
 /* --- lanes ---------------------------------------------------------------------------------- */
 
 .lane {
@@ -182,6 +218,14 @@
 
 .runner {
   --duty: 0;
+}
+
+/* a dark edge under the livery, so a pale livery still reads on a pale lane */
+.chevronEdge {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
 }
 
 .chevron {
@@ -269,6 +313,10 @@
 .runner[data-flags~="exhausted"] .chevron {
   fill-opacity: 0.35;
   stroke-dasharray: 2 2;
+}
+
+.runner[data-flags~="exhausted"] .chevronEdge {
+  stroke-opacity: 0.4;
 }
 
 .runner[data-flags~="finished"] .chevron {
