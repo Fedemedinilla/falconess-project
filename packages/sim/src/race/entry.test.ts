@@ -46,23 +46,27 @@ function curvesByHand(agility: number, curvesScale: number): number {
  * descent 0.3 → 1030 and 0.2 → 1020, canyon −0.1 → 900 and +0.15 → 1150, water 0.2 → 800, curves
  * from agility (×1.5 penalty on Boneyard frames); falke's no-climb-loss overrides climb to 1000;
  * Peregrina's talon-lock multiplies descent by 1.005 (1030 → 1035, 1020 → 1025) and canyon by
- * 1.004 (900 → 903, 1150 → 1154), flooring each product (ADR-0005).
+ * 1.006 (900 → 905, 1150 → 1156), Caracara's scrap-armor descent by 1.003 (1030 → 1033,
+ * 1020 → 1023) and canyon by 1.004 (900 → 903, 1150 → 1154), flooring each product (ADR-0005).
  */
 function factorsByHand(courseId: string, frameId: string, agility: number): number[] {
   const c = curvesByHand(agility, BONEYARD_FRAMES.has(frameId) ? 1500 : 1000);
   const talon = frameId === "peregrina-signature";
+  const scrap = frameId === "caracara-signature";
+  const pick = (base: number, ifTalon: number, ifScrap: number) =>
+    talon ? ifTalon : scrap ? ifScrap : base;
   switch (courseId) {
     case "desert-sprint":
       return [1000, c, 1000, c, 1000];
     case "desert-ridge":
-      return [1000, talon ? 1035 : 1030, 1000, 1000, talon ? 1025 : 1020, 1000, 1000];
+      return [1000, pick(1030, 1035, 1033), 1000, 1000, pick(1020, 1025, 1023), 1000, 1000];
     case "desert-canyon":
       return [
         1000,
         frameId === "falke" ? 1000 : 963,
-        talon ? 903 : 900,
+        pick(900, 905, 903),
         1000,
-        talon ? 1154 : 1150,
+        pick(1150, 1156, 1154),
         800,
         1000,
       ];

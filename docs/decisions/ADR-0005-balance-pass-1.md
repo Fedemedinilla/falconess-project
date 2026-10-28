@@ -310,3 +310,108 @@ de S3); la exploración previa se hizo con el arnés.
    `pulseBiomePm` o los pesos de PW, re-medir S3 con `--profile full --scenarios S3` y ajustar los
    tres números de firma (regen de `still-air` y `scrap-armor`, bono de cadena de `talon-lock`)
    antes de fijar los golden.
+
+## Combinación (métricas 2 a 5 juntas)
+
+Estado: **aceptado** (contenido de dos pasivos de firma dentro de rango). Las dos secciones
+anteriores se midieron cada una sobre v1 sin la otra; esta junta los dos conjuntos en
+`phase-2-race-engine` (primero el de las métricas 2 y 5, después el de las 3 y 4) y mide la
+combinación con las dos bases de semillas contra sus líneas base v1.
+
+### Diagnóstico: la combinación sin ajustes
+
+Lote `pr` 10 000, por defecto y alt1: las métricas 1, 2, 4, 5, 6 y 8 salen idénticas celda por
+celda a las de su sección (S1, S4, S6 y S8 corren bastidores neutros; S2 y S5 no llevan
+habilidades); S7 se mueve dentro de su fail (30,0 / 26,7 / 36,7 %; la sección de las métricas 2 y 5
+daba 28,3 / 28,3 / 36,7 %). La métrica 3 vuelve a **fail** (0/1/8 en las dos bases): Peregrina en el
+sprint 0,754 (alt1 0,714). Es la interacción que anticipaba la propuesta 2 de «Métricas 3 y 4»:
+
+- La cadena de `talon-lock` (cada 2.º pulso encadenado +30 %) escala con `pulseBiomePm.desert`
+  1450: la firma gana el 55,1 % del sprint y el cañón baja a 52,5 %.
+- Con energía 140 en mule y en caracara-signature el regen 0,015 de `scrap-armor` vale más en el
+  sprint y menos en el cañón: 54,7 % y 52,2 % (antes 53,8 % y 53,4 %).
+- Cernícala pasa de 53,4 % a 53,8 % en el sprint por los términos de telemetría: sigue dentro de la
+  banda y no se toca.
+
+### Cambios aceptados (combinación)
+
+| Habilidad     | En «Métricas 3 y 4»                                        | Ahora                                                                                   |
+| ------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `talon-lock`  | cadena cada 2.º pulso +30 %, descent ×1,005, canyon ×1,004 | cadena +24 %, descent ×1,005, canyon ×1,006 (enfriamiento y bono final sin cambio)      |
+| `scrap-armor` | obstacle-armor 6 + regen 0,015 por tick                    | obstacle-armor 6 + regen 0,011 por tick + segment-factor descent ×1,003 + canyon ×1,004 |
+
+Razones: es el ajuste más chico que reparte la ventaja en las tres pistas. Un solo número ya no
+alcanza para Caracara: bajar el regen arregla el sprint y hunde el ridge y el cañón (0,010: 53,2 /
+51,9 / 51,6 %), así que `scrap-armor` toma la forma de `talon-lock`, un término por terreno de pista
+(el regen paga en todas, el descenso en el ridge, el viento del cañón en el cañón); la armadura se
+queda (durabilidad de temporada, D35). En Peregrina la cadena baja hasta el centro de la banda en el
+sprint y el factor de cañón sube lo que la cadena le quitaba al cañón. Exploración con el arnés de
+S3 (construcción del lote, prefijo de semillas propio, 6000 muestras por celda, mismas semillas en
+cada variante): cadena 0,30 / 0,25 / 0,24 / 0,20 / 0,15 → sprint 54,8 / 53,7 / 53,4 / 52,3 / 51,2 %;
+regen de Caracara 0,015 / 0,012 / 0,011 / 0,010 → sprint 54,2 / 53,7 / 53,4 / 53,2 %. Descartado:
+`jump` ×1,012 + `water` ×1,02 en `scrap-armor` (el agua lleva el cañón a 56,0 %).
+
+### Evidencia
+
+S3 `full` (`--profile full --scenarios S3`), la firma gana (veredicto de la razón):
+
+| Celda                   | Combinación sin ajuste, por defecto | Ahora, por defecto | Ahora, alt1        |
+| ----------------------- | ----------------------------------- | ------------------ | ------------------ |
+| caracara/desert-sprint  | 54,7 % **fail**                     | 53,5 % pass        | 53,3 % pass        |
+| caracara/desert-ridge   | 52,7 % inconcluso                   | 53,4 % pass        | 53,6 % pass        |
+| caracara/desert-canyon  | 52,2 % **fail**                     | 53,5 % pass        | 53,6 % pass        |
+| cernicala/desert-sprint | 53,8 % inconcluso                   | 53,8 % inconcluso  | 53,8 % inconcluso  |
+| cernicala/desert-ridge  | 52,9 % pass                         | 52,9 % pass        | 53,1 % pass        |
+| cernicala/desert-canyon | 53,2 % pass                         | 53,2 % pass        | 53,4 % pass        |
+| peregrina/desert-sprint | 55,1 % **fail**                     | 53,4 % pass        | 53,7 % pass        |
+| peregrina/desert-ridge  | 53,5 % pass                         | 53,1 % pass        | 53,6 % pass        |
+| peregrina/desert-canyon | 52,5 % inconcluso                   | 53,3 % pass        | 53,3 % pass        |
+| **Veredicto**           | **fail** (3/3/3)                    | inconcluso (8/0/1) | inconcluso (8/0/1) |
+
+En `pr` la métrica 3 queda 0/0/9 inconclusa en las dos bases (por defecto Peregrina 0,807 / 0,899 /
+0,863 y Caracara 0,875 / 0,875 / 0,840; alt1 0,775 / 0,840 / 0,852 y 0,875 / 0,807 / 0,840): con 150
+muestras la lectura puntual de `pr` oscila ±3 puntos de cuota (propuesta 1 de «Métricas 3 y 4»).
+Ninguna otra celda del lote cambia con este ajuste (por defecto y alt1). S7: `pnpm sim:season-batch
+-- --runs 500` da lo mismo antes y después del ajuste (≥ B: Caracara 33 %, Cernícala 22 %, Peregrina
+37 %). Corridas del lote de esta sección: 7 (dos `pr` y una `full` de S3 antes del ajuste, dos `pr`
+y dos `full` de S3 después).
+
+Estado de las métricas con la combinación (`pr` 10 000; por defecto / alt1 contra la línea base v1
+de cada base):
+
+| #   | Métrica                    | v1                              | Combinación                                                        |
+| --- | -------------------------- | ------------------------------- | ------------------------------------------------------------------ |
+| 1   | estilos 15-35 % por bioma  | pass 4/0/0                      | pass 4/0/0, idéntica (25,1 / 26,9 / 23,6 / 24,3 %)                 |
+| 2   | casa 30-45 %, débil ≤ 15 % | **fail** 5/4/1                  | inconclusa 7/0/3 (`full` 9/0/1, sección «Métricas 2 y 5»)          |
+| 3   | genérico / firma 0,85-0,90 | **fail** 0/9/0                  | inconclusa 0/0/9 (`full` 8/0/1 en las dos bases)                   |
+| 4   | habilidades 0,5-8 m        | **fail** 22/7/2 (alt1 21/7/3)   | pass 31/0/0 (0,65-6,33 m; alt1 0,62-7,11 m)                        |
+| 5   | piezas ≤ 3 puntos          | **fail** 14/10/0 (alt1 13/10/1) | pass 24/0/0 (máximo 2,3 puntos, `lumiere-stabilizer` en el sprint) |
+| 6   | dispersión 0,8-2 %         | pass 3/0/0                      | pass 3/0/0, idéntica (1,25 / 1,42 / 1,07 %)                        |
+| 7   | temporadas ≥ B ≥ 60 %      | **fail** 0/3/0                  | **fail** 0/3/0 (30,0 / 26,7 / 36,7 %; alt1 36,7 / 25,0 / 36,7 %)   |
+| 8   | la inteligencia no resta   | inconclusa 3/0/1                | inconclusa 3/0/1, idéntica                                         |
+
+Tests y documentos del mismo cambio: `modifiers.test.ts` (traits de los dos pasivos; el test de la
+tabla `f` suma `scrap-armor`), `entry.test.ts` (factores a mano de caracara-signature y Peregrina),
+las filas de peregrina-signature y caracara-signature de las tablas 25.4 (`docs/race-engine.md` y
+`sanity.test.ts`, regeneradas con el prototipo de la especificación) y la nota de R14 en
+`docs/race-engine.md`. El test «SPEC_RULESET matches v1 until the first balance change» ya lo borró
+el cambio de la métrica 2. Los golden v1 cambian y los regenera el líder.
+
+### Consecuencias
+
+- Las tres firmas quedan entre 52,9 % y 53,8 % en las nueve celdas de `full`, en las dos bases.
+  Cernícala en el sprint queda inconclusa (cota baja de la razón 0,848-0,850): un regen 0,013 en
+  `still-air` la centraría, pero llevaría su ridge (52,9-53,1 %) al borde bajo; no se tocó.
+- `talon-lock` y `scrap-armor` dependen de `pulseBiomePm`, de la energía de los bastidores Boneyard
+  y de `kE`: cualquier pasada que los mueva vuelve a medir S3 `full` antes de fijar los golden.
+
+### Propuestas para el dueño (combinación)
+
+Estado: **propuesto**.
+
+1. **Métrica 7 sin dueño en esta pasada.** Sigue en fail con la combinación (`pr` 25,0-36,7 %;
+   `sim:season-batch` 500: ≥ B 33 / 22 / 37 %, frente a 40 / 9 / 28 % con solo «Métricas 3 y 4»).
+   Caracara baja de 40 % a 33 % al sumar los cambios de la métrica 2 (este ajuste no la mueve).
+   Opciones: (a) una pasada propia de la métrica 7 (metas de la temporada, política de referencia,
+   crecimiento: contenido de `packages/content/falconess`); (b) objetivo: revisar el 60 % con un ADR
+   si la política fija no representa a un jugador.

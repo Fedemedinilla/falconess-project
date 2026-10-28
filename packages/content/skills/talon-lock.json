@@ -18,7 +18,7 @@
     {
       "kind": "pulse-chain-accel",
       "chainIndex": 2,
-      "accelBonus": 0.3
+      "accelBonus": 0.24
     },
     {
       "kind": "segment-factor",
@@ -30,7 +30,7 @@
       "kind": "segment-factor",
       "segment": "canyon",
       "mode": "multiply",
-      "value": 1.004
+      "value": 1.006
     }
   ]
 }
