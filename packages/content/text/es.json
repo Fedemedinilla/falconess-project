@@ -240,7 +240,7 @@
   "ui.end.skills": "Habilidades ({n})",
   "ui.end.stars": "{n} de {of} estrellas",
   "ui.end.stats": "Stats finales",
-  "ui.end.stats.note": "Al lado de cada valor, lo que ganó en la temporada.",
+  "ui.end.stats.note": "La parte rayada de cada barra y el número de al lado son lo que ganó en la temporada.",
   "ui.end.time": "{time} s",
   "ui.end.undo": "Deshacer última decisión",
   "ui.end.weeks": "Semanas",

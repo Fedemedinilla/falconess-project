@@ -1,5 +1,5 @@
 import type { RunInput } from "@falconess/schema";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
 import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
@@ -28,6 +28,18 @@ export function Turn() {
   const [previewKind, setPreviewKind] = useState<ActionKind | undefined>();
   const [workshopOpen, setWorkshopOpen] = useState(false);
   const [undone, setUndone] = useState(false);
+  const backToActions = useRef(false);
+
+  // leaving the workshop puts the focus back on the button that opened it
+  useEffect(() => {
+    if (workshopOpen || !backToActions.current) return;
+    backToActions.current = false;
+    document.getElementById("accion-workshop")?.focus();
+  }, [workshopOpen]);
+  const closeWorkshop = () => {
+    backToActions.current = true;
+    setWorkshopOpen(false);
+  };
   const viewRace = useViewRace();
   const run = snap.run;
   if (!run) return null;
@@ -163,11 +175,7 @@ export function Turn() {
         </div>
         <div className={s.right}>
           {workshopOpen ? (
-            <Workshop
-              className={s.actions}
-              onClose={() => setWorkshopOpen(false)}
-              onDone={() => setWorkshopOpen(false)}
-            />
+            <Workshop className={s.actions} onClose={closeWorkshop} onDone={closeWorkshop} />
           ) : (
             <TurnActions
               ctx={ctx}

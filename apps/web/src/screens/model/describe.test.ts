@@ -1,4 +1,4 @@
-import type { ActiveSkill } from "@falconess/schema";
+import { type ActiveSkill, PART_TYPES } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../../content/load";
 import {
@@ -74,5 +74,14 @@ describe("content in plain words", () => {
         { chance: "30\u00a0%", effects: ["Fatiga +15"] },
       ],
     });
+  });
+});
+
+describe("keys built at run time", () => {
+  it("has a name for every part type and race phase the screens name", () => {
+    for (const type of PART_TYPES) expect(content.text.has(`ui.part.${type}`), type).toBe(true);
+    for (const phase of ["start", "middle", "final"])
+      expect(content.text.has(`ui.phase.${phase}`), phase).toBe(true);
+    for (const n of ["one", "other"]) expect(content.text.has(`ui.count.weeks.${n}`)).toBe(true);
   });
 });

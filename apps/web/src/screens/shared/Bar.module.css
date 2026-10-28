@@ -45,10 +45,9 @@
   border-left: 1px solid var(--accent);
 }
 
-.loss {
-  background: repeating-linear-gradient(135deg, var(--good) 0 3px, transparent 3px 6px);
-  border-left: 0;
-  border-right: 1px solid var(--good);
+.within {
+  background: repeating-linear-gradient(135deg, var(--accent) 0 3px, transparent 3px 6px);
+  border-left: 1px solid var(--accent);
 }
 
 .mark {

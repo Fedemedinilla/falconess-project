@@ -10,11 +10,11 @@ import { cx } from "../ui/cx";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
-import { StatBar } from "../ui/StatBar";
 import { Table } from "../ui/Table";
 import { seasonSummary } from "./model/end";
 import { goalStatuses } from "./model/season";
 import s from "./SeasonEnd.module.css";
+import { Bar } from "./shared/Bar";
 import { Letter } from "./shared/Letter";
 import { useViewRace } from "./shared/useViewRace";
 
@@ -216,13 +216,15 @@ export function SeasonEnd() {
         <Panel title={ui("ui.end.stats")} className={s.stats}>
           <div className={s.statList}>
             {STAT_ORDER.map((stat) => (
-              <StatBar
+              <Bar
                 key={stat}
-                label={gameText(`stat.${stat}`)}
-                value={state.stats[stat]}
-                max={ctx.ruleset.season.statMax}
-                preview={state.stats[stat] - summary.startStats[stat]}
                 size="sm"
+                label={gameText(`stat.${stat}`)}
+                value={formatInt(state.stats[stat])}
+                fraction={state.stats[stat] / ctx.ruleset.season.statMax}
+                ghost={-(state.stats[stat] - summary.startStats[stat]) / ctx.ruleset.season.statMax}
+                after={formatSigned(state.stats[stat] - summary.startStats[stat])}
+                afterTone="up"
               />
             ))}
           </div>

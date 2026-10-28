@@ -1,5 +1,5 @@
 import type { PartType } from "@falconess/schema";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
 import { formatFixed, formatInt, formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
@@ -46,6 +46,12 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   const [plan, setPlan] = useState<WorkshopPlan | undefined>(state && emptyPlan(state));
   const turn = state?.turn;
   const inputs = run?.inputs.length;
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // the panel replaces the button that opened it: focus moves into it
+  useEffect(() => {
+    bodyRef.current?.focus();
+  }, []);
 
   // a new week (or an undo) starts a new plan
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on the week, not on every state
@@ -129,7 +135,7 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
       className={className}
       id="taller"
     >
-      <div className={s.workshop}>
+      <div className={s.workshop} ref={bodyRef} tabIndex={-1}>
         <p className={s.lead}>{ui("ui.workshop.lead")}</p>
 
         {/* frame ------------------------------------------------------------------------------ */}

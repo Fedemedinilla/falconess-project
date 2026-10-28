@@ -7,7 +7,10 @@ export type BarProps = {
   value: string;
   /** Filled share of the track, 0–1. */
   fraction: number;
-  /** A previewed change on top of the fill, as a share of the track (negative eats into it). */
+  /**
+   * A change drawn on the track, as a share of it: a positive one extends the fill (a previewed
+   * gain), a negative one marks the end of the fill (what a rest takes away, what a season added).
+   */
   ghost?: number | undefined;
   /** A threshold to mark on the track, 0–1 (e.g. forced rest). */
   mark?: number | undefined;
@@ -55,7 +58,7 @@ export function Bar({
         style={color ? { "--bar-color": color } : undefined}
       >
         <span className={s.fill} style={{ width: pct(fill) }} />
-        {ghostStyle && <span className={cx(s.ghost, g < 0 && s.loss)} style={ghostStyle} />}
+        {ghostStyle && <span className={cx(s.ghost, g < 0 && s.within)} style={ghostStyle} />}
         {mark !== undefined && <span className={s.mark} style={{ left: pct(mark) }} />}
       </span>
       <span className={s.value}>

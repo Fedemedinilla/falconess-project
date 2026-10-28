@@ -3,6 +3,10 @@
   gap: var(--space-4);
 }
 
+.workshop:focus {
+  outline: none;
+}
+
 .lead {
   max-width: 70ch;
   font-size: var(--fs-sm);
