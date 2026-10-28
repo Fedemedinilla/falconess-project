@@ -1,5 +1,14 @@
 export { type FrameBuild, installPart, resolveFrameBuild } from "./frame-build.js";
 export {
+  canonicalJson,
+  DETERMINISM_EXTRAS,
+  GOLDEN_SCENARIOS,
+  type GoldenScenario,
+  goldenDiffHint,
+  goldenEntries,
+  runGoldenScenario,
+} from "./race/golden.js";
+export {
   buildCourseGeometry,
   type CourseGeometry,
   createRaceArena,
