@@ -79,6 +79,7 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
   const snap = useSyncExternalStore(clock.subscribe, clock.getSnapshot, clock.getSnapshot);
   const [revealed, setRevealed] = useState(false);
   const [mode, setMode] = useState<ChartMode>("pack");
+  const [guess, setGuess] = useState<number | undefined>(undefined);
   useEffect(() => {
     if (snap.atEnd) setRevealed(true);
   }, [snap.atEnd]);
@@ -145,10 +146,28 @@ function RaceReplay({ log, labels, idPrefix }: RaceReplayProps) {
       </Panel>
       <LivePanel view={view} tick={snap.tick} />
       {revealed ? (
-        <Results view={view} clock={clock} idPrefix={idPrefix} />
+        <Results view={view} clock={clock} idPrefix={idPrefix} guess={guess} />
       ) : (
         <div className={s.pending}>
           <p>{ui("ui.race.pending")}</p>
+          <span className={s.select}>
+            <label htmlFor={`${idPrefix}-pronostico`}>{ui("ui.race.guess")}</label>
+            <select
+              id={`${idPrefix}-pronostico`}
+              value={guess ?? ""}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setGuess(value === "" ? undefined : Number(value));
+              }}
+            >
+              <option value="">{ui("ui.race.guess.none")}</option>
+              {view.runners.map((r) => (
+                <option key={r.lane} value={r.lane}>
+                  {ui("ui.race.guess.option", { lane: r.lane + 1, name: r.name })}
+                </option>
+              ))}
+            </select>
+          </span>
         </div>
       )}
     </div>

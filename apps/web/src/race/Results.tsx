@@ -452,14 +452,26 @@ export function Results({
   view,
   clock,
   idPrefix,
+  guess,
 }: {
   view: RaceView;
   clock: ReplayClock;
   idPrefix: string;
+  /** The lane the tester picked to win before watching, if she did. */
+  guess?: number | undefined;
 }) {
   const player = view.player;
+  const winner = view.byPlace[0];
+  const guessed = view.runners.find((r) => r.lane === guess);
   return (
     <section className={s.results} aria-label={ui("ui.race.result.title")}>
+      {guessed && winner && (
+        <p className={cx(s.guess, guessed.lane === winner.lane ? s.guessRight : s.guessWrong)}>
+          {guessed.lane === winner.lane
+            ? ui("ui.race.guess.right", { name: guessed.name })
+            : ui("ui.race.guess.wrong", { name: guessed.name, winner: winner.name })}
+        </p>
+      )}
       {player && (
         <p className={s.verdict}>
           <Pill

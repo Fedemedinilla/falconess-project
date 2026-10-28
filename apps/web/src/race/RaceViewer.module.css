@@ -93,9 +93,31 @@
 }
 
 .pending {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
   padding: var(--space-4);
   border: 1px dashed var(--line-strong);
   color: var(--ink-2);
+}
+
+.guess {
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--line-strong);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.guessRight {
+  border-left-color: var(--good);
+  background: var(--good-soft);
+}
+
+.guessWrong {
+  border-left-color: var(--warn);
+  background: var(--warn-soft);
 }
 
 /* --- controls ---------------------------------------------------------------------------------- */
