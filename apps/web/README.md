@@ -10,7 +10,7 @@ pnpm --filter @falconess/web build:artifact  # dist-artifact/falconess-playtest.
 pnpm web:build                             # both
 pnpm --filter @falconess/web test:e2e       # both builds, then the browser tests (Chromium)
 pnpm --filter @falconess/web test:e2e:dev   # the app tests on the dev server (React warnings fail)
-pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/shots/
+pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/shots/ (or E2E_SHOTS_DIR)
 ```
 
 ## Layout
@@ -21,9 +21,12 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
   `continueSaved`, `loadText`, `exportText`), the save format (`run.ts`), guarded storage, goal
   race replays with detail `"full"` (`goal-race.ts`) and the `useGame()` hook.
 - `src/text/` `ui(key, vars)` for interface texts (`ui.*` keys of
-  packages/content/text/es.json), `gameText(textKey)` for game names, Spanish number formats.
-- `src/ui/` shared components: Panel, StatBar, Button, Pill, Livery, Dialog, Table, SeasonStrip.
-- `src/app/` shell: hash routes, timing bar, theme, error banner, run and load dialogs.
+  packages/content/text/es.json), `gameText(textKey)` for game names, Spanish number formats;
+  `brief.ts` for the two lengths of an explanation (below).
+- `src/ui/` shared components: Panel, StatBar, Button, Pill, Livery, Dialog, Table, SeasonStrip,
+  Icon and ExplainSwitch; `icons.ts` is the game's concepts as emojis (below).
+- `src/app/` shell: hash routes, timing bar, theme, explanations default (`explain.ts`), error
+  banner, run and load dialogs.
 - `src/screens/` season screens; `src/race/` race screens. The route map is in `src/app/App.tsx`.
 
 ## Rules
@@ -42,6 +45,37 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
 - A run is `seed + RunInput[]`, saved as `{ schemaVersion, rulesetVersion, seed, inputs }`.
 - Every visible text is an es.json key (`src/text/keys.test.ts` checks the static ones).
 - Every color is a token of `src/styles/tokens.css`; manufacturer liveries come from content.
+- Every emoji is in `src/ui/icons.ts` (`icons.test.ts` checks the sources and es.json).
+
+## Icons
+
+`src/ui/icons.ts` maps each concept to one emoji: the eight actions (💤 Descansar, ☕ Salida…),
+the five stats (a training shares its stat's emoji), mood faces by level, fatigue, skill points,
+scrap, feathers, injury, risk, crew and bond, the four frame stats, passive, quirk, part, rule,
+skill, the race gauges, terrain, biomes, styles, the runners' flags and events, goal races,
+medals, the grade. They are presentation, like colors: `Icon` draws one `aria-hidden` before
+the label that names the concept (never instead of it), at a fixed width so a column of labels
+stays aligned. A concept keeps its emoji everywhere; two concepts share one only when listed in
+`SHARED_ICONS` (a training and its stat, Resistencia and Físico, a goal race and its finish).
+They render with the system's emoji font: the label always says it in words.
+
+## Brief and full explanations
+
+Every explanation a card can shorten has two texts in es.json: the full one under its key and a
+one-line brief one under `<key>.brief` (`rule.pulse.brief`, `skill.third-pulse.brief`,
+`ui.goals.consequence.brief`…). `uiAt(detail, key)` and `gameBrief(textKey)` pick them;
+`brief.test.ts` checks that every one exists, is shorter than its full text and uses no value
+the full one lacks, and that every skill and rule has one (parts and quirks when their text is
+long). Briefs must say what the engine does (docs/race-engine.md), only shorter.
+
+Each such card has «Breve | Completo» in its header (`ExplainSwitch`: two `aria-pressed` buttons,
+ids `<card>-breve` and `<card>-completo`, 44 px tall on phones): frame and runner cards of
+NewSeason, the Turn's actions, goal races, hangar frame and crews, the workshop's parts, quirks and
+skills, the free race form, the live order and "Por qué" (brief: «En pocas palabras»; full: the
+phases, losses, gains, skills and «Detalle técnico»). «Explicaciones» in the top bar sets the
+default for every card (brief unless the viewer chose otherwise; remembered in localStorage when
+the page may use it) and drops the cards' own choices; a card's own switch holds until then
+(`src/app/explain.ts`). Texts outside a card (panel hints, the race legend) follow the default.
 
 ## Race screens (`src/race/`)
 
@@ -91,12 +125,16 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   stats and fatigue, and the loaded run plays on identically; "Continuar" after a reload; undo;
   storage blocked and the copy fallback (the text is selected).
 - `free-race.spec.ts`: the default race, another course and seed, the neutral field.
+- `explain.spec.ts`: one card's «Breve | Completo», then «Explicaciones» for every card; the
+  default survives a reload and the card's own choice does not; 44 px switches on a phone, and
+  the switches with storage blocked.
 - `artifact.spec.ts`: the built fragment against the page contract, then wrapped the way the host
   does it with every request but Google Fonts blocked, at the top level and inside a sandboxed
   iframe at 400 px (no storage, no clipboard, no horizontal scroll).
 - `shots.spec.ts` (only with `test:e2e:shots`): Home, NewSeason, Turn with a crew, the workshop,
   an event, the T12 replay mid-race and at the finish, the free race and SeasonEnd, at 1280×800
-  and 400×860, light and dark, full page with real fonts. Each shot also checks that every form
+  and 400×860, light and dark, full page with real fonts; the screens with explanations twice,
+  brief and full (`-brief`, `-full`). Each shot also checks that every form
   control has a stable id and, on the phone, that the page does not scroll sideways.
 
 The app tests answer Google Fonts with an empty stylesheet (the fallback stacks show), so they
