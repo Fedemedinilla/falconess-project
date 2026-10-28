@@ -38,9 +38,10 @@ export type BalanceUnit = z.infer<typeof BalanceUnit>;
 
 /**
  * `wilson`: win rate over independent races. `paired-normal`: normal interval of a mean paired
- * difference. `sigma`: σ × (1 ± 1.96 / √(2(N − 1))). `share-ratio`: normal interval of the
- * signature's mean share mapped through (1 − p) / p (S3). `converted`: S5's paired time gain
- * mapped to win-rate points with the equal-field model.
+ * difference. `sigma`: σ × (1 ± 1.96 / √(2(N − 1))). `share-ratio`: paired score interval (Tango)
+ * of the signature's mean share, mapped through (1 − p) / p (S3; the normal interval of the mean
+ * until ADR-0005 «Pasada 2»). `converted`: S5's paired time gain mapped to win-rate points with the
+ * equal-field model.
  */
 export const BalanceIntervalMethod = z.enum([
   "wilson",

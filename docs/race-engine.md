@@ -2125,8 +2125,8 @@ Boneyard frames run with empty quirk slots, exactly like the generated rivals (2
 are `${profile}/${scenario}/${course}/${cell}/${k}`. "Paired" means that the two runs of a pair
 use the same seed and the same lanes, so every runner's draws coincide (17.1, P6, P6b). Intervals
 are 95 %: Wilson for a win rate over independent races; the normal interval of the mean paired
-difference for paired scenarios (S3, S4, S5, the adjacent-I steps of S8); for σ/mean,
-`σ × (1 ± 1.96 / √(2(N − 1)))`.
+difference for paired scenarios (S4, S5, the adjacent-I steps of S8); for S3, the paired score
+interval of its sweep rates (ADR-0005 «Pasada 2»); for σ/mean, `σ × (1 ± 1.96 / √(2(N − 1)))`.
 
 - **S1 style:** 8 runners, 2 per style, built with `neutralFixtureEntry` (3.4: PW 1.0, energy 100,
   dissipation 60, durability 100, `rule: "none"`, no passive, no parts, no quirks; batch fixture,
@@ -2194,7 +2194,10 @@ difference for paired scenarios (S3, S4, S5, the adjacent-I steps of S8); for σ
     base-1.0 skill is already at p 1000 (857 + 150). So nimbus's mid-activation is inert in S3 by
     construction. Scavenger-stride fires on the ridge for both sides alike.
   - **Ratio** = generic wins / signature wins (a dead heat counts half a win for each), with the
-    95 % interval over the paired samples.
+    95 % interval over the paired samples. A sample is a signature sweep, a split or a generic
+    sweep, so the signature's share is 0.5 + (p₊ − p₋) / 2; the interval is Tango's score interval
+    of p₊ − p₋ mapped through (1 − p) / p (ADR-0005 «Pasada 2»: the normal interval of the mean
+    collapsed on cells with few sweeps and false-failed `pr` runs).
   - **Verdict per (pair, course) cell:** all 9 cells (3 pairs × 3 courses) must lie in 0.85-0.90
     (25.2.1); courses are not pooled. A pooled ratio would pass a passive worth ≈ 2 % on one course
     and nothing on the others (scrap-armor's water override, R14).
@@ -2306,7 +2309,10 @@ Verdict of each metric, both profiles:
   `sim` or `content` fails the batch job until a PR fixes the metric or attaches an ADR that moves
   the target.
 - Metric 5 in `pr` uses S5's converted time gain; metric 8 in `pr` fails only on a significant
-  decrease (S8).
+  decrease (S8); metric 3 in `pr` is pass or inconclusive, never fail (ADR-0005 «Pasada 2»: its
+  band is 1.4 points of share and a 150-sample interval 2.5-5.5, so a `pr` fail cannot be told from
+  a cell near an edge; a cell whose interval lies outside the band says so in its note and the
+  `full` run decides).
 - **Cells (revision 4):** metric 2 has one verdict per (manufacturer, course) home or weak cell
   and metric 3 one verdict per (pair, course) cell (25.2). A metric passes only if every cell
   passes, and fails if any cell fails. Otherwise it is inconclusive.

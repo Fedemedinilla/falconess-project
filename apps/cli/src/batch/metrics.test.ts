@@ -3,9 +3,10 @@ import type { BalanceMetric, BalanceScenario } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { buildCatalog } from "./catalog.js";
 import type { JobResult, RaceRecord, SeasonRecord } from "./execute.js";
-import { computeMetrics, type MetricsInput, s3CellsOf } from "./metrics.js";
+import { computeMetrics, type MetricsInput, S3_PR_OUTSIDE_NOTE, s3CellsOf } from "./metrics.js";
 import type { Job, Profile } from "./plan.js";
-import { meanInterval, pointsFromTimeGain, wilson } from "./stats.js";
+import { meanInterval, pairedScoreInterval, pointsFromTimeGain, wilson } from "./stats.js";
+import { cellVerdict } from "./verdict.js";
 
 const content = loadContent();
 const catalog = buildCatalog(content);
@@ -144,28 +145,98 @@ describe("S3 signature ratio", () => {
     races: [race(a), race(b)],
   });
 
-  it("is generic wins / signature wins over paired samples, interval from the mean share", () => {
-    const rows = [s3(0, [1, 2], [1, 2]), s3(1, [1, 2], [2, 1]), s3(2, [2, 1], [2, 1])];
-    const cell = s3CellsOf(input(rows, ["S3"]))[0];
-    expect(cell?.value).toBe(1);
-    const mi = meanInterval([1, 0.5, 0]);
-    expect(cell?.interval.lo).toBeCloseTo(
-      (1 - Math.min(1, mi.hi ?? 1)) / Math.min(1, mi.hi ?? 1),
-      6,
+  /** Share of the signature → ratio (1 − p) / p, the band's unit. */
+  const ratioOf = (share: number) => (1 - share) / share;
+  /** `sweeps` samples where the signature wins both races, the rest one race each. */
+  const sweepRows = (n: number, sweeps: number): Row[] =>
+    Array.from({ length: n }, (_, k) =>
+      k < sweeps ? s3(k, [1, 2], [1, 2]) : s3(k, [1, 2], [2, 1]),
     );
-    expect(cell?.interval.hi).toBeNull();
+
+  it("is generic wins / signature wins over paired samples, score interval of the sweep rates", () => {
+    // A signature sweep, a split and a generic sweep: one discordant sample on each side.
+    const rows = [s3(0, [1, 2], [1, 2]), s3(1, [1, 2], [2, 1]), s3(2, [2, 1], [2, 1])];
+    const cell = s3CellsOf(input(rows, ["S3"], "full"))[0];
+    expect(cell?.value).toBe(1);
+    const ci = pairedScoreInterval(1, 1, 3);
+    expect(cell?.interval.lo).toBeCloseTo(ratioOf(0.5 + (ci.hi ?? 0) / 2), 6);
+    expect(cell?.interval.hi).toBeCloseTo(ratioOf(0.5 + (ci.lo ?? 0) / 2), 6);
+    expect(cell?.interval.method).toBe("share-ratio");
     expect(cell?.verdict).toBe("inconclusive");
+    expect(cell?.note).toBe("signature wins 50 % (sweeps: signature 1, generic 1, of 3)");
   });
 
-  it("splits a dead heat half and half, and fails a signature that always wins or never wins", () => {
+  it("splits a dead heat half and half, and fails (full) a signature that always or never wins", () => {
     const tie = s3CellsOf(input([s3(0, [5, 5], [5, 5]), s3(1, [5, 5], [5, 5])], ["S3"]))[0];
     expect(tie?.value).toBe(1);
-    const always = s3CellsOf(input([s3(0, [1, 2], [1, 2]), s3(1, [1, 2], [1, 2])], ["S3"]))[0];
+    const half = s3CellsOf(input([s3(0, [1, 2], [5, 5]), s3(1, [1, 2], [2, 1])], ["S3"]))[0];
+    expect(half?.note).toBe("signature wins 62.5 % (sweeps: signature 0.5, generic 0, of 2)");
+    // Two sweeps out of two prove nothing (the old interval had zero width there and failed it).
+    const twice = s3CellsOf(input(sweepRows(2, 2), ["S3"], "full"))[0];
+    expect(twice?.value).toBe(0);
+    expect(twice?.verdict).toBe("inconclusive");
+    const always = s3CellsOf(input(sweepRows(20, 20), ["S3"], "full"))[0];
     expect(always?.value).toBe(0);
     expect(always?.verdict).toBe("fail");
-    const never = s3CellsOf(input([s3(0, [2, 1], [2, 1]), s3(1, [2, 1], [2, 1])], ["S3"]))[0];
+    const neverRows = Array.from({ length: 20 }, (_, k) => s3(k, [2, 1], [2, 1]));
+    const never = s3CellsOf(input(neverRows, ["S3"], "full"))[0];
     expect(never?.value).toBeNull();
+    expect(never?.interval.hi).toBeNull();
     expect(never?.verdict).toBe("fail");
+  });
+
+  it("no longer false-fails 4 sweeps in 150 samples (alt1 cernicala/desert-ridge, ADR-0005)", () => {
+    // ADR-0005 «Métricas 3 y 4», propuesta 1: alt1 read 51.3 % (4 sweeps, 146 splits) while
+    // 8000 samples read 52.9 %, inside the band. The old interval, the normal interval of the
+    // mean share, used the sample's own variance: 4 sweeps gave ±1.3 points and a fail.
+    const rows = sweepRows(150, 4);
+    const shares = [...new Array<number>(4).fill(1), ...new Array<number>(146).fill(0.5)];
+    const old = meanInterval(shares);
+    const oldRatioLo = ratioOf(old.hi ?? 1);
+    expect(oldRatioLo).toBeGreaterThan(0.9);
+    expect(cellVerdict({ lo: oldRatioLo, hi: ratioOf(old.lo ?? 0) }, { min: 0.85, max: 0.9 })).toBe(
+      "fail",
+    );
+    for (const profile of ["pr", "full"] as const) {
+      const cell = s3CellsOf(input(rows, ["S3"], profile))[0];
+      expect(cell?.value).toBeCloseTo(146 / 154, 6);
+      // Score interval: share 50.05-53.33 % (ratio 0.875-0.998), straddling the band's 0.90 edge.
+      expect(cell?.interval.lo).toBeCloseTo(0.8751, 3);
+      expect(cell?.interval.hi).toBeCloseTo(0.998, 3);
+      expect(cell?.verdict).toBe("inconclusive");
+      expect(cell?.note).not.toContain(S3_PR_OUTSIDE_NOTE);
+    }
+  });
+
+  it("never fails in pr: an inert signature (150 splits) reads inconclusive with a note, fails in full", () => {
+    const rows = sweepRows(150, 0);
+    const full = computeMetrics(input(rows, ["S3"], "full"));
+    expect(metric(full, "m3-signature").verdict).toBe("fail");
+    const fullCell = s3CellsOf(input(rows, ["S3"], "full"))[0];
+    // With no sweep the interval is ±z² / (n + z²) of the share's distance from even, not a point.
+    const w = (1.96 * 1.96) / (150 + 1.96 * 1.96);
+    expect(fullCell?.interval.lo).toBeCloseTo(ratioOf(0.5 + w / 2), 6);
+    expect(fullCell?.interval.hi).toBeCloseTo(ratioOf(0.5 - w / 2), 6);
+    expect(fullCell?.verdict).toBe("fail");
+    expect(fullCell?.note).not.toContain(S3_PR_OUTSIDE_NOTE);
+
+    const pr = computeMetrics(input(rows, ["S3"], "pr"));
+    const m3 = metric(pr, "m3-signature");
+    expect(m3.verdict).toBe("inconclusive");
+    expect(m3.cells[0]?.interval).toEqual(fullCell?.interval);
+    expect(m3.cells[0]?.verdict).toBe("inconclusive");
+    expect(m3.cells[0]?.note).toContain(S3_PR_OUTSIDE_NOTE);
+    expect(m3.notes.some((n) => n.startsWith("pr: metric 3 is pass or inconclusive"))).toBe(true);
+    expect(metric(full, "m3-signature").notes.some((n) => n.startsWith("pr:"))).toBe(false);
+    // An overpowered signature (share 60 %) is no pr fail either.
+    expect(s3CellsOf(input(sweepRows(150, 30), ["S3"], "pr"))[0]?.verdict).toBe("inconclusive");
+    expect(s3CellsOf(input(sweepRows(150, 30), ["S3"], "full"))[0]?.verdict).toBe("fail");
+  });
+
+  it("passes in pr only when the interval fits the band (a pr run large enough to resolve it)", () => {
+    // 3000 samples at 7 % sweeps: share 53.5 %, interval ≈ ±0.45 points, inside 52.6-54.1 %.
+    const cell = s3CellsOf(input(sweepRows(3000, 210), ["S3"], "pr"))[0];
+    expect(cell?.verdict).toBe("pass");
   });
 });
 

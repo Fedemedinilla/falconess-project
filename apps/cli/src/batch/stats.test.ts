@@ -4,6 +4,8 @@ import {
   equalFieldWinProbability,
   meanInterval,
   normalCdf,
+  pairedScoreInterval,
+  pairedScoreStatistic,
   pointsFromTimeGain,
   sigmaInterval,
   topShares,
@@ -87,6 +89,112 @@ describe("intervals (§25.2: 95 %)", () => {
     const cv = coefficientOfVariation([99, 100, 101]);
     expect(cv).toBeCloseTo(1 / 100, 12);
     expect(coefficientOfVariation([5])).toBeNull();
+  });
+});
+
+describe("paired score interval (Tango 1998; S3, ADR-0005 Pasada 2)", () => {
+  /** Restricted MLE of p₋ under Δ by brute force over the likelihood, then the score statistic. */
+  function bruteStatistic(plus: number, minus: number, n: number, delta: number): number {
+    const lo = Math.max(0, -delta);
+    const hi = (1 - delta) / 2;
+    const term = (k: number, p: number) => (k === 0 ? 0 : p <= 0 ? -Infinity : k * Math.log(p));
+    let best = lo;
+    let bestLl = -Infinity;
+    const steps = 200_000;
+    for (let i = 0; i <= steps; i++) {
+      const q = lo + ((hi - lo) * i) / steps;
+      const ll = term(plus, q + delta) + term(minus, q) + term(n - plus - minus, 1 - 2 * q - delta);
+      if (ll > bestLl) {
+        bestLl = ll;
+        best = q;
+      }
+    }
+    return (plus - minus - n * delta) / Math.sqrt(n * (2 * best + delta * (1 - delta)));
+  }
+
+  it("takes the restricted MLE in closed form (checked against the likelihood)", () => {
+    for (const [plus, minus, n] of [
+      [10, 0, 150],
+      [10, 3, 150],
+      [3, 10, 150],
+      [40, 25, 100],
+      [2.5, 0.5, 20],
+    ] as const)
+      for (const delta of [-0.4, -0.05, 0.02, 0.07, 0.3])
+        expect(pairedScoreStatistic(plus, minus, n, delta)).toBeCloseTo(
+          bruteStatistic(plus, minus, n, delta),
+          3,
+        );
+  });
+
+  it("decreases in Δ, so the bisection from the estimate finds the only crossing", () => {
+    for (const n of [3, 20, 150])
+      for (let plus = 0; plus <= n; plus += Math.max(1, Math.floor(n / 6)))
+        for (let minus = 0; plus + minus <= n; minus += Math.max(1, Math.floor(n / 6))) {
+          let prev = Number.POSITIVE_INFINITY;
+          for (let i = 0; i <= 400; i++) {
+            const z = pairedScoreStatistic(plus, minus, n, -1 + i / 200);
+            expect(z).toBeLessThanOrEqual(prev + 1e-9);
+            prev = z;
+          }
+        }
+  });
+
+  it("puts the score statistic at ±z on its bounds", () => {
+    const ci = pairedScoreInterval(10, 3, 150);
+    expect(pairedScoreStatistic(10, 3, 150, ci.lo ?? Number.NaN)).toBeCloseTo(1.96, 9);
+    expect(pairedScoreStatistic(10, 3, 150, ci.hi ?? Number.NaN)).toBeCloseTo(-1.96, 9);
+    expect(ci.mean).toBeCloseTo(7 / 150, 12);
+  });
+
+  it("with no discordant sample is ±z² / (n + z²), not a point", () => {
+    const ci = pairedScoreInterval(0, 0, 150);
+    const w = (1.96 * 1.96) / (150 + 1.96 * 1.96);
+    expect(ci.mean).toBe(0);
+    expect(ci.lo).toBeCloseTo(-w, 9);
+    expect(ci.hi).toBeCloseTo(w, 9);
+    // The normal interval of the same 150 even samples has zero width.
+    const flat = meanInterval(new Array<number>(150).fill(0.5));
+    expect(flat.hi).toBe(flat.lo);
+  });
+
+  it("with discordant samples on one side only has Wilson's upper bound and a lower bound below it", () => {
+    for (const [plus, n] of [
+      [4, 150],
+      [10, 150],
+      [300, 4000],
+    ] as const) {
+      const ci = pairedScoreInterval(plus, 0, n);
+      const w = wilson(plus, n);
+      expect(ci.hi).toBeCloseTo(w.hi ?? Number.NaN, 9);
+      expect(ci.lo ?? Number.NaN).toBeLessThanOrEqual((w.lo ?? Number.NaN) + 1e-12);
+    }
+  });
+
+  it("is antisymmetric in the sides, widens with z and reaches the ends of [−1, 1]", () => {
+    const a = pairedScoreInterval(12, 4, 90);
+    const b = pairedScoreInterval(4, 12, 90);
+    expect(b.lo).toBeCloseTo(-(a.hi ?? Number.NaN), 12);
+    expect(b.hi).toBeCloseTo(-(a.lo ?? Number.NaN), 12);
+    const wide = pairedScoreInterval(12, 4, 90, 2.77);
+    expect(wide.lo ?? 0).toBeLessThan(a.lo ?? 0);
+    expect(wide.hi ?? 0).toBeGreaterThan(a.hi ?? 0);
+    expect(pairedScoreInterval(20, 0, 20).hi).toBe(1);
+    expect(pairedScoreInterval(0, 20, 20).lo).toBe(-1);
+    expect(pairedScoreInterval(0, 0, 0)).toEqual({ mean: null, lo: null, hi: null });
+  });
+
+  it("matches the normal interval once both sides have hundreds of samples", () => {
+    // full size: 4000 samples, 300 / 20 discordant; per-sample values 1, 0 and 0.5 (S3 shares).
+    const values = [
+      ...new Array<number>(300).fill(1),
+      ...new Array<number>(20).fill(0),
+      ...new Array<number>(3680).fill(0.5),
+    ];
+    const normal = meanInterval(values);
+    const score = pairedScoreInterval(300, 20, 4000);
+    expect(0.5 + (score.lo ?? 0) / 2).toBeCloseTo(normal.lo ?? 0, 3);
+    expect(0.5 + (score.hi ?? 0) / 2).toBeCloseTo(normal.hi ?? 0, 3);
   });
 });
 

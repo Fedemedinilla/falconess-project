@@ -85,6 +85,79 @@ export function meanInterval(values: readonly number[]): Interval & { mean: numb
   return { mean: m, lo: m - half, hi: m + half };
 }
 
+/**
+ * Score statistic of Tango (1998) for Δ = p₊ − p₋, the difference of the two discordant rates of
+ * a paired design (each sample favours side +, side − or neither): (n₊ − n₋ − nΔ) / √V(Δ), with
+ * V(Δ) = n (2 p̃₋ + Δ (1 − Δ)) the variance of n₊ − n₋ under Δ and p̃₋ the restricted maximum
+ * likelihood estimate of p₋ given Δ, the root of
+ * 2n p² − (n₊ + n₋ − (2n − n₊ + n₋) Δ) p − n₋ Δ (1 − Δ) = 0.
+ * Since p̃₋ ≥ 0 and p̃₊ = p̃₋ + Δ ≥ 0, V(Δ) ≥ n |Δ| (1 − |Δ|): a share that far from even needs at
+ * least that many discordant samples, whatever the sample happened to show. Counts may be
+ * fractional (a dead heat counts half). Decreasing in Δ (tested on a grid).
+ */
+export function pairedScoreStatistic(
+  plus: number,
+  minus: number,
+  n: number,
+  delta: number,
+): number {
+  const a = 2 * n;
+  const b = -plus - minus + (2 * n - plus + minus) * delta;
+  const c = -minus * delta * (1 - delta);
+  const pMinus = Math.max(0, (-b + Math.sqrt(Math.max(0, b * b - 4 * a * c))) / (2 * a));
+  const variance = n * (2 * pMinus + delta * (1 - delta));
+  const numerator = plus - minus - n * delta;
+  if (variance <= 0) {
+    if (numerator === 0) return 0;
+    return numerator > 0 ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+  }
+  return numerator / Math.sqrt(variance);
+}
+
+/** Bisection steps of the score interval: 2 / 2⁶⁰ is below the float spacing near the bounds. */
+const SCORE_STEPS = 60;
+
+/**
+ * Tango's score interval for Δ = p₊ − p₋ of a paired design: every Δ in [−1, 1] whose score
+ * statistic lies within ±z (S3, ADR-0005 «Pasada 2»). Unlike the normal interval of the mean, the
+ * variance is taken under each candidate Δ, not at the estimate, so the interval cannot collapse
+ * when the sample shows few discordant samples, or none on one side (with n₋ = 0 its upper bound
+ * is Wilson's for n₊ / n). Deterministic: fixed bisection steps from the estimate outwards.
+ */
+export function pairedScoreInterval(
+  plus: number,
+  minus: number,
+  n: number,
+  z: number = Z95,
+): Interval & { mean: number | null } {
+  if (n <= 0) return { mean: null, lo: null, hi: null };
+  const d = (plus - minus) / n;
+  const stat = (delta: number) => pairedScoreStatistic(plus, minus, n, delta);
+  let lo = -1;
+  if (stat(-1) > z) {
+    let out = -1;
+    let inside = d;
+    for (let i = 0; i < SCORE_STEPS; i++) {
+      const mid = (out + inside) / 2;
+      if (stat(mid) > z) out = mid;
+      else inside = mid;
+    }
+    lo = inside;
+  }
+  let hi = 1;
+  if (stat(1) < -z) {
+    let inside = d;
+    let out = 1;
+    for (let i = 0; i < SCORE_STEPS; i++) {
+      const mid = (inside + out) / 2;
+      if (stat(mid) < -z) out = mid;
+      else inside = mid;
+    }
+    hi = inside;
+  }
+  return { mean: d, lo, hi };
+}
+
 /** §25.2 interval for σ/mean: `σ × (1 ± 1.96 / √(2(N − 1)))`. */
 export function sigmaInterval(value: number, n: number): Interval {
   if (n < 2) return { lo: null, hi: null };

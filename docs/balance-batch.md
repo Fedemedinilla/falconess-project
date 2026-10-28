@@ -81,7 +81,7 @@ dead heat for first (equal `finishMilli`) evenly; the lane tie-break is never us
 | S1              | 8-runner race                               | 8 neutral fixtures, 2 per style, stats 600, no skills                                                                                                                                                   | metric 1: per-biome mean of the course win rates per style, Wilson (n = the biome's races), 15-35 %; per-course rates and phase splits as diagnostics                                                              |
 | S2 real         | 8-runner race                               | 5 designated entries (one non-signature frame per manufacturer, one `nextInt("race")` each from `new Rng(seed + "/frames")`, base 600, letters B, no skills, parts or quirks) + 3 neutral hover fillers | metric 2: designated entry's win share per (manufacturer, course) home or weak cell, Wilson, home 30-45 %, weak ≤ 15 %; neutral cells reported                                                                     |
 | S2 equal-PW     | 8-runner race                               | designated entries = neutral hover fixture with `rule` and `manufacturer` set                                                                                                                           | sanity table with informative verdicts (not gated)                                                                                                                                                                 |
-| S3              | paired sample: both lane orders of one seed | the same Falconess (base 600, her letters, her unique skill only) on signature and generic                                                                                                              | metric 3: generic wins / signature wins per (pair, course); normal interval of the signature's mean share per sample mapped through (1 − p) / p; 0.85-0.90; `full` doubles a cell (4000 → 8000) while inconclusive |
+| S3              | paired sample: both lane orders of one seed | the same Falconess (base 600, her letters, her unique skill only) on signature and generic                                                                                                              | metric 3: generic wins / signature wins per (pair, course); paired score interval (Tango) of the share mapped through (1 − p) / p; 0.85-0.90, no `pr` fail; `full` doubles a cell (4000 → 8000) while inconclusive |
 | S4              | paired seed (on / off)                      | S1 field, every runner carries the skill; off = `disableSkill` on all 8                                                                                                                                 | metric 4: mean over runners of (timeOff − timeOn) × L / timeOff, then over seeds; paired normal interval; 0.5-8 m per (skill, course) cell where the trigger can occur (31 cells)                                  |
 | S5              | paired seed (with / without)                | S1 field; carrier = lane `k mod 8` with `fixtureBuild(content, [part], [])`                                                                                                                             | metric 5: `pr` converts the paired time gain to points at this run's S6 σ (equal-field model); `full` judges Δ win rate directly; ≤ 3 points                                                                       |
 | S6              | (S1 races)                                  | each S1 runner is a fixed build                                                                                                                                                                         | metric 6: mean over the 8 runners of σ/mean per course; σ × (1 ± 1.96 / √(2(N − 1))); 0.8-2 %; real-frame σ (shiden: R6) as a diagnostic                                                                           |
@@ -107,6 +107,24 @@ cheapest generic active costs 60, so the learning rule never fires in the refere
 Verdicts (§25.2.1): pass when the 95 % interval lies inside the target, fail when entirely outside,
 inconclusive otherwise; a metric passes only if every cell passes and fails if any fails, and the
 same rule combines metrics into the report verdict.
+
+**Metric 3 statistic (ADR-0005 «Pasada 2», owner decision of 2026-10-28).** An S3 sample (both lane
+orders of one seed) is a signature sweep, a split or a generic sweep, so the signature's mean share
+is 0.5 + (p₊ − p₋) / 2 with p₊ and p₋ the two sweep rates; measured on v1 the generic never sweeps
+and the signature sweeps 6-8 % of the samples, about 10 of a 150-sample `pr` cell. The interval is
+Tango's score interval of p₊ − p₋ (`pairedScoreInterval` in `batch/stats.ts`), mapped to the share
+and through (1 − p) / p. It takes the variance under each candidate value, with the restricted
+maximum-likelihood p₋, so it is never narrower than a share that far from even requires: with no
+sweep p₊ − p₋ stays within ±z² / (n + z²) (±1.25 points of share at 150 samples), and with p₋ = 0
+its upper bound is Wilson's. The normal interval of the mean that it replaces used the
+sample's own variance and collapsed when a cell showed few sweeps: 4 sweeps in 150 read
+50.0-52.6 % and failed a cell whose share is 52.9 %. In `pr` metric 3 is pass or inconclusive,
+never fail: its band is 1.4 points of share and a 150-sample interval 2.5-5.5 points, so nine cells
+at 95 % false-fail about one correct content state in ten, and the fixed `pr` seeds repeat a fail
+on every PR until the content changes. A `pr` cell whose interval lies outside the band reads
+inconclusive and says so in its note; the `full` profile (4000-8000 samples per cell, per-cell
+95 %) decides, and its fails reach every PR through the gate report. The `pr` budget is unchanged
+(150 samples per cell): no `pr` size inside 10 000 races resolves the band.
 
 Performance: `--engine fake --fake-cost-ms 5` busy-waits 5 ms per 8-runner race (scaled by runners
 / 8), the engine budget of §22. On the dev container (4 cores) the 10 000-race `pr` batch took

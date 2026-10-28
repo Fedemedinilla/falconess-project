@@ -6,7 +6,9 @@
   **aceptado (dueño, 2026-10-28)**, con las alas rotas fuera del peso de PW (propuestas 3 y 5 de
   «Métricas 2 y 5»; sección «Pasada 2»). Temporada más exigente (propuestas 1 y 4 de «Métrica 7»,
   opción (a) de la 4): **aceptado (dueño, 2026-10-28)**; `FIELD` 75 / 9 y escalera 7 / 6 / 5 / 3
-  reemplazan el 60 / 8 de «Métrica 7» (sección «Pasada 2»).
+  reemplazan el 60 / 8 de «Métrica 7» (sección «Pasada 2»). Estadística de la métrica 3 (propuesta
+  1 de «Métricas 3 y 4», opción (a)): **aceptado (dueño, 2026-10-28)**; intervalo de puntuación
+  pareado y veredicto `pr` pass / inconcluso, banda 0,85-0,90 sin cambio (sección «Pasada 2»).
 - Fecha: 2026-10-28
 - Alcance: `packages/sim/src/rulesets/v1/constants.ts`, `packages/content/` (bastidores, piezas,
   habilidades)
@@ -356,17 +358,21 @@ de S3); la exploración previa se hizo con el arnés.
 
 ### Propuestas para el dueño
 
-1. **Estadística de la métrica 3 (propuesto).** La banda 0,85-0,90 mide 1,5 puntos de cuota. En `pr`
-   (150 muestras) el intervalo mide ±5-7 puntos: ninguna celda puede pasar, y una celda correcta
-   puede fallar por ruido cuando la varianza muestral sale baja (alt1 Cernícala ridge: 51,3 % con
-   intervalo de ±1,3 puntos, mientras 8000 muestras dan 52,9 %). Con `BALANCE_GATE=enforce` ese fail
-   bloquearía un PR. En `full` el semiancho es ≈ 0,5 puntos: una celda pasa solo si su cuota real
-   está en ≈ 53,1-53,6 %, y con un número de contenido por pasivo la dispersión entre pistas (0,5-0,9
-   puntos) deja celdas en el borde. Opciones: (a) cambio de código en `apps/cli/src/batch/metrics.ts`:
-   piso de varianza en el intervalo de S3 (por ejemplo la de dos carreras independientes,
-   p(1 − p) / 2) para que `pr` no produzca fails falsos; (b) mover la banda a 0,82-0,92 (la firma
-   gana 52-55 %) con este ADR; (c) subir el tope de `full` a 16 000 muestras por celda (semiancho
-   ≈ 0,35 puntos, ≈ +40 s). Recomendación: (a) y, si se quiere un pass en `full`, (b).
+1. **Estadística de la métrica 3: aceptado (dueño, 2026-10-28), opción (a)** en la forma que
+   registra «Pasada 2»: intervalo de puntuación pareado (el piso de varianza que exige cada valor
+   candidato) y veredicto `pr` pass / inconcluso; la banda no se mueve (b) ni sube el tope de `full`
+   (c). Texto de la propuesta: la banda 0,85-0,90 mide 1,5 puntos de cuota. En `pr` (150 muestras)
+   el intervalo mide ±5-7 puntos: ninguna celda puede pasar, y una celda correcta puede fallar por
+   ruido cuando la varianza muestral sale baja (alt1 Cernícala ridge: 51,3 % con intervalo de
+   ±1,3 puntos, mientras 8000 muestras dan 52,9 %). Con `BALANCE_GATE=enforce` ese fail bloquearía
+   un PR. En `full` el semiancho es ≈ 0,5 puntos: una celda pasa solo si su cuota real está en
+   ≈ 53,1-53,6 %, y con un número de contenido por pasivo la dispersión entre pistas
+   (0,5-0,9 puntos) deja celdas en el borde. Opciones: (a) cambio de código en
+   `apps/cli/src/batch/metrics.ts`: piso de varianza en el intervalo de S3 (por ejemplo la de dos
+   carreras independientes, p(1 − p) / 2) para que `pr` no produzca fails falsos; (b) mover la banda
+   a 0,82-0,92 (la firma gana 52-55 %) con este ADR; (c) subir el tope de `full` a 16 000 muestras
+   por celda (semiancho ≈ 0,35 puntos, ≈ +40 s). Recomendación: (a) y, si se quiere un pass en
+   `full`, (b).
 2. **Coordinación con las métricas 2 y 5 (propuesto).** Si esa pasada mueve `kE`, `regenPerTick`,
    `pulseBiomePm` o los pesos de PW, re-medir S3 con `--profile full --scenarios S3` y ajustar los
    tres números de firma (regen de `still-air` y `scrap-armor`, bono de cadena de `talon-lock`)
@@ -1077,3 +1083,138 @@ Estado: **propuesto**.
    de la temporada. Opciones: (a) contenido: una escalera más estricta para Peregrina, que iguala la
    nota pero no las victorias; (b) balance de bastidores (otra pasada de la métrica 2); (c) dejarlo
    así.
+
+### Estadística de la métrica 3 (decisión 3)
+
+Estado: **aceptado (dueño, 2026-10-28)**: propuesta 1 de «Métricas 3 y 4», opción (a). La banda
+0,85-0,90 se queda y una corrida `pr` no puede dar un fail falso de la métrica 3; en `pr` un
+inconcluso vale, un fail falso no. Solo cambia la herramienta del lote
+(`apps/cli/src/batch/stats.ts` y `metrics.ts`): ni constantes, ni contenido, ni el presupuesto de
+corridas, ni las semillas.
+
+#### Diagnóstico (verificado)
+
+Arnés local (`.work/s3stat`, no versionado) que corre los trabajos de S3 del lote (mismo
+`buildRaceJob`, puerto del motor y pool de workers) y guarda el resultado de cada muestra:
+20 000 muestras por celda con el prefijo de semillas `calib` (180 000 en total), y las 150 muestras
+`pr` de siete bases de semillas.
+
+- Una muestra (los dos órdenes de carril de una semilla) es un barrido de la firma (gana las dos
+  carreras), un reparto (una cada una) o un barrido del genérico. El genérico no barrió nunca (0 de
+  180 000): los sorteos de carril se cancelan entre las dos carreras y la firma solo gana las dos
+  cuando su ventaja supera la del carril. La firma barre el 6,2-7,5 % de las muestras (cuota
+  53,1-53,8 %, como `full`); empates de `finishMilli`: 0-4 por celda. La cuota de la firma es
+  0,5 + (p₊ − p₋) / 2, con p₊ y p₋ las dos tasas de barrido, y la banda 52,63-54,05 % es p₊
+  5,26-8,11 %: una celda `pr` espera 7,9-12,2 barridos de 150.
+- El intervalo de v1 (normal de la media de la cuota por muestra, con la varianza de la propia
+  muestra) es el de Wald de un conteo de ≈ 10: su ancho sigue al conteo observado. Con 4 barridos
+  (el caso alt1 Cernícala ridge de la propuesta 1) mide 50,04-52,63 % y falla, con la cuota real en
+  52,9-53,1 %.
+- Fail de una celda `pr` (150 muestras, sin barridos del genérico): con el intervalo de v1,
+  4 barridos o menos, o 21 o más; con un intervalo de puntuación del 95 % por celda, 2 o menos, o 19
+  o más.
+
+Fails falsos de la métrica 3 por corrida `pr` con las nueve celdas de hoy, todas dentro de la banda
+(binomial exacta con las p₊ medidas / empírica, 133 bloques disjuntos de 150 muestras de las
+20 000), con las nueve celdas en su borde peor, y fails de una celda `pr` mal hecha:
+
+| Regla de la celda en `pr`                          | Celdas de hoy | Las 9 en el borde peor | Firma inerte (50 %)   | Firma a 57 / 58 / 60 % |
+| -------------------------------------------------- | ------------- | ---------------------- | --------------------- | ---------------------- |
+| normal de la media, 95 % (v1)                      | 18,4 / 17,3 % | 61,1 %                 | 100 %                 | 53,6 / 77,9 / 97,8 %   |
+| puntuación, 95 % por celda                         | 10,3 / 10,5 % | 27,7 %                 | 100 %                 | 71,5 / 89,3 / 99,3 %   |
+| puntuación, simultáneo 95 % (Bonferroni, 9 celdas) | 0,94 / 1,5 %  | 4,4 %                  | 100 %                 | 44,2 / 70,5 / 96,3 %   |
+| **puntuación, sin fail en `pr` (elegida)**         | **0**         | **0**                  | nota; falla en `full` | nota; falla en `full`  |
+
+En las siete bases `pr` medidas (por defecto y alt1-alt6; barridos mínimo-máximo por celda 6-19,
+5-19, 7,5-20, 5-17, 4-14, 4-16 y 6-16) la regla de v1 falla alt4 (Cernícala ridge y cañón,
+4 barridos) y alt5 (Caracara ridge, 4); la del 95 % por celda fallaría la base por defecto, alt1 y
+alt2 (un sprint con 19-20 barridos); la elegida, ninguna. Las semillas `pr` son fijas: un fail falso
+se repite en cada PR mientras no cambie el contenido de S3, y con `BALANCE_GATE=enforce` bloquea
+todo PR que toque `sim` o `content`.
+
+#### Cambio
+
+1. **Intervalo, en los dos perfiles.** El de S3 es el intervalo de puntuación de Tango (1998) para
+   la diferencia de proporciones pareadas p₊ − p₋, llevado a la cuota (0,5 + Δ / 2) y a la razón
+   ((1 − p) / p) como antes (`pairedScoreInterval` en `stats.ts`; un empate cuenta medio barrido).
+   Es el piso de varianza de la opción (a) hecho por principio: la varianza se toma bajo cada valor
+   candidato, con la p₋ de máxima verosimilitud restringida, así que nunca baja de
+   n · |Δ| · (1 − |Δ|), la que exige una cuota tan lejos del 50 %. Sin barridos, Δ queda en
+   ±z² / (n + z²) (±1,25 puntos de cuota con 150 muestras; antes, ancho cero), y con p₋ = 0 su cota
+   alta es la de Wilson (métricas 1, 2 y 7). El piso p(1 − p) / 2 del ejemplo de la propuesta se
+   descartó: tira la reducción de varianza real del diseño pareado (el genérico nunca barre), mide
+   ±5,7 puntos en `pr` y no podría fallar nunca a una firma inerte (cota alta 55,7 %).
+2. **Veredicto `pr` de la métrica 3: pass o inconcluso.** El fail queda para `full` (D48: el
+   nocturno decide lo que el PR no puede). La banda mide 1,42 puntos de cuota y un intervalo de
+   150 muestras, 2,5-5,5: ninguna celda puede pasar en `pr` y, sea cual sea su cuota real, toda
+   celda queda a menos de un intervalo de un borde. Una celda `pr` cuyo intervalo cae fuera de la
+   banda se lee inconclusa y lo dice su nota («95 % interval outside the band: a pr run does not
+   fail metric 3, the full profile decides»); una nota de la métrica lo explica. `full` conserva el
+   95 % por celda y la duplicación a 8000 muestras; sus fails llegan a todo PR por el informe de
+   puerta.
+3. **Presupuesto sin cambio** (S3: 150 muestras por celda, 2700 carreras; S1 absorbe el resto y el
+   total suma `--runs`). Subirlo se descartó: S3 ya lleva 2700 de las 10 000 carreras, 300 por celda
+   pediría 2700 más con S1 en 1200 (métrica 1, S6 y la σ de S5), y ningún tamaño `pr` dentro de
+   10 000 carreras resuelve la banda: una celda centrada necesita ≈ 1200 muestras para que su
+   intervalo del 95 % quepa en 1,42 puntos (21 600 carreras las nueve). Con 300 y Bonferroni el
+   fail falso seguiría en 0,5 %.
+
+Alternativa para el dueño (no aplicada; una línea en `s3CellsOf`): fail en `pr` solo con el
+intervalo simultáneo de las nueve celdas (Bonferroni, z 2,77). Falla en el mismo PR a una firma
+inerte (0 barridos: cota alta 52,44 % < 52,63 %) y a una de 60 % en el 96 % de las corridas, a
+cambio de un fail falso fijo en ≈ 1 % de los estados de contenido correctos (4,4 % con las nueve
+celdas en un borde).
+
+#### Evidencia (lote)
+
+`pnpm sim:batch -- --runs 10000`, antes y después del cambio, en tres bases. Las 79 celdas de las
+métricas 1, 2 y 4-8 y todos los diagnósticos salen idénticos en las tres (S3 no alimenta otra
+métrica); la estadística no suma tiempo medible (después, 6,6-7,0 s de pared con 3 workers; las
+corridas de antes, 11,5-12,2 s, coincidieron con carga en la máquina: 2,8-2,9 ms por carrera en el
+motor contra 1,6-1,7). Métrica 3: inconclusa 0/0/9 antes y después en las tres bases.
+Celdas: barridos de la firma (de 150), intervalo de la razón v1 → nuevo y veredicto (? inconcluso);
+¹ intervalo fuera de la banda (fallaría con el 95 % por celda; la nota lo dice):
+
+| Celda                   | Por defecto                               | alt1                                      | alt2                                      |
+| ----------------------- | ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| caracara/desert-sprint  | 10: [0,807; 0,948] ? → [0,788; 0,929] ?   | 10: [0,807; 0,948] ? → [0,788; 0,929] ?   | 20: [0,684; 0,854] ? → [0,671; 0,838] ? ¹ |
+| caracara/desert-ridge   | 10: [0,807; 0,948] ? → [0,788; 0,929] ?   | 16: [0,730; 0,892] ? → [0,715; 0,875] ?   | 12: [0,780; 0,930] ? → [0,763; 0,911] ?   |
+| caracara/desert-canyon  | 13: [0,767; 0,920] ? → [0,750; 0,902] ?   | 13: [0,767; 0,920] ? → [0,750; 0,902] ?   | 13: [0,767; 0,920] ? → [0,750; 0,902] ?   |
+| cernicala/desert-sprint | 19: [0,695; 0,863] ? → [0,682; 0,847] ? ¹ | 14: [0,754; 0,911] ? → [0,738; 0,893] ?   | 10: [0,807; 0,948] ? → [0,788; 0,929] ?   |
+| cernicala/desert-ridge  | 6: [0,867; 0,983] ? → [0,844; 0,972] ?    | 5: [0,883; 0,991] ? → [0,859; 0,985] ?    | 10: [0,807; 0,948] ? → [0,788; 0,929] ?   |
+| cernicala/desert-canyon | 14: [0,754; 0,911] ? → [0,738; 0,893] ?   | 16: [0,730; 0,892] ? → [0,715; 0,875] ?   | 14: [0,754; 0,911] ? → [0,738; 0,893] ?   |
+| peregrina/desert-sprint | 16: [0,730; 0,892] ? → [0,715; 0,875] ?   | 19: [0,695; 0,863] ? → [0,682; 0,847] ? ¹ | 7,5: [0,844; 0,969] ? → [0,822; 0,954] ?  |
+| peregrina/desert-ridge  | 8: [0,836; 0,966] ? → [0,815; 0,947] ?    | 13: [0,767; 0,920] ? → [0,750; 0,902] ?   | 9: [0,821; 0,957] ? → [0,802; 0,938] ?    |
+| peregrina/desert-canyon | 11: [0,793; 0,939] ? → [0,775; 0,920] ?   | 12: [0,780; 0,930] ? → [0,763; 0,911] ?   | 10: [0,807; 0,948] ? → [0,788; 0,929] ?   |
+
+En las tres bases los fails de la regla de v1 no aparecen (ninguna celda con 4 barridos o menos);
+alt4 y alt5, las bases donde sí (sección «Diagnóstico»), leen 0/0/9 con el cambio (`--scenarios S3`:
+Cernícala ridge y cañón de alt4 y Caracara ridge de alt5, 4 barridos, razón [0,875; 0,998] antes
+[0,900; 0,998] y fail).
+
+`pnpm sim:batch -- --profile full --scenarios S3` por defecto y alt1: 8/0/1 → 8/0/1 en las dos
+(Cernícala sprint inconclusa, cota baja de la razón 0,847-0,849); las mismas celdas se duplican a
+8000 (por defecto Cernícala sprint y ridge, alt1 Cernícala sprint y Peregrina sprint; 88 000
+carreras en las dos) y las cotas se mueven ≈ 0,02 puntos de cuota como mucho (con 250-600 barridos
+por celda el intervalo de puntuación y el normal coinciden).
+
+Tests: `stats.test.ts` (la p₋ restringida en forma cerrada contra la verosimilitud por fuerza bruta;
+el estadístico decrece en Δ y vale ±z en las cotas; sin barridos ±z² / (n + z²); con p₋ = 0, la
+cota alta de Wilson; antisimetría; coincide con el intervalo normal con miles de muestras) y
+`metrics.test.ts` (el caso alt1 de 4 barridos en 150: v1 falla, ahora inconcluso en `pr` y en
+`full`; firma inerte: fail en `full`, inconclusa con nota en `pr`; firma a 60 %: lo mismo;
+2 barridos de 2 ya no fallan; un `pr` grande sí puede pasar). Documentos: `docs/balance-batch.md`
+(tabla de escenarios y «Metric 3 statistic»), `docs/race-engine.md` (§25.2, reglas comunes y S3;
+§25.2.1, veredictos) y el comentario de `share-ratio` en `packages/schema/src/balance.ts` (el
+nombre del método no cambia, así que los informes de `main` siguen siendo legibles como línea base
+y puerta). Corridas del lote: 6 `pr` completas, 2 `pr` de S3 (alt4, alt5) y 4 `full` de S3.
+
+#### Consecuencias
+
+- Con `--runs 10000` la métrica 3 en `pr` es inconclusa por construcción. Una firma inerte o
+  desbocada que entre en un PR solo se ve como nota en su informe: la falla el siguiente `full` y la
+  puerta bloquea los PR siguientes hasta corregirla (una noche de demora).
+- La nota «outside the band» aparece en ≈ 10 % de los estados de contenido correctos (3 de las 7
+  bases medidas): informa, no bloquea.
+- `full` sigue con el 95 % por celda (D48, sin cambio): con las celdas de hoy un fail falso en
+  `full` sale ≈ 0,06 % de las veces; una celda que quede justo en un borde da hasta 2,5 % por noche.

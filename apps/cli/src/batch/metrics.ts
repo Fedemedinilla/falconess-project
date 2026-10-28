@@ -28,6 +28,7 @@ import {
   type Interval,
   mean,
   meanInterval,
+  pairedScoreInterval,
   pointsFromTimeGain,
   sigmaInterval,
   topShares,
@@ -507,7 +508,24 @@ function shareToRatio(p: number | null): number | null {
   return (1 - p) / p;
 }
 
-/** Ratio cells of S3, one per (pair, course), in plan order. */
+/** Note of a `pr` cell whose interval lies outside the band (ADR-0005 «Pasada 2»). */
+export const S3_PR_OUTSIDE_NOTE =
+  "95 % interval outside the band: a pr run does not fail metric 3, the full profile decides";
+
+/**
+ * Ratio cells of S3, one per (pair, course), in plan order. A paired sample (both lane orders of
+ * one seed) is a signature sweep, a split or a generic sweep, so the signature's mean share is
+ * 0.5 + (p₊ − p₋) / 2 with p₊ and p₋ the two sweep rates. Interval: the paired score interval of
+ * p₊ − p₋ (Tango), mapped to the share and through (1 − p) / p (ADR-0005 «Pasada 2»: the normal
+ * interval of the mean collapsed when a 150-sample cell showed few sweeps).
+ *
+ * `pr` verdict: pass or inconclusive, never fail (owner decision of 2026-10-28). The band is 1.4
+ * points of share wide and a 150-sample interval 2.5-5.5 points, so every cell sits within one
+ * interval of a band edge whatever its true share: nine cells at 95 % false-fail ≈ 10 % of correct
+ * content states, and the fixed `pr` seeds would repeat that fail on every PR until the content
+ * changed. A cell whose interval lies outside the band reads inconclusive with
+ * `S3_PR_OUTSIDE_NOTE`; the `full` profile decides fails (§25.2.1, D48).
+ */
 export function s3CellsOf(input: MetricsInput): (BalanceCell & { pair: Slug; course: Slug })[] {
   const groups = groupBy(pairs(input, "S3"), (p) => `${p.job.pair}/${p.job.course}`);
   const out: (BalanceCell & { pair: Slug; course: Slug })[] = [];
@@ -516,7 +534,9 @@ export function s3CellsOf(input: MetricsInput): (BalanceCell & { pair: Slug; cou
     if (!first) continue;
     let sig = 0;
     let gen = 0;
-    const shares = list.map(({ result }) => {
+    let plus = 0;
+    let minus = 0;
+    for (const { result } of list) {
       let s = 0;
       for (let race = 0; race < 2; race++) {
         const w = winShares(finishOf(result, race));
@@ -524,11 +544,14 @@ export function s3CellsOf(input: MetricsInput): (BalanceCell & { pair: Slug; cou
         gen += w[1] ?? 0;
       }
       sig += s;
-      return s / 2;
-    });
-    const mi = meanInterval(shares);
-    const pLo = mi.lo === null ? 0 : Math.max(0, mi.lo);
-    const pHi = mi.hi === null ? 1 : Math.min(1, mi.hi);
+      // s is the signature's wins in the two races: 2 a sweep, 0 a generic sweep (dead heats: halves).
+      plus += Math.max(0, s - 1);
+      minus += Math.max(0, 1 - s);
+    }
+    const n = list.length;
+    const ci = pairedScoreInterval(plus, minus, n);
+    const pLo = ci.lo === null ? 0 : Math.max(0, 0.5 + ci.lo / 2);
+    const pHi = ci.hi === null ? 1 : Math.min(1, 0.5 + ci.hi / 2);
     const ratioLo = pHi <= 0 ? RATIO_CAP : (1 - pHi) / pHi;
     const ratioHi = shareToRatio(pLo);
     const value = sig > 0 ? gen / sig : null;
@@ -538,9 +561,13 @@ export function s3CellsOf(input: MetricsInput): (BalanceCell & { pair: Slug; cou
       { lo: ratioLo, hi: ratioHi },
       "share-ratio",
       BAND.signature,
-      list.length,
-      `signature wins ${pct(sig / (2 * list.length))} %`,
+      n,
+      `signature wins ${pct(sig / (2 * n))} % (sweeps: signature ${plus}, generic ${minus}, of ${n})`,
     );
+    if (input.profile === "pr" && cell.verdict === "fail") {
+      cell.verdict = "inconclusive";
+      cell.note = `${cell.note}; ${S3_PR_OUTSIDE_NOTE}`;
+    }
     out.push({ ...cell, pair: first.job.pair, course: first.job.course });
   }
   return out;
@@ -560,7 +587,12 @@ function s3Metric(input: MetricsInput): MetricsOutput {
     cells,
     [
       "S3: 1v1, both lane orders of one seed form a paired sample; both entries are the same Falconess (base 600, her letters, her unique skill as the only active, no parts or quirks).",
-      "Ratio = generic wins / signature wins (a dead heat counts half each). Interval: normal interval of the signature's mean share per sample, mapped through (1 − p) / p.",
+      "Ratio = generic wins / signature wins (a dead heat counts half each). A sample is a signature sweep, a split or a generic sweep; interval: paired score interval (Tango) of the difference of the two sweep rates, mapped to the signature's share 0.5 + Δ / 2 and through (1 − p) / p (ADR-0005 Pasada 2).",
+      ...(input.profile === "pr"
+        ? [
+            "pr: metric 3 is pass or inconclusive, never fail (ADR-0005 Pasada 2): the band is 1.4 points of share and a 150-sample interval 2.5-5.5, so a fail at pr size cannot be told from a cell near a band edge, and the fixed pr seeds would repeat it on every PR. A cell whose interval lies outside the band says so in its note; the full profile (4000-8000 samples per cell) decides.",
+          ]
+        : []),
       "Home biome read as desert for all three pairs in v1 (D47).",
     ],
   );
