@@ -304,10 +304,12 @@ mili-ticks; margen = distancia real del siguiente al cruzar el anterior; guarda 
 
 ### Rivales de las carreras objetivo
 
-Intención: campo de clase igualada que sigue a ≈ ¾ la curva de stats de la Falconess de referencia
-(política de la stat más baja, ≈ 71 + 10,9 × turno por stat de T12 a T46): la jugadora entrenada
-con criterio llega a cada objetivo con la misma ventaja relativa y la dificultad la pone
-`minPlace`. Potencia
+Intención: bastidores de la misma clase de PW que la jugadora (banda de PW) y stats a ≈ ¾ de la
+curva de la Falconess de referencia (política de la stat más baja, ≈ 71 + 10,9 × turno por stat de
+T12 a T46): la jugadora entrenada con criterio llega a cada objetivo con la misma ventaja relativa.
+No es un campo igualado en stats: con ≈ ¾ la referencia gana el 73-80 % de las carreras objetivo
+(cuota justa 12,5 %) y las metas funcionan como puntos de control; si deben ser un desafío lo
+decide el dueño (ADR-0005 «Métrica 7», propuesta 4). Potencia
 `fl(5 × (rivalBase + rivalPerTurn × turno) × (1000 ± rivalNoise), 1000)` repartida por pesos de estilo
 (±`rivalStatJitter`); bastidores genéricos con `|PW − pw0| × 1000 ≤ rivalPwBandPm × pw0`, donde
 `pw0` es el PW base del bastidor de la jugadora (banda relativa del 5 %; mínimo 1 bastidor, elección

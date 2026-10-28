@@ -1784,7 +1784,9 @@ intelligence): glide 240/210/170/180/200, dive 250/180/170/220/180, hover 220/20
 ground 200/230/220/190/160. The relative curve is the stub's (`5 × (95 + 9 t) ± 20 %`).
 Balance pass 1 (ADR-0005, metric 7) re-anchors v1 at `60 + 8 t` (T12 156, T24 252, T36 348, T46
 428 per stat, ≈ ¾ of the reference policy's measured curve at every goal turn); the par table
-below was measured on the stub curve.
+below was measured on the stub curve. With ¾ the reference policy wins 73-80 % of its goal races
+(29-42 % on the stub curve): goals act as checkpoints, and whether they should be a challenge is
+left to the owner (ADR-0005, metric 7, proposal 4).
 
 Class-matching implements pillar 2's "clase de equipo igualado" for goal races: with literal PW an
 unrestricted pool makes Peregrina (1.4) win everything and Caracara (0.7) nothing (judges'

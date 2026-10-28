@@ -480,6 +480,8 @@ Estado: **aceptado** (dos constantes de `FIELD` dentro de rango); la sección «
 dueño (métrica 7)» queda **propuesta**. Medida sobre `phase-2-race-engine` con las métricas 2 a 5
 ya combinadas (`b37f0bf`). Las líneas base del lote son ese mismo `HEAD` en las dos bases de
 semillas (`pr` completo y `full` de S7), no la v1: las métricas 2 a 5 ya movieron las carreras de S7.
+El cambio deja las carreras objetivo como puntos de control: la referencia gana el 73-80 %. Si deben
+ser un desafío lo decide el dueño (propuesta 4).
 
 ### Diagnóstico (verificado)
 
@@ -599,8 +601,39 @@ Diagnósticos de S7 `full` por defecto (Caracara / Cernícala / Peregrina), ante
 - Curva de stats: el entrenamiento no cambia; las temporadas completas terminan en 618-639 por stat
   (arnés; antes 644-660 porque solo terminaban las temporadas fuertes), dentro de 550-800.
 
-La temporada sigue siendo un desafío (arnés, 500 temporadas por Falconess, semillas `batch-0` …
-`batch-499`, ≥ B Caracara / Cernícala / Peregrina):
+### Puesto en las carreras objetivo (añadido en la verificación)
+
+El cambio aprueba la métrica 7 haciendo casi automáticas las carreras objetivo para la jugadora de
+referencia: los rivales quedan a ≈ ¾ de sus stats y ella gana la mayoría. En un campo de ocho la
+cuota justa es 12,5 %. Datos del arnés, semillas `batch-0` … `batch-499`, las mismas de
+`pnpm sim:season-batch -- --runs 500`, que con el cambio informa `win rate` 73 / 76 / 80 %.
+Porcentajes de las carreras objetivo que la temporada llegó a correr:
+
+| Carreras objetivo corridas (Caracara / Cernícala / Peregrina) | 95 / 9 (v1)          | 60 / 8               |
+| ------------------------------------------------------------- | -------------------- | -------------------- |
+| Ganadas (1.º)                                                 | 32,9 / 28,6 / 42,2 % | 73,1 / 75,9 / 79,7 % |
+| En el podio (≤ 3.º)                                           | 63,9 / 61,3 / 69,1 % | 92,0 / 91,0 / 93,4 % |
+| Temporadas que ganan las cuatro                               | 3,8 / 1,8 / 3,0 %    | 33,0 / 36,8 / 40,2 % |
+| Carreras objetivo por temporada                               | 2,6 / 2,4 / 2,6      | 3,7 / 3,6 / 3,7      |
+
+Reparto de puestos, del 1.º al 8.º, de las tres juntas: 34,8 / 17,0 / 13,1 / 9,7 / 7,7 / 7,6 / 5,3
+/ 4,8 % → 76,2 / 10,7 / 5,2 / 3,2 / 2,2 / 1,4 / 0,6 / 0,4 %. Por meta, en % de las temporadas
+(arnés con `minPlace` 8, así que todas corren las cuatro):
+
+| Ganadas por meta (sin cortar la temporada) | T12         | T24         | T36         | T46         |
+| ------------------------------------------ | ----------- | ----------- | ----------- | ----------- |
+| Caracara, 95 / 9 → 60 / 8                  | 19,2 → 54,2 | 20,4 → 66,8 | 42,4 → 83,8 | 46,2 → 83,4 |
+| Cernícala, 95 / 9 → 60 / 8                 | 13,4 → 52,4 | 22,0 → 75,4 | 29,2 → 80,4 | 49,4 → 89,0 |
+| Peregrina, 95 / 9 → 60 / 8                 | 8,4 → 50,4  | 51,6 → 87,2 | 46,8 → 84,0 | 75,2 → 97,0 |
+
+`pnpm sim -- --seed 42`: las tres Falconess terminan 1.ª en sus cuatro carreras objetivo (12 de 12),
+también en las de T24 y T36 que solo piden podio. No es ruido de las semillas de ajuste: con una
+tercera base de semillas (alt2, de la verificación) la métrica 7 da `pr` 75,0 / 78,3 / 86,7 % y
+`full` 81,2 / 79,0 / 82,0 %.
+
+Para la jugadora de referencia la temporada deja de ser un desafío en las carreras (propuesta 4 de
+«Métrica 7»). La dificultad que queda la sienten las políticas descuidadas (arnés, 500 temporadas
+por Falconess, semillas `batch-0` … `batch-499`, ≥ B Caracara / Cernícala / Peregrina):
 
 | Política                                                                | 95 / 9 (v1)        | 60 / 8             |
 | ----------------------------------------------------------------------- | ------------------ | ------------------ |
@@ -626,8 +659,9 @@ T24 y T46) cambian además de los que ya cambiaban; los regenera el líder.
   por debajo (crecimiento en técnica e inteligencia) y sus dos metas del cañón son sus celdas más
   bajas (90-94 %). No se tocó su contenido: con 60 / 8 pasa con margen en `full`.
 - Las carreras objetivo de `pnpm sim`, `pnpm play` y de cualquier jugadora corren contra rivales más
-  flojos; con su bastidor de firma (el hangar de referencia lleva genéricos) la temporada es aún más
-  fácil.
+  flojos: la referencia gana el 73-80 % (antes 29-42 %) y el 33-40 % de sus temporadas gana las
+  cuatro. Con su bastidor de firma (el hangar de referencia lleva genéricos) la temporada es aún
+  más fácil.
 - La razón ¾ depende de la curva de referencia: un cambio de la economía de entrenamiento
   (`trainBase`, `secondaryGain`, fatiga), del crecimiento de las Falconess o de la política de
   referencia vuelve a medir la razón con el arnés antes de tocar `FIELD`.
@@ -655,3 +689,44 @@ Estado: **propuesto**.
    Falconess). Si se rompieran, con `pwCruiseWeight` 5 costarían ≈ 0,2 % de tiempo en vez de ≈ 30 %
    (propuesta 5 de «Métricas 2 y 5»). Para que reparar sea una decisión hacen falta las dos cosas:
    más desgaste y un castigo real de alas rotas.
+4. **Las carreras objetivo son casi automáticas para la referencia** (sección «Puesto en las
+   carreras objetivo»): gana el 73-80 % y el 33-40 % de sus temporadas gana las cuatro. BRIEF §12
+   solo pone un piso a la métrica 7, y ni el brief ni la especificación dicen cuánto debe ganar la
+   referencia: eso lo decide el dueño. Arnés de la sección (1000 temporadas por Falconess, cada
+   escalera evaluada sobre las mismas carreras; «actual» es 5/4/3/2 en Caracara y 5/3/3/1 en
+   Cernícala y Peregrina; ≥ B en Caracara / Cernícala / Peregrina; «Ganadas», las carreras objetivo
+   corridas que gana, de las tres juntas):
+
+   | `rivalBase` / `rivalPerTurn` (razón T12-T46) | `minPlace` (T12/T24/T36/T46) | ≥ B (%)            | Ganadas |
+   | -------------------------------------------- | ---------------------------- | ------------------ | ------- |
+   | 60 / 8 (0,74-0,77; hoy)                      | actual                       | 78,8 / 74,3 / 84,3 | 75,0 %  |
+   | 60 / 9 (0,81-0,85)                           | actual                       | 60,7 / 52,5 / 70,2 | 59,7 %  |
+   | 60 / 9                                       | T12 ≤ 7                      | 65,3 / 55,4 / 77,1 | 59,3 %  |
+   | 70 / 9 (0,84-0,88)                           | actual                       | 52,3 / 42,8 / 61,4 | 52,4 %  |
+   | 70 / 9                                       | T12 ≤ 8 (sin meta en T12)    | 59,6 / 47,6 / 73,6 | 52,1 %  |
+   | 70 / 9                                       | 6/5/4/3 las tres             | 68,0 / 67,5 / 79,1 | 52,5 %  |
+   | 80 / 9 (0,85-0,91)                           | 6/5/4/3 las tres             | 61,8 / 60,5 / 72,7 | 45,2 %  |
+   | 80 / 9                                       | 7/6/5/3 las tres             | 71,6 / 70,2 / 80,9 | 45,0 %  |
+   | 95 / 9 (0,88-0,98; v1)                       | 7/6/5/3 las tres             | 60,9 / 60,9 / 74,0 | 35,4 %  |
+
+   La tasa de victorias la fija la razón de los rivales, no la escalera: 75 / 60 / 52 / 45 / 35 %
+   con 60 / 8, 60 / 9, 70 / 9, 80 / 9 y 95 / 9. Aflojar solo T12 no alcanza con una razón ≈ 0,85: con 70 / 9
+   y sin meta en T12, Cernícala queda en 47,6 %. La moneda al aire de T12 era el diagnóstico de la
+   curva 95 / 9; con razón 0,85 también muerden las metas «≤ 1» de T46 (Cernícala y Peregrina) y
+   las del cañón de Cernícala. Además, una meta «≤ 1» obliga a ganar esa carrera en ≥ 60 % de las
+   temporadas para cumplir la métrica 7, así que un techo bajo de victorias no convive con metas de
+   ganar. Opciones:
+   (a) contenido y constantes: razón ≈ 0,85-0,9 (`FIELD` 70 / 9 u 80 / 9) con una escalera más
+   floja en las cuatro metas y sin metas de ganar (6/5/4/3 o 7/6/5/3): ganadas 45-52 %, ≥ B
+   60-81 %. Coste: T46 deja de pedir la victoria y, tal como se midió, las tres comparten
+   escalera. Con 80 / 9 y 6/5/4/3 Cernícala queda al borde (60,5 %). Una escalera propia por
+   Falconess se evalúa con el arnés en minutos y se confirma con `sim:batch` (S7 `pr` y `full`, dos
+   bases).
+   (b) objetivo, código de la herramienta (`apps/cli/src/batch`): un diagnóstico de techo en S7, por
+   ejemplo ganadas ≤ 50 % o temporadas que ganan las cuatro ≤ 10 %, para que la métrica 7 no se
+   cumpla solo aflojando el campo. Va con (a): con la escalera de hoy un techo de 40 % es
+   incompatible con ≥ B 60 %, y aun con 7/6/5/3 pide la curva v1 y deja ≥ B en el borde (60,9 %).
+   (c) aceptar «metas como puntos de control»: es el estado de hoy. La referencia gana casi
+   siempre; la dificultad queda para las políticas descuidadas (propuesta 2) y para las notas
+   altas (A o mejor en 0,6-4 % de las temporadas). Este ADR y `docs/formulas.md` ya lo describen
+   así: aceptarla cierra la propuesta.
