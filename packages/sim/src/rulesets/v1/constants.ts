@@ -116,15 +116,6 @@ export const TRAINING_SECONDARY: Readonly<Record<TrainingKind, StatName | null>>
   "train:simulator": "technique",
 };
 
-/** Stub race field: rival power ≈ rivalsPerEntry × (rivalBase + rivalPerTurn × turn) ± rivalNoise. */
-export const STUB_RACE = {
-  rivalBase: 95,
-  rivalPerTurn: 9,
-  rivalNoise: 200,
-  styleMatchBonus: 60,
-  powerToWeightBonus: 200,
-} as const;
-
 /**
  * Widened (non-literal) view of a constants object: numbers become `number`, tuples keep their
  * length. Lets tests and the balance batch build rulesets with other values (e.g. paceHalfWidth 0)
@@ -276,7 +267,7 @@ const RACE_V1 = {
   maxEffectiveStat: 2_000, // validator bound for effective stats
 } as const;
 
-/** Rival field for season goal races (new; replaces STUB_RACE). */
+/** Rival field for season goal races (spec 21.1). */
 const FIELD_V1 = {
   rivalBase: 95, // per-stat mean at turn 0 (stub curve)
   rivalPerTurn: 9, // per-stat mean growth per turn

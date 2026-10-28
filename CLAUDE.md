@@ -41,8 +41,11 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 
 ## Comandos
 
-pnpm typecheck · pnpm test · pnpm test:golden · pnpm content:validate · pnpm sim -- --seed 42
-pnpm play -- --seed 42 · pnpm sim:batch -- --runs 10000 · pnpm lint
+pnpm typecheck · pnpm test · pnpm test:golden · pnpm lint · pnpm content:validate · pnpm bench
+pnpm sim -- --seed 42 --falconess peregrina · pnpm play -- --seed 42 --falconess peregrina
+pnpm sim:race -- --seed 1 --course desert-ridge · pnpm sim:batch -- --runs 10000
+pnpm sim:season-batch -- --runs 500 · pnpm golden:update -- --yes (solo el líder, con ADR)
+Detalle de cada comando: docs/commands.md.
 
 ## Lecciones aprendidas
 
@@ -52,3 +55,10 @@ pnpm play -- --seed 42 · pnpm sim:batch -- --runs 10000 · pnpm lint
 - `structuredClone` no está en `lib: ES2022`; `packages/sim` clona el estado con JSON porque el estado es el formato de guardado.
 - Las ganancias de entrenamiento 8–14 del brief dejan la temporada en ~135 por stat con 48 turnos; la base inicial recalibrada es 44–76 (ver docs/formulas.md).
 - El RNG por input se deriva de `seed/inputsApplied`: el estado no carga RNG y la reproducción es trivial.
+- Biome 2.6 también formatea Markdown (y sus bloques de código): nunca correr `biome --write` sobre docs/; el formateador está apagado para docs/race-engine.md.
+- `noUncheckedIndexedAccess` también afecta a los arrays tipados (Int32Array): las lecturas llevan `?? 0`.
+- Los tests quedaban fuera de `tsc -b`; `tsconfig.tests.json` los incluye en `pnpm typecheck`.
+- `Rng.nextRange(x, x)` no consume sorteo: un ruleset con ruido 0 desplaza los sorteos siguientes del mismo stream.
+- El loader de tsx no pasa a los worker threads: los workers del lote arrancan con `worker-boot.mjs`, que registra `tsx/esm/api`.
+- Commits con la identidad configurada del entorno (firma incluida); nunca pasar `-c user.email`. Los worktrees de agentes pueden nacer de `main`: resetearlos a la rama de trabajo antes de empezar.
+- El prototipo del spec (`.work/proto`, local, no versionado) fue el oráculo del motor: con la misma entrada da el mismo resultado; útil para depurar diferencias.

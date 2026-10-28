@@ -153,28 +153,28 @@ lote que mide las 7 métricas.
 
 Tareas, en orden (cada día cierra con un test de propiedad nuevo):
 
-- [ ] D8 · `Course` y `Segment`, fases, `RaceEntry` congelada, tick de 1/15 s, `v_cruise` y `accel`
+- [x] D8 · `Course` y `Segment`, fases, `RaceEntry` congelada, tick de 1/15 s, `v_cruise` y `accel`
   en enteros con escala 1000, `hp_drain` con cuadrado como producto entero. Solo `flat`.
   Propiedades: más `agility` nunca da peor tiempo en `flat`; dos builds iguales empatan.
-- [ ] D9 · Boost, `energy`, `heat`, `dissipation`, penalización ×0,92, `durability` y su caída al 25 %.
+- [x] D9 · Boost, `energy`, `heat`, `dissipation`, penalización ×0,92, `durability` y su caída al 25 %.
   Los 4 controladores de estilo (`dive`, `hover`, `glide`, `ground`) con sus decisiones de boost.
-- [ ] D10 · Segmentos `climb`, `descent`, `curves`, `water`, `canyon` con `f_seg`; `jump` con `lift`,
+- [x] D10 · Segmentos `climb`, `descent`, `curves`, `water`, `canyon` con `f_seg`; `jump` con `lift`,
   fallo, ruta `ground` ×1,25. Fatiga final con Coraje.
-- [ ] D11 · Sprint final (cálculo único al entrar en fase final, recálculo si una habilidad devuelve
+- [x] D11 · Sprint final (cálculo único al entrar en fase final, recálculo si una habilidad devuelve
   energía). Esquema `Skill` completo; activación `max(1 − 90/I_eff, 0,2)` con orden determinista
   por tick → carril → id. 15 habilidades en JSON.
-- [ ] D12 · 5 `ManufacturerRule` en `sim/rules/` (`mass-thrust`, `regen`, `pulse`, `telemetry`,
+- [x] D12 · 5 `ManufacturerRule` en `sim/rules/` (`mass-thrust`, `regen`, `pulse`, `telemetry`,
   `repairable`). 10 pasivos de bastidor. `mods` de piezas y efectos de las 12 peculiaridades.
   10 bastidores + 3 firmas + 8 piezas en JSON. Borrar `raceStub` y conectar la carrera real a
   `advanceSeason`.
-- [ ] D13 · `RaceLog` con muestreo denso (cada tick en el primer segundo y últimos 25 m, cada 15 ticks
+- [x] D13 · `RaceLog` con muestreo denso (cada tick en el primer segundo y últimos 25 m, cada 15 ticks
   en el resto), eventos (`skill`, `pulse`, `jumpOk`, `jumpFail`, `overheat`, `finish`), márgenes
   en milímetros. 12 golden en `tests/golden/v1/`. Benchmark en `packages/sim/bench/`: 8
   corredoras, 3.000 m, objetivo < 5 ms.
-- [ ] D13 · Bioma del MVP: `desert` (recomendado, ver §7) con 3 pistas: `desert-sprint` (1.200 m,
+- [x] D13 · Bioma del MVP: `desert` (recomendado, ver §7) con 3 pistas: `desert-sprint` (1.200 m,
   `flat` + `curves`), `desert-ridge` (2.000 m, `descent` + `jump` + `flat`), `desert-canyon`
   (3.000 m, `climb` + `canyon` + `flat`). Cubren los cuatro estilos y los tres fabricantes del MVP.
-- [ ] D14 · `pnpm sim:batch -- --runs 10000 --report out/balance.json` con las 7 métricas del brief
+- [x] D14 · `pnpm sim:batch -- --runs 10000 --report out/balance.json` con las 7 métricas del brief
   §12 y diff contra línea base. Job de CI que pega el reporte en el PR. Opcional: verificación
   Node = Deno con `deno run` sobre el bundle ESM de `sim` (una semilla, un hash).
 - [ ] D14 · `apps/cli`: `pnpm sim:race -- --seed <n> --course <id> --entries <archivo>` imprime la
@@ -185,6 +185,14 @@ Tareas, en orden (cada día cierra con un test de propiedad nuevo):
 
 **Criterio de aceptación (brief §14, semana 2):** 10.000 carreras en < 60 s; métricas dentro de rango
 o con ADR; determinismo Node = Deno verificado; benchmark < 5 ms; 12 golden idénticos.
+
+**Estado (2026-10-28): motor completo, balance pendiente.** Diseño en `docs/race-engine.md` con
+ADR-0003 aceptada (D1-D55). `simulateRace` reproduce el prototipo del spec; 8 corredoras en
+3000 m tardan ≈ 3 ms (p95 3,1 ms). La temporada corre carreras reales con `generateField`; el stub
+está borrado. `sim:race`, `sim:batch` (8 escenarios, 7 métricas, CI que comenta en el PR) y 12
+golden (ADR-0004) están en verde. Falta la primera pasada de balance (D14): la puerta D12 de
+temporada falla para las tres Falconess (B o mejor: Caracara 41 %, Peregrina 30 %, Cernícala 9 %),
+y el subagente `balance-analyst` con `/balance-report`. La verificación Node = Deno sigue opcional.
 
 **Riesgo a vigilar desde D8:** rendimiento. Si al D10 una carrera supera 5 ms, se detiene la fase
 y se optimiza (sin asignaciones por tick, arrays tipados, log muestreado y no por tick completo).

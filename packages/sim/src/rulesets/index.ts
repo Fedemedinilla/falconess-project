@@ -8,7 +8,6 @@ import {
   type RaceConstants,
   RULESET_VERSION,
   SEASON,
-  STUB_RACE,
   TRAINING_SECONDARY,
   TRAINING_STAT,
 } from "./v1/constants.js";
@@ -22,7 +21,6 @@ export type Ruleset = {
   readonly moodMult: typeof MOOD_MULT;
   readonly trainingStat: typeof TRAINING_STAT;
   readonly trainingSecondary: typeof TRAINING_SECONDARY;
-  readonly stubRace: typeof STUB_RACE;
 };
 
 export const RULESET_V1: Ruleset = {
@@ -34,7 +32,6 @@ export const RULESET_V1: Ruleset = {
   moodMult: MOOD_MULT,
   trainingStat: TRAINING_STAT,
   trainingSecondary: TRAINING_SECONDARY,
-  stubRace: STUB_RACE,
 };
 
 const RULESETS: Readonly<Record<string, Ruleset>> = { v1: RULESET_V1 };
