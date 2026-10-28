@@ -2369,6 +2369,16 @@ signature rows its redesigned talon-lock, still-air and scrap-armor (metrics 3 a
 through the same prototype with the revision 2 constants; the rows before the pass are in this
 file's git history.
 
+**Spec ruleset, not live v1.** Every number of 25.4 is measured on the spec ruleset: the section 26
+constants, frozen as `SPEC_RULESET` (`packages/sim/src/race/testing/spec-ruleset.ts`), which
+`sanity.test.ts` and the other pinned tests of section 24 read. Only the content moves with the
+balance passes (the rows above). The live v1 constants are `packages/sim/src/rulesets/v1/constants.ts`
+(`RULESET_V1`); balance pass 1 changed them (PW weights, regen, rule terms, broken wings, `FIELD`),
+and ADR-0005 records each value and its measured effect. Under v1 the four neutral rows come out
+the same (PW 1.0 and rule `none`: no constant the pass changed acts on them); the 13 real-frame
+rows do not (with the PW weights 5 / 250 they all finish within 3.5 % of the neutral times,
+against −23 % to +43 % here).
+
 **Hand check (neutral hover, sprint):** 1200 m at 23.5 m/s = 51.1 s; launch (dash to 17 m/s in
 9 ticks, then 0.4 m/s² for ≈ 15 s) costs ≈ +2.4 s, cut short by the first curve at 300 m; curves
 350 m at 21.15 m/s ≈ +1.65 s plus ≈ +0.5 s of re-acceleration at 0.4 m/s²; boost 100 ticks ×
@@ -2506,6 +2516,13 @@ and type `RACE: RaceConstants` (dropping `as const`) and `Ruleset.race: RaceCons
 `packages/sim/src/rulesets/`, so this block, the types and `RULESET_V1.field` are the lead's
 commit, made before the first D8 commit. `STUB_RACE` and `Ruleset.stubRace` stay until D12 and are
 removed together with `race/stub.ts` (the lead's second commit in that folder).
+
+**Spec ruleset, not live v1.** The block below is the spec ruleset: the constants accepted with
+ADR-0003 (D56's `brokenSpeedPm` included), frozen as `SPEC_RULESET`
+(`packages/sim/src/race/testing/spec-ruleset.ts`) for the pinned tests of section 24. It is not
+kept in step with v1: balance pass 1 moved the live values in `packages/sim/src/rulesets/v1/constants.ts`
+(`RULESET_V1`, the source of truth for v1), and ADR-0005 records each change with its before and
+after numbers. The `(v1 …, ADR-0005 …)` comments below point at some of them, not all.
 
 ```ts
 /** Race constants. BRIEF §6-§7 values kept; units in comments; docs/formulas.md "Carrera". */

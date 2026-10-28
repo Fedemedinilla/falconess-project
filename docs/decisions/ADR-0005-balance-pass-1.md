@@ -1242,3 +1242,54 @@ Veredictos sin cambio (`pr` por defecto y alt1: 1 pass, 2 inconclusa 7/0/3, 3 in
 `pr` (antes y después en las dos bases), 2 `full` (después; la línea base es la de «Pasada 2»,
 `.work/balance/p2-broken/post-full-*.json`) y 1 de `sim:season-batch`. Documentos:
 `docs/formulas.md` («Términos de regla»).
+
+**m3: los números de §25.4 y §26 son los de la especificación.** `docs/race-engine.md` presentaba
+las tablas de §25.4 y el bloque de §26 como «v1». Cada sección lleva ahora una nota corta (sin
+reformatear el archivo): son `SPEC_RULESET`, y los valores vivos de v1 están en
+`packages/sim/src/rulesets/v1/constants.ts` y en este ADR. Medido para la nota de §25.4 (las 17
+filas de cada pista, solo, ruido apagado, `RULESET_V1` contra `SPEC_RULESET`): las cuatro filas
+neutras salen idénticas (PW 1,0 y regla `none`: ninguna constante de la pasada actúa), y las 13 de
+bastidores reales cambian, todas a menos de 3,5 % de los tiempos neutros (en la especificación, de
+−23 % a +43 %).
+
+**m4: invariantes anti pay-to-win de BRIEF §9.** `packages/sim/tests/economy.test.ts`, la ruta que
+nombra el brief (el proyecto `sim` de Vitest la toma; `tsconfig.tests.json` la suma a
+`pnpm typecheck`), las comprueba sobre el contenido y el código. «Comprable» es lo que una tirada
+puede dar: las Falconess y los bastidores de los pools y las peculiaridades que se sortean sobre un
+bastidor Boneyard; las piezas cuestan chatarra, que `premium` nunca compra (§9).
+
+- **1, ninguna pieza ni peculiaridad en gacha.** Todo id de los pools (`items` y `featured`) es una
+  Falconess o un bastidor de la clase del pool; `GachaPool.kind` solo admite `falconess` y
+  `frames`; el validador rechaza una pieza o una peculiaridad agregada a cualquier pool.
+- **3, nada comprable toca stats, `growth` ni aptitudes.** `Frame` no tiene campos de stats de
+  Falconess, `growth` ni aptitudes, y `growth` no está en `SeasonState`. El único `falconess-stat`
+  del contenido está en una pieza (`koryu-firmware`), nunca en el pasivo de un bastidor de los
+  pools ni en una peculiaridad. En carrera, todo bastidor con cualquier peculiaridad solo elige la
+  letra de estilo: `freezeEntry` da las stats efectivas de la Falconess. En la temporada, dos
+  hangares que solo difieren en un bastidor del mismo fabricante (SR contra SSR, firma contra
+  genérico) entrenan idéntico hasta la primera carrera objetivo.
+- **4, el rango de repetidos en ninguna fórmula.** Ningún esquema que lee el simulador
+  (`SeasonState`, `RunInput`, `Falconess`, `Frame`, `Part`, `QuirkList`, `EntryInput`,
+  `RaceEntry`, `Build`, `BlackBox`, `Economy`; todos estrictos) ni constante de `RULESET_V1` tiene
+  un campo de rango o de copias; el hangar rechaza un bastidor repetido; ningún identificador de
+  `packages/sim/src` nombra repetidos o copias.
+
+La 2 es la métrica 3 del lote (S3, 0,85-0,90; su estadística en `pr`, en este ADR) y la 5 (liga
+`scrap-class`) queda diferida con el multijugador (ADR-0001): el archivo la deja como `it.todo`.
+Verificado que las comprobaciones muerden: un `falconess-stat` en una peculiaridad hace fallar dos
+tests; un bono de entrenamiento por rareza del bastidor equipado, el de la temporada; un
+identificador `dupeRank` en `packages/sim/src`, el de los fuentes. Observación para el dueño, sin
+efecto hoy (no hay tiradas, ADR-0001): §9 desguaza los bastidores repetidos por chatarra y la
+chatarra compra piezas, y una pieza (`koryu-firmware`, +30 de inteligencia en carrera) sí mueve
+stats efectivas; el día que haya tiradas, ese camino (repetidos → chatarra → piezas) queda acotado
+por la métrica 5 (≤ 3 puntos por pieza), no por la invariante 3.
+
+**m5: el cruce del motor con el prototipo usa solo valores del oráculo.** El comentario de
+`engine.test.ts` («an eight-runner field of real frames with actives matches the prototype») decía
+que los carriles de sylphe, hayate y horizon llevaban la salida del propio motor desde la pasada 1.
+Vuelto a correr el prototipo (`.work/proto/proto2/engine.mjs`, semilla `s1`, constantes de la
+especificación) con el contenido de las habilidades de la pasada (`cool-head`, `iron-wings`,
+`gravity-friend`): da los 24 tiempos y las 24 listas de habilidades del test exactamente, así que
+ningún valor estaba fijado al motor. Solo cambia el comentario, que ahora lo dice; D50 coincide con
+el prototipo y D51-D55 no actúan en ese campo (ninguna habilidad `once: false`, ninguna pista corta,
+D54 y D55 son solo del log).

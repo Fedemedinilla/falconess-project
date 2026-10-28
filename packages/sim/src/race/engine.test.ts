@@ -111,8 +111,12 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
       expect(noisy).toEqual(NOISY_MILLI[id]);
     });
 
-  // Prototype values for the lanes whose skills ADR-0005 left alone; sylphe (cool-head), hayate
-  // (iron-wings) and horizon (gravity-friend on the ridge) carry the engine's values after the pass.
+  // All eight lanes are the prototype's output (same engine.mjs, seed "s1", spec constants) re-run
+  // with the skill content of ADR-0005: cool-head (sylphe), iron-wings (hayate) and gravity-friend
+  // (horizon on the ridge) changed there, which moved lanes 2, 5 and 7 (sprint 690 784 → 689 635 and
+  // 708 147 → 707 082). Re-checked 2026-10-28: the prototype gives these 24 times and skill lists
+  // exactly, so none is pinned to the engine's own output; D50 matches the prototype and D51-D55
+  // change nothing in this field (no once: false skill, no short course, D54 and D55 are log only).
   it("an eight-runner field of real frames with actives matches the prototype (finish, skills)", () => {
     const want: Record<string, { milli: number[]; skills: string[] }> = {
       "desert-sprint": {

@@ -10,6 +10,7 @@
   },
   "include": [
     "packages/*/src/**/*.test.ts",
+    "packages/*/tests/**/*.ts",
     "packages/*/bench/**/*.ts",
     "apps/*/src/**/*.test.ts",
     "tests/**/*.ts",
