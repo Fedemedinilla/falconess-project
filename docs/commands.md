@@ -17,4 +17,5 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm play -- --seed 42 --falconess peregrina`: interactive text season (PT0).
 - `pnpm sim:race -- --seed 1 --course desert-ridge`: one race, classification, timeline and events.
 - `pnpm sim:batch -- --runs 10000`: balance batch of BRIEF §12 (docs/balance-batch.md).
-- `pnpm sim:season-batch -- --runs 500`: seasons with the reference policy, stat curve and grades.
+- `pnpm sim:season-batch -- --runs 500`: seasons with the reference policy, stat curve and grades,
+  goal races won and by place, goal pass rates.

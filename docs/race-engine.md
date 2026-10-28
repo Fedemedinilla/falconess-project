@@ -1877,7 +1877,8 @@ season, the reference policy and the field generated exactly as above, `sim:seas
 Falconess. Reported with it, as diagnostics: the grade distribution; the mean `seasonScore` split
 into stat total, skills and race bonuses; and the goal pass-rate table of the shape above (per
 Falconess × goal turn, share of the seasons that reach the goal; a cell under 80 % is flagged, it
-is not a gate). A Falconess under 60 % is fixed with the knobs of metric 7 (25.1 row 7): `FIELD`
+is not a gate); and, since ADR-0005 «Pasada 2», the share of the goal races the player wins, their
+place distribution and the share of seasons that win every goal race (also won / reached per goal). A Falconess under 60 % is fixed with the knobs of metric 7 (25.1 row 7): `FIELD`
 (`rivalBase`, `rivalPerTurn`, `rivalPwBandPm`), goal `minPlace` content, the training economy,
 or the grade thresholds and score weights (`SEASON.gradeThresholds`, `scorePerSkill`,
 `scoreWinBonus`, `scorePodiumBonus`), each with the report attached and an ADR line.

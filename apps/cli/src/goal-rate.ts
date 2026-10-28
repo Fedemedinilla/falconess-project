@@ -17,3 +17,14 @@ export function goalPassRate(passed: number, reached: number): number | null {
 export function goalFlagged(passed: number, reached: number): boolean {
   return reached > 0 && passed < GOAL_FLAG_BELOW * reached;
 }
+
+/**
+ * Goal races by the player's place (ADR-0005 «Pasada 2»): `counts[k]` is the number of goal races
+ * she finished in place k + 1 (a DNF is recorded as last place, D12). At least `fieldSize` slots,
+ * more if a place beyond it shows up.
+ */
+export function placeCounts(places: readonly number[], fieldSize = 8): number[] {
+  const counts = new Array<number>(Math.max(fieldSize, ...places)).fill(0);
+  for (const p of places) counts[p - 1] = (counts[p - 1] ?? 0) + 1;
+  return counts;
+}

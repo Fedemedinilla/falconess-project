@@ -18,7 +18,7 @@ import {
   STYLES,
   type Style,
 } from "@falconess/schema";
-import { goalFlagged, goalPassRate } from "../goal-rate.js";
+import { goalFlagged, goalPassRate, placeCounts } from "../goal-rate.js";
 import type { Catalog } from "./catalog.js";
 import type { JobResult } from "./execute.js";
 import { type Job, type Profile, S8_INTELLIGENCE } from "./plan.js";
@@ -800,6 +800,7 @@ function s7Metric(input: MetricsInput): MetricsOutput {
   const gradeRows: (string | number | null)[][] = [];
   const scoreRows: (string | number | null)[][] = [];
   const goalRows: (string | number | null)[][] = [];
+  const placeRows: (string | number | null)[][] = [];
   const engines = new Set<string>();
   const order: Grade[] = [...GRADES].reverse();
   for (const [falconess, list] of groups) {
@@ -824,12 +825,31 @@ function s7Metric(input: MetricsInput): MetricsOutput {
       avg((s) => s.score.total),
       avg((s) => s.goalRaces),
     ]);
+    const places = seasons.flatMap((s) =>
+      s.goals.flatMap((g) => (g.place === null ? [] : [g.place])),
+    );
+    const counts = placeCounts(places);
+    const allWon = seasons.filter((s) => s.goals.every((g) => g.place === 1)).length;
+    placeRows.push([
+      falconess,
+      places.length,
+      pct(goalPassRate(counts[0] ?? 0, places.length)),
+      pct(
+        goalPassRate(
+          counts.slice(0, 3).reduce((a, k) => a + k, 0),
+          places.length,
+        ),
+      ),
+      ...counts.slice(0, 8).map((k) => pct(goalPassRate(k, places.length))),
+      pct(allWon / n),
+    ]);
     for (const goal of input.content.getFalconess(falconess).seasonGoals) {
       const rows = seasons.map((s) => s.goals.find((g) => g.turn === goal.turn));
       const reached = rows.filter((g) => g !== undefined && g.place !== null).length;
       const passed = rows.filter(
         (g) => g !== undefined && g.place !== null && g.place <= goal.minPlace,
       ).length;
+      const won = rows.filter((g) => g !== undefined && g.place === 1).length;
       goalRows.push([
         falconess,
         goal.turn,
@@ -838,6 +858,7 @@ function s7Metric(input: MetricsInput): MetricsOutput {
         pct(reached / n),
         pct(passed / n),
         pct(goalPassRate(passed, reached)),
+        pct(goalPassRate(won, reached)),
         goalFlagged(passed, reached) ? "under 80 %" : "",
       ]);
     }
@@ -885,7 +906,7 @@ function s7Metric(input: MetricsInput): MetricsOutput {
             table(
               "s7-goals",
               "S7",
-              "S7 goal pass rates (reached % and passed %: of all seasons; passed / reached %: of the seasons that ran the race, flagged under 80 %, not gated)",
+              "S7 goal pass rates (reached % and passed %: of all seasons; passed / reached % and won / reached %: of the seasons that ran the race, flagged under 80 % passed, not gated)",
               [
                 "falconess",
                 "turn",
@@ -894,9 +915,24 @@ function s7Metric(input: MetricsInput): MetricsOutput {
                 "reached %",
                 "passed %",
                 "passed / reached %",
+                "won / reached %",
                 "flag",
               ],
               goalRows,
+            ),
+            table(
+              "s7-places",
+              "S7",
+              "S7 goal races by the player's place (% of the goal races run; a DNF is last; all won: seasons that won every goal race, % of seasons)",
+              [
+                "falconess",
+                "goal races",
+                "won %",
+                "podium %",
+                ...Array.from({ length: 8 }, (_, k) => `${k + 1}. %`),
+                "all won %",
+              ],
+              placeRows,
             ),
           ],
   };

@@ -257,11 +257,12 @@ describe("S7 season grade", () => {
       "reached %",
       "passed %",
       "passed / reached %",
+      "won / reached %",
       "flag",
     ]);
-    expect(goals?.rows[0]).toEqual(["peregrina", 12, "desert-sprint", 5, 100, 80, 80, ""]);
+    expect(goals?.rows[0]).toEqual(["peregrina", 12, "desert-sprint", 5, 100, 80, 80, 0, ""]);
     // no season reached T24: no rate and no flag
-    expect(goals?.rows[1]?.slice(4)).toEqual([0, 0, null, ""]);
+    expect(goals?.rows[1]?.slice(4)).toEqual([0, 0, null, null, ""]);
   });
 
   it("flags a goal on the seasons that reached it, never on the seasons an earlier goal ended (21.1)", () => {
@@ -282,11 +283,44 @@ describe("S7 season grade", () => {
       job: { scenario: "S7", falconess: "peregrina", k },
       extra: { season: season("C", p12, p24) },
     }));
-    const goals = computeMetrics(input(rows, ["S7"])).diagnostics.find((d) => d.id === "s7-goals");
-    // T12: 6 of 10 pass, all 10 ran it: flagged
-    expect(goals?.rows[0]?.slice(4)).toEqual([100, 60, 60, "under 80 %"]);
-    // T24: 5 of all 10 seasons (50 %), but 5 of the 6 that ran it (83.3 %): not flagged
-    expect(goals?.rows[1]?.slice(4)).toEqual([60, 50, 83.3, ""]);
+    const out = computeMetrics(input(rows, ["S7"]));
+    const goals = out.diagnostics.find((d) => d.id === "s7-goals");
+    // T12: 6 of 10 pass (and win), all 10 ran it: flagged
+    expect(goals?.rows[0]?.slice(4)).toEqual([100, 60, 60, 60, "under 80 %"]);
+    // T24: 5 of all 10 seasons (50 %), but 5 of the 6 that ran it (83.3 %): not flagged; 2 won
+    expect(goals?.rows[1]?.slice(4)).toEqual([60, 50, 83.3, 33.3, ""]);
+    // 16 goal races: 8 won, 2 second, 1 third, 1 fourth, 4 seventh; no season won every goal
+    const byPlace = out.diagnostics.find((d) => d.id === "s7-places");
+    expect(byPlace?.columns).toEqual([
+      "falconess",
+      "goal races",
+      "won %",
+      "podium %",
+      "1. %",
+      "2. %",
+      "3. %",
+      "4. %",
+      "5. %",
+      "6. %",
+      "7. %",
+      "8. %",
+      "all won %",
+    ]);
+    expect(byPlace?.rows[0]).toEqual([
+      "peregrina",
+      16,
+      50,
+      68.8,
+      50,
+      12.5,
+      6.3,
+      6.3,
+      0,
+      0,
+      25,
+      0,
+      0,
+    ]);
   });
 });
 

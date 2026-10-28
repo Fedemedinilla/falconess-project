@@ -25,11 +25,21 @@ describe("pnpm sim:season-batch", () => {
     // a completed season passed every goal
     expect(m.goals.at(-1)?.passed).toBe(m.completed);
     expect(m.races).toBe(m.goals.reduce((n, g) => n + g.reached, 0));
+    // every goal race has a place; the first slot is the wins
+    expect(m.places.reduce((n, k) => n + k, 0)).toBe(m.races);
+    expect(m.places[0]).toBe(m.wins);
+    expect(m.goals.reduce((n, g) => n + g.won, 0)).toBe(m.wins);
+    for (const g of m.goals) expect(g.won).toBeLessThanOrEqual(g.passed);
+    expect(m.allWon).toBeLessThanOrEqual(m.completed);
 
     const text = renderSeasonBatch(m).join("\n");
     expect(text).toContain("cernicala  runs 4");
     expect(text).toContain("T46 desert-canyon ≤ 1: passed");
     expect(text).toMatch(/mean seasonScore \d+ = stats \d+ \+ skills \d+ \+ races \d+/);
+    expect(text).toMatch(
+      /goal races: [\d.]+ per season {2}won \d+% {2}podium \d+% {2}places 1st…8th ([\d.]+ \/ ){7}[\d.]+ % {2}seasons that won every goal race \d+%/,
+    );
+    expect(text).toMatch(/T12 desert-sprint ≤ 5: .* won\/reached \d+%/);
   });
 
   it("flags a goal under 80 % of the seasons that reached it, not of all seasons (21.1)", () => {
@@ -39,15 +49,19 @@ describe("pnpm sim:season-batch", () => {
       runs: 100,
       // T12 46 of 100; T24 42 of the 46 that ran it; T36 none ran it
       goals: [
-        { goal: goals[0], reached: 100, passed: 46 },
-        { goal: goals[1], reached: 46, passed: 42 },
-        { goal: goals[2], reached: 0, passed: 0 },
+        { goal: goals[0], reached: 100, passed: 46, won: 20 },
+        { goal: goals[1], reached: 46, passed: 42, won: 23 },
+        { goal: goals[2], reached: 0, passed: 0, won: 0 },
       ].flatMap((g) => (g.goal ? [{ ...g, goal: g.goal }] : [])),
     };
     const lines = renderSeasonBatch(m).filter((l) => l.trim().startsWith("T"));
-    expect(lines[0]).toMatch(/passed 46% {2}reached 100% {2}passed\/reached 46% {2}< 80%$/);
-    expect(lines[1]).toMatch(/passed 42% {2}reached 46% {2}passed\/reached 91%$/);
-    expect(lines[2]).toMatch(/passed 0% {2}reached 0% {2}passed\/reached —$/);
+    expect(lines[0]).toMatch(
+      /passed 46% {2}reached 100% {2}passed\/reached 46% {2}won\/reached 20% {2}< 80%$/,
+    );
+    expect(lines[1]).toMatch(
+      /passed 42% {2}reached 46% {2}passed\/reached 91% {2}won\/reached 50%$/,
+    );
+    expect(lines[2]).toMatch(/passed 0% {2}reached 0% {2}passed\/reached — {2}won\/reached —$/);
   });
 
   it("goal-rate: the rate and the flag use the seasons that reached the goal", () => {
