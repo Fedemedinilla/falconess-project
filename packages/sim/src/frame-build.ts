@@ -1,5 +1,11 @@
 import { clamp, toPermille } from "@falconess/rng";
-import type { ContentIndex, ManufacturerRule, RaceModifier, Style } from "@falconess/schema";
+import type {
+  ContentIndex,
+  FrameMods,
+  ManufacturerRule,
+  RaceModifier,
+  Style,
+} from "@falconess/schema";
 
 /**
  * A frame with its parts and quirks resolved into one flat, engine-ready description.
@@ -29,25 +35,51 @@ const LIMITS = {
   durability: [20, 260],
 } as const;
 
-export function resolveFrameBuild(
-  content: ContentIndex,
-  frameId: string,
-  partIds: readonly string[],
-  quirkIds: readonly string[],
-): FrameBuild {
-  const frame = content.getFrame(frameId);
-  const manufacturer = content.getManufacturer(frame.manufacturer);
-  const parts = partIds.map((id) => content.getPart(id));
-  const quirks = quirkIds.map((id) => content.getQuirk(id));
-  const modifiers: RaceModifier[] = [];
+/** PW cap of the telemetry rule (`RACE.telemetryPowerCap`), applied here so every consumer agrees. */
+const TELEMETRY_PW_CAP = 1100;
 
-  let pw = toPermille(frame.stats.powerToWeight);
-  let energy = frame.stats.energy;
-  let dissipation = frame.stats.dissipation;
-  let durability = frame.stats.durability;
+/** Frame values before parts and quirks; PW in per-mille, the rest in content units. */
+export type BuildBase = {
+  readonly powerToWeight: number;
+  readonly energy: number;
+  readonly dissipation: number;
+  readonly durability: number;
+};
+
+/** A part or a quirk: additive mods plus race modifiers. */
+export type BuildSource = {
+  readonly mods: FrameMods;
+  readonly modifiers: readonly RaceModifier[];
+};
+
+export type BuildValues = {
+  readonly powerToWeight: number;
+  readonly energy: number;
+  readonly dissipation: number;
+  readonly durabilityMax: number;
+  readonly skillSlots: number;
+  readonly modifiers: readonly RaceModifier[];
+};
+
+/**
+ * The arithmetic shared by `resolveFrameBuild` and the race fixtures' `fixtureBuild`
+ * (docs/race-engine.md 3.4): add part then quirk mods to the base, collect passive, part then quirk
+ * modifiers, apply the rule PW cap (if any), then every `power-cap` modifier, then the clamps.
+ * Internal to packages/sim.
+ */
+export function applyBuild(
+  base: BuildBase,
+  passiveModifiers: readonly RaceModifier[],
+  parts: readonly BuildSource[],
+  quirks: readonly BuildSource[],
+  rulePowerCap: number | null,
+): BuildValues {
+  const modifiers: RaceModifier[] = [...passiveModifiers];
+  let pw = base.powerToWeight;
+  let energy = base.energy;
+  let dissipation = base.dissipation;
+  let durability = base.durability;
   let skillSlots = 0;
-
-  if (frame.passive !== undefined) modifiers.push(...content.getPassive(frame.passive).modifiers);
 
   for (const mods of [...parts.map((p) => p.mods), ...quirks.map((q) => q.mods)]) {
     pw += toPermille(mods.powerToWeight);
@@ -60,20 +92,45 @@ export function resolveFrameBuild(
   for (const q of quirks) modifiers.push(...q.modifiers);
 
   // Manufacturer rules that cap a stat are applied here so every consumer sees the same number.
-  if (manufacturer.rule === "telemetry") pw = Math.min(pw, 1100);
+  if (rulePowerCap !== null) pw = Math.min(pw, rulePowerCap);
   for (const m of modifiers) if (m.kind === "power-cap") pw = Math.min(pw, toPermille(m.max));
 
   return {
-    frameId,
-    manufacturer: manufacturer.id,
-    rule: manufacturer.rule,
-    style: frame.style,
     powerToWeight: clamp(pw, LIMITS.powerToWeight[0], LIMITS.powerToWeight[1]),
     energy: clamp(energy, LIMITS.energy[0], LIMITS.energy[1]),
     dissipation: clamp(dissipation, LIMITS.dissipation[0], LIMITS.dissipation[1]),
     durabilityMax: clamp(durability, LIMITS.durability[0], LIMITS.durability[1]),
     skillSlots,
     modifiers,
+  };
+}
+
+export function resolveFrameBuild(
+  content: ContentIndex,
+  frameId: string,
+  partIds: readonly string[],
+  quirkIds: readonly string[],
+): FrameBuild {
+  const frame = content.getFrame(frameId);
+  const manufacturer = content.getManufacturer(frame.manufacturer);
+  const values = applyBuild(
+    {
+      powerToWeight: toPermille(frame.stats.powerToWeight),
+      energy: frame.stats.energy,
+      dissipation: frame.stats.dissipation,
+      durability: frame.stats.durability,
+    },
+    frame.passive !== undefined ? content.getPassive(frame.passive).modifiers : [],
+    partIds.map((id) => content.getPart(id)),
+    quirkIds.map((id) => content.getQuirk(id)),
+    manufacturer.rule === "telemetry" ? TELEMETRY_PW_CAP : null,
+  );
+  return {
+    frameId,
+    manufacturer: manufacturer.id,
+    rule: manufacturer.rule,
+    style: frame.style,
+    ...values,
     parts: partIds.slice(),
     quirks: quirkIds.slice(),
   };

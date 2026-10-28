@@ -1,4 +1,14 @@
 export { type FrameBuild, installPart, resolveFrameBuild } from "./frame-build.js";
+export {
+  buildCourseGeometry,
+  type CourseGeometry,
+  disableSkill,
+  type FixtureBuild,
+  fixtureBuild,
+  freezeEntry,
+  freezeSkill,
+  neutralFixtureEntry,
+} from "./race/index.js";
 export { raceStub } from "./race/stub.js";
 export { getRuleset, RULESET_V1, type Ruleset } from "./rulesets/index.js";
 export { advanceSeason, InvalidInputError } from "./season/advance.js";
