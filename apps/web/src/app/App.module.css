@@ -1,0 +1,17 @@
+/* the one outer wrapper that carries the side gutter */
+.shell {
+  min-height: 100%;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 var(--space-7);
+}
+
+.main {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-block: var(--space-5) 0;
+}
+
+.main:focus {
+  outline: none;
+}

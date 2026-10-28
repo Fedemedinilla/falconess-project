@@ -19,6 +19,16 @@ export default defineConfig({
       { test: { name: "content", root: "packages/content" } },
       { test: { name: "cli", root: "apps/cli" } },
       {
+        // pure helpers of the web app, in node (no DOM): content loader, controller, formats,
+        // routes and the artifact post-processing; Vite's module runner handles import.meta.glob
+        test: {
+          name: "web",
+          root: "apps/web",
+          include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
+          benchmark: { include: [] },
+        },
+      },
+      {
         test: {
           name: "repo",
           root: ".",

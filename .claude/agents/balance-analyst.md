@@ -1,4 +1,5 @@
 ---
+
 name: balance-analyst
 description: Runs the balance batch, reads out/balance.json against the main baseline and proposes at most three constant or content changes with their expected effect. Use before or after any change to packages/sim or packages/content that can move race or season results.
 tools: Bash, Read, Grep, Glob

@@ -1,0 +1,145 @@
+/*
+ * Layout: a pit wall. A sticky timing bar on top; below it square-edged panels on a 12-column
+ * grid; numbers in condensed tabular figures, right-aligned; color only for state, the track's
+ * terrain and the manufacturers' liveries (which come from content, never from here).
+ *
+ * Every color is a token: light values on bare :root, dark values twice below (system dark unless
+ * the viewer chose light, and an explicit dark choice).
+ */
+:root {
+  /* steel neutrals, biased cold */
+  --bg: #e7ebef;
+  --surface: #f8fafb;
+  --surface-2: #dfe5eb;
+  --surface-3: #d0d8e0;
+  --ink: #111820;
+  --ink-2: #39444f;
+  --ink-3: #5c6874;
+  --line: #c3ccd5;
+  --line-strong: #8794a2;
+
+  /* one accent: the orange of a pit board */
+  --accent: #b93d0b;
+  --accent-ink: #ffffff;
+  --accent-soft: #f7ded0;
+  --accent-text: #a3360a;
+
+  /* state, separate from the accent */
+  --good: #1b7448;
+  --good-soft: #d5eee0;
+  --warn: #8f5500;
+  --warn-soft: #f5e5c6;
+  --bad: #b02a20;
+  --bad-soft: #f8dbd8;
+
+  --focus: #0a5cd6;
+  --shadow-rgb: 17 24 32;
+  --backdrop: rgb(17 24 32 / 0.5);
+
+  /* track terrain (segment types) */
+  --seg-flat: #98a3af;
+  --seg-climb: #a87412;
+  --seg-descent: #1d8275;
+  --seg-jump: #ad2e76;
+  --seg-water: #2862be;
+  --seg-canyon: #973322;
+  --seg-curves: #6849bd;
+
+  /* type */
+  --font-display:
+    "Barlow Condensed", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-body:
+    Barlow, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 2rem;
+  --fs-3xl: clamp(2.25rem, 1.7rem + 2.4vw, 3.5rem);
+
+  /* space and shape */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --radius: 2px;
+  --content-max: 77.5rem;
+
+  /* motion: every transition uses these; zero under prefers-reduced-motion (global.css) */
+  --dur-fast: 120ms;
+  --dur-med: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1115;
+    --surface: #141a20;
+    --surface-2: #1b232b;
+    --surface-3: #252f39;
+    --ink: #e3e8ed;
+    --ink-2: #b3bdc7;
+    --ink-3: #8a96a3;
+    --line: #2a343e;
+    --line-strong: #4b5866;
+    --accent: #ff7a30;
+    --accent-ink: #1b0b02;
+    --accent-soft: #3a2013;
+    --accent-text: #ff9a5e;
+    --good: #4cc28a;
+    --good-soft: #14301f;
+    --warn: #f0a640;
+    --warn-soft: #33260e;
+    --bad: #ff7366;
+    --bad-soft: #3b1714;
+    --focus: #6aa9ff;
+    --shadow-rgb: 0 0 0;
+    --backdrop: rgb(0 0 0 / 0.6);
+    --seg-flat: #5f6b78;
+    --seg-climb: #d5a03b;
+    --seg-descent: #43b2a2;
+    --seg-jump: #df5f9e;
+    --seg-water: #5a96ea;
+    --seg-canyon: #d8654e;
+    --seg-curves: #9a83e8;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0d1115;
+  --surface: #141a20;
+  --surface-2: #1b232b;
+  --surface-3: #252f39;
+  --ink: #e3e8ed;
+  --ink-2: #b3bdc7;
+  --ink-3: #8a96a3;
+  --line: #2a343e;
+  --line-strong: #4b5866;
+  --accent: #ff7a30;
+  --accent-ink: #1b0b02;
+  --accent-soft: #3a2013;
+  --accent-text: #ff9a5e;
+  --good: #4cc28a;
+  --good-soft: #14301f;
+  --warn: #f0a640;
+  --warn-soft: #33260e;
+  --bad: #ff7366;
+  --bad-soft: #3b1714;
+  --focus: #6aa9ff;
+  --shadow-rgb: 0 0 0;
+  --backdrop: rgb(0 0 0 / 0.6);
+  --seg-flat: #5f6b78;
+  --seg-climb: #d5a03b;
+  --seg-descent: #43b2a2;
+  --seg-jump: #df5f9e;
+  --seg-water: #5a96ea;
+  --seg-canyon: #d8654e;
+  --seg-curves: #9a83e8;
+  color-scheme: dark;
+}

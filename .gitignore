@@ -6,3 +6,5 @@ out/
 tools/.usage.json
 coverage/
 .work/
+apps/web/dist-artifact/
+.tsbuild/

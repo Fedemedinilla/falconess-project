@@ -1,4 +1,5 @@
 ---
+
 name: balance-report
 description: Run the Falconess balance batch, diff it against a baseline and summarise every metric verdict. Use when the user asks for a balance report or after changing race constants or content.
 ---

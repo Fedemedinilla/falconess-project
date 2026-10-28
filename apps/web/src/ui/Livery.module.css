@@ -1,0 +1,24 @@
+.swatch {
+  display: inline-block;
+  flex: none;
+  width: 1.5rem;
+  height: 0.875rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 1px;
+  background: linear-gradient(
+    105deg,
+    var(--livery-primary) 0 58%,
+    var(--livery-secondary) 58% 100%
+  );
+  vertical-align: -0.1em;
+}
+
+.sm {
+  width: 1.125rem;
+  height: 0.625rem;
+}
+
+.lg {
+  width: 2.25rem;
+  height: 1.25rem;
+}

@@ -1,0 +1,39 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  max-width: var(--content-max);
+  margin: var(--space-4) auto 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--bad);
+  border-left-width: 4px;
+  background: var(--bad-soft);
+  color: var(--ink);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.message {
+  font-weight: 600;
+}
+
+.details summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.code {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

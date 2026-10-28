@@ -1,0 +1,50 @@
+.facts {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.saved,
+.unsaved {
+  font-size: var(--fs-sm);
+}
+
+.saved {
+  color: var(--good);
+}
+
+.unsaved {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.json {
+  width: 100%;
+  min-height: 8rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  min-height: 1.5em;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+}

@@ -13,6 +13,7 @@
     "packages/*/tests/**/*.ts",
     "packages/*/bench/**/*.ts",
     "apps/*/src/**/*.test.ts",
+    "apps/web/scripts/**/*.test.ts",
     "tests/**/*.ts",
     "vitest.config.ts"
   ],
@@ -21,6 +22,8 @@
     { "path": "packages/schema" },
     { "path": "packages/sim" },
     { "path": "packages/content" },
-    { "path": "apps/cli" }
+    { "path": "apps/cli" },
+    { "path": "apps/web/tsconfig.app.json" },
+    { "path": "apps/web/tsconfig.node.json" }
   ]
 }

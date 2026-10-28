@@ -19,3 +19,5 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm sim:batch -- --runs 10000`: balance batch of BRIEF §12 (docs/balance-batch.md).
 - `pnpm sim:season-batch -- --runs 500`: seasons with the reference policy, stat curve and grades,
   goal races won and by place, goal pass rates.
+- `pnpm dev`: the web tester app (apps/web) on the Vite dev server, with hot reload.
+- `pnpm web:build`: apps/web to dist/ and the single-file tester page to dist-artifact/.

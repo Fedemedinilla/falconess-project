@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".tsbuild/node",
+    "tsBuildInfoFile": ".tsbuild/node.tsbuildinfo",
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts", "scripts/**/*.ts"],
+  "exclude": ["scripts/**/*.test.ts"]
+}
