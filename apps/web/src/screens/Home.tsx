@@ -4,7 +4,7 @@ import { LoadDialog } from "../app/LoadDialog";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { formatInt } from "../text/format";
-import { gameText, ui } from "../text/ui";
+import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Livery } from "../ui/Livery";
@@ -122,7 +122,7 @@ export function Home({ onOpenRun }: HomeProps) {
     const start = saved.inputs[0];
     continueNote = ui("ui.home.continue.saved", {
       name: start?.kind === "start" ? nameOf(start.falconessId) : saved.seed,
-      decisions: saved.inputs.length - 1,
+      decisions: uiCount("ui.count.decisions", saved.inputs.length - 1),
       seed: saved.seed,
     });
   }

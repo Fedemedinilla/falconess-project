@@ -36,9 +36,12 @@
 
 /* --- board ------------------------------------------------------------------------------------ */
 
+/* the roster spans both rows on the right; the second row takes its extra height, so the
+   tests panel sits right under the actions */
 .grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: auto 1fr;
   gap: var(--space-4);
   align-items: start;
 }
@@ -57,6 +60,10 @@
 }
 
 @media (max-width: 60rem) {
+  .grid {
+    grid-template-rows: none;
+  }
+
   .actions,
   .roster,
   .tests {

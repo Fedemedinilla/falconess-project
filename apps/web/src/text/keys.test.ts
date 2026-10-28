@@ -5,6 +5,7 @@ import { STAT_ORDER } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../content/load";
 import { GAME_ERROR_KINDS } from "../game/controller";
+import { uiCount } from "./ui";
 
 /**
  * Every text the interface shows is an es.json key (BRIEF section 2, rule 6). This finds the
@@ -30,7 +31,8 @@ describe("ui text keys", () => {
     for (const file of sources(SRC)) {
       for (const m of readFileSync(file, "utf8").matchAll(/["'`](ui\.[A-Za-z0-9_.:-]+)["'`]/g)) {
         const key = m[1] ?? "";
-        if (!content.text.has(key)) missing.push(`${file}: ${key}`);
+        const counted = content.text.has(`${key}.one`) && content.text.has(`${key}.other`);
+        if (!content.text.has(key) && !counted) missing.push(`${file}: ${key}`);
       }
     }
     expect(missing).toEqual([]);
@@ -45,5 +47,11 @@ describe("ui text keys", () => {
       expect(content.text.has(`ui.home.tests.${code}`)).toBe(true);
       expect(content.text.has(`ui.home.tests.${code}.code`)).toBe(true);
     }
+  });
+
+  it("writes counts in the singular or the plural", () => {
+    expect(uiCount("ui.count.decisions", 1)).toBe("1 decisión");
+    expect(uiCount("ui.count.decisions", 0)).toBe("0 decisiones");
+    expect(uiCount("ui.count.decisions", 47)).toBe("47 decisiones");
   });
 });

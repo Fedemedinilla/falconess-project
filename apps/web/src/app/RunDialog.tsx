@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
-import { ui } from "../text/ui";
+import { ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { copyOrSelect } from "./copy";
@@ -66,7 +66,7 @@ export function RunDialog({ open, onClose }: RunDialogProps) {
         {ui("ui.run.summary", {
           seed: run.seed,
           ruleset: run.rulesetVersion,
-          decisions: run.inputs.length - 1,
+          decisions: uiCount("ui.count.decisions", run.inputs.length - 1),
         })}
       </p>
       <p className={snap.saved ? s.saved : s.unsaved}>

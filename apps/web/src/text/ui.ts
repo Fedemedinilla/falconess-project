@@ -12,6 +12,16 @@ export function ui(key: string, vars?: TextVars): string {
   return interpolate(getContent().t(key), vars);
 }
 
+const plural = new Intl.PluralRules("es");
+
+/**
+ * A count with its noun, from the keys `<key>.one` and `<key>.other`:
+ * `uiCount("ui.count.decisions", 1)` = "1 decisión", with 2 "2 decisiones".
+ */
+export function uiCount(key: string, n: number): string {
+  return ui(`${key}.${plural.select(n) === "one" ? "one" : "other"}`, { n });
+}
+
 /** A game text by its content key (`falconess.peregrina`, `course.desert-ridge`...). */
 export function gameText(textKey: string): string {
   return getContent().t(textKey);
