@@ -158,8 +158,10 @@ export function TurnActions({
   const injured = state.injuryTurns > 0;
   const rest = restPreview(ctx);
   const outing = outingPreview(ctx, state);
-  const [crew, setCrew] = useState(outing.crews[0] ?? "");
-  const crewChoice = outing.crews.includes(crew) ? crew : (outing.crews[0] ?? "");
+  // the crew the player picked for an outing; until then, the equipped frame's
+  const [crew, setCrew] = useState<string | undefined>();
+  const crewChoice =
+    crew !== undefined && outing.crews.includes(crew) ? crew : (outing.crews[0] ?? "");
   const equipped = durabilityOf(ctx, state, state.equippedFrame);
 
   const inputFor = (kind: ActionKind): RunInput | undefined => {
