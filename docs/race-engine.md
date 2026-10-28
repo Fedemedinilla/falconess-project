@@ -513,8 +513,8 @@ longer than the sprint. The engine reconstructs the Umamusume start: `vCore = VS
 the gun and a **start dash** of `R.kStartDash = 24 000 mm/s²` (1.6 m/s per tick) while
 `vCore < 0.85 × min(vBase, target)`. A PW 1.0 runner reaches 17 m/s in 9 ticks (6.7 m), then the
 brief's acceleration closes the rest: cruise is reached after ≈ 15.3 s (309 m) at T 600, ≈ 12.2 s
-at T 900, ≈ 20.3 s at T 300; a PW 1.4 frame needs ≈ 27.7 s (707 m) because its gap from 17 m/s to
-its 32.9 m/s cruise is larger (spec prototype).
+at T 900, ≈ 20.3 s at T 300; a PW 1.4 frame needs ≈ 27.7 s (695 m) because its gap from 17 m/s to
+its 32.9 m/s cruise is larger (spec prototype; every launch distance here is thrust-free).
 Technique is therefore worth ≈ 5 m per +100 on the launch alone, more on courses with terrain
 transitions. The `min(vBase, tgt)` makes slow frames (PW 0.7, target 16.45 m/s) dash to
 13.98 m/s instead of overshooting their own cruise.
@@ -672,8 +672,10 @@ immuneUntil = traits.heatImmuneUntilMm == null ? INF : traits.heatImmuneUntilMm 
 - **Clamps:** `energy ∈ [0, Emax]`, `heat ≥ 0` (telemetry `≤ D`), `hp ∈ [0, hpMax]`,
   `dur ∈ [0, durMax]`, `vCore ≥ 0`, `vOut ≥ 0`, `pos` non-decreasing. Every update uses `sub0` or
   `addCap`; the gates guarantee a paid boost tick never needs the clamp (property P4).
-- Sanity: continuous boost from cold reaches 69 000 mh (D 60, C 600) after 35 ticks; a duty of 1/3
-  is exactly heat-neutral (`2d = 1 − d`).
+- Sanity: a runner that wants boost on every tick from cold (D 60, C 600: `capLim` 69 000) boosts
+  34 ticks to 68 000 mh; the gate `heat + kH ≤ capLim` (9.3) refuses the 35th, the runner cools to
+  67 000, and 69 000 is first reached at tick 36; from there the governor holds a duty of 1/3
+  (67 000 → 69 000 → 68 000 → 67 000), which is exactly heat-neutral (`2d = 1 − d`).
 
 ## 9. Rank and style controllers (item 9)
 
@@ -1964,7 +1966,7 @@ identifier `Date`, no `Math.pow/sqrt`, no float division in race math.
 | f_seg | 963, 1030, 1020, 800, 900, 1150, curves 900 / 950 (stabilizer) / 1000 (A ≥ 1200); falke override 1000; thin-air 1011 / 978; mud-runner 1000; two overrides take the max; clamps 500 / 1500 |
 | speed | start: 3 m/s, dash reaches 255 000 vu in ≈ 9 ticks; PW 0.7 dashes to 0.85 × target; then 400 vu/tick (glide 440 in the start phase only); decel 3000 vu/tick; recovery dash after a crash; airborne hold; landing `vCore × landPm` once per jump, never after a crash; thrust and skill speed instantaneous (`vTot = vCore + thrust + skillSpeed`); dive thrust × 1.4 on descents and in the final only; hover target × 1.02 only in the middle phase and only while `inPack` (never solo, never exhausted) |
 | hp | 862 890 / 1 121 757 µhp; fat floor at C ≥ 1500; glide lead variant 980; telemetry ×0.9; hpMax 915 / 1235 / 1635; exhaustion: target `vMin`, thrust off, burst aborted |
-| heat | continuous boost from 0 reaches 69 000 after 35 ticks and is then held at duty 1/3; the governor keeps `heat ≤ capLim` for every non-licensed runner in a 10 000-tick boost-wanting loop; telemetry never above D; ×0.92 on output only (100 overheated ticks at constant target give exactly `fl(target × 920, 1000)` each tick); one flag per tick |
+| heat | boost wanted on every tick from 0: 34 boosts to 68 000, one cooling tick to 67 000, 69 000 at tick 36, then duty 1/3; the governor keeps `heat ≤ capLim` for every non-licensed runner in a 10 000-tick boost-wanting loop; telemetry never above D; ×0.92 on output only (100 overheated ticks at constant target give exactly `fl(target × 920, 1000)` each tick); one flag per tick |
 | licence | Steinhaus overheats only in `PLAN`/`KICK` and only while projected durability after the tail stays > 25 %; never breaks itself; −2000 md per overheated tick, no speed penalty; the plan never counts the licence; hot-head overheats (style modes included) only if the tail ends inside 300 m |
 | durability | break → `b = 1` tables and replan; repair caps at max and never un-breaks; start at 0 → broken |
 | accumulator | N ticks at level s → exactly `fl(acc0 + N·s, unit)` on-ticks; saturation under a gate block; no accrual on jump-blocked ticks (airborne, or a non-ground runner on a jump segment); reset on mode change |
@@ -2380,9 +2382,9 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | Quantity | Value |
 | --- | --- |
 | Reference speeds (A 600, PW 1.0) | flat 23.50 m/s; climb 0.25 22.63; descent 0.3 / 0.2 24.20 / 23.97; water 0.2 18.80; canyon −0.1 / +0.15 21.15 / 27.02; curves 21.15 (Boneyard 19.98); vMin 17.00; thrust +3.00 (continuous; dive in the final 4.20), +4.05 (pulse; × 1.15 in the desert = 4.66; +5.67 at PW 1.4) |
-| Launch (dash end / cruise reached on flat) | PW 1.0: 9 ticks (6.7 m) / T 300 20.3 s, T 600 15.3 s (309 m), T 900 12.2 s; PW 1.4, T 600: 27.7 s (707 m); PW 0.7, T 600: 8.1 s (121 m); glide's start-phase ×1.1 and telemetry's ×0.85 change the ramp only |
+| Launch (dash end / cruise reached on flat) | PW 1.0: 9 ticks (6.7 m) / T 300 20.3 s, T 600 15.3 s (309 m), T 900 12.2 s; PW 1.4, T 600: 27.7 s (695 m); PW 0.7, T 600: 8.1 s (121 m); distances thrust-free; glide's start-phase ×1.1 and telemetry's ×0.85 change the ramp only |
 | Drain (600 St, C 600) | 862 890 / 1 121 757 µhp per tick at cruise (non-final / final); hpMax 915 / 1235 / 1635 hp |
-| Heat | continuous boost from cold reaches 69 000 mh in 35 ticks, then the governor holds duty 1/3 |
+| Heat | boost wanted on every tick from cold: 34 boosts to 68 000 mh, one cooling tick (67 000), 69 000 at tick 36, then the governor holds duty 1/3 |
 | Landing (T 600, PW 1.0) | 23.5 → 20.2 m/s, ≈ 13.5 m (0.58 s) per landing; Lumière 23.5 → 16.9 m/s; Boneyard 23.5 → 21.9 m/s |
 | Failed jump (flat 800 + jump 100 + flat 1100 vs flat 2000) | +3.35 s and −25 durability; with obstacle-armor +2.00 s and no damage (a crashed runner does not land) |
 | 200 m of water (drag 0.2) between flats | +3.11 s and −10 durability |
@@ -2906,6 +2908,17 @@ was re-measured with the revision-2 prototype at the exact build that 25.2 now d
 | 1 | Metric 2 had no counting rule: with "one random non-signature frame of each manufacturer + 3 random" a manufacturer held 1-3 entries, so total wins measured entry count (12.5-37.5 %, mean ≈ 20 %), failing "weak ≤ 15 %" with no rule effect | S2 = five designated entries (one per manufacturer, random non-signature frame; signatures never enter) + three non-attributed `none` fixtures; win rate = designated entry's wins / races, dead heats split; fair share 12.5 %; verdict per (manufacturer, course) home or weak cell; the equal-PW variant uses the same field and counting | 25.1, 25.2, D40; formulas.md; ADR-0003 D40 | the critic's option 1. Option 2 (per-entry rate) was rejected: same-manufacturer entries take wins from each other and the field composition would change per seed. The equal-PW table of 25.4 was already measured on this field shape (five rules + three `none`), so it stands. The weak ceiling sits 2.5 points above the fair share: it stops a weak manufacturer from beating its fair share and does not demand less (stated in 25.2) |
 | 2 | S3 build undefined (stats, letters, actives); R14 (d) "real actives" vs 25.4 "no actives"; verdict per cell or pooled unstated; "bioma casa" silently read as desert | S3 build: `freezeEntry` with base stats 600, her real aptitude maps, her unique skill as the only active, no parts, generic without quirks; verdict per (pair, course) cell; "bioma casa" = desert for all three in v1, with the reason, in D47; R14 table re-measured at that build; R14 (c) and (d) rewritten to match | 25.2, 25.4, R14, D47; formulas.md; ADR-0003 D47 | unique only rather than a generic list: it is the one active every season starts with. The critic's "two pairs depend almost entirely on activation passives" overstates the effect. Cernícala's pair is decided by still-air's regen, and mid-activation is inert in S3: wind-hover cannot fire in a two-runner race, and Altair's +150 saturates p at I 630. Talon-lock's activation clause acts only through stoop-strike on the ridge. Re-measured, the defined build moves no cell by more than 0.01 in ratio (peregrina 1.35 / 0.99 / 1.03 against 1.35 / 1.00 / 1.02) |
 | 3 | D45 never named BRIEF §7 "no como bonificación numérica"; the ADR claimed the terms act "dentro de su propio mecanismo", and 13.1 claimed each is keyed to a segment type or biome; false for telemetry (global, ≈ +178 St / −180 T), Lumière (landing) and Boneyard (landing, detour, curves) | D45 (spec and ADR) is tagged with the §7 principle it overrides and gives the reason; 13.1 says which terms act inside their rule's mechanism (Steinhaus, Kōryū) and which act outside (Lumière, Boneyard, telemetry, the last one global), with a stat-equivalent column; the false claims are removed from 13, 13.1, formulas.md and the ADR | 13, 13.1, 25.1, 26 (comment), D45; formulas.md; ADR-0003 D45 | the terms are kept: re-keying telemetry needs a new design and a new S2 equal-PW measurement. That is offered to the owner as alternative (a) of D45, with (b) "no numeric terms, move metric 2" |
+
+### 28.4 Implementation review errata (text only)
+
+Measured statements that the implementation review found wrong while the engine and the spec
+prototype agree. No rule and no constant changed; each number is pinned by a test.
+
+| Where | Was | Now | Pinned by |
+| --- | --- | --- | --- |
+| 1.5 | speeds ≤ 1.5e6 vu; drain, finish and margin rows at that bound | speeds ≤ 2e6 vu (v1 maximum 1 949 680 vu); the three rows at 2e6; every product still > 100× under 2^53 | `physics.test.ts` (helpers at the maxima, exact BigInt floors) |
+| 8.4, 24.1, 25.4 (Heat) | continuous boost from cold reaches 69 000 mh after 35 ticks | 34 boosts to 68 000; the 9.3 gate refuses the 35th; 69 000 first at tick 36; then duty 1/3 | `controller.test.ts` (governor loop) |
+| 5.2, 25.4 (Launch) | PW 1.4 reaches cruise in 27.7 s (707 m) | 27.7 s (695 m), thrust-free like the other launch distances (707 m included early SURPLUS boost and depends on the course length) | `anchors.test.ts` |
 
 ## 29. Risks carried into implementation
 

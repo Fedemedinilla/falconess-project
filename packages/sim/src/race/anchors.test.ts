@@ -151,7 +151,7 @@ describe("25.4 other measured anchors (solo, noise off)", () => {
     ]);
   });
 
-  it("launch to cruise on flat: T 300 20.3 s, T 600 15.3 s (309 m), T 900 12.2 s; PW 1.4 27.7 s; PW 0.7 8.1 s (121 m)", () => {
+  it("launch to cruise on flat: T 300 20.3 s, T 600 15.3 s (309 m), T 900 12.2 s; PW 1.4 27.7 s (695 m); PW 0.7 8.1 s (121 m)", () => {
     // the first tick whose vCore reaches the cruise target, no boost (thrust never enters vCore)
     const flat = course("flat-3000", [{ type: "flat", length: 3000 }]);
     const rows = (
@@ -179,8 +179,8 @@ describe("25.4 other measured anchors (solo, noise off)", () => {
       );
       return `${(ticks / 15).toFixed(1)} s ${(pos / 225_000).toFixed(0)} m`;
     });
-    // 25.4 prints 707 m for PW 1.4: a boosted run (SURPLUS at the gun) on a ~1.5 km course; the
-    // thrust-free launch covers 695 m in the same 27.7 s
+    // thrust-free distances, as 5.2 and 25.4 print them (the earlier 707 m for PW 1.4 came from a
+    // boosted run on a ~1.5 km course: spec erratum 28.4)
     expect(rows).toEqual([
       "20.3 s 412 m",
       "15.3 s 309 m",
