@@ -1,16 +1,13 @@
 import {
-  BiomeAptitudes,
   type ContentIndex,
   type Course,
-  FalconessStats,
-  Mood,
-  Slug,
+  EntryInput,
+  type FalconessStats,
+  type RaceEntry,
   STYLES,
-  StyleAptitudes,
 } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
-import type { EntryInput, RaceEnginePort } from "./engine-port.js";
-import type { RaceEntry } from "./log-view.js";
+import type { RaceEnginePort } from "./engine-port.js";
 import { RaceArgsError } from "./options.js";
 
 /** What `buildField` builds; the `--entries` file is already read and parsed. */
@@ -117,83 +114,42 @@ export function buildField(
   }
 }
 
-// TEMPORARY: replace with `EntryInput.array().min(1).max(8).parse` from @falconess/schema
-// (race.ts) when the engine lands.
-const ENTRY_KEYS = [
-  "runnerId",
-  "kind",
-  "falconessId",
-  "baseStats",
-  "mood",
-  "biomeAptitude",
-  "styleAptitude",
-  "frameId",
-  "parts",
-  "quirks",
-  "learnedSkills",
-  "durability",
-] as const;
+type EntryIssue = NonNullable<ReturnType<typeof EntryInput.safeParse>["error"]>["issues"][number];
 
-function slugList(v: unknown, where: string): string[] {
-  if (!Array.isArray(v) || !v.every((s) => Slug.safeParse(s).success))
-    throw new RaceArgsError(`${where}: expected an array of kebab-case ids`);
-  return v.map(String);
+/** `f.json[0].parts[1]` from the issue path, under the item's own location. */
+function issuePath(where: string, path: readonly PropertyKey[]): string {
+  return path.reduce<string>(
+    (out, key) => (typeof key === "number" ? `${out}[${key}]` : `${out}.${String(key)}`),
+    where,
+  );
 }
 
-function parseEntryInput(raw: unknown, where: string): EntryInput {
-  if (typeof raw !== "object" || raw === null || Array.isArray(raw))
-    throw new RaceArgsError(`${where}: expected an EntryInput object`);
-  const o = raw as Record<string, unknown>;
-  for (const key of Object.keys(o))
-    if (!(ENTRY_KEYS as readonly string[]).includes(key))
-      throw new RaceArgsError(`${where}: unknown field "${key}"`);
-  for (const key of ENTRY_KEYS)
-    if (!(key in o)) throw new RaceArgsError(`${where}: missing field "${key}"`);
-  const { runnerId, kind, falconessId, frameId, durability } = o;
-  if (typeof runnerId !== "string" || runnerId.length === 0)
-    throw new RaceArgsError(`${where}.runnerId: expected a non-empty string`);
-  if (kind !== "player" && kind !== "rival" && kind !== "ghost")
-    throw new RaceArgsError(`${where}.kind: expected "player", "rival" or "ghost"`);
-  if (falconessId !== null && !Slug.safeParse(falconessId).success)
-    throw new RaceArgsError(`${where}.falconessId: expected a Falconess id or null`);
-  if (typeof frameId !== "string" || !Slug.safeParse(frameId).success)
-    throw new RaceArgsError(`${where}.frameId: expected a frame id`);
-  if (durability !== null && (typeof durability !== "number" || !Number.isInteger(durability)))
-    throw new RaceArgsError(`${where}.durability: expected an integer or null`);
-  const baseStats = FalconessStats.safeParse(o.baseStats);
-  if (!baseStats.success)
-    throw new RaceArgsError(
-      `${where}.baseStats: ${baseStats.error.issues[0]?.message ?? "invalid"}`,
-    );
-  const mood = Mood.safeParse(o.mood);
-  if (!mood.success) throw new RaceArgsError(`${where}.mood: expected an integer in -2..2`);
-  const biomeAptitude = BiomeAptitudes.safeParse(o.biomeAptitude);
-  if (!biomeAptitude.success)
-    throw new RaceArgsError(`${where}.biomeAptitude: expected a letter per biome`);
-  const styleAptitude = StyleAptitudes.safeParse(o.styleAptitude);
-  if (!styleAptitude.success)
-    throw new RaceArgsError(`${where}.styleAptitude: expected a letter per style`);
-  return {
-    runnerId,
-    kind,
-    falconessId: typeof falconessId === "string" ? falconessId : null,
-    baseStats: baseStats.data,
-    mood: mood.data,
-    biomeAptitude: biomeAptitude.data,
-    styleAptitude: styleAptitude.data,
-    frameId,
-    parts: slugList(o.parts, `${where}.parts`),
-    quirks: slugList(o.quirks, `${where}.quirks`),
-    learnedSkills: slugList(o.learnedSkills, `${where}.learnedSkills`),
-    durability: typeof durability === "number" ? durability : null,
-  };
+function describeIssue(raw: unknown, where: string, issue: EntryIssue): string {
+  if (issue.code === "unrecognized_keys")
+    return `${where}: unknown field ${issue.keys.map((k) => `"${k}"`).join(", ")}`;
+  const [key] = issue.path;
+  if (
+    issue.path.length === 1 &&
+    typeof key === "string" &&
+    typeof raw === "object" &&
+    raw !== null &&
+    !(key in raw)
+  )
+    return `${where}: missing field "${key}"`;
+  return `${issuePath(where, issue.path)}: ${issue.message}`;
 }
 
-/** The `--entries` file: a JSON array of 1..8 EntryInput (spec 3.1), lane = array index. */
+/** The `--entries` file: a JSON array of 1..8 `EntryInput` (spec 3.1), lane = array index. */
 export function parseEntryInputs(raw: unknown, source: string): EntryInput[] {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 8)
     throw new RaceArgsError(
       `${source}: expected a JSON array of 1..8 EntryInput objects (docs/race-engine.md 3.1)`,
     );
-  return raw.map((item, i) => parseEntryInput(item, `${source}[${i}]`));
+  return raw.map((item: unknown, i) => {
+    const where = `${source}[${i}]`;
+    const parsed = EntryInput.safeParse(item);
+    if (parsed.success) return parsed.data;
+    const issue = parsed.error.issues[0];
+    throw new RaceArgsError(issue ? describeIssue(item, where, issue) : `${where}: invalid`);
+  });
 }

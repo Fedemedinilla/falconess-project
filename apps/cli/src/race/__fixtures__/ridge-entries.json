@@ -1,0 +1,122 @@
+[
+  {
+    "runnerId": "player",
+    "kind": "player",
+    "falconessId": "caracara",
+    "baseStats": {
+      "agility": 560,
+      "stamina": 640,
+      "technique": 620,
+      "courage": 600,
+      "intelligence": 540
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "A", "mountain": "B", "coast": "C", "urban": "B", "tundra": "C" },
+    "styleAptitude": { "dive": "D", "hover": "C", "glide": "B", "ground": "A" },
+    "frameId": "caracara-signature",
+    "parts": ["boneyard-battery"],
+    "quirks": ["cheap-fuel"],
+    "learnedSkills": ["scavenger-stride", "iron-wings"],
+    "durability": 60
+  },
+  {
+    "runnerId": "rival-1",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 620,
+      "stamina": 580,
+      "technique": 600,
+      "courage": 560,
+      "intelligence": 600
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
+    "frameId": "kite",
+    "parts": [],
+    "quirks": ["glider-tape"],
+    "learnedSkills": ["gravity-friend", "second-wind"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-2",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 600,
+      "stamina": 600,
+      "technique": 600,
+      "courage": 600,
+      "intelligence": 640
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "A", "glide": "B", "ground": "B" },
+    "frameId": "nimbus",
+    "parts": [],
+    "quirks": [],
+    "learnedSkills": ["pack-shadow"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-3",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 600,
+      "stamina": 620,
+      "technique": 640,
+      "courage": 580,
+      "intelligence": 560
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
+    "frameId": "erzherzog",
+    "parts": [],
+    "quirks": [],
+    "learnedSkills": ["lead-guard"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-4",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 620,
+      "stamina": 560,
+      "technique": 580,
+      "courage": 640,
+      "intelligence": 600
+    },
+    "mood": 1,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
+    "frameId": "shiden",
+    "parts": ["koryu-firmware"],
+    "quirks": [],
+    "learnedSkills": ["gravity-friend"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-5",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 600,
+      "stamina": 600,
+      "technique": 600,
+      "courage": 600,
+      "intelligence": 600
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "A", "glide": "B", "ground": "B" },
+    "frameId": "sylphe",
+    "parts": ["lumiere-turbine"],
+    "quirks": [],
+    "learnedSkills": ["clean-start"],
+    "durability": null
+  }
+]

@@ -8,114 +8,209 @@ pista  [________//////////||||||||||||__________||||||||~~~~________]  1 car = 5
 
 CLASIFICACIÓN
    #  corredora    tiempo     margen  alas · fabricante · estilo
-  »1  Peregrina  115.59 s          —  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
-   2  rival-1    132.06 s  +376.88 m  Falke · Steinhaus Aerowerk · Planeo
-   3  rival-2    132.93 s   +20.81 m  Horizon · Altair Systems · Planeo
-   4  rival-3    136.38 s   +58.76 m  Erzherzog · Steinhaus Aerowerk · Rasante
+   1  rival-3    106.01 s          —  Étoile · Lumière Aéronef · Picada
+  »2  Peregrina  109.66 s   +83.45 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
+   3  rival-5    118.90 s  +161.92 m  Shiden · Kōryū Racing · Picada
+   4  rival-1    127.57 s  +159.07 m  Falke · Steinhaus Aerowerk · Planeo
+   5  rival-2    136.44 s  +209.76 m  Horizon · Altair Systems · Planeo
+   6  rival-7    138.22 s   +32.39 m  Erzherzog · Steinhaus Aerowerk · Rasante
+   7  Cernícala  149.99 s  +244.02 m  Nimbus Vigil (firma de Cernícala) · Altair Systems · Suspensión
+   8  rival-4    188.11 s  +635.79 m  Mule · Boneyard Works · Rasante
 
 LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
-              10%   20%   30%   40%   50%   60%   70%    80%    90%   100%
-  Peregrina  13.1  23.9  33.3  43.2  53.2  62.5  71.3   80.1   98.7  115.6
-  rival-1    14.3  27.0  39.7  53.8  68.0  81.0  93.5  104.6  119.4  132.1
-  rival-2    14.5  27.5  40.8  54.9  69.0  82.1  94.4  105.5  119.7  132.9
-  rival-3    14.3  27.6  40.9  55.1  69.3  82.4  95.0  106.2  121.1  136.4
+              10%   20%   30%   40%   50%    60%    70%    80%    90%   100%
+  rival-3    13.3  23.7  32.6  41.9  51.1   59.8   68.0   78.4   93.2  106.0
+  Peregrina  13.1  23.8  33.3  43.4  53.5   62.9   71.8   81.1   96.4  109.7
+  rival-5    13.1  23.9  33.8  44.3  54.9   64.7   74.1   82.9  101.7  118.9
+  rival-1    14.1  25.8  37.3  49.9  62.7   74.4   85.7   95.7  111.2  127.6
+  rival-2    14.4  27.9  41.6  56.2  70.9   84.5   97.2  108.7  123.5  136.4
+  rival-7    14.4  27.4  41.2  55.9  70.7   84.2   97.3  108.9  124.6  138.2
+  Cernícala  15.0  30.0  44.9  60.8  76.7   91.4  105.6  118.2  135.3  150.0
+  rival-4    18.5  37.1  56.6  77.4  98.3  117.4  136.0  151.9  169.9  188.1
 
-  1 columna = 3 s
+  1 columna = 4 s
   > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  - crucero  | meta  X DNF
-             0s        30s       60s       90s       120s  
-  Peregrina  ****-------------------**_____________|       
-  rival-1    >+++--------------------------+++++++++++++!| 
-  rival-2    >>--------------------------->+---++++++----| 
-  rival-3    +++++----------------------------------+++___|
+             0s        40s       80s       120s      160s
+  rival-3    >++++++++++++++++_________|                     
+  Peregrina  ***--------------*_________|                    
+  rival-5    ***---------------*__________|                  
+  rival-1    +++-----------------+++++______|                
+  rival-2    >+--------------------++-----+++++|             
+  rival-7    ++++++++++++++++++++++++-------++!|             
+  Cernícala  +>>++++++++++++++++++++++++++++++++++|          
+  rival-4    +++++++++++++++++++++++++++++++++-+++++++++++++|
 
 EVENTOS
   Peregrina (carril 1)
       0.0 s     0 m  pulsos ×5 hasta 11.2 s · cadena máx 5
-     33.3 s   900 m  habilidad Sentido del cañón (p 857 > u 277)
-     68.5 s  2002 m  plan de sprint #1 (phase): 2.61 m/s de 2002 m a 2230 m · hp-limited · limpio · E 28.0 (percibe 28.5) · hp 273 (percibe 279) · 26 cand.
-     71.3 s  2096 m  pulso · cadena máx 1
-     75.3 s  2249 m  hp agotada: sin boost, a velocidad mínima
-     80.1 s  2400 m  agua -10.0 durabilidad
-     80.1 s  2400 m  alas rotas (P/W 1.05)
-     80.1 s  2400 m  plan de sprint #2 (broken): ninguno (exhausted)
-    115.5 s  3000 m  meta 1º
+     69.0 s  2002 m  habilidad Último suspiro (p 792 > u 423)
+     69.0 s  2002 m  plan de sprint (phase): 2.61 m/s de 2002 m a 2184 m · hp-limited · limpio · E 28.0 (percibe 27.6) · hp 240 (percibe 236) · 27 cand.
+     71.8 s  2099 m  pulso · cadena máx 1
+     74.9 s  2216 m  hp agotada: sin boost, a velocidad mínima
+     81.1 s  2400 m  agua -10.0 durabilidad
+     81.1 s  2400 m  habilidad Rasante de agua (p 965 > u 882)
+    109.7 s  3000 m  meta 2º
   rival-1 (carril 2)
-     18.6 s   400 m  habilidad Pulmones de cuesta (p 847 > u 640)
-     89.5 s  2001 m  plan de sprint #1 (phase): 0.18 m/s de 2001 m a 2940 m · planned · limpio · E 72.0 (percibe 70.9) · hp 688 (percibe 678) · 31 cand.
-    104.5 s  2401 m  agua -10.0 durabilidad
-    131.7 s  2990 m  sobrecalentada hasta el final (calor 54.0)
-    132.0 s  3000 m  meta 2º
+     18.1 s   400 m  habilidad Pulmones de cuesta (p 857 > u 805)
+     82.1 s  2002 m  plan de sprint (phase): 0.80 m/s de 2029 m a 2559 m · hp-limited · limpio · E 71.0 (percibe 72.0) · hp 484 (percibe 491) · 33 cand.
+     95.7 s  2400 m  agua -10.0 durabilidad
+    102.9 s  2564 m  hp agotada: sin boost, a velocidad mínima
+    127.6 s  3000 m  meta 4º
   rival-2 (carril 3)
-      1.8 s    33 m  habilidad Cabeza fría (p 1000 > u 95)
-     90.3 s  2001 m  calor a energía: 72.0 calor → +36.0 energía
-     90.3 s  2001 m  plan de sprint #1 (phase): 1.20 m/s de 2364 m a 2940 m · planned · limpio · E 84.0 (percibe 84.3) · hp 718 (percibe 721) · 28 cand.
-    105.5 s  2400 m  agua -10.0 durabilidad
-    132.9 s  3002 m  meta 3º
+     41.7 s   900 m  habilidad Sentido del cañón (p 1000 > u 648)
+     93.0 s  2001 m  calor a energía: 70.0 calor → +35.0 energía
+     93.0 s  2001 m  plan de sprint (phase): 1.30 m/s de 2564 m a 2940 m · planned · limpio · E 94.0 (percibe 99.5) · hp 724 (percibe 767) · 30 cand.
+    108.7 s  2401 m  agua -10.0 durabilidad
+    128.5 s  2812 m  habilidad Segundo aliento (p 1000 > u 977)
+    128.5 s  2812 m  replan 1 (refund): 3.00 m/s de 2888 m a 2940 m · planned · limpio · E 29.0 (percibe 30.7) · hp 207 (percibe 219) · 30 cand.
+    136.4 s  3000 m  meta 5º
   rival-3 (carril 4)
-     90.9 s  2001 m  plan de sprint #1 (phase): 1.20 m/s de 2633 m a 2940 m · hp-limited · limpio · E 39.0 (percibe 37.4) · hp 599 (percibe 575) · 19 cand.
-    106.2 s  2401 m  agua -0.0 durabilidad
-    106.3 s  2401 m  falla Rasante de agua (u 871 ≥ p 844)
-    127.1 s  2835 m  hp agotada: sin boost, a velocidad mínima
-    136.3 s  3000 m  meta 4º
+     20.5 s   501 m  habilidad Guardia de punta (p 846 > u 340)
+     65.4 s  2001 m  plan de sprint (phase): 2.98 m/s de 2001 m a 2080 m · hp-limited · limpio · E 32.0 (percibe 31.5) · hp 123 (percibe 122) · 59 cand.
+     68.2 s  2107 m  hp agotada: sin boost, a velocidad mínima
+     78.4 s  2401 m  agua -10.0 durabilidad
+    106.0 s  3000 m  meta 1º
+  rival-4 (carril 5)
+      0.0 s     0 m  habilidad Alas de hierro (p 831 > u 43)
+     98.3 s  1501 m  reparación +2.0 durabilidad
+    129.9 s  2000 m  plan de sprint (phase): 0.70 m/s de 2107 m a 2940 m · planned · limpio · E 123.5 (percibe 119.4) · hp 938 (percibe 907) · 21 cand.
+    151.9 s  2401 m  agua -5.0 durabilidad
+    163.9 s  2600 m  reparación +2.0 durabilidad
+    188.1 s  3000 m  meta 8º
+  rival-5 (carril 6)
+      0.0 s     0 m  pulsos ×5 hasta 11.2 s · cadena máx 5
+     71.0 s  2000 m  plan de sprint (phase): 2.61 m/s de 2018 m a 2230 m · hp-limited · limpio · E 28.0 (percibe 27.4) · hp 297 (percibe 291) · 27 cand.
+     74.4 s  2111 m  pulso · cadena máx 1
+     78.8 s  2273 m  hp agotada: sin boost, a velocidad mínima
+     82.9 s  2401 m  alas rotas (P/W 1.05)
+     82.9 s  2401 m  agua -10.0 durabilidad
+     82.9 s  2401 m  replan 1 (broken): ninguno (exhausted)
+    118.9 s  3000 m  meta 3º
+  Cernícala (carril 7)
+     44.9 s   900 m  habilidad Sentido del cañón (p 1000 > u 585)
+    100.9 s  2000 m  calor a energía: 73.0 calor → +18.3 energía
+    105.6 s  2101 m  plan de sprint (phase): 0.65 m/s de 2101 m a 2940 m · planned · limpio · E 59.3 (percibe 61.4) · hp 779 (percibe 807) · 26 cand.
+    118.2 s  2401 m  agua -10.0 durabilidad
+    150.0 s  3000 m  meta 7º
+  rival-7 (carril 8)
+      0.0 s     0 m  habilidad Salida limpia (p 846 > u 374)
+     93.1 s  2001 m  plan de sprint (phase): 1.40 m/s de 2749 m a 2875 m · hp-limited · limpio · E 39.0 (percibe 37.1) · hp 646 (percibe 615) · 30 cand.
+    108.9 s  2402 m  agua sin daño
+    109.0 s  2402 m  habilidad Rasante de agua (p 846 > u 808)
+    132.2 s  2872 m  sobrecalentada 1 tick (calor 52.0 → 51.5)
+    132.3 s  2875 m  sobrecalentada 4 ticks (calor 53.5 → 51.5)
+    135.8 s  2954 m  hp agotada: sin boost, a velocidad mínima
+    138.2 s  3000 m  meta 6º
 
 POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
-  1º Peregrina  115.59 s
-     fases        salida 20.60 s · medio 47.93 s · final 47.07 s
-     ganancias    boost 60/0/12 ticks · 6 pulsos · 1 habilidad(es)
-     pérdidas     agotada en 2249 m (751 m a velocidad mínima) · energía sin usar 13.6
-     juicio       ritmo +2/+11/-5 ‰ · error de plan +19 ‰ (±71)
-     plan         2.61 m/s de 2002 m a 2230 m · hp-limited · limpio · E 28.0 (percibe 28.5) · hp 273 (percibe 279) · 26 cand. · 1 replan, el último (broken): ninguno (exhausted)
+  1º rival-3  106.01 s
+     fases        salida 20.47 s · medio 44.93 s · final 40.67 s
+     ganancias    boost 126/225/16 ticks · 1 habilidad(es)
+     pérdidas     agotada en 2107 m (893 m a velocidad mínima) · energía sin usar 60.0
+     juicio       ritmo -43/+37/0 ‰ · error de plan -15 ‰ (±76)
+     plan         2.98 m/s de 2001 m a 2080 m · hp-limited · limpio · E 32.0 (percibe 31.5) · hp 123 (percibe 122) · 59 cand.
+     modos        surplus ×92 → plan 2.98 → hold → kick
+     términos     picada 1400 ‰
+     tramos       _ 1.00/31.8 · / 0.96/33.2 · | 0.90/31.0 · _ 1.00/34.5 · | 1.15/38.2 · ~ 0.80/26.6 · _ 1.00/33.2  (f / crucero m/s)
+     energía      gastada 367.0 · lift 0.0 · regen +359.0 · reembolso +8.0 · calor +0.0 · queda 60.0
+     cuerpo       hp final 0 · durabilidad -10.0 +0.0 → 50.0
+     habilidades  ✓ Guardia de punta (p 846 > u 340)
+  2º Peregrina  109.66 s  (+3.64 s)
+     fases        salida 20.53 s (+0.07) · medio 48.47 s (+3.53) · final 40.67 s (+0.00)
+     ganancias    boost 60/0/12 ticks · 6 pulsos · 2 habilidad(es)
+     pérdidas     agotada en 2216 m (784 m a velocidad mínima) · energía sin usar 13.6
+     juicio       ritmo -37/-23/-38 ‰ · error de plan -16 ‰ (±66)
+     plan         2.61 m/s de 2002 m a 2184 m · hp-limited · limpio · E 28.0 (percibe 27.6) · hp 240 (percibe 236) · 27 cand.
      modos        surplus → plan 2.61 → hold → kick
      términos     picada 1400 ‰ · aire _1150 /1150 |1150 _1150 |1150 ~690 _1150
-     tramos       _ 1.00/24.8 · / 0.96/24.1 · | 0.90/22.5 · _ 1.00/25.0 · | 1.15/28.3 · ~ 0.80/19.7 · _ 1.00/24.6  (f / crucero m/s)
+     tramos       _ 1.00/32.5 · / 0.96/31.8 · | 0.90/29.7 · _ 1.00/33.0 · | 1.15/37.3 · ~ 0.80/26.0 · _ 1.00/32.5  (f / crucero m/s)
+     energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
+     cuerpo       hp final 0 · durabilidad -10.0 +0.0 → 90.0
+     habilidades  ✓ Último suspiro (p 792 > u 423) · ✓ Rasante de agua (p 965 > u 882)
+  3º rival-5  118.90 s  (+12.89 s)
+     fases        salida 20.60 s (+0.13) · medio 50.40 s (+5.47) · final 47.93 s (+7.27)
+     ganancias    boost 60/0/12 ticks · 6 pulsos
+     pérdidas     agotada en 2273 m (727 m a velocidad mínima) · energía sin usar 13.6
+     juicio       ritmo +2/-40/-19 ‰ · error de plan -20 ‰ (±71)
+     plan         2.61 m/s de 2018 m a 2230 m · hp-limited · limpio · E 28.0 (percibe 27.4) · hp 297 (percibe 291) · 27 cand. · 1 replan, el último (broken): ninguno (exhausted)
+     modos        surplus → hold → plan 2.61 → hold → kick
+     términos     picada 1400 ‰ · aire _1150 /1150 |1150 _1150 |1150 ~690 _1150
+     tramos       _ 1.00/33.0 · / 0.96/30.4 · | 0.90/28.4 · _ 1.00/31.6 · | 1.15/37.1 · ~ 0.80/25.8 · _ 1.00/32.3  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 0 · durabilidad -8.0 +0.0 → 0.0
-     habilidades  ✓ Sentido del cañón (p 857 > u 277)
-  2º rival-1  132.06 s  (+16.47 s)
-     fases        salida 22.80 s (+2.20) · medio 66.67 s (+18.73) · final 42.60 s (-4.47)
-     ganancias    boost 48/0/69 ticks · 1 habilidad(es)
-     pérdidas     sobrecalor 6 ticks · energía sin usar 3.0
-     juicio       ritmo -6/+4/+8 ‰ · error de plan -15 ‰ (±76)
-     plan         0.18 m/s de 2001 m a 2940 m · planned · limpio · E 72.0 (percibe 70.9) · hp 688 (percibe 678) · 31 cand.
-     modos        glide-chase ×2 → plan 0.18 → kick
-     tramos       _ 1.00/23.4 · / 1.00/23.6 · | 0.90/21.2 · _ 1.00/23.6 · | 1.15/27.2 · ~ 0.80/19.0 · _ 1.00/23.7  (f / crucero m/s)
-     energía      gastada 117.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 3.0
-     cuerpo       hp final 41 · durabilidad -22.0 +0.0 → 118.0
-     habilidades  ✓ Pulmones de cuesta (p 847 > u 640)
-  3º rival-2  132.93 s  (+17.34 s)
-     fases        salida 23.20 s (+2.60) · medio 67.13 s (+19.20) · final 42.67 s (-4.40)
-     ganancias    boost 56/36/84 ticks · 1 habilidad(es)
+  4º rival-1  127.57 s  (+21.56 s)
+     fases        salida 22.00 s (+1.53) · medio 60.13 s (+15.20) · final 45.47 s (+4.80)
+     ganancias    boost 49/0/70 ticks · 1 habilidad(es)
+     pérdidas     agotada en 2564 m (436 m a velocidad mínima) · energía sin usar 1.0
+     juicio       ritmo -20/+8/-19 ‰ · error de plan +14 ‰ (±71)
+     plan         0.80 m/s de 2029 m a 2559 m · hp-limited · limpio · E 71.0 (percibe 72.0) · hp 484 (percibe 491) · 33 cand.
+     modos        surplus → glide-chase → hold → plan 0.80 → hold → kick
+     tramos       _ 1.00/25.5 · / 1.00/26.2 · | 0.90/23.6 · _ 1.00/26.2 · | 1.15/29.3 · ~ 0.80/20.4 · _ 1.00/25.5  (f / crucero m/s)
+     energía      gastada 119.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 1.0
+     cuerpo       hp final 0 · durabilidad -10.0 +0.0 → 130.0
+     habilidades  ✓ Pulmones de cuesta (p 857 > u 805)
+  5º rival-2  136.44 s  (+30.43 s)
+     fases        salida 23.40 s (+2.93) · medio 69.60 s (+24.67) · final 43.47 s (+2.80)
+     ganancias    boost 66/35/104 ticks · 2 habilidad(es)
      pérdidas     —
-     juicio       ritmo +10/-2/+6 ‰ · error de plan +3 ‰ (±73)
-     plan         1.20 m/s de 2364 m a 2940 m · planned · limpio · E 84.0 (percibe 84.3) · hp 718 (percibe 721) · 28 cand.
-     modos        glide-chase ×4 → preheat → hold → plan 1.20 → kick
-     tramos       _ 1.00/23.9 · / 0.96/22.7 · | 0.90/21.2 · _ 1.00/23.6 · | 1.15/27.3 · ~ 0.80/19.0 · _ 1.00/23.8  (f / crucero m/s)
-     energía      gastada 176.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +36.0 · queda 0.0
-     cuerpo       hp final 82 · durabilidad -10.0 +0.0 → 90.0
-     habilidades  ✓ Cabeza fría (p 1000 > u 95)
-  4º rival-3  136.38 s  (+20.79 s)
-     fases        salida 23.20 s (+2.60) · medio 67.73 s (+19.80) · final 45.47 s (-1.60)
-     ganancias    boost 61/0/39 ticks
-     pérdidas     agotada en 2835 m (165 m a velocidad mínima)
-     juicio       ritmo -12/0/+2 ‰ · error de plan -40 ‰ (±77)
-     plan         1.20 m/s de 2633 m a 2940 m · hp-limited · limpio · E 39.0 (percibe 37.4) · hp 599 (percibe 575) · 19 cand.
-     modos        ground-constant 1.05 → hold → plan 1.20 → kick
-     tramos       _ 1.00/23.2 · / 0.96/22.6 · | 0.90/21.1 · _ 1.00/23.4 · | 1.15/27.0 · ~ 0.80/18.8 · _ 1.00/23.5  (f / crucero m/s)
+     juicio       ritmo -26/-34/-8 ‰ · error de plan +59 ‰ (±71)
+     plan         1.30 m/s de 2564 m a 2940 m · planned · limpio · E 94.0 (percibe 99.5) · hp 724 (percibe 767) · 30 cand. · 1 replan, el último (refund): 3.00 m/s de 2888 m
+     modos        glide-chase → preheat → hold → plan 1.30 → hold → plan 3.00 → kick
+     tramos       _ 1.00/22.9 · / 0.96/21.9 · | 0.90/20.4 · _ 1.00/22.7 · | 1.15/26.8 · ~ 0.80/18.6 · _ 1.00/23.3  (f / crucero m/s)
+     energía      gastada 205.0 · lift 0.0 · regen +0.0 · reembolso +10.0 · calor +35.0 · queda 0.0
+     cuerpo       hp final 84 · durabilidad -10.0 +0.0 → 90.0
+     habilidades  ✓ Sentido del cañón (p 1000 > u 648) · ✓ Segundo aliento (p 1000 > u 977)
+  6º rival-7  138.22 s  (+32.21 s)
+     fases        salida 22.93 s (+2.47) · medio 70.13 s (+25.20) · final 45.20 s (+4.53)
+     ganancias    boost 15/46/39 ticks · 2 habilidad(es)
+     pérdidas     agotada en 2954 m (46 m a velocidad mínima) · sobrecalor 5 ticks
+     juicio       ritmo +23/-43/-40 ‰ · error de plan -49 ‰ (±76)
+     plan         1.40 m/s de 2749 m a 2875 m · hp-limited · limpio · E 39.0 (percibe 37.1) · hp 646 (percibe 615) · 30 cand.
+     modos        ground-constant 0.13 → hold → plan 1.40 → hold → kick
+     tramos       _ 1.00/24.0 · / 0.96/21.7 · | 0.90/20.2 · _ 1.00/22.5 · | 1.15/25.9 · ~ 0.80/18.0 · _ 1.00/22.6  (f / crucero m/s)
      energía      gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
-     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 140.0
-     habilidades  ✗ Rasante de agua (u 871 ≥ p 844)"
+     cuerpo       hp final 0 · durabilidad -5.0 +0.0 → 155.0
+     habilidades  ✓ Salida limpia (p 846 > u 374) · ✓ Rasante de agua (p 846 > u 808)
+  7º Cernícala  149.99 s  (+43.97 s)
+     fases        salida 25.00 s (+4.53) · medio 75.87 s (+30.93) · final 49.13 s (+8.47)
+     ganancias    boost 125/255/180 ticks · 1 habilidad(es)
+     pérdidas     energía sin usar 0.8
+     juicio       ritmo -16/+8/+2 ‰ · error de plan +36 ‰ (±51)
+     plan         0.65 m/s de 2101 m a 2940 m · planned · limpio · E 59.3 (percibe 61.4) · hp 779 (percibe 807) · 26 cand.
+     modos        regen-overflow ×8 → hover-catchup ×6 → preheat → hover-catchup → plan 0.65 → kick
+     tramos       _ 1.00/19.8 · / 0.96/19.6 · | 0.90/18.3 · _ 1.00/20.3 · | 1.15/23.2 · ~ 0.80/16.2 · _ 1.00/20.2  (f / crucero m/s)
+     energía      gastada 560.0 · lift 0.0 · regen +422.5 · reembolso +0.0 · calor +18.3 · queda 0.8
+     cuerpo       hp final 294 · durabilidad -10.0 +0.0 → 90.0
+     habilidades  ✓ Sentido del cañón (p 1000 > u 585)
+  8º rival-4  188.11 s  (+82.10 s)
+     fases        salida 30.60 s (+10.13) · medio 99.33 s (+54.40) · final 58.20 s (+17.53)
+     ganancias    boost 93/298/254 ticks · 1 habilidad(es)
+     pérdidas     energía sin usar 1.0
+     juicio       ritmo +9/-44/-24 ‰ · error de plan -33 ‰ (±83)
+     plan         0.70 m/s de 2107 m a 2940 m · planned · limpio · E 123.5 (percibe 119.4) · hp 938 (percibe 907) · 21 cand.
+     modos        (regen-overflow → ground-constant 0.08) ×390 → regen-overflow → hold → plan 0.70 → kick
+     tramos       _ 1.00/16.4 · / 0.96/14.9 · | 0.90/14.0 · _ 1.00/15.5 · | 1.15/18.2 · ~ 1.00/15.8 · _ 1.00/15.8  (f / crucero m/s)
+     energía      gastada 645.0 · lift 0.0 · regen +521.0 · reembolso +0.0 · calor +0.0 · queda 1.0
+     cuerpo       hp final 431 · durabilidad -5.0 +4.0 → 11.0
+     habilidades  ✓ Alas de hierro (p 831 > u 43)"
 `;
 
-exports[`renderRace snapshots > renders the dnf fixture 1`] = `
-"Sprint de las Dunas · 1200 m · Desierto · semilla pt1-dnf · ruleset v1 · motor v1
+exports[`renderRace snapshots > renders the results fixture 1`] = `
+"Sprint de las Dunas · 1200 m · Desierto · semilla pt1-sprint · ruleset v1 · motor v1
 pista  [____________))))))))____________))))))__________]  1 car = 25 m
        _ Llano  ) Curvas
        fases: salida hasta 200 m · medio hasta 800 m · final hasta 1200 m
 
 CLASIFICACIÓN
-   #  corredora          tiempo  margen  alas · fabricante · estilo
-   1  neutral-ground-1  54.51 s       —  fixture-neutral · none · Rasante
-   2  neutral-hover-1       DNF          fixture-neutral · none · Suspensión
+   #  corredora   tiempo    margen  alas · fabricante · estilo
+   1  rival-3    42.71 s         —  Étoile · Lumière Aéronef · Picada
+   2  rival-4    42.75 s   +0.94 m  Étoile · Lumière Aéronef · Picada
+   3  rival-2    42.91 s   +4.10 m  Étoile · Lumière Aéronef · Picada
+  »4  Peregrina  42.92 s   +0.31 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
+   5  rival-6    43.17 s   +5.82 m  Étoile · Lumière Aéronef · Picada
+   6  rival-7    43.78 s  +16.39 m  Shiden · Kōryū Racing · Picada
+   7  rival-5    43.91 s   +3.22 m  Shiden · Kōryū Racing · Picada
+   8  rival-1    44.35 s  +12.55 m  Shiden · Kōryū Racing · Picada
 
 LÍNEA DE TIEMPO
   (sin frames: detail "results")
@@ -124,22 +219,86 @@ EVENTOS
   (sin eventos: detail "results")
 
 POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
-  1º neutral-ground-1  54.51 s
-     fases      salida 10.00 s · medio 26.87 s · final 17.67 s
-     ganancias  boost 53/8/39 ticks
-     pérdidas   —
-     juicio     ritmo 0/0/0 ‰ · error de plan 0 ‰ (±75)
-     tramos     _ 1.00/23.5 · ) 0.90/21.2 · _ 1.00/23.5 · ) 0.90/21.2 · _ 1.00/23.5  (f / crucero m/s)
-     energía    gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
-     cuerpo     hp final 226 · durabilidad -0.0 +0.0 → 100.0
-  2º neutral-hover-1  DNF
-     fases      salida 10.47 s · medio 789.53 s · final 0.00 s
-     ganancias  boost 1/0/0 ticks
-     pérdidas   detenida 769.40 s · DNF · energía sin usar 99.0
-     juicio     ritmo 0/0/0 ‰ · error de plan 0 ‰ (±75)
-     tramos     _ 1.00/23.5 · ) 0.90/21.2 · _ 1.00/23.5 · ) 0.90/21.2 · _ 1.00/23.5  (f / crucero m/s)
-     energía    gastada 1.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 99.0
-     cuerpo     hp final 597 · durabilidad -0.0 +0.0 → 100.0"
+  1º rival-3  42.71 s
+     fases        salida 9.47 s · medio 20.87 s · final 12.40 s
+     ganancias    boost 48/106/66 ticks · 3 habilidad(es)
+     pérdidas     agotada en 1108 m (92 m a velocidad mínima) · energía sin usar 52.5
+     juicio       ritmo +23/-24/+6 ‰ · error de plan -87 ‰ (±90)
+     términos     picada 1400 ‰
+     tramos       _ 1.00/34.0 · ) 0.91/29.4 · _ 1.00/32.4 · ) 0.91/30.3 · _ 1.00/33.4  (f / crucero m/s)
+     energía      gastada 220.0 · lift 0.0 · regen +210.5 · reembolso +2.0 · calor +0.0 · queda 52.5
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Salida limpia · ✓ Guardia de punta · ✓ Cabeza fría
+  2º rival-4  42.75 s  (+0.04 s)
+     fases        salida 9.47 s (+0.00) · medio 20.87 s (+0.00) · final 12.47 s (+0.07)
+     ganancias    boost 48/105/69 ticks · 2 habilidad(es)
+     pérdidas     agotada en 1107 m (93 m a velocidad mínima) · energía sin usar 48.0
+     juicio       ritmo -3/-39/-2 ‰ · error de plan -12 ‰ (±90)
+     términos     picada 1400 ‰
+     tramos       _ 1.00/33.1 · ) 0.91/28.9 · _ 1.00/31.9 · ) 0.91/30.0 · _ 1.00/33.1  (f / crucero m/s)
+     energía      gastada 222.0 · lift 0.0 · regen +210.0 · reembolso +0.0 · calor +0.0 · queda 48.0
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Salida limpia · ✓ Último suspiro
+  3º rival-2  42.91 s  (+0.21 s)
+     fases        salida 9.67 s (+0.20) · medio 21.20 s (+0.33) · final 12.07 s (-0.33)
+     ganancias    boost 49/106/72 ticks · 1 habilidad(es)
+     pérdidas     agotada en 1104 m (96 m a velocidad mínima) · energía sin usar 41.5
+     juicio       ritmo -25/-16/+34 ‰ · error de plan +81 ‰ (±90)
+     términos     picada 1400 ‰
+     tramos       _ 1.00/32.4 · ) 0.91/29.6 · _ 1.00/32.7 · ) 0.91/31.1 · _ 1.00/34.3  (f / crucero m/s)
+     energía      gastada 227.0 · lift 0.0 · regen +208.5 · reembolso +0.0 · calor +0.0 · queda 41.5
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Alas de hierro
+  4º Peregrina  42.92 s  (+0.22 s)
+     fases        salida 9.40 s (-0.07) · medio 21.20 s (+0.33) · final 12.33 s (-0.07)
+     ganancias    boost 36/0/36 ticks · 6 pulsos · 1 habilidad(es)
+     pérdidas     energía sin usar 13.6
+     juicio       ritmo +3/-19/-24 ‰ · error de plan -38 ‰ (±71)
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/33.2 · ) 0.91/29.4 · _ 1.00/32.5 · ) 0.91/29.3 · _ 1.00/32.3  (f / crucero m/s)
+     energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
+     cuerpo       hp final 11 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Trazadora de curvas · ✗ Último suspiro
+  5º rival-6  43.17 s  (+0.46 s)
+     fases        salida 9.67 s (+0.20) · medio 21.20 s (+0.33) · final 12.33 s (-0.07)
+     ganancias    boost 49/106/78 ticks · 2 habilidad(es)
+     pérdidas     agotada en 1114 m (86 m a velocidad mínima) · energía sin usar 44.5
+     juicio       ritmo -33/+25/-4 ‰ · error de plan -87 ‰ (±90)
+     términos     picada 1400 ‰
+     tramos       _ 1.00/32.1 · ) 0.91/30.8 · _ 1.00/34.0 · ) 0.91/30.0 · _ 1.00/33.1  (f / crucero m/s)
+     energía      gastada 233.0 · lift 0.0 · regen +207.5 · reembolso +10.0 · calor +0.0 · queda 44.5
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Cabeza fría · ✓ Segundo aliento
+  6º rival-7  43.78 s  (+1.07 s)
+     fases        salida 9.27 s (-0.20) · medio 22.20 s (+1.33) · final 12.33 s (-0.07)
+     ganancias    boost 48/0/36 ticks · 7 pulsos · 3 habilidad(es)
+     pérdidas     agotada en 1132 m (68 m a velocidad mínima) · energía sin usar 9.2
+     juicio       ritmo +3/-46/+1 ‰ · error de plan +38 ‰ (±90)
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/33.3 · ) 0.91/28.7 · _ 1.00/31.7 · ) 0.91/30.1 · _ 1.00/33.2  (f / crucero m/s)
+     energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +10.0 · calor +0.0 · queda 9.2
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Alas de hierro · ✓ Sombra del pelotón · ✓ Segundo aliento
+  7º rival-5  43.91 s  (+1.20 s)
+     fases        salida 9.27 s (-0.20) · medio 22.20 s (+1.33) · final 12.47 s (+0.07)
+     ganancias    boost 48/0/36 ticks · 7 pulsos · 2 habilidad(es)
+     pérdidas     agotada en 1137 m (63 m a velocidad mínima) · energía sin usar 7.2
+     juicio       ritmo -16/+19/-15 ‰ · error de plan -12 ‰ (±90)
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/32.7 · ) 0.91/30.6 · _ 1.00/33.8 · ) 0.91/29.6 · _ 1.00/32.7  (f / crucero m/s)
+     energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +8.0 · calor +0.0 · queda 7.2
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Guardia de punta · ✓ Sombra del pelotón
+  8º rival-1  44.35 s  (+1.64 s)
+     fases        salida 9.27 s (-0.20) · medio 22.20 s (+1.33) · final 12.93 s (+0.53)
+     ganancias    boost 48/0/24 ticks · 6 pulsos · 1 habilidad(es)
+     pérdidas     agotada en 1156 m (44 m a velocidad mínima) · energía sin usar 13.6
+     juicio       ritmo +22/-24/-42 ‰ · error de plan +90 ‰ (±90)
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/33.9 · ) 0.91/29.4 · _ 1.00/32.4 · ) 0.91/28.8 · _ 1.00/31.8  (f / crucero m/s)
+     energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Trazadora de curvas"
 `;
 
 exports[`renderRace snapshots > renders the ridge fixture 1`] = `
@@ -149,102 +308,165 @@ pista  [______\\\\\\\\\\\\\\\\^^________\\\\\\\\\\\\^^________]  1 car = 50 m
        fases: salida hasta 333 m · medio hasta 1333 m · final hasta 2000 m
 
 CLASIFICACIÓN
-   #  corredora          tiempo     margen  alas · fabricante · estilo
-   1  neutral-ground-1  86.50 s          —  fixture-neutral · none · Rasante
-   2  neutral-glide-1   86.90 s    +9.39 m  fixture-neutral · none · Planeo
-   3  neutral-dive-1    86.94 s    +0.90 m  fixture-neutral · none · Picada
-   4  neutral-hover-1   91.74 s  +115.02 m  fixture-neutral · none · Suspensión
+   #  corredora    tiempo     margen  alas · fabricante · estilo
+   1  rival-4     71.05 s          —  Shiden · Kōryū Racing · Picada
+   2  rival-5     77.21 s  +129.20 m  Sylphe · Lumière Aéronef · Suspensión
+   3  rival-3     86.58 s  +227.59 m  Erzherzog · Steinhaus Aerowerk · Rasante
+   4  rival-2    102.03 s  +318.00 m  Nimbus · Altair Systems · Suspensión
+   5  rival-1    118.40 s  +279.93 m  Kite · Boneyard Works · Planeo
+  »6  Caracara   121.00 s   +43.14 m  Mule Carancho (firma de Caracara) · Boneyard Works · Rasante
 
 LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
-                     10%   20%   30%   40%   50%   60%   70%   80%   90%  100%
-  neutral-ground-1  10.0  18.6  26.8  35.6  44.1  52.6  60.9  69.7  78.3  86.5
-  neutral-glide-1   10.3  18.8  27.0  35.4  44.4  52.9  61.2  69.8  78.7  86.9
-  neutral-dive-1    10.4  18.9  27.2  35.7  44.8  53.4  61.8  70.2  79.1  86.9
-  neutral-hover-1   10.7  19.8  28.0  38.9  48.4  57.0  65.3  73.9  83.3  91.7
+             10%   20%   30%   40%   50%   60%   70%   80%    90%   100%
+  rival-4    9.6  17.6  24.4  30.5  37.1  43.2  49.1  54.9   62.6   71.0
+  rival-5    9.4  17.1  23.9  30.8  39.1  46.4  53.1  59.9   67.9   77.2
+  rival-3   10.3  18.9  27.1  35.8  44.3  52.8  61.1  69.9   78.4   86.6
+  rival-2   10.7  20.7  30.6  40.8  51.8  62.0  72.0  82.0   92.5  102.0
+  rival-1   12.9  25.1  36.3  47.8  59.5  71.1  82.7  94.7  106.9  118.4
+  Caracara  12.7  24.6  36.4  48.7  61.0  73.2  85.2  97.4  109.4  121.0
 
-  1 columna = 2 s
+  1 columna = 3 s
   > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  - crucero  | meta  X DNF
-                    0s        20s       40s       60s       80s   
-  neutral-ground-1  ++++++----------------------------------+>+|  
-  neutral-glide-1   +--------------^^^--------------^^---+>>>+-|  
-  neutral-dive-1    ------->-------^^^--------------^^^----+>>+|  
-  neutral-hover-1   ----------------x-----------------^^--------+|
+            0s        30s       60s       90s       120s
+  rival-4   **-------^------*^_____|                 
+  rival-5   +++++++++^++++++++^^>>___|               
+  rival-3   ++++++++++++++++++++------++|            
+  rival-2   +----======^^^=========--^^---+>>+|      
+  rival-1   +-------------^^-------------^^----++++| 
+  Caracara  +++++++++++++++++++++++++++---------++++|
 
 EVENTOS
-  neutral-dive-1 (carril 1)
-     31.4 s   700 m  salto OK (lift 85.0 ≥ 20.0)
-     35.7 s   801 m  aterrizaje -3.27 m/s
-     59.0 s  1333 m  plan de sprint #1 (phase): 2.60 m/s de 1800 m a 1940 m · planned · limpio · E 65.0 (percibe 64.2) · hp 522 (percibe 516) · 18 cand.
-     65.9 s  1501 m  salto OK (lift 65.0 ≥ 15.0)
-     69.2 s  1580 m  aterrizaje -3.32 m/s
-     69.3 s  1580 m  plan de sprint #2 (jump): 2.60 m/s de 1800 m a 1940 m · planned · limpio · E 50.0 (percibe 49.4) · hp 341 (percibe 337) · 18 cand.
-     86.9 s  2001 m  meta 3º
-  neutral-hover-1 (carril 2)
-     32.1 s   700 m  salto FALLIDO (lift 18.8 < 20.0) · -25.0 durabilidad · 20 ticks detenida
-     65.3 s  1401 m  plan de sprint #1 (phase): ninguno (no-energy)
-     69.5 s  1501 m  salto OK (lift 18.8 ≥ 15.0)
-     72.8 s  1580 m  aterrizaje -4.00 m/s
-     72.9 s  1580 m  plan de sprint #2 (jump): ninguno (no-energy)
-     91.7 s  2001 m  meta 4º
-  neutral-glide-1 (carril 3)
-     31.2 s   701 m  salto OK (lift 95.0 ≥ 20.0)
-     35.3 s   800 m  aterrizaje -3.31 m/s
-     58.5 s  1334 m  plan de sprint #1 (phase): 1.50 m/s de 1722 m a 1940 m · planned · limpio · E 75.0 (percibe 75.5) · hp 517 (percibe 521) · 21 cand.
-     65.5 s  1501 m  salto OK (lift 75.0 ≥ 15.0)
-     68.9 s  1582 m  aterrizaje -3.27 m/s
-     68.9 s  1582 m  plan de sprint #2 (jump): 1.50 m/s de 1722 m a 1940 m · planned · limpio · E 60.0 (percibe 60.4) · hp 338 (percibe 341) · 21 cand.
-     86.9 s  2001 m  meta 2º
-  neutral-ground-1 (carril 4)
-     30.9 s   700 m  desvío por tierra (tramo 3)
-     58.2 s  1335 m  plan de sprint #1 (phase): 2.50 m/s de 1860 m a 1940 m · planned · limpio · E 39.0 (percibe 37.8) · hp 502 (percibe 487) · 17 cand.
-     65.1 s  1500 m  desvío por tierra (tramo 6)
-     86.5 s  2001 m  meta 1º
+  Caracara (carril 1)
+      0.0 s     0 m  habilidad Alas de hierro (p 841 > u 221)
+     42.3 s   700 m  desvío por tierra (tramo 3)
+     42.4 s   700 m  habilidad Zancada carroñera (p 841 > u 382)
+     48.7 s   801 m  reparación +2.0 durabilidad
+     81.3 s  1334 m  plan de sprint (phase): 0.90 m/s de 1785 m a 1940 m · planned · limpio · E 57.0 (percibe 57.3) · hp 729 (percibe 733) · 21 cand.
+     91.1 s  1501 m  desvío por tierra (tramo 6)
+     96.1 s  1581 m  reparación +2.0 durabilidad
+    121.0 s  2000 m  meta 6º
+  rival-1 (carril 2)
+     19.1 s   300 m  falla Amiga de la gravedad (u 958 ≥ p 857)
+     42.0 s   700 m  salto OK (lift 96.8 ≥ 20.0)
+     47.7 s   800 m  aterrizaje -1.21 m/s
+     78.8 s  1334 m  plan de sprint (phase): 1.00 m/s de 1798 m a 1940 m · planned · limpio · E 68.0 (percibe 72.7) · hp 698 (percibe 746) · 21 cand.
+     88.7 s  1501 m  salto OK (lift 74.8 ≥ 15.0)
+     93.4 s  1581 m  aterrizaje -1.16 m/s
+     93.5 s  1581 m  replan 1 (jump): 1.00 m/s de 1802 m a 1940 m · planned · limpio · E 53.0 (percibe 56.7) · hp 569 (percibe 608) · 21 cand.
+    111.8 s  1887 m  habilidad Segundo aliento (p 857 > u 14)
+    111.8 s  1887 m  replan 2 (refund): 1.00 m/s de 1887 m a 1940 m · planned · limpio · E 29.0 (percibe 31.0) · hp 409 (percibe 437) · 21 cand.
+    118.4 s  2000 m  meta 5º
+  rival-2 (carril 3)
+     17.5 s   333 m  habilidad Sombra del pelotón (p 1000 > u 105)
+     35.6 s   701 m  salto OK (lift 108.0 ≥ 20.0)
+     40.7 s   801 m  aterrizaje -2.69 m/s
+     72.0 s  1401 m  plan de sprint (phase): 1.35 m/s de 1753 m a 1940 m · planned · limpio · E 88.0 (percibe 85.0) · hp 650 (percibe 628) · 26 cand.
+     76.9 s  1501 m  salto OK (lift 88.0 ≥ 15.0)
+     80.9 s  1581 m  aterrizaje -2.79 m/s
+     80.9 s  1581 m  replan 1 (jump): 1.35 m/s de 1752 m a 1940 m · planned · limpio · E 73.0 (percibe 70.5) · hp 551 (percibe 532) · 26 cand.
+    102.0 s  2000 m  meta 4º
+  rival-3 (carril 4)
+     31.2 s   702 m  desvío por tierra (tramo 3)
+     58.3 s  1334 m  plan de sprint (phase): 1.40 m/s de 1811 m a 1940 m · planned · limpio · E 39.0 (percibe 36.5) · hp 513 (percibe 480) · 30 cand.
+     65.3 s  1501 m  desvío por tierra (tramo 6)
+     84.1 s  1940 m  sobrecalentada 16 ticks (calor 52.0 → 51.5)
+     86.6 s  2000 m  meta 3º
+  rival-4 (carril 5)
+      0.0 s     0 m  pulsos ×2 hasta 2.8 s · cadena máx 2
+     13.8 s   301 m  falla Amiga de la gravedad (u 877 ≥ p 869)
+     27.5 s   702 m  salto OK (lift 71.7 ≥ 20.0)
+     30.5 s   801 m  aterrizaje -4.63 m/s
+     47.1 s  1333 m  plan de sprint (phase): 2.61 m/s de 1333 m a 1606 m · hp-limited · limpio · E 51.2 (percibe 51.5) · hp 319 (percibe 321) · 27 cand.
+     49.9 s  1428 m  pulso · cadena máx 1
+     51.9 s  1502 m  salto OK (lift 37.1 ≥ 15.0)
+     54.2 s  1582 m  aterrizaje -4.64 m/s
+     54.3 s  1582 m  replan 1 (jump): 2.61 m/s de 1582 m a 1612 m · hp-limited · limpio · E 21.8 (percibe 21.9) · hp 56 (percibe 56) · 27 cand.
+     55.1 s  1606 m  pulso · cadena máx 1
+     55.9 s  1635 m  hp agotada: sin boost, a velocidad mínima
+     71.0 s  2000 m  meta 1º
+  rival-5 (carril 6)
+      0.0 s     0 m  habilidad Salida limpia (p 857 > u 751)
+     27.3 s   702 m  salto OK (lift 58.5 ≥ 20.0)
+     30.7 s   802 m  aterrizaje -7.92 m/s
+     53.1 s  1401 m  plan de sprint (phase): 2.15 m/s de 1415 m a 1762 m · hp-limited · limpio · E 60.0 (percibe 61.3) · hp 338 (percibe 345) · 38 cand.
+     56.3 s  1501 m  salto OK (lift 46.5 ≥ 15.0)
+     59.1 s  1582 m  aterrizaje -8.11 m/s
+     59.1 s  1582 m  replan 1 (jump): 2.65 m/s de 1582 m a 1750 m · hp-limited · limpio · E 52.5 (percibe 53.6) · hp 171 (percibe 175) · 38 cand.
+     68.1 s  1805 m  hp agotada: sin boost, a velocidad mínima
+     77.2 s  2000 m  meta 2º
 
 POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
-  1º neutral-ground-1  86.50 s
-     fases      salida 15.80 s · medio 42.40 s · final 28.33 s
-     ganancias  boost 61/0/39 ticks
-     pérdidas   2 desvío(s) por tierra
-     juicio     ritmo +8/+2/-4 ‰ · error de plan -30 ‰ (±75)
-     plan       2.50 m/s de 1860 m a 1940 m · planned · limpio · E 39.0 (percibe 37.8) · hp 502 (percibe 487) · 17 cand.
-     modos      ground-constant 1.05 → hold → plan 2.50 → kick
-     términos   desvío 1100 ‰
-     tramos     _ 1.00/23.7 · \\ 1.03/24.3 · ^ 1.00/23.5 · _ 1.00/23.5 · \\ 1.02/23.9 · ^ 1.00/23.4 · _ 1.00/23.4  (f / crucero m/s)
-     energía    gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
-     cuerpo     hp final 12 · durabilidad -0.0 +0.0 → 100.0
-  2º neutral-glide-1  86.90 s  (+0.40 s)
-     fases      salida 16.13 s (+0.33) · medio 42.33 s (-0.07) · final 28.47 s (+0.13)
-     ganancias  boost 5/0/60 ticks
-     pérdidas   2 aterrizaje(s) -6.58 m/s en total
-     juicio     ritmo -2/+5/-6 ‰ · error de plan +7 ‰ (±75)
-     plan       1.50 m/s de 1722 m a 1940 m · planned · limpio · E 75.0 (percibe 75.5) · hp 517 (percibe 521) · 21 cand. · 1 replan, el último (jump): 1.50 m/s de 1722 m
-     modos      glide-chase ×7 → hold → plan 1.50 → kick
-     términos   aterrizaje 860 ‰
-     tramos     _ 1.00/23.5 · \\ 1.03/24.3 · ^ 1.00/23.6 · _ 1.00/23.6 · \\ 1.02/23.8 · ^ 1.00/23.4 · _ 1.00/23.4  (f / crucero m/s)
-     energía    gastada 65.0 · lift 35.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
-     cuerpo     hp final 39 · durabilidad -0.0 +0.0 → 100.0
-  3º neutral-dive-1  86.94 s  (+0.44 s)
-     fases      salida 16.13 s (+0.33) · medio 42.87 s (+0.47) · final 28.00 s (-0.33)
-     ganancias  boost 15/0/50 ticks
-     pérdidas   2 aterrizaje(s) -6.59 m/s en total
-     juicio     ritmo +3/-7/+10 ‰ · error de plan -12 ‰ (±75)
-     plan       2.60 m/s de 1800 m a 1940 m · planned · limpio · E 65.0 (percibe 64.2) · hp 522 (percibe 516) · 18 cand. · 1 replan, el último (jump): 2.60 m/s de 1800 m
-     modos      dive-descent ×2 → hold → plan 2.60 → kick
-     términos   picada 1400 ‰ · aterrizaje 860 ‰
-     tramos     _ 1.00/23.6 · \\ 1.03/24.0 · ^ 1.00/23.3 · _ 1.00/23.3 · \\ 1.02/24.2 · ^ 1.00/23.7 · _ 1.00/23.7  (f / crucero m/s)
-     energía    gastada 65.0 · lift 35.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
-     cuerpo     hp final 34 · durabilidad -0.0 +0.0 → 100.0
-  4º neutral-hover-1  91.74 s  (+5.24 s)
-     fases      salida 16.93 s (+1.13) · medio 45.60 s (+3.20) · final 29.27 s (+0.93)
-     ganancias  boost 0/0/10 ticks
-     pérdidas   detenida 1.33 s (1 salto(s) fallido(s)) · 1 aterrizaje(s) -4.00 m/s en total
-     juicio     ritmo -9/+14/+1 ‰ · error de plan +40 ‰ (±75)
-     plan       ninguno (no-energy) · 1 replan, el último (jump): ninguno (no-energy)
-     modos      hold → kick
-     términos   aterrizaje 830 ‰
-     tramos     _ 1.00/23.3 · \\ 1.03/24.5 · ^ 1.00/23.8 · _ 1.00/23.8 · \\ 1.02/24.0 · ^ 1.00/23.5 · _ 1.00/23.5  (f / crucero m/s)
-     energía    gastada 10.0 · lift 15.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
-     cuerpo     hp final 79 · durabilidad -25.0 +0.0 → 75.0"
+  1º rival-4  71.05 s
+     fases        salida 15.13 s · medio 32.00 s · final 23.93 s
+     ganancias    boost 24/0/24 ticks · 4 pulsos
+     pérdidas     agotada en 1635 m (365 m a velocidad mínima) · 2 aterrizaje(s) -9.27 m/s en total · energía sin usar 7.4
+     juicio       ritmo -18/-7/-6 ‰ · error de plan +6 ‰ (±63)
+     plan         2.61 m/s de 1333 m a 1606 m · hp-limited · limpio · E 51.2 (percibe 51.5) · hp 319 (percibe 321) · 27 cand. · 1 replan, el último (jump): 2.61 m/s de 1582 m
+     modos        surplus → dive-descent ×2 → plan 2.61 → hold → kick
+     términos     picada 1400 ‰ · aterrizaje 860 ‰ · aire _1150 \\1380 ^1150 _1150 \\1380 ^1150 _1150
+     tramos       _ 1.00/32.7 · \\ 1.03/34.1 · ^ 1.00/33.1 · _ 1.00/33.1 · \\ 1.02/33.8 · ^ 1.00/33.1 · _ 1.00/33.1  (f / crucero m/s)
+     energía      gastada 57.6 · lift 35.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 7.4
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✗ Amiga de la gravedad (u 877 ≥ p 869)
+  2º rival-5  77.21 s  (+6.17 s)
+     fases        salida 14.73 s (-0.40) · medio 36.13 s (+4.13) · final 26.40 s (+2.47)
+     ganancias    boost 76/164/89 ticks · 1 habilidad(es)
+     pérdidas     agotada en 1805 m (195 m a velocidad mínima) · 2 aterrizaje(s) -16.03 m/s en total · energía sin usar 60.0
+     juicio       ritmo +8/-37/-14 ‰ · error de plan +21 ‰ (±71)
+     plan         2.15 m/s de 1415 m a 1762 m · hp-limited · limpio · E 60.0 (percibe 61.3) · hp 338 (percibe 345) · 38 cand. · 1 replan, el último (jump): 2.65 m/s de 1582 m
+     modos        regen-overflow ×238 → hold → plan 2.15 → plan 2.65 → hold → kick
+     términos     aterrizaje 720 ‰
+     tramos       _ 1.00/29.6 · \\ 1.03/29.1 · ^ 1.00/28.3 · _ 1.00/28.3 · \\ 1.02/29.5 · ^ 1.00/29.0 · _ 1.00/29.0  (f / crucero m/s)
+     energía      gastada 329.0 · lift 35.0 · regen +364.0 · reembolso +0.0 · calor +0.0 · queda 60.0
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 80.0
+     habilidades  ✓ Salida limpia (p 857 > u 751)
+  3º rival-3  86.58 s  (+15.53 s)
+     fases        salida 16.13 s (+1.00) · medio 42.20 s (+10.20) · final 28.27 s (+4.33)
+     ganancias    boost 17/44/39 ticks
+     pérdidas     2 desvío(s) por tierra · sobrecalor 16 ticks
+     juicio       ritmo -19/-3/-1 ‰ · error de plan -64 ‰ (±76)
+     plan         1.40 m/s de 1811 m a 1940 m · planned · limpio · E 39.0 (percibe 36.5) · hp 513 (percibe 480) · 30 cand.
+     modos        surplus → ground-constant 0.21 → hold → plan 1.40 → kick
+     términos     desvío 1100 ‰
+     tramos       _ 1.00/23.1 · \\ 1.03/24.1 · ^ 1.00/23.4 · _ 1.00/23.4 · \\ 1.02/23.9 · ^ 1.00/23.5 · _ 1.00/23.5  (f / crucero m/s)
+     energía      gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
+     cuerpo       hp final 26 · durabilidad -16.0 +0.0 → 124.0
+  4º rival-2  102.03 s  (+30.99 s)
+     fases        salida 17.47 s (+2.33) · medio 51.27 s (+19.27) · final 33.33 s (+9.40)
+     ganancias    boost 12/0/73 ticks · rebufo 51.3 s · 1 habilidad(es)
+     pérdidas     2 aterrizaje(s) -5.48 m/s en total
+     juicio       ritmo -15/-38/-3 ‰ · error de plan -34 ‰ (±66)
+     plan         1.35 m/s de 1753 m a 1940 m · planned · limpio · E 88.0 (percibe 85.0) · hp 650 (percibe 628) · 26 cand. · 1 replan, el último (jump): 1.35 m/s de 1752 m
+     modos        hover-catchup → hold → plan 1.35 → kick
+     términos     aterrizaje 860 ‰
+     tramos       _ 1.00/19.7 · \\ 1.03/19.8 · ^ 1.00/19.2 · _ 1.00/19.2 · \\ 1.02/20.3 · ^ 1.00/19.9 · _ 1.00/19.9  (f / crucero m/s)
+     energía      gastada 85.0 · lift 35.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
+     cuerpo       hp final 321 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Sombra del pelotón (p 1000 > u 105)
+  5º rival-1  118.40 s  (+47.35 s)
+     fases        salida 21.20 s (+6.07) · medio 57.60 s (+25.60) · final 39.67 s (+15.73)
+     ganancias    boost 12/0/63 ticks · 1 habilidad(es)
+     pérdidas     2 aterrizaje(s) -2.36 m/s en total
+     juicio       ritmo -32/+42/+2 ‰ · error de plan +69 ‰ (±71)
+     plan         1.00 m/s de 1798 m a 1940 m · planned · limpio · E 68.0 (percibe 72.7) · hp 698 (percibe 746) · 21 cand. · 2 replan, el último (refund): 1.00 m/s de 1887 m
+     modos        glide-chase → hold → plan 1.00 → kick
+     términos     aterrizaje 930 ‰
+     tramos       _ 1.00/16.0 · \\ 1.03/17.7 · ^ 1.00/17.2 · _ 1.00/17.2 · \\ 1.02/16.9 · ^ 1.00/16.6 · _ 1.00/16.6  (f / crucero m/s)
+     energía      gastada 75.0 · lift 35.0 · regen +0.0 · reembolso +10.0 · calor +0.0 · queda 0.0
+     cuerpo       hp final 348 · durabilidad -0.0 +0.0 → 180.0
+     habilidades  ✗ Amiga de la gravedad (u 958 ≥ p 857) · ✓ Segundo aliento (p 857 > u 14)
+  6º Caracara  121.00 s  (+49.96 s)
+     fases        salida 20.67 s (+5.53) · medio 60.60 s (+28.60) · final 39.80 s (+15.87)
+     ganancias    boost 21/62/57 ticks · 2 habilidad(es)
+     pérdidas     2 desvío(s) por tierra
+     juicio       ritmo +12/-12/+11 ‰ · error de plan +5 ‰ (±79)
+     plan         0.90 m/s de 1785 m a 1940 m · planned · limpio · E 57.0 (percibe 57.3) · hp 729 (percibe 733) · 21 cand.
+     modos        ground-constant 0.14 → hold → plan 0.90 → kick
+     términos     desvío 1050 ‰
+     tramos       _ 1.00/16.6 · \\ 1.03/16.7 · ^ 1.00/16.2 · _ 1.00/16.2 · \\ 1.02/16.9 · ^ 1.00/16.6 · _ 1.00/16.6  (f / crucero m/s)
+     energía      gastada 140.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
+     cuerpo       hp final 393 · durabilidad -0.0 +4.0 → 64.0
+     habilidades  ✓ Alas de hierro (p 841 > u 221) · ✓ Zancada carroñera (p 841 > u 382)"
 `;
 
 exports[`renderRace snapshots > renders the sprint fixture 1`] = `
@@ -255,80 +477,193 @@ pista  [____________))))))))____________))))))__________]  1 car = 25 m
 
 CLASIFICACIÓN
    #  corredora   tiempo    margen  alas · fabricante · estilo
-   1  rival-1    41.32 s         —  Étoile · Lumière Aéronef · Picada
-  »2  Peregrina  42.38 s  +35.60 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
-   3  rival-2    43.20 s  +26.78 m  Shiden · Kōryū Racing · Picada
+   1  rival-3    42.71 s         —  Étoile · Lumière Aéronef · Picada
+   2  rival-4    42.75 s   +0.94 m  Étoile · Lumière Aéronef · Picada
+   3  rival-2    42.91 s   +4.10 m  Étoile · Lumière Aéronef · Picada
+  »4  Peregrina  42.92 s   +0.31 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
+   5  rival-6    43.17 s   +5.82 m  Étoile · Lumière Aéronef · Picada
+   6  rival-7    43.78 s  +16.39 m  Shiden · Kōryū Racing · Picada
+   7  rival-5    43.91 s   +3.22 m  Shiden · Kōryū Racing · Picada
+   8  rival-1    44.35 s  +12.55 m  Shiden · Kōryū Racing · Picada
 
 LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
              10%   20%   30%   40%   50%   60%   70%   80%   90%  100%
-  rival-1    5.9  10.9  15.4  19.6  23.5  27.2  30.7  34.2  37.7  41.3
-  Peregrina  5.8  11.1  15.9  20.3  24.4  28.2  31.8  35.4  39.0  42.4
-  rival-2    5.8  11.1  16.0  20.4  24.6  28.4  32.2  36.1  39.6  43.2
+  rival-3    6.0  11.1  15.7  20.0  24.1  27.9  31.4  35.0  38.5  42.7
+  rival-4    6.0  11.1  15.7  20.0  24.1  27.9  31.4  35.0  38.5  42.7
+  rival-2    6.1  11.3  16.0  20.4  24.5  28.4  32.0  35.5  38.8  42.9
+  Peregrina  5.8  11.1  15.9  20.3  24.3  28.1  31.9  35.7  39.3  42.9
+  rival-6    6.1  11.3  16.0  20.4  24.5  28.4  32.0  35.6  39.0  43.2
+  rival-7    5.9  11.1  16.0  20.6  24.9  28.9  32.8  36.5  40.1  43.8
+  rival-5    5.9  11.1  16.0  20.6  24.9  28.9  32.8  36.6  40.1  43.9
+  rival-1    5.9  11.1  16.0  20.6  24.9  28.9  32.8  36.7  40.4  44.4
 
   1 columna = 1 s
   > boost ≥ 50 %  + boost < 50 %  * pulso  = rebufo  ^ en el aire  _ agotada  ! sobrecalentada  x detenida  - crucero  | meta  X DNF
-             0s        10s       20s       30s       40s 
-  rival-1    ++++++++++++++++++++++++++++++>>>>+>>>>__|  
-  Peregrina  *-**-**--------------------------**-*--*--| 
-  rival-2    *-**-**--------------------------**-**-**--|
+             0s        10s       20s       30s       40s
+  rival-3    +++++++++++++++++++++++++++++++>>>>>>+-___|  
+  rival-4    +++++++++++++++++++++++++++++++>>>>>>>+___|  
+  rival-2    +++++++++++++++++++++++++++++++>>>>>>>>___|  
+  Peregrina  *-**-**--------------------------**-*--*--|  
+  rival-6    +++++++++++++++++++++++++++++++>>>>>>>>+___| 
+  rival-7    *-**-**-**-------------------------*-**-*__| 
+  rival-5    *-**-**-**------------------------**-*-**__| 
+  rival-1    *-**-**-**-------------------------**-**--__|
 
 EVENTOS
   rival-1 (carril 1)
-      0.0 s     0 m  habilidad Salida limpia (p 844 > u 133)
-     29.5 s   801 m  plan de sprint #1 (phase): 3.08 m/s de 801 m a 1140 m · hp-limited · limpio · E 58.0 (percibe 59.8) · hp 374 (percibe 385) · 21 cand.
-     39.3 s  1139 m  hp agotada: sin boost, a velocidad mínima
-     41.3 s  1200 m  meta 1º
-  Peregrina (carril 2)
+      0.0 s     0 m  pulsos ×4 hasta 8.4 s · cadena máx 4
+     13.7 s   301 m  habilidad Trazadora de curvas (p 812 > u 368)
+     31.5 s   801 m  plan de sprint (phase): 2.61 m/s de 846 m a 1140 m · planned · limpio · E 42.4 (percibe 46.2) · hp 378 (percibe 412) · 27 cand.
+     35.8 s   928 m  pulsos ×2 hasta 38.6 s · cadena máx 2
+     42.9 s  1156 m  hp agotada: sin boost, a velocidad mínima
+     44.4 s  1200 m  meta 8º
+  rival-2 (carril 2)
+      0.0 s     0 m  habilidad Alas de hierro (p 812 > u 647)
+     30.9 s   802 m  plan de sprint (phase): 3.38 m/s de 802 m a 1099 m · hp-limited · limpio · E 59.0 (percibe 63.8) · hp 361 (percibe 390) · 59 cand.
+     39.5 s  1104 m  hp agotada: sin boost, a velocidad mínima
+     42.9 s  1200 m  meta 3º
+  rival-3 (carril 3)
+      0.0 s     0 m  habilidad Salida limpia (p 812 > u 199)
+     11.1 s   242 m  habilidad Guardia de punta (p 812 > u 206)
+     30.3 s   802 m  plan de sprint (phase): 3.48 m/s de 802 m a 1055 m · hp-limited · limpio · E 58.5 (percibe 53.4) · hp 352 (percibe 321) · 59 cand.
+     34.2 s   933 m  habilidad Cabeza fría (p 812 > u 169)
+     39.4 s  1108 m  hp agotada: sin boost, a velocidad mínima
+     42.7 s  1200 m  meta 1º
+  rival-4 (carril 4)
+      0.0 s     0 m  habilidad Salida limpia (p 812 > u 536)
+     30.3 s   802 m  habilidad Último suspiro (p 649 > u 227)
+     30.3 s   802 m  plan de sprint (phase): 3.38 m/s de 802 m a 1078 m · hp-limited · limpio · E 58.0 (percibe 57.3) · hp 352 (percibe 348) · 59 cand.
+     39.3 s  1107 m  hp agotada: sin boost, a velocidad mínima
+     42.7 s  1200 m  meta 2º
+  rival-5 (carril 5)
+      0.0 s     0 m  pulsos ×4 hasta 8.4 s · cadena máx 4
+      9.3 s   200 m  habilidad Guardia de punta (p 812 > u 487)
+     12.6 s   276 m  habilidad Sombra del pelotón (p 812 > u 256)
+     31.5 s   801 m  plan de sprint (phase): 2.61 m/s de 801 m a 1096 m · hp-limited · limpio · E 50.4 (percibe 49.8) · hp 378 (percibe 373) · 27 cand.
+     34.3 s   885 m  pulsos ×3 hasta 39.9 s · cadena máx 3
+     41.7 s  1137 m  hp agotada: sin boost, a velocidad mínima
+     43.9 s  1200 m  meta 7º
+  rival-6 (carril 6)
+     30.9 s   802 m  plan de sprint (phase): 3.48 m/s de 802 m a 1065 m · hp-limited · limpio · E 59.0 (percibe 53.9) · hp 361 (percibe 330) · 59 cand.
+     35.2 s   947 m  habilidad Cabeza fría (p 812 > u 680)
+     37.8 s  1035 m  habilidad Segundo aliento (p 812 > u 118)
+     37.8 s  1035 m  replan 1 (refund): 4.98 m/s de 1035 m a 1088 m · hp-limited · limpio · E 29.5 (percibe 26.9) · hp 93 (percibe 85) · 59 cand.
+     40.1 s  1114 m  hp agotada: sin boost, a velocidad mínima
+     43.2 s  1200 m  meta 5º
+  Peregrina (carril 7)
       0.0 s     0 m  pulsos ×3 hasta 5.6 s · cadena máx 3
-     13.6 s   300 m  falla Trazadora de curvas (u 912 ≥ p 859)
-     30.6 s   801 m  habilidad Trazadora de curvas (p 959 > u 912)
-     30.6 s   801 m  habilidad Último suspiro (p 787 > u 214)
-     30.6 s   801 m  plan de sprint #1 (phase): 2.61 m/s de 801 m a 1140 m · planned · limpio · E 56.8 (percibe 55.6) · hp 413 (percibe 404) · 26 cand.
-     33.4 s   891 m  pulsos ×3 hasta 39.0 s · cadena máx 3
-     42.2 s  1194 m  hp agotada: sin boost, a velocidad mínima
-     42.3 s  1201 m  meta 2º
-  rival-2 (carril 3)
-      0.0 s     0 m  pulsos ×3 hasta 5.6 s · cadena máx 3
-      9.4 s   200 m  habilidad Sombra del pelotón (p 826 > u 402)
-     30.9 s   800 m  plan de sprint #1 (phase): 2.61 m/s de 801 m a 1140 m · planned · sucio · E 56.8 (percibe 60.1) · hp 413 (percibe 437) · 26 cand.
-     33.7 s   884 m  pulsos ×3 hasta 39.3 s · cadena máx 3
-     43.1 s  1200 m  meta 3º
+     13.6 s   300 m  habilidad Trazadora de curvas (p 857 > u 312)
+     30.6 s   801 m  falla Último suspiro (u 970 ≥ p 785)
+     30.6 s   801 m  plan de sprint (phase): 2.61 m/s de 801 m a 1140 m · planned · limpio · E 56.8 (percibe 54.6) · hp 410 (percibe 394) · 27 cand.
+     33.4 s   884 m  pulsos ×3 hasta 39.0 s · cadena máx 3
+     42.9 s  1200 m  meta 4º
+  rival-7 (carril 8)
+      0.0 s     0 m  habilidad Alas de hierro (p 812 > u 559)
+      0.0 s     0 m  pulsos ×4 hasta 8.4 s · cadena máx 4
+     12.6 s   276 m  habilidad Sombra del pelotón (p 812 > u 517)
+     31.5 s   801 m  plan de sprint (phase): 2.61 m/s de 823 m a 1114 m · hp-limited · limpio · E 42.4 (percibe 44.0) · hp 378 (percibe 393) · 27 cand.
+     35.0 s   907 m  pulsos ×2 hasta 37.8 s · cadena máx 2
+     38.3 s  1018 m  habilidad Segundo aliento (p 812 > u 648)
+     38.3 s  1018 m  replan 1 (refund): 2.61 m/s de 1018 m a 1111 m · hp-limited · limpio · E 29.6 (percibe 30.7) · hp 140 (percibe 145) · 27 cand.
+     40.6 s  1095 m  pulso · cadena máx 3
+     41.5 s  1132 m  hp agotada: sin boost, a velocidad mínima
+     43.8 s  1200 m  meta 6º
 
 POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas del ledger
-  1º rival-1  41.32 s
-     fases        salida 9.33 s · medio 20.20 s · final 11.80 s
-     ganancias    boost 48/101/77 ticks · 1 habilidad(es)
-     pérdidas     agotada en 1139 m (61 m a velocidad mínima) · energía sin usar 31.0
-     juicio       ritmo -4/+9/+12 ‰ · error de plan +31 ‰ (±77)
-     plan         3.08 m/s de 801 m a 1140 m · hp-limited · limpio · E 58.0 (percibe 59.8) · hp 374 (percibe 385) · 21 cand.
-     modos        regen-overflow ×148 → plan 3.08 → kick
+  1º rival-3  42.71 s
+     fases        salida 9.47 s · medio 20.87 s · final 12.40 s
+     ganancias    boost 48/106/66 ticks · 3 habilidad(es)
+     pérdidas     agotada en 1108 m (92 m a velocidad mínima) · energía sin usar 52.5
+     juicio       ritmo +23/-24/+6 ‰ · error de plan -87 ‰ (±90)
+     plan         3.48 m/s de 802 m a 1055 m · hp-limited · limpio · E 58.5 (percibe 53.4) · hp 352 (percibe 321) · 59 cand.
+     modos        regen-overflow ×151 → plan 3.48 → hold → kick
      términos     picada 1400 ‰
-     tramos       _ 1.00/33.1 · ) 0.91/30.4 · _ 1.00/33.5 · ) 0.91/30.5 · _ 1.00/33.6  (f / crucero m/s)
-     energía      gastada 226.0 · lift 0.0 · regen +197.0 · reembolso +0.0 · calor +0.0 · queda 31.0
+     tramos       _ 1.00/34.0 · ) 0.91/29.4 · _ 1.00/32.4 · ) 0.91/30.3 · _ 1.00/33.4  (f / crucero m/s)
+     energía      gastada 220.0 · lift 0.0 · regen +210.5 · reembolso +2.0 · calor +0.0 · queda 52.5
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
-     habilidades  ✓ Salida limpia (p 844 > u 133)
-  2º Peregrina  42.38 s  (+1.06 s)
-     fases        salida 9.40 s (+0.07) · medio 21.20 s (+1.00) · final 11.80 s (+0.00)
-     ganancias    boost 36/0/36 ticks · 6 pulsos · 2 habilidad(es)
-     pérdidas     agotada en 1194 m (6 m a velocidad mínima) · energía sin usar 13.6
-     juicio       ritmo +6/-3/+15 ‰ · error de plan -22 ‰ (±70)
-     plan         2.61 m/s de 801 m a 1140 m · planned · limpio · E 56.8 (percibe 55.6) · hp 413 (percibe 404) · 26 cand.
-     modos        surplus → hold → plan 2.61 → kick
-     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
-     tramos       _ 1.00/33.3 · ) 0.91/29.9 · _ 1.00/33.0 · ) 0.91/30.4 · _ 1.00/33.6  (f / crucero m/s)
-     energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
-     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
-     habilidades  ✗ Trazadora de curvas (u 912 ≥ p 859) · ✓ Trazadora de curvas (p 959 > u 912) · ✓ Último suspiro (p 787 > u 214)
-  3º rival-2  43.20 s  (+1.88 s)
-     fases        salida 9.40 s (+0.07) · medio 21.53 s (+1.33) · final 12.27 s (+0.47)
+     habilidades  ✓ Salida limpia (p 812 > u 199) · ✓ Guardia de punta (p 812 > u 206) · ✓ Cabeza fría (p 812 > u 169)
+  2º rival-4  42.75 s  (+0.04 s)
+     fases        salida 9.47 s (+0.00) · medio 20.87 s (+0.00) · final 12.47 s (+0.07)
+     ganancias    boost 48/105/69 ticks · 2 habilidad(es)
+     pérdidas     agotada en 1107 m (93 m a velocidad mínima) · energía sin usar 48.0
+     juicio       ritmo -3/-39/-2 ‰ · error de plan -12 ‰ (±90)
+     plan         3.38 m/s de 802 m a 1078 m · hp-limited · limpio · E 58.0 (percibe 57.3) · hp 352 (percibe 348) · 59 cand.
+     modos        regen-overflow ×152 → plan 3.38 → hold → kick
+     términos     picada 1400 ‰
+     tramos       _ 1.00/33.1 · ) 0.91/28.9 · _ 1.00/31.9 · ) 0.91/30.0 · _ 1.00/33.1  (f / crucero m/s)
+     energía      gastada 222.0 · lift 0.0 · regen +210.0 · reembolso +0.0 · calor +0.0 · queda 48.0
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Salida limpia (p 812 > u 536) · ✓ Último suspiro (p 649 > u 227)
+  3º rival-2  42.91 s  (+0.21 s)
+     fases        salida 9.67 s (+0.20) · medio 21.20 s (+0.33) · final 12.07 s (-0.33)
+     ganancias    boost 49/106/72 ticks · 1 habilidad(es)
+     pérdidas     agotada en 1104 m (96 m a velocidad mínima) · energía sin usar 41.5
+     juicio       ritmo -25/-16/+34 ‰ · error de plan +81 ‰ (±90)
+     plan         3.38 m/s de 802 m a 1099 m · hp-limited · limpio · E 59.0 (percibe 63.8) · hp 361 (percibe 390) · 59 cand.
+     modos        regen-overflow ×154 → plan 3.38 → hold → kick
+     términos     picada 1400 ‰
+     tramos       _ 1.00/32.4 · ) 0.91/29.6 · _ 1.00/32.7 · ) 0.91/31.1 · _ 1.00/34.3  (f / crucero m/s)
+     energía      gastada 227.0 · lift 0.0 · regen +208.5 · reembolso +0.0 · calor +0.0 · queda 41.5
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Alas de hierro (p 812 > u 647)
+  4º Peregrina  42.92 s  (+0.22 s)
+     fases        salida 9.40 s (-0.07) · medio 21.20 s (+0.33) · final 12.33 s (-0.07)
      ganancias    boost 36/0/36 ticks · 6 pulsos · 1 habilidad(es)
      pérdidas     energía sin usar 13.6
-     juicio       ritmo -11/-18/+4 ‰ · error de plan +58 ‰ (±85)
-     plan         2.61 m/s de 801 m a 1140 m · planned · sucio · E 56.8 (percibe 60.1) · hp 413 (percibe 437) · 26 cand.
+     juicio       ritmo +3/-19/-24 ‰ · error de plan -38 ‰ (±71)
+     plan         2.61 m/s de 801 m a 1140 m · planned · limpio · E 56.8 (percibe 54.6) · hp 410 (percibe 394) · 27 cand.
+     modos        surplus → plan 2.61 → kick
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/33.2 · ) 0.91/29.4 · _ 1.00/32.5 · ) 0.91/29.3 · _ 1.00/32.3  (f / crucero m/s)
+     energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
+     cuerpo       hp final 11 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Trazadora de curvas (p 857 > u 312) · ✗ Último suspiro (u 970 ≥ p 785)
+  5º rival-6  43.17 s  (+0.46 s)
+     fases        salida 9.67 s (+0.20) · medio 21.20 s (+0.33) · final 12.33 s (-0.07)
+     ganancias    boost 49/106/78 ticks · 2 habilidad(es)
+     pérdidas     agotada en 1114 m (86 m a velocidad mínima) · energía sin usar 44.5
+     juicio       ritmo -33/+25/-4 ‰ · error de plan -87 ‰ (±90)
+     plan         3.48 m/s de 802 m a 1065 m · hp-limited · limpio · E 59.0 (percibe 53.9) · hp 361 (percibe 330) · 59 cand. · 1 replan, el último (refund): 4.98 m/s de 1035 m
+     modos        regen-overflow ×154 → plan 3.48 → plan 4.98 → hold → kick
+     términos     picada 1400 ‰
+     tramos       _ 1.00/32.1 · ) 0.91/30.8 · _ 1.00/34.0 · ) 0.91/30.0 · _ 1.00/33.1  (f / crucero m/s)
+     energía      gastada 233.0 · lift 0.0 · regen +207.5 · reembolso +10.0 · calor +0.0 · queda 44.5
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 60.0
+     habilidades  ✓ Cabeza fría (p 812 > u 680) · ✓ Segundo aliento (p 812 > u 118)
+  6º rival-7  43.78 s  (+1.07 s)
+     fases        salida 9.27 s (-0.20) · medio 22.20 s (+1.33) · final 12.33 s (-0.07)
+     ganancias    boost 48/0/36 ticks · 7 pulsos · 3 habilidad(es)
+     pérdidas     agotada en 1132 m (68 m a velocidad mínima) · energía sin usar 9.2
+     juicio       ritmo +3/-46/+1 ‰ · error de plan +38 ‰ (±90)
+     plan         2.61 m/s de 823 m a 1114 m · hp-limited · limpio · E 42.4 (percibe 44.0) · hp 378 (percibe 393) · 27 cand. · 1 replan, el último (refund): 2.61 m/s de 1018 m
+     modos        surplus → hold → plan 2.61 → hold → kick
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/33.3 · ) 0.91/28.7 · _ 1.00/31.7 · ) 0.91/30.1 · _ 1.00/33.2  (f / crucero m/s)
+     energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +10.0 · calor +0.0 · queda 9.2
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Alas de hierro (p 812 > u 559) · ✓ Sombra del pelotón (p 812 > u 517) · ✓ Segundo aliento (p 812 > u 648)
+  7º rival-5  43.91 s  (+1.20 s)
+     fases        salida 9.27 s (-0.20) · medio 22.20 s (+1.33) · final 12.47 s (+0.07)
+     ganancias    boost 48/0/36 ticks · 7 pulsos · 2 habilidad(es)
+     pérdidas     agotada en 1137 m (63 m a velocidad mínima) · energía sin usar 7.2
+     juicio       ritmo -16/+19/-15 ‰ · error de plan -12 ‰ (±90)
+     plan         2.61 m/s de 801 m a 1096 m · hp-limited · limpio · E 50.4 (percibe 49.8) · hp 378 (percibe 373) · 27 cand.
+     modos        surplus → plan 2.61 → hold → kick
+     términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
+     tramos       _ 1.00/32.7 · ) 0.91/30.6 · _ 1.00/33.8 · ) 0.91/29.6 · _ 1.00/32.7  (f / crucero m/s)
+     energía      gastada 100.8 · lift 0.0 · regen +0.0 · reembolso +8.0 · calor +0.0 · queda 7.2
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Guardia de punta (p 812 > u 487) · ✓ Sombra del pelotón (p 812 > u 256)
+  8º rival-1  44.35 s  (+1.64 s)
+     fases        salida 9.27 s (-0.20) · medio 22.20 s (+1.33) · final 12.93 s (+0.53)
+     ganancias    boost 48/0/24 ticks · 6 pulsos · 1 habilidad(es)
+     pérdidas     agotada en 1156 m (44 m a velocidad mínima) · energía sin usar 13.6
+     juicio       ritmo +22/-24/-42 ‰ · error de plan +90 ‰ (±90)
+     plan         2.61 m/s de 846 m a 1140 m · planned · limpio · E 42.4 (percibe 46.2) · hp 378 (percibe 412) · 27 cand.
      modos        surplus → hold → plan 2.61 → kick
      términos     picada 1400 ‰ · aire _1150 )1150 _1150 )1150 _1150
-     tramos       _ 1.00/32.3 · ) 0.90/28.8 · _ 1.00/32.1 · ) 0.90/29.4 · _ 1.00/32.8  (f / crucero m/s)
+     tramos       _ 1.00/33.9 · ) 0.91/29.4 · _ 1.00/32.4 · ) 0.91/28.8 · _ 1.00/31.8  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
-     cuerpo       hp final 4 · durabilidad -0.0 +0.0 → 100.0
-     habilidades  ✓ Sombra del pelotón (p 826 > u 402)"
+     cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 100.0
+     habilidades  ✓ Trazadora de curvas (p 812 > u 368)"
 `;

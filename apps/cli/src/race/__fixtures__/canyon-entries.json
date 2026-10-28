@@ -1,0 +1,162 @@
+[
+  {
+    "runnerId": "player",
+    "kind": "player",
+    "falconessId": "peregrina",
+    "baseStats": {
+      "agility": 640,
+      "stamina": 560,
+      "technique": 600,
+      "courage": 620,
+      "intelligence": 580
+    },
+    "mood": 1,
+    "biomeAptitude": { "desert": "A", "mountain": "B", "coast": "B", "urban": "C", "tundra": "D" },
+    "styleAptitude": { "dive": "A", "hover": "C", "glide": "B", "ground": "E" },
+    "frameId": "peregrina-signature",
+    "parts": ["koryu-firmware"],
+    "quirks": [],
+    "learnedSkills": ["stoop-strike", "last-gasp", "water-skimmer"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-1",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 620,
+      "stamina": 600,
+      "technique": 580,
+      "courage": 520,
+      "intelligence": 600
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
+    "frameId": "falke",
+    "parts": ["steinhaus-turbine"],
+    "quirks": [],
+    "learnedSkills": ["hill-lungs", "cool-head"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-2",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 600,
+      "stamina": 600,
+      "technique": 600,
+      "courage": 600,
+      "intelligence": 600
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
+    "frameId": "horizon",
+    "parts": ["altair-battery"],
+    "quirks": [],
+    "learnedSkills": ["canyon-sense", "second-wind"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-3",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 640,
+      "stamina": 560,
+      "technique": 560,
+      "courage": 640,
+      "intelligence": 560
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
+    "frameId": "etoile",
+    "parts": [],
+    "quirks": [],
+    "learnedSkills": ["gravity-friend", "lead-guard"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-4",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 560,
+      "stamina": 680,
+      "technique": 640,
+      "courage": 600,
+      "intelligence": 520
+    },
+    "mood": -1,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
+    "frameId": "mule",
+    "parts": ["boneyard-battery"],
+    "quirks": ["scrap-heart", "mud-runner"],
+    "learnedSkills": ["iron-wings"],
+    "durability": 12
+  },
+  {
+    "runnerId": "rival-5",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 600,
+      "stamina": 600,
+      "technique": 600,
+      "courage": 600,
+      "intelligence": 600
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
+    "frameId": "shiden",
+    "parts": [],
+    "quirks": [],
+    "learnedSkills": ["corner-carver", "pack-shadow"],
+    "durability": 8
+  },
+  {
+    "runnerId": "rival-6",
+    "kind": "rival",
+    "falconessId": "cernicala",
+    "baseStats": {
+      "agility": 580,
+      "stamina": 620,
+      "technique": 620,
+      "courage": 540,
+      "intelligence": 680
+    },
+    "mood": 2,
+    "biomeAptitude": { "desert": "B", "mountain": "A", "coast": "B", "urban": "B", "tundra": "C" },
+    "styleAptitude": { "dive": "C", "hover": "A", "glide": "B", "ground": "D" },
+    "frameId": "cernicala-signature",
+    "parts": ["altair-firmware"],
+    "quirks": [],
+    "learnedSkills": ["wind-hover", "canyon-sense"],
+    "durability": null
+  },
+  {
+    "runnerId": "rival-7",
+    "kind": "rival",
+    "falconessId": null,
+    "baseStats": {
+      "agility": 600,
+      "stamina": 640,
+      "technique": 620,
+      "courage": 580,
+      "intelligence": 560
+    },
+    "mood": 0,
+    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
+    "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
+    "frameId": "erzherzog",
+    "parts": ["steinhaus-stabilizer"],
+    "quirks": [],
+    "learnedSkills": ["water-skimmer", "clean-start"],
+    "durability": null
+  }
+]

@@ -108,11 +108,13 @@ describe("buildField through the port", () => {
 
   it("freezes every --entries input with lane = array index", () => {
     const { engine, calls } = fakeEngine(log);
-    const second = {
+    const second: EntryInput = {
       ...validInput,
       runnerId: "rival-1",
-      kind: "rival" as const,
+      kind: "rival",
       falconessId: null,
+      frameId: "kite",
+      learnedSkills: ["iron-wings"],
     };
     const entries = buildField(engine, ctx, sprint, "s1", {
       kind: "entries",
