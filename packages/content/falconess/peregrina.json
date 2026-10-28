@@ -35,22 +35,22 @@
     {
       "turn": 12,
       "courseId": "desert-sprint",
-      "minPlace": 5
+      "minPlace": 7
     },
     {
       "turn": 24,
       "courseId": "desert-ridge",
-      "minPlace": 3
+      "minPlace": 6
     },
     {
       "turn": 36,
       "courseId": "desert-canyon",
-      "minPlace": 3
+      "minPlace": 5
     },
     {
       "turn": 46,
       "courseId": "desert-ridge",
-      "minPlace": 1
+      "minPlace": 3
     }
   ],
   "version": 1,

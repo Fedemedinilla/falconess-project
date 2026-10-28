@@ -1809,11 +1809,12 @@ generateField(ruleset, content, { course, turn, raceSeed, player: EntryInput }):
 `F.rivalWeights` (‰, each row sums to 1000; agility / stamina / technique / courage /
 intelligence): glide 240/210/170/180/200, dive 250/180/170/220/180, hover 220/200/170/170/240,
 ground 200/230/220/190/160. The relative curve is the stub's (`5 × (95 + 9 t) ± 20 %`).
-Balance pass 1 (ADR-0005, metric 7) re-anchors v1 at `60 + 8 t` (T12 156, T24 252, T36 348, T46
-428 per stat, ≈ ¾ of the reference policy's measured curve at every goal turn); the par table
-below was measured on the stub curve. With ¾ the reference policy wins 73-80 % of its goal races
-(29-42 % on the stub curve): goals act as checkpoints, and whether they should be a challenge is
-left to the owner (ADR-0005, metric 7, proposal 4).
+Balance pass 1 (ADR-0005, metric 7) re-anchored v1 at `60 + 8 t` (≈ ¾ of the reference policy's
+curve; it won 73-80 % of its goal races, 29-42 % on the stub curve). The owner then asked for a
+more demanding season (ADR-0005 «Pasada 2», decision 2): v1 is `75 + 9 t` (T12 183, T24 291, T36
+399, T46 489 per stat, 0.83-0.86 of the reference policy's stats at each goal race) with the goal
+ladder `minPlace` 7 / 6 / 5 / 3 for every Falconess (no goal asks for a win), and the reference
+policy wins 43-58 % of its goal races. The par table below was measured on the stub curve.
 
 Class-matching implements pillar 2's "clase de equipo igualado" for goal races: with literal PW an
 unrestricted pool makes Peregrina (1.4) win everything and Caracara (0.7) nothing (judges'
@@ -2112,7 +2113,7 @@ budget of 20 min and is not part of this gate.
 | 4 | Skill leave-one-out (0.5-8 m) | content `speed × duration` (instant speed: gain ≈ speed × duration × p / 15 per tick); `activationNumerator` ↑ / `activationFloor` ↓ lower p; `kAcc` ↑ shrinks accel skills (they only act below target); `hpPerKm` (speed skills lose part of their value where hp binds); iron-wings and gravity-friend need content edits |
 | 5 | Part ablation (≤ 3 points of win rate; in an equal 8-field with σ 1.0-1.2 % that is a time gain of only **0.16-0.19 %**, R18) | **Content, not engine knobs** (R18): the engine knobs reach 0.16-0.19 % only by deleting what they govern (`pwCruiseWeight`/`pwBoostWeight` ≈ 20 ‰ removes PW tiers; `kCurves` with a curve penalty ≈ 10 ‰ at A 600 removes the curve term), and `kE` ↓ (25.3 step 2) raises the value of batteries. Part values: lumiere-stabilizer 2.26 % on the sprint (Boneyard 3.96 %), steinhaus-turbine ≈ 10 % cruise at literal weight and 2.5 % at weight 250, lumiere-turbine half of that, batteries 0.33 % at `kE` 1000 and 0.55-0.6 % at `kE` 250, koryu-firmware ≈ 0.1 % plus ≈ 2.5 points of p. Content tickets in 25.3 (stabilizer scale, turbine PW, batteries after step 2) or an ADR that moves metric 5. Measure with S5 (equal neutral field, paired) |
 | 6 | Same-build time σ (0.8-2 %) | `paceHalfWidth` (σ ≈ 0.27 × W0 with hp margin, damped where hp binds; +10 ‰ of W0 ≈ +0.27 points; the same for every I); `paceCentreSpan` changes the mean effect of Intelligence, not σ; `activationNumerator` (Bernoulli variance near p = 0.5); `planErrorMax` (minor unless hp binds) |
-| 7 | Season `gradeFor ≥ B` in ≥ 60 % of seasons per Falconess (lowest-stat policy; grade B needs `seasonScore ≥ 2900` and no failed goal) | Score side: `SEASON.gradeThresholds` (B 2900 ↓ easier), `scorePerSkill`, `scoreWinBonus`, `scorePodiumBonus`, `gradeCapOnGoalFailure`, the training economy (`trainBase`: stat total at season end). Goal side: `FIELD.rivalBase`, `rivalPerTurn` (↓ easier), `rivalNoise`, `rivalPwBandPm`, `rivalMaxSkills`; goal `minPlace` (content); `hpBase`/`hpPerKm` (canyon goals for stamina-poor builds); `scrapByPlace` (repairs, durability persistence). Season constants live in `rulesets/` too: batch report and ADR line. Diagnostics: grade distribution, score split and the goal pass-rate table (21.1) |
+| 7 | Season `gradeFor ≥ B` in ≥ 60 % of seasons per Falconess (lowest-stat policy; grade B needs `seasonScore ≥ 2900` and no failed goal) | Score side: `SEASON.gradeThresholds` (B 2900 ↓ easier), `scorePerSkill`, `scoreWinBonus`, `scorePodiumBonus`, `gradeCapOnGoalFailure`, the training economy (`trainBase`: stat total at season end). Goal side: `FIELD.rivalBase`, `rivalPerTurn` (↓ easier), `rivalNoise`, `rivalPwBandPm`, `rivalMaxSkills`; goal `minPlace` (content); `hpBase`/`hpPerKm` (canyon goals for stamina-poor builds); `scrapByPlace` (repairs, durability persistence). Season constants live in `rulesets/` too: batch report and ADR line. Diagnostics: grade distribution, score split, the goal pass-rate table (21.1) and the goal races by place (ADR-0005 «Pasada 2») |
 | 8 | Intelligence and style letter never lower the win rate (added, S8) | `paceCentreSpan` ↑ (mean effect of I); `paceHalfWidth` must stay the same for every I; `planErrorMax` |
 
 ### 25.2 Batch scenario definitions and run budget (D14; revision 3)

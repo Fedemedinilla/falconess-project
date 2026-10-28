@@ -235,9 +235,9 @@ describe("S7 season grade", () => {
     grade,
     score: { stats: 2800, skills: 40, races: 70, total: 2910 },
     goals: [
-      { turn: 12, minPlace: 5, place: place12 },
-      { turn: 24, minPlace: 3, place: place24 },
-      { turn: 36, minPlace: 3, place: null },
+      { turn: 12, minPlace: 7, place: place12 },
+      { turn: 24, minPlace: 6, place: place24 },
+      { turn: 36, minPlace: 5, place: null },
     ],
     goalRaces: [place12, place24].filter((p) => p !== null).length,
     raceEngine: "stub",
@@ -246,7 +246,7 @@ describe("S7 season grade", () => {
     const grades: SeasonRecord["grade"][] = ["A", "B", "C", "S", "B"];
     const rows: Row[] = grades.map((g, k) => ({
       job: { scenario: "S7", falconess: "peregrina", k },
-      extra: { season: season(g, k < 4 ? 2 : 7) },
+      extra: { season: season(g, k < 4 ? 2 : 8) },
     }));
     const out = computeMetrics(input(rows, ["S7"]));
     const m7 = metric(out, "m7-season");
@@ -260,24 +260,24 @@ describe("S7 season grade", () => {
       "won / reached %",
       "flag",
     ]);
-    expect(goals?.rows[0]).toEqual(["peregrina", 12, "desert-sprint", 5, 100, 80, 80, 0, ""]);
+    expect(goals?.rows[0]).toEqual(["peregrina", 12, "desert-sprint", 7, 100, 80, 80, 0, ""]);
     // no season reached T24: no rate and no flag
     expect(goals?.rows[1]?.slice(4)).toEqual([0, 0, null, null, ""]);
   });
 
   it("flags a goal on the seasons that reached it, never on the seasons an earlier goal ended (21.1)", () => {
-    // 10 seasons: 4 end at T12; of the 6 that run T24, 5 pass it (83 %), 1 fails (place 4)
+    // 10 seasons: 4 end at T12 (≤ 7); of the 6 that run T24 (≤ 6), 5 pass it (83 %), 1 fails
     const places: [number, number | null][] = [
-      [7, null],
-      [7, null],
-      [7, null],
-      [7, null],
+      [8, null],
+      [8, null],
+      [8, null],
+      [8, null],
       [1, 1],
       [1, 2],
       [1, 3],
       [1, 1],
       [1, 2],
-      [1, 4],
+      [1, 7],
     ];
     const rows: Row[] = places.map(([p12, p24], k) => ({
       job: { scenario: "S7", falconess: "peregrina", k },
@@ -289,7 +289,7 @@ describe("S7 season grade", () => {
     expect(goals?.rows[0]?.slice(4)).toEqual([100, 60, 60, 60, "under 80 %"]);
     // T24: 5 of all 10 seasons (50 %), but 5 of the 6 that ran it (83.3 %): not flagged; 2 won
     expect(goals?.rows[1]?.slice(4)).toEqual([60, 50, 83.3, 33.3, ""]);
-    // 16 goal races: 8 won, 2 second, 1 third, 1 fourth, 4 seventh; no season won every goal
+    // 16 goal races: 8 won, 2 second, 1 third, 1 seventh, 4 eighth; no season won every goal
     const byPlace = out.diagnostics.find((d) => d.id === "s7-places");
     expect(byPlace?.columns).toEqual([
       "falconess",
@@ -314,11 +314,11 @@ describe("S7 season grade", () => {
       50,
       12.5,
       6.3,
+      0,
+      0,
+      0,
       6.3,
-      0,
-      0,
       25,
-      0,
       0,
     ]);
   });

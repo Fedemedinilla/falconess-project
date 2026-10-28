@@ -34,12 +34,12 @@ describe("pnpm sim:season-batch", () => {
 
     const text = renderSeasonBatch(m).join("\n");
     expect(text).toContain("cernicala  runs 4");
-    expect(text).toContain("T46 desert-canyon ≤ 1: passed");
+    expect(text).toContain("T46 desert-canyon ≤ 3: passed");
     expect(text).toMatch(/mean seasonScore \d+ = stats \d+ \+ skills \d+ \+ races \d+/);
     expect(text).toMatch(
       /goal races: [\d.]+ per season {2}won \d+% {2}podium \d+% {2}places 1st…8th ([\d.]+ \/ ){7}[\d.]+ % {2}seasons that won every goal race \d+%/,
     );
-    expect(text).toMatch(/T12 desert-sprint ≤ 5: .* won\/reached \d+%/);
+    expect(text).toMatch(/T12 desert-sprint ≤ \d: .* won\/reached \d+%/);
   });
 
   it("flags a goal under 80 % of the seasons that reached it, not of all seasons (21.1)", () => {

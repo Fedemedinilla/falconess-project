@@ -4,7 +4,9 @@
   «Propuestas para el dueño» quedan **propuestas** salvo las que marcan la decisión del dueño.
   `pwCruiseWeight` 1000 → 5 (métrica 2) y lo que depende de él (las turbinas de la métrica 5):
   **aceptado (dueño, 2026-10-28)**, con las alas rotas fuera del peso de PW (propuestas 3 y 5 de
-  «Métricas 2 y 5»; sección «Pasada 2»).
+  «Métricas 2 y 5»; sección «Pasada 2»). Temporada más exigente (propuestas 1 y 4 de «Métrica 7»,
+  opción (a) de la 4): **aceptado (dueño, 2026-10-28)**; `FIELD` 75 / 9 y escalera 7 / 6 / 5 / 3
+  reemplazan el 60 / 8 de «Métrica 7» (sección «Pasada 2»).
 - Fecha: 2026-10-28
 - Alcance: `packages/sim/src/rulesets/v1/constants.ts`, `packages/content/` (bastidores, piezas,
   habilidades)
@@ -481,8 +483,9 @@ Estado: **propuesto**.
 
 ## Métrica 7
 
-Estado: **aceptado** (dos constantes de `FIELD` dentro de rango); la sección «Propuestas para el
-dueño (métrica 7)» queda **propuesta**. Medida sobre `phase-2-race-engine` con las métricas 2 a 5
+Estado: **aceptado** (dos constantes de `FIELD` dentro de rango), **reemplazado** por la «Pasada
+2» (decisión 2 del dueño: `FIELD` 75 / 9 y escalera 7 / 6 / 5 / 3); la sección «Propuestas para el
+dueño (métrica 7)» queda **propuesta** salvo las propuestas 1 y 4. Medida sobre `phase-2-race-engine` con las métricas 2 a 5
 ya combinadas (`b37f0bf`). Las líneas base del lote son ese mismo `HEAD` en las dos bases de
 semillas (`pr` completo y `full` de S7), no la v1: las métricas 2 a 5 ya movieron las carreras de S7.
 El cambio deja las carreras objetivo como puntos de control: la referencia gana el 73-80 %. Si deben
@@ -673,15 +676,21 @@ T24 y T46) cambian además de los que ya cambiaban; los regenera el líder.
 
 ### Propuestas para el dueño (métrica 7)
 
-Estado: **propuesto**.
+Estado: **propuesto**, salvo las propuestas 1 y 4: **aceptado (dueño, 2026-10-28)** (sección
+«Pasada 2», «Temporada más exigente»).
 
-1. **La política de referencia no gasta puntos de habilidad.** Termina la temporada con su única
+1. **La política de referencia no gasta puntos de habilidad.** **Aceptado (dueño, 2026-10-28)**:
+   aprende en el taller las activas genéricas útiles que pagan sus puntos (`skillsToLearn`). Medido
+   en la «Pasada 2»: con la economía v1 nunca junta los 60 puntos de la activa más barata, así que
+   la regla no se dispara (propuesta 1 de «Temporada más exigente»). El resto describe el estado
+   previo. Termina la temporada con su única
    habilidad (20 puntos de nota) mientras los rivales llevan una activa genérica por cada 12 turnos
    (3 desde T36). La métrica 7 mide así a una jugadora que ignora las habilidades. Opción (código de
    la herramienta, `apps/cli/src/policy.ts`): aprender una activa cuando alcancen los puntos, y volver
    a medir la razón de `FIELD` con esa política.
 2. **Una política descuidada pasa más que antes** (al azar 15-38 %, solo agilidad 17-50 %; antes
-   0-9 %). Opciones: (a) objetivo: sumar al lote una política descuidada con un techo (por ejemplo
+   0-9 %). Con la «Pasada 2» vuelve a 12-32 % y 4-8 % (arnés): la temporada más exigente ya deja a
+   las dos bajo el techo de 40 % de la opción (a), que sigue sin estar en el lote. Opciones: (a) objetivo: sumar al lote una política descuidada con un techo (por ejemplo
    ≤ 40 % de ≥ B) para que la métrica 7 no se cumpla solo aflojando el campo; (b) si se quiere una
    temporada más dura con la misma política, 65-70 / 8 da 74-76 / 67-71 / 79-81 % (arnés) a costa
    del margen en `pr`.
@@ -696,12 +705,16 @@ Estado: **propuesto**.
    más desgaste y un castigo real de alas rotas. El castigo volvió con la «Pasada 2» (≈ 30 %); el
    desgaste sigue sin cambio y la propuesta sigue abierta.
 4. **Las carreras objetivo son casi automáticas para la referencia** (sección «Puesto en las
-   carreras objetivo»): gana el 73-80 % y el 33-40 % de sus temporadas gana las cuatro. BRIEF §12
-   solo pone un piso a la métrica 7, y ni el brief ni la especificación dicen cuánto debe ganar la
-   referencia: eso lo decide el dueño. Arnés de la sección (1000 temporadas por Falconess, cada
-   escalera evaluada sobre las mismas carreras; «actual» es 5/4/3/2 en Caracara y 5/3/3/1 en
-   Cernícala y Peregrina; ≥ B en Caracara / Cernícala / Peregrina; «Ganadas», las carreras objetivo
-   corridas que gana, de las tres juntas):
+   carreras objetivo»). **Aceptado (dueño, 2026-10-28), opción (a)**: `FIELD` 75 / 9 (razón
+   0,83-0,86 en cada carrera) y escalera 7 / 6 / 5 / 3 para las tres, sin metas de ganar; la
+   referencia gana el 43-58 % (sección «Pasada 2»). De la opción (b) solo se tomó el informe: el
+   lote muestra las victorias y los puestos (tabla `s7-places`) sin juzgarlos. La (c) queda
+   descartada. El resto describe el estado previo: gana el 73-80 % y el 33-40 % de sus temporadas
+   gana las cuatro. BRIEF §12 solo pone un piso a la métrica 7, y ni el brief ni la
+   especificación dicen cuánto debe ganar la referencia: eso lo decide el dueño. Arnés de la sección
+   (1000 temporadas por Falconess, cada escalera evaluada sobre las mismas carreras; «actual» es
+   5/4/3/2 en Caracara y 5/3/3/1 en Cernícala y Peregrina; ≥ B en Caracara / Cernícala / Peregrina;
+   «Ganadas», las carreras objetivo corridas que gana, de las tres juntas):
 
    | `rivalBase` / `rivalPerTurn` (razón T12-T46) | `minPlace` (T12/T24/T36/T46) | ≥ B (%)            | Ganadas |
    | -------------------------------------------- | ---------------------------- | ------------------ | ------- |
@@ -833,3 +846,234 @@ nuevo de `derived`; g10-g12 cambian además de física (bastidores rotos: el car
 el 2 en g12). Los regenera el líder (ADR-0004); hasta entonces la suite corre sin `golden.test.ts`.
 Corridas de esta sección: 8 de `sim:batch` (`pr` y `full` antes y después, en las dos bases), 2 de
 `sim:season-batch` y 4 del arnés de temporada.
+
+### Temporada más exigente (decisión 2)
+
+Estado: **aceptado (dueño, 2026-10-28)**: propuestas 1 y 4 de «Métrica 7», opción (a) de la 4. El
+dueño pide rivales más cerca de la jugadora y una escalera de metas más floja sin metas de ganar,
+para que la referencia gane ≈ la mitad de sus carreras objetivo con la métrica 7 (≥ 60 % de las
+temporadas en B o mejor) pasando. Antes de este cambio la referencia ganaba el 73-80 % y la métrica
+7 daba 75-86 %.
+
+#### La política de referencia aprende activas genéricas (propuesta 1)
+
+Regla (`apps/cli/src/policy.ts`, `skillsToLearn`): con un evento pendiente elige la opción 0; si el
+bastidor está bajo el 50 % de su durabilidad o los puntos pagan alguna activa útil, va al taller
+(una visita repara y aprende); si no, descansa con fatiga ≥ 60 o entrena la stat más baja. Útil:
+una activa sin `uniqueTo`, sin aprender, cuyo disparador puede ocurrir en una pista objetivo que
+queda por correr (un disparador de `segment` pide ese tipo de segmento en una de esas pistas; los de
+fase, posición, calor y energía sirven en cualquiera). Aprende en orden de costo (empate por id)
+mientras alcancen los puntos, hasta el tope de aprendizaje (`learnCap`, con la única incluida).
+
+Medido: la regla nunca se dispara. Los puntos salen del simulador (+5 por sesión, BRIEF §8) y la
+política de la stat más baja lo entrena 6-8 veces por temporada: termina con 25-50 puntos (media
+46 / 35 / 45 en Caracara / Cernícala / Peregrina; arnés, 500 temporadas por Falconess) y la activa
+genérica más barata (`clean-start`) cuesta 60; las demás, 70-150. Con la regla, `sim:batch` `pr`
+(88 celdas y 12 diagnósticos, en las dos bases), S7 `full` (las dos bases),
+`sim:season-batch -- --runs 500` y el arnés (1500 temporadas) salen idénticos a `637198f`. Los
+rivales llevan 1 / 2 / 3 / 3 activas genéricas en T12 / T24 / T36 / T46.
+
+Lo que costaría juntar los puntos (arnés, 500 temporadas por Falconess, la regla de aprender más
+una regla de ahorro mientras quede una activa útil sin aprender; campo 60 / 8 y escalera de
+entonces; Caracara / Cernícala / Peregrina):
+
+| Regla de ahorro                               | Activas genéricas por temporada | Ganadas | ≥ B                  |
+| --------------------------------------------- | ------------------------------- | ------- | -------------------- |
+| ninguna (la política aceptada)                | 0 / 0 / 0                       | 76,2 %  | 79,8 / 75,2 / 84,8 % |
+| simulador si inteligencia ≤ 1,2 × la más baja | 0,05 / 0 / 0,01                 | 76,0 %  | 78,8 / 77,8 / 85,0 % |
+| simulador si inteligencia ≤ 1,3 × la más baja | 0,30 / 0 / 0,17                 | 73,0 %  | 76,4 / 77,2 / 82,4 % |
+| simulador con fatiga ≥ 40 en vez de entrenar  | 1 / 1 / 1                       | 43,1 %  | 31,2 / 9,8 / 46,8 %  |
+| simulador con fatiga ≥ 20 en vez de entrenar  | 2 / 2 / 2                       | 14,5 %  | 0 / 0 / 0 %          |
+
+Una activa cuesta ≈ 10 sesiones de simulador más: la inteligencia sube, las demás stats se quedan
+atrás y la carrera pierde mucho más de lo que la activa da (S4: 0,5-8 m por activa). Ninguna regla
+de ahorro entra en la política: BRIEF §12 define la métrica con «entrenar la stat más baja» y
+cambiar el entrenamiento cambia la política medida (propuesta 1 de abajo).
+
+#### Victorias y puestos en el informe
+
+`pnpm sim:season-batch` imprime por Falconess una línea de carreras objetivo (corridas por
+temporada, ganadas, podio, reparto del 1.º al 8.º y temporadas que las ganan todas) y `won/reached`
+por meta; `pnpm sim:batch` suma la tabla `s7-places` (lo mismo en S7) y la columna «won / reached %»
+de `s7-goals`. `placeCounts` (`apps/cli/src/goal-rate.ts`) es común a los dos. Ninguna celda cambia.
+
+#### Cambio aceptado
+
+| Constante o contenido                          | Antes         | Después       | Por qué                                                                                      |
+| ---------------------------------------------- | ------------- | ------------- | -------------------------------------------------------------------------------------------- |
+| `FIELD.rivalBase`                              | 60            | 75            | Rivales a 0,83-0,86 de la referencia en cada carrera objetivo (antes 0,71-0,74).             |
+| `FIELD.rivalPerTurn`                           | 8             | 9             | Con 10 la T12 pasa a ser la carrera más difícil y la T46 ≤ 3 baja a 80-81 % (Caracara).      |
+| `FIELD.rivalNoise`                             | 200           | 200           | 100 sube las victorias a 55 % y las descuidadas; 300 las baja a 33-40 % y la T46 ≤ 3 a 84 %. |
+| `minPlace` de Caracara (T12 / T24 / T36 / T46) | 5 / 4 / 3 / 2 | 7 / 6 / 5 / 3 | Sin metas de ganar; la escalera sigue cerrándose hacia T46 (podio).                          |
+| `minPlace` de Cernícala y Peregrina            | 5 / 3 / 3 / 1 | 7 / 6 / 5 / 3 | La misma escalera para las tres.                                                             |
+
+Media por stat de los rivales en T12 / T24 / T36 / T46: 156 / 252 / 348 / 428 → 183 / 291 / 399 /
+489. La referencia llega a esas carreras con 220 / 339 / 470 / 591 (arnés, stats tras la acción del
+turno, media de las tres), así que la razón pasa de 0,71 / 0,74 / 0,74 / 0,72 a 0,83 / 0,86 / 0,85
+/ 0,83 (la sección «Métrica 7» medía las stats antes de la acción: 0,74-0,77).
+
+Exploración (arnés de «Métrica 7» con la política nueva, 1000 temporadas por Falconess, semillas
+`batch-0` … `batch-999`; cada escalera se evalúa sobre las mismas carreras; «Peor meta», la menor
+tasa de las doce entre las temporadas que corren la carrera; «Ganadas», de las carreras objetivo
+corridas, las tres juntas y por Falconess; ≥ B en Caracara / Cernícala / Peregrina):
+
+| `FIELD` (base / por turno / ruido) | Escalera          | ≥ B (%)            | Peor meta | Ganadas                     |
+| ---------------------------------- | ----------------- | ------------------ | --------- | --------------------------- |
+| 60 / 8 / 200 (antes)               | 5/4/3/2 y 5/3/3/1 | 78,8 / 74,3 / 84,3 | 91,9 %    | 75,0 % (71,9 / 74,3 / 78,9) |
+| 60 / 8 / 200                       | 7/6/5/3           | 89,9 / 85,4 / 91,8 | 96,7 %    | 74,7 %                      |
+| 70 / 9 / 200                       | 7/6/5/3           | 76,2 / 74,7 / 85,4 | 87,8 %    | 52,0 % (47,7 / 46,5 / 61,7) |
+| **75 / 9 / 200**                   | **7/6/5/3**       | 73,4 / 72,4 / 83,0 | 86,6 %    | 48,3 % (44,0 / 42,8 / 58,0) |
+| 75 / 9 / 200                       | 7/6/5/4           | 77,3 / 74,1 / 83,3 | 92,4 %    | 48,3 %                      |
+| 75 / 9 / 200                       | 6/6/5/3           | 69,1 / 69,5 / 77,8 | 87,1 %    | 48,5 %                      |
+| 75 / 9 / 200                       | 6/5/4/3           | 64,3 / 63,4 / 76,4 | 87,5 %    | 48,6 %                      |
+| 80 / 9 / 200 (ejemplo del dueño)   | 7/6/5/3           | 71,6 / 70,2 / 80,9 | 86,2 %    | 45,0 % (40,7 / 39,5 / 54,7) |
+| 85 / 9 / 200                       | 7/6/5/3           | 67,6 / 68,0 / 78,8 | 85,1 %    | 41,7 %                      |
+| 90 / 9 / 200                       | 7/6/5/3           | 64,3 / 65,6 / 76,4 | 84,6 %    | 38,7 %                      |
+| 80 / 9 / 100                       | 7/6/5/3           | 70,3 / 69,2 / 81,1 | 88,5 %    | 55,0 %                      |
+| 80 / 9 / 300                       | 7/6/5/3           | 70,4 / 65,9 / 81,4 | 83,8 %    | 33,2 %                      |
+| 70 / 9 / 300                       | 7/6/5/3           | 74,6 / 70,1 / 85,5 | 86,1 %    | 39,5 %                      |
+| 50 / 10 / 200                      | 7/6/5/3           | 70,0 / 69,5 / 83,8 | 81,4 %    | 47,2 %                      |
+| 60 / 10 / 200                      | 7/6/5/3           | 64,0 / 62,7 / 79,9 | 79,7 %    | 40,7 %                      |
+
+Con otra base de semillas del arnés (`alt1/batch-0` … `alt1/batch-999`): 75 / 9 con 7/6/5/3 da
+≥ B 73,9 / 74,5 / 85,1 %, peor meta 88,6 % y ganadas 50,0 % (45,0 / 45,9 / 58,8); 80 / 9, 71,9 /
+72,1 / 83,2 %, 88,6 % y 46,6 % (41,4 / 41,8 / 56,3).
+
+Razones:
+
+- 75 / 9 es la curva de la familia «por turno 9» que deja la tasa de victorias en la mitad: 48-50 %
+  en el arnés y 48-49 % en S7 `full`, en las dos bases. El ejemplo del dueño (80 / 9) da 45-47 % con
+  Caracara y Cernícala en 40-42 % y 1-3 puntos menos de margen de ≥ B; 70 / 9 da 52 % con Peregrina
+  en 62 %.
+- 7/6/5/3 es la escalera más exigente que deja cada meta ≥ 85 % y ≥ B en 72-83 %: 6/6/5/3 y 6/5/4/3
+  bajan a Cernícala a 63-70 %, y 7/6/5/4 aflojaría la última meta. La misma escalera para las tres:
+  lo que las separa es el bastidor y el pool de su clase, no las metas (propuesta 2).
+- `rivalPerTurn` 9: la razón baja de 0,86 a 0,83 a lo largo de la temporada mientras la escalera se
+  cierra (de ≤ 7 a ≤ 3); con 10 (base 50-60) las victorias se aplanan (T12 33-41 %) pero la T46 ≤ 3
+  de Caracara queda en 80-81 %.
+- `rivalNoise` 200 sin cambio: la variedad del campo se queda y ninguna alternativa mejora a la vez
+  las victorias, la peor meta y las políticas descuidadas.
+
+#### Evidencia (lote)
+
+`pnpm sim:batch -- --runs 10000`, por defecto y `--seed alt1`, contra el mismo `HEAD` sin el cambio
+(`1651f94`, idéntico a `637198f`): las 85 celdas de las métricas 1-6 y 8 y sus diagnósticos quedan
+idénticos en las dos bases; cambian las tres celdas de la métrica 7 y las tablas de S7.
+
+| Base        | Caracara                   | Cernícala                  | Peregrina                  | Veredicto               |
+| ----------- | -------------------------- | -------------------------- | -------------------------- | ----------------------- |
+| por defecto | 83,3 → 80,0 % [68,2, 88,2] | 78,3 → 73,3 % [61,0, 82,9] | 86,7 → 85,0 % [73,9, 91,9] | pass 3/0/0 → pass 3/0/0 |
+| alt1        | 75,0 → 75,0 % [62,8, 84,2] | 80,0 → 75,0 % [62,8, 84,2] | 80,0 → 83,3 % [72,0, 90,7] | pass 3/0/0 → pass 3/0/0 |
+
+Con 60 temporadas por Falconess una celda de `pr` pasa desde 44 de 60 (73,3 %): con la tasa real de
+Caracara y Cernícala en 71-77 %, una corrida `pr` puede salir pass o inconclusa, y un fail pide ≤ 28
+de 60 (probabilidad < 0,01 %). Decide `full`.
+
+S7 `full` (`--profile full --scenarios S7`, 500 temporadas por Falconess):
+
+| Base        | Caracara                   | Cernícala                  | Peregrina                  | Veredicto               |
+| ----------- | -------------------------- | -------------------------- | -------------------------- | ----------------------- |
+| por defecto | 83,0 → 76,6 % [72,7, 80,1] | 78,0 → 74,0 % [70,0, 77,7] | 83,8 → 84,4 % [81,0, 87,3] | pass 3/0/0 → pass 3/0/0 |
+| alt1        | 80,0 → 75,8 % [71,9, 79,3] | 74,4 → 70,8 % [66,7, 74,6] | 83,6 → 82,6 % [79,0, 85,7] | pass 3/0/0 → pass 3/0/0 |
+
+La cota baja más baja es 66,7 % (Cernícala, alt1): 6,7 puntos sobre el objetivo.
+
+Perfil `full` completo después del cambio, contra el `full` de `637198f` (`.work/balance/p2-broken/`):
+177 de las 180 celdas y 10 de los 14 diagnósticos quedan idénticos en las dos bases; cambian las
+tres celdas de la métrica 7 (las de la tabla de arriba) y las tablas de S7. Veredictos de las
+métricas 1-6 y 8 sin cambio (pass 4/0/0, inconclusa 9/0/1, inconclusa 8/0/1, pass 31/0/0, pass
+24/0/0, pass 3/0/0 y pass 96/0/0).
+
+Metas de S7 `full`, por defecto / alt1: «Pasa», las temporadas que corren la carrera y la pasan;
+«Gana», las mismas que la ganan:
+
+| Falconess | Carrera    | Meta antes → ahora | Pasa antes  | Pasa ahora  | Gana ahora  |
+| --------- | ---------- | ------------------ | ----------- | ----------- | ----------- |
+| caracara  | T12 ridge  | ≤ 5 → ≤ 7          | 94,8 / 93,2 | 95,8 / 96,2 | 31,2 / 32,4 |
+| caracara  | T24 sprint | ≤ 4 → ≤ 6          | 96,6 / 94,0 | 94,4 / 93,3 | 28,8 / 34,9 |
+| caracara  | T36 canyon | ≤ 3 → ≤ 5          | 98,3 / 97,5 | 97,1 / 96,0 | 61,7 / 54,6 |
+| caracara  | T46 ridge  | ≤ 2 → ≤ 3          | 93,8 / 94,8 | 88,6 / 89,6 | 59,0 / 59,2 |
+| cernicala | T12 sprint | ≤ 5 → ≤ 7          | 94,6 / 94,8 | 95,4 / 97,0 | 26,6 / 27,4 |
+| cernicala | T24 canyon | ≤ 3 → ≤ 6          | 92,2 / 90,3 | 93,1 / 91,8 | 37,3 / 36,7 |
+| cernicala | T36 ridge  | ≤ 3 → ≤ 5          | 97,0 / 96,7 | 93,9 / 93,5 | 48,2 / 44,0 |
+| cernicala | T46 canyon | ≤ 1 → ≤ 3          | 93,9 / 90,8 | 92,8 / 90,4 | 74,3 / 69,5 |
+| peregrina | T12 sprint | ≤ 5 → ≤ 7          | 92,6 / 93,6 | 94,8 / 95,8 | 19,2 / 21,6 |
+| peregrina | T24 ridge  | ≤ 3 → ≤ 6          | 98,3 / 97,0 | 99,8 / 99,6 | 61,2 / 61,6 |
+| peregrina | T36 canyon | ≤ 3 → ≤ 5          | 97,6 / 97,6 | 94,1 / 95,0 | 62,4 / 61,0 |
+| peregrina | T46 ridge  | ≤ 1 → ≤ 3          | 97,5 / 97,3 | 98,2 / 98,5 | 87,2 / 85,4 |
+
+Puestos de S7 `full` (`s7-places`), por defecto / alt1: la referencia gana el 44,5 / 44,6 %
+(Caracara), 45,4 / 43,3 % (Cernícala) y 56,5 / 56,6 % (Peregrina) de sus carreras objetivo, 48,8 /
+48,3 % de las tres juntas; podio 76,8 / 76,5 / 80,9 % (por defecto). Reparto del 1.º al 8.º de las
+tres juntas (por defecto): 48,8 / 17,9 / 11,3 / 7,9 / 5,5 / 4,2 / 2,5 / 1,9 %; antes (arnés, 60 / 8)
+75,0 / 10,9 / 5,6 / 3,5 / 2,4 / 1,4 / 0,7 / 0,5 %. Temporadas que ganan las cuatro: 7,2 / 6,6 /
+11,0 % (antes 31-38 % en el arnés).
+
+`pnpm sim:season-batch -- --runs 500`, antes → después (Caracara / Cernícala / Peregrina): ≥ B 80 /
+75 / 85 → 73 / 72 / 85 %; temporadas completas 81 / 77 / 86 → 75 / 76 / 88 %; carreras objetivo
+ganadas 73 / 76 / 80 → 46 / 45 / 59 %; podio 92 / 91 / 93 → 76 / 74 / 83 %; temporadas que las ganan
+todas 33 / 37 / 40 → 10 / 7 / 13 %; `seasonScore` medio 3102 / 2931 / 3107 → 3070 / 2916 / 3114
+(bonos de carrera 149 / 149 / 159 → 107 / 104 / 130). Metas (pasa / gana entre las que la corren):
+Caracara 96 / 94 / 96 / 87 % y 32 / 36 / 57 / 61 %; Cernícala 95 / 93 / 95 / 92 % y 29 / 42 / 43 /
+71 %; Peregrina 94 / 100 / 95 / 98 % y 22 / 68 / 63 / 87 %.
+
+Políticas descuidadas (arnés, 1000 temporadas por Falconess; ≥ B en Caracara / Cernícala /
+Peregrina y, entre paréntesis, las carreras objetivo ganadas de las tres juntas):
+
+| Política                                                             | 60 / 8, escalera de antes   | 75 / 9, 7/6/5/3             |
+| -------------------------------------------------------------------- | --------------------------- | --------------------------- |
+| referencia                                                           | 78,8 / 74,3 / 84,3 % (75,0) | 73,4 / 72,4 / 83,0 % (48,3) |
+| al azar: los 5 entrenamientos, descanso y salida, uniforme; opción 0 | 30,8 / 15,2 / 36,7 % (55,3) | 22,8 / 12,2 / 32,0 % (28,0) |
+| solo agilidad: la de referencia, pero todo entrenamiento es agilidad | 18,5 / 19,0 / 50,0 % (78,8) | 4,3 / 6,5 / 7,5 % (60,0)    |
+
+Las dos quedan bajo el techo de 40 % de la propuesta 2 (a) de «Métrica 7» y a 40-77 puntos de la
+referencia. Solo agilidad gana más carreras objetivo que la referencia (60 % contra 48 %) y aun así
+casi nunca llega a B: completa el 15-65 % de las temporadas (pasa la T46 ≤ 3 en el 15-66 %) y termina
+con 2660-2690 de stats, bajo los 2900 del umbral.
+
+`pnpm sim -- --seed 42`: Caracara y Peregrina ganan sus cuatro carreras objetivo y Cernícala queda
+1.ª / 3.ª / 3.ª / 3.ª (antes, 12 victorias de 12); las tres terminan en B.
+
+Tests: `policy.test.ts` (la regla de aprender), `season-batch.test.ts` y `metrics.test.ts` (la línea
+y la tabla de puestos; las metas de Cernícala y Peregrina pasan a ≤ 3 en T46 y a 7 / 6 / 5 en las
+filas de S7). Ningún test fija `FIELD` de v1. La suite sin golden, `pnpm typecheck`, `pnpm lint` y
+`pnpm content:validate` pasan. Documentos: `docs/formulas.md` («Rivales de las carreras
+objetivo»), `docs/race-engine.md` (21.1 y fila 7 de 25.1), `docs/balance-batch.md` y
+`docs/commands.md`. Golden: los que generan campo (g04-g09, T24 y T46) cambian además de lo que ya
+cambió con la decisión 1; los regenera el líder (ADR-0004). Corridas de esta sección: 11 de `sim:batch` (`pr` antes y después en las
+dos bases, una `pr` de S7 para el informe nuevo, S7 `full` antes y después en las dos bases y el
+`full` completo después en las dos bases) y 3 de `sim:season-batch`; arnés: 8 variantes de la
+política, 15 de `FIELD` (más 2 con la otra base) y 14 corridas de políticas descuidadas.
+
+#### Consecuencias
+
+- La referencia gana ≈ la mitad de sus carreras objetivo (48-49 % en S7 `full`; 43-58 % según la
+  Falconess) y el 7-11 % de sus temporadas las gana todas. La métrica 7 pasa en `full` con la cota
+  baja ≥ 66,7 % en las dos bases; en `pr` puede salir inconclusa.
+- Ninguna meta pide ganar; la última pide podio. Cernícala sigue siendo la más floja en ≥ B (71-74 %
+  en `full`) y Peregrina gana 11-14 puntos más que las otras dos con la misma escalera.
+- El entrenamiento y la política no cambian, así que las stats de la temporada son las mismas: la
+  nota baja por los bonos de carrera (−31 a −44 puntos de media en S7 `full`) y las temporadas en C
+  (completas bajo 2900) pasan de 5,0-8,4 % a 4,8-12,4 %.
+- La razón 0,83-0,86 depende de la curva de referencia: un cambio de la economía de entrenamiento,
+  del crecimiento de las Falconess o de la política (por ejemplo, la propuesta 1) vuelve a medir con
+  el arnés antes de tocar `FIELD` o la escalera.
+
+#### Propuestas para el dueño (decisión 2)
+
+Estado: **propuesto**.
+
+1. **Economía de habilidades.** Con 5 puntos por sesión de simulador y activas genéricas de 60-150,
+   la referencia nunca aprende una (25-50 puntos por temporada), y juntar los de una cuesta ≈ 10
+   sesiones de simulador que hunden las carreras (tabla de la regla de ahorro: 43 % de victorias y
+   ≥ B 10-47 % por una activa). Los rivales llevan 1-3. Opciones: (a) contenido: activas genéricas
+   a 20-50 puntos, para que una temporada de la stat más baja pague 1-2; (b) BRIEF §8: más puntos por
+   sesión de simulador o por carrera objetivo; (c) `FIELD.rivalMaxSkills` 1 (o
+   `rivalTurnsPerSkill` 24), para que los rivales lleven lo que la jugadora puede pagar; (d) aceptar
+   que las habilidades son una inversión que la referencia no hace. Cualquiera de (a)-(c) vuelve a
+   medir la razón de `FIELD` con el arnés.
+2. **Peregrina gana más que las otras dos** (56-58 % de sus carreras objetivo contra 43-46 %; ≥ B
+   83-85 % contra 71-77 %). Viene de los bastidores y del pool de su clase (etoile y shiden, R9), no
+   de la temporada. Opciones: (a) contenido: una escalera más estricta para Peregrina, que iguala la
+   nota pero no las victorias; (b) balance de bastidores (otra pasada de la métrica 2); (c) dejarlo
+   así.
