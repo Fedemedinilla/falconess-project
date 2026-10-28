@@ -26,11 +26,20 @@ export function moodMult(mood: Mood): number {
   return MOOD_MULT[mood + 2] ?? 1000;
 }
 
-export const SEASON = {
+/**
+ * Training failure model (ADR-0006). "linear": failBase + floor(fatigue / failPerFatigue) ‰, the
+ * simulator never fails, a risk flight fails at riskFlightFail and injures at riskFlightInjury.
+ * "curve": 0 ‰ up to fatigue failCurveStart, then failCurveMax × ((f − start) / (100 − start))²
+ * (vigor 60 → 0 ‰, vigor 0 → 600 ‰); see docs/formulas.md.
+ */
+export type FailModel = "linear" | "curve";
+
+const SEASON_V1 = {
   turns: 48,
   statMin: 1,
   statMax: 1200,
   fatigueMax: 100,
+  /** Training at this fatigue or more rests instead. Above fatigueMax: never (v2). */
   forcedRestAt: 80,
   /**
    * Training gain base per facility level 1–5. Calibrated so the reference policy ends a season
@@ -52,16 +61,45 @@ export const SEASON = {
     "train:risk-flight": 30,
     "train:simulator": 10,
     workshop: 5,
+    /** A week spent injured. A chosen rest uses restRecovery. */
     rest: -40,
     outing: -10,
   } as const satisfies Record<TrainingKind | "workshop" | "rest" | "outing", number>,
   /** Per-mille failure chances. Simple training adds floor(fatigue / 4). */
+  failModel: "linear" as FailModel,
   failBase: 50,
   failPerFatigue: 4,
   riskFlightFail: 120,
   riskFlightInjury: 30,
+  /** Curve model only (FailModel). */
+  failCurveStart: 40,
+  failCurveMax: 600,
+  /** Curve model: the simulator fails at this ‰ of the curve. */
+  simulatorFailPm: 0,
+  /**
+   * Curve model: a failed training is an injury with injuryShareOfFail ‰ when it is a risk flight
+   * or the fatigue before it is at least injuryFromFatigue (vigor 20 or less in v2).
+   */
+  injuryFromFatigue: 101,
+  injuryShareOfFail: 250,
   injuryTurns: 2,
+  /** Share of the gain lost on a failed training (‰) and the mood it costs. */
+  failLossPm: 500,
+  failMoodLoss: 1,
+  /** Fatigue a chosen rest removes: one option = no draw; several = weighted pick (stream training). */
+  restRecovery: [40] as readonly number[],
+  restRecoveryWeights: [1] as readonly number[],
   restMoodUpChance: 500,
+  /**
+   * Mood drift on a training week: −1 mood with moodDriftBase + moodDriftPerStreak × max(0,
+   * streak − moodDriftFreeStreak) ‰, where streak counts consecutive training weeks including this
+   * one. Both 0 = no draw (v1).
+   */
+  moodDriftBase: 0,
+  moodDriftPerStreak: 0,
+  moodDriftFreeStreak: 2,
+  /** A goal race finished at this place or worse costs 1 mood. Above the field size: never (v1). */
+  raceLossMoodAt: 9,
   /** Bond gained with each crew present at a training; outing gives a flat bond. */
   bondPerTraining: 4,
   bondPerOuting: 5,
@@ -97,6 +135,15 @@ export const SEASON = {
   scorePodiumBonus: 20,
   scorePerSkill: 20,
 } as const;
+export type SeasonConstants = Omit<
+  Widen<typeof SEASON_V1>,
+  "failModel" | "gradeThresholds" | "gradeCapOnGoalFailure"
+> & {
+  readonly failModel: FailModel;
+  readonly gradeThresholds: ReadonlyArray<readonly [Grade, number]>;
+  readonly gradeCapOnGoalFailure: Grade;
+};
+export const SEASON: SeasonConstants = SEASON_V1;
 
 /** Which stat each training kind primarily trains (for crew presence and growth). */
 export const TRAINING_STAT: Readonly<Record<TrainingKind, StatName>> = {

@@ -194,6 +194,7 @@ export const SPEC_RULESET: Ruleset = Object.freeze({
     G: 700,
   }),
   moodMult: deepFreeze<Ruleset["moodMult"]>([950, 980, 1000, 1050, 1100]),
+  trainMoodMult: deepFreeze<Ruleset["trainMoodMult"]>([950, 980, 1000, 1050, 1100]),
   trainingStat: deepFreeze<Ruleset["trainingStat"]>({
     "train:agility": "agility",
     "train:stamina": "stamina",
