@@ -86,6 +86,8 @@ export function EventDialog() {
         icon="event"
         id="evento-dialogo"
         size="lg"
+        // the Enter that closed «Lo que pasó» must not hide the event unread behind its bar
+        focusTitle
       >
         <p className={s.meta}>
           <span className={s.source}>{source}</span>

@@ -140,15 +140,18 @@ test("the week's result first, then its event; Esc and a click outside close the
     if ((await week.getByText(t("ui.week.eventNext")).count()) > 0) break;
   }
 
-  // the week's result, with word of the event that waits behind it
+  // the week's result, with word of the event that waits behind it, next to «Continuar»
   await expect(week).toBeVisible();
-  await expect(week).toContainText(t("ui.week.eventNext"));
+  await expect(week.locator("footer #semana-evento-espera")).toContainText(t("ui.week.eventNext"));
   await expect(page.locator("#evento-dialogo[open]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(week).toHaveCount(0);
 
-  // then the event; its answer gets its own «Lo que pasó», with the event's text as context
+  // then the event, with the focus on its title: a second Enter does not hide it unread
   const event = page.locator("#evento-dialogo[open]");
+  await expect(event).toBeVisible();
+  await expect(event.locator("h2")).toBeFocused();
+  await page.keyboard.press("Enter");
   await expect(event).toBeVisible();
   const text = (await page.locator("#evento-texto").textContent()) ?? "";
   expect(text.length).toBeGreaterThan(0);

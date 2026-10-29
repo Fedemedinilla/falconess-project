@@ -41,6 +41,11 @@
   text-transform: uppercase;
 }
 
+/* a title that takes the focus on open (focusTitle) is not a control: no ring around it */
+.title[tabindex="-1"]:focus {
+  outline: none;
+}
+
 .body {
   display: flex;
   flex-direction: column;

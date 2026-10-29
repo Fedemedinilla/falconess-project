@@ -18,6 +18,11 @@ export type DialogProps = {
   size?: "md" | "lg";
   /** A stable id for the dialog element. */
   id?: string | undefined;
+  /**
+   * Focus the title when it opens instead of the first button (the close one): an Enter that
+   * closed the dialog before it must not close this one unread.
+   */
+  focusTitle?: boolean;
   children: ReactNode;
 };
 
@@ -33,9 +38,11 @@ export function Dialog({
   footer,
   size = "md",
   id,
+  focusTitle = false,
   children,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const headingId = useId();
 
   useEffect(() => {
@@ -44,8 +51,9 @@ export function Dialog({
     if (open && !dialog.open) {
       if (typeof dialog.showModal === "function") dialog.showModal();
       else dialog.setAttribute("open", "");
+      if (focusTitle) titleRef.current?.focus();
     } else if (!open && dialog.open) dialog.close();
-  }, [open]);
+  }, [open, focusTitle]);
 
   return (
     <dialog
@@ -56,7 +64,12 @@ export function Dialog({
       onClose={onClose}
     >
       <header className={s.head}>
-        <h2 className={s.title} id={headingId}>
+        <h2
+          className={s.title}
+          id={headingId}
+          ref={titleRef}
+          tabIndex={focusTitle ? -1 : undefined}
+        >
           {icon && <Icon name={icon} size="lg" />}
           {title}
         </h2>
