@@ -138,6 +138,24 @@ describe("v2 in the text season", () => {
     expect([...want.keys()], "events never rolled").toEqual([]);
   });
 
+  it("keeps the vigor line when a luck event's vigor cancels the training's", () => {
+    // weeks 13-23: the long sleep (vigor +20) after a stamina training (vigor −20) from full vigor
+    for (let i = 0; i < 600; i++) {
+      const s0 = { ...startSeason(V2, `luck-zero-${i}`, START), turn: 15 };
+      const s1 = advanceSeason(V2, s0, { kind: "train:stamina" });
+      if (s1.log.at(-1)?.event?.id !== "luck-long-sleep") continue;
+      expect(s1.fatigue).toBe(s0.fatigue);
+      const lines = turnSummary(V2, s1, s0);
+      const vigor = lines.find((l) => l.startsWith("  vigor "));
+      expect(vigor).toMatch(new RegExp(`^  vigor 0 → ${vigorBar(V2, s1.fatigue)}`));
+      expect(lines.find((l) => l.startsWith("  🎲 "))).toContain(
+        `${content.t("ui.turn.vigor")} +20`,
+      );
+      return;
+    }
+    throw new Error("no long sleep in 600 seeds");
+  });
+
   it("after an event choice prints the option and its outcome, not the question again", () => {
     for (let i = 0; i < 200; i++) {
       let s = startSeason(V2, `choice-${i}`, START);

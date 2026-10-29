@@ -545,6 +545,54 @@ describe("«Lo que pasó» on ruleset v2: mood with its causes, vigor, luck even
     expect(w.rows.find((r) => r.id === "vigor")?.cause).toBe(ui("ui.week.cause.training"));
   });
 
+  it("keeps the vigor row when a luck event's vigor cancels the training's", () => {
+    // a luck event at week 4 that gives exactly the vigor a stamina training costs (20)
+    const nap = {
+      id: "test-nap",
+      version: 1,
+      source: { kind: "random" },
+      weight: null,
+      fixedTurn: 4,
+      auto: true,
+      rulesets: ["v2"],
+      textKey: "test.nap",
+      options: [{ textKey: "test.nap.opt", effects: { fatigue: -20 } }],
+    };
+    const raw = loadRawContent();
+    const napCtx = {
+      ruleset: RULESET_V2,
+      content: buildContentIndex({
+        ...raw,
+        events: [...raw.events, nap],
+        text: { ...raw.text, "test.nap": "Una siesta larga.", "test.nap.opt": "Despierta nueva." },
+      }),
+    };
+    let s = startSeason(napCtx, "nap", {
+      kind: "start",
+      falconessId: "peregrina",
+      hangar: HANGAR,
+      parents: [],
+    });
+    while (s.turn < 4 || s.pendingEvent)
+      s = advanceSeason(
+        napCtx,
+        s,
+        s.pendingEvent ? { kind: "event:choose", option: 0 } : { kind: "rest" },
+      );
+    expect(s.fatigue).toBe(0);
+    const input = { kind: "train:stamina" } as const;
+    const after = advanceSeason(napCtx, s, input);
+    expect(after.fatigue).toBe(0);
+    const w = weekSummary(napCtx, { before: s, input, after });
+    expect(w.event).toMatchObject({ id: "test-nap", tone: "good" });
+    expect(w.rows.find((r) => r.id === "vigor")).toMatchObject({
+      value: formatSigned(0),
+      tone: "neutral",
+      to: "100",
+      cause: `${ui("ui.week.cause.training")}, ${ui("ui.week.cause.event")}`,
+    });
+  });
+
   it("weighs an event's effects: all help is good news, all hurt is bad, a mix is neither", () => {
     const fx = (over: object) => ({
       stats: {},

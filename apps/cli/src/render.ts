@@ -195,7 +195,8 @@ export function turnSummary(ctx: SimContext, s: SeasonState, prev: SeasonState):
     lines.push(
       `  ánimo ${signed(s.mood - prev.mood)} → ${moodLabel(ctx, s.mood)}${why("log.mood.")}`,
     );
-  if (s.fatigue !== prev.fatigue)
+  // a luck event's vigor can cancel the action's: the line still shows, at 0
+  if (s.fatigue !== prev.fatigue || (event?.auto && evVigor !== 0))
     lines.push(
       `  vigor ${signed(prev.fatigue - s.fatigue)} → ${vigorBar(ctx, s.fatigue)}${why("log.vigor.")}`,
     );

@@ -549,7 +549,10 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
 
   const rows: WeekRow[] = [];
   const fatigue = after.fatigue - before.fatigue;
-  if (fatigue !== 0)
+  // a luck event's vigor can cancel the action's (a training −20 and a long sleep +20): the row
+  // still shows, at 0, so the week does not read as if the training cost nothing
+  const eventVigor = auto !== undefined && resolved?.touches?.has("fatigue") === true;
+  if (fatigue !== 0 || eventVigor)
     rows.push({
       id: "vigor",
       icon: "vigor",
