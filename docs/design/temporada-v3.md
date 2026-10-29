@@ -15,21 +15,21 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 
 ## Resumen
 
-| #   | Tema                                     | Estado  | Recomendación en una línea                                                            |
-| --- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
-| T1  | Piezas de bastidor                       | Abierta | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
-| T2  | Cuadrillas como support cards            | Abierta | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
-| T3  | Carreras opcionales                      | Abierta | Calendario con carreras opcionales que dan puntos de habilidad                        |
-| T4  | Taller                                   | Abierta | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad               |
-| T5  | Fabricantes como escuelas                | Abierta | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
-| T6  | Tres cuadrillas por escuela              | Abierta | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
-| T7  | Falconess como apoyo                     | Futuro  | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
-| T8  | Bastidor firma como mejor opción         | Abierta | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
-| T9  | Gráfica e ilustración                    | Futuro  | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
-| T10 | Elección de cuadrillas (A, B o C)        | Abierta | Reemplazada por T2 + T5 + T6                                                          |
-| T11 | Qué se juega y qué entra al gacha        | Abierta | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
-| T12 | Monetización sin depender del ilustrador | Abierta | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
-| T13 | Acabados de alas generados por código    | Abierta | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
+| #   | Tema                                     | Estado        | Recomendación en una línea                                                            |
+| --- | ---------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| T1  | Piezas de bastidor                       | Abierta       | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
+| T2  | Cuadrillas como support cards            | Abierta       | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
+| T3  | Carreras opcionales                      | Abierta       | Calendario con carreras opcionales que dan puntos de habilidad                        |
+| T4  | Taller                                   | Abierta       | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad               |
+| T5  | Fabricantes como escuelas                | Abierta       | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
+| T6  | Tres cuadrillas por escuela              | Abierta       | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
+| T7  | Falconess como apoyo                     | Futuro        | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
+| T8  | Bastidor firma como mejor opción         | Abierta       | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
+| T9  | Gráfica e ilustración                    | Futuro        | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
+| T10 | Elección de cuadrillas (A, B o C)        | Abierta       | Reemplazada por T2 + T5 + T6                                                          |
+| T11 | Qué se juega y qué entra al gacha        | Abierta       | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
+| T12 | Monetización sin depender del ilustrador | Abierta       | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
+| T13 | Acabados de alas generados por código    | Idea aprobada | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
 
 ## T1 · Piezas de bastidor
 
