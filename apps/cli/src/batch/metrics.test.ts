@@ -1,5 +1,6 @@
 import { loadContent } from "@falconess/content";
 import type { BalanceMetric, BalanceScenario } from "@falconess/schema";
+import { RULESET_V1, RULESET_V2, type Ruleset } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { buildCatalog } from "./catalog.js";
 import type { JobResult, RaceRecord, SeasonRecord } from "./execute.js";
@@ -10,6 +11,7 @@ import {
   S3_PR_FAIL_Z,
   S3_PR_OUTSIDE_NOTE,
   s3CellsOf,
+  s7PolicyNote,
 } from "./metrics.js";
 import type { Job, Profile } from "./plan.js";
 import { meanInterval, pairedScoreInterval, pointsFromTimeGain, wilson } from "./stats.js";
@@ -30,6 +32,7 @@ function input(
   rows: readonly Row[],
   scenarios: BalanceScenario[],
   profile: Profile = "pr",
+  ruleset: Ruleset = RULESET_V1,
 ): MetricsInput {
   const jobs = rows.map((r, id): Job => ({ ...r.job, id, seed: `t/${id}` }));
   const results: JobResult[] = rows.map((r, id) => ({
@@ -38,7 +41,7 @@ function input(
     dnf: 0,
     ...r.extra,
   }));
-  return { profile, catalog, content, scenarios, jobs, results };
+  return { profile, ruleset, catalog, content, scenarios, jobs, results };
 }
 
 function metric(out: ReturnType<typeof computeMetrics>, id: string): BalanceMetric {
@@ -383,6 +386,22 @@ describe("S7 season grade", () => {
     goalRaces: [place12, place24].filter((p) => p !== null).length,
     raceEngine: "stub",
   });
+  it("names the ruleset's reference policy and B threshold in its note (ADR-0006 «Métrica 7»)", () => {
+    const rows: Row[] = [
+      { job: { scenario: "S7", falconess: "peregrina", k: 0 }, extra: { season: season("B", 2) } },
+    ];
+    const v1 = metric(computeMetrics(input(rows, ["S7"])), "m7-season").notes[0];
+    // v1 keeps its baseline words
+    expect(v1).toBe(
+      "S7: seasons through the season engine with the reference policy 'train the lowest stat' (repairing a frame below 50 % durability, learning the useful generic actives its skill points pay for) and the reference hangar (shiden, mule, nimbus, falke); metric = share of seasons with gradeFor ≥ B (score ≥ 2900 and no failed goal).",
+    );
+    const v2 = metric(computeMetrics(input(rows, ["S7"], "pr", RULESET_V2)), "m7-season").notes[0];
+    expect(v2).toBe(s7PolicyNote(RULESET_V2));
+    expect(v2).toContain("'careful'");
+    expect(v2).not.toContain("'train the lowest stat'");
+    expect(v2).toContain("score ≥ 3190 and no failed goal");
+  });
+
   it("is the share of seasons graded B or better, with Wilson, plus the goal table", () => {
     const grades: SeasonRecord["grade"][] = ["A", "B", "C", "S", "B"];
     const rows: Row[] = grades.map((g, k) => ({

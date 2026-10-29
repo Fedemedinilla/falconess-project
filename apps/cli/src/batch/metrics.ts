@@ -18,7 +18,9 @@ import {
   STYLES,
   type Style,
 } from "@falconess/schema";
+import type { Ruleset } from "@falconess/sim";
 import { goalFlagged, goalPassRate, placeCounts } from "../goal-rate.js";
+import { referencePolicyKind } from "../policy.js";
 import type { Catalog } from "./catalog.js";
 import type { JobResult } from "./execute.js";
 import { type Job, type Profile, S8_INTELLIGENCE } from "./plan.js";
@@ -40,6 +42,8 @@ import { cellVerdict, combineVerdicts } from "./verdict.js";
 
 export type MetricsInput = {
   profile: Profile;
+  /** The batch's ruleset: S7's note names its reference policy and its B threshold. */
+  ruleset: Ruleset;
   catalog: Catalog;
   content: ContentIndex;
   scenarios: readonly BalanceScenario[];
@@ -855,6 +859,19 @@ function quirkDiagnostic(
 
 const B_INDEX = GRADES.indexOf("B");
 
+/** What S7 plays: the reference policy of the batch's ruleset (ADR-0006 «Métrica 7»). */
+const S7_POLICY: Record<ReturnType<typeof referencePolicyKind>, string> = {
+  "lowest-stat": "'train the lowest stat'",
+  careful:
+    "'careful' (train the lowest stat; rest or go out as soon as that training's failure chance is above 0, go out with mood below +1)",
+};
+
+/** S7's first note, built from the ruleset: v1 keeps the words of its baseline report. */
+export function s7PolicyNote(ruleset: Ruleset): string {
+  const b = ruleset.season.gradeThresholds.find(([grade]) => grade === "B")?.[1];
+  return `S7: seasons through the season engine with the reference policy ${S7_POLICY[referencePolicyKind(ruleset)]} (repairing a frame below 50 % durability, learning the useful generic actives its skill points pay for) and the reference hangar (shiden, mule, nimbus, falke); metric = share of seasons with gradeFor ≥ B (score ≥ ${b} and no failed goal).`;
+}
+
 function s7Metric(input: MetricsInput): MetricsOutput {
   const groups = groupBy(pairs(input, "S7"), (p) => p.job.falconess);
   const cells: BalanceCell[] = [];
@@ -925,7 +942,7 @@ function s7Metric(input: MetricsInput): MetricsOutput {
     }
   }
   const notes = [
-    "S7: seasons through the season engine with the reference policy 'train the lowest stat' (repairing a frame below 50 % durability, learning the useful generic actives its skill points pay for) and the reference hangar (shiden, mule, nimbus, falke); metric = share of seasons with gradeFor ≥ B (score ≥ 2900 and no failed goal).",
+    s7PolicyNote(input.ruleset),
     "S7 DNF check: the season keeps only the player's result, so the batch's DNF count covers her goal races (a DNF is recorded with the course's maxTicks) but not the rivals in them.",
   ];
   if (engines.has("stub"))

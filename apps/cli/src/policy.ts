@@ -11,6 +11,7 @@ import {
   learnCap,
   lowestStat,
   RULESET_V1,
+  type Ruleset,
   resolveFrameBuild,
   type SimContext,
   trainingRisk,
@@ -190,7 +191,14 @@ export function carefulPolicy(
  * forced rest a reference player has to look after vigor and mood herself.
  */
 export function referencePolicy(ctx: SimContext, state: SeasonState): RunInput {
-  return ctx.ruleset.version === RULESET_V1.version
+  return referencePolicyKind(ctx.ruleset) === "lowest-stat"
     ? lowestStatPolicy(ctx, state)
     : carefulPolicy(ctx, state);
+}
+
+/** Which policy `referencePolicy` plays on a ruleset (the batch report names it, S7's note). */
+export type ReferencePolicyKind = "lowest-stat" | "careful";
+
+export function referencePolicyKind(ruleset: Ruleset): ReferencePolicyKind {
+  return ruleset.version === RULESET_V1.version ? "lowest-stat" : "careful";
 }

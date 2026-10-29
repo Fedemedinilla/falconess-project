@@ -26,6 +26,7 @@ function metricsInput(
 ): MetricsInput {
   return {
     profile: plan.config.profile,
+    ruleset: opts.ruleset,
     catalog,
     content: opts.content,
     scenarios: plan.config.scenarios,
