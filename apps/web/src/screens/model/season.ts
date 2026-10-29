@@ -11,7 +11,7 @@ import type {
   TurnLogEntry,
 } from "@falconess/schema";
 import { type SimContext, STAT_ORDER } from "@falconess/sim";
-import { ui } from "../../text/ui";
+import { gameText, ui } from "../../text/ui";
 
 export type GoalStatus = {
   readonly goal: SeasonGoal;
@@ -110,6 +110,32 @@ export function recentWeeks(state: SeasonState, count: number): WeekLog[] {
       race: state.raceResults.find((r) => r.turn === turn),
     };
   });
+}
+
+export type WeekOutcome = { readonly text: string; readonly tone: "good" | "bad" | "warn" };
+
+/**
+ * How the week's action went, in a few words, from the notes the sim logged. A failure says it
+ * lowered the mood only when the sim logged that it did (`log.mood.failure`): at the lowest mood it
+ * cannot.
+ */
+export function weekOutcome(notes: readonly string[]): WeekOutcome | undefined {
+  if (notes.includes("log.train.injury"))
+    return { text: gameText("log.train.injury"), tone: "bad" };
+  if (notes.includes("log.train.fail"))
+    return {
+      text: ui(
+        notes.includes("log.mood.failure")
+          ? "ui.turn.feedback.fail"
+          : "ui.turn.feedback.fail.sameMood",
+      ),
+      tone: "bad",
+    };
+  if (notes.includes("log.train.ok")) return { text: ui("ui.turn.feedback.ok"), tone: "good" };
+  if (notes.includes("log.rest.forced"))
+    return { text: ui("ui.turn.feedback.forced"), tone: "warn" };
+  if (notes.includes("log.injured")) return { text: gameText("log.injured"), tone: "warn" };
+  return undefined;
 }
 
 /**

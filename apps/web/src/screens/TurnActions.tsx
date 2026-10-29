@@ -19,6 +19,7 @@ import {
   type CrewBonus,
   driftPreview,
   isTraining,
+  MOOD_MAX,
   outingPreview,
   type RiskLevel,
   restPreview,
@@ -26,7 +27,7 @@ import {
   workshopVigor,
 } from "./model/actions";
 import { formatChance } from "./model/describe";
-import type { NextGoal, WeekLog } from "./model/season";
+import { type NextGoal, type WeekLog, weekOutcome } from "./model/season";
 import { vigorScale } from "./model/vigor";
 import { durabilityOf } from "./model/workshop";
 import s from "./TurnActions.module.css";
@@ -185,20 +186,6 @@ function ActionCard({
   );
 }
 
-type Tone = "good" | "bad" | "warn";
-
-/** How the week's action went, from the notes the sim logged. */
-function outcome(notes: readonly string[]): { text: string; tone: Tone } | undefined {
-  if (notes.includes("log.train.injury"))
-    return { text: gameText("log.train.injury"), tone: "bad" };
-  if (notes.includes("log.train.fail")) return { text: ui("ui.turn.feedback.fail"), tone: "bad" };
-  if (notes.includes("log.train.ok")) return { text: ui("ui.turn.feedback.ok"), tone: "good" };
-  if (notes.includes("log.rest.forced"))
-    return { text: ui("ui.turn.feedback.forced"), tone: "warn" };
-  if (notes.includes("log.injured")) return { text: gameText("log.injured"), tone: "warn" };
-  return undefined;
-}
-
 /**
  * "Semana 4: Entrenar resistencia — salió bien · RES +66 · COR +33", from the season log: a
  * one-line recap of what «Lo que pasó» said (its button opens that again).
@@ -213,7 +200,7 @@ function LastWeek({
   onReopen: (() => void) | undefined;
 }) {
   if (!week.input || week.input.kind === "start") return null;
-  const result = outcome(week.notes);
+  const result = weekOutcome(week.notes);
   const deltas = STAT_ORDER.filter((st) => (week.deltas[st] ?? 0) !== 0);
   return (
     <div className={s.feedback} id="turno-semana-pasada">
@@ -278,6 +265,8 @@ export function TurnActions({
   const rest = restPreview(ctx);
   const outing = outingPreview(ctx, state);
   const drift = driftPreview(ctx, state);
+  // at the top mood (+2) neither a rest nor an outing can raise it
+  const moodTop = state.mood >= MOOD_MAX;
   const S = ctx.ruleset.season;
   const scale = vigorScale(ctx.ruleset);
   const restValue =
@@ -287,6 +276,24 @@ export function TurnActions({
           min: formatSigned(rest.vigorMin),
           max: formatSigned(rest.vigorMax),
         });
+  // what a rest can give back (v2 draws one of several) and, while mood can rise, its chance
+  const restNote = [
+    rest.options.length > 1
+      ? ui("ui.action.rest.options", {
+          options: disjunction.format(
+            rest.options.map((o) =>
+              ui("ui.action.rest.option", {
+                vigor: formatSigned(o.vigor),
+                chance: formatChance(o.chancePm),
+              }),
+            ),
+          ),
+        })
+      : undefined,
+    moodTop ? undefined : ui("ui.action.rest.note", { chance: formatChance(rest.moodUpPm) }),
+  ]
+    .filter((x) => x !== undefined)
+    .join(" ");
   // the crew the player picked for an outing; until then, the equipped frame's
   const [crew, setCrew] = useState<string | undefined>();
   const crewChoice =
@@ -442,28 +449,17 @@ export function TurnActions({
               <Effect value={restValue} label={ui("ui.action.vigorShort")} icon="vigor" strong />
               {/* a chance, not a promise: v2 gives the point one rest in four */}
               <Effect
-                value="+1"
-                label={ui("ui.action.moodChance", { chance: formatChance(rest.moodUpPm) })}
+                value={moodTop ? formatSigned(0) : "+1"}
+                label={
+                  moodTop
+                    ? ui("ui.action.moodTop")
+                    : ui("ui.action.moodChance", { chance: formatChance(rest.moodUpPm) })
+                }
                 icon="mood"
               />
             </>
           }
-          detail={
-            <p className={s.note}>
-              {rest.options.length > 1 &&
-                `${ui("ui.action.rest.options", {
-                  options: disjunction.format(
-                    rest.options.map((o) =>
-                      ui("ui.action.rest.option", {
-                        vigor: formatSigned(o.vigor),
-                        chance: formatChance(o.chancePm),
-                      }),
-                    ),
-                  ),
-                })} `}
-              {ui("ui.action.rest.note", { chance: formatChance(rest.moodUpPm) })}
-            </p>
-          }
+          detail={restNote && <p className={s.note}>{restNote}</p>}
           footer={<span>{ui("ui.action.noFail")}</span>}
         />
       );
@@ -478,7 +474,7 @@ export function TurnActions({
             <>
               <Effect
                 value={formatSigned(outing.mood)}
-                label={ui("ui.action.moodShort")}
+                label={ui(moodTop ? "ui.action.moodTop" : "ui.action.moodShort")}
                 icon="mood"
                 strong
               />

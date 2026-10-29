@@ -132,6 +132,10 @@ export function trainingPreview(
   };
 }
 
+/** The mood's bounds: the sim keeps it within −2 … +2 (season/context.ts `changeMood`). */
+export const MOOD_MIN = -2;
+export const MOOD_MAX = 2;
+
 export type RestPreview = {
   /** What a chosen rest can give back, with its chance (one option: no draw, v1). */
   readonly options: readonly { readonly vigor: number; readonly chancePm: number }[];
@@ -162,6 +166,7 @@ export function restPreview(ctx: SimContext): RestPreview {
 
 export type OutingPreview = {
   readonly vigor: number;
+  /** The mood it gives: +1, or 0 when she is already at the top (the sim keeps mood at +2). */
   readonly mood: number;
   readonly bond: number;
   /** The crews an outing can go with: the hangar's manufacturers, the equipped frame's first. */
@@ -177,7 +182,7 @@ export function outingPreview(ctx: SimContext, state: SeasonState): OutingPrevie
   }
   return {
     vigor: -ctx.ruleset.season.fatigueCost.outing,
-    mood: 1,
+    mood: Math.min(1, MOOD_MAX - state.mood),
     bond: ctx.ruleset.season.bondPerOuting,
     crews,
   };
@@ -197,10 +202,6 @@ export function trainMoodPm(ctx: SimContext, state: SeasonState): number {
 export function raceMoodPm(ctx: SimContext, state: SeasonState): number {
   return moodMultiplier(ctx.ruleset, state.mood);
 }
-
-/** The mood's bounds: the sim keeps it within −2 … +2 (season/context.ts `changeMood`). */
-export const MOOD_MIN = -2;
-export const MOOD_MAX = 2;
 
 export type DriftPreview = {
   /** Training weeks in a row at the end of the log. */

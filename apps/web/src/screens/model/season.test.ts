@@ -10,6 +10,7 @@ import {
   nextGoal,
   recentWeeks,
   turnDeltas,
+  weekOutcome,
 } from "./season";
 
 const ctx = { ruleset: RULESET_V1, content: getContent() };
@@ -112,5 +113,24 @@ describe("season views", () => {
     expect(weeks[0]?.notes).toContain("log.race");
     expect(isEventNote("ev.sandstorm-week")).toBe(true);
     expect(isEventNote("log.rest")).toBe(false);
+  });
+});
+
+describe("the last week's recap", () => {
+  it("says a failure lowered the mood only when the sim logged that it did", () => {
+    const content = getContent();
+    expect(weekOutcome(["log.train.fail", "log.mood.failure"])).toEqual({
+      text: content.t("ui.turn.feedback.fail"),
+      tone: "bad",
+    });
+    // at the lowest mood (−2) the failure cannot lower it: the sim logs no mood note
+    const same = weekOutcome(["log.train.fail"]);
+    expect(same).toEqual({ text: content.t("ui.turn.feedback.fail.sameMood"), tone: "bad" });
+    expect(same?.text).not.toMatch(/ánimo/);
+    expect(weekOutcome(["log.train.ok"])?.tone).toBe("good");
+    expect(weekOutcome(["log.train.injury", "log.train.fail"])?.text).toBe(
+      content.t("log.train.injury"),
+    );
+    expect(weekOutcome(["log.outing"])).toBeUndefined();
   });
 });

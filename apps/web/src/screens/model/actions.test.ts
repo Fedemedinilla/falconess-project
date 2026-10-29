@@ -302,6 +302,16 @@ describe("action previews", () => {
     expect(outingPreview(v2, start(v2, "o", "peregrina")).vigor).toBe(20);
   });
 
+  it("gives no mood point when she is already at the top, as the sim keeps it at +2", () => {
+    for (const ctx of [v1, v2]) {
+      const s = { ...start(ctx, "top", "peregrina"), fatigue: 50 };
+      expect(outingPreview(ctx, { ...s, mood: 1 }).mood).toBe(1);
+      const top = { ...s, mood: 2 as const };
+      expect(outingPreview(ctx, top).mood).toBe(0);
+      expect(advanceSeason(ctx, top, { kind: "outing" }).mood).toBe(2);
+    }
+  });
+
   it("weighs mood twice in v2 (training ×0,80 … ×1,20, race ×0,96 … ×1,04), the same table in v1", () => {
     const s = start(v2, "mood", "peregrina");
     expect(trainMoodPm(v2, { ...s, mood: 1 })).toBe(1100);
