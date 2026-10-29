@@ -29,6 +29,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T10 | Elección de cuadrillas (A, B o C)        | Abierta | Reemplazada por T2 + T5 + T6                                                          |
 | T11 | Qué se juega y qué entra al gacha        | Abierta | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
 | T12 | Monetización sin depender del ilustrador | Abierta | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
+| T13 | Acabados de alas generados por código    | Abierta | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
 
 ## T1 · Piezas de bastidor
 
@@ -239,3 +240,35 @@ ilustradores puedan trabajar con el mismo estilo; contratos de obra por encargo 
 derechos; el arte a mano se reserva para personajes (lo que más valora este público) y todo lo
 demás sale de sistemas paramétricos. El arte generado con IA exige declararlo en Steam y genera
 rechazo en parte del público; no conviene basar el plan en él.
+
+## T13 · Acabados de alas generados por código
+
+**Propuesta del dueño:** crear por código 100 o más variantes de bastidor, como los Sparkling de
+Aniimo: cambian colores, efectos, sonidos y detalles, no las stats. Que no parezcan «payasos» (el
+botín de WoW que no combina), que respeten el sistema visual del juego y que por ser tantas cada
+jugador sienta la suya como única.
+
+**Cómo hacerlo realista:** separar el **modelo** del bastidor (Falke, Shiden…: forma y stats,
+escaso, hecho a mano o modelado) del **acabado** (cosmético, generado). Un acabado es una semilla
+que elige capas de bibliotecas curadas, nunca valores al azar sueltos:
+
+| Capa                 | Biblioteca (ejemplo)                                    |
+| -------------------- | ------------------------------------------------------- |
+| Paleta               | 8 por escuela, armadas a mano, con su color de escuela  |
+| Patrón               | franjas, bloques, degradé, número de dorsal, calcomanía |
+| Acabado del material | mate, metalizado, perlado, carbono                      |
+| Estela en carrera    | color y forma de partículas                             |
+| Sonido               | timbre del motor por síntesis (tono, filtro, pulso)     |
+
+Reglas que evitan el «payaso»: como máximo tres colores con proporción 60/30/10, el color de la
+escuela siempre presente, contraste mínimo entre capas, patrones con densidad acotada y
+combinaciones prohibidas listadas. Con 8 paletas, 6 patrones, 4 materiales, 5 estelas y 3 sonidos
+salen 2880 acabados por modelo; se publican los que pasan las reglas y una revisión visual.
+
+**Unicidad, en números:** con 100 acabados equiprobables, la chance de que una de las 7 rivales de
+una carrera lleve el mismo que vos es 6,8 %; con 300, 2,3 %; con 1000, 0,7 %. Los acabados raros
+(como Dazzling y Shadow de Aniimo, 0,5 % cada uno al usar un Sigil) bajan más esa chance.
+
+**Reglas del proyecto que respeta:** el acabado es una semilla más (reproducible, como todo el
+juego); vive en el estado y en el `Build`, nunca en `packages/sim` (invariante 3: nada comprable
+cambia la carrera); no requiere ilustrador más allá de las bibliotecas iniciales.
