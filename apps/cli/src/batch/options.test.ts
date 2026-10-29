@@ -15,6 +15,13 @@ describe("sim:batch command line", () => {
     expect(o.workers).toBeGreaterThanOrEqual(1);
     expect(o.workers).toBeLessThanOrEqual(4);
     expect(o.failOnVerdict).toBe(false);
+    expect(o.rulesetVersion).toBe("v1");
+  });
+
+  it("takes --ruleset for S7's seasons and rejects an unknown one (ADR-0006)", () => {
+    expect(parseBatchArgs(["--ruleset", "v2"]).rulesetVersion).toBe("v2");
+    expect(() => parseBatchArgs(["--ruleset", "v9"])).toThrow(UsageError);
+    expect(() => parseBatchArgs(["--ruleset"])).toThrow(/needs a value/);
   });
 
   it("parses every option, with pnpm's -- separator and the default alias", () => {

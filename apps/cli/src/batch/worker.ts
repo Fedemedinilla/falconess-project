@@ -5,7 +5,7 @@
  */
 import { parentPort, workerData } from "node:worker_threads";
 import { loadContent } from "@falconess/content";
-import { RULESET_V1 } from "@falconess/sim";
+import { getRuleset } from "@falconess/sim";
 import { buildCatalog } from "./catalog.js";
 import { createExecContext, runJob } from "./execute.js";
 import type { FakeEngineOptions } from "./fake-engine.js";
@@ -35,6 +35,15 @@ function engineOf(data: unknown): EngineChoice {
   throw new Error("sim:batch worker: bad workerData");
 }
 
+/** The batch's ruleset (`--ruleset`), passed by the pool. */
+function rulesetVersionOf(data: unknown): string {
+  if (typeof data === "object" && data !== null && "rulesetVersion" in data) {
+    const v: unknown = data.rulesetVersion;
+    if (typeof v === "string") return v;
+  }
+  throw new Error("sim:batch worker: bad workerData");
+}
+
 function isToWorker(m: unknown): m is ToWorker {
   return typeof m === "object" && m !== null && "type" in m;
 }
@@ -47,7 +56,7 @@ try {
   const content = loadContent();
   const ctx = createExecContext(
     createPort(engineOf(workerData)),
-    RULESET_V1,
+    getRuleset(rulesetVersionOf(workerData)),
     content,
     buildCatalog(content),
   );

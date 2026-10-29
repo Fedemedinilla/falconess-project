@@ -67,7 +67,7 @@ export type FromWorker =
   | { type: "timing"; timing: Timing }
   | { type: "error"; message: string };
 
-export type WorkerData = { engine: EngineChoice };
+export type WorkerData = { engine: EngineChoice; rulesetVersion: string };
 
 const BOOT = new URL("./worker-boot.mjs", import.meta.url);
 
@@ -76,7 +76,7 @@ function isFromWorker(m: unknown): m is FromWorker {
 }
 
 export function createWorkerPoolExecutor(opts: ExecutorOptions): Executor {
-  const data: WorkerData = { engine: opts.engine };
+  const data: WorkerData = { engine: opts.engine, rulesetVersion: opts.ruleset.version };
   const workers = Array.from(
     { length: Math.max(1, opts.workers) },
     () => new Worker(BOOT, { workerData: data }),

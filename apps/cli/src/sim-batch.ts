@@ -2,7 +2,7 @@
  * `pnpm sim:batch -- --runs 10000 [--profile pr|full] [--scenarios S1,S3] [--seed base]
  *   [--report out/balance.json] [--baseline out/baseline.json [--baseline-from TEXT]]
  *   [--markdown out/balance.md] [--workers N] [--fail-on-verdict [--gate-report PATH]]
- *   [--max-wall-ms MS]`
+ *   [--max-wall-ms MS] [--ruleset v1|v2]`
  *
  * The balance batch of BRIEF §12 with the scenarios, run budget and verdicts of
  * docs/race-engine.md §25.2 (ADR-0003 D40, D47, D48, D49). The race engine sits behind the port
@@ -12,7 +12,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { loadContent } from "@falconess/content";
 import type { BalanceReport } from "@falconess/schema";
-import { RULESET_V1 } from "@falconess/sim";
+import { getRuleset } from "@falconess/sim";
 import { type BaselineDiff, diffReports, renderDiffMarkdown } from "./batch/baseline.js";
 import { exitDecision, parseReportText, type ReportRead } from "./batch/gate.js";
 import { parseBatchArgs, USAGE, UsageError } from "./batch/options.js";
@@ -64,7 +64,7 @@ async function main(argv: readonly string[]): Promise<number> {
       workers: opts.workers,
       engine: opts.engine,
       engineId,
-      ruleset: RULESET_V1,
+      ruleset: getRuleset(opts.rulesetVersion),
       content: loadContent(),
     });
   } catch (e) {
