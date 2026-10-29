@@ -2,7 +2,16 @@ import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { stubFonts, t, watchErrors } from "./fixtures";
-import { closeWeek, decide, policyChoice, RUN_KEY, readTurn, startSeason } from "./play";
+import {
+  closeWeek,
+  decide,
+  policyChoice,
+  RUN_KEY,
+  RUN1_WEEK19,
+  readTurn,
+  startSeason,
+  takeWeek,
+} from "./play";
 
 /**
  * Screenshots for review (`pnpm --filter @falconess/web test:e2e:shots`), never committed:
@@ -21,11 +30,18 @@ const SEED = "pt-e2e-1";
 
 const VIEWPORTS = [
   { width: 1280, height: 800, scale: 1 },
-  { width: 400, height: 860, scale: 2 },
+  { width: 390, height: 844, scale: 2 },
 ] as const;
 const SCHEMES = ["light", "dark"] as const;
 
-type Runs = { crew: string; event: string; afterT12: string; ended: string };
+type Runs = {
+  crew: string;
+  event: string;
+  afterT12: string;
+  ended: string;
+  /** Vigor in the red: four trainings in a row (v2). */
+  spent: string;
+};
 
 async function savedRun(page: Page): Promise<string> {
   const text = await page.evaluate((key) => localStorage.getItem(key), RUN_KEY);
@@ -57,10 +73,16 @@ async function findRuns(browser: Browser): Promise<Runs> {
     await decide(page, policyChoice(view), view.inputs);
   }
   found.ended = await savedRun(page);
+  // agility, a risk flight, agility, agility: vigor 10, every training's card in red
+  await startSeason(page, "peregrina", "pt-e2e-vigor-2");
+  for (const kind of ["agility", "risk-flight", "agility", "agility"])
+    await takeWeek(page, `#accion-train-${kind}`);
+  found.spent = await savedRun(page);
   await context.close();
-  const { crew, event, afterT12, ended } = found;
-  if (!crew || !event || !afterT12 || !ended) throw new Error("the season lacks a moment to shoot");
-  return { crew, event, afterT12, ended };
+  const { crew, event, afterT12, ended, spent } = found;
+  if (!crew || !event || !afterT12 || !ended || !spent)
+    throw new Error("the season lacks a moment to shoot");
+  return { crew, event, afterT12, ended, spent };
 }
 
 let runs: Runs | undefined;
@@ -201,6 +223,23 @@ for (const vp of VIEWPORTS)
       page = await open(all.ended);
       await expect(page).toHaveURL(/#fin$/);
       await shot(page, 9, "season-end");
+      await page.context().close();
+
+      // 10 · vigor in the red (v2): the bar, its band and every training's card
+      page = await open(all.spent);
+      await closeWeek(page);
+      const view = await readTurn(page);
+      if (view.eventOpen) {
+        await decide(page, "#evento-opcion-0", view.inputs);
+        await closeWeek(page);
+      }
+      await shot(page, 10, "turn-vigor-spent");
+      await page.context().close();
+
+      // 11 · a v1 run (the owner's, at week 19): no bands, its forced rest
+      page = await open(JSON.stringify(RUN1_WEEK19));
+      await closeWeek(page);
+      await shot(page, 11, "turn-v1-forced-rest");
       await page.context().close();
 
       expect(watched.flat(), "console errors or uncaught exceptions").toEqual([]);
