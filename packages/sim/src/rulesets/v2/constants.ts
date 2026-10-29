@@ -30,7 +30,8 @@ export const SEASON: SeasonConstants = {
   forcedRestAt: SEASON_V1.fatigueMax + 1,
   fatigueCost: {
     ...SEASON_V1.fatigueCost,
-    "train:simulator": 5,
+    /** The simulator restores vigor (study §9: vigor +5). */
+    "train:simulator": -5,
     /** A week spent injured recovers the mean of a chosen rest. */
     rest: -50,
     outing: -20,
