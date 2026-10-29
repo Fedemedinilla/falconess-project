@@ -363,6 +363,12 @@ function collectV2(): FoundV2 {
       const step = { before: state, input, after };
       const notes = newNotes(state, after);
       const moved = after.mood !== state.mood;
+      // a luck event the same week (v2 content) moves mood and vigor too: keep those steps out
+      const luck = after.log.some((e, i) => e.event?.auto === true && !state.log[i]?.event);
+      if (luck) {
+        state = after;
+        continue;
+      }
       if (notes.includes("log.mood.drift") && !notes.includes("log.mood.failure"))
         found.drift ??= step;
       if (notes.includes("log.mood.race-loss")) {

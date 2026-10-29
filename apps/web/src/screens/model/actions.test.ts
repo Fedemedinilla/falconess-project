@@ -35,6 +35,14 @@ function start(ctx: { ruleset: Ruleset }, seed: string, falconessId: string): Se
   });
 }
 
+/**
+ * Whether the step applied a luck event by itself (v2 content): its effects land on the same log
+ * entry as the action's, so the action's own numbers cannot be read off that entry.
+ */
+function luck(before: SeasonState, after: SeasonState): boolean {
+  return after.log.some((e, i) => e.event?.auto === true && !before.log[i]?.event);
+}
+
 /** The log entry of the action taken on `turn`. */
 function entryOf(state: SeasonState, turn: number, kind: string) {
   const entry = state.log.find((e) => e.turn === turn && e.input?.kind === kind);
@@ -61,13 +69,19 @@ describe("action previews", () => {
             if (actionBlock(ctx, s, kind) !== undefined || (t % 7 === 6 && s.fatigue >= 70)) {
               const next = advanceSeason(ctx, s, { kind: "rest" });
               const range = previewVigor(ctx, s, actionPreview(ctx, s, "rest"));
-              expect(vigorOf(ctx, next)).toBeGreaterThanOrEqual(range?.min ?? -1);
-              expect(vigorOf(ctx, next)).toBeLessThanOrEqual(range?.max ?? -1);
+              if (!luck(s, next)) {
+                expect(vigorOf(ctx, next)).toBeGreaterThanOrEqual(range?.min ?? -1);
+                expect(vigorOf(ctx, next)).toBeLessThanOrEqual(range?.max ?? -1);
+              }
               s = next;
               continue;
             }
             const preview = trainingPreview(ctx, s, kind);
             const next = advanceSeason(ctx, s, { kind });
+            if (luck(s, next)) {
+              s = next;
+              continue;
+            }
             const entry = entryOf(next, s.turn, kind);
             if (entry.notes.includes("log.train.ok")) {
               successes += 1;
@@ -176,7 +190,7 @@ describe("action previews", () => {
         expect(preview.injuryPm).toBeGreaterThan(0);
         const next = advanceSeason(ctx, s, { kind: "train:risk-flight" });
         const entry = entryOf(next, s.turn, "train:risk-flight");
-        if (!entry.notes.includes("log.train.injury")) continue;
+        if (!entry.notes.includes("log.train.injury") || luck(s, next)) continue;
         for (const g of preview.gains)
           expect(entry.deltas[g.stat]).toBe(
             -Math.max(1, Math.floor((g.gain * S.failLossPm) / 1000)),
@@ -188,6 +202,7 @@ describe("action previews", () => {
         for (const kind of ACTION_KINDS) expect(actionBlock(ctx, after, kind)).toBe("injured");
         // the injured week rests whatever the input, with the injured week's recovery
         const rested = advanceSeason(ctx, after, { kind: "train:agility" });
+        if (luck(after, rested)) continue;
         const notes = rested.log.filter((e) => e.turn === after.turn).flatMap((e) => e.notes);
         expect(notes).toContain("log.injured");
         const range = previewVigor(ctx, after, actionPreview(ctx, after, "train:agility"));

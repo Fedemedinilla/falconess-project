@@ -103,9 +103,12 @@ test("a failed training says so in red, with the mood it cost and why; the focus
     .getByRole("list", { name: t("ui.week.changes") })
     .getByText(t("ui.week.cause.fail"));
   if ((await mood.count()) > 0) await expect(mood).toBeVisible();
+  // the focus goes back to the training, unless an event of that week opens next
+  const eventNext = (await failed.getByText(t("ui.week.eventNext")).count()) > 0;
   await page.click("#semana-continuar");
   await expect(failed).toBeHidden();
-  await expect(page.locator("#accion-train-agility")).toBeFocused();
+  if (eventNext) await expect(page.locator("#evento-dialogo[open]")).toBeVisible();
+  else await expect(page.locator("#accion-train-agility")).toBeFocused();
 });
 
 test("the week's result first, then its event; Esc and a click outside close them", async ({
