@@ -1,7 +1,8 @@
 /*
  * «Lo que pasó»: a modal in the middle of the screen, one headline in the week's tone (good, bad,
- * warn, neutral) on a tinted band, the changes in two compact lists, the buttons at the foot. A
- * normal week fits a 390 × 700 phone without scrolling inside it.
+ * warn, neutral) on a tinted band, the changes in two compact lists, the buttons at the foot (with
+ * word of a waiting event above them). Every week fits a 390 × 700 phone without scrolling inside
+ * it, a goal race with its tip too: on a short screen the tip keeps its headlines only.
  */
 .dialog {
   --tone: var(--accent);
@@ -225,9 +226,9 @@
   font-weight: 600;
 }
 
-.next {
-  padding-top: var(--space-2);
-  border-top: 1px dashed var(--line);
+/* a waiting event, in the footer above the buttons, on a line of its own */
+.foot > .next {
+  flex: 1 0 100%;
   color: var(--ink-2);
   font-size: var(--fs-sm);
 }
@@ -371,5 +372,68 @@
 
   .foot > * {
     flex: 1;
+  }
+}
+
+/*
+ * A short screen (a 390 × 700 phone, a 768-pixel laptop): tighter spacing, and the tip after a
+ * goal race keeps what to train; its numbers and its «Breve | Completo» stay in «Ver carrera»,
+ * whose «Por qué» shows the same tip whole.
+ */
+@media (max-height: 760px) {
+  .dialog {
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .head {
+    gap: 2px;
+    padding-block: var(--space-2);
+  }
+
+  .body {
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+  }
+
+  .foot {
+    padding-block: var(--space-2);
+  }
+
+  .title {
+    font-size: var(--fs-lg);
+  }
+
+  .stats {
+    gap: var(--space-1);
+  }
+
+  .stats li {
+    padding: 2px var(--space-2);
+  }
+
+  .statValue {
+    font-size: var(--fs-lg);
+  }
+
+  .rows {
+    gap: 2px;
+  }
+
+  .row {
+    padding-bottom: 2px;
+    font-size: var(--fs-sm);
+  }
+
+  .rowValue {
+    font-size: var(--fs-md);
+  }
+
+  .body .advice {
+    padding-block: var(--space-2);
+  }
+
+  .advice [data-part="why"],
+  .advice fieldset {
+    display: none;
   }
 }

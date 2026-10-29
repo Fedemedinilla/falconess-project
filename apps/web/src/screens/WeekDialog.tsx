@@ -276,15 +276,16 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
                 className={s.advice}
               />
             )}
+          </div>
+
+          <footer className={s.foot}>
             {summary.eventNext && (
-              <p className={cx(s.line, s.next)}>
+              // in the footer, next to «Continuar»: it never scrolls out of sight
+              <p className={cx(s.line, s.next)} id="semana-evento-espera">
                 <Icon name="event" />
                 {ui("ui.week.eventNext")}
               </p>
             )}
-          </div>
-
-          <footer className={s.foot}>
             {race && (
               <Button
                 id="semana-ver-carrera"

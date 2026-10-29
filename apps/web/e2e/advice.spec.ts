@@ -160,3 +160,41 @@ test("a goal race that ends the season: «Lo que pasó» over SeasonEnd, then wh
   await expect(note.locator("li").first()).toHaveAttribute("data-reason", "cruise");
   await expect(note).toContainText(t("ui.advice.lead.cruise", { name: "Peregrina" }));
 });
+
+test("on a 390 × 700 phone the race week with its tips fits: the tips keep what to train", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.goto("#inicio");
+  await page.click("#inicio-cargar");
+  await page.fill("#cargar-json", JSON.stringify(RESTING));
+  await page.click("#cargar-enviar");
+  const week = page.locator("#semana-dialogo[open]");
+  await expect(week).toBeVisible();
+  // two tips, each with its lead and the stat to train; their numbers and switch wait in the replay
+  const note = week.locator("#semana-consejo");
+  await expect(note.locator("li")).toHaveCount(2);
+  await expect(note.locator("li").first()).toContainText(
+    t("ui.advice.lead.cruise", { name: "Peregrina" }),
+  );
+  await expect(note.locator('[data-part="why"]').first()).toBeHidden();
+  await expect(page.locator("#semana-consejo-explicacion-breve")).toBeHidden();
+  await expect(page.locator("#semana-ver-carrera")).toBeVisible();
+  // no scrolling inside, nothing outside the viewport
+  const fit = await week.evaluate((d) => {
+    const body = d.querySelector("#semana-cambios");
+    const box = d.getBoundingClientRect();
+    return {
+      overflow: body ? body.scrollHeight - body.clientHeight : -1,
+      top: box.top,
+      bottom: box.bottom,
+      height: window.innerHeight,
+    };
+  });
+  expect(fit.overflow).toBe(0);
+  expect(fit.top).toBeGreaterThanOrEqual(0);
+  expect(fit.bottom).toBeLessThanOrEqual(fit.height);
+  // on a taller screen the same tips show their numbers again
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(note.locator('[data-part="why"]').first()).toBeVisible();
+});

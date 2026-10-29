@@ -69,7 +69,9 @@ export function AdviceNote({ log, lane, labels, id, detail, className }: AdviceN
                   </span>
                   {w.after}
                 </p>
-                <p className={s.why}>{w.why}</p>
+                <p className={s.why} data-part="why">
+                  {w.why}
+                </p>
               </li>
             );
           })}
