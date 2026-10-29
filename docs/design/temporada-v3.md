@@ -15,21 +15,21 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 
 ## Resumen
 
-| #   | Tema                                     | Estado        | Recomendación en una línea                                                            |
-| --- | ---------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| T1  | Piezas de bastidor                       | Abierta       | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
-| T2  | Cuadrillas como support cards            | Abierta       | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
-| T3  | Carreras opcionales                      | Abierta       | Calendario con carreras opcionales que dan puntos de habilidad                        |
-| T4  | Taller                                   | Abierta       | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad               |
-| T5  | Fabricantes como escuelas                | Abierta       | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
-| T6  | Tres cuadrillas por escuela              | Abierta       | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
-| T7  | Falconess como apoyo                     | Futuro        | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
-| T8  | Bastidor firma como mejor opción         | Abierta       | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
-| T9  | Gráfica e ilustración                    | Futuro        | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
-| T10 | Elección de cuadrillas (A, B o C)        | Abierta       | Reemplazada por T2 + T5 + T6                                                          |
-| T11 | Qué se juega y qué entra al gacha        | Abierta       | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
-| T12 | Monetización sin depender del ilustrador | Abierta       | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
-| T13 | Acabados de alas generados por código    | Idea aprobada | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
+| #   | Tema                                     | Estado                       | Recomendación en una línea                                                            |
+| --- | ---------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
+| T1  | Piezas de bastidor                       | Abierta                      | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
+| T2  | Cuadrillas como support cards            | Abierta                      | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
+| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas de otros biomas, que no le quedan perfectas; dan puntos de habilidad    |
+| T4  | Taller                                   | Decidida (detalles abiertos) | Botón del menú de la semana que no cuenta como semana; alas, reparar, habilidades     |
+| T5  | Fabricantes como escuelas                | Abierta                      | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
+| T6  | Tres cuadrillas por escuela              | Abierta                      | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
+| T7  | Falconess como apoyo                     | Futuro                       | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
+| T8  | Bastidor firma como mejor opción         | Abierta                      | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
+| T9  | Gráfica e ilustración                    | Futuro                       | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
+| T10 | Elección de cuadrillas (A, B o C)        | Abierta                      | Reemplazada por T2 + T5 + T6                                                          |
+| T11 | Qué se juega y qué entra al gacha        | Abierta                      | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
+| T12 | Monetización sin depender del ilustrador | Abierta                      | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
+| T13 | Acabados de alas generados por código    | Idea aprobada                | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
 
 ## T1 · Piezas de bastidor
 
@@ -69,29 +69,121 @@ Esto cambia la regla del BRIEF «el hangar reemplaza a las support cards»: va c
 **Propuesta del dueño:** como en Umamusume, que el jugador decida entre correr y entrenar: correr
 da más puntos de habilidad; entrenar da lo normal, pero fijo.
 
-**Hoy:** 4 carreras objetivo fijas por Falconess y nada en el medio. Los puntos de habilidad salen
-casi solo del simulador (+5 por sesión).
+**Decidido por el dueño (2026-10-29):** las carreras opcionales se corren en **pistas nuevas** que
+**no son perfectas** para la Falconess que se entrena: otros biomas y segmentos donde su escuela
+flojea. Responde la pregunta abierta: el calendario no repite las 3 pistas del desierto.
 
-**Recomendación:** algunas semanas (2 o 3 por mes, nunca la de una carrera objetivo ni la anterior)
-ofrecen una carrera opcional. Cuesta la semana y unos 15 de vigor; paga puntos de habilidad según
-el puesto (≈ 30 al ganar, ≈ 5 al 8.º), chatarra y ánimo +1 al ganar (6.º o peor ya resta en v2). La
-tercera carrera seguida cuesta más vigor o puede bajar el ánimo. El simulador da menos puntos.
-Fama como recurso (requisito de las carreras objetivo) y táctica en la pre-carrera quedan para
-después. Antes de implementar: estudio con temporadas simuladas para que correr mucho y entrenar
-mucho sean viables y ninguna estrategia gane siempre.
+**Hoy:** 4 carreras objetivo fijas por Falconess, todas en el desierto (las 3 pistas que existen), y
+nada en el medio. Los puntos de habilidad salen casi solo del simulador (+5 por sesión).
 
-**Pregunta abierta:** ¿el calendario repite las 3 pistas actuales con distancias distintas o
-necesita pistas nuevas?
+**Mecánica propuesta (números iniciales, a medir):**
+
+- **Cadencia:** 2 o 3 semanas por mes ofrecen carreras opcionales; nunca la semana de una carrera
+  objetivo ni la anterior. Cada una de esas semanas muestra **3 carreras** para elegir, o ninguna
+  si el jugador prefiere entrenar. Una temporada ronda 20-24 semanas con oferta.
+- **Costo:** la semana entera y **Vigor −15**. No hay fallo de entrenamiento; sí hay desgaste de las
+  alas, como en cualquier carrera (se repara en el taller, T4).
+- **Premio:** puntos de habilidad según el puesto, como fracción del tope de la carrera: 1.º 100 %,
+  2.º 80 %, 3.º 65 %, 4.º 50 %, 5.º 40 %, 6.º 30 %, 7.º 25 %, 8.º 15 %. El tope depende de la
+  dificultad: ★ +25, ★★ +30, ★★★ +40. Más la chatarra de hoy por puesto (60 al ganar … 10) y ánimo
+  +1 al ganar (6.º o peor ya resta en v2). El jugador solo ve «rivales ★★» y «hasta +30 puntos».
+- **Carreras seguidas:** la 2.ª seguida no cambia nada; la **3.ª seguida** (contando las objetivo)
+  cuesta Vigor −25 y baja el ánimo un nivel con 50 % de chance; la 4.ª, el ánimo seguro. La
+  pantalla avisa antes de confirmar: «Sería la 3.ª carrera seguida».
+- **Simulador:** queda en +5 puntos; las carreras pasan a ser la fuente principal. Meta: 2-3
+  activas por temporada para quien corre con criterio, 1 para quien nunca corre.
+- **Fama** como requisito de las carreras objetivo y táctica en la pre-carrera: después.
+
+**Cómo elige pistas el calendario (que no le queden perfectas):** el calendario se arma al
+empezar la temporada, con la semilla (stream propio, por ejemplo `calendar`), mirando las letras de
+bioma de la Falconess y la doctrina de su escuela (casa y débil, BRIEF §7):
+
+- como máximo **una opcional por mes en su mejor bioma** (Peregrina: desierto A; Cernícala:
+  ciudad A; Caracara: montaña A) o en una pista que premia a su escuela (Kōryū: muchas bajadas);
+- en cada semana con oferta, **al menos 2 de las 3** pistas son incómodas: bioma con letra C o
+  peor, o con un segmento débil de su escuela (Kōryū: agua; Altair: sprints; Boneyard: velocidad
+  pura);
+- la dificultad (★) baja cuando la pista le queda peor, para que una pista difícil sea una apuesta
+  y no un castigo: «Muy difícil» con rivales ★ y premio más chico, «Pista incómoda» con ★★★ y
+  premio grande;
+- la ficha de cada carrera dice cómo le queda en palabras («Le cuesta», «Pista incómoda», «Muy
+  difícil»), nunca con multiplicadores.
+
+**Pistas nuevas (propuesta: 8, en los 4 biomas que faltan):** distancias como las de hoy: corta
+≈ 1200 m, media ≈ 1800-2200 m, larga ≈ 2600-3000 m.
+
+| Pista                     | Bioma   | Largo | Segmentos y carácter                                                   |
+| ------------------------- | ------- | ----- | ---------------------------------------------------------------------- |
+| Copa Bahía de Sal         | costa   | media | Dos tramos de agua y curvas abiertas: castiga a Kōryū (agua)           |
+| Regata de los Acantilados | costa   | larga | Subida, bajada al mar, agua y viento de cañón cruzado                  |
+| Gran Premio Ciudad Vieja  | ciudad  | corta | Sprint de curvas cerradas entre rectas cortas: castiga a Altair        |
+| Circuito de las Azoteas   | ciudad  | media | Saltos entre techos y curvas: buena para Boneyard, mala para Lumière   |
+| Trofeo Paso Helado        | tundra  | larga | Subidas largas y viento en contra: premia la Resistencia, no la picada |
+| Clásico del Lago Blanco   | tundra  | media | Rectas largas y hielo fino (agua): velocidad pura, castiga a Boneyard  |
+| Copa Cumbre Partida       | montaña | media | Subida, salto y bajada técnica: obstáculos para Rasante                |
+| Bajada del Cóndor         | montaña | corta | Casi todo bajadas: casa de Kōryū; para Peregrina sale una vez por mes  |
+
+El esquema actual ya admite estos biomas, segmentos y rasgos (`Biome`, `SegmentType`,
+`CourseTrait`): son 8 archivos de contenido con sus textos, sin cambio de esquema. Los biomas
+nuevos activan términos de reglas de escuela que ninguna pista midió todavía (por ejemplo
+`massThrustCoolPm` de Steinhaus en costa, ciudad y tundra).
+
+**Antes de fijar números (temporadas simuladas):**
+
+- que correr mucho y entrenar mucho sean viables y ninguna estrategia gane siempre: políticas
+  «nunca corre», «corre todo lo que puede» y «corre 1 por mes», 500 temporadas por Falconess, en
+  dos bases de semillas, con la métrica 7 por Falconess (Wilson);
+- cuántas activas aprende cada política (meta 2-3) con estos premios y los costos de T4;
+- el castigo de la 3.ª seguida: que encadenar carreras no sea la mejor jugada ni una trampa;
+- `pnpm sim:batch` en las 8 pistas nuevas: que ninguna escuela gane casi siempre en su bioma casa
+  ni pierda casi siempre en el débil, y que la dificultad ★ ordene de verdad a los rivales;
+- que el calendario cumpla sus reglas en todas las semillas (test de propiedad).
 
 ## T4 · Taller
 
 **Hoy y estudio (`.work/design2/taller.md`):** nadie va porque la visita cuesta la semana y rinde
 menos que entrenar.
 
-**Recomendación:** visita gratis, una por semana, antes de la acción. Con T1 y T3 el taller queda
-para cambiar de alas, reparar, re-sortear rarezas de Boneyard y aprender habilidades con los
-puntos que dan las carreras. En la pantalla de la semana, un aviso de qué tiene el taller para la
-próxima carrera.
+**Decidido por el dueño (2026-10-29):** el taller es **un botón en el menú de la semana**. Se entra
+y se sale sin que cuente como una semana. La interfaz no lo anuncia: el botón dice «Taller» y nada
+más (ni «gratis» ni «no gasta la semana»); al salir se vuelve al mismo menú, en la misma semana.
+
+**Qué hay adentro ahora que no hay piezas (T1):**
+
+| Sección     | Qué hace                                                    | Cuesta                                      |
+| ----------- | ----------------------------------------------------------- | ------------------------------------------- |
+| Alas        | Cambiar las alas equipadas por otras del hangar             | Nada                                        |
+| Reparar     | Devolver la durabilidad de las alas equipadas al máximo     | Chatarra según el daño (≈ 20 por un tercio) |
+| Habilidades | Aprender habilidades con los puntos de las carreras (T3)    | Puntos de habilidad (≈ 35-115 por activa)   |
+| Rarezas     | Re-sortear las peculiaridades de alas Boneyard (Mule, Kite) | Chatarra: 40 y sube con cada re-sorteo      |
+
+Reglas de la visita:
+
+- Ninguna acción del taller toca el vigor, el ánimo ni el fallo; lo que se gasta es chatarra o
+  puntos, y la pantalla siempre muestra el saldo y el precio («Reparar: 20 chatarra»).
+- Sin límite de visitas: como no cuesta la semana, no hace falta contar entradas. Se puede deshacer
+  dentro de la misma visita (cambiar de alas y volver), no una habilidad ya aprendida.
+- Un **aviso** sobre el botón cuando el taller tiene algo para la próxima carrera (alas dañadas,
+  una habilidad que ya alcanza, unas alas del hangar que le quedan mejor a esa pista): así deja de
+  ser invisible, que fue lo que pasó en el playtest 1.
+- La escuela de las alas y de la Falconess se ve en los colores de la pantalla (T5), sin texto de
+  doctrina.
+
+**Implementación:** en v3 las operaciones del taller dejan de ser una acción de la semana
+(`RunInput.kind: "workshop"`) y pasan a ser entradas que no cierran la semana; `advanceSeason`
+sigue siendo pura y cada entrada queda registrada para reproducir la partida. Cambio de estado con
+ADR; v1 y v2 conservan el taller que gasta la semana.
+
+**Antes de fijar números (temporadas simuladas):**
+
+- precios de las activas (hoy 60-150; el estudio midió ×0,75) contra los puntos de T3, para que
+  2-3 activas por temporada sea lo normal y no lo máximo;
+- economía de chatarra: cuánto entra por carreras y cuánto piden reparar y re-sortear, sin que
+  sobre siempre ni falte siempre;
+- bajar `scrap-heart` antes de abaratar los re-sorteos (el estudio midió que esa rareza sola vale
+  +15 a +32 puntos por carrera);
+- que «usa el taller» le gane a «lo ignora» por ≈ 10 puntos de victorias (como en el estudio), sin
+  que lo ignore quede sin chances.
 
 ## T5 · Fabricantes como escuelas
 
