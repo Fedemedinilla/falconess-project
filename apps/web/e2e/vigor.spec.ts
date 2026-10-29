@@ -82,9 +82,12 @@ test("vigor drains with training: its band, its color and every training's chanc
   await startSeason(page, "peregrina", "pt-e2e-vigor-2");
   const view = await readTurn(page);
   expect(vigorOf(view)).toBe(100);
+  // full vigor: the plain trainings cannot fail; the note says the risk flight still can, as its
+  // card does (12 % and an injury in a quarter of them)
   await expect(page.locator("#turno-vigor-nota")).toContainText(
-    t("ui.turn.vigor.note.safe", { safe: 60 }),
+    t("ui.turn.vigor.note.safe", { safe: 60, risk: "12 %" }),
   );
+  await expect(card(page, "train-risk-flight")).toContainText(/Fallo 12\s%/);
   // rest gives back a drawn 30, 50 or 70; an outing 20 and a point of mood; no forced rest
   await expect(card(page, "rest")).toContainText("+30 a +70");
   await expect(card(page, "outing")).toContainText("+20");

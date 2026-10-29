@@ -1,5 +1,5 @@
 import { BIOMES, type SeasonState, STYLES } from "@falconess/schema";
-import { learnCap, type SimContext, STAT_ORDER } from "@falconess/sim";
+import { learnCap, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
 import { formatFixed, formatInt, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { cx } from "../ui/cx";
@@ -16,6 +16,7 @@ import {
   trainMoodPm,
   vigorOf,
 } from "./model/actions";
+import { formatChance } from "./model/describe";
 import { seasonStatScale } from "./model/new-season";
 import { lastClosedTurn, turnDeltas } from "./model/season";
 import {
@@ -74,7 +75,14 @@ function VigorGauge({
   let note: string | undefined;
   if (band && scale.bands) {
     const { safeFrom, highBelow, injuryAt } = scale.bands;
-    note = ui(`ui.turn.vigor.note.${band}`, { safe: safeFrom, high: highBelow, injury: injuryAt });
+    // the risk flight fails even at full vigor: the safe band says so, with its chance
+    const risk = formatChance(trainingRisk(ctx.ruleset, 0, "train:risk-flight").failPm);
+    note = ui(`ui.turn.vigor.note.${band}`, {
+      safe: safeFrom,
+      high: highBelow,
+      injury: injuryAt,
+      risk,
+    });
   } else if (scale.forcedAt !== undefined)
     note = ui("ui.turn.vigor.forced", { at: scale.forcedAt });
   return (

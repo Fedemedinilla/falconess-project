@@ -1,5 +1,5 @@
 import type { RunInput, SeasonState } from "@falconess/schema";
-import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
+import { bondLevel, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
@@ -594,7 +594,11 @@ export function TurnActions({
         {scale.bands
           ? uiAt(explain, "ui.turn.actions.legend.v2", {
               safe: scale.bands.safeFrom,
-              max: formatChance(S.failCurveMax),
+              max: formatChance(trainingRisk(ctx.ruleset, S.fatigueMax, "train:agility").failPm),
+              risk: formatChance(trainingRisk(ctx.ruleset, 0, "train:risk-flight").failPm),
+              riskMax: formatChance(
+                trainingRisk(ctx.ruleset, S.fatigueMax, "train:risk-flight").failPm,
+              ),
               injury: scale.bands.injuryAt,
               share: formatChance(S.injuryShareOfFail),
               free: S.moodDriftFreeStreak,
