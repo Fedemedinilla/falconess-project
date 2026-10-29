@@ -1,11 +1,5 @@
-import type {
-  ContentIndex,
-  Mood,
-  RunInput,
-  SeasonState,
-  TrainingKind,
-  TurnLogEntry,
-} from "@falconess/schema";
+import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
+import type { ContentIndex, Mood, RunInput, SeasonState, TrainingKind } from "@falconess/schema";
 import {
   facilityLevel,
   goalForTurn,
@@ -139,51 +133,7 @@ export function trainingMenu(ctx: SimContext, s: SeasonState): string[] {
   });
 }
 
-/**
- * What one input added to the log: the new entries, and the notes and stat changes an event
- * choice added to the week's entry (it extends the entry of the week it answers).
- */
-export function addedToLog(
-  prev: SeasonState,
-  s: SeasonState,
-): { notes: string[]; deltas: Map<string, number>; event: TurnLogEntry["event"] } {
-  const notes: string[] = [];
-  const deltas = new Map<string, number>();
-  let event: TurnLogEntry["event"];
-  s.log.forEach((entry, i) => {
-    const before = prev.log[i];
-    notes.push(...entry.notes.slice(before?.notes.length ?? 0));
-    for (const [k, v] of Object.entries(entry.deltas)) {
-      const d = v - (before?.deltas[k as keyof typeof before.deltas] ?? 0);
-      if (d !== 0) deltas.set(k, (deltas.get(k) ?? 0) + d);
-    }
-    if (entry.event && !before?.event) event = entry.event;
-  });
-  return { notes, deltas, event };
-}
-
 const signed = (n: number): string => `${n > 0 ? "+" : ""}${n}`;
-
-/**
- * The texts and stat changes of the event resolved by this input, as the content defines them:
- * the event's text, for an auto event the option's (the player saw no dialog), the drawn branch's.
- */
-function eventPart(
-  c: ContentIndex,
-  event: TurnLogEntry["event"],
-): { keys: string[]; stats: Map<string, number> } {
-  if (!event) return { keys: [], stats: new Map() };
-  const e = c.getEvent(event.id);
-  const opt = e.options[event.option];
-  const branch = event.branch === undefined ? undefined : opt?.chance?.[event.branch];
-  const keys = [e.textKey, event.auto ? opt?.textKey : undefined, branch?.textKey].filter(
-    (k) => k !== undefined,
-  );
-  const stats = new Map<string, number>();
-  for (const fx of [opt?.effects, branch?.effects])
-    for (const [k, v] of Object.entries(fx?.stats ?? {})) stats.set(k, (stats.get(k) ?? 0) + v);
-  return { keys, stats };
-}
 
 /**
  * The week in a few lines (ADR-0006 D7): what the action did with its stat changes; a luck event
@@ -195,12 +145,17 @@ export function turnSummary(ctx: SimContext, s: SeasonState, prev: SeasonState):
   const c = ctx.content;
   const lines: string[] = [];
   const text = (n: string) => (c.text.has(n) ? c.t(n) : n);
-  const { notes, deltas, event } = addedToLog(prev, s);
+  // the same reading of the step as the web's «Lo que pasó» (@falconess/race-view)
+  const { notes, deltas, event } = stepLog(prev, s);
   const isCause = (n: string) => n.startsWith("log.mood.") || n.startsWith("log.vigor.");
-  const ev = eventPart(c, event);
-  const statList = (m: Map<string, number>) =>
+  const resolved = event && resolveLoggedEvent(c, event);
+  const ev = {
+    keys: resolved?.noteKeys ?? [],
+    stats: new Map(resolved?.stats.map(({ stat, delta }) => [stat, delta])),
+  };
+  const statList = (m: ReadonlyMap<string, number>) =>
     [...m].filter(([, v]) => v !== 0).map(([k, v]) => `${c.t(`stat.${k}`)} ${signed(v)}`);
-  const own = new Map(deltas);
+  const own = new Map<string, number>(deltas);
   if (event?.auto) for (const [k, v] of ev.stats) own.set(k, (own.get(k) ?? 0) - v);
   const action = notes.filter((n) => !isCause(n) && !(event?.auto && ev.keys.includes(n)));
   const shown = event?.auto ? action : action.filter((n) => n !== ev.keys[0]);
