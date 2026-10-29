@@ -112,7 +112,6 @@ export function TopBar({ route, onOpenRun }: TopBarProps) {
             title={nextLabel}
           >
             <ThemeGlyph />
-            <span className={s.themeLabel}>{nextLabel}</span>
           </Button>
         </div>
       </div>

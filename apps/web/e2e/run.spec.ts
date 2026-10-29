@@ -172,3 +172,53 @@ test("starting another season says it replaces the saved one and offers to copy 
   await expect(page.locator("#cargar-dialogo")).toBeVisible();
   await expect(page.getByText(textPattern("ui.saved.replace.load"))).toHaveCount(0);
 });
+
+/**
+ * The top bar's texts never sit on each other, and the run's week shows whole, at every common
+ * width (verifier P5: from 840 to 1040 px the run went over the sections). This project loads the
+ * fallback font stacks, the widest case; the artifact project loads the page's fonts.
+ */
+test("the top bar keeps the sections, the run and the tools apart at every width", async ({
+  page,
+}) => {
+  await startSeason(page, "cernicala", "pt-e2e-barra");
+  const week = page.getByTitle(t("ui.top.week.long", { turn: 1, turns: 48 }));
+  for (const width of [390, 640, 768, 900, 1024, 1180, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 800 });
+    const problems = await page.getByRole("banner").evaluate(
+      (bar, weekTitle) => {
+        const out: string[] = [];
+        const leaves = [...bar.querySelectorAll("a, button, span, strong")].filter(
+          (e): e is HTMLElement =>
+            e instanceof HTMLElement &&
+            e.children.length === 0 &&
+            (e.textContent ?? "").trim() !== "" &&
+            e.getBoundingClientRect().width > 0,
+        );
+        for (const [i, a] of leaves.entries())
+          for (const b of leaves.slice(i + 1)) {
+            const ra = a.getBoundingClientRect();
+            const rb = b.getBoundingClientRect();
+            if (
+              ra.right > rb.left + 1 &&
+              rb.right > ra.left + 1 &&
+              ra.bottom > rb.top + 1 &&
+              rb.bottom > ra.top + 1
+            )
+              out.push(`«${a.textContent}» × «${b.textContent}»`);
+          }
+        const status = bar.querySelector(`[title="${weekTitle}"]`)?.parentElement;
+        const wk = bar.querySelector(`[title="${weekTitle}"]`);
+        if (status && wk) {
+          const rs = status.getBoundingClientRect();
+          const rw = wk.getBoundingClientRect();
+          if (rw.left < rs.left - 0.5 || rw.right > rs.right + 0.5) out.push("week cut");
+        } else out.push("no week");
+        return out;
+      },
+      t("ui.top.week.long", { turn: 1, turns: 48 }),
+    );
+    expect(problems, `${width} px`).toEqual([]);
+    await expect(week).toBeVisible();
+  }
+});

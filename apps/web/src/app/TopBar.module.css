@@ -90,6 +90,8 @@
   justify-content: flex-end;
   gap: var(--space-2);
   min-width: 0;
+  /* never over the sections: what does not fit is cut, the name first (with an ellipsis) */
+  overflow: hidden;
 }
 
 .swatch {
@@ -97,11 +99,15 @@
 }
 
 .runner {
+  min-width: 0;
+  overflow: hidden;
   font-family: var(--font-display);
   font-size: var(--fs-lg);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .week {
@@ -129,17 +135,19 @@
   margin-inline: var(--space-1);
 }
 
-@media (max-width: 52rem) {
+/*
+ * Two rows (name and tools, then sections and the run) until one row fits them all: brand, the
+ * three sections, the run with a waiting event and the tools take ≈ 70rem with the page's fonts
+ * and ≈ 78rem with the fallback stacks when Google Fonts do not load (global.css and
+ * ExplainDefault.module.css switch at the same width).
+ */
+@media (max-width: 79rem) {
   .inner {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "brand tools"
       "nav status";
     gap: var(--space-1) var(--space-3);
-  }
-
-  .themeLabel {
-    display: none;
   }
 }
 

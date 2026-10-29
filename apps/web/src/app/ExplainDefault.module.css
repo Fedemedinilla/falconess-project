@@ -28,8 +28,8 @@
   background: var(--surface);
 }
 
-/* the narrow top bar keeps the book and the control */
-@media (max-width: 52rem) {
+/* the top bar in two rows (TopBar.module.css) keeps the book and the control */
+@media (max-width: 79rem) {
   .bar .labelText {
     display: none;
   }

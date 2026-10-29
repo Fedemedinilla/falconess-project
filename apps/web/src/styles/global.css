@@ -24,7 +24,7 @@ body {
   --sticky-top: 4.5rem;
 }
 
-@media (max-width: 52rem) {
+@media (max-width: 79rem) {
   :root {
     --sticky-top: 6.5rem;
   }
