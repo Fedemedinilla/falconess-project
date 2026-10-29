@@ -105,14 +105,19 @@ note («Peregrina está harta de entrenar», «la carrera la dejó desanimada»,
 desanimó»; a drop in red), and changes that cancel out keep their notes as lines; the vigor row
 names the band it ended in; a drawn rest says how she slept (only when it gave vigor back); an
 injury from exhaustion says so in red. A luck event the sim applied by itself (`event.auto` on the
-log entry) gets its own block (`#semana-evento`): its text, what happened (the option) and how its
-chance branch came out, green when its effects only helped, red when they only hurt, amber when
-mixed (`effectsTone`, `data-tone`); it is named as a cause only of what its effects change. An
-answered event's headline takes the same tone. The dialog carries its headline's tone as
-`data-tone`.
+log entry) gets its own block (`#semana-evento`): its text, what happened (the option), how its
+chance branch came out and what it did (`#semana-evento-efectos`: the option's effects, then the
+drawn branch's, worded as the event dialog words an option's: «Agilidad +10», «Vigor −15»; the
+week's stats and rows add them to the action's), green when its effects only helped, red when they
+only hurt, amber when mixed (`effectsTone`, `data-tone`); it is named as a cause only of what its
+effects change. An answered event's headline takes the same tone. The dialog carries its
+headline's tone as `data-tone`.
 
 Everything comes from the controller's last step (`before`, `input`, `after`) through the pure
-view model `screens/model/week.ts` (`weekSummary`, tested on real seasons). Read once, it does not
+view model `screens/model/week.ts` (`weekSummary`, tested on real seasons and on the content's
+luck events). It reads the step with `stepLog` and `resolveLoggedEvent` of `@falconess/race-view`,
+the same reading the CLI's week summary makes, so the browser's block and the terminal's 🎲 line
+name the same event, texts and stats. Read once, it does not
 open again: `GameController.acknowledgeStep()` marks it in the snapshot (`lastStepSeen`) and in
 localStorage (`falconess.pruebas.vista`, the run's `runFingerprint`, guarded); a load rebuilds the
 last step and opens it unless this browser already read that week of that very run. The one-line
@@ -215,7 +220,7 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   comes back, the recap line opens it again), a failed training (agility every week until the curve
   catches her) closed with its button, the week's result before its event (Esc) and the answer's
   own result (a click outside), the reload rule (unread opens again, read does not), and a luck
-  event's block (skipped while the content has no luck event). `play.ts` reads it with Enter after
+  event's block (one of the content's `ev.luck-*` texts, its effects, its tone). `play.ts` reads it with Enter after
   every decision (`closeWeek`); `takeWeek` answers a waiting event first. v2 scenes are found by
   playing on, not pinned to one seed's draws, so new v2 content does not break them.
 - `vigor.spec.ts`: the vigor bar's band and every training's failure and injury chance after each
