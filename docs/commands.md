@@ -15,7 +15,8 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm content:validate`: parse every content JSON and check the cross references.
 - `pnpm sim -- --seed 42 --falconess peregrina`: one season with the ruleset's reference policy
   (v2: the careful one; v1: the lowest stat), turn by turn: vigor as a draining bar, mood with its
-  training multiplier, each week's causes of a mood or vigor change and its luck event (🎲).
+  training multiplier, each week's causes of a mood or vigor change and its luck event (🎲, with
+  its texts and the stats, mood and vigor it gives, as in the web's «Lo que pasó»).
   `--ruleset v1` plays the old rules; the default is `CURRENT_RULESET` (v2, ADR-0006).
 - `pnpm play -- --seed 42 --falconess peregrina`: interactive text season (PT0) with the same
   week summary and, next to each training, its gains, vigor cost and failure, injury and mood-drift

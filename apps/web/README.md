@@ -129,7 +129,7 @@ Everything comes from the controller's last step (`before`, `input`, `after`) th
 view model `screens/model/week.ts` (`weekSummary`, tested on real seasons and on the content's
 luck events). It reads the step with `stepLog` and `resolveLoggedEvent` of `@falconess/race-view`,
 the same reading the CLI's week summary makes, so the browser's block and the terminal's 🎲 line
-name the same event, texts and stats. Read once, it does not
+name the same event, texts, stats, mood and vigor. Read once, it does not
 open again: `GameController.acknowledgeStep()` marks it in the snapshot (`lastStepSeen`) and in
 localStorage (`falconess.pruebas.vista`, the run's `runFingerprint`, guarded); a load rebuilds the
 last step and opens it unless this browser already read that week of that very run. The one-line

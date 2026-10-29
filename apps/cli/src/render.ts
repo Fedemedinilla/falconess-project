@@ -1,5 +1,12 @@
 import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
-import type { ContentIndex, Mood, RunInput, SeasonState, TrainingKind } from "@falconess/schema";
+import type {
+  ContentIndex,
+  EventEffects,
+  Mood,
+  RunInput,
+  SeasonState,
+  TrainingKind,
+} from "@falconess/schema";
 import {
   facilityLevel,
   goalForTurn,
@@ -137,7 +144,8 @@ const signed = (n: number): string => `${n > 0 ? "+" : ""}${n}`;
 
 /**
  * The week in a few lines (ADR-0006 D7): what the action did with its stat changes; a luck event
- * that happened on its own (🎲: its texts and stats); then mood and vigor, each with where it
+ * that happened on its own (🎲: its texts, then its stats, mood and vigor as the content gives them,
+ * like the web's «Lo que pasó»); then mood and vigor, each with where it
  * ended and why it moved (the cause notes of the log); and the goal race, if any. After an event
  * choice, the option's outcome (its branch text and stats; the event's text was the question).
  */
@@ -155,6 +163,11 @@ export function turnSummary(ctx: SimContext, s: SeasonState, prev: SeasonState):
   };
   const statList = (m: ReadonlyMap<string, number>) =>
     [...m].filter(([, v]) => v !== 0).map(([k, v]) => `${c.t(`stat.${k}`)} ${signed(v)}`);
+  // an event's mood and vigor, summed over its blocks; its fatigue +15 is vigor −15 (ADR-0006 D2)
+  const fxSum = (pick: (fx: EventEffects) => number) =>
+    (resolved?.effects ?? []).reduce((sum, fx) => sum + pick(fx), 0);
+  const evMood = fxSum((fx) => fx.mood);
+  const evVigor = -fxSum((fx) => fx.fatigue);
   const own = new Map<string, number>(deltas);
   if (event?.auto) for (const [k, v] of ev.stats) own.set(k, (own.get(k) ?? 0) - v);
   const action = notes.filter((n) => !isCause(n) && !(event?.auto && ev.keys.includes(n)));
@@ -169,6 +182,8 @@ export function turnSummary(ctx: SimContext, s: SeasonState, prev: SeasonState):
           .map(text)
           .join(" "),
         ...statList(ev.stats),
+        ...(evMood !== 0 ? [`${c.t("ui.turn.mood")} ${signed(evMood)}`] : []),
+        ...(evVigor !== 0 ? [`${c.t("ui.turn.vigor")} ${signed(evVigor)}`] : []),
       ].join(" · ")}`,
     );
   const why = (prefix: string) => {

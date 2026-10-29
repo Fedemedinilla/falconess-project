@@ -59,6 +59,9 @@ describe("v2 in the text season", () => {
     expect(menu[0]).toContain(`fallo ${pmPercent(agility.failPm)}`);
     expect(menu[0]).toContain(`lesión ${pmPercent(agility.injuryPm)}`);
     expect(menu[0]).toContain("vigor -20");
+    // the simulator gives a little vigor back in v2 (study §9), read from the ruleset
+    expect(menu[4]).toContain(`vigor +${-RULESET_V2.season.fatigueCost["train:simulator"]}`);
+    expect(menu[4]).toContain("vigor +5");
     expect(menu[3]).toContain(
       `fallo ${pmPercent(trainingRisk(RULESET_V2, 80, "train:risk-flight").failPm)}`,
     );
@@ -108,6 +111,25 @@ describe("v2 in the text season", () => {
       return;
     }
     throw new Error("no tailwind in 400 seeds");
+  });
+
+  it("lists a luck event's mood and vigor on its line, as the web does", () => {
+    // weeks 2-11: the stormy night (vigor −15) and the lost goggles (mood −1)
+    const want = new Map([
+      ["luck-stormy-night", `${content.t("ui.turn.vigor")} -15`],
+      ["luck-lost-goggles", `${content.t("ui.turn.mood")} -1`],
+    ]);
+    for (let i = 0; i < 600 && want.size > 0; i++) {
+      const s0 = { ...startSeason(V2, `luck-fx-${i}`, START), turn: 5, mood: 1 as const };
+      const s1 = advanceSeason(V2, s0, { kind: "train:stamina" });
+      const id = s1.log.at(-1)?.event?.id ?? "";
+      const effect = want.get(id);
+      if (effect === undefined) continue;
+      const luck = turnSummary(V2, s1, s0).find((l) => l.startsWith("  🎲 "));
+      expect(luck).toBe(`  🎲 ${content.t(`ev.${id}`)} ${content.t(`ev.${id}.opt0`)} · ${effect}`);
+      want.delete(id);
+    }
+    expect([...want.keys()], "events never rolled").toEqual([]);
   });
 
   it("after an event choice prints the option and its outcome, not the question again", () => {
