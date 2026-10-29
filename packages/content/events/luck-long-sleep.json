@@ -6,7 +6,7 @@
   },
   "rulesets": ["v2"],
   "auto": true,
-  "weight": 12,
+  "weight": 14,
   "textKey": "ev.luck-long-sleep",
   "options": [
     {

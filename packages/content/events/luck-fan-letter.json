@@ -6,7 +6,7 @@
   },
   "rulesets": ["v2"],
   "auto": true,
-  "weight": 8,
+  "weight": 3,
   "textKey": "ev.luck-fan-letter",
   "options": [
     {
