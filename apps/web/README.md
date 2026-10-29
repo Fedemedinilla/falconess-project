@@ -26,7 +26,11 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
 - `src/ui/` shared components: Panel, StatBar, Button, Pill, Livery, Dialog, Table, SeasonStrip,
   Icon and ExplainSwitch; `icons.ts` is the game's concepts as emojis (below).
 - `src/app/` shell: hash routes, timing bar, theme, explanations default (`explain.ts`,
-  `ExplainDefault.tsx`), error banner, run and load dialogs.
+  `ExplainDefault.tsx`), error banner, run and load dialogs. The timing bar is one row from 79rem
+  (it needs ≈ 70rem with the page's fonts and ≈ 78rem with the fallback stacks), two rows below
+  (name and tools, then the sections and the run) and the phone's sticky row below 37.5rem; the
+  run's name gives way with an ellipsis before anything goes over the sections (an e2e test in
+  `run.spec.ts` checks 390 to 1440 px).
 - `src/screens/` season screens; `src/race/` race screens. The route map is in `src/app/App.tsx`.
 
 ## Rules
@@ -84,10 +88,14 @@ forced rest at vigor 20 or less (mark, pill, the cards' block). Every training c
 failure chance and, when there is one, its injury chance (`trainingRisk` at the current fatigue),
 amber from 10 % and red from 25 % or an injury from exhaustion (`data-risk` on the card); rest says
 «+30 a +70» and each recovery's chance (`restOptions`) and «+1 Ánimo (25 %)», the chance on the
-effect itself (`restMoodUpChance`), the outing «+20» vigor and +1 mood. The mood line gives its
+effect itself (`restMoodUpChance`), the outing «+20» vigor and +1 mood; at the top mood (+2) both
+show their mood effect as «0 Ánimo (ya al máximo)» and the rest drops its mood chance. The mood line gives its
 multiplier on training and on races («Entrenamientos ×1,10 · carreras ×1,02», `#turno-animo-nota`);
 when a training streak makes the next mood drift likelier than a first training's, a line above
-the cards says so with its chance (`#turno-racha`, `nextTrainingDriftPm`). The actions' legend
+the cards says so with its chance (`#turno-racha`, `nextTrainingDriftPm`), except at the lowest
+mood (−2), where the drift has nowhere to take her. The line above the actions («Lo que pasó»,
+`#turno-semana-pasada`) says a failure lowered the mood only when the log has `log.mood.failure`.
+The actions' legend
 explains the curve in v2 and the linear chance in v1, brief and full; in v2 both lengths also say
 that the simulator gives a little vigor back, as its card does («Vigor +5»,
 `-fatigueCost["train:simulator"]`).
@@ -116,7 +124,8 @@ its switch wait in «Ver carrera» (the replay's «Por qué» shows the same tip
 With ruleset v2 it also says why: every mood change names its cause from the sim's `log.mood.*`
 note («Peregrina está harta de entrenar», «la carrera la dejó desanimada», «el fallo la
 desanimó»; a drop in red), and changes that cancel out keep their notes as lines; the vigor row
-names the band it ended in; a drawn rest says how she slept (only when it gave vigor back); an
+names the band it ended in, and shows at 0 when a luck event's vigor cancelled the action's
+(«Vigor 0 → 80 · entrenamiento, evento»); a drawn rest says how she slept (only when it gave vigor back); an
 injury from exhaustion says so in red. A luck event the sim applied by itself (`event.auto` on the
 log entry) gets its own block (`#semana-evento`): its text, what happened (the option), how its
 chance branch came out and what it did (`#semana-evento-efectos`: the option's effects, then the
