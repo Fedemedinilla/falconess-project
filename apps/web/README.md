@@ -88,7 +88,9 @@ effect itself (`restMoodUpChance`), the outing «+20» vigor and +1 mood. The mo
 multiplier on training and on races («Entrenamientos ×1,10 · carreras ×1,02», `#turno-animo-nota`);
 when a training streak makes the next mood drift likelier than a first training's, a line above
 the cards says so with its chance (`#turno-racha`, `nextTrainingDriftPm`). The actions' legend
-explains the curve in v2 and the linear chance in v1, brief and full.
+explains the curve in v2 and the linear chance in v1, brief and full; in v2 both lengths also say
+that the simulator gives a little vigor back, as its card does («Vigor +5»,
+`-fatigueCost["train:simulator"]`).
 
 ## «Lo que pasó» (`src/screens/WeekDialog.tsx`)
 

@@ -139,6 +139,8 @@ describe("action previews", () => {
       risk: "high",
     });
     expect(trainingPreview(v2, tired, "train:simulator").failPm).toBe(75);
+    // and gives a little vigor back (study §9): its card reads «Vigor +5»
+    expect(trainingPreview(v2, s, "train:simulator").vigor).toBe(5);
     // vigor 20: a quarter of the failures are injuries
     const spent = { ...s, fatigue: 80 };
     expect(trainingPreview(v2, spent, "train:agility")).toMatchObject({
@@ -146,6 +148,16 @@ describe("action previews", () => {
       injuryPm: 66,
       risk: "danger",
     });
+  });
+
+  it("says the simulator gives vigor back only where it does: every ruleset with the curve", () => {
+    // the v2 legend (the bands' legend, shown for the curve) says so, with the ruleset's number
+    expect(getContent().t("ui.turn.actions.legend.v2")).toContain("devuelve un poco de vigor");
+    expect(getContent().t("ui.turn.actions.legend.v2.brief")).toContain(
+      "devuelve un poco de vigor",
+    );
+    for (const r of [RULESET_V1, RULESET_V2].filter((r) => r.season.failModel === "curve"))
+      expect(-r.season.fatigueCost["train:simulator"], r.version).toBeGreaterThan(0);
   });
 
   it("grades a chance's tone: one in ten warns, one in four or an exhausted injury alarms", () => {

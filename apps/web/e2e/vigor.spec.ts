@@ -88,6 +88,9 @@ test("vigor drains with training: its band, its color and every training's chanc
     t("ui.turn.vigor.note.safe", { safe: 60, risk: "12 %" }),
   );
   await expect(card(page, "train-risk-flight")).toContainText(/Fallo 12\s%/);
+  // the simulator gives a little vigor back (+5 in v2), and the actions' legend says so
+  await expect(card(page, "train-simulator")).toContainText("Vigor +5");
+  await expect(page.getByText(/El simulador .*devuelve un poco de vigor/)).toBeVisible();
   // rest gives back a drawn 30, 50 or 70; an outing 20 and a point of mood; no forced rest
   await expect(card(page, "rest")).toContainText("+30 a +70");
   await expect(card(page, "outing")).toContainText("+20");

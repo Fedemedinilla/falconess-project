@@ -606,6 +606,8 @@ export function TurnActions({
               ),
               injury: scale.bands.injuryAt,
               share: formatChance(S.injuryShareOfFail),
+              // a curve ruleset's simulator gives vigor back (actions.test.ts checks it)
+              simulator: formatSigned(-S.fatigueCost["train:simulator"]),
               free: S.moodDriftFreeStreak,
               secondary: formatChance(S.secondaryGain),
             })
