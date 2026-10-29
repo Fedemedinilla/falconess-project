@@ -326,12 +326,26 @@ const TAILWIND_TEXT = {
   "test.tailwind.bad": "Una ráfaga la tumba.",
 };
 
+/** A luck event at week 4 that only gives a stat: it is no cause of the vigor a training cost. */
+const GUST = {
+  id: "test-gust",
+  version: 1,
+  source: { kind: "random" },
+  weight: null,
+  fixedTurn: 4,
+  auto: true,
+  rulesets: ["v2"],
+  textKey: "test.gust",
+  options: [{ textKey: "test.gust.opt", effects: { stats: { courage: 3 } } }],
+};
+const GUST_TEXT = { "test.gust": "Una racha limpia.", "test.gust.opt": "La aprovecha." };
+
 function withTailwind() {
   const raw = loadRawContent();
   return buildContentIndex({
     ...raw,
-    events: [...raw.events, TAILWIND],
-    text: { ...raw.text, ...TAILWIND_TEXT },
+    events: [...raw.events, TAILWIND, GUST],
+    text: { ...raw.text, ...TAILWIND_TEXT, ...GUST_TEXT },
   });
 }
 
@@ -495,6 +509,27 @@ describe("«Lo que pasó» on ruleset v2: mood with its causes, vigor, luck even
       expect(w.rows.find((r) => r.id === "vigor")?.cause).toContain(ui("ui.week.cause.event"));
     }
     expect(tones).toEqual(new Set(["good", "warn"]));
+  });
+
+  it("names a luck event as a cause only of what it changed", () => {
+    const gustCtx = { ruleset: RULESET_V2, content: withTailwind() };
+    let s = startSeason(gustCtx, "gust", {
+      kind: "start",
+      falconessId: "peregrina",
+      hangar: HANGAR,
+      parents: [],
+    });
+    while (s.turn < 4 || s.pendingEvent)
+      s = advanceSeason(
+        gustCtx,
+        s,
+        s.pendingEvent ? { kind: "event:choose", option: 0 } : { kind: "rest" },
+      );
+    const input = { kind: "train:stamina" } as const;
+    const w = weekSummary(gustCtx, { before: s, input, after: advanceSeason(gustCtx, s, input) });
+    expect(w.event).toMatchObject({ id: "test-gust", tone: "good" });
+    expect(w.stats.find((x) => x.stat === "courage")?.delta).toBeGreaterThan(0);
+    expect(w.rows.find((r) => r.id === "vigor")?.cause).toBe(ui("ui.week.cause.training"));
   });
 
   it("weighs an event's effects: all help is good news, all hurt is bad, a mix is neither", () => {

@@ -234,19 +234,35 @@ export function effectsTone(blocks: readonly EventEffects[]): WeekTone {
   return good > 0 ? "warn" : "neutral";
 }
 
-/** The texts and the tone of a resolved event, from content (an unknown id keeps its key). */
+/** What an event's effects can change, to name it as a cause only where it acted. */
+type Touch = "fatigue" | "skillPoints" | "scrap" | "feathers" | "durability" | "injury" | "skill";
+
+function touchesOf(blocks: readonly EventEffects[]): Set<Touch> {
+  const out = new Set<Touch>();
+  for (const fx of blocks) {
+    if (fx.fatigue !== 0) out.add("fatigue");
+    if (fx.skillPoints !== 0) out.add("skillPoints");
+    if (fx.scrap !== 0) out.add("scrap");
+    if (fx.feathers !== 0) out.add("feathers");
+    if (fx.durability !== 0) out.add("durability");
+    if (fx.injuryTurns > 0) out.add("injury");
+    if (fx.learnSkill !== undefined) out.add("skill");
+  }
+  return out;
+}
+
+/** The texts, the tone and the reach of a resolved event, from content (unknown: its key). */
 function describeLogged(ctx: SimContext, logged: LoggedEvent) {
   const event = ctx.content.events.get(logged.id);
   const option = event?.options[logged.option];
   const branch = logged.branch === undefined ? undefined : option?.chance?.[logged.branch];
-  const tone: WeekTone = option
-    ? effectsTone(branch ? [option.effects, branch.effects] : [option.effects])
-    : "neutral";
+  const blocks = option ? (branch ? [option.effects, branch.effects] : [option.effects]) : [];
   return {
     textKey: event?.textKey ?? `ev.${logged.id}`,
     optionKey: option?.textKey,
     branchKey: branch?.textKey,
-    tone,
+    tone: option ? effectsTone(blocks) : ("neutral" as WeekTone),
+    touches: option ? touchesOf(blocks) : undefined,
   };
 }
 
@@ -509,6 +525,9 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   if (race) sources.push("race");
   if (input.kind === "event:choose" || auto) sources.push("event");
   const hasEvent = sources.includes("event");
+  // the event is a cause only of what its effects change (unknown effects: of anything it can)
+  const ev = (touch: Touch): Can =>
+    resolved?.touches === undefined || resolved.touches.has(touch) ? ["event"] : [];
 
   const stats = STAT_ORDER.map((stat) => ({
     stat,
@@ -525,7 +544,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
       value: formatSigned(-fatigue),
       tone: tone(-fatigue),
       to: String(S.fatigueMax - after.fatigue),
-      cause: causeOf(sources, outcome, ["action", "event"]),
+      cause: causeOf(sources, outcome, ["action", ...ev("fatigue")]),
       band: bandOf(ctx, S.fatigueMax - after.fatigue),
     });
   const mood = after.mood - before.mood;
@@ -559,15 +578,15 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   counter("skillPoints", ui("ui.turn.skillPoints"), after.skillPoints - before.skillPoints, [
     "train-ok",
     "workshop",
-    "event",
+    ...ev("skillPoints"),
   ]);
   counter("scrap", ui("ui.turn.scrap"), after.wallet.scrap - before.wallet.scrap, [
     "workshop",
     "race",
-    "event",
+    ...ev("scrap"),
   ]);
   counter("feathers", ui("ui.turn.feathers"), after.wallet.feathers - before.wallet.feathers, [
-    "event",
+    ...ev("feathers"),
   ]);
 
   // bond: one row per change, the crews that got it as its cause
@@ -603,7 +622,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
       value: formatSigned(durability),
       tone: tone(durability),
       to: String(durabilityOf(ctx, after, frame).current),
-      cause: causeOf(sources, outcome, ["workshop", "race", "event"]),
+      cause: causeOf(sources, outcome, ["workshop", "race", ...ev("durability")]),
     });
   if (after.injuryTurns > before.injuryTurns)
     rows.push({
@@ -612,7 +631,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
       label: ui("ui.week.injury"),
       value: uiCount("ui.count.weeks", after.injuryTurns),
       tone: "bad",
-      cause: causeOf(sources, outcome, ["injury", "event"]),
+      cause: causeOf(sources, outcome, ["injury", ...ev("injury")]),
     });
   for (const skill of after.learnedSkills)
     if (!before.learnedSkills.includes(skill))
@@ -622,7 +641,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
         label: ui("ui.week.skill"),
         value: gameText(ctx.content.getSkill(skill).textKey),
         tone: "good",
-        cause: causeOf(sources, outcome, ["workshop", "event"]),
+        cause: causeOf(sources, outcome, ["workshop", ...ev("skill")]),
       });
 
   // the notes not said yet: the answered event's text is the context, a luck event has its block
