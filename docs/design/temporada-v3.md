@@ -15,18 +15,19 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 
 ## Resumen
 
-| #   | Tema                              | Estado  | Recomendación en una línea                                                           |
-| --- | --------------------------------- | ------- | ------------------------------------------------------------------------------------ |
-| T1  | Piezas de bastidor                | Abierta | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                   |
-| T2  | Cuadrillas como support cards     | Abierta | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)     |
-| T3  | Carreras opcionales               | Abierta | Calendario con carreras opcionales que dan puntos de habilidad                       |
-| T4  | Taller                            | Abierta | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad              |
-| T5  | Fabricantes como escuelas         | Abierta | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen            |
-| T6  | Tres cuadrillas por escuela       | Abierta | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico            |
-| T7  | Falconess como apoyo              | Futuro  | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                |
-| T8  | Bastidor firma como mejor opción  | Abierta | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar     |
-| T9  | Gráfica e ilustración             | Futuro  | Retratos provisionales con iniciales y colores de escuela; dirección de arte después |
-| T10 | Elección de cuadrillas (A, B o C) | Abierta | Reemplazada por T2 + T5 + T6                                                         |
+| #   | Tema                              | Estado  | Recomendación en una línea                                                            |
+| --- | --------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| T1  | Piezas de bastidor                | Abierta | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
+| T2  | Cuadrillas como support cards     | Abierta | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
+| T3  | Carreras opcionales               | Abierta | Calendario con carreras opcionales que dan puntos de habilidad                        |
+| T4  | Taller                            | Abierta | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad               |
+| T5  | Fabricantes como escuelas         | Abierta | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
+| T6  | Tres cuadrillas por escuela       | Abierta | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
+| T7  | Falconess como apoyo              | Futuro  | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
+| T8  | Bastidor firma como mejor opción  | Abierta | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
+| T9  | Gráfica e ilustración             | Futuro  | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
+| T10 | Elección de cuadrillas (A, B o C) | Abierta | Reemplazada por T2 + T5 + T6                                                          |
+| T11 | Qué se juega y qué entra al gacha | Abierta | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
 
 ## T1 · Piezas de bastidor
 
@@ -171,3 +172,31 @@ eventos de escuela. Revisar que la pantalla de elección no esconda las alas que
 sobre los colores de su escuela, para que el sistema se pruebe sin arte. Cuando se encare: una
 biblia visual por escuela (uniforme, colores, forma de las alas) y fichas de personaje, en
 `docs/world.md` y `docs/characters/`.
+
+## T11 · Qué se desbloquea jugando y qué entra al gacha
+
+**Propuesta del dueño:**
+
+- Las cuadrillas se desbloquean jugando.
+- El apoyo de cada Falconess se desbloquea jugando con esa Falconess.
+- Al gacha entran solo las Falconess nuevas (como corredoras) y sus bastidores firma.
+
+**Hoy (BRIEF §9):** dos pools, Falconess y bastidores. El pool de bastidores trae también los
+genéricos SR y SSR de cada fabricante (Falke, Étoile, Hayate…). Las Falconess repetidas suben un
+rango que da trajes y episodios, nunca stats; los bastidores repetidos se desguazan por chatarra.
+
+**Recomendación:** de acuerdo; refuerza el pilar sin pay-to-win, porque nada de lo que da poder al
+entrenar se compra. Tres puntos a cerrar:
+
+1. **Bastidores genéricos:** con la propuesta salen del gacha. Se desbloquean jugando con la
+   escuela (por ejemplo, al subir el vínculo con sus cuadrillas). Cambia el BRIEF §9: va con ADR.
+2. **El firma sin suerte:** quien tiene a la Falconess pero no su firma corre al 85-90 % con el
+   genérico (invariante 2). Propuesta: además del gacha, el firma se gana jugando muchas temporadas
+   con ella (un hito de su rango de vínculo), para que la suerte adelante el firma pero no lo
+   bloquee.
+3. **Cómo crece un apoyo:** el de una Falconess se desbloquea al terminar una temporada con ella y
+   mejora con más temporadas (su historia avanza); una cuadrilla, con el vínculo acumulado en su
+   escuela. Crecer jugando está bien; los repetidos del gacha nunca tocan el apoyo (invariante 4).
+
+Consecuencia: al gacha le queda poco para gastar plumas. En v0 no hay dinero real, así que no
+urge; más adelante, trajes y cosméticos de escuela pueden ser el resto de la oferta.
