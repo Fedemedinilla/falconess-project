@@ -28,8 +28,9 @@ this list and the scripts in sync). Arguments after `--` go to the script.
   `--ruleset v1|v2`, default v1 (the CI baseline); S7 plays the ruleset's reference policy, so
   `--ruleset v2` measures metric 7 with the careful policy (ADR-0006 «Métrica 7»).
 - `pnpm sim:season-batch -- --runs 500`: seasons with the ruleset's reference policy (v2: careful,
-  v1: lowest stat, byte for byte the v1 output of `5f0fd65`), stat curve and grades, goal races won
-  and by place, goal pass rates. `--ruleset` as in `pnpm sim` (default v2).
+  v1: lowest stat, byte for byte the v1 output of `5f0fd65` apart from the `ruleset v1` header
+  line), stat curve and grades, goal races won and by place, goal pass rates. `--ruleset` as in
+  `pnpm sim` (default v2).
 - `pnpm dev`: the web tester app (apps/web) on the Vite dev server, with hot reload.
 - `pnpm web:build`: apps/web to dist/ and the single-file tester page to dist-artifact/.
 - `pnpm web:e2e`: both builds of apps/web, then its browser tests in Chromium (apps/web/README.md):
