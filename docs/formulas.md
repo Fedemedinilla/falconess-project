@@ -151,11 +151,12 @@ en el primer tramo, donde compiten con más eventos con elección; los de ánimo
 porque un −1 de ánimo le cuesta una semana a quien lo cuida y un +1 le ahorra las salidas a quien no
 sale.
 
-Rango medido (política cuidadosa, 500 temporadas por Falconess): 8,6 eventos de suerte por
-temporada, uno cada 5 semanas jugadas (2,1 / 2,5 / 2,4 / 1,6 por tramo); los eventos con elección
-bajan de 13,7 a 13,0 por temporada (los del primer tramo se corren a los siguientes). Efecto en la
-temporada: la cuidadosa ≈ −2 puntos de B o mejor (entre 0 y −4 según la base de semillas); la que
-nunca sale, +3 a +4 (detalle y tablas en ADR-0006 «Eventos al azar: balance»).
+Rango medido (política cuidadosa, 500 temporadas por Falconess, constantes de `b3722b5`): 8,7
+eventos de suerte por temporada, uno cada 5,1 semanas jugadas (2,1 / 2,5 / 2,4 / 1,7 por tramo); los
+eventos con elección bajan de 13,9 a 13,3 por temporada (los del primer tramo se corren a los
+siguientes). Efecto en la temporada: la cuidadosa ≈ −1 punto de B o mejor (−1,3 / −1,4 en las dos
+bases de semillas; entre −1,4 y +1,2 en cuatro bases); la que nunca sale, +3 a +4 (detalle y tablas
+en ADR-0006 «Eventos al azar: balance»).
 
 ## Carrera
 
