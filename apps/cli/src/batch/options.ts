@@ -1,6 +1,6 @@
 /** Command line of `pnpm sim:batch` (docs/race-engine.md §25.2.1, BRIEF §12). */
 import { type BalanceScenario, BalanceScenario as ScenarioEnum } from "@falconess/schema";
-import { getRuleset, RULESET_V1 } from "@falconess/sim";
+import { CURRENT_RULESET, getRuleset } from "@falconess/sim";
 import { parseArgs } from "../args.js";
 import { type BatchConfig, defaultScenarios, type Profile, resolveScenarios } from "./plan.js";
 import { defaultWorkers, type EngineChoice } from "./pool.js";
@@ -16,8 +16,8 @@ export const USAGE = `pnpm sim:batch -- [options]
   --markdown PATH      write the report as Markdown (PR comment)
   --workers N          worker threads (default min(4, cpus - 1)); 1 runs in process
   --engine real|fake   fake is a deterministic stand-in for development (default real)
-  --ruleset vN         ruleset of the batch (default v1); S7 plays that ruleset's reference
-                       policy (v1 lowest stat, v2 careful; ADR-0006)
+  --ruleset vN         ruleset of the batch (default: the one new runs start on, v2); S7 plays
+                       that ruleset's reference policy (v1 lowest stat, v2 careful; ADR-0006)
   --fake-cost-ms MS    with --engine fake, busy-wait MS per 8-runner race (time the budget)
   --baseline-from TEXT where the baseline comes from (run id, commit), shown in the diff header
   --fail-on-verdict    exit 1 when the report's verdict is fail
@@ -39,7 +39,10 @@ export class UsageError extends Error {
 
 export type BatchOptions = {
   config: BatchConfig;
-  /** `--ruleset`: v1 until the CI baseline moves to v2 (ADR-0006 «Métrica 7»). */
+  /**
+   * `--ruleset`: `CURRENT_RULESET` (v2) by default, so CI measures the rules new runs play
+   * (ADR-0006 «Métrica 7»); `--ruleset v1` measures the old rules.
+   */
   rulesetVersion: string;
   workers: number;
   engine: EngineChoice;
@@ -136,7 +139,7 @@ export function parseBatchArgs(argv: readonly string[]): BatchOptions {
         }
       : { kind: "real" };
 
-  const rulesetVersion = str("ruleset") ?? RULESET_V1.version;
+  const rulesetVersion = str("ruleset") ?? CURRENT_RULESET.version;
   try {
     getRuleset(rulesetVersion);
   } catch {

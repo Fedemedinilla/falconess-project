@@ -26,8 +26,9 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm sim:race -- --seed 1 --course desert-ridge`: one race, classification, timeline and events;
   the "why" of each runner ends with what to train ("consejo").
 - `pnpm sim:batch -- --runs 10000`: balance batch of BRIEF §12 (docs/balance-batch.md).
-  `--ruleset v1|v2`, default v1 (the CI baseline); S7 plays the ruleset's reference policy, so
-  `--ruleset v2` measures metric 7 with the careful policy (ADR-0006 «Métrica 7»).
+  `--ruleset v1|v2`, default `CURRENT_RULESET` (v2, what CI measures); S7 plays the ruleset's
+  reference policy, so the default measures metric 7 with the careful policy and `--ruleset v1`
+  with the lowest-stat one, as `5f0fd65` did (ADR-0006 «Métrica 7 en v2 y CI»).
 - `pnpm sim:season-batch -- --runs 500`: seasons with the ruleset's reference policy (v2: careful,
   v1: lowest stat, byte for byte the v1 output of `5f0fd65` apart from the `ruleset v1` header
   line), stat curve and grades, goal races won and by place, goal pass rates. `--ruleset` as in

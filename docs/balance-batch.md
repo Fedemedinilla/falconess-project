@@ -9,7 +9,7 @@ pnpm sim:batch -- --runs 10000                         # pr profile → out/bala
 pnpm sim:batch -- --runs 10000 --markdown out/balance.md --baseline out/baseline.json
 pnpm sim:batch -- --profile full                       # nightly sample sizes (--runs ignored)
 pnpm sim:batch -- --scenarios S1,S3 --seed try2 --workers 3
-pnpm sim:batch -- --runs 10000 --ruleset v2           # S7 on ruleset v2 (careful policy)
+pnpm sim:batch -- --runs 10000 --ruleset v1           # S7 on ruleset v1 (lowest-stat policy)
 pnpm sim:batch -- --runs 1000 --engine fake            # development stand-in, not the engine
 pnpm sim:batch -- --engine fake --fake-cost-ms 5        # time the 60-s budget with a 5 ms engine
 ```
@@ -114,7 +114,7 @@ Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:se
   at fatigue 80 is its safety net. With the v1 economy the lowest-stat training ends a season with
   25-50 skill points and the cheapest generic active costs 60, so the learning rule never fires in
   the reference seasons. Kept exactly so v1's metrics stay comparable: `sim:season-batch --ruleset
-  v1` and `sim:batch` (v1) print the same numbers as `5f0fd65`.
+  v1` and `sim:batch --ruleset v1` print the same numbers as `5f0fd65`.
 - **v2: `carefulPolicy`** (the study's «cuidadosa» f0 m1, `.work/design2/fatiga-animo.md` §4). v2
   has no forced rest, so a reference player has to look after vigor and mood: under v2 the
   lowest-stat policy, which never goes out, reaches B or better in only 37-40 % of the seasons.
@@ -123,25 +123,33 @@ Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:se
   above what the training risks fresh (a risk flight always fails 12 %), it recovers: an outing if
   mood is below +2 and the outing's vigor brings the chance back to 0, otherwise a rest. It also
   goes out whenever mood is below +1 (`CAREFUL`: `maxFailPm` 0, `moodFloor` 1). Otherwise it trains
-  the lowest stat. Measured (500 seasons per Falconess, ruleset v2 with the luck events, four seed
-  sets): 64-68 % B or better, 30-31 % of the goal races won; 73-76 % and 37-38 % with the study's
-  simulator cost (ADR-0006 «Eventos al azar: balance» and «Pendiente»).
+  the lowest stat. Measured with the committed constants (`b3722b5`: the simulator gives 5 vigor
+  back, as the study asks; 500 seasons per Falconess, luck events on, four seed sets): 72.9-76.0 %
+  B or better, 36.7-38.0 % of the goal races won (ADR-0006 «Eventos al azar: balance»).
 
-  **Metric 7 under v2 is not met yet.** The mean hides the split per Falconess. With the committed
-  constants, 500 seasons per Falconess on three seed sets (`sim:season-batch`'s `batch-…`, S7
-  `full`, S7 `full` with `--seed alt1`): Caracara 58.0 / 62.8 / 61.4 % (pooled 60.7 %, Wilson
-  58.2-63.2 %: inconclusive), **Cernícala 52.6 / 56.4 / 59.2 % (pooled 56.1 %, 53.5-58.6 %: fail;
-  `batch-…` alone fails at 48.2-56.9 %)**, Peregrina 80.2 / 77.8 / 79.6 % (pass). With the study's
-  simulator cost (vigor +5): 71.6 / 73.4 / 71.8, 60.6 / 63.4 / 63.8 (Cernícala pooled 62.6 %,
-  60.1-65.0 %: a narrow pass) and 86.6 / 81.2 / 86.0 %. CI stays green only because `sim:batch`
-  defaults to v1. Before that default moves to v2 the lead decides between the simulator constant,
-  Cernícala's goal ladder and an ADR that moves metric 7's target (ADR-0006 «Consecuencias» and
-  «Pendiente»).
+  **Metric 7 under v2** passes or is inconclusive for every Falconess, with no fail cell. The mean
+  hides the split, so it is read per Falconess: 500 seasons per Falconess on three seed sets
+  (`sim:season-batch`'s `batch-…`, S7 `full`, S7 `full` with `--seed alt1`), Wilson 95 %: Caracara
+  71.6 / 73.4 / 71.8 % (pass on each), Cernícala 60.6 / 63.4 / 63.8 % (inconclusive on each; pooled
+  over the 1500 seasons 62.6 %, 60.1-65.0 %: pass), Peregrina 86.6 / 81.2 / 86.0 % (pass on each).
+  Before `b3722b5` (the simulator cost 5 vigor) Cernícala pooled 56.1 % (fail), which kept CI on
+  v1 (ADR-0006 «Consecuencias», «Métrica 7 en v2 y CI»).
 
-`--ruleset` (default v1, so the CI report and its baseline stay on v1 until the lead moves them)
-picks the batch's ruleset. Only S7 depends on it: at `--runs 10000` every race metric of `--ruleset
-v2` is identical to v1's (same race engine; the fixtures race at mood 0 and the v2 rival field only
-exists in the season's goal races). The workers receive the version from the pool.
+`--ruleset` picks the batch's ruleset. The default is `CURRENT_RULESET` (v2, the rules new runs
+start on), so CI measures v2: decided in ADR-0006 «Métrica 7 en v2 y CI» once S7 read pass or
+inconclusive on both `full` seed sets; no target moved. `--ruleset v1` measures the old rules (its
+report equals `5f0fd65`'s apart from metadata). Only S7 depends on it: at `--runs 10000` every
+race metric of `--ruleset v2` is identical to v1's (same race engine; the fixtures race at mood 0
+and the v2 rival field only exists in the season's goal races). The workers receive the version
+from the pool.
+
+In the `pr` profile (60 seasons per Falconess) S7 under v2 is inconclusive: Caracara 76.7 %,
+Peregrina 88.3 % and Cernícala 48.3 % (29 of 60, Wilson 36.2-60.7 %), one season above a fail cell
+(28 of 60 gives 34.6-59.1 %); with `--seed alt1`, `alt2` and `alt3` the same `pr` gives her 71.7 /
+70.0 / 71.7 %. A change that re-draws her seasons can read a `pr` fail with no real change in the
+mean: with the gate on, such a PR carries the `balance-adr` label and a `--profile full --scenarios
+S7` run, and the nightly `full` decides. The first v2 report diffs against a v1 baseline of `main`:
+the diff header warns «ruleset v1 → v2» and only S7 moves.
 
 Verdicts (§25.2.1): pass when the 95 % interval lies inside the target, fail when entirely outside,
 inconclusive otherwise; a metric passes only if every cell passes and fails if any fails, and the
@@ -190,7 +198,7 @@ which registers tsx (the parent's TypeScript loader does not reach worker thread
   `packages/rng/**`, `packages/schema/src/**`, the batch, the S7 reference policy
   `apps/cli/src/policy.ts`, `apps/cli/src/goal-rate.ts` or the workflow; the push list is the
   same): `pnpm sim:batch -- --runs 10000 --report out/balance.json --markdown out/balance.md
-  --max-wall-ms 60000`, with `--baseline` and `--baseline-from` when a baseline exists. The Markdown goes to the job summary and to one sticky PR
+  --max-wall-ms 60000` (ruleset v2, the default), with `--baseline` and `--baseline-from` when a baseline exists. The Markdown goes to the job summary and to one sticky PR
   comment (the comment whose body starts with `<!-- falconess-balance-report -->` is edited, else
   `gh pr comment` creates it; skipped for forks). The report is uploaded as `balance-pr`.
 - **Baseline:** every push to `main` that touches those paths runs the same job and uploads the

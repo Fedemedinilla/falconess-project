@@ -1,3 +1,4 @@
+import { CURRENT_RULESET } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { parseBatchArgs, UsageError } from "./options.js";
 
@@ -15,10 +16,13 @@ describe("sim:batch command line", () => {
     expect(o.workers).toBeGreaterThanOrEqual(1);
     expect(o.workers).toBeLessThanOrEqual(4);
     expect(o.failOnVerdict).toBe(false);
-    expect(o.rulesetVersion).toBe("v1");
+    // the rules new runs play (ADR-0006 «Métrica 7»: S7 passes or is inconclusive under v2)
+    expect(o.rulesetVersion).toBe(CURRENT_RULESET.version);
+    expect(o.rulesetVersion).toBe("v2");
   });
 
   it("takes --ruleset for S7's seasons and rejects an unknown one (ADR-0006)", () => {
+    expect(parseBatchArgs(["--ruleset", "v1"]).rulesetVersion).toBe("v1");
     expect(parseBatchArgs(["--ruleset", "v2"]).rulesetVersion).toBe("v2");
     expect(() => parseBatchArgs(["--ruleset", "v9"])).toThrow(UsageError);
     expect(() => parseBatchArgs(["--ruleset"])).toThrow(/needs a value/);

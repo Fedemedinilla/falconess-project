@@ -446,27 +446,33 @@ de eventos) y `.work/impl2/stage-c/replay-owner.mts`; la fila sin eventos no dep
   juega la de cada ruleset: v1 la de la stat más baja, sin cambios (`sim:season-batch --ruleset v1` y
   `sim:batch` dan lo mismo que `5f0fd65`); v2 la cuidadosa (`carefulPolicy`: entrena la stat más
   baja, descansa o sale en cuanto el fallo de ese entrenamiento pasa de 0, sale con ánimo bajo +1).
-  La usan `pnpm sim`, `pnpm sim:season-batch` y S7 de `pnpm sim:batch`; este último sigue en v1 por
-  defecto (la línea base de CI) y mide v2 con `--ruleset v2`: las métricas de carrera dan lo mismo en
-  los dos rulesets y S7 da 65 / 53 / 85 % (`pr`, 60 temporadas por Falconess). BRIEF §12 lleva la
-  nota.
-- **Con las constantes tal como están, la política cuidadosa no cumple la métrica 7 para
-  Cernícala.** La media de las tres (64-68 %) esconde el reparto: con 500 temporadas por Falconess y
-  tres bases de semillas (las de `sim:season-batch`, `batch-…`; las de S7 `full`, y S7 `full` con
-  `--seed alt1`), con eventos:
+  La usan `pnpm sim`, `pnpm sim:season-batch` y S7 de `pnpm sim:batch`, que mide `CURRENT_RULESET`
+  (v2) por defecto desde que la métrica 7 dejó de fallar en v2 (punto siguiente); `--ruleset v1`
+  mide v1. BRIEF §12 lleva la nota.
+- **Métrica 7 en v2 y CI.** Con el simulador del estudio (`b3722b5`) la política cuidadosa pasa o
+  queda inconclusa para las tres Falconess, sin ninguna celda que falle, en las dos bases de S7
+  `full` y en la de `sim:season-batch` (`batch-…`). La media de las tres (73 %) esconde el reparto,
+  así que se mide por Falconess: 500 temporadas por Falconess y base, con eventos, Wilson 95 %:
 
-  | Falconess | v2 tal como está             | Juntas (1500), Wilson 95 %     | v2 con el simulador del estudio (vigor +5) | Juntas (1500), Wilson 95 %     |
-  | --------- | ---------------------------- | ------------------------------ | ------------------------------------------ | ------------------------------ |
-  | Caracara  | 58,0 / 62,8 / 61,4 %         | 60,7 % (58,2-63,2): inconclusa | 71,6 / 73,4 / 71,8 %                       | 72,3 % (69,9-74,5): pasa       |
-  | Cernícala | 52,6 (falla) / 56,4 / 59,2 % | 56,1 % (53,5-58,6): **falla**  | 60,6 / 63,4 / 63,8 %                       | 62,6 % (60,1-65,0): pasa justo |
-  | Peregrina | 80,2 / 77,8 / 79,6 %         | 79,2 % (77,1-81,2): pasa       | 86,6 / 81,2 / 86,0 %                       | 84,6 % (82,7-86,3): pasa       |
+  | Falconess | `sim:season-batch`            | S7 `full`                     | S7 `full --seed alt1`         | Juntas (1500)           |
+  | --------- | ----------------------------- | ----------------------------- | ----------------------------- | ----------------------- |
+  | Caracara  | 71,6 % (67,5-75,4) pasa       | 73,4 % (69,4-77,1) pasa       | 71,8 % (67,7-75,6) pasa       | 72,3 % (69,9-74,5) pasa |
+  | Cernícala | 60,6 % (56,3-64,8) inconclusa | 63,4 % (59,1-67,5) inconclusa | 63,8 % (59,5-67,9) inconclusa | 62,6 % (60,1-65,0) pasa |
+  | Peregrina | 86,6 % (83,3-89,3) pasa       | 81,2 % (77,5-84,4) pasa       | 86,0 % (82,7-88,8) pasa       | 84,6 % (82,7-86,3) pasa |
 
-  Con 500 temporadas, Cernícala falla en la base de `sim:season-batch` (Wilson 48,2-56,9 %) y queda
-  inconclusa en las otras dos; con el simulador del estudio queda inconclusa en cada base y pasa
-  con las tres juntas. CI sigue en verde solo porque `sim:batch` mide v1 por defecto, mientras que
-  las partidas nuevas (`CURRENT_RULESET`) ya son v2. Antes de pasar el `sim:batch` por defecto a v2,
-  el líder decide entre la constante del simulador, la escalera de metas de Cernícala o un ADR que
-  mueva el objetivo de la métrica 7 («Pendiente»).
+  **Decisión: `pnpm sim:batch` mide v2 por
+  defecto** (`CURRENT_RULESET`), así que CI mide las reglas con las que empiezan las partidas
+  nuevas. Las métricas de carrera (1-6 y 8) dan lo mismo en los dos rulesets (`pr`, `--runs 10000`:
+  cada celda idéntica); solo cambia S7. En el perfil `pr` (60 temporadas por Falconess) S7 v2 queda
+  inconclusa: Caracara 76,7 %, Peregrina 88,3 % y **Cernícala 48,3 % (29 de 60, Wilson 36,2-60,7)**,
+  a una temporada de una celda que falla (28 de 60 da 34,6-59,1). Con `--seed alt1`, `alt2` y
+  `alt3` el mismo `pr` le da 71,7 / 70,0 / 71,7 %: la base por defecto le tocó mala. Un cambio que
+  mueva los sorteos de su temporada puede leer «falla» en el `pr` sin que la media se mueva; con la
+  puerta encendida (`BALANCE_GATE=enforce`) ese PR lleva la etiqueta `balance-adr` y una corrida
+  `full`, y el nocturno `full` decide (§25.2.1). El primer reporte en v2 se compara con una línea
+  base de `main` en v1: el diff avisa «ruleset v1 → v2». No se movió ningún objetivo. Historia: con
+  el simulador de `0b6cdfc` (vigor −5) Cernícala juntaba 56,1 % (53,5-58,6, falla) y Caracara
+  60,7 % (inconclusa), y CI siguió en v1 hasta este cambio.
 - Los golden del motor de carrera (`tests/golden/v1`) no cambian: corren con `RULESET_V1` y v2 usa el
   mismo motor de carrera.
 - `pnpm play` imprime la partida al salir en el formato de guardado de la web

@@ -221,9 +221,10 @@ Tareas, en orden:
   referencia juega temporadas completas sin interfaz y reporta distribución de `grade`, stats
   finales y `feathers`. Objetivo: B en el 60 % de los casos. Ajustar ganancias de entrenamiento
   del brief §8 contra la curva 550–800. Estado con el ruleset v2 (ADR-0006 «Consecuencias»): la
-  referencia es la política cuidadosa; con las constantes actuales Cernícala queda en 56 % de B o
-  mejor (1500 temporadas: falla) y Caracara en 61 % (inconclusa). El líder decide entre la
-  constante del simulador, la escalera de metas de Cernícala o un ADR antes de pasar `sim:batch` a v2.
+  referencia es la política cuidadosa; con el simulador del estudio (`b3722b5`, vigor +5) llega a B
+  o mejor en el 72 / 63 / 85 % de las temporadas de Caracara, Cernícala y Peregrina (1500 cada una:
+  pasan las tres; Cernícala queda inconclusa en cada base de 500), y `sim:batch` mide v2 por
+  defecto.
 - [ ] D18 · Biblias de voz `docs/characters/{peregrina,cernicala,caracara}.md` (escritas a mano) y
   `docs/world.md`. 10 eventos de historia escritos a mano (`handwritten: true`), 3–4 por Falconess.
 - [ ] D19 · `tools/generators/` para `events`, `skills`, `quirks` con salidas estructuradas del SDK de
