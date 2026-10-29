@@ -66,3 +66,6 @@ Detalle de cada comando: docs/commands.md.
 - Con conteos chicos (S3 en pr) el intervalo normal de la media colapsa: usar intervalos de puntuación.
 - Antes de suponer que la política de referencia gasta puntos de habilidad, medirlo: con la economía v1 nunca llega a 60.
 - Una regla nueva de temporada va detrás de constantes cuyo valor viejo no sortea (una opción, probabilidad 0): `v1-invariance.test.ts` compara v1 con los digests de `5f0fd65`, y un estado solo avanza con el ruleset con el que empezó.
+- Un archivo de contenido nuevo no invalida la caché de módulos de Vitest (el `import.meta.glob` de la web queda viejo y `load.test.ts` falla): `pnpm vitest --clearCache`.
+- Un evento de suerte (`auto`, v2) se aplica en la misma entrada, después de la acción: un test que mide el ánimo o el vigor de una semana v2 usa contenido sin eventos `auto`.
+- En v2 un ánimo −1 le cuesta a la política cuidadosa ≈ una semana (≈ −5,7 puntos de B por evento) y un ánimo +1 vale ≈ +14 a la que nunca sale: los eventos de ánimo van con poco peso; medir cada tipo de efecto por separado antes de pesar contenido nuevo.

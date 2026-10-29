@@ -9,6 +9,7 @@ pnpm sim:batch -- --runs 10000                         # pr profile → out/bala
 pnpm sim:batch -- --runs 10000 --markdown out/balance.md --baseline out/baseline.json
 pnpm sim:batch -- --profile full                       # nightly sample sizes (--runs ignored)
 pnpm sim:batch -- --scenarios S1,S3 --seed try2 --workers 3
+pnpm sim:batch -- --runs 10000 --ruleset v2           # S7 on ruleset v2 (careful policy)
 pnpm sim:batch -- --runs 1000 --engine fake            # development stand-in, not the engine
 pnpm sim:batch -- --engine fake --fake-cost-ms 5        # time the 60-s budget with a 5 ms engine
 ```
@@ -90,7 +91,7 @@ dead heat for first (equal `finishMilli`) evenly; the lane tie-break is never us
 | S4              | paired seed (on / off)                      | S1 field, every runner carries the skill; off = `disableSkill` on all 8                                                                                                                                 | metric 4: mean over runners of (timeOff − timeOn) × L / timeOff, then over seeds; paired normal interval; 0.5-8 m per (skill, course) cell where the trigger can occur (31 cells)                                  |
 | S5              | paired seed (with / without)                | S1 field; carrier = lane `k mod 8` with `fixtureBuild(content, [part], [])`                                                                                                                             | metric 5: `pr` converts the paired time gain to points at this run's S6 σ (equal-field model); `full` judges Δ win rate directly; ≤ 3 points                                                                       |
 | S6              | (S1 races)                                  | each S1 runner is a fixed build                                                                                                                                                                         | metric 6: mean over the 8 runners of σ/mean per course; σ × (1 ± 1.96 / √(2(N − 1))); 0.8-2 %; real-frame σ (shiden: R6) as a diagnostic                                                                           |
-| S7              | season (≤ 4 goal races)                     | season engine, reference policy and hangar of `sim:season-batch`                                                                                                                                        | metric 7: share of seasons with `gradeFor ≥ B` per Falconess, Wilson, ≥ 60 %; grade distribution, score split, goal pass-rate table (passed / reached, flag under 80 %; won / reached) and goal races by place     |
+| S7              | season (≤ 4 goal races)                     | season engine, the ruleset's reference policy and the hangar of `sim:season-batch`                                                                                                                      | metric 7: share of seasons with `gradeFor ≥ B` per Falconess, Wilson, ≥ 60 %; grade distribution, score split, goal pass-rate table (passed / reached, flag under 80 %; won / reached) and goal races by place     |
 | S8              | I sweep: 5 races on one seed                | 8 neutral fixtures of one style; measured runner in lane `k mod 8` at I 300 / 510 / 600 / 630 / 1000                                                                                                    | metric 8: `pr` pools adjacent-I paired win differences over styles and courses; `full` one cell per (style, course, step, win or top-3); fail only when the interval lies below 0                                  |
 | quirks (`full`) | paired seed                                 | like S5 with `fixtureBuild(content, [], [quirk])`                                                                                                                                                       | table only                                                                                                                                                                                                         |
 | stats (`full`)  | paired seed (2 solo races)                  | solo neutral hover, 600 vs stat + 100                                                                                                                                                                   | metres per +100, table only                                                                                                                                                                                        |
@@ -100,14 +101,36 @@ S1 absorbs the remainder so the budgeted races add up to exactly `--runs` (S7 ru
 goal fails). The allocation is computed over every line, so `--scenarios` never changes a cell's
 seeds or counts. S6 and S5's `pr` verdict pull S1 in.
 
-Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:season-batch`): option
-0 on an event; a workshop visit that does a `repair` when the equipped frame's durability is below
-50 % of the build's maximum (`REPAIR_BELOW_PM`; durability persists between goal races, ADR-0003
-D35, risk R8) and learns, cheapest first and up to the learn cap, every useful generic active the
-skill points pay for (`skillsToLearn`: an active no Falconess owns whose trigger can fire on a goal
-course still ahead; ADR-0005 «Pasada 2»); rest at fatigue 60 or more; otherwise train the lowest
-stat. With the v1 economy the lowest-stat training ends a season with 25-50 skill points and the
-cheapest generic active costs 60, so the learning rule never fires in the reference seasons.
+Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:season-batch`):
+`referencePolicy(ctx, state)` plays the reference of the run's ruleset (ADR-0006 «Consecuencias»,
+«Métrica 7»: option (a) of the v2 study, `.work/design2/fatiga-animo.md` §10).
+
+- **v1: `lowestStatPolicy`.** Option 0 on an event; a workshop visit that does a `repair` when the
+  equipped frame's durability is below 50 % of the build's maximum (`REPAIR_BELOW_PM`; durability
+  persists between goal races, ADR-0003 D35, risk R8) and learns, cheapest first and up to the
+  learn cap, every useful generic active the skill points pay for (`skillsToLearn`: an active no
+  Falconess owns whose trigger can fire on a goal course still ahead; ADR-0005 «Pasada 2»); rest at
+  fatigue 60 or more; otherwise train the lowest stat. It never goes on an outing: v1's forced rest
+  at fatigue 80 is its safety net. With the v1 economy the lowest-stat training ends a season with
+  25-50 skill points and the cheapest generic active costs 60, so the learning rule never fires in
+  the reference seasons. Kept exactly so v1's metrics stay comparable: `sim:season-batch --ruleset
+  v1` and `sim:batch` (v1) print the same numbers as `5f0fd65`.
+- **v2: `carefulPolicy`** (the study's «cuidadosa» f0 m1, `.work/design2/fatiga-animo.md` §4). v2
+  has no forced rest, so a reference player has to look after vigor and mood: under v2 the
+  lowest-stat policy, which never goes out, reaches B or better in only 37-40 % of the seasons.
+  Option 0 and the same workshop visit; then it takes the lowest stat's training and its failure
+  chance from the sim (`trainingRisk`, the vigor before training). When that chance is above 0 and
+  above what the training risks fresh (a risk flight always fails 12 %), it recovers: an outing if
+  mood is below +2 and the outing's vigor brings the chance back to 0, otherwise a rest. It also
+  goes out whenever mood is below +1 (`CAREFUL`: `maxFailPm` 0, `moodFloor` 1). Otherwise it trains
+  the lowest stat. Measured (500 seasons per Falconess, ruleset v2 with the luck events, four seed
+  sets): 64-68 % B or better, 30-31 % of the goal races won; 73-76 % and 37-38 % with the study's
+  simulator cost (ADR-0006 «Eventos al azar: balance» and «Pendiente»).
+
+`--ruleset` (default v1, so the CI report and its baseline stay on v1 until the lead moves them)
+picks the batch's ruleset. Only S7 depends on it: at `--runs 10000` every race metric of `--ruleset
+v2` is identical to v1's (same race engine; the fixtures race at mood 0 and the v2 rival field only
+exists in the season's goal races). The workers receive the version from the pool.
 
 Verdicts (§25.2.1): pass when the 95 % interval lies inside the target, fail when entirely outside,
 inconclusive otherwise; a metric passes only if every cell passes and fails if any fails, and the

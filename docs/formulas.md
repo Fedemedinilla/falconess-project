@@ -119,6 +119,33 @@ suba, sale con ánimo < +1) llega a B o mejor en 74-75 % y gana 38-40 % de sus c
 la que nunca sale, 45 %; la que descansa con vigor 20, 30 %; la que descansa con vigor 0, 7 %; el
 spam de un solo entrenamiento, 0-0,1 %. Stat media final de la cuidadosa ≈ 710.
 
+### Eventos al azar (v2, ADR-0006 D8)
+
+Intención: la suerte de la semana, buena o mala, que el jugador no elige pero ve en «Lo que pasó»
+(pedido del dueño): los malos bajan el ánimo o el vigor, los buenos dan stats, vigor o ánimo.
+
+Mecánica (la de todos los eventos): al cerrar la semana, después de la acción y de la carrera, un
+evento de historia en su `fixedTurn` sale siempre; si no hay, con `eventChance` (600 ‰) sale uno de
+los ponderados elegibles, elegido por `weight` (stream `events`). Un evento con `auto` se aplica en
+esa misma entrada: efectos de su única opción, la rama de azar si tiene, y sus notas. Los de suerte
+(`packages/content/events/luck-*.json`) llevan `rulesets: ["v2"]`: v1 no los ve y no sortea
+distinto.
+
+Contenido (16): cada uno sale como mucho una vez por temporada (`maxOccurrences` 1) y vive en uno de
+los tramos entre carreras objetivo (semanas 2-11, 13-23, 25-35 y 37-45), así ninguno le quita la
+semana de carrera a `podium-interview` o `hard-loss`. Efectos: malo = ánimo −1 o vigor −10 … −15
+(`fatigue` +10 … +15); bueno = una o dos stats +6 … +10, vigor +20 (`fatigue` −20) o ánimo +1; dos
+eventos tiran una moneda entre un resultado bueno y uno malo (75/25 y 60/40). Pesos 3-20: más altos
+en el primer tramo, donde compiten con más eventos con elección; los de ánimo, los más bajos (3-4),
+porque un −1 de ánimo le cuesta una semana a quien lo cuida y un +1 le ahorra las salidas a quien no
+sale.
+
+Rango medido (política cuidadosa, 500 temporadas por Falconess): 8,6 eventos de suerte por
+temporada, uno cada 5 semanas jugadas (2,1 / 2,5 / 2,4 / 1,6 por tramo); los eventos con elección
+bajan de 13,7 a 13,0 por temporada (los del primer tramo se corren a los siguientes). Efecto en la
+temporada: la cuidadosa ≈ −2 puntos de B o mejor (entre 0 y −4 según la base de semillas); la que
+nunca sale, +3 a +4 (detalle y tablas en ADR-0006 «Eventos al azar: balance»).
+
 ## Carrera
 
 Especificación completa, pseudocódigo y pruebas: `docs/race-engine.md`; desviaciones del brief:
@@ -418,9 +445,9 @@ v1, porque no hay pistas urbanas ni de montaña (ADR-0003 D47). Métrica 5: los 
 victoria que gana una corredora `δ` más rápida que las otras siete en un campo igualado con tiempos normales de σ relativa; 3 puntos ≈ `δ`
 0,155 % con σ 0,99 % y 0,185 % con σ 1,18 % (las piezas del contenido inicial valían 5-87 puntos, `docs/race-engine.md`
 R18; ADR-0005 las deja en ≤ 2,3). Métrica 7, literal: cuota de temporadas con `gradeFor ≥ B` ≥ 60 % por Falconess con la
-política de la stat más baja, donde `seasonScore = total de stats + scorePerSkill × habilidades +
+política de referencia del ruleset (v1: la de la stat más baja; v2: la cuidadosa, ADR-0006 «Métrica 7»), donde `seasonScore = total de stats + scorePerSkill × habilidades +
 scoreWinBonus × victorias + scorePodiumBonus × segundos y terceros puestos`, y B exige
-`seasonScore ≥ 2900` y ningún objetivo fallado (un fallo limita la nota a C). Constantes: `SEASON.gradeThresholds`, `scorePerSkill` 20, `scoreWinBonus` 50,
+`seasonScore ≥ 2900` (v2: 3190) y ningún objetivo fallado (un fallo limita la nota a C). Constantes: `SEASON.gradeThresholds`, `scorePerSkill` 20, `scoreWinBonus` 50,
 `scorePodiumBonus` 20, `gradeCapOnGoalFailure`; los tamaños de muestra viven en el lote
 (`apps/cli`), no en el ruleset.
 

@@ -511,7 +511,7 @@ Seis capas de prueba, y las cuatro primeras corren en cada commit: unitarias, pr
 | Dispersión de tiempos con semillas distintas y misma build           | Desviación estándar entre 0,8 % y 2 % del tiempo medio |
 | Resultado de temporada con política fija "entrenar la stat más baja" | `grade` B en el 60 % de los casos                      |
 
-El reporte incluye un diff contra la línea base de `main`; una métrica fuera de rango bloquea el merge salvo que el PR adjunte un ADR que mueva el objetivo. Las políticas de entrenamiento de referencia (`tools/policies/`) son agentes deterministas simples que juegan temporadas completas sin interfaz; sirven para medir la economía y la curva de stats.
+Desde el ruleset v2 (ADR-0006 «Métrica 7»), la temporada de la última fila se juega con la política cuidadosa (sigue entrenando la stat más baja, pero descansa o sale antes de que suba el fallo y sale con ánimo bajo +1): sin descanso forzado, la que nunca sale ya no representa a un jugador; en v1 sigue la de la stat más baja. El reporte incluye un diff contra la línea base de `main`; una métrica fuera de rango bloquea el merge salvo que el PR adjunte un ADR que mueva el objetivo. Las políticas de entrenamiento de referencia (`tools/policies/`) son agentes deterministas simples que juegan temporadas completas sin interfaz; sirven para medir la economía y la curva de stats.
 
 **Rendimiento:** el motor debe simular una carrera de 8 corredoras y 3.000 m en menos de 5 ms; si no, el lote no cabe en CI. Se mide con un benchmark en `packages/sim/bench/` y se registra en cada PR.
 

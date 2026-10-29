@@ -185,9 +185,9 @@ export function carefulPolicy(
 
 /**
  * The reference policy of the run's ruleset (metric 7, `sim:season-batch`, `pnpm sim`; ADR-0006
- * «Métrica 7», owner's decision): ruleset v1 keeps `lowestStatPolicy`, so v1's metrics stay
- * comparable; every later ruleset plays `carefulPolicy`, since without a forced rest a reference
- * player has to look after vigor and mood herself.
+ * «Consecuencias», Métrica 7: option (a) of the v2 study): ruleset v1 keeps `lowestStatPolicy`,
+ * so v1's metrics stay comparable; every later ruleset plays `carefulPolicy`, since without a
+ * forced rest a reference player has to look after vigor and mood herself.
  */
 export function referencePolicy(ctx: SimContext, state: SeasonState): RunInput {
   return ctx.ruleset.version === RULESET_V1.version
