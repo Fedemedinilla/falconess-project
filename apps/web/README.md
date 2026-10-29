@@ -75,11 +75,15 @@ for every ruleset: a fatigue cost of +20 is «Vigor −20», an event's fatigue 
 The status panel's bar drains with training and fills with rest; with ruleset v2 it is colored and
 named by its risk band (`screens/model/vigor.ts`, the edges of the failure curve: ≥ 60 «Sin
 riesgo», 40–59 «Riesgo bajo», 21–39 «Riesgo alto», ≤ 20 «Puede lesionarse», marked on the track,
-`#turno-vigor-nota`, `data-band`). A v1 run has no bands: its bar keeps the forced rest at vigor 20
-or less (mark, pill, the cards' block). Every training card says its failure chance and, when
-there is one, its injury chance (`trainingRisk` at the current fatigue), amber from 10 % and red
-from 25 % or an injury from exhaustion (`data-risk` on the card); rest says «+30 a +70» and each
-recovery's chance (`restOptions`), the outing «+20» vigor and +1 mood. The mood line gives its
+`#turno-vigor-nota`, `data-band`; green, amber, amber and red: red only where a failure can be an
+injury, as on the cards). The bands speak of the plain trainings: the safe band's note and the v2
+legend say the risk flight fails even at full vigor (12 %, `trainingRisk` at fatigue 0), and that
+a quarter of its failures are injuries at any vigor. A v1 run has no bands: its bar keeps the
+forced rest at vigor 20 or less (mark, pill, the cards' block). Every training card says its
+failure chance and, when there is one, its injury chance (`trainingRisk` at the current fatigue),
+amber from 10 % and red from 25 % or an injury from exhaustion (`data-risk` on the card); rest says
+«+30 a +70» and each recovery's chance (`restOptions`) and «+1 Ánimo (25 %)», the chance on the
+effect itself (`restMoodUpChance`), the outing «+20» vigor and +1 mood. The mood line gives its
 multiplier on training and on races («Entrenamientos ×1,10 · carreras ×1,02», `#turno-animo-nota`);
 when a training streak makes the next mood drift likelier than a first training's, a line above
 the cards says so with its chance (`#turno-racha`, `nextTrainingDriftPm`). The actions' legend
@@ -88,8 +92,10 @@ explains the curve in v2 and the linear chance in v1, brief and full.
 ## «Lo que pasó» (`src/screens/WeekDialog.tsx`)
 
 After every input that closes a week or answers an event (a training, rest, outing, workshop, a
-race week, an event's answer) a modal opens over the Turn screen: the native `<dialog>` in modal
-mode (the page behind dimmed and inert, `aria-modal`, labelled by its headline, focus on
+race week, an event's answer) a modal opens over the Turn screen, and over SeasonEnd for the input
+that ends the season (week 48, a failed goal race, an answer that ends it; «Continuar» leaves the
+player on #fin with the focus on the page): the native `<dialog>` in modal mode (the page behind
+dimmed and inert, `aria-modal`, labelled by its headline, focus on
 «Continuar»), closed by «Continuar», Enter, Esc or a click on the dimmed page, the focus back
 where it was (or on the week's action when that element is gone). One headline says what happened
 («✅ ¡Entrenamiento exitoso!», «❌ Falló el entrenamiento», «🩹 Se lesionó», «💤 Descansó», «☕
@@ -97,8 +103,12 @@ Salida con …», «📣 Elegiste: …»; on a race week the place and the goal,
 below), then the stats as chips, the other changes with where they ended and their cause (vigor =
 `fatigueMax − fatigue`, mood, skill points, scrap, feathers, bond, durability, injury, skills),
 the log notes nothing above says (any key, through the text lookup), the race's tip with its own
-«Breve | Completo» and «Ver carrera», and a line when an event waits: the event dialog opens only
-after this one closes. A normal week fits 390 × 700 without scrolling inside.
+«Breve | Completo» and «Ver carrera», and, in the footer next to «Continuar», a line when an event
+waits (`#semana-evento-espera`): the event dialog opens only after this one closes, with the focus
+on its title (`Dialog`'s `focusTitle`), so the Enter that closed this one does not hide the event
+unread. Every week fits 390 × 700 without scrolling inside: on a screen 760 px tall or less the
+spacing tightens and the race's tip keeps its leads and the stat to train, while its numbers and
+its switch wait in «Ver carrera» (the replay's «Por qué» shows the same tip whole).
 
 With ruleset v2 it also says why: every mood change names its cause from the sim's `log.mood.*`
 note («Peregrina está harta de entrenar», «la carrera la dejó desanimada», «el fallo la
@@ -108,9 +118,10 @@ injury from exhaustion says so in red. A luck event the sim applied by itself (`
 log entry) gets its own block (`#semana-evento`): its text, what happened (the option), how its
 chance branch came out and what it did (`#semana-evento-efectos`: the option's effects, then the
 drawn branch's, worded as the event dialog words an option's: «Agilidad +10», «Vigor −15»; the
-week's stats and rows add them to the action's), green when its effects only helped, red when they
-only hurt, amber when mixed (`effectsTone`, `data-tone`); it is named as a cause only of what its
-effects change. An answered event's headline takes the same tone. The dialog carries its
+stat chips under the headline are the action's own, the week's change minus the event's stats,
+while the rows give the week's totals; no note repeats the event's mood), green when its effects
+only helped, red when they only hurt, amber when mixed (`effectsTone`, `data-tone`); it is named
+as a cause only of what its effects change. An answered event's headline takes the same tone. The dialog carries its
 headline's tone as `data-tone`.
 
 Everything comes from the controller's last step (`before`, `input`, `after`) through the pure
@@ -123,7 +134,7 @@ localStorage (`falconess.pruebas.vista`, the run's `runFingerprint`, guarded); a
 last step and opens it unless this browser already read that week of that very run. The one-line
 recap above the actions («Lo que pasó · Semana 4: …», `#turno-semana-pasada`) brings it back
 («Ver de nuevo»). Ids: `semana-dialogo`, `semana-titulo`, `semana-cambios`, `semana-continuar`,
-`semana-ver-carrera`, `semana-consejo` (+ `-explicacion-breve|completo`).
+`semana-ver-carrera`, `semana-consejo` (+ `-explicacion-breve|completo`), `semana-evento-espera`.
 
 ## Brief and full explanations
 
@@ -214,21 +225,25 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
 - `advice.spec.ts`: a loaded run whose T12 race ends 7th: «Lo que pasó» with the place, the goal
   and the tip (brief and full; Enter on its switch switches, it does not close), the same tip atop
   the replay's "Por qué", none for the winner, and back on the season the week stays read, also
-  after a reload; a resting run whose T24 race ends the season: the tip on SeasonEnd.
+  after a reload; a resting run whose T24 race ends the season: «Lo que pasó» over SeasonEnd,
+  then the tip on SeasonEnd; the same week at 390 × 700 fits with the tips' leads only.
 - `week.spec.ts`: «Lo que pasó» after a training at 390 × 700 (modal, headline, changes with the
   vigor band, no inner scroll, inert page, no motion with reduced motion, Enter closes it, the focus
   comes back, the recap line opens it again), a failed training (agility every week until the curve
-  catches her) closed with its button, the week's result before its event (Esc) and the answer's
+  catches her) closed with its button, the week's result before its event (Esc; the waiting line in
+  the footer; the event's title takes the focus, so Enter does not hide it) and the answer's
   own result (a click outside), the reload rule (unread opens again, read does not), and a luck
   event's block (one of the content's `ev.luck-*` texts, its effects, its tone). `play.ts` reads it with Enter after
   every decision (`closeWeek`); `takeWeek` answers a waiting event first. v2 scenes are found by
   playing on, not pinned to one seed's draws, so new v2 content does not break them.
-- `vigor.spec.ts`: the vigor bar's band and every training's failure and injury chance after each
-  of four trainings, against v2's curve written out in the test as an oracle; the cards' alarm at
-  vigor 20 or less; the streak line above the cards and the mood drift in «Lo que pasó».
+- `vigor.spec.ts`: the safe band's note names the risk flight's 12 %, as its card does; the vigor
+  bar's band and every training's failure and injury chance after each of four trainings, against
+  v2's curve written out in the test as an oracle; the cards' alarm at vigor 20 or less; the streak
+  line above the cards and the mood drift in «Lo que pasó».
 - `ruleset.spec.ts`: the owner's playtest 1 (`packages/sim/src/season/__fixtures__/`) loads as a
-  v1 run with its grade (B); a copy cut before week 19 plays on under v1 (vigor 15, the forced
-  rest, +40) and keeps v1 after a reload; a new season is v2.
+  v1 run, its last week's «Lo que pasó» over SeasonEnd, with its grade (B); a copy cut before week
+  19 plays on under v1 (vigor 15, the forced rest, +40) and keeps v1 after a reload; a new season
+  is v2.
 - `explain.spec.ts`: one card's «Breve | Completo», then «Explicaciones» for every card; the
   default survives a reload and the card's own choice does not; the card in view stays put when
   the default changes; on a phone the switches open with «Ver detalle», the default sits at the
