@@ -6,7 +6,7 @@ import { closeWeek, decide, playUntil, RUN_KEY, readTurn, startSeason, statsOf }
  * "Continuar" replays the stored one, and the page works when storage is blocked.
  */
 
-test("copy a run and load it in a fresh browser: same week, stats and fatigue", async ({
+test("copy a run and load it in a fresh browser: same week, stats and vigor", async ({
   page,
   browser,
 }) => {

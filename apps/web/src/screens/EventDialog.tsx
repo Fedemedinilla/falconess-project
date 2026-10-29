@@ -91,7 +91,9 @@ export function EventDialog() {
           <span className={s.source}>{source}</span>
           <span>{ui("ui.goals.week", { turn: pending.turn })}</span>
         </p>
-        <p className={s.text}>{gameText(event.textKey)}</p>
+        <p className={s.text} id="evento-texto">
+          {gameText(event.textKey)}
+        </p>
         <ol className={s.options}>
           {event.options.map((option, i) => {
             const summary = describeOption(option, crewName);

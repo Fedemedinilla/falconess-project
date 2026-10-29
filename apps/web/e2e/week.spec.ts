@@ -1,12 +1,12 @@
 import { expect, t, test, textPattern } from "./fixtures";
-import { closeWeek, decide, readTurn, startSeason } from "./play";
+import { closeWeek, decide, readTurn, startSeason, takeWeek, vigorOf } from "./play";
 
 /**
  * «Lo que pasó»: after every input a modal says what happened (headline, changes with their
  * causes, notes), over an inert page, until the player reads it (Continuar, Enter, Esc, a click
- * outside). The seeds are Peregrina's with ruleset v1: in "pt-e2e-semana-0" the first agility
- * training goes well, in "pt-e2e-semana-11" it fails, in "pt-e2e-semana-1" the second one leaves
- * an event (boneyard-botch-1) waiting.
+ * outside). New seasons play ruleset v2, where a training at full vigor never fails: the failure
+ * and the event are found by playing on (spam one training, or train and rest), so the scenes do
+ * not hang on one seed's draws.
  */
 
 const DIALOG = "#semana-dialogo";
@@ -33,10 +33,13 @@ test("a training on a phone: one headline, the changes, no scrolling; Enter clos
   await expect(dialog.getByRole("list", { name: t("ui.turn.stats") })).toContainText(
     t("stat.agility"),
   );
+  // vigor drains: −20 to 80, still with no risk
   const changes = dialog.getByRole("list", { name: t("ui.week.changes") });
-  await expect(changes).toContainText(t("ui.week.vigor"));
-  await expect(changes).toContainText("−20");
-  await expect(changes).toContainText(t("ui.week.cause.training"));
+  const vigor = changes.getByRole("listitem").filter({ hasText: t("ui.week.vigor") });
+  await expect(vigor).toContainText("−20");
+  await expect(vigor).toContainText("→ 80");
+  await expect(vigor).toContainText(t("ui.week.cause.training"));
+  await expect(vigor).toContainText(t("ui.turn.vigor.band.safe"));
   // no motion when the viewer asks for none
   expect(await dialog.evaluate((d) => getComputedStyle(d).animationDuration)).toBe("0s");
 
@@ -77,54 +80,70 @@ test("a training on a phone: one headline, the changes, no scrolling; Enter clos
   await expect(page.locator("#turno-ver-semana")).toBeFocused();
 });
 
-test("a failed training says so in red; the button closes it and the focus comes back", async ({
+test("a failed training says so in red, with the mood it cost and why; the focus comes back", async ({
   page,
 }) => {
-  await startSeason(page, "peregrina", "pt-e2e-semana-11");
-  await decide(page, "#accion-train-agility", (await readTurn(page)).inputs);
-  const dialog = page.getByRole("dialog", { name: t("ui.week.title.train-fail") });
-  await expect(dialog).toBeVisible();
-  // half the gain is lost: the stats go down
-  await expect(dialog.getByRole("list", { name: t("ui.turn.stats") })).toContainText("−");
-  const mood = dialog
+  // agility every week: vigor runs out and the failure curve catches her
+  await startSeason(page, "peregrina", "pt-e2e-fallo");
+  const failed = page
+    .getByRole("dialog", { name: t("ui.week.title.train-fail") })
+    .or(page.getByRole("dialog", { name: t("ui.week.title.injury") }));
+  let found = false;
+  for (let week = 0; week < 12 && !found; week++) {
+    if (!(await takeWeek(page, "#accion-train-agility"))) break;
+    found = (await failed.count()) > 0;
+  }
+  expect(found, "agility every week never failed").toBe(true);
+  await expect(failed).toBeVisible();
+  await expect(page.locator(DIALOG)).toHaveAttribute("data-tone", "bad");
+  // part of the gain is lost: the stats go down
+  await expect(failed.getByRole("list", { name: t("ui.turn.stats") })).toContainText("−");
+  // the mood it cost, unless it was already at the bottom, says why in red
+  const mood = failed
     .getByRole("list", { name: t("ui.week.changes") })
     .getByText(t("ui.week.cause.fail"));
   if ((await mood.count()) > 0) await expect(mood).toBeVisible();
   await page.click("#semana-continuar");
-  await expect(dialog).toBeHidden();
+  await expect(failed).toBeHidden();
   await expect(page.locator("#accion-train-agility")).toBeFocused();
-  await expect(page.locator("#turno-semana-pasada")).toContainText(t("ui.turn.feedback.fail"));
 });
 
 test("the week's result first, then its event; Esc and a click outside close them", async ({
   page,
 }) => {
   await startSeason(page, "peregrina", "pt-e2e-semana-1");
-  await decide(page, "#accion-train-agility", (await readTurn(page)).inputs);
-  await closeWeek(page);
-  await decide(page, "#accion-train-agility", (await readTurn(page)).inputs);
-
-  // the training's result, with word of the event that waits behind it
+  // train until a week leaves an event waiting (rest when vigor runs low)
   const week = page.locator(`${DIALOG}[open]`);
+  let action = "";
+  for (let i = 0; i < 12; i++) {
+    const view = await readTurn(page);
+    action = vigorOf(view) <= 40 ? "#accion-rest" : "#accion-train-agility";
+    await takeWeek(page, action);
+    if ((await week.getByText(t("ui.week.eventNext")).count()) > 0) break;
+  }
+
+  // the week's result, with word of the event that waits behind it
   await expect(week).toBeVisible();
   await expect(week).toContainText(t("ui.week.eventNext"));
   await expect(page.locator("#evento-dialogo[open]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(week).toHaveCount(0);
 
-  // then the event; its answer gets its own «Lo que pasó»
-  await expect(page.locator("#evento-dialogo[open]")).toBeVisible();
+  // then the event; its answer gets its own «Lo que pasó», with the event's text as context
+  const event = page.locator("#evento-dialogo[open]");
+  await expect(event).toBeVisible();
+  const text = (await page.locator("#evento-texto").textContent()) ?? "";
+  expect(text.length).toBeGreaterThan(0);
   await decide(page, "#evento-opcion-0", (await readTurn(page)).inputs);
   const answer = page.getByRole("dialog", { name: textPattern("ui.week.title.event") });
   await expect(answer).toBeVisible();
-  await expect(answer).toContainText(t("ev.boneyard-botch-1"));
+  await expect(answer).toContainText(text);
   await expect(page.locator("#semana-continuar")).toBeFocused();
 
   // a click on the dimmed page closes it; the focus goes to the week's action
   await page.mouse.click(4, 4);
   await expect(answer).toBeHidden();
-  await expect(page.getByTitle(t("ui.top.week.long", { turn: 3, turns: 48 }))).toBeAttached();
-  await expect(page.locator("#accion-train-agility")).toBeFocused();
+  await expect(page.locator(action)).toBeFocused();
 });
 
 test("an unread week opens again after a reload; once read, it does not", async ({ page }) => {

@@ -116,7 +116,9 @@ export function SeasonEnd() {
             <Icon name="grade" />
             {ui("ui.end.grade")}
           </span>
-          <span className={s.gradeValue}>{summary.grade}</span>
+          <span className={s.gradeValue} id="fin-nota">
+            {summary.grade}
+          </span>
         </div>
         <div className={s.who}>
           <p className={s.eyebrow}>

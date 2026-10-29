@@ -130,6 +130,7 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
       ref={ref}
       id={WEEK_DIALOG_ID}
       className={cx(s.dialog, s[headline.tone])}
+      data-tone={headline.tone}
       aria-labelledby={TITLE_ID}
       aria-describedby={BODY_ID}
       aria-modal="true"

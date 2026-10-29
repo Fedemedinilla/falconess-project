@@ -1,9 +1,11 @@
 /**
  * A tester's hands: start a season and play it by clicking, with a simple policy (answer events
- * with the first option, rest when tired, else train the lowest stat). Everything is read from
- * the page (meters, the timing bar, the open dialog); the save in localStorage is only used to
- * know that a click went through.
+ * with the first option, rest when vigor runs low, else train the lowest stat). Everything is read
+ * from the page (meters, the timing bar, the open dialog); the save in localStorage is only used
+ * to know that a click went through.
  */
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 
@@ -21,8 +23,11 @@ const TRAINING_BUTTON: Readonly<Record<Stat, string>> = {
   intelligence: "#accion-train-simulator",
 };
 
-/** Fatigue from which the policy rests (the Turn screen turns the bar amber there). */
-export const TIRED_AT = 60;
+/**
+ * Vigor at or below which the policy rests: under it ruleset v2's failure curve climbs fast
+ * ("riesgo alto"); in v1 the bar turns amber there.
+ */
+export const LOW_VIGOR = 40;
 
 export type TurnView = {
   readonly hash: string;
@@ -31,7 +36,7 @@ export type TurnView = {
   readonly eventOpen: boolean;
   /** «Lo que pasó» is open (after every input, until it is read; an event waits behind it). */
   readonly weekOpen: boolean;
-  /** Stats by their game name, and fatigue under "Fatiga" (the hidden meters of the Turn screen). */
+  /** Stats by their game name, and vigor under "Vigor" (the hidden meters of the Turn screen). */
   readonly meters: Readonly<Record<string, number>>;
   /** Inputs of the saved run (start included); -1 without a save. */
   readonly inputs: number;
@@ -67,6 +72,13 @@ export async function readTurn(page: Page): Promise<TurnView> {
   }, RUN_KEY);
 }
 
+/** The vigor meter of the Turn screen (`fatigueMax − fatigue`). */
+export function vigorOf(view: TurnView): number {
+  const vigor = view.meters[t("ui.turn.vigor")];
+  if (vigor === undefined) throw new Error(`no vigor meter on ${view.hash}`);
+  return vigor;
+}
+
 export function statsOf(view: TurnView): Record<Stat, number> {
   const out = {} as Record<Stat, number>;
   for (const stat of STATS) {
@@ -80,9 +92,7 @@ export function statsOf(view: TurnView): Record<Stat, number> {
 /** The button the policy clicks this week. */
 export function policyChoice(view: TurnView): string {
   if (view.eventOpen) return "#evento-opcion-0";
-  const fatigue = view.meters[t("ui.turn.fatigue")];
-  if (fatigue === undefined) throw new Error("no fatigue meter");
-  if (fatigue >= TIRED_AT) return "#accion-rest";
+  if (vigorOf(view) <= LOW_VIGOR) return "#accion-rest";
   const stats = statsOf(view);
   let lowest: Stat = STATS[0];
   for (const stat of STATS) if (stats[stat] < stats[lowest]) lowest = stat;
@@ -116,6 +126,29 @@ export async function closeWeek(page: Page): Promise<void> {
   await expect(page.locator("#semana-continuar")).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(dialog).toHaveCount(0);
+}
+
+/**
+ * Take one week with `action` (a button id): read a «Lo que pasó» still open and answer a waiting
+ * event first (its first option, and its own «Lo que pasó»), then click. The week's «Lo que pasó»
+ * is left open for the caller. Returns false when the season has ended (#fin).
+ */
+export async function takeWeek(page: Page, action: string): Promise<boolean> {
+  for (let i = 0; i < 4; i++) {
+    const view = await readTurn(page);
+    if (view.weekOpen) {
+      await closeWeek(page);
+      continue;
+    }
+    if (view.hash === "#fin") return false;
+    if (view.eventOpen) {
+      await decide(page, "#evento-opcion-0", view.inputs);
+      continue;
+    }
+    await decide(page, action, view.inputs);
+    return true;
+  }
+  throw new Error("the week did not open for an action");
 }
 
 /** One decision of the policy. Returns false when the season has ended (#fin). */
@@ -166,6 +199,32 @@ export async function startSeason(page: Page, falconessId: string, seed: string)
   await page.fill("#nueva-semilla", seed);
   await page.click("#nueva-empezar");
   await expect(page.getByTitle(t("ui.top.week.long", { turn: 1, turns: 48 }))).toBeAttached();
+}
+
+/** The owner's playtest 1 (ruleset v1, seed 397553), as packages/sim keeps it for its tests. */
+export const RUN1: {
+  schemaVersion: number;
+  rulesetVersion: string;
+  seed: string;
+  inputs: { kind: string }[];
+} = JSON.parse(
+  readFileSync(
+    fileURLToPath(
+      new URL("../../../packages/sim/src/season/__fixtures__/playtest-run1.json", import.meta.url),
+    ),
+    "utf8",
+  ),
+);
+
+/** The owner's run up to week 19, whose training v1 turned into a forced rest (fatigue 85). */
+export const RUN1_WEEK19 = { ...RUN1, inputs: RUN1.inputs.slice(0, 29) };
+
+/** Home → Cargar partida → paste `run` → Cargar y reproducir. */
+export async function loadRun(page: Page, run: unknown): Promise<void> {
+  await page.goto("#inicio");
+  await page.click("#inicio-cargar");
+  await page.fill("#cargar-json", JSON.stringify(run));
+  await page.click("#cargar-enviar");
 }
 
 /** The place and field of a "3.º de 12" text. */
