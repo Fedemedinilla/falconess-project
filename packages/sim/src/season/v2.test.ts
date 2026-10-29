@@ -408,10 +408,14 @@ describe("v2 seasons", () => {
           falconessId: i % 2 ? "caracara" : "peregrina",
         });
         while (s.status === "active") {
+          // a third trains one stat, a third rests whenever tired (many rest draws, so the three
+          // rest outcomes show up whatever the content's events do to the trajectories)
           const input: RunInput =
             !s.pendingEvent && i % 3 === 0 && s.turn % 4 !== 0
               ? { kind: "train:technique" }
-              : mixedPolicy(content, s);
+              : !s.pendingEvent && i % 3 === 1 && s.fatigue >= 60
+                ? { kind: "rest" }
+                : mixedPolicy(content, s);
           s = advanceSeason(ctx, s, input);
         }
         for (const n of s.log.flatMap((e) => e.notes)) seen.add(n);
