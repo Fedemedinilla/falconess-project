@@ -67,6 +67,12 @@ describe("v2 in the text season", () => {
     );
   });
 
+  it("gives the drift's chance of costing mood only while mood can still go down", () => {
+    const s = startSeason(V2, "drift", START);
+    expect(trainingMenu(V2, { ...s, mood: -1 })[0]).toContain("ánimo -1 2 %");
+    expect(trainingMenu(V2, { ...s, mood: -2 })[0]).not.toContain("ánimo -1");
+  });
+
   it("draws the vigor bar from the sim's vigor: full, empty and rounded down", () => {
     expect(vigorBar(V2, 0)).toBe("██████████ 100/100");
     expect(vigorBar(V2, 100)).toBe("░░░░░░░░░░ 0/100");

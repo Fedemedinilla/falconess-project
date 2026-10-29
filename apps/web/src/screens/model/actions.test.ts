@@ -322,6 +322,15 @@ describe("action previews", () => {
     }
     expect(seen).toEqual([20, 60, 100]);
     expect(driftPreview(v2, s)).toMatchObject({ streak: 3, rising: true });
+    // at the lowest mood the drift has nowhere to take her: no chance, no warning
+    for (let week = 0; week < 3; week++) {
+      while (s.pendingEvent) s = advanceSeason(v2, s, { kind: "event:choose", option: 0 });
+      s = advanceSeason(v2, s, { kind: "train:simulator" });
+    }
+    while (s.pendingEvent) s = advanceSeason(v2, s, { kind: "event:choose", option: 0 });
+    expect(driftPreview(v2, { ...s, mood: -1 })).toMatchObject({ streak: 6, rising: true });
+    expect(driftPreview(v2, { ...s, mood: -1 }).nextPm).toBeGreaterThan(0);
+    expect(driftPreview(v2, { ...s, mood: -2 })).toEqual({ streak: 6, nextPm: 0, rising: false });
     // v1 has no drift
     expect(driftPreview(v1, start(v1, "streak", "peregrina")).nextPm).toBe(0);
   });

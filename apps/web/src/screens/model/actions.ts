@@ -198,10 +198,17 @@ export function raceMoodPm(ctx: SimContext, state: SeasonState): number {
   return moodMultiplier(ctx.ruleset, state.mood);
 }
 
+/** The mood's bounds: the sim keeps it within −2 … +2 (season/context.ts `changeMood`). */
+export const MOOD_MIN = -2;
+export const MOOD_MAX = 2;
+
 export type DriftPreview = {
   /** Training weeks in a row at the end of the log. */
   readonly streak: number;
-  /** Chance that the next training week costs 1 mood, per-mille (0: the ruleset has no drift). */
+  /**
+   * Chance that the next training week costs 1 mood, per-mille: 0 when the ruleset has no drift
+   * (v1) or the mood is already at its lowest (the sim rolls, but a lower mood does not exist).
+   */
   readonly nextPm: number;
   /** The streak makes it more likely than a first training's: worth a word on the screen. */
   readonly rising: boolean;
@@ -209,7 +216,7 @@ export type DriftPreview = {
 
 /** The mood drift the next training would roll (ADR-0006: a streak tires her of training). */
 export function driftPreview(ctx: SimContext, state: SeasonState): DriftPreview {
-  const nextPm = nextTrainingDriftPm(ctx.ruleset, state);
+  const nextPm = state.mood > MOOD_MIN ? nextTrainingDriftPm(ctx.ruleset, state) : 0;
   return {
     streak: trainingStreak(state),
     nextPm,

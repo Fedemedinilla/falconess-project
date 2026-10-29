@@ -119,7 +119,8 @@ export function pmPercent(pm: number): string {
 export function trainingMenu(ctx: SimContext, s: SeasonState): string[] {
   const c = ctx.content;
   const S = ctx.ruleset.season;
-  const drift = nextTrainingDriftPm(ctx.ruleset, s);
+  // at the lowest mood (−2) the drift has nowhere to take her: no chance to show
+  const drift = s.mood > -2 ? nextTrainingDriftPm(ctx.ruleset, s) : 0;
   return TRAININGS.map((k, i) => {
     const gains = trainingGains(ctx, s, k)
       .map(({ stat, gain }) => `+${gain} ${c.t(`stat.${stat}`)}`)
