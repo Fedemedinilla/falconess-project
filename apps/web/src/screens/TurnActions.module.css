@@ -44,9 +44,15 @@
 
 .cardHead {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  /* the title keeps its words whole; the meta beside it («Abre el taller») wraps instead */
+  grid-template-columns: auto minmax(min-content, 1fr) auto;
   align-items: center;
   gap: var(--space-2);
+}
+
+.cardHead .meta {
+  text-align: end;
+  white-space: normal;
 }
 
 .key {

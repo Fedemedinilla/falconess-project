@@ -535,7 +535,7 @@ export function TurnActions({
         key={kind}
         {...common}
         disabled={pending || injured}
-        meta={<span className={s.level}>{ui("ui.action.workshop.open")}</span>}
+        meta={<span className={cx(s.level, s.meta)}>{ui("ui.action.workshop.open")}</span>}
         effects={
           <Effect
             value={ui("ui.frame.durability", { current: equipped.current, max: equipped.max })}
