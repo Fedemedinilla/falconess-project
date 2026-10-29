@@ -189,6 +189,11 @@ nueva (por defecto `CURRENT_RULESET`). Una propiedad de fast-check reconstruye l
 entrada (`rngForInput`) y comprueba que el fallo, la lesión y la deriva que aplica `advanceSeason`
 son exactamente los que dicen esas funciones.
 
+Lo mismo vale para leer una semana ya jugada: qué notas, deltas y evento agregó una entrada al log,
+y qué texto y qué efectos tiene ese evento en el contenido (la opción y la rama sorteada), lo leen
+la CLI (`turnSummary`) y la web («Lo que pasó») con las mismas dos funciones de
+`@falconess/race-view`: `stepLog` y `resolveLoggedEvent`.
+
 ## Constantes (v1 → v2)
 
 Estudio §9; nombres del código (el prototipo usaba otros: `failModel` "v1" → "linear",
