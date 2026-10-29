@@ -255,23 +255,26 @@ Del motor (esta implementación):
 
 - v1 sin cambios: `v1-invariance.test.ts` (partida del dueño entrada por entrada y 30 temporadas
   mixtas contra `5f0fd65`), y `pnpm sim:season-batch -- --runs 500 --ruleset v1` imprime byte a byte
-  lo mismo que `5f0fd65`.
+  lo mismo que `5f0fd65`, salvo la línea `ruleset v1` del encabezado.
 - v2 igual al prototipo del estudio: 240 temporadas (política mixta y una de referencia con
-  salidas, 11 269 entradas) jugadas con el prototipo (`sim-scratch.diff` sobre `5f0fd65`, palancas
-  en los valores de v2) y con este motor dan el mismo estado sin el log después de cada entrada
-  (comparación local, `.work/impl2/stage-a.md`).
+  salidas, 11 490 entradas con las constantes de `b3722b5`) jugadas con el prototipo
+  (`sim-scratch.diff` sobre `5f0fd65`, palancas en los valores de v2) y con este motor, con el
+  contenido sin los eventos `auto`, dan el mismo estado sin el log después de cada entrada
+  (comparación local, `.work/impl2/final2.md`; la etapa A la hizo con el simulador de `0b6cdfc`
+  sobre 11 269 entradas, `.work/impl2/stage-a.md`).
 - La política de la stat más baja (la referencia de `pnpm sim:season-batch` hasta la etapa C, que
-  pasó la de v2 a la cuidadosa: «Consecuencias»; 500 temporadas por Falconess, sin eventos de suerte):
+  pasó la de v2 a la cuidadosa: «Consecuencias»; 500 temporadas por Falconess, sin eventos de suerte;
+  «Gana» es la media de las tres, como en las demás tablas):
 
   | Ruleset                            | ≥ B (media; Caracara / Cernícala / Peregrina) | Gana   |
   | ---------------------------------- | --------------------------------------------- | ------ |
-  | v1                                 | 76,5 % (72,8 / 72,0 / 84,8)                   | 50,1 % |
-  | v2 (`b3722b5`: simulador vigor +5) | 40,6 % (35,6 / 30,2 / 56,0)                   | 25,5 % |
-  | v2 con los umbrales de nota de v1  | **44,5 %** (37,0 / 33,4 / 63,2)               | 25,5 % |
+  | v1                                 | 76,5 % (72,8 / 72,0 / 84,8)                   | 50,0 % |
+  | v2 (`b3722b5`: simulador vigor +5) | 40,6 % (35,6 / 30,2 / 56,0)                   | 25,2 % |
+  | v2 con los umbrales de nota de v1  | **44,5 %** (37,0 / 33,4 / 63,2)               | 25,2 % |
 
   La última fila es exactamente la referencia del estudio con rivales 60 + 11 (§8: 44,5 % y 25,2 %
   de victorias): el motor reproduce el estudio. Historia: el commit de v2 (`0b6cdfc`) escribió el
-  simulador con vigor −5 y la referencia quedaba en 34,3 % (29,2 / 25,4 / 48,4) y 22,8 %; `b3722b5`
+  simulador con vigor −5 y la referencia quedaba en 34,3 % (29,2 / 25,4 / 48,4) y 22,5 %; `b3722b5`
   lo dejó como el estudio.
 - Tests de v2 (`packages/sim/src/season/v2.test.ts`): la tabla de la curva, sin descanso forzado,
   simulador a mitad de curva, lesión con vigor ≤ 20 y en el vuelo de riesgo, reparto del descanso
@@ -361,7 +364,7 @@ Falconess y política, escalera real (una meta fallada termina la temporada, com
 
 **v1 (línea base, sin cambios).** `pnpm sim:season-batch -- --runs 500 --ruleset v1` imprime byte a
 byte lo mismo que `5f0fd65` (salvo la línea `ruleset v1` del encabezado): política de la stat más
-baja 72,8 / 72,0 / 84,8 % de B o mejor (media 76,5 %), gana el 50,1 % de sus carreras objetivo. Con
+baja 72,8 / 72,0 / 84,8 % de B o mejor (media 76,5 %), gana el 50,0 % de sus carreras objetivo. Con
 las reglas de v1, el estudio midió para las demás políticas: cuidadosa 74 %, descansa con vigor 20
 (la obligaba el juego) 79 %, spam de Agilidad 7 %. Los eventos de suerte no existen en v1.
 
@@ -448,8 +451,9 @@ su semilla usa el simulador una sola vez y la partida termina igual.
   v2 queda en 41-46 % de B o mejor y la métrica (≥ 60 %) fallaría. Decisión (estudio §10, opción
   a): en v2 la métrica 7 se mide con la política cuidadosa. `referencePolicy` (`apps/cli/src/policy.ts`)
   juega la de cada ruleset: v1 la de la stat más baja, sin cambios (`sim:season-batch --ruleset v1` y
-  `sim:batch` dan lo mismo que `5f0fd65`); v2 la cuidadosa (`carefulPolicy`: entrena la stat más
-  baja, descansa o sale en cuanto el fallo de ese entrenamiento pasa de 0, sale con ánimo bajo +1).
+  `sim:batch --ruleset v1` dan lo mismo que `5f0fd65`); v2 la cuidadosa (`carefulPolicy`: entrena
+  la stat más baja, descansa o sale en cuanto el fallo de ese entrenamiento pasa de 0, sale con
+  ánimo bajo +1).
   La usan `pnpm sim`, `pnpm sim:season-batch` y S7 de `pnpm sim:batch`, que mide `CURRENT_RULESET`
   (v2) por defecto desde que la métrica 7 dejó de fallar en v2 (punto siguiente); `--ruleset v1`
   mide v1. BRIEF §12 lleva la nota.
@@ -482,9 +486,9 @@ su semilla usa el simulador una sola vez y la partida termina igual.
 - `pnpm play` imprime la partida al salir en el formato de guardado de la web
   (`{"schemaVersion":1,"rulesetVersion":…,"seed":…,"inputs":[…]}`) para que la versión viaje con
   ella. Las líneas viejas sin versión (`{"seed","inputs"}`) son partidas v1.
-- La web empieza las partidas nuevas en v2 cuando la etapa D cambie su controlador
-  (`CURRENT_RULESET`); hasta entonces sigue creando partidas v1, que ahora también traen las notas
-  de causa del ánimo.
+- La web empieza las partidas nuevas en v2 (`CURRENT_RULESET`, desde que la etapa D cambió su
+  controlador); una partida v1 guardada sigue en v1 y ahora también trae las notas de causa del
+  ánimo.
 - Puertas abiertas: condiciones malas (insomnio, «Practice Poor») como contenido; eventos que suban
   el tope de vigor; renombrar `fatigue` a `vigor` en el código con su propio ADR si algún día conviene.
 
