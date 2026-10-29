@@ -272,3 +272,56 @@ una carrera lleve el mismo que vos es 6,8 %; con 300, 2,3 %; con 1000, 0,7 %. Lo
 **Reglas del proyecto que respeta:** el acabado es una semilla más (reproducible, como todo el
 juego); vive en el estado y en el `Build`, nunca en `packages/sim` (invariante 3: nada comprable
 cambia la carrera); no requiere ilustrador más allá de las bibliotecas iniciales.
+
+**Estado:** el dueño aprueba la idea y pide dejarla firme para retomarla después; el prototipo
+queda postergado.
+
+### Modelo de datos (propuesta)
+
+- `FinishLibrary` en `packages/content` (JSON validado por `packages/schema`): paletas por escuela,
+  patrones, materiales, estelas y perfiles de sonido, cada uno con id, versión y escuela (o
+  «cualquiera»).
+- `FinishRules`: las reglas visuales que todo acabado cumple (máximo de colores y proporción,
+  color de escuela obligatorio, contraste mínimo, densidad de patrón, combinaciones prohibidas).
+- `Finish` = `{ frameModel, school, seed, libraryVersion }`. La semilla elige una capa de cada
+  biblioteca con el RNG del proyecto (stream propio, por ejemplo `finish`), así que el mismo
+  acabado se reconstruye igual en la web, la CLI y una liga. Si una combinación rompe una regla,
+  se vuelve a sortear con la semilla derivada siguiente, de forma determinista.
+- Catálogo publicado: lista de acabados aprobados (semilla + nombre + rareza), no todas las
+  combinaciones posibles. Una biblioteca nueva sube `libraryVersion` y no cambia acabados viejos.
+- El acabado vive en el estado de la temporada, en el `Build` y en la `BlackBox`; nunca entra a
+  `packages/sim`. Un test lo verifica (invariante 3 del BRIEF §9).
+
+### Rarezas (propuesta)
+
+| Rareza    | Qué suma                                         | Parte del catálogo |
+| --------- | ------------------------------------------------ | ------------------ |
+| Estándar  | paleta, patrón y material                        | ≈ 80 %             |
+| Brillante | estela de color y material metalizado o perlado  | ≈ 17 %             |
+| Prisma    | estela animada, sonido propio, detalle exclusivo | ≈ 3 %              |
+
+Ninguna rareza cambia stats, letras ni resultados de carrera.
+
+### Cómo se consiguen (abierto, ligado a T11 y T12)
+
+- Cada bastidor obtenido trae un acabado sorteado de su escuela, como el Sparkling de Aniimo.
+- Pase de liga y logros: acabados de temporada o de campeona.
+- Tienda: acabados elegidos (sin azar), lo que esquiva la regulación de objetos aleatorios pagos.
+- Repintar: cambiar el acabado de un bastidor propio. Como en Aniimo 1.1, conviene poder volver a
+  los acabados ya obtenidos.
+- Pendiente: si se venden acabados al azar con dinero real, aplican las reglas de T12
+  (probabilidades publicadas, clasificación por edad, mercados con restricciones).
+
+### Qué se necesita y qué no
+
+- Una vez: el arte vectorial en capas de cada modelo de bastidor (contorno, paneles, zonas de
+  pintura), las paletas por escuela y los perfiles de sonido. Lo puede hacer cualquier diseñador
+  con la biblia visual (T9).
+- Siempre: nada más. Los acabados nuevos salen de la semilla y las bibliotecas.
+
+### Prototipo pendiente (cuando haya presupuesto)
+
+Una página que genere 100 acabados de un mismo bastidor con alas vectoriales provisionales,
+agrupados por escuela, con un botón para generar otros y la lista de reglas que cumple cada uno.
+Criterio de éxito: una persona reconoce la escuela de cada acabado sin leer el nombre, y ninguno
+desentona.
