@@ -219,9 +219,11 @@ for (const vp of VIEWPORTS)
       await shot(page, 8, "free-race-full");
       await page.context().close();
 
-      // 9 · the season's end
+      // 9 · the season's end: the last week's «Lo que pasó» over it, then the screen itself
       page = await open(all.ended);
       await expect(page).toHaveURL(/#fin$/);
+      await shot(page, 9, "season-end-week");
+      await closeWeek(page);
       await shot(page, 9, "season-end");
       await page.context().close();
 

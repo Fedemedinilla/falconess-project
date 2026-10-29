@@ -1,5 +1,5 @@
 import { expect, t, test, textPattern } from "./fixtures";
-import { playerPlace } from "./play";
+import { closeWeek, playerPlace } from "./play";
 
 /**
  * Umamusume's tip after a goal race finished 3rd or worse. The run is the reference policy's
@@ -138,12 +138,21 @@ const RESTING = {
   ],
 };
 
-test("a goal race that ends the season: SeasonEnd says what to train", async ({ page }) => {
+test("a goal race that ends the season: «Lo que pasó» over SeasonEnd, then what to train", async ({
+  page,
+}) => {
   await page.goto("#inicio");
   await page.click("#inicio-cargar");
   await page.fill("#cargar-json", JSON.stringify(RESTING));
   await page.click("#cargar-enviar");
   await expect(page).toHaveURL(/#fin$/);
+  // the week that ended the season gets its «Lo que pasó» too, over SeasonEnd
+  const week = page.getByRole("dialog", {
+    name: t("ui.week.title.race.failed", { place: 8, field: 8 }),
+  });
+  await expect(week).toBeVisible();
+  await expect(week.locator("#semana-consejo")).toBeVisible();
+  await closeWeek(page);
   await expect(page.getByText(t("ui.end.failed", { turn: 24 }))).toBeVisible();
   const note = page.locator("#fin-consejo");
   await expect(note).toHaveAttribute("role", "note");

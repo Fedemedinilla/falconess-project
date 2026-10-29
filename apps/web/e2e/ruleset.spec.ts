@@ -11,6 +11,8 @@ test("the owner's playtest 1 loads as a v1 run and ends as it did", async ({ pag
   expect(RUN1.rulesetVersion).toBe("v1");
   await loadRun(page, RUN1);
   await expect(page).toHaveURL(/#fin$/);
+  // its last week first: the T48 training, over SeasonEnd
+  await closeWeek(page);
   await expect(
     page.getByText(t("ui.end.eyebrow", { seed: "397553", ruleset: "v1" }), { exact: true }),
   ).toBeVisible();

@@ -25,6 +25,7 @@ import { Bar } from "./shared/Bar";
 import { Letter } from "./shared/Letter";
 import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { useViewRace } from "./shared/useViewRace";
+import { WeekDialog } from "./WeekDialog";
 
 type CopyStatus = "idle" | "copied" | "selected";
 
@@ -419,6 +420,8 @@ export function SeasonEnd() {
           )}
         </Panel>
       </div>
+      {/* the week that ended the season: its «Lo que pasó» first, over this screen */}
+      <WeekDialog onViewRace={viewRace} />
     </div>
   );
 }

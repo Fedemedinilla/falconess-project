@@ -24,17 +24,13 @@ const BODY_ID = "semana-cambios";
 const CONTINUE_ID = "semana-continuar";
 
 /**
- * Whether «Lo que pasó» waits for the player: the last step of an active run, not read yet. The
+ * Whether «Lo que pasó» waits for the player: the last step of the run in play, not read yet. The
  * event dialog stays closed meanwhile, so the week's result shows first and the event after it.
+ * The step that ends the season counts too: its popup opens over SeasonEnd (#fin).
  */
 export function weekDialogWaiting(snap: GameSnapshot): boolean {
   const step = snap.lastStep;
-  return (
-    step !== undefined &&
-    !snap.lastStepSeen &&
-    snap.run?.state === step.after &&
-    step.after.status === "active"
-  );
+  return step !== undefined && !snap.lastStepSeen && snap.run?.state === step.after;
 }
 
 /** A step's notes can repeat a key (their order is the log's): `key#n` tells them apart. */
@@ -57,11 +53,12 @@ export type WeekDialogProps = {
 
 /**
  * «Lo que pasó»: after every input (an action, a race week, an event's answer) a modal over the
- * Turn screen says what happened in one headline, then the changes with their causes, the notes
- * of the log, and on a race week the place, the goal and the tip after the race. It closes with
- * «Continuar», Enter, Esc or a click outside, and only then does a waiting event open. Read once,
- * it does not open again for that week (`GameController.acknowledgeStep`); the recap line above
- * the actions brings it back.
+ * Turn screen (over SeasonEnd for the input that ends the season) says what happened in one
+ * headline, then the changes with their causes, the notes of the log, and on a race week the
+ * place, the goal and the tip after the race (on a short screen the tip's leads only). It closes
+ * with «Continuar», Enter, Esc or a click outside, and only then does a waiting event open. Read
+ * once, it does not open again for that week (`GameController.acknowledgeStep`); the recap line
+ * above the actions brings it back.
  */
 export function WeekDialog({ onViewRace }: WeekDialogProps) {
   const { game, snap } = useGame();
@@ -102,12 +99,12 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
       if (dialog.open) dialog.close();
       const back = returnTo.current;
       returnTo.current = null;
+      // on SeasonEnd the week's action is gone: the focus goes to the page's main region
       const target =
         back?.isConnected && !back.closest("[inert]")
           ? back
-          : fallbackId
-            ? document.getElementById(fallbackId)
-            : null;
+          : ((fallbackId ? document.getElementById(fallbackId) : null) ??
+            document.querySelector<HTMLElement>("main"));
       target?.focus();
     }
   }, [open, fallbackId]);
