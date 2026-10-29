@@ -276,6 +276,7 @@
   "ui.action.injury": "Lesión {injury}",
   "ui.action.level": "Nv {level}",
   "ui.action.level.title": "Nivel de la pista de entrenamiento: sube con el uso y da más ganancia",
+  "ui.action.moodChance": "Ánimo ({chance})",
   "ui.action.moodShort": "Ánimo",
   "ui.action.noCrew": "Sin cuadrilla esta semana",
   "ui.action.noFail": "Sin riesgo",

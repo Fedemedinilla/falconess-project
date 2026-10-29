@@ -440,7 +440,12 @@ export function TurnActions({
           effects={
             <>
               <Effect value={restValue} label={ui("ui.action.vigorShort")} icon="vigor" strong />
-              <Effect value="+1" label={ui("ui.action.moodShort")} icon="mood" />
+              {/* a chance, not a promise: v2 gives the point one rest in four */}
+              <Effect
+                value="+1"
+                label={ui("ui.action.moodChance", { chance: formatChance(rest.moodUpPm) })}
+                icon="mood"
+              />
             </>
           }
           detail={
