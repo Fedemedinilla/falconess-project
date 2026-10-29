@@ -99,7 +99,7 @@ export type WeekRow = {
   readonly to?: string | undefined;
   /** What changed it, in words: "entrenamiento fallido, racha de entrenamientos". */
   readonly cause?: string | undefined;
-  /** Vigor: the risk band it ended in (v2), "Puede lesionarse" in red. */
+  /** Vigor: the band it ended in (v2), «Agotada» in red. */
   readonly band?: { readonly label: string; readonly tone: WeekTone } | undefined;
 };
 

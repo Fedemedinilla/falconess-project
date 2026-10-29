@@ -73,12 +73,13 @@ font and stop at Unicode 12 (Windows 10 has no 13.0 emojis): the label always sa
 The screen speaks in vigor, `fatigueMax − fatigue` (presentation only: the state keeps `fatigue`),
 for every ruleset: a fatigue cost of +20 is «Vigor −20», an event's fatigue +15 is «Vigor −15».
 The status panel's bar drains with training and fills with rest; with ruleset v2 it is colored and
-named by its risk band (`screens/model/vigor.ts`, the edges of the failure curve: ≥ 60 «Sin
-riesgo», 40–59 «Riesgo bajo», 21–39 «Riesgo alto», ≤ 20 «Puede lesionarse», marked on the track,
+named by its band (`screens/model/vigor.ts`, the edges of the failure curve: ≥ 60 «Descansada»,
+40–59 «Algo cansada», 21–39 «Cansada», ≤ 20 «Agotada», marked on the track,
 `#turno-vigor-nota`, `data-band`; green, amber, amber and red: red only where a failure can be an
-injury, as on the cards). The bands speak of the plain trainings: the safe band's note and the v2
-legend say the risk flight fails even at full vigor (12 %, `trainingRisk` at fatigue 0), and that
-a quarter of its failures are injuries at any vigor. A v1 run has no bands: its bar keeps the
+injury, as on the cards). The labels say how tired she is, never that training is safe (the «Lo que
+pasó» pill shows the label with no note beside it), and a unit test keeps «riesgo» out of them. The notes speak of the plain trainings: the top band's note and the v2 legend say the risk
+flight fails even at full vigor (12 %, `trainingRisk` at fatigue 0), and that a quarter of its
+failures are injuries at any vigor. A v1 run has no bands: its bar keeps the
 forced rest at vigor 20 or less (mark, pill, the cards' block). Every training card says its
 failure chance and, when there is one, its injury chance (`trainingRisk` at the current fatigue),
 amber from 10 % and red from 25 % or an injury from exhaustion (`data-risk` on the card); rest says

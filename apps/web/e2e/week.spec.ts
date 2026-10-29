@@ -48,7 +48,7 @@ test("a training on a phone: one headline, the changes, no scrolling; Enter clos
   await expect(dialog.getByRole("list", { name: t("ui.turn.stats") })).toContainText(
     t("stat.agility"),
   );
-  // vigor drains: −20 to 80, still with no risk
+  // vigor drains: −20 to 80, still rested
   const changes = dialog.getByRole("list", { name: t("ui.week.changes") });
   const vigor = changes.getByRole("listitem").filter({ hasText: t("ui.week.vigor") });
   await expect(vigor).toContainText("−20");

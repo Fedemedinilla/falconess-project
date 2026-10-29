@@ -5,10 +5,12 @@
  * Its risk bands are the edges of the ruleset's failure curve ("curve" model, v2): safe while the
  * curve has not started (`failCurveStart`), injury once a failure can be an injury
  * (`injuryFromFatigue`, counted on the fatigue before training, so vigor 20 itself is in it), and
- * the span between split in half into low and high. With v2's numbers: ≥ 60 sin riesgo, 40–59
- * riesgo bajo, 21–39 riesgo alto, ≤ 20 puede lesionarse. Only the edges are read here; the chance
- * of each training is the sim's `trainingRisk`, on its button (at 58–59 the curve still rounds
- * down to 0 ‰). The linear model (v1) has no bands: v1 has its forced rest instead.
+ * the span between split in half into low and high. With v2's numbers: ≥ 60 «Descansada», 40–59
+ * «Algo cansada», 21–39 «Cansada», ≤ 20 «Agotada». The labels say how tired she is, never that a
+ * training is safe: the risk flight fails 12 % even at full vigor (its card and the safe band's
+ * note say so). Only the edges are read here; the chance of each training is the sim's
+ * `trainingRisk`, on its button (at 58–59 the curve still rounds down to 0 ‰). The linear model
+ * (v1) has no bands: v1 has its forced rest instead.
  */
 import { type Ruleset, vigor } from "@falconess/sim";
 

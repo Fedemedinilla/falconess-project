@@ -1,6 +1,7 @@
 import { RULESET_V1, RULESET_V2, trainingRisk } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
-import { vigorBand, vigorMarks, vigorScale, vigorTone } from "./vigor";
+import { getContent } from "../../content/load";
+import { type VigorBand, vigorBand, vigorMarks, vigorScale, vigorTone } from "./vigor";
 
 describe("the vigor bar", () => {
   it("reads v2's bands from the sim's failure curve: 60 safe, 40–59 low, 21–39 high, ≤ 20 injury", () => {
@@ -40,6 +41,15 @@ describe("the vigor bar", () => {
       if (band === "high") expect(risk.failPm, `vigor ${v}`).toBeGreaterThan(50);
       expect(risk.injuryPm > 0, `vigor ${v}`).toBe(band === "injury");
     }
+  });
+
+  it("names each band by how tired she is, never as safe: the risk flight fails at full vigor", () => {
+    const content = getContent();
+    const bands: VigorBand[] = ["safe", "low", "high", "injury"];
+    const labels = bands.map((b) => content.t(`ui.turn.vigor.band.${b}`));
+    expect(labels).toEqual(["Descansada", "Algo cansada", "Cansada", "Agotada"]);
+    expect(trainingRisk(RULESET_V2, 0, "train:risk-flight").failPm).toBeGreaterThan(0);
+    for (const label of labels) expect(label).not.toMatch(/riesgo|seguro|no falla/i);
   });
 
   it("keeps v1 as it played: no bands, the forced rest at vigor 20, amber 20 above it", () => {
