@@ -70,3 +70,4 @@ Detalle de cada comando: docs/commands.md.
 - Un archivo de contenido nuevo no invalida la caché de módulos de Vitest (el `import.meta.glob` de la web queda viejo y `load.test.ts` falla): `pnpm vitest --clearCache`.
 - Un evento de suerte (`auto`, v2) se aplica en la misma entrada, después de la acción: un test que mide el ánimo o el vigor de una semana v2 usa contenido sin eventos `auto`.
 - En v2 un ánimo −1 le cuesta a la política cuidadosa ≈ una semana (≈ −5,7 puntos de B por evento) y un ánimo +1 vale ≈ +14 a la que nunca sale: los eventos de ánimo van con poco peso; medir cada tipo de efecto por separado antes de pesar contenido nuevo.
+- Lo que agregó una entrada al log de temporada (notas, deltas, evento y su contenido) se lee con `stepLog` y `resolveLoggedEvent` de `@falconess/race-view`: la CLI y «Lo que pasó» los comparten; en los e2e el emoji del `<Icon>` entra en `textContent`.
