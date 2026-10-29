@@ -626,7 +626,47 @@ describe("«Lo que pasó» with the content's luck events (v2), read as the CLI 
       const effects = w.event?.effects.map((e) => e.text);
       for (const { stat, delta } of resolved.stats)
         expect(effects, key).toContain(fxStat(stat, delta));
+      // the chips under the headline are the action's own: the week's change minus the event's
+      const eventDelta = new Map(resolved.stats.map(({ stat, delta }) => [stat, delta]));
+      const own = STAT_ORDER.map((stat) => ({
+        stat,
+        delta: s.after.stats[stat] - s.before.stats[stat] - (eventDelta.get(stat) ?? 0),
+      })).filter((x) => x.delta !== 0);
+      expect(w.stats, key).toEqual(own);
+      // the block lists the event's mood: no note says it again
+      expect(noteKeys, key).not.toContain("log.mood.event.up");
+      expect(noteKeys, key).not.toContain("log.mood.event.down");
     }
+  });
+
+  it("keeps a luck event's stats out of the week's chips: a rest week shows none", () => {
+    // a rest gains no stats: whatever stat a luck event gave is in its block only
+    let rest: WeekStep | undefined;
+    for (let seed = 0; seed < 60 && !rest; seed++) {
+      let state = startSeason(v2, `luck-rest-${seed}`, {
+        kind: "start",
+        falconessId: "peregrina",
+        hangar: HANGAR,
+        parents: [],
+      });
+      // rest every other week: the luck events of weeks 2–11 land on rests often
+      for (let i = 0; state.status === "active" && i < 24 && !rest; i++) {
+        const input: RunInput = state.pendingEvent
+          ? { kind: "event:choose", option: 0 }
+          : i % 2 === 0
+            ? { kind: "rest" }
+            : { kind: "train:agility" };
+        const after = advanceSeason(v2, state, input);
+        const moved = STAT_ORDER.some((stat) => after.stats[stat] !== state.stats[stat]);
+        if (input.kind === "rest" && stepLog(state, after).event?.auto && moved)
+          rest = { before: state, input, after };
+        state = after;
+      }
+    }
+    if (!rest) throw new Error("no luck event with stats on a rest week in 60 seasons");
+    const w = weekSummary(v2, rest);
+    expect(w.stats).toEqual([]);
+    expect(w.event?.effects.some((e) => e.icon.startsWith("stat."))).toBe(true);
   });
 
   it("says what the tailwind gave, apart from the training's gains", () => {

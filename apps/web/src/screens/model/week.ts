@@ -144,6 +144,7 @@ export type WeekSummary = {
   /** A short line of context under the headline: the race's course and goal, the event's text. */
   readonly context: string | undefined;
   readonly race: WeekRace | undefined;
+  /** The stats the week's action moved (a luck event's own are in `event.effects`). */
   readonly stats: readonly WeekStat[];
   readonly rows: readonly WeekRow[];
   readonly event: WeekEvent | undefined;
@@ -267,6 +268,7 @@ function describeLogged(ctx: SimContext, logged: LoggedEvent) {
     optionKey: resolved?.option.textKey,
     branchKey: resolved?.branch?.textKey,
     effects: blocks.flatMap((fx) => describeEffects(fx, (id) => crewName(ctx, id))),
+    stats: resolved?.stats ?? [],
     tone: resolved ? effectsTone(blocks) : ("neutral" as WeekTone),
     touches: resolved ? touchesOf(blocks) : undefined,
   };
@@ -535,9 +537,14 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   const ev = (touch: Touch): Can =>
     resolved?.touches === undefined || resolved.touches.has(touch) ? ["event"] : [];
 
+  // a luck event lists its own stats in its block: the chips under the headline are the action's
+  // (a failed risk flight and a tailwind would otherwise cancel out into a lone green chip)
+  const eventStats = new Map(
+    (auto && resolved ? resolved.stats : []).map(({ stat, delta }) => [stat, delta]),
+  );
   const stats = STAT_ORDER.map((stat) => ({
     stat,
-    delta: after.stats[stat] - before.stats[stat],
+    delta: after.stats[stat] - before.stats[stat] - (eventStats.get(stat) ?? 0),
   })).filter((s) => s.delta !== 0);
 
   const rows: WeekRow[] = [];
@@ -651,6 +658,9 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   const said = new Set(SAID);
   // mood that moved and came back (a rest's lift and a lost race) has no row: its notes say it
   if (mood === 0) for (const key of Object.keys(MOOD_CAUSE)) said.delete(key);
+  // a luck event's block lists its own mood among its effects: no note repeats it
+  if (auto && resolved)
+    for (const key of ["log.mood.event.up", "log.mood.event.down"]) said.add(key);
   // how she slept is news only when the rest gave vigor back
   if (fatigue === 0)
     for (const key of ["log.vigor.rest.poor", "log.vigor.rest.normal", "log.vigor.rest.great"])
