@@ -1,6 +1,7 @@
 /**
  * `pnpm sim:season-batch -- --runs 500 [--falconess peregrina] [--hangar a,b,c,d] [--ruleset v2]`
- * Plays N seasons per Falconess with the reference policy and reports what docs/race-engine.md
+ * Plays N seasons per Falconess with the ruleset's reference policy (`referencePolicy`: v1 the
+ * lowest-stat policy, v2 the careful one; ADR-0006 «Métrica 7») and reports what docs/race-engine.md
  * 21.1 asks of D12: the completion rate, the grade distribution and the share graded B or better
  * (the gate: ≥ 60 % per Falconess), the mean `seasonScore` split into stat total, skills and race
  * bonuses, the mean final stats, the goal races' win rate and place distribution (ADR-0005
@@ -21,7 +22,7 @@ import {
 } from "@falconess/sim";
 import { argRuleset, argString, parseArgs } from "./args.js";
 import { goalFlagged, placeCounts } from "./goal-rate.js";
-import { lowestStatPolicy, REFERENCE_HANGAR } from "./policy.js";
+import { REFERENCE_HANGAR, referencePolicy } from "./policy.js";
 
 export const GRADE_ORDER: readonly Grade[] = ["SS", "S", "A", "B", "C", "D", "E", "F", "G"];
 const B_OR_BETTER: ReadonlySet<Grade> = new Set(["SS", "S", "A", "B"]);
@@ -54,7 +55,7 @@ export type SeasonBatchSummary = {
   failTurns: Record<number, number>;
 };
 
-/** Plays `runs` reference seasons of one Falconess (seeds `batch-<i>`). */
+/** Plays `runs` seasons of one Falconess with the ruleset's reference policy (seeds `batch-<i>`). */
 export function runSeasonBatch(
   ctx: SimContext,
   falconessId: string,
@@ -81,7 +82,7 @@ export function runSeasonBatch(
   for (let i = 0; i < runs; i++) {
     const start: RunInput = { kind: "start", falconessId, hangar: [...hangar], parents: [] };
     let s = startSeason(ctx, `batch-${i}`, start);
-    while (s.status === "active") s = advanceSeason(ctx, s, lowestStatPolicy(ctx, s));
+    while (s.status === "active") s = advanceSeason(ctx, s, referencePolicy(ctx, s));
     const grade = s.grade ?? "G";
     out.grades[grade] = (out.grades[grade] ?? 0) + 1;
     for (const k of STAT_ORDER) out.statSums[k] = (out.statSums[k] ?? 0) + s.stats[k];

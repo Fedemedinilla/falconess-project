@@ -1,12 +1,23 @@
 import { loadContent } from "@falconess/content";
-import type { SeasonState } from "@falconess/schema";
-import { advanceSeason, learnCap, RULESET_V1, type SimContext, startSeason } from "@falconess/sim";
+import type { SeasonState, StatName } from "@falconess/schema";
+import {
+  advanceSeason,
+  learnCap,
+  RULESET_V1,
+  RULESET_V2,
+  type SimContext,
+  STAT_ORDER,
+  startSeason,
+  trainingRisk,
+} from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import {
+  carefulPolicy,
   lowestStatPolicy,
   needsRepair,
   REFERENCE_HANGAR,
   REST_AT_FATIGUE,
+  referencePolicy,
   skillsToLearn,
   usefulGenericActives,
 } from "./policy.js";
@@ -127,5 +138,68 @@ describe("reference policy: generic actives (ADR-0005 Pasada 2, decision 2)", ()
       kind: "workshop",
       ops: [{ op: "repair" }, { op: "learn-skill", skillId: "clean-start" }],
     });
+  });
+});
+
+describe("careful policy: the reference of ruleset v2 (ADR-0006 «Métrica 7»)", () => {
+  const v2: SimContext = { ruleset: RULESET_V2, content: ctx.content };
+  const fresh = startSeason(v2, "careful", {
+    kind: "start",
+    falconessId: "peregrina",
+    hangar: [...REFERENCE_HANGAR],
+    parents: [],
+  });
+  /** A state whose lowest stat is `low` (its training is the target), at this vigor and mood. */
+  const where = (low: StatName, fatigue: number, mood: SeasonState["mood"]): SeasonState => ({
+    ...fresh,
+    stats: { ...fresh.stats, ...Object.fromEntries(STAT_ORDER.map((k) => [k, 300])), [low]: 200 },
+    fatigue,
+    mood,
+  });
+
+  it("trains the lowest stat while its failure chance is still 0", () => {
+    expect(trainingRisk(RULESET_V2, 40, "train:agility").failPm).toBe(0);
+    expect(carefulPolicy(v2, where("agility", 40, 1))).toEqual({ kind: "train:agility" });
+    expect(carefulPolicy(v2, where("intelligence", 0, 2))).toEqual({ kind: "train:simulator" });
+  });
+
+  it("recovers once the chance rises: an outing when it brings the chance back to 0, else a rest", () => {
+    expect(trainingRisk(RULESET_V2, 45, "train:stamina").failPm).toBeGreaterThan(0);
+    // 45 − 20 = 25: the outing is enough, and mood is not at the top
+    expect(carefulPolicy(v2, where("stamina", 45, 1))).toEqual({ kind: "outing" });
+    // at the top of the mood scale the outing adds nothing: rest
+    expect(carefulPolicy(v2, where("stamina", 45, 2))).toEqual({ kind: "rest" });
+    // 70 − 20 = 50 still fails sometimes: rest
+    expect(carefulPolicy(v2, where("stamina", 70, 0))).toEqual({ kind: "rest" });
+  });
+
+  it("judges a risk flight against its fixed chance, not against 0", () => {
+    const fixed = trainingRisk(RULESET_V2, 0, "train:risk-flight").failPm;
+    expect(fixed).toBeGreaterThan(0);
+    expect(carefulPolicy(v2, where("courage", 40, 1))).toEqual({ kind: "train:risk-flight" });
+    expect(trainingRisk(RULESET_V2, 50, "train:risk-flight").failPm).toBeGreaterThan(fixed);
+    expect(carefulPolicy(v2, where("courage", 50, 2))).toEqual({ kind: "rest" });
+  });
+
+  it("goes out when mood is below +1, and answers events and repairs first", () => {
+    expect(carefulPolicy(v2, where("agility", 0, 0))).toEqual({ kind: "outing" });
+    expect(carefulPolicy(v2, where("agility", 0, 1))).toEqual({ kind: "train:agility" });
+    expect(
+      carefulPolicy(v2, { ...where("agility", 90, -2), pendingEvent: { eventId: "x", turn: 1 } }),
+    ).toEqual({ kind: "event:choose", option: 0 });
+    expect(carefulPolicy(v2, worn(where("agility", 90, -2), 0))).toEqual({
+      kind: "workshop",
+      ops: [{ op: "repair" }],
+    });
+  });
+
+  it("is the reference of v2; v1 keeps the lowest-stat policy", () => {
+    const tired = where("technique", 70, 0);
+    expect(referencePolicy(v2, tired)).toEqual(carefulPolicy(v2, tired));
+    const s1 = { ...start("cernicala"), fatigue: 70 };
+    expect(referencePolicy(ctx, s1)).toEqual(lowestStatPolicy(ctx, s1));
+    expect(referencePolicy(ctx, start("caracara"))).toEqual(
+      lowestStatPolicy(ctx, start("caracara")),
+    );
   });
 });

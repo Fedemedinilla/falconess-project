@@ -14,7 +14,7 @@ import {
   startSeason,
   statTotal,
 } from "@falconess/sim";
-import { lowestStatPolicy, REFERENCE_HANGAR } from "../policy.js";
+import { REFERENCE_HANGAR, referencePolicy } from "../policy.js";
 import type { Catalog } from "./catalog.js";
 import type { RaceEnginePort } from "./engine-port.js";
 import type { CourseGeometry, RaceArena } from "./engine-types.js";
@@ -146,7 +146,7 @@ function runSeason(
     hangar: [...REFERENCE_HANGAR],
     parents: [],
   });
-  while (s.status === "active") s = advanceSeason(sim, s, lowestStatPolicy(sim, s));
+  while (s.status === "active") s = advanceSeason(sim, s, referencePolicy(sim, s));
   ctx.timing.seasonMs += ctx.now() - t0;
   ctx.timing.seasons += 1;
   if (s.grade === undefined) throw new Error(`season ${job.seed} ended without a grade`);

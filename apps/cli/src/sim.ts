@@ -9,7 +9,7 @@ import { loadContent } from "@falconess/content";
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { advanceSeason, blackBoxFor, type SimContext, startSeason } from "@falconess/sim";
 import { argRuleset, argString, parseArgs } from "./args.js";
-import { lowestStatPolicy } from "./policy.js";
+import { referencePolicy } from "./policy.js";
 import {
   describeInput,
   finalSummary,
@@ -29,7 +29,7 @@ export function runSeason(
   const inputs: RunInput[] = [start];
   lines.push(`seed ${seed}  ruleset ${ctx.ruleset.version}`, frameLine(ctx, state), "");
   while (state.status === "active") {
-    const input = lowestStatPolicy(ctx, state);
+    const input = referencePolicy(ctx, state);
     inputs.push(input);
     const prev = state;
     state = advanceSeason(ctx, state, input);
