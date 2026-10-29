@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, t, test, textPattern } from "./fixtures";
 import { closeWeek, decide, policyChoice, readTurn, startSeason, takeWeek, vigorOf } from "./play";
 
@@ -10,6 +12,19 @@ import { closeWeek, decide, policyChoice, readTurn, startSeason, takeWeek, vigor
  */
 
 const DIALOG = "#semana-dialogo";
+
+/** The texts of the content's luck events (`auto: true`), read from the event files. */
+function luckTexts(): Set<string> {
+  const dir = fileURLToPath(new URL("../../../packages/content/events/", import.meta.url));
+  const texts = new Set<string>();
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
+    const event: { auto?: boolean; textKey: string } = JSON.parse(
+      readFileSync(`${dir}${file}`, "utf8"),
+    );
+    if (event.auto === true) texts.add(t(event.textKey));
+  }
+  return texts;
+}
 
 test("a training on a phone: one headline, the changes, no scrolling; Enter closes it", async ({
   page,
@@ -167,7 +182,7 @@ test("an unread week opens again after a reload; once read, it does not", async 
   await expect(page.locator(`${DIALOG}[open]`)).toHaveCount(0);
 });
 
-test("a luck event the week brought by itself: its text, what happened, good or bad news", async ({
+test("a luck event the week brought by itself: its text, what it did, good or bad news", async ({
   page,
 }) => {
   // v2's luck events apply on their own (no dialog): «Lo que pasó» is where the player reads them
@@ -189,11 +204,15 @@ test("a luck event the week brought by itself: its text, what happened, good or 
     await takeWeek(page, policyChoice(view));
     found = (await block.count()) > 0;
   }
-  test.skip(!found, "no luck event turned up: the content has none for this ruleset");
+  expect(found, "a v2 season brings a luck event within 30 weeks").toBe(true);
   await expect(block).toBeVisible();
   const tone = await block.getAttribute("data-tone");
   expect(["good", "bad", "warn", "neutral"]).toContain(tone);
-  expect(((await block.locator("p").first().textContent()) ?? "").length).toBeGreaterThan(1);
+  // one of the content's luck events, with what it did (every luck event has an effect)
+  const text = ((await block.locator("p").first().textContent()) ?? "").trim();
+  const luck = [...luckTexts()].find((x) => text.endsWith(x));
+  expect(luck, `«${text}» is a luck event's text`).toBeDefined();
+  await expect(block.locator("#semana-evento-efectos li").first()).toBeVisible();
   // the headline is still the week's own (an answer would say «Elegiste»)
   const answer = t("ui.week.title.event", { option: "" }).trim();
   await expect(page.locator("#semana-titulo")).not.toContainText(answer);

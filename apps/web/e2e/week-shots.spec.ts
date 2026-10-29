@@ -6,6 +6,7 @@ import {
   closeWeek,
   decide,
   playUntil,
+  policyChoice,
   RUN_KEY,
   RUN1_WEEK19,
   readTurn,
@@ -125,6 +126,21 @@ async function findScenes(browser: Browser): Promise<Scenes> {
   await closeWeek(page);
   await decide(page, "#evento-opcion-0", (await readTurn(page)).inputs);
   scenes["event-answer"] = await saved(page);
+  // the e2e policy until a week brings one of the content's luck events by itself
+  await startSeason(page, "peregrina", "pt-e2e-suerte");
+  const luck = page.locator("#semana-dialogo[open] #semana-evento");
+  for (let i = 0; i < 30 && (await luck.count()) === 0; i++) {
+    let view = await readTurn(page);
+    if (view.weekOpen) {
+      await closeWeek(page);
+      view = await readTurn(page);
+    }
+    if (view.hash === "#fin") break;
+    if (view.eventOpen) await decide(page, "#evento-opcion-0", view.inputs);
+    else await takeWeek(page, policyChoice(view));
+  }
+  if ((await luck.count()) === 0) throw new Error("no luck event in 30 weeks");
+  scenes.luck = await saved(page);
   // v1: the owner's run at week 19, whose training turns into a forced rest
   await page.goto("#inicio");
   await page.click("#inicio-cargar");
@@ -156,6 +172,7 @@ const ORDER = [
   "outing",
   "event-next",
   "event-answer",
+  "luck",
   "race-t12",
   "race-advice",
   "forced-rest-v1",
