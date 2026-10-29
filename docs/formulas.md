@@ -85,8 +85,9 @@ recupera `−fatigueCost.rest` (v1 40, v2 50) sin sorteo. Descanso forzado con `
 forcedRestAt` (v1 80; v2 101: nunca). Helper: `restOptions(ruleset)`.
 
 **Salida y simulador (v2).** Salida: vigor +20 (`fatigueCost.outing` −20; v1 −10) y ánimo +1.
-Simulador: `fatigueCost["train:simulator"]` (v1 +10; el estudio pide vigor +5, ver ADR-0006
-«Pendiente»).
+Simulador: vigor +5 (`fatigueCost["train:simulator"]` −5; v1 +10, vigor −10), como pide el
+estudio (§9; `b3722b5`): el entrenamiento de las semanas cansadas, que falla con la mitad de la
+curva.
 
 **Ánimo al entrenar.** Intención: el ánimo pesa en lo que rinde cada semana (×0,80 … ×1,20 como en
 Umamusume) y poco en la carrera. La ganancia usa `trainMoodMult[ánimo + 2]` en lugar de
@@ -120,12 +121,14 @@ llega a B o mejor en 74-75 % y gana 38-40 % de sus carreras objetivo; la que nun
 que descansa con vigor 20, 30 %; la que descansa con vigor 0, 7 %; el spam de un solo
 entrenamiento, 0-0,1 %. Stat media final de la cuidadosa ≈ 710.
 
-Con las constantes tal como están (simulador vigor −5) y los eventos de suerte el rango medido es
-más bajo (ADR-0006 «Eventos al azar: balance» y «Pendiente»): cuidadosa 64-68 % de B o mejor y
-30-31 % de victorias, stat media final ≈ 617; la que nunca sale, 37-40 %; la que descansa con vigor
-20, ≈ 20 %; con vigor 0, ≈ 4 %; el spam, 0 %. Por Falconess, la cuidadosa deja a Cernícala en ≈ 56 %
-de B o mejor, por debajo de la métrica 7 (ADR-0006 «Consecuencias»). Los números del estudio
-dependen de la constante del simulador, que decide el líder.
+Con las constantes de `b3722b5` (el simulador del estudio) y los eventos de suerte el rango medido
+es (ADR-0006 «Eventos al azar: balance»; 500 temporadas por Falconess, dos a cuatro bases de
+semillas): cuidadosa 73-76 % de B o mejor y 37-38 % de victorias, stat media final ≈ 653; la que
+nunca sale, 44-46 %; la que descansa con vigor 20, 27-30 %; con vigor 0, 5-8 %; el spam, 0 %. Sin
+eventos, la cuidadosa 74-75 % y la que nunca sale 41-43 %. Por Falconess, la cuidadosa llega a B o
+mejor en el 72 / 63 / 85 % de las temporadas de Caracara, Cernícala y Peregrina (1500 cada una): la
+métrica 7 pasa para las tres juntando las bases, y Cernícala queda inconclusa en cada base de 500
+(ADR-0006 «Consecuencias»).
 
 ### Eventos al azar (v2, ADR-0006 D8)
 

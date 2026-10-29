@@ -117,7 +117,7 @@ Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:se
   v1` and `sim:batch --ruleset v1` print the same numbers as `5f0fd65`.
 - **v2: `carefulPolicy`** (the study's «cuidadosa» f0 m1, `.work/design2/fatiga-animo.md` §4). v2
   has no forced rest, so a reference player has to look after vigor and mood: under v2 the
-  lowest-stat policy, which never goes out, reaches B or better in only 37-40 % of the seasons.
+  lowest-stat policy, which never goes out, reaches B or better in only 44-46 % of the seasons.
   Option 0 and the same workshop visit; then it takes the lowest stat's training and its failure
   chance from the sim (`trainingRisk`, the vigor before training). When that chance is above 0 and
   above what the training risks fresh (a risk flight always fails 12 %), it recovers: an outing if

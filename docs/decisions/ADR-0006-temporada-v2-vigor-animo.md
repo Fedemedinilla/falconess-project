@@ -4,9 +4,10 @@
   `.work/design2/fatiga-animo.md` (§9, recomendación D2 + M2 con rivales 60 + 11 y umbrales ×1,1),
   que el dueño aceptó; los eventos al azar son un pedido del dueño del mismo día. La sección
   «Eventos al azar: balance» (etapa C) describe los 16 eventos de suerte y su lote; la métrica 7 se
-  mide con la política cuidadosa en v2 («Consecuencias»). Quedan dos decisiones para el líder
-  (sección «Pendiente»): la constante del simulador, que difiere del estudio, y la métrica 7 de
-  Cernícala, que con las constantes tal como están no llega al 60 %.
+  mide con la política cuidadosa en v2 («Consecuencias»). La constante del simulador, que el commit
+  de v2 escribió con el signo cambiado, quedó como la del estudio en `b3722b5` (vigor +5): con ella
+  se cumplen las metas del estudio y la de victorias, la métrica 7 pasa o queda inconclusa para las
+  tres Falconess y `sim:batch` mide v2 por defecto («Consecuencias»).
 - Fecha: 2026-10-28
 - Alcance: sim (`packages/sim/src/season/`, `packages/sim/src/rulesets/v2/`), schema
   (`TurnLogEntry`, `GameEvent`), content (`events/luck-*.json`, `text/es.json`), cli (`--ruleset`,
@@ -96,7 +97,8 @@ cada stat entrenada y ánimo −1. Fórmulas exactas: `docs/formulas.md` «Tempo
 Un descanso elegido recupera +30 / +50 / +70 de vigor con 25 / 50 / 25 % (`restRecovery`,
 `restRecoveryWeights`), sorteado antes de la tirada de ánimo, que baja a 25 %. Una semana lesionada
 recupera `−fatigueCost.rest` sin sorteo: 50 en v2 (la media del descanso elegido; el estudio la
-midió con 40, ver «Pendiente»). La salida da vigor +20 y ánimo +1.
+midió con 40, ver «Pendiente»). La salida da vigor +20 y ánimo +1; el simulador devuelve 5 de
+vigor (estudio §9, `b3722b5`).
 
 ### D5. Ánimo con peso
 
@@ -207,7 +209,7 @@ descanso elegido pasó de `fatigueCost.rest` a `restRecovery`).
 | Descanso forzado        | Con fatiga ≥ 80                                  | Ninguno                                                                  | `forcedRestAt` 80 → 101                                                      |
 | Fallo de un simple      | 5 % + fatiga/4 ‰                                 | 0 % con vigor ≥ 60; 1,6 / 6,6 / 15 / 26,6 / 41,6 / 60 % con vigor 50 … 0 | `failModel` "linear" → "curve", `failCurveStart` 40, `failCurveMax` 600      |
 | Vuelo de riesgo         | 12 % fijo, 3 % de lesión                         | 12 % + la curva; un cuarto de los fallos es lesión                       | `riskFlightFail` 120, `injuryShareOfFail` 250                                |
-| Simulador               | Nunca falla; fatiga +10                          | Mitad de la curva; vigor +5 en el estudio (ver «Pendiente»)              | `simulatorFailPm` 0 → 500, `fatigueCost["train:simulator"]`                  |
+| Simulador               | Nunca falla; fatiga +10                          | Mitad de la curva; vigor +5 (`b3722b5`)                                  | `simulatorFailPm` 0 → 500, `fatigueCost["train:simulator"]` 10 → −5          |
 | Lesión por agotamiento  | —                                                | Con vigor ≤ 20, un cuarto de los fallos es lesión (2 semanas)            | `injuryFromFatigue` 101 → 80, `injuryShareOfFail` 250, `injuryTurns` 2       |
 | Costo de un fallo       | Media ganancia, ánimo −1                         | Igual                                                                    | `failLossPm` 500, `failMoodLoss` 1                                           |
 | Descanso elegido        | Vigor +40; ánimo +1 con 50 %                     | Vigor +30 / +50 / +70 (25 / 50 / 25 %); ánimo +1 con 25 %                | `restRecovery`, `restRecoveryWeights`, `restMoodUpChance` 500 → 250          |
@@ -261,16 +263,16 @@ Del motor (esta implementación):
 - La política de la stat más baja (la referencia de `pnpm sim:season-batch` hasta la etapa C, que
   pasó la de v2 a la cuidadosa: «Consecuencias»; 500 temporadas por Falconess, sin eventos de suerte):
 
-  | Ruleset                                                      | ≥ B (media; Caracara / Cernícala / Peregrina) | Gana   |
-  | ------------------------------------------------------------ | --------------------------------------------- | ------ |
-  | v1                                                           | 76,5 % (72,8 / 72,0 / 84,8)                   | 50,1 % |
-  | v2 tal como está (`0b6cdfc`)                                 | 34,3 % (29,2 / 25,4 / 48,4)                   | 22,8 % |
-  | v2 con el simulador del estudio (fatiga −5)                  | 40,6 % (35,6 / 30,2 / 56,0)                   | 25,5 % |
-  | v2 con el simulador del estudio y los umbrales de nota de v1 | **44,5 %** (37,0 / 33,4 / 63,2)               | 25,5 % |
+  | Ruleset                            | ≥ B (media; Caracara / Cernícala / Peregrina) | Gana   |
+  | ---------------------------------- | --------------------------------------------- | ------ |
+  | v1                                 | 76,5 % (72,8 / 72,0 / 84,8)                   | 50,1 % |
+  | v2 (`b3722b5`: simulador vigor +5) | 40,6 % (35,6 / 30,2 / 56,0)                   | 25,5 % |
+  | v2 con los umbrales de nota de v1  | **44,5 %** (37,0 / 33,4 / 63,2)               | 25,5 % |
 
   La última fila es exactamente la referencia del estudio con rivales 60 + 11 (§8: 44,5 % y 25,2 %
-  de victorias): el motor reproduce el estudio; lo que falta es la constante del simulador
-  («Pendiente»).
+  de victorias): el motor reproduce el estudio. Historia: el commit de v2 (`0b6cdfc`) escribió el
+  simulador con vigor −5 y la referencia quedaba en 34,3 % (29,2 / 25,4 / 48,4) y 22,8 %; `b3722b5`
+  lo dejó como el estudio.
 - Tests de v2 (`packages/sim/src/season/v2.test.ts`): la tabla de la curva, sin descanso forzado,
   simulador a mitad de curva, lesión con vigor ≤ 20 y en el vuelo de riesgo, reparto del descanso
   (solo v2 sortea), salida, deriva por racha, ánimo por carrera mala en el 6.º, multiplicador de
@@ -321,8 +323,8 @@ texto de evento existente decía «fatiga», así que no hubo que reescribir nin
 ### Por qué esos pesos
 
 Lo que vale cada tipo de efecto, medido agregando al contenido solo los eventos de ese tipo, con las
-magnitudes de la primera versión (500 temporadas por Falconess, v2 tal como está, puntos de B o
-mejor por evento ocurrido):
+magnitudes de la primera versión (500 temporadas por Falconess, v2 con el simulador de `0b6cdfc`,
+antes de `b3722b5`; puntos de B o mejor por evento ocurrido):
 
 | Efecto                 | Cuidadosa | Nunca sale |
 | ---------------------- | --------- | ---------- |
@@ -341,13 +343,13 @@ más frecuentes son los de stats y vigor. Una primera versión con todos los eve
 largos daba 13 eventos por temporada (uno cada 3,3 semanas), le quitaba 8 puntos de B a la cuidadosa
 y le sumaba 4 a la que nunca sale.
 
-Frecuencia (cuidadosa, base): 8,6 eventos de suerte por temporada, uno cada 5,0 semanas jugadas
-(2,1 / 2,5 / 2,4 / 1,6 en los cuatro tramos). Los eventos con elección bajan de 13,7 a 13,0 por
-temporada: los del primer tramo se corren a los siguientes (6,5 → 4,3 en las semanas 1-11, 1,9 → 2,9
-en las 24-35). Por evento, sin → con los de suerte: `boneyard-botch-1` 2,95 → 2,89,
-`steinhaus-maintenance-1` 2,29 → 2,10, `sandstorm-week` 1,96 → 1,91, `sponsor-photo` 1,94 → 1,87,
-`altair-contract-1` 1,24 → 1,19, `koryu-data-session-1` 0,57 → 0,53, `podium-interview` 0,61 →
-0,46, `hard-loss` 0,16 → 0,15; los de historia y de cada Falconess, iguales. `podium-interview` es
+Frecuencia (cuidadosa, base, `b3722b5`): 8,7 eventos de suerte por temporada, uno cada 5,1 semanas
+jugadas (2,1 / 2,5 / 2,4 / 1,7 en los cuatro tramos). Los eventos con elección bajan de 13,9 a 13,3
+por temporada: los del primer tramo se corren a los siguientes (6,5 → 4,3 en las semanas 1-11, 1,9 →
+3,1 en las 24-35). Por evento, sin → con los de suerte: `boneyard-botch-1` 2,96 → 2,91,
+`steinhaus-maintenance-1` 2,38 → 2,21, `sandstorm-week` 1,96 → 1,92, `sponsor-photo` 1,94 → 1,89,
+`altair-contract-1` 1,32 → 1,24, `koryu-data-session-1` 0,61 → 0,57, `podium-interview` 0,60 →
+0,47, `hard-loss` 0,11 → 0,10; los de historia y de cada Falconess, iguales. `podium-interview` es
 el que más baja aunque ningún evento de suerte cae en semana de carrera: los eventos con elección que
 la suerte corre del primer tramo siguen elegibles en la semana 12 y le disputan el sorteo.
 
@@ -363,85 +365,87 @@ baja 72,8 / 72,0 / 84,8 % de B o mejor (media 76,5 %), gana el 50,1 % de sus car
 las reglas de v1, el estudio midió para las demás políticas: cuidadosa 74 %, descansa con vigor 20
 (la obligaba el juego) 79 %, spam de Agilidad 7 %. Los eventos de suerte no existen en v1.
 
-**v2 sin eventos** (el estudio con su simulador, vigor +5: cuidadosa 74-75 %, nunca sale 45 %,
-descansa con vigor 20 30 %, con vigor 0 7 %, spam 0-0,1 %) y **v2 con eventos**, con el simulador
-tal como está (vigor −5) y con el del estudio:
+**v2 sin eventos** (el estudio midió con el mismo simulador, vigor +5: cuidadosa 74-75 %, nunca
+sale 45 %, descansa con vigor 20 30 %, con vigor 0 7 %, spam 0-0,1 %) y **v2 con eventos**, con las
+constantes de `b3722b5`:
 
-| Política                                         | v2 tal como está, sin eventos | v2 tal como está, con eventos | v2 con simulador vigor +5, sin eventos | v2 con simulador vigor +5, con eventos |
-| ------------------------------------------------ | ----------------------------- | ----------------------------- | -------------------------------------- | -------------------------------------- |
-| Cuidadosa (referencia v2, f0 m1)                 | 65,6 / 68,3                   | 63,6 / 64,7                   | 74,2 / 74,7                            | 72,9 / 73,3                            |
-| Cuidadosa f70 m1                                 | 65,4 / 68,3                   | 64,5 / 67,0                   | 73,3 / 74,2                            | 70,7 / 74,3                            |
-| Cuida el vigor, nunca sale (referencia v1)       | 34,3 / 35,8                   | 37,2 / 39,8                   | 40,6 / 43,3                            | 44,3 / 46,1                            |
-| Descansa solo con vigor 20                       | 16,1 / 16,9                   | 20,5 / 20,9                   | 25,5 / 25,3                            | 26,8 / 30,3                            |
-| Descansa solo con vigor 0                        | 2,8 / 2,5                     | 3,7 / 3,1                     | 4,7 / 4,7                              | 5,4 / 7,7                              |
-| Nunca descansa                                   | 0,0 / 0,0                     | 0,0 / 0,1                     | 0,0 / 0,0                              | 0,0 / 0,1                              |
-| Spam de Agilidad (descanse con vigor 20 o nunca) | 0,0 / 0,0                     | 0,0 / 0,0                     | 0,0 / 0,0                              | 0,0 / 0,0                              |
-| **Gana** (cuidadosa)                             | 31,8 / 30,1                   | 30,8 / 30,5                   | 38,1 / 37,0                            | 37,5 / 37,7                            |
-| **Gana** (nunca sale)                            | 22,5 / 21,8                   | 22,8 / 22,6                   | 25,2 / 26,2                            | 25,7 / 26,0                            |
+| Política                                         | v2 sin eventos | v2 con eventos |
+| ------------------------------------------------ | -------------- | -------------- |
+| Cuidadosa (referencia v2, f0 m1)                 | 74,2 / 74,7    | 72,9 / 73,3    |
+| Cuidadosa f70 m1                                 | 73,3 / 74,2    | 70,7 / 74,3    |
+| Cuida el vigor, nunca sale (referencia v1)       | 40,6 / 43,3    | 44,3 / 46,1    |
+| Descansa solo con vigor 20                       | 25,5 / 25,3    | 26,8 / 30,3    |
+| Descansa solo con vigor 0                        | 4,7 / 4,7      | 5,4 / 7,7      |
+| Nunca descansa                                   | 0,0 / 0,0      | 0,0 / 0,1      |
+| Spam de Agilidad (descanse con vigor 20 o nunca) | 0,0 / 0,0      | 0,0 / 0,0      |
+| **Gana** (cuidadosa)                             | 38,1 / 37,0    | 37,5 / 37,7    |
+| **Gana** (nunca sale)                            | 25,2 / 26,2    | 25,7 / 26,0    |
 
-Con otras dos bases (`alt2`, `alt3`) la cuidadosa con eventos da 63,9 / 67,7 % (65,9 / 67,9 sin
-eventos) y, con el simulador del estudio, 72,9 / 76,0 %. `pnpm sim:season-batch -- --runs 500`
-(v2, con eventos): 58 / 53 / 80 % de B o mejor (media 63,7 %), gana 27 / 24 / 42 %.
+Con otras dos bases (`alt2`, `alt3`) la cuidadosa con eventos da 72,9 / 76,0 % y gana 36,7 /
+38,0 %. `pnpm sim:season-batch -- --runs 500` (v2, con eventos): 72 / 61 / 87 % de B o mejor
+(71,6 / 60,6 / 86,6; media 72,9 %), gana 36 / 28 / 49 %. Historia: hasta `b3722b5` el simulador
+gastaba 5 de vigor y la cuidadosa con eventos quedaba en 63,6 / 64,7 % y ganaba 30,8 / 30,5 %. La
+etapa C midió en proceso el valor del estudio; con la constante ya escrita, el arnés,
+`sim:season-batch`, S7 y la partida del dueño repiten esas mediciones sorteo por sorteo: son los
+números de esta tabla (`.work/impl2/final2-g.md`).
 
-Detalle por temporada, v2 tal como está, con eventos (base):
+Detalle por temporada, v2 (`b3722b5`), con eventos (base):
 
 | Política                                | B o mejor | Gana | Stat media final | Fallos | Lesiones | Descansos | Salidas | Ánimo +2 (% semanas) | Ánimo < 0 (% semanas) | Eventos de suerte |
 | --------------------------------------- | --------- | ---- | ---------------- | ------ | -------- | --------- | ------- | -------------------- | --------------------- | ----------------- |
-| Cuidadosa                               | 63,6      | 30,8 | 617              | 0,55   | 0,14     | 8,3       | 7,6     | 58                   | 0                     | 8,6               |
-| Nunca sale                              | 37,2      | 22,8 | 555              | 0,75   | 0,14     | 10,6      | 0       | 6                    | 53                    | 8,2               |
-| Descansa con vigor 20                   | 20,5      | 17,5 | 495              | 1,89   | 0,18     | 9,4       | 0       | 4                    | 61                    | 7,7               |
-| Descansa con vigor 0                    | 3,7       | 9,4  | 393              | 3,75   | 0,73     | 6,4       | 0       | 1                    | 73                    | 6,7               |
+| Cuidadosa                               | 72,9      | 37,5 | 653              | 0,55   | 0,14     | 7,3       | 7,7     | 56                   | 0                     | 8,7               |
+| Nunca sale                              | 44,3      | 25,7 | 583              | 0,78   | 0,15     | 9,8       | 0       | 4                    | 58                    | 8,4               |
+| Descansa con vigor 20                   | 26,8      | 20,3 | 531              | 1,86   | 0,21     | 8,8       | 0       | 3                    | 66                    | 8,1               |
+| Descansa con vigor 0                    | 5,4       | 11,5 | 421              | 3,83   | 0,75     | 6,0       | 0       | 1                    | 75                    | 7,0               |
 | Spam de Agilidad, descansa con vigor 20 | 0,0       | 45,4 | 519              | 1,76   | 0        | 11,9      | 0       | 3                    | 62                    | 9,5               |
 
 Lectura:
 
-- **Los eventos no cambian la dificultad de quien juega bien**: a la cuidadosa le cuestan ≈ 2
-  puntos (entre 0 y 4 según la base de semillas), del orden del ruido de 500 temporadas, y le quitan
-  ≈ 7 puntos de semanas con ánimo +2 (65 → 58 %): el ánimo se mueve más, como pidió el dueño.
+- **Los eventos no cambian la dificultad de quien juega bien**: a la cuidadosa le cuestan ≈ 1
+  punto (1,3 / 1,4 según la base de semillas), menos que el ruido de 500 temporadas, y le quitan
+  ≈ 6 puntos de semanas con ánimo +2 (62 → 56 %): el ánimo se mueve más, como pidió el dueño.
 - **A la descuidada la ayudan un poco** (+3 a +4 puntos a la que nunca sale, +1 a +5 a la que
   descansa con vigor 20): los eventos buenos de vigor y de stats valen para todas y el poco ánimo +1
-  que hay vale mucho para quien no sale. La cuidadosa sigue 25-29 puntos por encima de la que nunca
+  que hay vale mucho para quien no sale. La cuidadosa sigue 27-29 puntos por encima de la que nunca
   sale y 43-46 por encima de la que descansa con vigor 20.
-- **El spam sigue en 0 %** y la que descansa con el vigor vacío en 3-8 %.
-- **Con el simulador tal como está no llega la meta de victorias**: la cuidadosa gana 30-31 % de sus
-  carreras objetivo (objetivo del dueño 35-45 %) y su B o mejor queda en el borde, 64-68 % (objetivo
-  65-80 %); por Falconess, Cernícala queda por debajo del 60 % de la métrica 7 («Consecuencias»).
-  Un contenido equilibrado no lo arregla: los eventos mueven ≈ ±2 puntos y faltan ≈ 5 de victorias;
-  solo los eventos buenos (6,5 por temporada, medido sin los malos) le suben 7 puntos de victorias,
-  así que haría falta una suerte casi siempre buena, contra el pedido del dueño. Con el
-  simulador del estudio (vigor +5) se cumplen todas las metas en las dos bases: cuidadosa 73 %,
-  gana 37-38 %, nunca sale 44-46 %, descansa con vigor 20 27-30 %, con vigor 0 5-8 %, spam 0 %.
-  Propuesta para el líder: `.work/impl2/ruleset-proposal-c.md` («Pendiente»).
+- **El spam sigue en 0 %** y la que descansa con el vigor vacío en 5-8 %.
+- **Se cumplen todas las metas en las dos bases**: la cuidadosa llega a B o mejor en el 73 %
+  (objetivo del dueño 65-80 %) y gana el 37,5-37,7 % de sus carreras objetivo (objetivo 35-45 %);
+  nunca sale 44-46 %, descansa con vigor 20 27-30 %, con vigor 0 5-8 %, spam 0 %. Por Falconess,
+  la métrica 7 pasa o queda inconclusa para las tres («Consecuencias»). La meta de victorias
+  dependía del simulador, no del contenido: con el de `0b6cdfc` la cuidadosa ganaba 30-31 %, los
+  eventos mueven ≈ ±2 puntos y solo una suerte casi siempre buena (6,5 eventos buenos por
+  temporada, sin los malos) le sumaba 7, contra el pedido del dueño.
 
 ### La partida del dueño con v2
 
 Sus 61 entradas de `run1.json` (Peregrina, semilla 397553) en orden, con el motor real: una elección
 de evento sin evento pendiente se salta y un evento sin elección suya toma la opción 0.
 
-| Reglas                                    | Su semilla                                                               | Sus botones en otras 300 semillas: B o mejor | Completa | Gana   | Fallos | Lesiones | Ánimo al final |
-| ----------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------- | -------- | ------ | ------ | -------- | -------------- |
-| v1 (la partida real)                      | B, 2958, 1.º / 1.º / 2.º / 1.º, 2 fallos                                 | 64,0 %                                       | 91,0 %   | 60,4 % | 1,9    | 0,14     | +1,6           |
-| v2 sin eventos                            | E: 8.ª en T36, la temporada termina                                      | 0,0 %                                        | 7,3 %    | 16,8 % | 5,7    | 1,26     | −1,9           |
-| v2 con eventos                            | E: 8.ª en T36 (2030 de stats, 3 fallos y 1 lesión, 10 eventos de suerte) | 0,7 %                                        | 7,0 %    | 18,2 % | 5,5    | 1,38     | −1,9           |
-| v2 con eventos y el simulador del estudio | igual que la anterior                                                    | 1,0 %                                        | 10,3 %   | 18,7 % | 5,4    | 1,35     | −1,9           |
+| Reglas               | Su semilla                                                               | Sus botones en otras 300 semillas: B o mejor | Completa | Gana   | Fallos | Lesiones | Ánimo al final |
+| -------------------- | ------------------------------------------------------------------------ | -------------------------------------------- | -------- | ------ | ------ | -------- | -------------- |
+| v1 (la partida real) | B, 2958, 1.º / 1.º / 2.º / 1.º, 2 fallos                                 | 64,0 %                                       | 91,0 %   | 60,4 % | 1,9    | 0,14     | +1,6           |
+| v2 sin eventos       | E: 8.ª en T36, la temporada termina                                      | 0,3 %                                        | 8,3 %    | 17,2 % | 5,5    | 1,23     | −1,9           |
+| v2 con eventos       | E: 8.ª en T36 (2030 de stats, 3 fallos y 1 lesión, 10 eventos de suerte) | 1,0 %                                        | 10,3 %   | 18,7 % | 5,4    | 1,35     | −1,9           |
 
-En su semilla gana las dos primeras carreras, pero de la semana 18 a la 31 entrena casi siempre con
-30 de vigor o menos (en v1 el descanso forzado en fatiga 80 lo frenaba): falla tres entrenamientos,
+En su semilla gana las dos primeras carreras, pero de la semana 19 a la 31 entrena casi siempre con
+20 de vigor o menos (en v1 el descanso forzado en fatiga 80 lo frenaba): falla tres entrenamientos,
 se lesiona por agotamiento en la semana 31 (dos semanas fuera) y su ánimo cae de +2 a −2 entre las
 semanas 20 y 23 (dos fallos, la deriva y un evento malo). Llega a la semana de la meta de T36, que
 pide 5.º o mejor, con 1939 de stats (2024 después del vuelo de riesgo de esa semana) y ánimo −1, y
 termina 8.ª. Con las reglas nuevas hubiera jugado distinto; lo que muestra es que el estilo de su
 partida v1 ya no alcanza, con o sin eventos. (La fila del estudio, §6, daba B en su semilla: su
 script de la partida del dueño no aplicaba el ánimo de M2, ni la deriva ni la tabla de
-entrenamiento.) Números medidos con el contenido final (después de `6d96ad1`, que cambió dos pesos
-de eventos) y `.work/impl2/stage-c/replay-owner.mts`; la fila sin eventos no depende de los pesos.
+entrenamiento.) Números medidos con `b3722b5` y `.work/impl2/stage-c/replay-owner.mts`. Con el
+simulador de `0b6cdfc` sus botones daban 0,0 % (sin eventos) y 0,7 % (con eventos) de B o mejor: en
+su semilla usa el simulador una sola vez y la partida termina igual.
 
 ## Consecuencias
 
 - La regla «fatiga ≥ 80 fuerza el descanso» de BRIEF §8 vale solo para v1; v2 la reemplaza por la
   curva de fallo (nota en BRIEF §8).
 - **Métrica 7.** BRIEF §12 mide la métrica 7 con la política de la stat más baja, que nunca sale: con
-  v2 queda en 34-40 % de B o mejor y la métrica (≥ 60 %) fallaría. Decisión (estudio §10, opción
+  v2 queda en 41-46 % de B o mejor y la métrica (≥ 60 %) fallaría. Decisión (estudio §10, opción
   a): en v2 la métrica 7 se mide con la política cuidadosa. `referencePolicy` (`apps/cli/src/policy.ts`)
   juega la de cada ruleset: v1 la de la stat más baja, sin cambios (`sim:season-batch --ruleset v1` y
   `sim:batch` dan lo mismo que `5f0fd65`); v2 la cuidadosa (`carefulPolicy`: entrena la stat más
@@ -486,28 +490,23 @@ de eventos) y `.work/impl2/stage-c/replay-owner.mts`; la fila sin eventos no dep
 
 ## Pendiente
 
-- **Simulador.** El estudio (§9) pide `fatigueCost["train:simulator"]` −5 (vigor +5: el simulador
-  como entrenamiento «seguro» de los turnos cansados, +5 puntos de B para la cuidadosa y +12 para la
-  referencia). El commit `0b6cdfc` escribió `5` (vigor −5). El motor lee la constante tal como está:
-  con `5` la referencia queda 6,3 puntos de B y 2,7 de victorias por debajo («Evidencia»), y con los
-  eventos la cuidadosa gana el 30-31 % de sus carreras objetivo, por debajo de la meta de 35-45 %
-  («Eventos al azar: balance»); con `−5` se cumplen todas las metas del estudio y la de victorias, y
-  la métrica 7 de Cernícala pasa justo con tres bases juntas («Consecuencias»). Corregirla es una
-  línea en `rulesets/v2/constants.ts` y la decide el líder (CLAUDE.md: los rulesets no se editan
-  sin aprobación); los tests leen la constante y no cambian. Propuesta con números:
-  `.work/impl2/ruleset-proposal-c.md` y `.work/impl2/ruleset-proposal-final.md`.
-- **Métrica 7 en v2 (Cernícala).** Con las constantes tal como están, la política cuidadosa deja a
-  Cernícala en 56,1 % de B o mejor (1500 temporadas, tres bases; falla el 60 %) y a Caracara en
-  60,7 % (inconclusa); tabla en «Consecuencias». Opciones para el líder, antes de que `sim:batch`
-  pase a medir v2 por defecto: (a) el simulador del estudio (arriba; Cernícala 62,6 %, pasa justo),
-  (b) aflojar la escalera de metas de Cernícala (contenido; su meta de T46, 3.ª o mejor, la pasan
-  solo el 76 % de las que llegan), o (c) un ADR que mueva el objetivo de la métrica 7 en v2.
-  Números y propuesta: `.work/impl2/ruleset-proposal-final.md`.
+- **Simulador (cerrado, `b3722b5`).** `fatigueCost["train:simulator"]` −5 (vigor +5), como
+  pide el estudio (§9). El commit `0b6cdfc` había escrito `5` (vigor −5). Con la constante del
+  estudio se cumplen todas sus metas y la de victorias («Eventos al azar: balance»), y las
+  mediciones en proceso de la etapa C y de la etapa final se reproducen exactas con la constante
+  escrita (`.work/impl2/final2-g.md`). Propuestas: `.work/impl2/ruleset-proposal-c.md` y
+  `.work/impl2/ruleset-proposal-final.md`.
+- **Métrica 7 en v2 (cerrado con el simulador).** Sin celdas que fallen en S7 `full`
+  (dos bases) ni en `sim:season-batch`; con las 1500 temporadas juntas pasan las tres (Cernícala
+  62,6 %, Wilson 60,1-65,0). `sim:batch` mide v2 por defecto («Consecuencias»). Cernícala queda
+  inconclusa en cada base de 500 y en el `pr`; si un cambio de contenido la baja, las opciones
+  siguen siendo aflojar su escalera de metas (su meta de T46, 3.ª o mejor, la pasan el 82 % de las
+  que llegan) o un ADR que mueva el objetivo.
 - **Semana lesionada.** v2 recupera 50 (la media del descanso elegido); el estudio la midió con 40.
-  Medido en la etapa C con los eventos: 40 o 50 dan lo mismo (cuidadosa 63,6 contra 63,6 %, nunca
-  sale 37,1 contra 37,2 %, descansa con vigor 0 3,7 contra 3,7 %): las lesiones son ≈ 0,14 por
-  temporada en la cuidadosa y la diferencia no se ve en 500 temporadas por Falconess; no hace falta
-  cambiarla.
+  Medido con los eventos y `b3722b5`: 40 o 50 dan lo mismo (cuidadosa 72,9 contra 72,9 %, nunca
+  sale 44,2 contra 44,3 %, descansa con vigor 0 5,3 contra 5,4 %; la etapa C lo vio igual con el
+  simulador de `0b6cdfc`): las lesiones son ≈ 0,14 por temporada en la cuidadosa y la diferencia no
+  se ve en 500 temporadas por Falconess; no hace falta cambiarla.
 
 ## Alternativas descartadas
 
