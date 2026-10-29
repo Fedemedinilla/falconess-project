@@ -220,7 +220,10 @@ Tareas, en orden:
 - [ ] D17 · `tools/policies/lowest-stat.ts` y `pnpm sim:season-batch -- --runs 1000`: la política de
   referencia juega temporadas completas sin interfaz y reporta distribución de `grade`, stats
   finales y `feathers`. Objetivo: B en el 60 % de los casos. Ajustar ganancias de entrenamiento
-  del brief §8 contra la curva 550–800.
+  del brief §8 contra la curva 550–800. Estado con el ruleset v2 (ADR-0006 «Consecuencias»): la
+  referencia es la política cuidadosa; con las constantes actuales Cernícala queda en 56 % de B o
+  mejor (1500 temporadas: falla) y Caracara en 61 % (inconclusa). El líder decide entre la
+  constante del simulador, la escalera de metas de Cernícala o un ADR antes de pasar `sim:batch` a v2.
 - [ ] D18 · Biblias de voz `docs/characters/{peregrina,cernicala,caracara}.md` (escritas a mano) y
   `docs/world.md`. 10 eventos de historia escritos a mano (`handwritten: true`), 3–4 por Falconess.
 - [ ] D19 · `tools/generators/` para `events`, `skills`, `quirks` con salidas estructuradas del SDK de
