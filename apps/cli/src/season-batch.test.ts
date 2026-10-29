@@ -1,5 +1,5 @@
 import { loadContent } from "@falconess/content";
-import { RULESET_V1, type SimContext } from "@falconess/sim";
+import { RULESET_V1, RULESET_V2, type SimContext } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { goalFlagged, goalPassRate } from "./goal-rate.js";
 import {
@@ -12,35 +12,40 @@ import {
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 
 describe("pnpm sim:season-batch", () => {
-  it("counts grades, completions and goal passes consistently, deterministically", () => {
-    const runs = 4;
-    const m = runSeasonBatch(ctx, "cernicala", runs);
-    expect(runSeasonBatch(ctx, "cernicala", runs)).toEqual(m);
-    expect(GRADE_ORDER.reduce((n, g) => n + (m.grades[g] ?? 0), 0)).toBe(runs);
-    const failed = Object.values(m.failTurns).reduce((n, k) => n + k, 0);
-    expect(m.completed + failed).toBe(runs);
-    expect(m.goals.map((g) => g.goal.turn)).toEqual([12, 24, 36, 46]);
-    expect(m.goals[0]?.reached).toBe(runs); // every season runs its first goal race
-    for (const g of m.goals) expect(g.passed).toBeLessThanOrEqual(g.reached);
-    // a completed season passed every goal
-    expect(m.goals.at(-1)?.passed).toBe(m.completed);
-    expect(m.races).toBe(m.goals.reduce((n, g) => n + g.reached, 0));
-    // every goal race has a place; the first slot is the wins
-    expect(m.places.reduce((n, k) => n + k, 0)).toBe(m.races);
-    expect(m.places[0]).toBe(m.wins);
-    expect(m.goals.reduce((n, g) => n + g.won, 0)).toBe(m.wins);
-    for (const g of m.goals) expect(g.won).toBeLessThanOrEqual(g.passed);
-    expect(m.allWon).toBeLessThanOrEqual(m.completed);
+  // v2 plays the careful reference policy, v1 the lowest-stat one (referencePolicy)
+  it.each([RULESET_V2, RULESET_V1])(
+    "counts grades, completions and goal passes consistently, deterministically ($version)",
+    (ruleset) => {
+      const ctx: SimContext = { ruleset, content: loadContent() };
+      const runs = 4;
+      const m = runSeasonBatch(ctx, "cernicala", runs);
+      expect(runSeasonBatch(ctx, "cernicala", runs)).toEqual(m);
+      expect(GRADE_ORDER.reduce((n, g) => n + (m.grades[g] ?? 0), 0)).toBe(runs);
+      const failed = Object.values(m.failTurns).reduce((n, k) => n + k, 0);
+      expect(m.completed + failed).toBe(runs);
+      expect(m.goals.map((g) => g.goal.turn)).toEqual([12, 24, 36, 46]);
+      expect(m.goals[0]?.reached).toBe(runs); // every season runs its first goal race
+      for (const g of m.goals) expect(g.passed).toBeLessThanOrEqual(g.reached);
+      // a completed season passed every goal
+      expect(m.goals.at(-1)?.passed).toBe(m.completed);
+      expect(m.races).toBe(m.goals.reduce((n, g) => n + g.reached, 0));
+      // every goal race has a place; the first slot is the wins
+      expect(m.places.reduce((n, k) => n + k, 0)).toBe(m.races);
+      expect(m.places[0]).toBe(m.wins);
+      expect(m.goals.reduce((n, g) => n + g.won, 0)).toBe(m.wins);
+      for (const g of m.goals) expect(g.won).toBeLessThanOrEqual(g.passed);
+      expect(m.allWon).toBeLessThanOrEqual(m.completed);
 
-    const text = renderSeasonBatch(m).join("\n");
-    expect(text).toContain("cernicala  runs 4");
-    expect(text).toContain("T46 desert-canyon ≤ 3: passed");
-    expect(text).toMatch(/mean seasonScore \d+ = stats \d+ \+ skills \d+ \+ races \d+/);
-    expect(text).toMatch(
-      /goal races: [\d.]+ per season {2}won \d+% {2}podium \d+% {2}places 1st…8th ([\d.]+ \/ ){7}[\d.]+ % {2}seasons that won every goal race \d+%/,
-    );
-    expect(text).toMatch(/T12 desert-sprint ≤ \d: .* won\/reached \d+%/);
-  });
+      const text = renderSeasonBatch(m).join("\n");
+      expect(text).toContain("cernicala  runs 4");
+      expect(text).toContain("T46 desert-canyon ≤ 3: passed");
+      expect(text).toMatch(/mean seasonScore \d+ = stats \d+ \+ skills \d+ \+ races \d+/);
+      expect(text).toMatch(
+        /goal races: [\d.]+ per season {2}won \d+% {2}podium \d+% {2}places 1st…8th ([\d.]+ \/ ){7}[\d.]+ % {2}seasons that won every goal race \d+%/,
+      );
+      expect(text).toMatch(/T12 desert-sprint ≤ \d: .* won\/reached \d+%/);
+    },
+  );
 
   it("flags a goal under 80 % of the seasons that reached it, not of all seasons (21.1)", () => {
     const goals = ctx.content.getFalconess("peregrina").seasonGoals;

@@ -34,7 +34,7 @@ export function runSeason(
     const prev = state;
     state = advanceSeason(ctx, state, input);
     if (input.kind !== "event:choose") lines.push(`${headerLine(ctx, prev)}  ${statsLine(prev)}`);
-    lines.push(`  ${describeInput(ctx.content, input)}`);
+    lines.push(`  ${describeInput(ctx.content, input, prev)}`);
     lines.push(...turnSummary(ctx, state, prev));
     if (state.pendingEvent)
       lines.push(`  ? ${ctx.content.t(ctx.content.getEvent(state.pendingEvent.eventId).textKey)}`);

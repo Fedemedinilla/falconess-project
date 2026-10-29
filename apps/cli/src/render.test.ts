@@ -11,11 +11,20 @@ import {
 } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { argRuleset, parseArgs } from "./args.js";
-import { headerLine, pmPercent, trainingMenu, turnSummary } from "./render.js";
+import {
+  describeInput,
+  headerLine,
+  moodLabel,
+  pmPercent,
+  trainingMenu,
+  turnSummary,
+  vigorBar,
+} from "./render.js";
 import { runSeason } from "./sim.js";
 
 const content = loadContent();
 const V2: SimContext = { ruleset: RULESET_V2, content };
+const V1: SimContext = { ruleset: RULESET_V1, content };
 const START: Extract<RunInput, { kind: "start" }> = {
   kind: "start",
   falconessId: "peregrina",
@@ -39,9 +48,10 @@ describe("--ruleset (ADR-0006)", () => {
 });
 
 describe("v2 in the text season", () => {
-  it("shows vigor, not fatigue, and each training's risk from the sim", () => {
+  it("shows vigor as a bar that drains, never fatigue, and each training's risk from the sim", () => {
     const s = { ...startSeason(V2, "menu", START), fatigue: 80 };
-    expect(headerLine(V2, s)).toContain("vigor 20");
+    expect(headerLine(V2, s)).toContain(`vigor ${vigorBar(V2, 80)}`);
+    expect(vigorBar(V2, 80)).toBe("██░░░░░░░░ 20/100");
     expect(headerLine(V2, s)).not.toContain("fatiga");
     const menu = trainingMenu(V2, s);
     expect(menu).toHaveLength(5);
@@ -54,14 +64,68 @@ describe("v2 in the text season", () => {
     );
   });
 
-  it("prints the week's mood and vigor change after its notes", () => {
-    const s0 = { ...startSeason(V2, "week", START), fatigue: 50, mood: 0 };
+  it("draws the vigor bar from the sim's vigor: full, empty and rounded down", () => {
+    expect(vigorBar(V2, 0)).toBe("██████████ 100/100");
+    expect(vigorBar(V2, 100)).toBe("░░░░░░░░░░ 0/100");
+    expect(vigorBar(V2, 41)).toBe("█████░░░░░ 59/100");
+    expect(vigorBar(V1, 41)).toBe("█████░░░░░ 59/100");
+  });
+
+  it("names the mood with what it does to training, per ruleset", () => {
+    expect(moodLabel(V2, 1)).toBe(`${content.t("mood.1")} (entrenar ×1.10)`);
+    expect(moodLabel(V2, -2)).toBe(`${content.t("mood.-2")} (entrenar ×0.80)`);
+    expect(moodLabel(V1, 1)).toBe(`${content.t("mood.1")} (entrenar ×1.05)`);
+    const s = { ...startSeason(V2, "mood", START), mood: 2 as const };
+    expect(headerLine(V2, s)).toContain(`ánimo ${moodLabel(V2, 2)}`);
+  });
+
+  it("prints the week: the action, then mood and vigor with where they ended and why", () => {
+    const s0 = { ...startSeason(V2, "week", START), fatigue: 50, mood: 0 as const };
     const s1 = advanceSeason(V2, s0, { kind: "outing" });
-    const [line] = turnSummary(V2, s1, s0);
-    expect(line).toContain(content.t("log.outing"));
-    expect(line).toContain(content.t("log.mood.outing"));
-    expect(line).toContain("ánimo +1");
-    expect(line).toContain("vigor +20");
+    const lines = turnSummary(V2, s1, s0);
+    expect(lines[0]).toBe(`  → ${content.t("log.outing")}`);
+    expect(lines).toContain(`  ánimo +1 → ${moodLabel(V2, 1)}: ${content.t("log.mood.outing")}`);
+    expect(lines).toContain(`  vigor +20 → ${vigorBar(V2, 30)}`);
+  });
+
+  it("puts a luck event on its own line with its texts and stats, apart from the action's", () => {
+    // a training week in weeks 2-11, until one rolls the tailwind (agility +10, technique +6)
+    for (let i = 0; i < 400; i++) {
+      const s0 = { ...startSeason(V2, `luck-${i}`, START), turn: 5 };
+      const s1 = advanceSeason(V2, s0, { kind: "train:stamina" });
+      const week = s1.log.at(-1);
+      if (week?.event?.id !== "luck-tailwind") continue;
+      expect(week.event.auto).toBe(true);
+      const lines = turnSummary(V2, s1, s0);
+      const luck = lines.find((l) => l.startsWith("  🎲 "));
+      expect(luck).toBe(
+        `  🎲 ${content.t("ev.luck-tailwind")} ${content.t("ev.luck-tailwind.opt0")} · ${content.t("stat.agility")} +10 · ${content.t("stat.technique")} +6`,
+      );
+      const action = lines[0] ?? "";
+      expect(action).toContain(content.t("stat.stamina"));
+      expect(action).not.toContain(content.t("ev.luck-tailwind"));
+      expect(action).not.toContain(content.t("stat.agility"));
+      return;
+    }
+    throw new Error("no tailwind in 400 seeds");
+  });
+
+  it("after an event choice prints the option and its outcome, not the question again", () => {
+    for (let i = 0; i < 200; i++) {
+      let s = startSeason(V2, `choice-${i}`, START);
+      while (!s.pendingEvent && s.status === "active") s = advanceSeason(V2, s, { kind: "rest" });
+      if (!s.pendingEvent) continue;
+      const e = content.getEvent(s.pendingEvent.eventId);
+      const opt = e.options[0];
+      if (!opt) continue;
+      expect(describeInput(content, { kind: "event:choose", option: 0 }, s)).toBe(
+        `elige: ${content.t(opt.textKey)}`,
+      );
+      const s1 = advanceSeason(V2, s, { kind: "event:choose", option: 0 });
+      for (const l of turnSummary(V2, s1, s)) expect(l).not.toContain(content.t(e.textKey));
+      return;
+    }
+    throw new Error("no event to answer");
   });
 
   it("formats per-mille chances as percents", () => {

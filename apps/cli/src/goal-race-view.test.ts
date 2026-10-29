@@ -1,24 +1,30 @@
 import { loadContent } from "@falconess/content";
 import type { RunInput, SeasonState } from "@falconess/schema";
-import { advanceSeason, RULESET_V1, type SimContext, startSeason } from "@falconess/sim";
+import {
+  advanceSeason,
+  RULESET_V1,
+  RULESET_V2,
+  type SimContext,
+  startSeason,
+} from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { goalRaceLog, goalRaceView } from "./goal-race-view.js";
-import { lowestStatPolicy, REFERENCE_HANGAR } from "./policy.js";
+import { REFERENCE_HANGAR, referencePolicy } from "./policy.js";
 import { ADVICE_FROM_PLACE, NO_ADVICE } from "./race/render-race.js";
 
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 
 /** The first goal race of a reference season: the state before it, its input and the result. */
-function firstGoalRace(falconessId: string, seed = `view-${falconessId}`) {
-  let s: SeasonState = startSeason(ctx, seed, {
+function firstGoalRace(falconessId: string, seed = `view-${falconessId}`, at: SimContext = ctx) {
+  let s: SeasonState = startSeason(at, seed, {
     kind: "start",
     falconessId,
     hangar: [...REFERENCE_HANGAR],
     parents: [],
   });
   for (;;) {
-    const input: RunInput = lowestStatPolicy(ctx, s);
-    const next = advanceSeason(ctx, s, input);
+    const input: RunInput = referencePolicy(at, s);
+    const next = advanceSeason(at, s, input);
     const result = next.raceResults.at(-1);
     if (result && next.raceResults.length > s.raceResults.length)
       return { before: s, input, result };
@@ -28,17 +34,21 @@ function firstGoalRace(falconessId: string, seed = `view-${falconessId}`) {
 }
 
 describe("pnpm play goal-race view", () => {
-  it("rebuilds the season's race with detail full: same place and time (P7)", () => {
-    for (const who of ["peregrina", "cernicala", "caracara"]) {
-      const { before, input, result } = firstGoalRace(who);
-      const log = goalRaceLog(ctx, before, input);
-      expect(log?.detail).toBe("full");
-      const me = log?.results.find((r) => r.runnerId === "player");
-      expect(me?.place).toBe(result.place);
-      expect(me?.timeTicks).toBe(result.timeTicks);
-      expect(log?.courseId).toBe(result.courseId);
-    }
-  });
+  it.each([RULESET_V1, RULESET_V2])(
+    "rebuilds the season's race with detail full: same place and time (P7, $version)",
+    (ruleset) => {
+      const at: SimContext = { ruleset, content: ctx.content };
+      for (const who of ["peregrina", "cernicala", "caracara"]) {
+        const { before, input, result } = firstGoalRace(who, `view-${who}`, at);
+        const log = goalRaceLog(at, before, input);
+        expect(log?.detail).toBe("full");
+        const me = log?.results.find((r) => r.runnerId === "player");
+        expect(me?.place).toBe(result.place);
+        expect(me?.timeTicks).toBe(result.timeTicks);
+        expect(log?.courseId).toBe(result.courseId);
+      }
+    },
+  );
 
   it("prints the classification and the player's phases, gains and time sinks", () => {
     const { before, input, result } = firstGoalRace("peregrina");
