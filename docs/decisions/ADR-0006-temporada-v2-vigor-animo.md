@@ -420,17 +420,19 @@ de evento sin evento pendiente se salta y un evento sin elección suya toma la o
 | ----------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------- | -------- | ------ | ------ | -------- | -------------- |
 | v1 (la partida real)                      | B, 2958, 1.º / 1.º / 2.º / 1.º, 2 fallos                                 | 64,0 %                                       | 91,0 %   | 60,4 % | 1,9    | 0,14     | +1,6           |
 | v2 sin eventos                            | E: 8.ª en T36, la temporada termina                                      | 0,0 %                                        | 7,3 %    | 16,8 % | 5,7    | 1,26     | −1,9           |
-| v2 con eventos                            | E: 8.ª en T36 (2036 de stats, 3 fallos y 1 lesión, 10 eventos de suerte) | 1,3 %                                        | 7,7 %    | 18,2 % | 5,6    | 1,33     | −1,9           |
-| v2 con eventos y el simulador del estudio | igual que la anterior                                                    | 1,7 %                                        | 10,3 %   | 19,3 % | 5,4    | 1,32     | −1,9           |
+| v2 con eventos                            | E: 8.ª en T36 (2030 de stats, 3 fallos y 1 lesión, 10 eventos de suerte) | 0,7 %                                        | 7,0 %    | 18,2 % | 5,5    | 1,38     | −1,9           |
+| v2 con eventos y el simulador del estudio | igual que la anterior                                                    | 1,0 %                                        | 10,3 %   | 18,7 % | 5,4    | 1,35     | −1,9           |
 
 En su semilla gana las dos primeras carreras, pero de la semana 18 a la 31 entrena casi siempre con
 30 de vigor o menos (en v1 el descanso forzado en fatiga 80 lo frenaba): falla tres entrenamientos,
-se lesiona por agotamiento en la semana 31 (dos semanas fuera) y su ánimo cae de +2 a −2 (los
-fallos, la deriva y dos eventos malos). Llega a la meta de T36, que pide 5.º o mejor, con 1945 de
-stats y ánimo −1, y termina 8.ª. Con las reglas nuevas hubiera jugado distinto; lo que muestra es
-que el estilo de su partida v1 ya no alcanza, con o sin eventos. (La fila del estudio, §6, daba B en
-su semilla: su script de la partida del dueño no aplicaba el ánimo de M2, ni la deriva ni la tabla
-de entrenamiento.)
+se lesiona por agotamiento en la semana 31 (dos semanas fuera) y su ánimo cae de +2 a −2 entre las
+semanas 20 y 23 (dos fallos, la deriva y un evento malo). Llega a la semana de la meta de T36, que
+pide 5.º o mejor, con 1939 de stats (2024 después del vuelo de riesgo de esa semana) y ánimo −1, y
+termina 8.ª. Con las reglas nuevas hubiera jugado distinto; lo que muestra es que el estilo de su
+partida v1 ya no alcanza, con o sin eventos. (La fila del estudio, §6, daba B en su semilla: su
+script de la partida del dueño no aplicaba el ánimo de M2, ni la deriva ni la tabla de
+entrenamiento.) Números medidos con el contenido final (después de `6d96ad1`, que cambió dos pesos
+de eventos) y `.work/impl2/stage-c/replay-owner.mts`; la fila sin eventos no depende de los pesos.
 
 ## Consecuencias
 
