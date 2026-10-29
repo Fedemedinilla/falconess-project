@@ -1,0 +1,23 @@
+{
+  "id": "luck-head-cold",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 8,
+  "textKey": "ev.luck-head-cold",
+  "options": [
+    {
+      "textKey": "ev.luck-head-cold.opt0",
+      "effects": {
+        "fatigue": 15
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [25, 35],
+    "maxOccurrences": 1
+  }
+}

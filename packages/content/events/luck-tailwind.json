@@ -1,0 +1,26 @@
+{
+  "id": "luck-tailwind",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 20,
+  "textKey": "ev.luck-tailwind",
+  "options": [
+    {
+      "textKey": "ev.luck-tailwind.opt0",
+      "effects": {
+        "stats": {
+          "agility": 10,
+          "technique": 6
+        }
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [2, 11],
+    "maxOccurrences": 1
+  }
+}

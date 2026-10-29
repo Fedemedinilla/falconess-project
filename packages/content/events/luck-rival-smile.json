@@ -1,0 +1,40 @@
+{
+  "id": "luck-rival-smile",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 8,
+  "textKey": "ev.luck-rival-smile",
+  "options": [
+    {
+      "textKey": "ev.luck-rival-smile.opt0",
+      "effects": {},
+      "chance": [
+        {
+          "p": 0.75,
+          "effects": {
+            "stats": {
+              "courage": 10,
+              "stamina": 6
+            }
+          },
+          "textKey": "ev.luck-rival-smile.good"
+        },
+        {
+          "p": 0.25,
+          "effects": {
+            "mood": -1
+          },
+          "textKey": "ev.luck-rival-smile.bad"
+        }
+      ]
+    }
+  ],
+  "conditions": {
+    "turnRange": [25, 35],
+    "maxOccurrences": 1
+  }
+}

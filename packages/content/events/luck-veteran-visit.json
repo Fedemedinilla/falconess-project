@@ -1,0 +1,26 @@
+{
+  "id": "luck-veteran-visit",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 12,
+  "textKey": "ev.luck-veteran-visit",
+  "options": [
+    {
+      "textKey": "ev.luck-veteran-visit.opt0",
+      "effects": {
+        "stats": {
+          "intelligence": 10,
+          "technique": 8
+        }
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [25, 35],
+    "maxOccurrences": 1
+  }
+}

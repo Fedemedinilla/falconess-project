@@ -1,0 +1,23 @@
+{
+  "id": "luck-stormy-night",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 16,
+  "textKey": "ev.luck-stormy-night",
+  "options": [
+    {
+      "textKey": "ev.luck-stormy-night.opt0",
+      "effects": {
+        "fatigue": 15
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [2, 11],
+    "maxOccurrences": 1
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "luck-caracara-hammock",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "caracara"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 16,
+  "textKey": "ev.luck-caracara-hammock",
+  "options": [
+    {
+      "textKey": "ev.luck-caracara-hammock.opt0",
+      "effects": {
+        "fatigue": -20
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [37, 45],
+    "maxOccurrences": 1
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "luck-radio-critic",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 3,
+  "textKey": "ev.luck-radio-critic",
+  "options": [
+    {
+      "textKey": "ev.luck-radio-critic.opt0",
+      "effects": {
+        "mood": -1
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [13, 23],
+    "maxOccurrences": 1
+  }
+}

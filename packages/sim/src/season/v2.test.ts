@@ -17,6 +17,11 @@ import { trainingGain } from "./training.js";
 const content = loadContent();
 const V1: SimContext = { ruleset: RULESET_V1, content };
 const V2: SimContext = { ruleset: RULESET_V2, content };
+/** V2 without the luck events, which a training week can roll after the action (ADR-0006 D8). */
+const V2_NO_LUCK: SimContext = {
+  ruleset: RULESET_V2,
+  content: { ...content, events: new Map([...content.events].filter(([, e]) => !e.auto)) },
+};
 const START: Extract<RunInput, { kind: "start" }> = {
   kind: "start",
   falconessId: "peregrina",
@@ -59,7 +64,8 @@ describe("training outcome = the exported chances (ADR-0006 D9)", () => {
         fc.integer({ min: -2, max: 2 }),
         fc.constantFrom(...KINDS),
         fc.integer({ min: 0, max: 8 }),
-        fc.constantFrom(V1, V2),
+        // the training's own draws, apart from a luck event the week may roll after it
+        fc.constantFrom(V1, V2_NO_LUCK),
         (seed, fatigue, mood, kind, streak, ctx) => {
           const s0 = withStreak(
             at(ctx, seed, { fatigue, mood: mood as SeasonState["mood"] }),

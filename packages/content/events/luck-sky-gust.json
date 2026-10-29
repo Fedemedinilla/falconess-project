@@ -1,0 +1,40 @@
+{
+  "id": "luck-sky-gust",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 12,
+  "textKey": "ev.luck-sky-gust",
+  "options": [
+    {
+      "textKey": "ev.luck-sky-gust.opt0",
+      "effects": {},
+      "chance": [
+        {
+          "p": 0.6,
+          "effects": {
+            "stats": {
+              "courage": 10,
+              "agility": 6
+            }
+          },
+          "textKey": "ev.luck-sky-gust.good"
+        },
+        {
+          "p": 0.4,
+          "effects": {
+            "fatigue": 10
+          },
+          "textKey": "ev.luck-sky-gust.bad"
+        }
+      ]
+    }
+  ],
+  "conditions": {
+    "turnRange": [37, 45],
+    "maxOccurrences": 1
+  }
+}

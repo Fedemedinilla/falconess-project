@@ -1,0 +1,23 @@
+{
+  "id": "luck-lost-goggles",
+  "version": 1,
+  "source": {
+    "kind": "random"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 3,
+  "textKey": "ev.luck-lost-goggles",
+  "options": [
+    {
+      "textKey": "ev.luck-lost-goggles.opt0",
+      "effects": {
+        "mood": -1
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [2, 11],
+    "maxOccurrences": 1
+  }
+}

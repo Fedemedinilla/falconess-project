@@ -1,0 +1,27 @@
+{
+  "id": "luck-cernicala-feather",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "cernicala"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 16,
+  "textKey": "ev.luck-cernicala-feather",
+  "options": [
+    {
+      "textKey": "ev.luck-cernicala-feather.opt0",
+      "effects": {
+        "stats": {
+          "technique": 10,
+          "agility": 6
+        }
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [37, 45],
+    "maxOccurrences": 1
+  }
+}

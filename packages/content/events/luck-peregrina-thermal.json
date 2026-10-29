@@ -1,0 +1,27 @@
+{
+  "id": "luck-peregrina-thermal",
+  "version": 1,
+  "source": {
+    "kind": "falconess",
+    "falconess": "peregrina"
+  },
+  "rulesets": ["v2"],
+  "auto": true,
+  "weight": 16,
+  "textKey": "ev.luck-peregrina-thermal",
+  "options": [
+    {
+      "textKey": "ev.luck-peregrina-thermal.opt0",
+      "effects": {
+        "stats": {
+          "agility": 10,
+          "courage": 6
+        }
+      }
+    }
+  ],
+  "conditions": {
+    "turnRange": [37, 45],
+    "maxOccurrences": 1
+  }
+}
