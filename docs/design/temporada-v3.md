@@ -15,19 +15,20 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 
 ## Resumen
 
-| #   | Tema                              | Estado  | Recomendación en una línea                                                            |
-| --- | --------------------------------- | ------- | ------------------------------------------------------------------------------------- |
-| T1  | Piezas de bastidor                | Abierta | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
-| T2  | Cuadrillas como support cards     | Abierta | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
-| T3  | Carreras opcionales               | Abierta | Calendario con carreras opcionales que dan puntos de habilidad                        |
-| T4  | Taller                            | Abierta | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad               |
-| T5  | Fabricantes como escuelas         | Abierta | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
-| T6  | Tres cuadrillas por escuela       | Abierta | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
-| T7  | Falconess como apoyo              | Futuro  | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
-| T8  | Bastidor firma como mejor opción  | Abierta | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
-| T9  | Gráfica e ilustración             | Futuro  | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
-| T10 | Elección de cuadrillas (A, B o C) | Abierta | Reemplazada por T2 + T5 + T6                                                          |
-| T11 | Qué se juega y qué entra al gacha | Abierta | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
+| #   | Tema                                     | Estado  | Recomendación en una línea                                                            |
+| --- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| T1  | Piezas de bastidor                       | Abierta | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
+| T2  | Cuadrillas como support cards            | Abierta | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
+| T3  | Carreras opcionales                      | Abierta | Calendario con carreras opcionales que dan puntos de habilidad                        |
+| T4  | Taller                                   | Abierta | Visita gratis antes de la acción; ahí se gastan los puntos de habilidad               |
+| T5  | Fabricantes como escuelas                | Abierta | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
+| T6  | Tres cuadrillas por escuela              | Abierta | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
+| T7  | Falconess como apoyo                     | Futuro  | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
+| T8  | Bastidor firma como mejor opción         | Abierta | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
+| T9  | Gráfica e ilustración                    | Futuro  | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
+| T10 | Elección de cuadrillas (A, B o C)        | Abierta | Reemplazada por T2 + T5 + T6                                                          |
+| T11 | Qué se juega y qué entra al gacha        | Abierta | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
+| T12 | Monetización sin depender del ilustrador | Abierta | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
 
 ## T1 · Piezas de bastidor
 
@@ -200,3 +201,41 @@ entrenar se compra. Tres puntos a cerrar:
 
 Consecuencia: al gacha le queda poco para gastar plumas. En v0 no hay dinero real, así que no
 urge; más adelante, trajes y cosméticos de escuela pueden ser el resto de la oferta.
+
+## T12 · Monetización sin depender de un ilustrador
+
+**Problema del dueño:** si al gacha solo entran Falconess nuevas, queda poco para vender; vender
+solo trajes y cosméticos ilustrados ata el proyecto a un ilustrador, que termina con más poder que
+el estudio.
+
+**Datos (con fuentes en la conversación del 2026-10-29):**
+
+- El ingreso F2P está muy concentrado: en 55 lanzamientos móviles de 2025 (Moloco), el 5 % de
+  pagadores con más gasto dio entre el 54 % y el 81 % del ingreso a los 10 meses.
+- Umamusume separa corredoras y support cards en dos gachas; las guías recomiendan tirar support
+  cards porque pesan más que la rareza de la corredora. Su gacha fuerte es justo el que T11 deja
+  fuera.
+- Regulación: Bélgica trata las cajas pagas como juego de azar; PEGI clasifica desde junio de 2026
+  como mínimo 16 a los juegos que venden objetos aleatorios pagos; Brasil habría prohibido su venta
+  a menores desde marzo de 2026 (sin confirmar en fuente oficial).
+
+**Lectura económica:** con un gacha solo de corredoras, el ingreso depende del ritmo al que se
+ilustran Falconess nuevas: el ilustrador fija el techo de facturación. Hay que separar el ingreso
+del arte hecho a mano, vendiendo cosas que el código produce.
+
+**Opciones:**
+
+- **A · Híbrido (recomendada):** gacha de corredoras y firmas (T11) con pity alto y selector;
+  pase mensual y pase de liga con tramo gratis y pago; y una línea de **pinturas de alas**
+  generadas por código: colores, franjas, números, calcomanías de escuela, estelas en carrera,
+  títulos y marcos de perfil. Las alas son máquinas, como los autos de un juego de carreras: su
+  pintura no necesita ilustrador. Más adelante, un editor de pinturas compartidas por jugadores.
+- **B · Juego pago con expansiones:** sin gacha; se compra el juego y cada expansión (bioma,
+  pistas, escuela, Falconess). Sin riesgo regulatorio; menos ingreso y menos alcance.
+- **C · Solo cosméticos ilustrados:** lo que el dueño quiere evitar.
+
+**Sobre los ilustradores, en cualquier opción:** biblia visual y plantillas para que varios
+ilustradores puedan trabajar con el mismo estilo; contratos de obra por encargo con cesión de
+derechos; el arte a mano se reserva para personajes (lo que más valora este público) y todo lo
+demás sale de sistemas paramétricos. El arte generado con IA exige declararlo en Steam y genera
+rechazo en parte del público; no conviene basar el plan en él.
