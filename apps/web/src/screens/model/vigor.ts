@@ -53,10 +53,13 @@ export function vigorBand(scale: VigorScale, value: number): VigorBand | undefin
 
 export type VigorTone = "good" | "warn" | "bad" | "neutral";
 
-/** The color of the bar: by band in v2; in v1, amber near the forced rest and red at it. */
+/**
+ * The color of the bar: by band in v2 (green while safe, amber while training can fail, red once a
+ * failure can be an injury, the cards' own red); in v1, amber near the forced rest and red at it.
+ */
 export function vigorTone(scale: VigorScale, value: number): VigorTone {
   const band = vigorBand(scale, value);
-  if (band) return band === "safe" ? "good" : band === "low" ? "warn" : "bad";
+  if (band) return band === "safe" ? "good" : band === "injury" ? "bad" : "warn";
   if (scale.forcedAt === undefined) return "neutral";
   if (value <= scale.forcedAt) return "bad";
   return value <= scale.forcedAt + 20 ? "warn" : "neutral";

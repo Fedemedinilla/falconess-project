@@ -22,10 +22,11 @@ describe("the vigor bar", () => {
       "injury",
     ]);
     expect(vigorMarks(scale)).toEqual([0.6, 0.4, 0.2]);
+    // red only once a failure can be an injury, as on the training cards
     expect([60, 50, 30, 20].map((v) => vigorTone(scale, v))).toEqual([
       "good",
       "warn",
-      "bad",
+      "warn",
       "bad",
     ]);
   });

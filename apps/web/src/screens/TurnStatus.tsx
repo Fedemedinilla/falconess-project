@@ -40,10 +40,11 @@ const TONE_COLOR: Readonly<Record<VigorTone, string>> = {
   neutral: "var(--ink-2)",
 };
 
+/** Red only where a failure can be an injury, as on the training cards (`DANGER_RISK_PM`). */
 const BAND_PILL: Readonly<Record<VigorBand, "good" | "warn" | "bad">> = {
   safe: "good",
   low: "warn",
-  high: "bad",
+  high: "warn",
   injury: "bad",
 };
 

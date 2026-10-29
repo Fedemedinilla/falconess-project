@@ -445,7 +445,7 @@ function moodCause(
 const BAND_TONE: Readonly<Record<VigorBand, WeekTone>> = {
   safe: "good",
   low: "warn",
-  high: "bad",
+  high: "warn",
   injury: "bad",
 };
 
