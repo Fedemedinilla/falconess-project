@@ -129,37 +129,38 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
     >
       <div className={s.status}>
         <div className={s.gauges}>
-          <div className={s.gauge}>
-            <span className={s.gaugeLabel}>
-              <Icon name={moodIcon(state.mood)} />
-              {ui("ui.turn.mood")}
-            </span>
-            <span
-              className={s.mood}
-              role="img"
-              aria-label={ui("ui.turn.mood.aria", { mood: gameText(`mood.${state.mood}`) })}
-            >
-              {MOODS.map((m) => (
-                <span
-                  key={m}
-                  className={cx(
-                    s.moodStep,
-                    m <= state.mood && s.moodOn,
-                    m === state.mood && s.moodNow,
-                  )}
-                  aria-hidden="true"
-                />
-              ))}
-            </span>
-            <span className={s.gaugeValue}>
-              {gameText(`mood.${state.mood}`)}
-              <span className={s.gaugeNote}>
-                {ui("ui.turn.mood.mult", {
-                  train: formatFixed(trainMoodPm(ctx, state), 1000, 2),
-                  race: formatFixed(raceMoodPm(ctx, state), 1000, 2),
-                })}
+          <div className={s.moodGauge}>
+            <div className={s.gauge}>
+              <span className={s.gaugeLabel}>
+                <Icon name={moodIcon(state.mood)} />
+                {ui("ui.turn.mood")}
               </span>
-            </span>
+              <span
+                className={s.mood}
+                role="img"
+                aria-label={ui("ui.turn.mood.aria", { mood: gameText(`mood.${state.mood}`) })}
+              >
+                {MOODS.map((m) => (
+                  <span
+                    key={m}
+                    className={cx(
+                      s.moodStep,
+                      m <= state.mood && s.moodOn,
+                      m === state.mood && s.moodNow,
+                    )}
+                    aria-hidden="true"
+                  />
+                ))}
+              </span>
+              <span className={s.gaugeValue}>{gameText(`mood.${state.mood}`)}</span>
+            </div>
+            {/* what mood is worth: its multiplier on training gains and on race stats */}
+            <p className={s.gaugeNote} id="turno-animo-nota">
+              {ui("ui.turn.mood.mult", {
+                train: formatFixed(trainMoodPm(ctx, state), 1000, 2),
+                race: formatFixed(raceMoodPm(ctx, state), 1000, 2),
+              })}
+            </p>
           </div>
 
           <VigorGauge ctx={ctx} state={state} preview={preview} />

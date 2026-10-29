@@ -978,7 +978,7 @@
   "ui.turn.injured": "Lesionada: le quedan {weeks} de recuperación; cualquier acción descansa.",
   "ui.turn.mood": "Ánimo",
   "ui.turn.mood.aria": "Ánimo: {mood}",
-  "ui.turn.mood.mult": "entrenamientos ×{train} · carreras ×{race}",
+  "ui.turn.mood.mult": "Entrenamientos ×{train} · carreras ×{race}",
   "ui.turn.next": "Próxima carrera: {course} · T{turn} · {when} · {place}.º o mejor",
   "ui.turn.next.inWeeks": "en {weeks}",
   "ui.turn.next.thisWeek": "esta semana",

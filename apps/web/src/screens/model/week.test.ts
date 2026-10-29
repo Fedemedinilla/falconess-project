@@ -113,6 +113,8 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
       to: String(100 - step.after.fatigue),
       cause: ui("ui.week.cause.training"),
     });
+    // v1 has no risk bands
+    expect(vigor?.band).toBeUndefined();
     expect(w.notes).toEqual([]);
     expect(w.weekAction).toBe(step.input.kind);
   });
@@ -443,6 +445,12 @@ describe("«Lo que pasó» on ruleset v2: mood with its causes, vigor, luck even
       icon: "injury",
       tone: "bad",
     });
+    // the vigor it ended at (when it moved: an empty bar stays empty), with the bar's band
+    const vigor = w.rows.find((r) => r.id === "vigor");
+    if (vigor) {
+      expect(Number(vigor.to)).toBeLessThanOrEqual(20);
+      expect(vigor.band).toEqual({ label: ui("ui.turn.vigor.band.injury"), tone: "bad" });
+    } else expect(needV2("exhausted").after.fatigue).toBe(100);
   });
 
   it("shows a luck event applied by itself: its text, what happened, how it came out", () => {

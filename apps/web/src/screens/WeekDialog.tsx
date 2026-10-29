@@ -10,6 +10,7 @@ import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
 import { statIcon } from "../ui/icons";
+import { Pill } from "../ui/Pill";
 import { type WeekNote, weekSummary } from "./model/week";
 import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { actionButtonId } from "./TurnActions";
@@ -222,6 +223,11 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
                     </span>
                     <strong className={cx(s.rowValue, s[`value-${row.tone}`])}>{row.value}</strong>
                     {row.to !== undefined && <span className={s.rowTo}>→ {row.to}</span>}
+                    {row.band && (
+                      <Pill tone={row.band.tone === "neutral" ? "neutral" : row.band.tone}>
+                        {row.band.label}
+                      </Pill>
+                    )}
                     {row.cause !== undefined && (
                       // a drop in mood says why in its own color: it is the news of the week
                       <span

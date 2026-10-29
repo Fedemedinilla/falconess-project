@@ -28,6 +28,7 @@ import { formatSeconds, formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { type IconName, placeIcon } from "../../ui/icons";
 import { goalStatuses, logNoteText } from "./season";
+import { type VigorBand, vigorBand, vigorScale } from "./vigor";
 import { durabilityOf } from "./workshop";
 
 /** One input of the run and the states around it (the controller's `Step`). */
@@ -92,6 +93,8 @@ export type WeekRow = {
   readonly to?: string | undefined;
   /** What changed it, in words: "entrenamiento fallido, racha de entrenamientos". */
   readonly cause?: string | undefined;
+  /** Vigor: the risk band it ended in (v2), "Puede lesionarse" in red. */
+  readonly band?: { readonly label: string; readonly tone: WeekTone } | undefined;
 };
 
 /** A log note the headline and the causes do not already say, in words. */
@@ -417,6 +420,19 @@ function moodCause(
   return words.length > 0 ? words.join(", ") : undefined;
 }
 
+const BAND_TONE: Readonly<Record<VigorBand, WeekTone>> = {
+  safe: "good",
+  low: "warn",
+  high: "bad",
+  injury: "bad",
+};
+
+/** The vigor band a value is in, as the Turn screen's bar names it (none in v1). */
+function bandOf(ctx: SimContext, value: number): WeekRow["band"] {
+  const band = vigorBand(vigorScale(ctx.ruleset), value);
+  return band && { label: ui(`ui.turn.vigor.band.${band}`), tone: BAND_TONE[band] };
+}
+
 const tone = (delta: number): WeekTone => (delta > 0 ? "good" : delta < 0 ? "bad" : "neutral");
 
 /** The action input of the week `turn` in a log, if one was taken. */
@@ -510,6 +526,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
       tone: tone(-fatigue),
       to: String(S.fatigueMax - after.fatigue),
       cause: causeOf(sources, outcome, ["action", "event"]),
+      band: bandOf(ctx, S.fatigueMax - after.fatigue),
     });
   const mood = after.mood - before.mood;
   if (mood !== 0)

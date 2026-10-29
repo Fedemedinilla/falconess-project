@@ -60,11 +60,16 @@
   text-align: end;
 }
 
+.moodGauge {
+  display: grid;
+  gap: var(--space-1);
+}
+
 .gaugeNote {
-  font-size: var(--fs-sm);
-  font-weight: 500;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 .vigor {
