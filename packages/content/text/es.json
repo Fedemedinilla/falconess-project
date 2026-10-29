@@ -1017,6 +1017,7 @@
   "ui.week.cause.workshop": "taller",
   "ui.week.changes": "Cambios",
   "ui.week.continue": "Continuar",
+  "ui.week.event.effects": "Lo que hizo el evento",
   "ui.week.eventNext": "Después, un evento espera tu respuesta.",
   "ui.week.eyebrow": "Semana {turn} · {action}",
   "ui.week.injury": "Lesión",

@@ -201,6 +201,20 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
                     {summary.event.outcome}
                   </p>
                 )}
+                {summary.event.effects.length > 0 && (
+                  <ul
+                    className={s.eventEffects}
+                    id="semana-evento-efectos"
+                    aria-label={ui("ui.week.event.effects")}
+                  >
+                    {summary.event.effects.map((line) => (
+                      <li key={line.text}>
+                        <Icon name={line.icon} />
+                        {line.text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
             {summary.stats.length > 0 && (

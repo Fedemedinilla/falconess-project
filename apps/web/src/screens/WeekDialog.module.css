@@ -187,6 +187,24 @@
   font-size: var(--fs-md);
 }
 
+/* what the event itself did, as the event dialog lists an option's effects */
+.eventEffects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.eventEffects li {
+  padding: 1px var(--space-2);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
 .note {
   color: var(--ink-2);
   font-size: var(--fs-sm);

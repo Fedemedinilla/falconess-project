@@ -1,8 +1,10 @@
 import { loadRawContent } from "@falconess/content";
+import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
 import { buildContentIndex, type RunInput, type SeasonState } from "@falconess/schema";
 import { advanceSeason, RULESET_V1, RULESET_V2, STAT_ORDER, startSeason } from "@falconess/sim";
 import { beforeAll, describe, expect, it } from "vitest";
 import { getContent } from "../../content/load";
+import { formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { goalStatuses } from "./season";
 import {
@@ -340,6 +342,11 @@ const GUST = {
 };
 const GUST_TEXT = { "test.gust": "Una racha limpia.", "test.gust.opt": "La aprovecha." };
 
+/** An effect on a stat as the event dialog and «Lo que pasó» word it: "Agilidad +10". */
+function fxStat(stat: string, delta: number): string {
+  return ui("ui.fx.stat", { stat: gameText(`stat.${stat}`), delta: formatSigned(delta) });
+}
+
 function withTailwind() {
   const raw = loadRawContent();
   return buildContentIndex({
@@ -496,6 +503,12 @@ describe("«Lo que pasó» on ruleset v2: mood with its causes, vigor, luck even
         text: TAILWIND_TEXT["test.tailwind"],
         option: TAILWIND_TEXT["test.tailwind.opt"],
         outcome: TAILWIND_TEXT[good ? "test.tailwind.good" : "test.tailwind.bad"],
+        // the option's effects, then the drawn branch's, as the event dialog words them
+        effects: [
+          { icon: "stat.agility", text: fxStat("agility", 5) },
+          { icon: "mood", text: ui("ui.fx.mood", { delta: formatSigned(good ? 1 : -1) }) },
+          { icon: "vigor", text: ui("ui.fx.vigor", { delta: formatSigned(good ? 10 : -15) }) },
+        ],
         // agility +5 and mood +1, vigor +10: good news; with mood −1 and vigor −15: mixed
         tone: good ? "good" : "warn",
       });
@@ -550,5 +563,123 @@ describe("«Lo que pasó» on ruleset v2: mood with its causes, vigor, luck even
     expect(effectsTone([fx({ injuryTurns: 1 })])).toBe("bad");
     expect(effectsTone([fx({ scrap: 20, mood: -1 })])).toBe("warn");
     expect(effectsTone([fx({})])).toBe("neutral");
+  });
+});
+
+describe("«Lo que pasó» with the content's luck events (v2), read as the CLI reads them", () => {
+  /** The first step of each luck event (and chance branch) a few v2 seasons bring. */
+  function luckSteps(): Map<string, WeekStep> {
+    const found = new Map<string, WeekStep>();
+    for (let seed = 0; seed < 80 && found.size < 18; seed++) {
+      let state = startSeason(v2, `luck-${seed}`, {
+        kind: "start",
+        falconessId: ["peregrina", "caracara", "cernicala"][seed % 3] ?? "peregrina",
+        hangar: HANGAR,
+        parents: [],
+      });
+      for (let i = 0; state.status === "active" && i < 80; i++) {
+        const input: RunInput = state.pendingEvent
+          ? { kind: "event:choose", option: 0 }
+          : state.fatigue >= 60
+            ? { kind: "rest" }
+            : (CYCLE[(i + seed) % CYCLE.length] ?? { kind: "rest" });
+        const after = advanceSeason(v2, state, input);
+        const event = stepLog(state, after).event;
+        if (event?.auto) {
+          const key = event.branch === undefined ? event.id : `${event.id}#${event.branch}`;
+          if (!found.has(key)) found.set(key, { before: state, input, after });
+        }
+        state = after;
+      }
+    }
+    return found;
+  }
+  let luck = new Map<string, WeekStep>();
+  beforeAll(() => {
+    luck = luckSteps();
+  });
+  const step = (key: string): WeekStep => {
+    const found = luck.get(key);
+    if (!found) throw new Error(`no ${key} in the v2 seasons played`);
+    return found;
+  };
+
+  it("finds luck events of every stretch of the season, on their own block", () => {
+    const ids = new Set([...luck.keys()].map((k) => k.split("#")[0]));
+    expect(ids.size).toBeGreaterThanOrEqual(12);
+    for (const [key, s] of luck) {
+      const w = weekSummary(v2, s);
+      const logged = stepLog(s.before, s.after).event;
+      const resolved = logged && resolveLoggedEvent(content, logged);
+      if (!resolved) throw new Error(`content does not know ${key}`);
+      expect(w.event?.id, key).toBe(resolved.event.id);
+      expect(w.event?.text, key).toBe(gameText(resolved.event.textKey));
+      expect(w.event?.option, key).toBe(gameText(resolved.option.textKey));
+      expect(w.event?.outcome, key).toBe(
+        resolved.branch?.textKey === undefined ? undefined : gameText(resolved.branch.textKey),
+      );
+      // its texts are said once (in the block), and the headline is still the week's action
+      const noteKeys = w.notes.map((n) => n.key);
+      for (const k of resolved.noteKeys) expect(noteKeys, key).not.toContain(k);
+      expect(w.outcome, key).not.toBe("event");
+      // the stats the CLI's 🎲 line prints are the block's stat effects
+      const effects = w.event?.effects.map((e) => e.text);
+      for (const { stat, delta } of resolved.stats)
+        expect(effects, key).toContain(fxStat(stat, delta));
+    }
+  });
+
+  it("says what the tailwind gave, apart from the training's gains", () => {
+    const w = weekSummary(v2, step("luck-tailwind"));
+    expect(w.event).toMatchObject({
+      text: gameText("ev.luck-tailwind"),
+      option: gameText("ev.luck-tailwind.opt0"),
+      outcome: undefined,
+      tone: "good",
+    });
+    expect(w.event?.effects).toEqual([
+      { icon: "stat.agility", text: fxStat("agility", 10) },
+      { icon: "stat.technique", text: fxStat("technique", 6) },
+    ]);
+  });
+
+  it("says which side of the rival's smile came up, good or bad news", () => {
+    const good = weekSummary(v2, step("luck-rival-smile#0"));
+    expect(good.event).toMatchObject({
+      branch: 0,
+      outcome: gameText("ev.luck-rival-smile.good"),
+      tone: "good",
+    });
+    expect(good.event?.effects.map((e) => e.text)).toEqual([
+      fxStat("stamina", 6),
+      fxStat("courage", 10),
+    ]);
+    const bad = weekSummary(v2, step("luck-rival-smile#1"));
+    expect(bad.event).toMatchObject({
+      branch: 1,
+      outcome: gameText("ev.luck-rival-smile.bad"),
+      tone: "bad",
+    });
+    expect(bad.event?.effects).toEqual([
+      { icon: "mood", text: ui("ui.fx.mood", { delta: formatSigned(-1) }) },
+    ]);
+    const mood = bad.rows.find((r) => r.id === "mood");
+    if (mood) expect(mood.cause).toContain(ui("ui.week.cause.event"));
+  });
+
+  it("says the vigor a head cold took and a long sleep gave, even when the week evens it out", () => {
+    const cold = weekSummary(v2, step("luck-head-cold"));
+    expect(cold.event).toMatchObject({ tone: "bad" });
+    expect(cold.event?.effects).toEqual([
+      { icon: "vigor", text: ui("ui.fx.vigor", { delta: formatSigned(-15) }) },
+    ]);
+    const coldVigor = cold.rows.find((r) => r.id === "vigor");
+    if (coldVigor) expect(coldVigor.cause).toContain(ui("ui.week.cause.event"));
+    const sleep = weekSummary(v2, step("luck-long-sleep"));
+    expect(sleep.event).toMatchObject({ tone: "good" });
+    // a training's −20 and the sleep's +20 leave no vigor row: the block still says it
+    expect(sleep.event?.effects).toEqual([
+      { icon: "vigor", text: ui("ui.fx.vigor", { delta: formatSigned(20) }) },
+    ]);
   });
 });

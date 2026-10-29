@@ -13,8 +13,13 @@
  * - the notes the headline and the causes do not already say, through the text lookup, so a note
  *   key added to the sim later shows without code here, toned good or bad when its key says so;
  * - a luck event the sim applied by itself (`event: { id, option, branch?, auto: true }` on a log
- *   entry, ADR-0006): its text, what happened and how it came out, good or bad by its effects.
+ *   entry, ADR-0006): its text, what happened and how it came out, what its effects were (the
+ *   content's blocks, as the event dialog lists an option's), good or bad by those effects.
+ *
+ * The step is read with `stepLog` and `resolveLoggedEvent` of `@falconess/race-view`, the same
+ * reading the CLI's week summary makes (apps/cli render.ts `turnSummary`).
  */
+import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
 import type {
   EventEffects,
   LoggedEvent,
@@ -23,10 +28,11 @@ import type {
   StatName,
   TurnLogEntry,
 } from "@falconess/schema";
-import { type SimContext, STAT_ORDER } from "@falconess/sim";
+import { type SimContext, STAT_ORDER, vigor } from "@falconess/sim";
 import { formatSeconds, formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { type IconName, placeIcon } from "../../ui/icons";
+import { describeEffects, type EffectLine } from "./describe";
 import { goalStatuses, logNoteText } from "./season";
 import { type VigorBand, vigorBand, vigorScale } from "./vigor";
 import { durabilityOf } from "./workshop";
@@ -116,6 +122,11 @@ export type WeekEvent = {
   readonly option: string | undefined;
   /** How it came out (the chance branch's text), when the branch has one. */
   readonly outcome: string | undefined;
+  /**
+   * What it did, as the content says (the option's effects, then the drawn branch's): "Agilidad
+   * +10", "Vigor −15". The week's stats and rows add these to the action's.
+   */
+  readonly effects: readonly EffectLine[];
   /** Good when all its effects help, bad when all hurt (`effectsTone`). */
   readonly tone: WeekTone;
 };
@@ -181,28 +192,14 @@ const MOOD_CAUSE: Readonly<Record<string, string>> = {
 /** Where a change can come from in one step. */
 type Source = "action" | "race" | "event";
 
-/** The log notes added by the step: the log only grows (new entries, or notes on the last one). */
-export function newNotes(before: SeasonState, after: SeasonState): string[] {
-  const count = before.log.reduce((n, e) => n + e.notes.length, 0);
-  return after.log.flatMap((e) => e.notes).slice(count);
+/** The log notes added by the step (`stepLog`: new entries, or notes on the last one). */
+export function newNotes(before: SeasonState, after: SeasonState): readonly string[] {
+  return stepLog(before, after).notes;
 }
 
 /** The event a log entry says was resolved that week (chosen or applied by itself), if any. */
 export function loggedEvent(entry: TurnLogEntry): LoggedEvent | undefined {
   return entry.event;
-}
-
-/** The event the step resolved: on a log entry the step added, or one it extended. */
-function stepEvent(before: SeasonState, after: SeasonState): LoggedEvent | undefined {
-  const from = Math.max(0, before.log.length - 1);
-  for (let i = from; i < after.log.length; i++) {
-    const entry = after.log[i];
-    if (!entry) continue;
-    const event = loggedEvent(entry);
-    const old = before.log[i];
-    if (event && !(old && loggedEvent(old))) return event;
-  }
-  return undefined;
 }
 
 /**
@@ -251,18 +248,27 @@ function touchesOf(blocks: readonly EventEffects[]): Set<Touch> {
   return out;
 }
 
-/** The texts, the tone and the reach of a resolved event, from content (unknown: its key). */
+/** A crew's name for an effect on its bond (an id content does not know, as it is). */
+function crewName(ctx: SimContext, id: string): string {
+  return ctx.content.manufacturers.has(id)
+    ? gameText(ctx.content.getManufacturer(id).crew.textKey)
+    : id;
+}
+
+/**
+ * The texts, the effects, the tone and the reach of a resolved event, from content (an event
+ * content does not know: its key, and no effects).
+ */
 function describeLogged(ctx: SimContext, logged: LoggedEvent) {
-  const event = ctx.content.events.get(logged.id);
-  const option = event?.options[logged.option];
-  const branch = logged.branch === undefined ? undefined : option?.chance?.[logged.branch];
-  const blocks = option ? (branch ? [option.effects, branch.effects] : [option.effects]) : [];
+  const resolved = resolveLoggedEvent(ctx.content, logged);
+  const blocks = resolved?.effects ?? [];
   return {
-    textKey: event?.textKey ?? `ev.${logged.id}`,
-    optionKey: option?.textKey,
-    branchKey: branch?.textKey,
-    tone: option ? effectsTone(blocks) : ("neutral" as WeekTone),
-    touches: option ? touchesOf(blocks) : undefined,
+    textKey: resolved?.event.textKey ?? `ev.${logged.id}`,
+    optionKey: resolved?.option.textKey,
+    branchKey: resolved?.branch?.textKey,
+    effects: blocks.flatMap((fx) => describeEffects(fx, (id) => crewName(ctx, id))),
+    tone: resolved ? effectsTone(blocks) : ("neutral" as WeekTone),
+    touches: resolved ? touchesOf(blocks) : undefined,
   };
 }
 
@@ -465,10 +471,10 @@ function actionOfWeek(state: SeasonState, turn: number): WeekSummary["weekAction
 /** Everything «Lo que pasó» shows for one step of the run. */
 export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   const { before, input, after } = step;
-  const S = ctx.ruleset.season;
-  const notes = newNotes(before, after);
+  const read = stepLog(before, after);
+  const notes = read.notes;
   const outcome = outcomeOf(input, notes);
-  const logged = stepEvent(before, after);
+  const logged = read.event;
   const resolved = logged && describeLogged(ctx, logged);
   // a luck event applied by itself gets its own block; an answered one is the step itself
   const auto = logged?.auto === true ? logged : undefined;
@@ -543,9 +549,9 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
       label: ui("ui.week.vigor"),
       value: formatSigned(-fatigue),
       tone: tone(-fatigue),
-      to: String(S.fatigueMax - after.fatigue),
+      to: String(vigor(ctx.ruleset, after.fatigue)),
       cause: causeOf(sources, outcome, ["action", ...ev("fatigue")]),
-      band: bandOf(ctx, S.fatigueMax - after.fatigue),
+      band: bandOf(ctx, vigor(ctx.ruleset, after.fatigue)),
     });
   const mood = after.mood - before.mood;
   if (mood !== 0)
@@ -595,10 +601,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   for (const id of crews) {
     const delta = (after.bond[id] ?? 0) - (before.bond[id] ?? 0);
     if (delta === 0) continue;
-    const name = ctx.content.manufacturers.has(id)
-      ? gameText(ctx.content.getManufacturer(id).crew.textKey)
-      : id;
-    byDelta.set(delta, [...(byDelta.get(delta) ?? []), name]);
+    byDelta.set(delta, [...(byDelta.get(delta) ?? []), crewName(ctx, id)]);
   }
   for (const [delta, names] of byDelta)
     rows.push({
@@ -678,6 +681,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
           text: noteText(ctx, resolved.textKey),
           option: resolved.optionKey && noteText(ctx, resolved.optionKey),
           outcome: resolved.branchKey && noteText(ctx, resolved.branchKey),
+          effects: resolved.effects,
           tone: resolved.tone,
         }
       : undefined;
