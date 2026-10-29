@@ -113,11 +113,19 @@ con 8 corredoras). Helper: `raceLossCostsMood(ruleset, puesto)`.
 T12 / T24 / T36 / T46; v1 75 + 9). Umbrales de nota ×1,1: SS 4950, S 4510, A 4070, B 3190, C 2750,
 D 2310, E 1870, F 1430.
 
-Rango esperado de la temporada con v2 (estudio, `.work/design2/fatiga-animo.md` §8-§9, 500
-temporadas por Falconess y política): la jugadora cuidadosa (descansa o sale antes de que el fallo
-suba, sale con ánimo < +1) llega a B o mejor en 74-75 % y gana 38-40 % de sus carreras objetivo;
-la que nunca sale, 45 %; la que descansa con vigor 20, 30 %; la que descansa con vigor 0, 7 %; el
-spam de un solo entrenamiento, 0-0,1 %. Stat media final de la cuidadosa ≈ 710.
+Rango esperado de la temporada con v2 según el estudio (`.work/design2/fatiga-animo.md` §8-§9, 500
+temporadas por Falconess y política), **medido con su simulador (vigor +5) y sin eventos de
+suerte**: la jugadora cuidadosa (descansa o sale antes de que el fallo suba, sale con ánimo < +1)
+llega a B o mejor en 74-75 % y gana 38-40 % de sus carreras objetivo; la que nunca sale, 45 %; la
+que descansa con vigor 20, 30 %; la que descansa con vigor 0, 7 %; el spam de un solo
+entrenamiento, 0-0,1 %. Stat media final de la cuidadosa ≈ 710.
+
+Con las constantes tal como están (simulador vigor −5) y los eventos de suerte el rango medido es
+más bajo (ADR-0006 «Eventos al azar: balance» y «Pendiente»): cuidadosa 64-68 % de B o mejor y
+30-31 % de victorias, stat media final ≈ 617; la que nunca sale, 37-40 %; la que descansa con vigor
+20, ≈ 20 %; con vigor 0, ≈ 4 %; el spam, 0 %. Por Falconess, la cuidadosa deja a Cernícala en ≈ 56 %
+de B o mejor, por debajo de la métrica 7 (ADR-0006 «Consecuencias»). Los números del estudio
+dependen de la constante del simulador, que decide el líder.
 
 ### Eventos al azar (v2, ADR-0006 D8)
 
