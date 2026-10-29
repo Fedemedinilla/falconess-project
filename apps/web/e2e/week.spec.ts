@@ -1,5 +1,5 @@
 import { expect, t, test, textPattern } from "./fixtures";
-import { closeWeek, decide, readTurn, startSeason, takeWeek, vigorOf } from "./play";
+import { closeWeek, decide, policyChoice, readTurn, startSeason, takeWeek, vigorOf } from "./play";
 
 /**
  * «Lo que pasó»: after every input a modal says what happened (headline, changes with their
@@ -165,4 +165,36 @@ test("an unread week opens again after a reload; once read, it does not", async 
   await closeWeek(page);
   await reopen();
   await expect(page.locator(`${DIALOG}[open]`)).toHaveCount(0);
+});
+
+test("a luck event the week brought by itself: its text, what happened, good or bad news", async ({
+  page,
+}) => {
+  // v2's luck events apply on their own (no dialog): «Lo que pasó» is where the player reads them
+  await startSeason(page, "peregrina", "pt-e2e-suerte");
+  const block = page.locator("#semana-dialogo[open] #semana-evento");
+  let found = false;
+  for (let i = 0; i < 30 && !found; i++) {
+    let view = await readTurn(page);
+    if (view.weekOpen) {
+      await closeWeek(page);
+      view = await readTurn(page);
+    }
+    if (view.hash === "#fin") break;
+    if (view.eventOpen) {
+      await decide(page, "#evento-opcion-0", view.inputs);
+      found = (await block.count()) > 0;
+      continue;
+    }
+    await takeWeek(page, policyChoice(view));
+    found = (await block.count()) > 0;
+  }
+  test.skip(!found, "no luck event turned up: the content has none for this ruleset");
+  await expect(block).toBeVisible();
+  const tone = await block.getAttribute("data-tone");
+  expect(["good", "bad", "warn", "neutral"]).toContain(tone);
+  expect(((await block.locator("p").first().textContent()) ?? "").length).toBeGreaterThan(1);
+  // the headline is still the week's own (an answer would say «Elegiste»)
+  const answer = t("ui.week.title.event", { option: "" }).trim();
+  await expect(page.locator("#semana-titulo")).not.toContainText(answer);
 });
