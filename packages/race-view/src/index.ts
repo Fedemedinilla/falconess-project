@@ -2,7 +2,9 @@
  * @falconess/race-view: the RaceLog read for people. Pure, text-free view models that `pnpm
  * sim:race` and the web's race screens share, so the terminal and the browser never disagree on
  * what a race shows (docs/race-engine.md 20.6). Nothing here recomputes physics: every number is
- * the log's, or a difference of the log's numbers. Words belong to each reader.
+ * the log's, or a difference of the log's numbers. Words belong to each reader. One step of a
+ * season's log is read here too (`season-step.ts`), for the CLI's week summary and the web's
+ * «Lo que pasó».
  */
 export {
   ADVICE_MAX,
@@ -53,6 +55,13 @@ export {
   segmentTypesPresent,
   TICK_HZ,
 } from "./log.js";
+export {
+  type ChanceBranch,
+  type ResolvedEvent,
+  resolveLoggedEvent,
+  type StepLog,
+  stepLog,
+} from "./season-step.js";
 export {
   secondsPerColumn,
   TIMELINE_CELLS,

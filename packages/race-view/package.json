@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "The RaceLog read for people: pure, text-free view models shared by the CLI and the web.",
+  "description": "The RaceLog and one step of the season log read for people: pure, text-free view models shared by the CLI and the web.",
   "exports": {
     ".": "./src/index.ts"
   },
