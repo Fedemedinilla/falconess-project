@@ -4,8 +4,9 @@
   `.work/design2/fatiga-animo.md` (§9, recomendación D2 + M2 con rivales 60 + 11 y umbrales ×1,1),
   que el dueño aceptó; los eventos al azar son un pedido del dueño del mismo día. La sección
   «Eventos al azar: balance» (etapa C) describe los 16 eventos de suerte y su lote; la métrica 7 se
-  mide con la política cuidadosa en v2 («Consecuencias»). Queda una diferencia con el estudio para
-  el líder (sección «Pendiente»).
+  mide con la política cuidadosa en v2 («Consecuencias»). Quedan dos decisiones para el líder
+  (sección «Pendiente»): la constante del simulador, que difiere del estudio, y la métrica 7 de
+  Cernícala, que con las constantes tal como están no llega al 60 %.
 - Fecha: 2026-10-28
 - Alcance: sim (`packages/sim/src/season/`, `packages/sim/src/rulesets/v2/`), schema
   (`TurnLogEntry`, `GameEvent`), content (`events/luck-*.json`, `text/es.json`), cli (`--ruleset`,
@@ -404,9 +405,10 @@ Lectura:
 - **El spam sigue en 0 %** y la que descansa con el vigor vacío en 3-8 %.
 - **Con el simulador tal como está no llega la meta de victorias**: la cuidadosa gana 30-31 % de sus
   carreras objetivo (objetivo del dueño 35-45 %) y su B o mejor queda en el borde, 64-68 % (objetivo
-  65-80 %). Un contenido equilibrado no lo arregla: los eventos mueven ≈ ±2 puntos y faltan ≈ 5 de
-  victorias; solo los eventos buenos (6,5 por temporada, medido sin los malos) le suben 7 puntos de
-  victorias, así que haría falta una suerte casi siempre buena, contra el pedido del dueño. Con el
+  65-80 %); por Falconess, Cernícala queda por debajo del 60 % de la métrica 7 («Consecuencias»).
+  Un contenido equilibrado no lo arregla: los eventos mueven ≈ ±2 puntos y faltan ≈ 5 de victorias;
+  solo los eventos buenos (6,5 por temporada, medido sin los malos) le suben 7 puntos de victorias,
+  así que haría falta una suerte casi siempre buena, contra el pedido del dueño. Con el
   simulador del estudio (vigor +5) se cumplen todas las metas en las dos bases: cuidadosa 73 %,
   gana 37-38 %, nunca sale 44-46 %, descansa con vigor 20 27-30 %, con vigor 0 5-8 %, spam 0 %.
   Propuesta para el líder: `.work/impl2/ruleset-proposal-c.md` («Pendiente»).
@@ -448,6 +450,23 @@ de eventos) y `.work/impl2/stage-c/replay-owner.mts`; la fila sin eventos no dep
   defecto (la línea base de CI) y mide v2 con `--ruleset v2`: las métricas de carrera dan lo mismo en
   los dos rulesets y S7 da 65 / 53 / 85 % (`pr`, 60 temporadas por Falconess). BRIEF §12 lleva la
   nota.
+- **Con las constantes tal como están, la política cuidadosa no cumple la métrica 7 para
+  Cernícala.** La media de las tres (64-68 %) esconde el reparto: con 500 temporadas por Falconess y
+  tres bases de semillas (las de `sim:season-batch`, `batch-…`; las de S7 `full`, y S7 `full` con
+  `--seed alt1`), con eventos:
+
+  | Falconess | v2 tal como está             | Juntas (1500), Wilson 95 %     | v2 con el simulador del estudio (vigor +5) | Juntas (1500), Wilson 95 %     |
+  | --------- | ---------------------------- | ------------------------------ | ------------------------------------------ | ------------------------------ |
+  | Caracara  | 58,0 / 62,8 / 61,4 %         | 60,7 % (58,2-63,2): inconclusa | 71,6 / 73,4 / 71,8 %                       | 72,3 % (69,9-74,5): pasa       |
+  | Cernícala | 52,6 (falla) / 56,4 / 59,2 % | 56,1 % (53,5-58,6): **falla**  | 60,6 / 63,4 / 63,8 %                       | 62,6 % (60,1-65,0): pasa justo |
+  | Peregrina | 80,2 / 77,8 / 79,6 %         | 79,2 % (77,1-81,2): pasa       | 86,6 / 81,2 / 86,0 %                       | 84,6 % (82,7-86,3): pasa       |
+
+  Con 500 temporadas, Cernícala falla en la base de `sim:season-batch` (Wilson 48,2-56,9 %) y queda
+  inconclusa en las otras dos; con el simulador del estudio queda inconclusa en cada base y pasa
+  con las tres juntas. CI sigue en verde solo porque `sim:batch` mide v1 por defecto, mientras que
+  las partidas nuevas (`CURRENT_RULESET`) ya son v2. Antes de pasar el `sim:batch` por defecto a v2,
+  el líder decide entre la constante del simulador, la escalera de metas de Cernícala o un ADR que
+  mueva el objetivo de la métrica 7 («Pendiente»).
 - Los golden del motor de carrera (`tests/golden/v1`) no cambian: corren con `RULESET_V1` y v2 usa el
   mismo motor de carrera.
 - `pnpm play` imprime la partida al salir en el formato de guardado de la web
@@ -466,10 +485,18 @@ de eventos) y `.work/impl2/stage-c/replay-owner.mts`; la fila sin eventos no dep
   referencia). El commit `0b6cdfc` escribió `5` (vigor −5). El motor lee la constante tal como está:
   con `5` la referencia queda 6,3 puntos de B y 2,7 de victorias por debajo («Evidencia»), y con los
   eventos la cuidadosa gana el 30-31 % de sus carreras objetivo, por debajo de la meta de 35-45 %
-  («Eventos al azar: balance»); con `−5` se cumplen todas las metas. Corregirla es una línea en
-  `rulesets/v2/constants.ts` y la decide el líder (CLAUDE.md: los rulesets no se editan sin
-  aprobación); los tests leen la constante y no cambian. Propuesta con números:
-  `.work/impl2/ruleset-proposal-c.md`.
+  («Eventos al azar: balance»); con `−5` se cumplen todas las metas del estudio y la de victorias, y
+  la métrica 7 de Cernícala pasa justo con tres bases juntas («Consecuencias»). Corregirla es una
+  línea en `rulesets/v2/constants.ts` y la decide el líder (CLAUDE.md: los rulesets no se editan
+  sin aprobación); los tests leen la constante y no cambian. Propuesta con números:
+  `.work/impl2/ruleset-proposal-c.md` y `.work/impl2/ruleset-proposal-final.md`.
+- **Métrica 7 en v2 (Cernícala).** Con las constantes tal como están, la política cuidadosa deja a
+  Cernícala en 56,1 % de B o mejor (1500 temporadas, tres bases; falla el 60 %) y a Caracara en
+  60,7 % (inconclusa); tabla en «Consecuencias». Opciones para el líder, antes de que `sim:batch`
+  pase a medir v2 por defecto: (a) el simulador del estudio (arriba; Cernícala 62,6 %, pasa justo),
+  (b) aflojar la escalera de metas de Cernícala (contenido; su meta de T46, 3.ª o mejor, la pasan
+  solo el 76 % de las que llegan), o (c) un ADR que mueva el objetivo de la métrica 7 en v2.
+  Números y propuesta: `.work/impl2/ruleset-proposal-final.md`.
 - **Semana lesionada.** v2 recupera 50 (la media del descanso elegido); el estudio la midió con 40.
   Medido en la etapa C con los eventos: 40 o 50 dan lo mismo (cuidadosa 63,6 contra 63,6 %, nunca
   sale 37,1 contra 37,2 %, descansa con vigor 0 3,7 contra 3,7 %): las lesiones son ≈ 0,14 por

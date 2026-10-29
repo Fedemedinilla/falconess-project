@@ -127,6 +127,17 @@ Reference policy (`apps/cli/src/policy.ts`, shared by S7, `pnpm sim` and `sim:se
   sets): 64-68 % B or better, 30-31 % of the goal races won; 73-76 % and 37-38 % with the study's
   simulator cost (ADR-0006 «Eventos al azar: balance» and «Pendiente»).
 
+  **Metric 7 under v2 is not met yet.** The mean hides the split per Falconess. With the committed
+  constants, 500 seasons per Falconess on three seed sets (`sim:season-batch`'s `batch-…`, S7
+  `full`, S7 `full` with `--seed alt1`): Caracara 58.0 / 62.8 / 61.4 % (pooled 60.7 %, Wilson
+  58.2-63.2 %: inconclusive), **Cernícala 52.6 / 56.4 / 59.2 % (pooled 56.1 %, 53.5-58.6 %: fail;
+  `batch-…` alone fails at 48.2-56.9 %)**, Peregrina 80.2 / 77.8 / 79.6 % (pass). With the study's
+  simulator cost (vigor +5): 71.6 / 73.4 / 71.8, 60.6 / 63.4 / 63.8 (Cernícala pooled 62.6 %,
+  60.1-65.0 %: a narrow pass) and 86.6 / 81.2 / 86.0 %. CI stays green only because `sim:batch`
+  defaults to v1. Before that default moves to v2 the lead decides between the simulator constant,
+  Cernícala's goal ladder and an ADR that moves metric 7's target (ADR-0006 «Consecuencias» and
+  «Pendiente»).
+
 `--ruleset` (default v1, so the CI report and its baseline stay on v1 until the lead moves them)
 picks the batch's ruleset. Only S7 depends on it: at `--runs 10000` every race metric of `--ruleset
 v2` is identical to v1's (same race engine; the fixtures race at mood 0 and the v2 rival field only
