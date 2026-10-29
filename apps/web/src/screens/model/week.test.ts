@@ -1,14 +1,24 @@
-import type { RunInput, SeasonState } from "@falconess/schema";
-import { advanceSeason, RULESET_V1, STAT_ORDER, startSeason } from "@falconess/sim";
+import { loadRawContent } from "@falconess/content";
+import { buildContentIndex, type RunInput, type SeasonState } from "@falconess/schema";
+import { advanceSeason, RULESET_V1, RULESET_V2, STAT_ORDER, startSeason } from "@falconess/sim";
 import { beforeAll, describe, expect, it } from "vitest";
 import { getContent } from "../../content/load";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { goalStatuses } from "./season";
-import { loggedEvent, newNotes, type WeekOutcomeKind, type WeekStep, weekSummary } from "./week";
+import {
+  effectsTone,
+  loggedEvent,
+  newNotes,
+  type WeekOutcomeKind,
+  type WeekStep,
+  weekSummary,
+} from "./week";
 
 const content = getContent();
 const ctx = { ruleset: RULESET_V1, content };
+const v2 = { ruleset: RULESET_V2, content };
 const HANGAR = ["shiden", "mule", "nimbus", "falke"];
+const PEREGRINA = gameText("falconess.peregrina");
 
 /** A policy that tries every action: trainings, risk flights, rests, outings, the workshop. */
 const CYCLE: readonly RunInput[] = [
@@ -121,6 +131,8 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
       tone: "bad",
       cause: ui("ui.week.cause.fail"),
     });
+    // the cause note itself is not said twice
+    expect(w.notes.map((n) => n.key)).not.toContain("log.mood.failure");
   });
 
   it("says an injury and how long it lasts, then the weeks spent injured", () => {
@@ -209,11 +221,16 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
     if (!pending || step.input.kind !== "event:choose") throw new Error("fixture");
     const event = content.getEvent(pending.eventId);
     const option = event.options[step.input.option];
-    expect(w.headline).toEqual({
+    expect(w.headline).toMatchObject({
       icon: "event",
       text: ui("ui.week.title.event", { option: gameText(option?.textKey ?? "") }),
-      tone: "neutral",
     });
+    // an answer reads as good or bad news by what it did
+    const branch = step.after.log.find((e) => e.event?.id === pending.eventId)?.event?.branch;
+    const fx = option ? [option.effects] : [];
+    const drawn = branch === undefined ? undefined : option?.chance?.[branch];
+    expect(w.headline.tone).toBe(effectsTone(drawn ? [...fx, drawn.effects] : fx));
+    expect(w.event).toBeUndefined();
     expect(w.context).toBe(gameText(event.textKey));
     expect(w.turn).toBe(pending.turn);
     expect(w.notes.map((n) => n.key)).not.toContain(event.textKey);
@@ -238,39 +255,31 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
     const entry = after.log.at(-1);
     if (!entry) throw new Error("no log");
     // ruleset v2 notes: a mood drift (said as the mood's cause) and keys this page does not know
-    entry.notes.push("log.mood.drift", "log.season.start", "log.algo.nuevo");
+    entry.notes.push("log.mood.drift", "log.season.start", "log.algo.nuevo", "log.algo.down");
     after.mood = step.before.mood - 1;
     const w = weekSummary(ctx, { ...step, after });
-    expect(w.rows.find((r) => r.id === "mood")?.cause).toBe(ui("ui.week.cause.drift"));
+    expect(w.rows.find((r) => r.id === "mood")?.cause).toBe(
+      ui("ui.week.cause.drift", { name: PEREGRINA }),
+    );
     expect(w.notes).toEqual([
-      { key: "log.season.start", icon: undefined, text: gameText("log.season.start") },
-      { key: "log.algo.nuevo", icon: undefined, text: "log.algo.nuevo" },
+      {
+        key: "log.season.start",
+        icon: undefined,
+        text: gameText("log.season.start"),
+        tone: "neutral",
+      },
+      { key: "log.algo.nuevo", icon: undefined, text: "log.algo.nuevo", tone: "neutral" },
+      { key: "log.algo.down", icon: undefined, text: "log.algo.down", tone: "bad" },
     ]);
   });
 
-  it("shows an event the sim applied by itself (v2 `event` on a log entry), once", () => {
-    const step = need(found, "rest");
-    const after = copy(step.after);
-    const entry = after.log.at(-1);
+  it("reads the event a log entry records, chosen or applied by itself", () => {
+    const step = need(found, "event");
+    const entry = step.after.log.find((e) => e.turn === step.before.pendingEvent?.turn);
     if (!entry) throw new Error("no log");
-    const event = content.getEvent("sandstorm-week");
-    Object.assign(entry, { event: { id: event.id, branch: 1 } });
-    entry.notes.push(event.textKey);
-    after.wallet.scrap += 15;
-    expect(loggedEvent(entry)).toEqual({ id: event.id, branch: 1 });
-    const w = weekSummary(ctx, { ...step, after });
-    expect(w.event).toEqual({ id: event.id, branch: 1, text: gameText(event.textKey) });
-    expect(w.notes.map((n) => n.key)).not.toContain(event.textKey);
-    // its effects are in the states: each change names the sources that can make it
-    expect(w.rows.find((r) => r.id === "scrap")?.cause).toBe(ui("ui.week.cause.event"));
-    expect(w.rows.find((r) => r.id === "vigor")?.cause).toBe(
-      [ui("ui.week.cause.rest"), ui("ui.week.cause.event")].join(", "),
-    );
-    // an entry without the field, or with a broken one, has no event
-    expect(loggedEvent(step.after.log.at(-1) ?? entry)).toBeUndefined();
-    expect(loggedEvent(Object.assign(copy(step.after).log.at(-1) ?? entry, { event: 3 }))).toBe(
-      undefined,
-    );
+    expect(loggedEvent(entry)).toMatchObject({ id: step.before.pendingEvent?.eventId });
+    expect(loggedEvent(entry)?.auto).toBeUndefined();
+    expect(loggedEvent(need(found, "train-ok").before.log[0] ?? entry)).toBeUndefined();
   });
 
   it("has a headline text for every outcome", () => {
@@ -284,5 +293,213 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
       "workshop",
     ])
       expect(content.text.has(`ui.week.title.${kind}`), kind).toBe(true);
+  });
+});
+
+/** A v2-only luck event at week 2 (packages/sim events.test.ts' fixture): the page shows any. */
+const TAILWIND = {
+  id: "test-tailwind",
+  version: 1,
+  source: { kind: "random" },
+  weight: null,
+  fixedTurn: 2,
+  auto: true,
+  rulesets: ["v2"],
+  textKey: "test.tailwind",
+  options: [
+    {
+      textKey: "test.tailwind.opt",
+      effects: { stats: { agility: 5 } },
+      chance: [
+        { p: 0.5, textKey: "test.tailwind.good", effects: { mood: 1, fatigue: -10 } },
+        { p: 0.5, textKey: "test.tailwind.bad", effects: { mood: -1, fatigue: 15 } },
+      ],
+    },
+  ],
+};
+const TAILWIND_TEXT = {
+  "test.tailwind": "Viento de cola en la pista.",
+  "test.tailwind.opt": "Sale a aprovecharlo.",
+  "test.tailwind.good": "Vuela como nunca.",
+  "test.tailwind.bad": "Una ráfaga la tumba.",
+};
+
+function withTailwind() {
+  const raw = loadRawContent();
+  return buildContentIndex({
+    ...raw,
+    events: [...raw.events, TAILWIND],
+    text: { ...raw.text, ...TAILWIND_TEXT },
+  });
+}
+
+type FoundV2 = Partial<
+  Record<"drift" | "race-loss" | "race-loss-even" | "rest" | "rest-full" | "exhausted", WeekStep>
+>;
+
+/**
+ * v2 seasons that spam one training (drift, exhaustion), only rest (a lost goal race, rests with
+ * the bar full) or train twice and rest (rests that give vigor back).
+ */
+function collectV2(): FoundV2 {
+  const found: FoundV2 = {};
+  for (let seed = 0; seed < 60 && Object.keys(found).length < 6; seed++) {
+    const policy = seed % 3;
+    let state = startSeason(v2, `week2-${seed}`, {
+      kind: "start",
+      falconessId: "peregrina",
+      hangar: HANGAR,
+      parents: [],
+    });
+    for (let i = 0; state.status === "active" && i < 80; i++) {
+      const input: RunInput = state.pendingEvent
+        ? { kind: "event:choose", option: 0 }
+        : policy === 0 || (policy === 2 && state.turn % 3 !== 0)
+          ? { kind: "train:agility" }
+          : { kind: "rest" };
+      const after = advanceSeason(v2, state, input);
+      const step = { before: state, input, after };
+      const notes = newNotes(state, after);
+      const moved = after.mood !== state.mood;
+      if (notes.includes("log.mood.drift") && !notes.includes("log.mood.failure"))
+        found.drift ??= step;
+      if (notes.includes("log.mood.race-loss")) {
+        if (moved) found["race-loss"] ??= step;
+        else found["race-loss-even"] ??= step;
+      }
+      if (notes.some((n) => n.startsWith("log.vigor.rest."))) {
+        if (after.fatigue !== state.fatigue) found.rest ??= step;
+        else found["rest-full"] ??= step;
+      }
+      if (notes.includes("log.vigor.exhausted")) found.exhausted ??= step;
+      state = after;
+    }
+  }
+  return found;
+}
+
+describe("«Lo que pasó» on ruleset v2: mood with its causes, vigor, luck events", () => {
+  let found: FoundV2 = {};
+  beforeAll(() => {
+    found = collectV2();
+  });
+  const needV2 = (key: keyof FoundV2): WeekStep => {
+    const step = found[key];
+    if (!step) throw new Error(`no ${key} step in the v2 seasons played`);
+    return step;
+  };
+
+  it("says she is tired of training when a streak lowers her mood", () => {
+    const w = weekSummary(v2, needV2("drift"));
+    const mood = w.rows.find((r) => r.id === "mood");
+    expect(mood).toMatchObject({ value: "−1", tone: "bad" });
+    expect(mood?.cause).toBe(ui("ui.week.cause.drift", { name: PEREGRINA }));
+    expect(mood?.cause).toContain(PEREGRINA);
+    expect(w.notes.map((n) => n.key)).not.toContain("log.mood.drift");
+  });
+
+  it("says a goal race finished far back left her down", () => {
+    const step = needV2("race-loss");
+    const w = weekSummary(v2, step);
+    expect(w.race?.place).toBeGreaterThanOrEqual(RULESET_V2.season.raceLossMoodAt);
+    expect(w.rows.find((r) => r.id === "mood")?.cause).toContain(ui("ui.week.cause.raceLoss"));
+  });
+
+  it("still says what moved her mood when the changes cancel out (a rest's lift, a lost race)", () => {
+    const step = needV2("race-loss-even");
+    const w = weekSummary(v2, step);
+    expect(w.rows.find((r) => r.id === "mood")).toBeUndefined();
+    const notes = w.notes.filter((n) => n.key.startsWith("log.mood."));
+    expect(notes.find((n) => n.key === "log.mood.race-loss")).toMatchObject({
+      icon: "mood",
+      tone: "bad",
+    });
+    for (const n of notes)
+      if (n.key === "log.mood.rest" || n.key === "log.mood.outing") expect(n.tone).toBe("good");
+  });
+
+  it("tells how a drawn rest went, good or bad news", () => {
+    const step = needV2("rest");
+    const w = weekSummary(v2, step);
+    const note = w.notes.find((n) => n.key.startsWith("log.vigor.rest."));
+    expect(note?.icon).toBe("vigor");
+    expect(note?.tone).toBe(
+      note?.key === "log.vigor.rest.great"
+        ? "good"
+        : note?.key === "log.vigor.rest.poor"
+          ? "bad"
+          : "neutral",
+    );
+    expect(w.rows.find((r) => r.id === "vigor")?.tone).toBe("good");
+    // with the bar already full, how she slept is not news
+    const full = weekSummary(v2, needV2("rest-full"));
+    expect(full.notes.map((n) => n.key).filter((k) => k.startsWith("log.vigor.rest."))).toEqual([]);
+  });
+
+  it("names an injury from exhaustion, in red", () => {
+    const w = weekSummary(v2, needV2("exhausted"));
+    expect(w.outcome).toBe("injury");
+    expect(w.notes.find((n) => n.key === "log.vigor.exhausted")).toMatchObject({
+      icon: "injury",
+      tone: "bad",
+    });
+  });
+
+  it("shows a luck event applied by itself: its text, what happened, how it came out", () => {
+    const tailCtx = { ruleset: RULESET_V2, content: withTailwind() };
+    const tones = new Set<string>();
+    for (let n = 0; n < 12; n++) {
+      let s = startSeason(tailCtx, `tail-${n}`, {
+        kind: "start",
+        falconessId: "peregrina",
+        hangar: HANGAR,
+        parents: [],
+      });
+      s = advanceSeason(tailCtx, s, { kind: "rest" });
+      while (s.pendingEvent) s = advanceSeason(tailCtx, s, { kind: "event:choose", option: 0 });
+      const step = { before: s, input: { kind: "train:stamina" } as const, after: s };
+      const after = advanceSeason(tailCtx, s, step.input);
+      const w = weekSummary(tailCtx, { ...step, after });
+      const branch = after.log.find((e) => e.turn === 2 && e.event)?.event?.branch;
+      const good = branch === 0;
+      expect(w.event).toEqual({
+        id: "test-tailwind",
+        branch,
+        text: TAILWIND_TEXT["test.tailwind"],
+        option: TAILWIND_TEXT["test.tailwind.opt"],
+        outcome: TAILWIND_TEXT[good ? "test.tailwind.good" : "test.tailwind.bad"],
+        // agility +5 and mood +1, vigor +10: good news; with mood −1 and vigor −15: mixed
+        tone: good ? "good" : "warn",
+      });
+      tones.add(w.event?.tone ?? "");
+      // said once: in the event block, not again as notes
+      const keys = w.notes.map((x) => x.key);
+      for (const key of Object.keys(TAILWIND_TEXT)) expect(keys).not.toContain(key);
+      // its effects are in the rows, with the event as a cause
+      const mood = w.rows.find((r) => r.id === "mood");
+      if (mood) expect(mood.cause).toContain(ui("ui.week.cause.event"));
+      expect(w.rows.find((r) => r.id === "vigor")?.cause).toContain(ui("ui.week.cause.event"));
+    }
+    expect(tones).toEqual(new Set(["good", "warn"]));
+  });
+
+  it("weighs an event's effects: all help is good news, all hurt is bad, a mix is neither", () => {
+    const fx = (over: object) => ({
+      stats: {},
+      mood: 0,
+      fatigue: 0,
+      bond: {},
+      skillPoints: 0,
+      scrap: 0,
+      feathers: 0,
+      durability: 0,
+      injuryTurns: 0,
+      ...over,
+    });
+    expect(effectsTone([fx({ stats: { agility: 4 } }), fx({ fatigue: -10 })])).toBe("good");
+    expect(effectsTone([fx({ fatigue: 10 }), fx({ mood: -1 })])).toBe("bad");
+    expect(effectsTone([fx({ injuryTurns: 1 })])).toBe("bad");
+    expect(effectsTone([fx({ scrap: 20, mood: -1 })])).toBe("warn");
+    expect(effectsTone([fx({})])).toBe("neutral");
   });
 });

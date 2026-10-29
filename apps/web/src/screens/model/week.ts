@@ -8,17 +8,26 @@
  * - stats, vigor (`fatigueMax − fatigue`: a fatigue change is a vigor change of opposite sign),
  *   mood, skill points, scrap, feathers, bond, durability, injury and learned skills from the two
  *   states, each with the sources in the step that can change it as its cause;
+ * - why mood moved, from the cause note the sim logs with every mood change (`log.mood.*`,
+ *   ADR-0006): "Peregrina está harta de entrenar", "la carrera la dejó desanimada";
  * - the notes the headline and the causes do not already say, through the text lookup, so a note
- *   key added to the sim later shows without code here;
- * - an event the sim applied by itself, when a log entry carries one (`event: { id, branch? }`,
- *   ruleset v2; read structurally until the schema has the field).
+ *   key added to the sim later shows without code here, toned good or bad when its key says so;
+ * - a luck event the sim applied by itself (`event: { id, option, branch?, auto: true }` on a log
+ *   entry, ADR-0006): its text, what happened and how it came out, good or bad by its effects.
  */
-import type { RunInput, SeasonState, StatName, TurnLogEntry } from "@falconess/schema";
+import type {
+  EventEffects,
+  LoggedEvent,
+  RunInput,
+  SeasonState,
+  StatName,
+  TurnLogEntry,
+} from "@falconess/schema";
 import { type SimContext, STAT_ORDER } from "@falconess/sim";
 import { formatSeconds, formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { type IconName, placeIcon } from "../../ui/icons";
-import { goalStatuses } from "./season";
+import { goalStatuses, logNoteText } from "./season";
 import { durabilityOf } from "./workshop";
 
 /** One input of the run and the states around it (the controller's `Step`). */
@@ -90,13 +99,22 @@ export type WeekNote = {
   readonly key: string;
   readonly icon: IconName | undefined;
   readonly text: string;
+  /** Good news, bad news, or neither (from the note's key, or the event it belongs to). */
+  readonly tone: WeekTone;
 };
 
-/** An event the sim applied by itself during the week (v2 log entries carry `event`). */
+/** A luck event the sim applied by itself during the week (v2: `auto` on the log's `event`). */
 export type WeekEvent = {
   readonly id: string;
   readonly branch: number | undefined;
+  /** The event's text. */
   readonly text: string;
+  /** What happened (the option's text), when it has its own. */
+  readonly option: string | undefined;
+  /** How it came out (the chance branch's text), when the branch has one. */
+  readonly outcome: string | undefined;
+  /** Good when all its effects help, bad when all hurt (`effectsTone`). */
+  readonly tone: WeekTone;
 };
 
 export type WeekSummary = {
@@ -133,9 +151,29 @@ const SAID: ReadonlySet<string> = new Set([
   "log.outing",
   "log.workshop",
   "log.race",
+  // every mood change has its cause note: the mood row says it
+  "log.mood.failure",
   "log.mood.drift",
   "log.mood.race-loss",
+  "log.mood.rest",
+  "log.mood.outing",
+  "log.mood.event.up",
+  "log.mood.event.down",
+  // an event's vigor: the vigor row names the event as a cause
+  "log.vigor.event.up",
+  "log.vigor.event.down",
 ]);
+
+/** The words of each mood cause note (`{name}` is the Falconess). */
+const MOOD_CAUSE: Readonly<Record<string, string>> = {
+  "log.mood.failure": "ui.week.cause.fail",
+  "log.mood.drift": "ui.week.cause.drift",
+  "log.mood.race-loss": "ui.week.cause.raceLoss",
+  "log.mood.rest": "ui.week.cause.rest",
+  "log.mood.outing": "ui.week.cause.outing",
+  "log.mood.event.up": "ui.week.cause.event",
+  "log.mood.event.down": "ui.week.cause.event",
+};
 
 /** Where a change can come from in one step. */
 type Source = "action" | "race" | "event";
@@ -146,38 +184,95 @@ export function newNotes(before: SeasonState, after: SeasonState): string[] {
   return after.log.flatMap((e) => e.notes).slice(count);
 }
 
-/** The event a log entry says the sim applied by itself, if the entry carries one. */
-export function loggedEvent(
-  entry: TurnLogEntry,
-): { id: string; branch: number | undefined } | undefined {
-  if (!("event" in entry)) return undefined;
-  const event: unknown = entry.event;
-  if (typeof event !== "object" || event === null) return undefined;
-  const id: unknown = Reflect.get(event, "id");
-  const branch: unknown = Reflect.get(event, "branch");
-  if (typeof id !== "string") return undefined;
-  return { id, branch: typeof branch === "number" ? branch : undefined };
+/** The event a log entry says was resolved that week (chosen or applied by itself), if any. */
+export function loggedEvent(entry: TurnLogEntry): LoggedEvent | undefined {
+  return entry.event;
 }
 
-/** The first event recorded on a log entry the step added or extended. */
-function stepEvent(before: SeasonState, after: SeasonState) {
+/** The event the step resolved: on a log entry the step added, or one it extended. */
+function stepEvent(before: SeasonState, after: SeasonState): LoggedEvent | undefined {
   const from = Math.max(0, before.log.length - 1);
   for (let i = from; i < after.log.length; i++) {
     const entry = after.log[i];
     if (!entry) continue;
     const event = loggedEvent(entry);
     const old = before.log[i];
-    if (event && !(old && loggedEvent(old)?.id === event.id)) return event;
+    if (event && !(old && loggedEvent(old))) return event;
   }
   return undefined;
 }
 
-/** A note in words: its text when es.json has the key, else the key itself (never a crash). */
-function noteText(ctx: SimContext, key: string): string {
-  return ctx.content.text.has(key) ? gameText(key) : key;
+/**
+ * Whether an event's effects read as good news (all help), bad news (all hurt), or mixed. Fatigue
+ * counts the other way round: positive fatigue is vigor lost.
+ */
+export function effectsTone(blocks: readonly EventEffects[]): WeekTone {
+  let good = 0;
+  let bad = 0;
+  const sign = (delta: number, better = delta > 0) => {
+    if (delta === 0) return;
+    if (better) good += 1;
+    else bad += 1;
+  };
+  for (const fx of blocks) {
+    for (const delta of Object.values(fx.stats)) sign(delta ?? 0);
+    for (const delta of Object.values(fx.bond)) sign(delta);
+    sign(fx.mood);
+    sign(fx.fatigue, fx.fatigue < 0);
+    sign(fx.skillPoints);
+    sign(fx.scrap);
+    sign(fx.feathers);
+    sign(fx.durability);
+    if (fx.injuryTurns > 0) bad += 1;
+    if (fx.learnSkill !== undefined) good += 1;
+  }
+  if (good > 0 && bad === 0) return "good";
+  if (bad > 0 && good === 0) return "bad";
+  return good > 0 ? "warn" : "neutral";
+}
+
+/** The texts and the tone of a resolved event, from content (an unknown id keeps its key). */
+function describeLogged(ctx: SimContext, logged: LoggedEvent) {
+  const event = ctx.content.events.get(logged.id);
+  const option = event?.options[logged.option];
+  const branch = logged.branch === undefined ? undefined : option?.chance?.[logged.branch];
+  const tone: WeekTone = option
+    ? effectsTone(branch ? [option.effects, branch.effects] : [option.effects])
+    : "neutral";
+  return {
+    textKey: event?.textKey ?? `ev.${logged.id}`,
+    optionKey: option?.textKey,
+    branchKey: branch?.textKey,
+    tone,
+  };
+}
+
+/** A note in words (model/season.ts `logNoteText`). */
+const noteText = logNoteText;
+
+/** Notes that are bad news, and good news (the rest is said as neutral, or by its key's end). */
+const BAD_NOTES: ReadonlySet<string> = new Set([
+  "log.vigor.exhausted",
+  "log.vigor.rest.poor",
+  "log.mood.failure",
+  "log.mood.drift",
+  "log.mood.race-loss",
+]);
+const GOOD_NOTES: ReadonlySet<string> = new Set([
+  "log.vigor.rest.great",
+  "log.mood.rest",
+  "log.mood.outing",
+]);
+
+/** A note whose key says it is good or bad news (v2's rest quality, an exhausted injury…). */
+function noteTone(key: string): WeekTone {
+  if (BAD_NOTES.has(key) || key.endsWith(".down")) return "bad";
+  if (GOOD_NOTES.has(key) || key.endsWith(".up")) return "good";
+  return "neutral";
 }
 
 function noteIcon(key: string): IconName | undefined {
+  if (key === "log.vigor.exhausted") return "injury";
   if (key.startsWith("ev.")) return "event";
   if (key.startsWith("log.mood.")) return "mood";
   if (key.startsWith("log.vigor.") || key.startsWith("log.fatigue.")) return "vigor";
@@ -291,22 +386,29 @@ function causeOf(
   return words.length > 0 ? words.join(", ") : undefined;
 }
 
-/** Why mood moved: the notes and the step's sources that move it in that direction. */
+/**
+ * Why mood moved: the cause notes the sim logged with each change (ADR-0006), in their order; a
+ * step without them (an older log) falls back to the sources that move mood that way.
+ */
 function moodCause(
   delta: number,
   outcome: WeekOutcomeKind,
   notes: readonly string[],
   hasEvent: boolean,
+  name: string,
 ): string | undefined {
   const words: string[] = [];
   const add = (key: string) => {
-    const word = ui(key);
+    const word = ui(key, { name });
     if (!words.includes(word)) words.push(word);
   };
+  for (const note of notes) {
+    const key = MOOD_CAUSE[note];
+    if (key) add(key);
+  }
+  if (words.length > 0) return words.join(", ");
   if (delta < 0) {
     if (outcome === "train-fail" || outcome === "injury") add("ui.week.cause.fail");
-    if (notes.includes("log.mood.drift")) add("ui.week.cause.drift");
-    if (notes.includes("log.mood.race-loss")) add("ui.week.cause.raceLoss");
   } else {
     if (outcome === "rest" || outcome === "forced-rest") add("ui.week.cause.rest");
     if (outcome === "outing") add("ui.week.cause.outing");
@@ -334,7 +436,11 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   const S = ctx.ruleset.season;
   const notes = newNotes(before, after);
   const outcome = outcomeOf(input, notes);
-  const event = stepEvent(before, after);
+  const logged = stepEvent(before, after);
+  const resolved = logged && describeLogged(ctx, logged);
+  // a luck event applied by itself gets its own block; an answered one is the step itself
+  const auto = logged?.auto === true ? logged : undefined;
+  const name = gameText(ctx.content.getFalconess(after.falconessId).textKey);
   const turn =
     input.kind === "event:choose" ? (before.pendingEvent?.turn ?? before.turn) : before.turn;
 
@@ -355,7 +461,12 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
         }
       : undefined;
 
-  const own: WeekLine = { ...OUTCOME_LINE[outcome], text: outcomeText(ctx, step, outcome) };
+  const own: WeekLine = {
+    ...OUTCOME_LINE[outcome],
+    // an answer reads as good or bad news by what it did, the chance branch included
+    ...(outcome === "event" && resolved ? { tone: resolved.tone } : {}),
+    text: outcomeText(ctx, step, outcome),
+  };
   let headline = own;
   let context: string | undefined;
   if (race) {
@@ -380,7 +491,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
   const sources: Source[] = [];
   if (input.kind !== "event:choose") sources.push("action");
   if (race) sources.push("race");
-  if (input.kind === "event:choose" || event) sources.push("event");
+  if (input.kind === "event:choose" || auto) sources.push("event");
   const hasEvent = sources.includes("event");
 
   const stats = STAT_ORDER.map((stat) => ({
@@ -409,7 +520,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
       value: formatSigned(mood),
       tone: tone(mood),
       to: gameText(`mood.${after.mood}`),
-      cause: moodCause(mood, outcome, notes, hasEvent),
+      cause: moodCause(mood, outcome, notes, hasEvent, name),
     });
   const counter = (
     id: "skillPoints" | "scrap" | "feathers",
@@ -497,17 +608,43 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
         cause: causeOf(sources, outcome, ["workshop", "event"]),
       });
 
-  // the notes not said yet: the answered event's text is the context, a logged event has its line
+  // the notes not said yet: the answered event's text is the context, a luck event has its block
   const said = new Set(SAID);
+  // mood that moved and came back (a rest's lift and a lost race) has no row: its notes say it
+  if (mood === 0) for (const key of Object.keys(MOOD_CAUSE)) said.delete(key);
+  // how she slept is news only when the rest gave vigor back
+  if (fatigue === 0)
+    for (const key of ["log.vigor.rest.poor", "log.vigor.rest.normal", "log.vigor.rest.great"])
+      said.add(key);
   if (outcome === "event" && before.pendingEvent) {
     const answered = ctx.content.events.get(before.pendingEvent.eventId);
     if (answered) said.add(answered.textKey);
   }
-  const eventKey = event && (ctx.content.events.get(event.id)?.textKey ?? `ev.${event.id}`);
-  if (eventKey) said.add(eventKey);
+  if (auto && resolved) {
+    said.add(resolved.textKey);
+    if (resolved.optionKey) said.add(resolved.optionKey);
+    if (resolved.branchKey) said.add(resolved.branchKey);
+  }
   const extra = notes
     .filter((key) => !said.has(key))
-    .map((key) => ({ key, icon: noteIcon(key), text: noteText(ctx, key) }));
+    .map((key) => ({
+      key,
+      icon: noteIcon(key),
+      text: noteText(ctx, key),
+      // an answered event's outcome is as good or bad as what it did
+      tone: resolved && key === resolved.branchKey ? resolved.tone : noteTone(key),
+    }));
+  const event: WeekEvent | undefined =
+    auto && resolved
+      ? {
+          id: auto.id,
+          branch: auto.branch,
+          text: noteText(ctx, resolved.textKey),
+          option: resolved.optionKey && noteText(ctx, resolved.optionKey),
+          outcome: resolved.branchKey && noteText(ctx, resolved.branchKey),
+          tone: resolved.tone,
+        }
+      : undefined;
 
   return {
     turn,
@@ -519,7 +656,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
     race,
     stats,
     rows,
-    event: event && eventKey ? { ...event, text: noteText(ctx, eventKey) } : undefined,
+    event,
     notes: extra,
     eventNext: after.status === "active" && after.pendingEvent !== undefined,
     weekAction:

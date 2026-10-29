@@ -12,7 +12,13 @@ import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
 import { formatChance } from "./model/describe";
-import { type GoalStatus, isEventNote, type NextGoal, type WeekLog } from "./model/season";
+import {
+  type GoalStatus,
+  isEventNote,
+  logNoteText,
+  type NextGoal,
+  type WeekLog,
+} from "./model/season";
 import { durabilityOf } from "./model/workshop";
 import { CourseStrip } from "./shared/CourseStrip";
 import { FrameCard } from "./shared/FrameCard";
@@ -296,7 +302,7 @@ export function LogPanel({ ctx, weeks, className }: LogPanelProps) {
                     // a week's notes can repeat a key; their order is the log's
                     // biome-ignore lint/suspicious/noArrayIndexKey: fixed log order
                     <p key={i} className={s.weekNote}>
-                      {ctx.content.text.has(n) ? gameText(n) : n}
+                      {logNoteText(ctx, n)}
                     </p>
                   ))}
                 {w.notes.filter(isEventNote).map((n) => (

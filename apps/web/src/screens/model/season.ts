@@ -11,6 +11,7 @@ import type {
   TurnLogEntry,
 } from "@falconess/schema";
 import { type SimContext, STAT_ORDER } from "@falconess/sim";
+import { ui } from "../../text/ui";
 
 export type GoalStatus = {
   readonly goal: SeasonGoal;
@@ -109,6 +110,19 @@ export function recentWeeks(state: SeasonState, count: number): WeekLog[] {
       race: state.raceResults.find((r) => r.turn === turn),
     };
   });
+}
+
+/**
+ * Log notes the page words itself: v1's forced rest says "vigor bajo", as the rest of the page
+ * (its game text still says «Fatiga alta», the CLI's word for it).
+ */
+const NOTE_WORDS: Readonly<Record<string, string>> = { "log.rest.forced": "ui.log.forcedRest" };
+
+/** A log note in words: the page's own wording, its game text, or the key itself (never a crash). */
+export function logNoteText(ctx: SimContext, key: string): string {
+  const own = NOTE_WORDS[key];
+  if (own) return ui(own);
+  return ctx.content.text.has(key) ? ctx.content.t(key) : key;
 }
 
 /** Whether a log note is an event's text (`ev.*`), shown apart from the plain notes. */

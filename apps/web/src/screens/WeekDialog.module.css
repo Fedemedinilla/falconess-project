@@ -154,15 +154,57 @@
   font-weight: 600;
 }
 
+/* a luck event the week brought: green when it only helped, red when it only hurt */
 .event {
+  display: grid;
+  gap: var(--space-1);
   padding: var(--space-2) var(--space-3);
   border-left: 3px solid var(--accent);
   background: var(--accent-soft);
 }
 
+.event-good {
+  border-left-color: var(--good);
+  background: var(--good-soft);
+}
+
+.event-bad {
+  border-left-color: var(--bad);
+  background: var(--bad-soft);
+}
+
+.event-warn {
+  border-left-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.eventOption {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.eventOutcome {
+  font-size: var(--fs-md);
+}
+
 .note {
   color: var(--ink-2);
   font-size: var(--fs-sm);
+}
+
+.note-good {
+  color: var(--good);
+  font-weight: 600;
+}
+
+.note-bad {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.note-warn {
+  color: var(--warn);
+  font-weight: 600;
 }
 
 .next {
@@ -274,6 +316,11 @@
   margin-inline-start: auto;
   color: var(--ink-3);
   font-size: var(--fs-sm);
+}
+
+.causeBad {
+  color: var(--bad);
+  font-weight: 600;
 }
 
 .advice {

@@ -10,7 +10,7 @@ import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
 import { statIcon } from "../ui/icons";
-import { weekSummary } from "./model/week";
+import { type WeekNote, weekSummary } from "./model/week";
 import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { actionButtonId } from "./TurnActions";
 import { describeInput } from "./TurnSide";
@@ -34,6 +34,16 @@ export function weekDialogWaiting(snap: GameSnapshot): boolean {
     snap.run?.state === step.after &&
     step.after.status === "active"
   );
+}
+
+/** A step's notes can repeat a key (their order is the log's): `key#n` tells them apart. */
+function keyedNotes(notes: readonly WeekNote[]): { id: string; note: WeekNote }[] {
+  const seen = new Map<string, number>();
+  return notes.map((note) => {
+    const n = (seen.get(note.key) ?? 0) + 1;
+    seen.set(note.key, n);
+    return { id: `${note.key}#${n}`, note };
+  });
 }
 
 /** Controls inside the dialog that Enter activates on its own. */
@@ -172,10 +182,24 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
               </p>
             )}
             {summary.event && (
-              <p className={cx(s.line, s.event)}>
-                <Icon name="event" />
-                {summary.event.text}
-              </p>
+              <div
+                className={cx(s.event, s[`event-${summary.event.tone}`])}
+                id="semana-evento"
+                data-tone={summary.event.tone}
+              >
+                <p className={s.line}>
+                  <Icon name="event" />
+                  {summary.event.text}
+                </p>
+                {summary.event.option !== undefined && (
+                  <p className={s.eventOption}>{summary.event.option}</p>
+                )}
+                {summary.event.outcome !== undefined && (
+                  <p className={cx(s.eventOutcome, s[`line-${summary.event.tone}`])}>
+                    {summary.event.outcome}
+                  </p>
+                )}
+              </div>
             )}
             {summary.stats.length > 0 && (
               <ul className={s.stats} aria-label={ui("ui.turn.stats")}>
@@ -198,7 +222,17 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
                     </span>
                     <strong className={cx(s.rowValue, s[`value-${row.tone}`])}>{row.value}</strong>
                     {row.to !== undefined && <span className={s.rowTo}>→ {row.to}</span>}
-                    {row.cause !== undefined && <span className={s.rowCause}>{row.cause}</span>}
+                    {row.cause !== undefined && (
+                      // a drop in mood says why in its own color: it is the news of the week
+                      <span
+                        className={cx(
+                          s.rowCause,
+                          row.id === "mood" && row.tone === "bad" && s.causeBad,
+                        )}
+                      >
+                        {row.cause}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -206,10 +240,12 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
             {summary.stats.length === 0 && summary.rows.length === 0 && (
               <p className={s.none}>{ui("ui.week.none")}</p>
             )}
-            {summary.notes.map((note, i) => (
-              // a step's notes can repeat a key; their order is the log's
-              // biome-ignore lint/suspicious/noArrayIndexKey: fixed log order
-              <p key={i} className={cx(s.line, s.note)}>
+            {keyedNotes(summary.notes).map(({ id, note }) => (
+              <p
+                key={id}
+                className={cx(s.line, s.note, note.tone !== "neutral" && s[`note-${note.tone}`])}
+                data-note={note.key}
+              >
                 {note.icon && <Icon name={note.icon} />}
                 {note.text}
               </p>
