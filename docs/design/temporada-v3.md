@@ -15,26 +15,26 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 
 ## Resumen
 
-| #   | Tema                                     | Estado                       | Recomendación en una línea                                                                    |
-| --- | ---------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
-| T1  | Piezas de bastidor                       | Abierta                      | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                            |
-| T2  | Cuadrillas como support cards            | Abierta                      | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)              |
-| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas de otros biomas, que no le quedan perfectas; dan puntos de habilidad            |
-| T4  | Taller                                   | Decidida (detalles abiertos) | Botón del menú de la semana que no cuenta como semana; alas, reparar, habilidades             |
-| T5  | Fabricantes como escuelas                | Abierta                      | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen                     |
-| T6  | Tres cuadrillas por escuela              | Abierta                      | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico                     |
-| T7  | Falconess como apoyo                     | Futuro                       | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                         |
-| T8  | Bastidor firma como mejor opción         | Abierta                      | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar              |
-| T9  | Gráfica e ilustración                    | Futuro                       | Retratos provisionales con iniciales y colores de escuela; dirección de arte después          |
-| T10 | Elección de cuadrillas (A, B o C)        | Abierta                      | Reemplazada por T2 + T5 + T6                                                                  |
-| T11 | Qué se juega y qué entra al gacha        | Abierta                      | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte         |
-| T12 | Monetización sin depender del ilustrador | Abierta                      | Gacha de corredoras + pases + pinturas de alas generadas por código                           |
-| T13 | Acabados de alas generados por código    | Idea aprobada                | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela           |
-| T14 | Interfaz móvil de la temporada           | Buen comienzo                | Combo 6: claro, con aire; base garage del 2, stats y entrenar del 1, calendario del 4         |
-| T15 | Arte de las corredoras                   | Abierta                      | Híbrido 2D con Spine: retrato animado + sprite SD de carrera; alas como piezas del esqueleto  |
-| T16 | La carrera como espectáculo legible      | Abierta                      | Estado visible en el cuerpo (alas), franja de estado, cámara por táctica y «por qué perdiste» |
-| T17 | Rivales con peso                         | Abierta                      | Una rival recurrente por temporada; tono de rivalidad deportiva, no oscuro                    |
-| T18 | Ritmo de la temporada                    | Abierta                      | Riesgo al principio, red al final, saltar lo visto, meta de 15-25 minutos                     |
+| #   | Tema                                     | Estado                       | Recomendación en una línea                                                                   |
+| --- | ---------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
+| T1  | Piezas de bastidor                       | Abierta                      | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                           |
+| T2  | Cuadrillas como support cards            | Abierta                      | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)             |
+| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas de otros biomas, que no le quedan perfectas; dan puntos de habilidad           |
+| T4  | Taller                                   | Decidida (detalles abiertos) | Botón del menú de la semana que no cuenta como semana; alas, reparar, habilidades            |
+| T5  | Fabricantes como escuelas                | Abierta                      | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen                    |
+| T6  | Tres cuadrillas por escuela              | Abierta                      | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico                    |
+| T7  | Falconess como apoyo                     | Futuro                       | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                        |
+| T8  | Bastidor firma como mejor opción         | Abierta                      | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar             |
+| T9  | Gráfica e ilustración                    | Futuro                       | Retratos provisionales con iniciales y colores de escuela; dirección de arte después         |
+| T10 | Elección de cuadrillas (A, B o C)        | Abierta                      | Reemplazada por T2 + T5 + T6                                                                 |
+| T11 | Qué se juega y qué entra al gacha        | Abierta                      | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte        |
+| T12 | Monetización sin depender del ilustrador | Abierta                      | Gacha de corredoras + pases + pinturas de alas generadas por código                          |
+| T13 | Acabados de alas generados por código    | Idea aprobada                | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela          |
+| T14 | Interfaz móvil de la temporada           | Buen comienzo                | Combo 6: claro, con aire; base garage del 2, stats y entrenar del 1, calendario del 4        |
+| T15 | Arte de las corredoras                   | Abierta                      | Híbrido 2D con Spine: retrato animado + sprite SD de carrera; alas como piezas del esqueleto |
+| T16 | La carrera como espectáculo legible      | Decidida                     | Indicadores dentro del mundo: alas, propulsor, casco y visor muestran el estado              |
+| T17 | Rivales y tono                           | Tono decidido                | Cool y con filo, no kawaii; rivales y amistades para después                                 |
+| T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
 
 ## T1 · Piezas de bastidor
 
@@ -648,3 +648,36 @@ y las partidas de 30-60 minutos ya no encajan en la vida diaria.
 - Saltar eventos ya vistos sin perder decisiones; avance rápido de animaciones.
 - Determinismo sin «resolverse»: la incertidumbre en lo que no se sabe del rival y en el recorrido,
   no en tiradas del final.
+
+## Decisiones del dueño sobre T16-T18 (2026-10-30)
+
+**T16 · Decidida.** «Algo excelente y muy in-lore»: en Umamusume no hay nada mecánico ni digital
+que indique estados; en Falconess sí. Los indicadores de carrera viven en el mundo: las alas, el
+propulsor y el casco. Si algo anda mal, ella también lo ve en rojo en su visor, y el jugador con
+ella. La franja de estado, la cámara por táctica y el «por qué perdiste» siguen como propuesta.
+
+**T17 · Tono decidido; rivales para después.** Las temporadas de Umamusume copian la vida real de
+cada caballo; Falconess puede inventar esa historia, y cada temporada debe tener el sello de la
+corredora con la que se juega. Rivales y amistades (animaciones, segmentos de historia) se verán
+más adelante. Sobre el tono, en palabras del dueño: no confundir «atractivas y simpáticas» con el
+mundo luminoso y kawaii de idol de las Uma. Ni oscuro, ni depresivo, ni violento, pero con riesgo y
+menos alegre siempre: el efecto **cool y badass** que Umamusume sacrifica es lo que Falconess debe
+tomar y explotar. Afecta textos, eventos, arte (T15) y la carrera (T16).
+
+**T18 · Problema decidido.** El dueño lo vivió: el azar puede tirar 45 minutos (las support cards
+no dan la habilidad, los eventos clave no salen, la herencia no da nada útil) y muchas veces la
+temporada se abandona a los 5 minutos por un fallo crucial. Regla: **el azar da variedad, nunca
+arruina una temporada.** Propuesta de redes, a aprobar:
+
+1. Nada de azar oculto: el riesgo siempre se ve antes de elegir (el fallo ya lo hace).
+2. Protección de mala racha: después de un fallo, el próximo entrenamiento no falla; los eventos
+   malos no se encadenan.
+3. Lo importante no depende de una tirada: la pista de habilidad de una cuadrilla llega por
+   vínculo (al llegar al nivel N, seguro), y los eventos clave de cada corredora salen en semanas
+   fijas.
+4. Herencia visible y cierta: lo que dan las cajas negras se ve y se fija al elegirlas, antes de
+   empezar, sin «sparks» al azar durante la temporada.
+5. Inicio que no se pierde: las primeras semanas no pueden hundir la temporada (un fallo temprano
+   cuesta poco).
+6. Segunda oportunidad limitada en las carreras objetivo (un reintento por temporada) y una
+   derrota que deja nota parcial y caja negra.
