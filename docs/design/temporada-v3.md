@@ -513,3 +513,26 @@ variado vuelve coleccionables los splash. Riesgos: popularidad desigual entre co
 artista, más coordinación y contratos, y un estilo invitado que se aleje del tono (lista negra de
 fan-service de la biblia). El costo por pieza es el mismo que el splash de T15 (≈ 250-700 USD) o
 más para nombres conocidos.
+
+### Ajuste: sin director de arte ni equipo fijo (2026-10-30)
+
+**Dato del dueño:** no hay presupuesto para un director de arte ni para un equipo fijo; el dueño
+hace todo, y los ilustradores indie invitados serían la forma de variar.
+
+**Recomendación ajustada: modelo «carta coleccionable»** (como Magic: The Gathering o
+Hearthstone, donde cada carta tiene su artista y el marco unifica):
+
+- Cada corredora tiene una ilustración principal de cuerpo entero, encargada por pieza a un
+  ilustrador indie distinto, con la biblia como brief. Esa misma pieza sirve de splash y, recortada,
+  de retrato en las pantallas; se anima solo con código (respiración, leve vaivén, brillo), sin
+  rig. Es el escenario «mínimo» de T15, por corredora ≈ 1 ilustración.
+- Lo que unifica no es un artista sino la interfaz y las reglas: el mismo marco y los colores de
+  escuela alrededor de cada ilustración, y reglas de entrega iguales para todos (cuerpo entero,
+  pose 3/4, fondo transparente, luz desde arriba a la izquierda, proporciones de la biblia, la
+  silueta del bastidor firma, invariantes de cara y peinado, lista negra de fan-service).
+- La carrera no necesita arte a mano: marcadores en los colores de escuela y las alas generadas
+  por código (T13).
+- El dueño hace de director de arte: aprueba boceto, color y final contra la biblia. La biblia la
+  escribe el dueño con ayuda de esta sesión (texto, paletas, reglas, ejemplos de referencia).
+- Con presupuesto, después: rig Spine del retrato o un SD de carrera; nada de esto bloquea el
+  modelo.
