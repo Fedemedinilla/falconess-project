@@ -725,15 +725,15 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt
 const SAVE = "falconess-c6-proto-2";
 let S;
 const UI = {screen:"menu", sel:-1, ticket:-1, ask:-1, menuConfirm:false, pick:-1, chip:false, eActs:false, eStats:false};
-const LAYKEY = "falconess-c6-layout", LAYS = ["A","B","C","D","E"];
+const LAYKEY = "falconess-c6-layout2", LAYS = ["A","B","C","D","E"];
 const LAYNAME = {A:"Clásico Uma", B:"Retrato cercano", C:"Lateral", D:"Escenario", E:"Mínimo"};
-let LAYOUT = "A";
+let LAYOUT = "D";
 try { const l = localStorage.getItem(LAYKEY); if (LAYS.includes(l)) LAYOUT = l; } catch(e){}
-const BTNKEY = "falconess-c6-dbtn2", BTNS = ["1","2","3A","3B","3C","4","5"];
+const BTNKEY = "falconess-c6-dbtn3", BTNS = ["1","2","3A","3B","3C","4","5"];
 const BTNNAME = {"1":"Insignia de piloto", "2":"Águila heráldica", "3A":"Delta · base", "3B":"Delta + potenciados", "3C":"Delta + chevrones", "4":"Alas mecánicas", "5":"Minimal con alas"};
-let BTNV = "3A";
+let BTNV = "3B";
 try { const v = String(localStorage.getItem(BTNKEY)); if (BTNS.includes(v)) BTNV = v; } catch(e){}
-const CVKEY = "falconess-c6-crewv", CVS = ["1","2","3","4","5"];
+const CVKEY = "falconess-c6-crewv2", CVS = ["1","2","3","4","5"];
 const CVNAME = {"1":"Bajo el nombre", "2":"En el borde inferior", "3":"Retrato arriba", "4":"Anillo dorado", "5":"Vista previa"};
 let CREWV = "3";
 try { const v = String(localStorage.getItem(CVKEY)); if (CVS.includes(v)) CREWV = v; } catch(e){}
