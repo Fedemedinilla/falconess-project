@@ -724,3 +724,8 @@ que corta solo entre ellas según el momento (Táctica en los tramos tranquilos,
 eventos, Visor en el sprint y la llegada). Regla de T16: todo lo que se ve sale del registro. El
 clima y la noche pueden empezar como ambientación, pero si algún día cambian la carrera, van al
 motor y al registro primero.
+
+**Decisión del dueño (2026-10-30):** quedan las tres cámaras elegidas (Táctica, Piloto y Visor),
+intercambiables en cualquier momento de la carrera. Por ahora quedan así: ya transmiten la
+información que necesitan el equipo y el jugador. El pulido (modo Director, Recorrido fijo en las
+tres, giro de cabeza, balanceo, lluvia y noche en el Visor) queda para después.

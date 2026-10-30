@@ -83,11 +83,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   <canvas id="stage" aria-label="Carrera de Falconess"></canvas>
   <nav class="ui top" id="top" aria-label="Vistas">
     <div class="tabs" role="tablist">
-      <button role="tab" data-view="A" aria-selected="false"><b>A</b><span>Persecución</span></button>
-      <button role="tab" data-view="B" aria-selected="false"><b>B</b><span>Lateral</span></button>
-      <button role="tab" data-view="C" aria-selected="false"><b>C</b><span>Dividida</span></button>
-      <button role="tab" data-view="D" aria-selected="false"><b>D</b><span>Visor</span></button>
-      <button role="tab" data-view="E" aria-selected="false"><b>E</b><span>Transmisión</span></button>
+      <button role="tab" data-view="B" aria-selected="false"><b>Táctica</b><span>Toda la carrera</span></button>
+      <button role="tab" data-view="C" aria-selected="false"><b>Piloto</b><span>Ella de cerca</span></button>
+      <button role="tab" data-view="D" aria-selected="false"><b>Visor</b><span>Desde el casco</span></button>
     </div>
   </nav>
   <div class="ui bottom" id="bottom">
@@ -281,7 +279,7 @@ const RACES={win:prep(DATA.win),lose:prep(DATA.lose)};
 /* ---------------- app state ---------------- */
 let raceKey=store.get('falconess.race.race')==='lose'?'lose':'win';
 let R=RACES[raceKey];
-let view=store.get('falconess.race.view');if(!/^[A-E]$/.test(view||''))view='A';
+let view=store.get('falconess.race.view');if(!/^[BCD]$/.test(view||''))view='B';
 let playing=false,speed=1,keyMode=false,t=0,prevT=0,kf=1,NOW=0,dtw=0,snap=true,resultShown=false;
 let active=[];           // active callouts {c,born}
 let shakeA=0,flashA=0,flashC='#fff';
