@@ -37,6 +37,9 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
 | T19 | Arquetipos de habilidades                | Abierta (debuffs después)    | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
 | T20 | Modo Némesis                             | Futuro                       | Modo aparte con rivales que recuerdan; pensado para el jugador, no para la tienda            |
+| T21 | Posición en carrera                      | Abierta                      | Elegir Punta/Pelotón/Acecho/Remate antes de largar, separado del estilo de las alas          |
+| T22 | La radio                                 | Idea aprobada                | Uno o dos gritos por carrera; la Falconess responde según su personalidad                    |
+| T23 | La veterana                              | Idea aprobada                | La Falconess anterior aparece y entrena a la actual; presencia leve, no evento al azar       |
 
 ## T1 · Piezas de bastidor
 
@@ -766,6 +769,59 @@ rivalidad se compra ni se acelera con dinero.
 - **Texto:** plantillas de frases y variantes de retrato (chibis), no escenas a mano.
 - **Azar (T18):** la rival que asciende es un desafío legible y con contra, nunca un muro.
 - Se apoya en T17 (rivales y tono) y en los arquetipos tácticos de T19 (debuffs de las rivales).
+
+## T21 · Posición en carrera (como front/pace/late/end de Umamusume)
+
+**Estado:** abierta (2026-10-30).
+
+**Hoy:** la posición no se elige; viene con el **estilo de las alas** (cada bastidor tiene uno) y la
+Falconess tiene una letra por estilo:
+
+| Estilo  | Qué hace en carrera (motor, 9.4)                              | Equivale en Umamusume | Alas                                       |
+| ------- | ------------------------------------------------------------- | --------------------- | ------------------------------------------ |
+| Planeo  | Toma la punta con crucero eficiente; poco propulsor           | Front                 | Falke, Kite, Horizon                       |
+| Flotar  | Se queda en el pelotón medio y ataca al 70 %                  | Pace                  | Nimbus, firma de Cernícala                 |
+| Picada  | Guarda energía y la gasta en bajadas y en el sprint final     | Late / End            | Shiden, Etoile, firma de Peregrina         |
+| Rasante | Ritmo constante por el suelo; no salta; desvío y más desgaste | Sin equivalente       | Mule, Hayate, Erzherzog, firma de Caracara |
+
+**Opciones:**
+
+- **A · Dejarlo en las alas:** cambiar de alas en el taller (T4, sin gastar la semana) es elegir la
+  posición. Simple, pero las alas firma (T8) atan a cada Falconess a un estilo.
+- **B · Posición elegida antes de cada carrera, separada de las alas (recomendada):** cuatro
+  posiciones (Punta, Pelotón, Acecho, Remate) con letra por Falconess, como en Umamusume; las alas
+  ponen el **cómo** (Picada remata en bajadas, Rasante no salta). Da combinaciones (una Picada en
+  punta) y deja libres las alas firma. Costo: cambio de motor (el modo de estilo se divide en
+  posición + alas), ADR y recalibración.
+- **C · Intermedio:** cada estilo de alas trae su posición por defecto y la Falconess puede
+  desviarse una casilla (Picada: Acecho o Remate).
+
+## T22 · La radio: los gritos del jugador
+
+**Estado:** idea aprobada en principio (2026-10-30), sin diseño.
+
+- **No debe volverse muy interactiva.** Uno o dos gritos por carrera, como mucho; la carrera se
+  sigue mirando, no se pilotea.
+- **Le da salida a lo que todos hacemos:** gritarle a la pantalla mientras corre y no poder
+  decirle nada.
+- **La Falconess responde según su personalidad:** obedece, se pasa de rosca, lo ignora o contesta.
+  Su respuesta se ve (casco, visor, alas; T16) y se oye en una línea corta.
+- Determinista: el grito queda registrado con su tick como una entrada más.
+
+## T23 · La veterana (herencia con presencia)
+
+**Estado:** idea aprobada por el dueño (2026-10-30), sin diseño.
+
+- La herencia es la **caja negra** de la temporada anterior (BRIEF §8), como hasta ahora.
+- **Lo nuevo:** la Falconess anterior no es solo un dato; **aparece durante la temporada como
+  veterana que entrena y enseña a la actual.** No son herederas ni «inspiración» una de la otra:
+  una le enseña a la otra, literalmente.
+- **Presencia leve y constante,** no un evento de inspiración al azar como en Umamusume: algunas
+  semanas de entrenamiento con ella, un consejo antes de una carrera objetivo, comentarios sobre
+  cómo corre la nueva. Que el jugador se encariñe.
+- Lo que enseña sale de su caja negra (sus factores, su estilo, sus pistas), así que cada veterana
+  enseña distinto.
+- Clima y hora con pronóstico: para después (anotado aparte, sin tema propio).
 
 ## T18 · Ritmo de la temporada
 
