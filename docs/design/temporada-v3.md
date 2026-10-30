@@ -15,22 +15,23 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 
 ## Resumen
 
-| #   | Tema                                     | Estado                       | Recomendación en una línea                                                            |
-| --- | ---------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
-| T1  | Piezas de bastidor                       | Abierta                      | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                    |
-| T2  | Cuadrillas como support cards            | Abierta                      | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)      |
-| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas de otros biomas, que no le quedan perfectas; dan puntos de habilidad    |
-| T4  | Taller                                   | Decidida (detalles abiertos) | Botón del menú de la semana que no cuenta como semana; alas, reparar, habilidades     |
-| T5  | Fabricantes como escuelas                | Abierta                      | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen             |
-| T6  | Tres cuadrillas por escuela              | Abierta                      | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico             |
-| T7  | Falconess como apoyo                     | Futuro                       | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                 |
-| T8  | Bastidor firma como mejor opción         | Abierta                      | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar      |
-| T9  | Gráfica e ilustración                    | Futuro                       | Retratos provisionales con iniciales y colores de escuela; dirección de arte después  |
-| T10 | Elección de cuadrillas (A, B o C)        | Abierta                      | Reemplazada por T2 + T5 + T6                                                          |
-| T11 | Qué se juega y qué entra al gacha        | Abierta                      | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
-| T12 | Monetización sin depender del ilustrador | Abierta                      | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
-| T13 | Acabados de alas generados por código    | Idea aprobada                | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
-| T14 | Interfaz móvil de la temporada           | Buen comienzo                | Combo 6: claro, con aire; base garage del 2, stats y entrenar del 1, calendario del 4 |
+| #   | Tema                                     | Estado                       | Recomendación en una línea                                                                   |
+| --- | ---------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
+| T1  | Piezas de bastidor                       | Abierta                      | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                           |
+| T2  | Cuadrillas como support cards            | Abierta                      | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)             |
+| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas de otros biomas, que no le quedan perfectas; dan puntos de habilidad           |
+| T4  | Taller                                   | Decidida (detalles abiertos) | Botón del menú de la semana que no cuenta como semana; alas, reparar, habilidades            |
+| T5  | Fabricantes como escuelas                | Abierta                      | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen                    |
+| T6  | Tres cuadrillas por escuela              | Abierta                      | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico                    |
+| T7  | Falconess como apoyo                     | Futuro                       | Sí, en el mismo mazo que las cuadrillas; nunca como ventaja comprable                        |
+| T8  | Bastidor firma como mejor opción         | Abierta                      | Ya existe (genérico al 85-90 %); reforzar el vínculo con su escuela, sin obligar             |
+| T9  | Gráfica e ilustración                    | Futuro                       | Retratos provisionales con iniciales y colores de escuela; dirección de arte después         |
+| T10 | Elección de cuadrillas (A, B o C)        | Abierta                      | Reemplazada por T2 + T5 + T6                                                                 |
+| T11 | Qué se juega y qué entra al gacha        | Abierta                      | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte        |
+| T12 | Monetización sin depender del ilustrador | Abierta                      | Gacha de corredoras + pases + pinturas de alas generadas por código                          |
+| T13 | Acabados de alas generados por código    | Idea aprobada                | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela          |
+| T14 | Interfaz móvil de la temporada           | Buen comienzo                | Combo 6: claro, con aire; base garage del 2, stats y entrenar del 1, calendario del 4        |
+| T15 | Arte de las corredoras                   | Abierta                      | Híbrido 2D con Spine: retrato animado + sprite SD de carrera; alas como piezas del esqueleto |
 
 ## T1 · Piezas de bastidor
 
@@ -455,3 +456,37 @@ las mejores partes; la primera versión era oscura y el dueño la pidió más ab
 **Pendiente:** verla renderizada en un teléfono real (hay tres textos que entran justos); decidir
 si el tramo de vigor parpadea; si Entrenar se confirma tocando dos veces el botón elegido o con un
 botón aparte; el arte de la corredora (T9) y la versión de las demás escuelas.
+
+## T15 · Arte de las corredoras
+
+**Fuente:** informe de Claude Deep Research pedido por el dueño (2026-10-30), con el prompt de
+esta sesión. Cifras de tarifas publicadas por proveedores y artistas; los totales por corredora y
+los presupuestos son estimaciones del informe, no presupuestos cotizados.
+
+**Recomendación del informe:** 2D ilustrado con animación esqueletal (Spine), en dos niveles por
+corredora: retrato de cuerpo entero animado (respiración, parpadeo, boca, expresiones) para las
+pantallas, y sprite SD para la carrera. Las alas son slots del esqueleto con piezas en escala de
+grises que el código tiñe y cambia (encaja con T13); un esqueleto base común para todas.
+
+| Escenario   | Por corredora | MVP (3)       | Año 1 (9 más)   |
+| ----------- | ------------- | ------------- | --------------- |
+| Mínimo      | 1.300-1.800   | ≈ 5.000-7.000 | ≈ 14.000-18.000 |
+| Recomendado | ≈ 4.300       | ≈ 17.000      | ≈ 44.500        |
+| Ambicioso   | ≈ 11.000 (3D) | ≈ 45.000      | ≈ 114.000       |
+
+USD, con artistas senior de Latinoamérica o Europa del Este y uso comercial incluido. Un banner
+cada 4-6 semanas pide al menos dos personas en paralelo (ilustración y rig/animación).
+
+**Lo que el equipo agrega:**
+
+- La web todavía no usa Phaser: la carrera es React con gráficos propios. Spine tiene runtimes
+  web oficiales además del de Phaser (spine-webgl, spine-player, spine-pixi), así que la elección
+  del formato no ata la del motor. Decidir el runtime al implementar.
+- Antes de contratar: validar en un prototipo que las alas por código encajan en el esqueleto y
+  que un segundo ilustrador replica el estilo (el informe lo pide para el MVP).
+- Política «arte 100 % humano» en piezas publicadas, y contratos con cesión expresa de
+  reproducción y explotación y entrega de archivos fuente (PSD, .spine). Lo legal y lo impositivo
+  del informe (Ley 11.723, percepciones, IVA) se valida con abogado y contador.
+
+**Pendiente del dueño:** aprobar el formato; elegir escenario de presupuesto; buscar primero al
+director de arte o diseñador de personajes, que arma la biblia visual (T9).
