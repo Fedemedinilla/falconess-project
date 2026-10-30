@@ -19,7 +19,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | --- | ---------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
 | T1  | Piezas de bastidor                       | Abierta                      | Sacarlas del juego en v3; quedan como contenido viejo para v1 y v2                           |
 | T2  | Cuadrillas como support cards            | Abierta                      | Cuadrillas elegibles con líder y vínculo visible, agrupadas por escuela (ver T5)             |
-| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas de otros biomas, que no le quedan perfectas; dan puntos de habilidad           |
+| T3  | Carreras opcionales                      | Decidida (detalles abiertos) | Pistas nuevas que no le quedan perfectas; puntos y stats por carrera (números a aprobar)     |
 | T4  | Taller                                   | Decidida (detalles abiertos) | Botón del menú de la semana que no cuenta como semana; alas, reparar, habilidades            |
 | T5  | Fabricantes como escuelas                | Abierta                      | Sí: cada escuela con su doctrina, expresada con las reglas que ya existen                    |
 | T6  | Tres cuadrillas por escuela              | Abierta                      | Sí, con un modelo de datos para N cuadrillas; contenido del MVP más chico                    |
@@ -35,6 +35,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T16 | La carrera como espectáculo legible      | Decidida                     | Indicadores dentro del mundo: alas, propulsor, casco y visor muestran el estado              |
 | T17 | Rivales y tono                           | Tono decidido                | Cool y con filo, no kawaii; rivales y amistades para después                                 |
 | T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
+| T19 | Arquetipos de habilidades                | Abierta (propuesta)          | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
 
 ## T1 · Piezas de bastidor
 
@@ -144,6 +145,66 @@ nuevos activan términos de reglas de escuela que ninguna pista midió todavía 
   ni pierda casi siempre en el débil, y que la dificultad ★ ordene de verdad a los rivales;
 - que el calendario cumpla sus reglas en todas las semillas (test de propiedad).
 
+### Estudio de simulación (2026-10-30)
+
+**Propuesta pendiente de aprobación del dueño.** Informe completo:
+`.work/design3/informe-t3-t4.md` (local, no versionado). Las políticas no miran el calendario futuro.
+Se midieron 500 temporadas por Falconess en dos bases de semillas, con la métrica 7 por Falconess
+(Wilson 95 %).
+
+- **T3 tal como está escrito no alcanza:** sin stats por carrera, correr una por mes cae a 2,6 % de
+  B o mejor. Hacen falta dos reglas nuevas:
+  - **cada opcional da +20 a cada stat × la fracción del puesto** (ganar ≈ una semana de
+    entrenamiento repartida en las 5 stats);
+  - **rendimiento por mes:** la 1.ª opcional del mes da el 100 % de esas stats, la 2.ª el 70 % y la
+    3.ª el 30 %. Los puntos de habilidad no bajan.
+- **Números propuestos:**
+  - topes de T3 tal cual (★ 25, ★★ 30, ★★★ 40) y la misma tabla por puesto;
+  - vigor −15 y racha de T3;
+  - rivales ★ −70, ★★ −50, ★★★ −30 por stat;
+  - **desgaste de alas del 10 % por opcional** y **la mitad de chatarra**;
+  - hasta 8 habilidades (7 genéricas + la única); simulador +5.
+- **Cambio de motor que pide el arquetipo táctico** (T19): peso de la Agilidad `kA` 350 → 250,
+  ritmo por Inteligencia `paceCentreSpan` 43 → 86 y escala táctica 0-2000 ‰. Sin él, la farmeadora
+  veloz le gana a la táctica por 5 puntos; con él, la táctica queda 1 a 3,5 puntos arriba.
+
+| B o mejor, `batch-` (`alt1`)        | Caracara            | Cernícala           | Peregrina           | juntas              |
+| ----------------------------------- | ------------------- | ------------------- | ------------------- | ------------------- |
+| Nunca corre                         | **79,0** (76,4)     | 49,4 (51,0)         | 85,8 (84,0)         | 71,4 (70,5)         |
+| Una por mes desde la semana 2       | **79,0** (**78,0**) | 46,8 (51,6)         | **94,0** (**92,6**) | **73,3** (**74,1**) |
+| Criteriosa                          | 75,2 (74,6)         | 46,4 (50,4)         | 90,0 (90,8)         | 70,5 (71,9)         |
+| Farmeadora táctica (2 por mes)      | 70,8 (66,4)         | **53,0** (**56,0**) | 88,4 (**92,6**)     | 70,7 (71,7)         |
+| Farmeadora veloz (2 por mes)        | 69,8 (64,8)         | 48,6 (50,0)         | 90,8 (89,8)         | 69,7 (68,2)         |
+| Siempre corre, salvo la 3.ª seguida | 53,6 (50,6)         | 21,2 (23,4)         | 76,6 (76,6)         | 50,5 (50,2)         |
+| Siempre corre (acepta rachas)       | 30,6 (27,8)         | 8,6 (8,4)           | 43,6 (41,2)         | 27,6 (25,8)         |
+
+En negrita, la mejor de cada columna. Intervalos de ± 3 a 4,5 puntos por Falconess y de ± 2,3 en
+«juntas».
+
+**Lectura:**
+
+- Ninguna estrategia razonable domina: quedan a ± 3 puntos entre sí. Correr sin mirar es la peor.
+- Cada Falconess tiene su camino:
+  - Caracara: no correr, o una por mes;
+  - Cernícala: farmear con forma táctica;
+  - Peregrina: una por mes (+8).
+- Empezar en la semana 13 en vez de la 2 cuesta 6-8 puntos (mensual) y 13-16 (farmeadora).
+- Una sola carrera extra es neutra en promedio: −0,5 puntos [−3,1; +2,1], intervalo por bootstrap de
+  temporadas.
+- Conviene más temprano y con ánimo +1 o menos: +3,5 [+1,1; +5,9] contra ánimo +2.
+- Las pistas ★ rinden igual que las ★★★ y se ganan más (62 % contra 50 %).
+- No se sostienen como consejo: «3-4 semanas después de una meta», «5 o más semanas hasta la
+  próxima» y el vigor.
+
+**Riesgos abiertos:**
+
+- **El equilibrio depende del número de stats por carrera:** con +17 correr se hunde; con +23
+  domina. Propuesta: expresarlo como fracción de una semana de entrenamiento y testear su robustez.
+- **El cambio de motor le baja la nota a Cernícala** (nunca corre: 62,6 → 49,4). Hay que recalibrarla
+  antes del ADR.
+- **Las activas superan la meta de «2-3»:** la mensual aprende 5,7, la criteriosa 5,0, la
+  farmeadora 6,3 y quien nunca corre 0,4. Propuesta: cambiar la meta a 1 / 4-6 / 6-7.
+
 ## T4 · Taller
 
 **Hoy y estudio (`.work/design2/taller.md`):** nadie va porque la visita cuesta la semana y rinde
@@ -189,6 +250,32 @@ ADR; v1 y v2 conservan el taller que gasta la semana.
   +15 a +32 puntos por carrera);
 - que «usa el taller» le gane a «lo ignora» por ≈ 10 puntos de victorias (como en el estudio), sin
   que lo ignore quede sin chances.
+
+### Estudio de simulación (2026-10-30)
+
+**Propuesta pendiente de aprobación del dueño** (mismo informe que T3).
+
+- **La visita que no gasta la semana es imprescindible.** Con el taller pago, quien nunca corre no
+  cambia (71,2 contra 71,4), pero la mensual cae a 16,7 % y la farmeadora a 6,0 % (200 temporadas
+  por Falconess). La magnitud depende de cómo visita la política; la dirección es firme.
+- **Precios propuestos:**
+  - alas gratis;
+  - reparar 60 de chatarra de 0 a lleno (≈ 20 por tercio);
+  - habilidades × 0,75 (≈ 35-115 puntos);
+  - re-sorteo 40 y sube.
+- **Costo de las habilidades:** con × 1,0 la criteriosa baja a 3,8 activas, pero la farmeadora
+  táctica pierde 5 puntos de B.
+- **Chatarra:** con el desgaste de 10 % por opcional y media chatarra, las reparaciones pasan a
+  3,7-8 por temporada sin mover la nota. Igual sobra: la mensual gana 460 y gasta 79; la farmeadora,
+  650 y 165. Propuesta: que la chatarra pague los reintentos de las carreras objetivo o el kit de
+  emergencia (T18).
+
+| Activas / puntos sin gastar / chatarra ganada y gastada (`batch-`) | Activas | Puntos sin gastar | Chatarra  |
+| ------------------------------------------------------------------ | ------- | ----------------- | --------- |
+| Nunca corre                                                        | 0,4     | 22                | 182 / 7   |
+| Una por mes                                                        | 5,7     | 60                | 460 / 79  |
+| Criteriosa                                                         | 5,0     | 29                | 396 / 73  |
+| Farmeadora táctica                                                 | 6,3     | 208               | 650 / 165 |
 
 ## T5 · Fabricantes como escuelas
 
@@ -729,3 +816,42 @@ motor y al registro primero.
 intercambiables en cualquier momento de la carrera. Por ahora quedan así: ya transmiten la
 información que necesitan el equipo y el jugador. El pulido (modo Director, Recorrido fijo en las
 tres, giro de cabeza, balanceo, lluvia y noche en el Visor) queda para después.
+
+## T19 · Arquetipos de habilidades (buffer, debuffer, táctica)
+
+**Estado:** propuesta del estudio de T3/T4 (2026-10-30), pendiente de aprobación del dueño.
+
+**Pedido del dueño:** una corredora no muy veloz, con mucha Inteligencia y Técnica y muchas
+habilidades gracias a tantas carreras, que gane de otra manera: como debuffer, buffer o con otras
+estrategias.
+
+**Propuesta:** nueve habilidades tácticas (estudio de la etapa B) cuya fuerza escala con la
+Inteligencia o la Técnica **contra la propia Agilidad**: de 0 en una corredora mucho más veloz que
+lista a 2000 ‰ con la mente muy por encima de las piernas. Todo entero, determinista, con efecto
+diferido un tick y registrado en el log (evento `tactic`; el ledger guarda la energía perdida y los
+ticks bajo una táctica rival). Las rivales no las usan hasta T17.
+
+| Arquetipo | Habilidades                                               | Qué hace                                                                                                                                | Cómo se ve (T16)                                                                                                      |
+| --------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Buffer    | Lectura de carrera, Rebufo, Respirar en el grupo          | Corrige su ritmo hacia lo mejor que puede dar; gasta menos detrás de una rival; recupera energía en el pelotón                          | Visor con la línea de ritmo; alas plegadas en el rebufo; llama del propulsor estable                                  |
+| Debuffer  | Presión, Finta, Turbulencia, Cerrar la puerta, Aire sucio | Hace gastar más a la de adelante; les saca energía a las de al lado; aire revuelto atrás; cierra la línea en el final; ensucia el salto | Corchetes en su visor sobre hasta 3 rivales; en la afectada, alas que tiemblan, propulsor que tose y su visor en rojo |
+| Táctica   | Concentración                                             | Sus otros efectos duran hasta +60 %                                                                                                     | Contador que se alarga en el visor                                                                                    |
+
+**Lo medido en temporada:**
+
+- La farmeadora táctica (≈ 70 menos de Agilidad, Resistencia y Coraje, la misma Int/Téc, 6,3
+  activas, 2 opcionales por mes) empata con la veloz en pistas largas y pierde 5 puntos en sprints
+  y obstáculos.
+- Es la mejor estrategia de Cernícala.
+- Requiere el cambio de motor propuesto en T3; sin él, la veloz con el mismo kit gana.
+
+**Límite honesto:** hoy la «debuffer» gana sobre todo yendo más rápida.
+
+- Con una sola portadora, Lectura de carrera (8,8 m de media) y Respirar en el grupo (8,5 m) pasan el
+  tope de 8 m a escala de táctica.
+- Presión, Cerrar la puerta y Aire sucio casi no miden (0-0,3 m de media).
+- Pendiente: rediseñar esos debuffs, bajar Lectura (≈ 60) y Respirar (≈ 140), y sumar a
+  `sim:batch` una métrica de debuff con una portadora.
+
+**Implementación:** va con un ADR de motor (esquema del efecto `tactic`, evento y ledger nuevos, `kA`
+y `paceCentreSpan` por ruleset) en el ruleset v3. v1 y v2 no cambian.
