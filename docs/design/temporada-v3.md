@@ -578,3 +578,8 @@ imágenes; el arte es provisional y generado con IA, T15). Decisiones del dueño
 - **Stats sin letras de rango** mientras se entrena: solo números. Las letras quedan para la nota
   de fin de temporada.
 - La barra de vigor no lleva texto de ayuda; el tramo rayado alcanza.
+- **Colores del fallo:** celeste con 0 %, verde de 1 a 19 %, amarillo de 20 a 39 %, rojo desde 40 %.
+- **Colores de los números de stat**, con relieve de medalla (degradé metálico, contorno y brillo),
+  distintos de los del fallo para que ningún tono de stat se lea como peligro: piedra (< 150),
+  jade (150-299), zafiro (300-449), bronce (450-649), rubí (650-849), oro (850-1199) y platino
+  (1200, con un brillo que late).

@@ -90,6 +90,17 @@ button:disabled{cursor:default}
 .st:last-child .st-v{border-right:0}
 .rk{font-family:var(--cn);font-weight:700;font-size:20px;color:var(--rank)}
 .val{font-family:var(--cn);font-weight:700;font-size:21px}
+/* número de stat con relieve de medalla: degradé metálico, contorno oscuro y brillo */
+.sn{background:linear-gradient(180deg,var(--ta) 0%,var(--ta) 42%,var(--tb) 58%,var(--tc) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.7px var(--tk);filter:drop-shadow(0 1px 0 rgba(255,255,255,.95)) drop-shadow(0 1.5px 1px rgba(20,25,35,.28));font-size:23px;letter-spacing:.2px}
+.sn.t0{--ta:#a9b0b9;--tb:#7d8691;--tc:#555d67;--tk:#3a4049}
+.sn.t1{--ta:#5fd6b4;--tb:#1a9b7c;--tc:#0b6550;--tk:#06402f}
+.sn.t2{--ta:#7fb8ff;--tb:#2e6fd6;--tc:#173c8c;--tk:#0e2659}
+.sn.t3{--ta:#ffb877;--tb:#cc6e25;--tc:#7f3c10;--tk:#4f2508}
+.sn.t4{--ta:#ff8cbb;--tb:#cc1f68;--tc:#760c39;--tk:#4a0623}
+.sn.t5{--ta:#ffe680;--tb:#e0a90a;--tc:#8f6200;--tk:#5a3d00}
+.sn.t6{--ta:#ffffff;--tb:#a8d3f0;--tc:#4f7596;--tk:#2c4a63}
+@media (prefers-reduced-motion:no-preference){.sn.t6{animation:plat 3s ease-in-out infinite}}
+@keyframes plat{50%{filter:drop-shadow(0 1px 0 rgba(255,255,255,.95)) drop-shadow(0 0 4px rgba(150,210,255,.9))}}
 .pts{height:64px;overflow:hidden;text-align:center}
 .pts .st-h{background:var(--soft)}
 .pts .val{display:block;font-size:24px;line-height:42px}
@@ -732,7 +743,10 @@ let FALV = "3";
 try { const v = String(localStorage.getItem(FVKEY)); if (FVS.includes(v)) FALV = v; } catch(e){}
 function setFalV(v){ v = String(v); if (!FVS.includes(v)) return; FALV = v; try { localStorage.setItem(FVKEY, v); } catch(e){} }
 /* color de riesgo: verde 0 %, ámbar, rojo (texto blanco, contraste ≥ 4.5) */
-const riskC = f => f === 0 ? "#1e7b46" : f < 25 ? "#9a4a00" : "#b3261e";
+/* riesgo de fallo: celeste 0 %, verde 1-19, amarillo 20-39, rojo 40+ (fondo y texto con contraste ≥ 4.5) */
+const riskS = f => f === 0 ? "background:#bfe6ff;color:#0b3d5c" : f < 20 ? "background:#1e7b46;color:#fff" : f < 40 ? "background:#f2c230;color:#2a2000" : "background:#b3261e;color:#fff";
+/* nivel de una stat: piedra, jade, zafiro, bronce, rubí, oro, platino (no son los colores del riesgo) */
+const tier = v => "sn t" + (v >= 1200 ? 6 : v >= 850 ? 5 : v >= 650 ? 4 : v >= 450 ? 3 : v >= 300 ? 2 : v >= 150 ? 1 : 0);
 function setCrewV(v){ v = String(v); if (!CVS.includes(v)) return; CREWV = v; try { localStorage.setItem(CVKEY, v); } catch(e){} }
 function setBtn(v){ v = String(v); if (!BTNS.includes(v)) return; BTNV = v; try { localStorage.setItem(BTNKEY, v); } catch(e){} }
 function setLayout(l){ if (!LAYS.includes(l)) return; LAYOUT = l; UI.chip = false; UI.eActs = false; UI.eStats = false; try { localStorage.setItem(LAYKEY, l); } catch(e){} }
@@ -943,7 +957,7 @@ function hudHTML(){
   const fv1 = UI.screen === "train" && FALV === "1";
   let fpill = "";
   if (fv1){
-    if (UI.sel >= 0){ const f = failPct(UI.sel); fpill = `<span class="fpill" style="background:${riskC(f)}" aria-label="Fallo ${f} %">Fallo ${f} %</span>`; }
+    if (UI.sel >= 0){ const f = failPct(UI.sel); fpill = `<span class="fpill" style="${riskS(f)}" aria-label="Fallo ${f} %">Fallo ${f} %</span>`; }
     else fpill = `<span class="fpill none" aria-hidden="true">Fallo –</span>`;
   }
   const vw = S.vigor >= 80 ? "llena" : S.vigor >= 60 ? "alta" : S.vigor >= 40 ? "a la mitad" : S.vigor >= 20 ? "baja" : "muy baja";
@@ -956,7 +970,7 @@ function hudHTML(){
   </div>`;
 }
 function stripHTML(hi=[]){
-  const cols = S.stats.map((v,i) => `<div class="st${hi.includes(i) ? " on" : ""}"><div class="st-h"><span class="long">${NAMES[i]}</span><span class="short">${SHORT[i]}</span></div><div class="st-v" aria-label="${NAMES[i]} ${v}"><span class="val">${v}</span></div></div>`).join("");
+  const cols = S.stats.map((v,i) => `<div class="st${hi.includes(i) ? " on" : ""}"><div class="st-h"><span class="long">${NAMES[i]}</span><span class="short">${SHORT[i]}</span></div><div class="st-v" aria-label="${NAMES[i]} ${v}"><span class="val ${tier(v)}">${v}</span></div></div>`).join("");
   return `<div class="strip"><div class="stats panel">${cols}</div><div class="pts panel"><div class="st-h">Puntos</div><span class="val">${S.pts}</span></div></div>`;
 }
 function stageHTML(kind="splash"){
@@ -1167,7 +1181,7 @@ function dBtn(p){
 const MBTN = `<button type="button" class="mbtn" data-act="menu" aria-label="Menú">${icon("menu",22,"currentColor","2.4")}</button>`;
 const ABBR = ["Agi.","Res.","Téc.","Cor.","Int."];
 function statCells(cls){
-  return S.stats.map((v,i) => `<div class="${cls}" aria-label="${NAMES[i]} ${v}"><span class="sh" aria-hidden="true">${ABBR[i]}</span><span class="sv" aria-hidden="true">${v}</span></div>`).join("")
+  return S.stats.map((v,i) => `<div class="${cls}" aria-label="${NAMES[i]} ${v}"><span class="sh" aria-hidden="true">${ABBR[i]}</span><span class="sv ${tier(v)}" aria-hidden="true">${v}</span></div>`).join("")
     + `<div class="${cls} pt" aria-label="Puntos ${S.pts}"><span class="sh" aria-hidden="true">Pts.</span><span class="sv" aria-hidden="true">${S.pts}</span></div>`;
 }
 function heroHTML(){
@@ -1251,7 +1265,7 @@ function trainHTML(){
     let deco = "";
     if (b && cv === "2") deco = `<span class="medal" aria-hidden="true">${cav(c)}<span class="mbolt">${icon("bolt",10,"#1d1704","3")}</span></span>`;
     if (b && (cv === "3" || cv === "5")) deco = `<span class="gdot" aria-hidden="true">${icon("bolt",cv === "3" ? 12 : 10,"#1d1704","3")}</span>`;
-    const ftag = sel && fv === "3" ? `<span class="ftag" style="background:${riskC(f)}" aria-hidden="true">Fallo ${f} %</span>` : "";
+    const ftag = sel && fv === "3" ? `<span class="ftag" style="${riskS(f)}" aria-hidden="true">Fallo ${f} %</span>` : "";
     return `<div class="rc">
       <button type="button" class="rbtn${tr.risk ? " risk" : ""}${sel ? " sel" : ""}${b ? " boost" : ""}" data-act="pick" data-i="${i}" aria-pressed="${sel}" aria-label="${tr.name}, Nv ${S.fac[i]}${b ? ", potenciado, con " + CREWS[c].name : ""}${sel ? `, elegido, fallo ${f} %: tocá otra vez para entrenar` : ""}">
         ${icon(tr.ic,26,sel ? "#ffffff" : "#14202b")}${lvIn}${deco}${ftag}</button>
@@ -1269,7 +1283,7 @@ function trainHTML(){
   </div>
   <div class="foot">
     <button type="button" class="btn back" data-act="home">${icon("back",20,"currentColor","2.4")}<span>Volver</span></button>
-    <button type="button" class="btn dark cbtn${fv === "2" ? " f2" : ""}" data-act="confirmTrain" ${t ? "" : "disabled"}><span class="cl">${t ? "Entrenar " + t.name : "Elegí uno"}</span>${t && fv === "2" ? `<span class="ctag" style="background:${riskC(failPct(s))}">Fallo ${failPct(s)} %</span>` : ""}</button>
+    <button type="button" class="btn dark cbtn${fv === "2" ? " f2" : ""}" data-act="confirmTrain" ${t ? "" : "disabled"}><span class="cl">${t ? "Entrenar " + t.name : "Elegí uno"}</span>${t && fv === "2" ? `<span class="ctag" style="${riskS(failPct(s))}">Fallo ${failPct(s)} %</span>` : ""}</button>
   </div>`;
 }
 /* avatar de cuadrilla: iniciales + anillo de vínculo */
