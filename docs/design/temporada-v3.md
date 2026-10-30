@@ -703,3 +703,24 @@ cuando hace falta y no permite ignorar el vigor. Propuesta para Falconess:
 contando la gratis) pagando una moneda. Pendiente: qué moneda. Recomendación: una que se gane solo
 jugando (chatarra o fichas de las carreras opcionales, T3), con precio creciente, para que comprar
 reintentos no sea pagar por ganar (BRIEF §9) y para que las carreras opcionales valgan más.
+
+### T16 · Pantallas de carrera elegidas (2026-10-30)
+
+Prototipo con cinco vistas sobre dos carreras reales del motor:
+https://claude.ai/artifact/1qgVNutxfw5hKTn7592QqW (fuente: `docs/design/prototipo/falconess-carrera.html`).
+El dueño eligió tres para pulir:
+
+- **B · Lateral («ver el todo»):** la pista de perfil con el terreno real y las 8 a su distancia.
+- **C · Dividida (rendimiento de ella):** primer plano cinematográfico de la corredora y su
+  equipo. Su panel de arriba, «Recorrido» (perfil del recorrido, tramos, 8 puntos y «a tu
+  alrededor»), es el mejor de los paneles extra: simple y claro.
+- **D · Visor (la más cinematográfica y única):** primera persona en el casco. Imagen del dueño:
+  lluvia, carrera nocturna, el visor que se mueve a los costados y ella que mira a los lados
+  cuando la pasan o la están por pasar.
+
+**Recomendación:** una sola pantalla de carrera con tres cámaras (Táctica = B, Piloto = C, Visor =
+D) que se cambian con un botón, el panel «Recorrido» compartido por las tres, y un modo «Director»
+que corta solo entre ellas según el momento (Táctica en los tramos tranquilos, Piloto en sus
+eventos, Visor en el sprint y la llegada). Regla de T16: todo lo que se ve sale del registro. El
+clima y la noche pueden empezar como ambientación, pero si algún día cambian la carrera, van al
+motor y al registro primero.
