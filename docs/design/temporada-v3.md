@@ -490,3 +490,27 @@ cada 4-6 semanas pide al menos dos personas en paralelo (ilustración y rig/anim
 
 **Pendiente del dueño:** aprobar el formato; elegir escenario de presupuesto; buscar primero al
 director de arte o diseñador de personajes, que arma la biblia visual (T9).
+
+### Variante del dueño: ilustradores invitados para los splash
+
+**Propuesta:** contratar ilustradores indie distintos, con la misma biblia, para que cada
+corredora tenga un splash de estilo propio pero reconocible dentro del mismo juego.
+
+**Recomendación:** sí, separando dos capas:
+
+- **Capa uniforme (equipo fijo):** retrato de juego, expresiones y sprite SD, sobre el mismo
+  esqueleto Spine y las mismas proporciones. Es lo que el jugador ve todos los días; si cambia de
+  estilo entre corredoras, la interfaz se siente rota.
+- **Capa de autor (invitados):** splash del banner, arte de eventos y trajes de colección. Cada
+  pieza lleva el crédito del ilustrador, como en Arknights, Fate/Grand Order o Azur Lane.
+
+Lo que ningún invitado cambia: la cara (forma de ojos, color, rasgos), el peinado, las piezas
+clave del uniforme, la silueta del bastidor firma y los colores de la escuela. Va en la biblia
+como lista de invariantes, y el director de arte aprueba boceto, color y final.
+
+Ventajas: ningún artista es imprescindible; cada invitado trae su público (marketing); el estilo
+variado vuelve coleccionables los splash. Riesgos: popularidad desigual entre corredoras según el
+artista, más coordinación y contratos, y un estilo invitado que se aleje del tono (lista negra de
+fan-service de la biblia). El costo por pieza es el mismo que el splash de T15 (≈ 250-700 USD) o
+más para nombres conocidos.
+
