@@ -600,7 +600,7 @@ ausentes son inferencia de la comunidad.
 **Lo que ya confirma lo decidido:** T11 (apoyos que se ganan jugando, sin copias en el gacha)
 evita la queja n.º 3; el fallo visible antes de elegir (v2, T14) ataca parte de la n.º 1; el
 consejo después de cada carrera y el panel «Por qué» de la repetición ya existen y son la base de
-la explicación que pide el informe; arte declarado como provisional e hecho con IA.
+la explicación que pide el informe; arte declarado como provisional y hecho con IA.
 
 ## T16 · La carrera como espectáculo legible
 
