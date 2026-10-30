@@ -556,3 +556,25 @@ basadas en el splash que dibuje cada ilustrador invitado.
   motor 3D por cada corredora).
 - Costo de referencia del informe de T15: arte SD en capas 150-400 USD por corredora; rig y 4
   ciclos 400-1.000. Con base modular, cada chibi nuevo debería costar menos que el primero.
+
+### Prototipo jugable y decisiones de la pantalla (2026-10-30)
+
+Prototipo para el celular: https://claude.ai/artifact/TsmHRSTAQB3vutpqXbbgBq (fuente en
+`docs/design/prototipo/`: `template.html` + `inject.py` arman `falconess-prototipo.html` con las
+imágenes; el arte es provisional y generado con IA, T15). Decisiones del dueño:
+
+- **Menú de la semana: diseño D.** La corredora de cuerpo entero es la protagonista; los botones
+  flotan sobre sus piernas en forma de \o/: Entrenar al centro, Salida y Carreras a sus lados,
+  Descansar y Taller más arriba, Equipo y Menú en las esquinas.
+- **Botón Entrenar: delta afilada (3B).** Triángulo invertido esmaltado con borde blanco, franja
+  del segundo color de la escuela, brillo y el emblema de la escuela de marca de agua. Debajo del
+  texto, chips con los entrenamientos potenciados de la semana (p. ej. «AGI · TÉC») con un brillo
+  suave; nada extra si no hay potenciados. Dice qué está potenciado para no repetir la decepción
+  del borde arcoíris de Umamusume.
+- **Pantalla de entrenamiento:** sin «Tocá de nuevo» ni flechas; el botón elegido no se mueve y
+  el doble toque rápido entrena. Cuadrilla en la opción 3 (aro dorado con rayito en el botón y el
+  retrato grande con su barra de vínculo arriba a la derecha, como Umamusume). «Fallo N %» como
+  etiqueta pegada al borde de arriba del botón elegido, sin fila propia.
+- **Stats sin letras de rango** mientras se entrena: solo números. Las letras quedan para la nota
+  de fin de temporada.
+- La barra de vigor no lleva texto de ayuda; el tramo rayado alcanza.
