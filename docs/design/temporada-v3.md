@@ -513,4 +513,3 @@ variado vuelve coleccionables los splash. Riesgos: popularidad desigual entre co
 artista, más coordinación y contratos, y un estilo invitado que se aleje del tono (lista negra de
 fan-service de la biblia). El costo por pieza es el mismo que el splash de T15 (≈ 250-700 USD) o
 más para nombres conocidos.
-
