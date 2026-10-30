@@ -30,7 +30,8 @@ bodysuit, suggestive pose; chibi proportions; western comic style; extra fingers
 
 ```text
 Short layered slate blue-grey hair with a cream-blonde streak, a dark falcon "moustache" mark painted below each
-eye. Red racing suit with angular yellow speed stripes and dark grey knee and shoulder pads, red racing boots.
+eye. Red racing suit with angular yellow speed stripes, a visible zip collar, chest padding and a short racing
+jacket tied at the waist, dark grey knee and shoulder pads, red racing boots.
 She holds a red and dark grey racing helmet under one arm, the other hand on her hip. Bold, competitive,
 charming grin, chin slightly raised.
 ```
@@ -39,9 +40,9 @@ charming grin, chin slightly raised.
 
 ```text
 Shoulder-length chestnut-rufous hair with small dark speckles like kestrel feathers, a soft fringe. Navy racing
-suit with cyan tech panel lines and a short navy jacket, a light translucent cyan visor headset with a small
-microphone. She holds a slim data tablet against her chest with one arm, the other hand relaxed. Calm, kind,
-attentive smile, head slightly tilted.
+suit with cyan tech panel lines and a short navy jacket, a translucent cyan visor worn over her eyes like glasses, with a small microphone. She holds a
+slim data tablet against her chest with one arm and waves gently with the other hand. Warm, kind, clearly
+visible smile, head slightly tilted.
 ```
 
 ## Caracara (carancho · escuela Boneyard · Rasante)
@@ -65,3 +66,6 @@ plain white background. No wings, no text, no logos.
 Reglas para que salgan como un mismo juego: generar las tres en la misma herramienta y con la
 misma configuración; si la herramienta acepta imagen de referencia de estilo, usar la Peregrina
 elegida para las otras dos; descartar cualquier resultado con letras o logos.
+
+Estado (2026-10-30): set provisional aprobado con estos prompts (segunda vuelta de Peregrina y
+Cernícala). Siguiente paso: los chibis.
