@@ -681,3 +681,25 @@ arruina una temporada.** Propuesta de redes, a aprobar:
    cuesta poco).
 6. Segunda oportunidad limitada en las carreras objetivo (un reintento por temporada) y una
    derrota que deja nota parcial y caja negra.
+
+### T18 · Redes elegidas por el dueño (2026-10-30)
+
+**Red contra el fallo (estilo Star Savior, no estilo Trackblazer).** El dueño comparó dos
+referencias: en Star Savior (modo Journey) un objeto de la tienda permite, después de fallar un
+entrenamiento, elegir consumirlo y recuperar el vigor perdido; en Umamusume (escenario
+Trackblazer) un objeto fuerza 0 % de fallo en una tirada, aunque el vigor esté en 10. Elegido el
+primero: el riesgo sigue siendo real (se entrena sabiendo el porcentaje), el objeto solo se gasta
+cuando hace falta y no permite ignorar el vigor. Propuesta para Falconess:
+
+- Objeto «kit de emergencia» (nombre provisional): al fallar, el juego pregunta si usarlo. Si se
+  usa, la semana queda neutra: se devuelve el vigor, no se pierden stats ni ánimo, no hay lesión;
+  tampoco hay ganancia.
+- Pocos por temporada (uno o dos), conseguidos jugando (taller, carreras opcionales, eventos).
+- Reemplaza a la «protección de mala racha» automática (red 2), que daba fallos gratis sin
+  decisión; se mantiene que los eventos malos no se encadenan.
+- Para el motor: es una decisión pendiente después del resultado, como una elección de evento.
+
+**Segunda oportunidad en carreras objetivo.** Una gratis por temporada; hasta 4 más (máximo 5
+contando la gratis) pagando una moneda. Pendiente: qué moneda. Recomendación: una que se gane solo
+jugando (chatarra o fichas de las carreras opcionales, T3), con precio creciente, para que comprar
+reintentos no sea pagar por ganar (BRIEF §9) y para que las carreras opcionales valgan más.
