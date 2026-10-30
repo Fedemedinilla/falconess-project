@@ -35,7 +35,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T16 | La carrera como espectáculo legible      | Decidida                     | Indicadores dentro del mundo: alas, propulsor, casco y visor muestran el estado              |
 | T17 | Rivales y tono                           | Tono decidido                | Cool y con filo, no kawaii; rivales y amistades para después                                 |
 | T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
-| T19 | Arquetipos de habilidades                | Abierta (propuesta)          | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
+| T19 | Arquetipos de habilidades                | Abierta (debuffs después)    | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
 
 ## T1 · Piezas de bastidor
 
@@ -204,6 +204,22 @@ En negrita, la mejor de cada columna. Intervalos de ± 3 a 4,5 puntos por Falcon
   antes del ADR.
 - **Las activas superan la meta de «2-3»:** la mensual aprende 5,7, la criteriosa 5,0, la
   farmeadora 6,3 y quien nunca corre 0,4. Propuesta: cambiar la meta a 1 / 4-6 / 6-7.
+
+### Decisiones del dueño sobre el estudio (2026-10-30)
+
+- **Stats por opcional: sí, pero al azar.** La carrera da stats, pero cuál sube se sortea: puede
+  servirle o no a la Falconess; igual son stats. Las cuadrillas (T2) pueden sumar **más stats** o
+  **más puntos de habilidad** por carrera opcional; el stat que dan también se sortea.
+- **Rendimiento por mes (100/70/30): sin decidir.** Choca con las builds que tardan en armarse: una
+  corredora débil al inicio llegaría a sus mejores carreras cuando ya rinden 30 %. Hay que buscar
+  otra forma de frenar el farmeo que no castigue a las builds lentas, y medirla.
+- **La táctica no es solo Int y Téc.** La farmeadora de habilidades necesita Resistencia y Agilidad
+  para sobrevivir a las carreras; tiene menos que una corredora hecha para sprint, no cero. El
+  perfil medido (≈ 70 menos de Agi/Res/Val) ya va en esa línea; los números nuevos deben
+  conservarlo.
+- **Meta de activas:** depende de cómo queden los dos puntos anteriores.
+- **Debuffs:** el rol y su implementación quedan para después (ver T19, pendiente).
+- **Pistas ★:** que lo descubra el jugador; no se les sube el premio ni se avisa.
 
 ## T4 · Taller
 
@@ -852,6 +868,9 @@ ticks bajo una táctica rival). Las rivales no las usan hasta T17.
 - Presión, Cerrar la puerta y Aire sucio casi no miden (0-0,3 m de media).
 - Pendiente: rediseñar esos debuffs, bajar Lectura (≈ 60) y Respirar (≈ 140), y sumar a
   `sim:batch` una métrica de debuff con una portadora.
+
+**Pendiente (dueño, 2026-10-30):** el rol de debuffer y el rediseño de sus habilidades quedan para
+después; es ajuste fino. Por ahora se trabaja con buffer y táctica.
 
 **Implementación:** va con un ADR de motor (esquema del efecto `tactic`, evento y ledger nuevos, `kA`
 y `paceCentreSpan` por ruleset) en el ruleset v3. v1 y v2 no cambian.
