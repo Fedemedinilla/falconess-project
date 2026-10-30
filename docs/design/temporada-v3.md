@@ -36,6 +36,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T17 | Rivales y tono                           | Tono decidido                | Cool y con filo, no kawaii; rivales y amistades para después                                 |
 | T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
 | T19 | Arquetipos de habilidades                | Abierta (debuffs después)    | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
+| T20 | Modo Némesis                             | Futuro                       | Modo aparte con rivales que recuerdan; pensado para el jugador, no para la tienda            |
 
 ## T1 · Piezas de bastidor
 
@@ -735,6 +736,36 @@ derrotas que pesen. Falconess no tiene esa atadura.
 las carreras objetivo y en eventos, con su propia historia (puede ganar limpio, hacer trampa o
 redimirse). Tono de rivalidad deportiva, coherente con «atractivas y simpáticas»: sin oscuridad
 gratuita. Las escuelas (T5) dan el marco: rivalidades entre doctrinas.
+
+## T20 · Modo Némesis (futuro)
+
+**Estado:** idea aprobada por el dueño (2026-10-30), para después. No entra en v3 ni en la
+temporada normal.
+
+**Qué es:** un **modo aparte**, con una temporada propia diseñada alrededor de rivales con memoria;
+no se enchufa en cualquier temporada. Inspirado en la idea de «enemigos que recuerdan» de Shadow of
+Mordor, pero con estructura propia y **pensado para el jugador, no para la tienda**: nada de la
+rivalidad se compra ni se acelera con dinero.
+
+**Ideas de partida (sin decidir):**
+
+- Cuatro a seis rivales con nombre por temporada, generadas de la semilla: escuela, estilo y rasgo.
+- **Ascenso:** la que te gana sube de rango y fama y aprende una contra-táctica de tu estilo, a
+  partir de lo que pasó en el log de carrera (quién te pasó, quién te cerró la línea).
+- **Marcas:** la que vencés feo o tirás en un choque vuelve cambiada (alas reparadas, más agresiva
+  o con miedo).
+- **Lazos:** algunas rivalidades terminan en alianza (corren a favor, dan rebufo).
+- Las carreras opcionales (T3) sirven para ir a buscar a una némesis o esquivarla.
+- Determinista: misma semilla y entradas, misma historia.
+
+**Cuidados:**
+
+- **Patente:** Warner Bros. tiene patentado en EE. UU. el «Nemesis System». El diseño tiene que ser
+  distinto en estructura (no copiar jerarquía, ascensos y recuerdos tal cual) y pasar por una
+  revisión legal antes de lanzarse.
+- **Texto:** plantillas de frases y variantes de retrato (chibis), no escenas a mano.
+- **Azar (T18):** la rival que asciende es un desafío legible y con contra, nunca un muro.
+- Se apoya en T17 (rivales y tono) y en los arquetipos tácticos de T19 (debuffs de las rivales).
 
 ## T18 · Ritmo de la temporada
 
