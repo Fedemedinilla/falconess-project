@@ -30,6 +30,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T11 | Qué se juega y qué entra al gacha        | Abierta                      | De acuerdo; falta decidir qué pasa con los bastidores genéricos y el firma sin suerte |
 | T12 | Monetización sin depender del ilustrador | Abierta                      | Gacha de corredoras + pases + pinturas de alas generadas por código                   |
 | T13 | Acabados de alas generados por código    | Idea aprobada                | Realista: un modelo de bastidor, cientos de acabados con reglas visuales de escuela   |
+| T14 | Interfaz móvil de la temporada           | Buen comienzo                | Combo 6: claro, con aire; base garage del 2, stats y entrenar del 1, calendario del 4 |
 
 ## T1 · Piezas de bastidor
 
@@ -417,3 +418,40 @@ Una página que genere 100 acabados de un mismo bastidor con alas vectoriales pr
 agrupados por escuela, con un botón para generar otros y la lista de reglas que cumple cada uno.
 Criterio de éxito: una persona reconoce la escuela de cada acabado sin leer el nombre, y ninguno
 desentona.
+
+## T14 · Interfaz móvil de la temporada
+
+**Estado:** el dueño eligió el combo 6 como «un buen comienzo» (2026-10-30). Canvas con las 6
+opciones: https://claude.ai/artifact/SDbQJtTmbDcrqiqBQHy63c (fila 6). Fuentes de los artboards:
+scratchpad de la sesión (`combos/project/C6-*.dc.html`, generador `c6gen/gen.py`); se copian al
+repo cuando se implemente.
+
+**Cómo se llegó:** cinco direcciones (fiel al género, box de carreras, una mano, calendario de
+temporada, transmisión deportiva), cada una con menú de la semana, entrenar, carreras opcionales
+y taller, revisadas por tamaño de letra, contraste, áreas táctiles y desbordes. El combo 6 combina
+las mejores partes; la primera versión era oscura y el dueño la pidió más abierta.
+
+**Lo que fija el combo 6:**
+
+- Tema claro y con aire: fondo de cielo, paneles blancos con sombra suave, sin franjas
+  decorativas, grupos separados 16-24 px.
+- Una sola cosa roja por pantalla (color de la escuela): la acción principal. El segundo color de
+  la escuela solo como relleno con texto oscuro.
+- La misma franja superior en todas las pantallas: semana, carrera objetivo, barra de vigor y
+  ánimo.
+- Menú de la semana: la corredora con escenario libre; Entrenar grande en rojo; Descansar,
+  Salida, Carreras y Taller como placas; Equipo en el pie.
+- Entrenar: tira de stats con letra de rango y valor; 5 botones redondos siempre visibles; «+N»
+  grande sobre la stat que sube; burbuja «Fallo N %»; retrato de la cuadrilla presente con su
+  vínculo; en la barra de vigor, el tramo que gastará el entrenamiento resaltado sin números
+  (pedido del dueño, como en Umamusume).
+- Carreras opcionales: boletos con nombre, cuánto le cuesta la pista a ella, rivales en
+  estrellas y «hasta +N»; cinta de semanas que explica el aviso de la 3.ª carrera seguida.
+- Taller: el box con las alas puestas, el hangar, las habilidades y reparar; nunca dice «gratis».
+- Números ocultos: solo «+N», «Fallo N %», letras de rango, barras, estrellas y «hasta +N».
+- Mínimos: cuerpo ≥ 15 px, etiquetas ≥ 12 px, números clave ≥ 20 px, contraste ≥ 4,5:1,
+  objetivos táctiles ≥ 44 px, acciones principales en la mitad inferior.
+
+**Pendiente:** verla renderizada en un teléfono real (hay tres textos que entran justos); decidir
+si el tramo de vigor parpadea; si Entrenar se confirma tocando dos veces el botón elegido o con un
+botón aparte; el arte de la corredora (T9) y la versión de las demás escuelas.
