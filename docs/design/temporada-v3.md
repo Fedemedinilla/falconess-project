@@ -536,3 +536,23 @@ Hearthstone, donde cada carta tiene su artista y el marco unifica):
   escribe el dueño con ayuda de esta sesión (texto, paletas, reglas, ejemplos de referencia).
 - Con presupuesto, después: rig Spine del retrato o un SD de carrera; nada de esto bloquea el
   modelo.
+
+### Variante del dueño: chibis basados en el splash (2026-10-30)
+
+**Propuesta:** hacer las corredoras en versión chibi (SD), como Blue Archive o Stella Sora,
+basadas en el splash que dibuje cada ilustrador invitado.
+
+**Recomendación:** sí, en 2D y con una base modular, no en 3D:
+
+- El chibi es lo que unifica el juego cuando cada splash tiene otro autor: todos salen de la misma
+  mano y la misma plantilla, y son los que se ven en la carrera, el equipo y los menús.
+- **Base modular («muñeca de papel»):** un solo artista hace una vez el cuerpo chibi base en capas
+  (cabeza, ojos, boca, cuerpo, brazos, piernas, puntos de anclaje de las alas) y las expresiones.
+  Cada corredora nueva es pelo, ropa y colores nuevos sobre esa base, tomados de su splash. Las
+  alas las pone el código (T13).
+- Animación por código al principio (rebote al correr, inclinación, parpadeo por capas); un rig
+  Spine del chibi es barato si después hay presupuesto, porque tiene pocas piezas y se reutiliza.
+- 3D chibi como Blue Archive: no, para un estudio de una persona (modelado, rig, animación y un
+  motor 3D por cada corredora).
+- Costo de referencia del informe de T15: arte SD en capas 150-400 USD por corredora; rig y 4
+  ciclos 400-1.000. Con base modular, cada chibi nuevo debería costar menos que el primero.
