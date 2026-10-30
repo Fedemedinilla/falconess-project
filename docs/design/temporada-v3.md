@@ -777,12 +777,12 @@ rivalidad se compra ni se acelera con dinero.
 **Hoy:** la posición no se elige; viene con el **estilo de las alas** (cada bastidor tiene uno) y la
 Falconess tiene una letra por estilo:
 
-| Estilo  | Qué hace en carrera (motor, 9.4)                              | Equivale en Umamusume | Alas                                       |
-| ------- | ------------------------------------------------------------- | --------------------- | ------------------------------------------ |
-| Planeo  | Toma la punta con crucero eficiente; poco propulsor           | Front                 | Falke, Kite, Horizon                       |
-| Flotar  | Se queda en el pelotón medio y ataca al 70 %                  | Pace                  | Nimbus, firma de Cernícala                 |
-| Picada  | Guarda energía y la gasta en bajadas y en el sprint final     | Late / End            | Shiden, Etoile, firma de Peregrina         |
-| Rasante | Ritmo constante por el suelo; no salta; desvío y más desgaste | Sin equivalente       | Mule, Hayate, Erzherzog, firma de Caracara |
+| Estilo     | Qué hace en carrera (motor, 9.4)                              | Equivale en Umamusume | Alas                                       |
+| ---------- | ------------------------------------------------------------- | --------------------- | ------------------------------------------ |
+| Planeo     | Toma la punta con crucero eficiente; poco propulsor           | Front                 | Falke, Kite, Horizon                       |
+| Suspensión | Se queda en el pelotón medio y ataca al 70 %                  | Pace                  | Nimbus, firma de Cernícala                 |
+| Picada     | Guarda energía y la gasta en bajadas y en el sprint final     | Late / End            | Shiden, Etoile, firma de Peregrina         |
+| Rasante    | Ritmo constante por el suelo; no salta; desvío y más desgaste | Sin equivalente       | Mule, Hayate, Erzherzog, firma de Caracara |
 
 **Opciones:**
 
