@@ -37,7 +37,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
 | T19 | Arquetipos de habilidades                | Abierta (debuffs después)    | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
 | T20 | Modo Némesis                             | Futuro                       | Modo aparte con rivales que recuerdan; pensado para el jugador, no para la tienda            |
-| T21 | Posición en carrera                      | Abierta                      | Elegir Punta/Pelotón/Acecho/Remate antes de largar, separado del estilo de las alas          |
+| T21 | Posición en carrera                      | B aprobada (diseño abierto)  | Elegir Punta/Pelotón/Acecho/Remate antes de largar, separado del estilo de las alas          |
 | T22 | La radio                                 | Idea aprobada                | Uno o dos gritos por carrera; la Falconess responde según su personalidad                    |
 | T23 | La veterana                              | Idea aprobada                | La Falconess anterior aparece y entrena a la actual; presencia leve, no evento al azar       |
 
@@ -214,7 +214,10 @@ En negrita, la mejor de cada columna. Intervalos de ± 3 a 4,5 puntos por Falcon
 - **Stats por opcional: sí, pero al azar.** La carrera da stats, pero cuál sube se sortea: puede
   servirle o no a la Falconess; igual son stats. Las cuadrillas (T2) pueden sumar **más stats** o
   **más puntos de habilidad** por carrera opcional; el stat que dan también se sortea.
-- **Rendimiento por mes (100/70/30): sin decidir.** Choca con las builds que tardan en armarse: una
+- **Freno al farmeo: opción A, tope por temporada (dueño, 2026-10-30).** Las primeras N opcionales
+  del año dan el 100 % de los stats y las siguientes rinden menos, sin importar cuándo se corran;
+  una build lenta puede guardar sus carreras para la segunda mitad. N y la caída, a medir.
+- **Rendimiento por mes (100/70/30): descartado.** Choca con las builds que tardan en armarse: una
   corredora débil al inicio llegaría a sus mejores carreras cuando ya rinden 30 %. Hay que buscar
   otra forma de frenar el farmeo que no castigue a las builds lentas, y medirla.
 - **La táctica no es solo Int y Téc.** La farmeadora de habilidades necesita Resistencia y Agilidad
@@ -795,6 +798,14 @@ Falconess tiene una letra por estilo:
   posición + alas), ADR y recalibración.
 - **C · Intermedio:** cada estilo de alas trae su posición por defecto y la Falconess puede
   desviarse una casilla (Picada: Acecho o Remate).
+
+**Dueño (2026-10-30):** opción B aprobada, con dos pedidos:
+
+- **Posiciones más distintas entre sí y más visuales:** que se reconozcan de un vistazo en la
+  carrera, no solo por el orden.
+- **Que usen más las alas:** hoy corren mucho y vuelan poco (el motor solo vuela en los saltos).
+- **Le gusta la picada atada al Coraje:** a más Coraje, menos chance de que la Falconess se
+  intimide.
 
 ## T22 · La radio: los gritos del jugador
 
