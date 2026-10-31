@@ -57,7 +57,7 @@ export function noBoost(R: Ruleset): Ruleset {
   return { ...Q, race: { ...Q.race, kBoost: 0, kH: 0 } };
 }
 
-const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"].map((id) =>
+const COURSES = ["sprint", "ridge", "canyon"].map((id) =>
   content.getCourse(id),
 );
 const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
@@ -76,7 +76,6 @@ export const RUNS = 500;
  * timed them out under load.
  */
 const HEAVY = 120_000;
-const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 
 export function at<T>(arr: readonly T[] | undefined, i: number): T {
   const v = arr?.[i];
@@ -85,7 +84,7 @@ export function at<T>(arr: readonly T[] | undefined, i: number): T {
 }
 
 export function testCourse(segments: Segment[], id = "prop-course"): Course {
-  return { id, version: 1, biome: "desert", traits: [], entries: 8, segments, textKey: "course.p" };
+  return { id, version: 1, traits: [], entries: 8, segments, textKey: "course.p" };
 }
 
 // --- arbitraries --------------------------------------------------------------------------------
@@ -211,7 +210,6 @@ const segmentArb: fc.Arbitrary<Segment> = fc.oneof(
   fc.record({
     type: fc.constant("canyon" as const),
     length: fc.integer({ min: 50, max: 500 }),
-    wind: fc.constantFrom(-0.15, -0.05, 0.1),
   }),
   fc.record({
     type: fc.constant("curves" as const),
@@ -272,7 +270,6 @@ export function frameEntry(
       falconessId: null,
       baseStats: stats,
       mood: 0,
-      biomeAptitude: B,
       styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
       frameId,
       parts: [],
@@ -396,7 +393,7 @@ export function raceProperties(R: Ruleset): void {
     it(
       "noise on: 8 identical builds over 2000 seeds, each lane wins 12.5 % ± 3 %",
       () => {
-        const course = content.getCourse("desert-sprint");
+        const course = content.getCourse("sprint");
         const entries = Array.from({ length: 8 }, (_, lane) =>
           neutralFixtureEntry({
             runnerId: `h-${lane}`,

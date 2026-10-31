@@ -25,9 +25,7 @@ function applyInheritance(ctx: SimContext, d: Draft, parents: readonly BlackBox[
     const apt = p.factors.aptitude;
     const chance = S.aptitudeInheritChance[apt.stars - 1] ?? 300;
     if (rng.chancePermille("training", chance)) {
-      if (apt.kind === "biome")
-        d.biomeAptitude[apt.key] = upgradeAptitude(d.biomeAptitude[apt.key] as Aptitude);
-      else d.styleAptitude[apt.key] = upgradeAptitude(d.styleAptitude[apt.key] as Aptitude);
+      d.styleAptitude[apt.key] = upgradeAptitude(d.styleAptitude[apt.key] as Aptitude);
     }
   }
 }
@@ -72,7 +70,6 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
     turn: 1,
     falconessId: falconess.id,
     stats: { ...falconess.baseStats },
-    biomeAptitude: { ...falconess.biomeAptitude },
     styleAptitude: { ...falconess.styleAptitude },
     mood: 0,
     fatigue: 0,

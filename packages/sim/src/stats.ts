@@ -1,8 +1,6 @@
 import { clamp, scale } from "@falconess/rng";
 import type {
   Aptitude,
-  Biome,
-  BiomeAptitudes,
   FalconessStats,
   Mood,
   StatName,
@@ -29,23 +27,20 @@ export function moodMultiplier(ruleset: Ruleset, mood: Mood): number {
 
 /**
  * Stats "of the day", computed once before training or racing (BRIEF §5):
- * S_eff = floor(S_base × m_mood × a), where biome aptitude scales agility and style aptitude
- * scales intelligence. Integers in, integers out.
+ * S_eff = floor(S_base × m_mood × a), where style aptitude scales intelligence
+ * (agility carries no aptitude since ADR-0007 removed biomes). Integers in, integers out.
  */
 export function effectiveStats(
   ruleset: Ruleset,
   base: FalconessStats,
   mood: Mood,
-  biomeApt: BiomeAptitudes,
   styleApt: StyleAptitudes,
-  biome: Biome,
   style: Style,
 ): FalconessStats {
   const m = moodMultiplier(ruleset, mood);
-  const a = aptitudeMult(ruleset, biomeApt[biome]);
   const s = aptitudeMult(ruleset, styleApt[style]);
   return {
-    agility: scale(scale(base.agility, m), a),
+    agility: scale(base.agility, m),
     stamina: scale(base.stamina, m),
     technique: scale(base.technique, m),
     courage: scale(base.courage, m),

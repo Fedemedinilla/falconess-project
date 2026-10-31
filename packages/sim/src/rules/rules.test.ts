@@ -1,4 +1,4 @@
-import { BIOMES, ManufacturerRule, RACE_RULES, type RaceRule } from "@falconess/schema";
+import { ManufacturerRule, RACE_RULES, type RaceRule } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { buildCourseGeometry } from "../race/geometry.js";
 import { defaultTraits } from "../race/modifiers.js";
@@ -33,14 +33,14 @@ describe("RULES: one RuleSpec per RaceRule (docs/race-engine.md 3.4, 13)", () =>
       const spec = RULES[rule];
       expect(spec.rule).toBe(rule);
       expect(spec.code).toBe(ruleCode(rule));
-      for (const biome of BIOMES) expect(spec.compile(R, biome).code).toBe(spec.code);
+      expect(spec.compile(R).code).toBe(spec.code);
     }
     expect(RULES.none.code).toBe(RULE_NONE);
     expect(ManufacturerRule.options.every((r) => r in RULES)).toBe(true);
   });
 
-  it("none is the no-op spec in every biome", () => {
-    for (const biome of BIOMES) expect(compileRule(R, "none", biome)).toEqual(neutralTerms(5));
+  it("none is the no-op spec", () => {
+    expect(compileRule(R, "none")).toEqual(neutralTerms(5));
     const n = neutralTerms(5);
     expect(n).toMatchObject({
       capLimRaw: false,
@@ -55,8 +55,8 @@ describe("RULES: one RuleSpec per RaceRule (docs/race-engine.md 3.4, 13)", () =>
     });
   });
 
-  it("each rule changes only its own mechanism and term (desert)", () => {
-    const desert = (rule: RaceRule) => changed(compileRule(R, rule, "desert"));
+  it("each rule changes only its own mechanism and term", () => {
+    const desert = (rule: RaceRule) => changed(compileRule(R, rule));
     expect(desert("mass-thrust")).toEqual({
       heatPenalty: false,
       licence: "always",
@@ -67,7 +67,7 @@ describe("RULES: one RuleSpec per RaceRule (docs/race-engine.md 3.4, 13)", () =>
     expect(desert("pulse")).toEqual({
       pulses: true,
       pulseAirPm: [1150, 1150, 1380, 1150, 690, 1150, 1150],
-      pulseBiomePm: 1150,
+      pulseBasePm: 1150,
     });
     expect(desert("telemetry")).toEqual({
       capLimRaw: true,
@@ -86,28 +86,19 @@ describe("RULES: one RuleSpec per RaceRule (docs/race-engine.md 3.4, 13)", () =>
     expect(desert("none")).toEqual({});
   });
 
-  it("biome-keyed terms: Steinhaus cooling and Koryu intake air per biome", () => {
-    expect(BIOMES.map((b) => compileRule(R, "mass-thrust", b).coolPm)).toEqual([
-      500, 1250, 1000, 500, 1250,
-    ]);
-    const mountain = compileRule(R, "pulse", "mountain");
-    expect(mountain.pulseAirPm).toEqual([1000, 1000, 1200, 1000, 600, 1000, 1000]);
-    expect(mountain.pulseBiomePm).toBe(1000);
-  });
-
   it("terms read the ruleset (a test ruleset changes them)", () => {
     const R2 = { ...R, regenPerTick: 60, telemetryDrainPm: 950, repairablePerFlatSegment: 3 };
-    expect(compileRule(R2, "regen", "desert").regenMe).toBe(60);
-    expect(compileRule(R2, "telemetry", "desert").drainPm).toBe(950);
-    expect(compileRule(R2, "repairable", "desert").repairMd).toBe(3000);
+    expect(compileRule(R2, "regen").regenMe).toBe(60);
+    expect(compileRule(R2, "telemetry").drainPm).toBe(950);
+    expect(compileRule(R2, "repairable").repairMd).toBe(3000);
   });
 });
 
 describe("one case per rule term of 13.1, through the table helpers", () => {
-  const t = (rule: RaceRule) => compileRule(R, rule, "desert");
+  const t = (rule: RaceRule) => compileRule(R, rule);
 
-  it("Steinhaus: desert cooling 500 mh per tick, overheat damage ×2", () => {
-    expect(coolTick(R, "desert", 45, t("mass-thrust"))).toBe(500);
+  it("Steinhaus: cooling 500 mh per tick, overheat damage ×2", () => {
+    expect(coolTick(R, 45, t("mass-thrust"))).toBe(500);
     expect(overheatDamage(R, "glide", t("mass-thrust"))).toBe(2000);
   });
 
@@ -132,7 +123,6 @@ describe("one case per rule term of 13.1, through the table helpers", () => {
     const sprint = buildCourseGeometry(SPEC_RULESET, {
       id: "c",
       version: 1,
-      biome: "desert",
       traits: [],
       entries: 8,
       segments: [{ type: "curves", length: 200, radius: 60 }],

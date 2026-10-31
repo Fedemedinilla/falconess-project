@@ -10,8 +10,8 @@ import { RULESET_V1 } from "../src/rulesets/index.js";
 
 /**
  * Race benchmark of docs/race-engine.md 22 and ROADMAP D13: eight mixed generic frames (every
- * manufacturer rule, every style, two pulse frames), four actives each, on desert-canyon (3000 m)
- * and desert-sprint (1200 m), with detail "full" and "results", one reused arena and a cached
+ * manufacturer rule, every style, two pulse frames), four actives each, on canyon (3000 m)
+ * and sprint (1200 m), with detail "full" and "results", one reused arena and a cached
  * geometry as the batch runs it. Target: under 5 ms per 8-runner 3000 m race (ROADMAP D10/D13):
  * the canyon "results" run fails if its p95 exceeds it. Run with `pnpm bench` (Vitest 5 benchmark
  * fixture, native ES modules: see the `sim-bench` project in vitest.config.ts). In GitHub Actions
@@ -22,7 +22,6 @@ import { RULESET_V1 } from "../src/rulesets/index.js";
 
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
-const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 const FIELD: [string, string[]][] = [
   ["falke", ["corner-carver", "cool-head", "hill-lungs", "last-gasp"]],
   ["erzherzog", ["canyon-sense", "clean-start", "hill-lungs", "pack-shadow"]],
@@ -43,7 +42,6 @@ function field(courseId: string): RaceEntry[] {
       falconessId: null,
       baseStats: S600,
       mood: 0,
-      biomeAptitude: B,
       styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
       frameId,
       parts: [],
@@ -84,7 +82,7 @@ function jobSummary(rows: readonly string[]): void {
     : [
         "### Race benchmark: ms per race",
         "",
-        `8 runners, 4 actives each, one reused arena and a cached geometry. Gate: the desert-canyon "results" p95 must stay under ${BUDGET_MS} ms (docs/race-engine.md 22).`,
+        `8 runners, 4 actives each, one reused arena and a cached geometry. Gate: the canyon "results" p95 must stay under ${BUDGET_MS} ms (docs/race-engine.md 22).`,
         "",
         "| course | detail | mean | p50 | p95 | p99 | samples | gate |",
         "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
@@ -103,7 +101,7 @@ function summaryRow(courseId: string, detail: string, l: Latency, gate: string):
   return `| ${courseId} | ${detail} | ${ms(l.mean)} | ${ms(l.p50)} | ${ms(p95(l))} | ${ms(l.p99)} | ${n} | ${gate} |`;
 }
 
-for (const courseId of ["desert-canyon", "desert-sprint"]) {
+for (const courseId of ["canyon", "sprint"]) {
   test(`8 runners, 4 actives each, ${courseId}`, async ({ bench }) => {
     const course = content.getCourse(courseId);
     const entries = field(courseId);
@@ -117,7 +115,7 @@ for (const courseId of ["desert-canyon", "desert-sprint"]) {
     const opts = { time: 2000, warmupTime: 500 };
     const results = await bench("detail results", run("results")).run(opts);
     const full = await bench("detail full", run("full")).run(opts);
-    const gated = courseId === "desert-canyon";
+    const gated = courseId === "canyon";
     const rows: string[] = [];
     for (const [name, r] of [
       ["results", results],

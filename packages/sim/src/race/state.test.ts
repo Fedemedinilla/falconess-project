@@ -29,9 +29,9 @@ import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 import { PH_FINAL, PH_MIDDLE, PH_START } from "./units.js";
 
 const content = loadContent();
-const RIDGE = content.getCourse("desert-ridge");
-const SPRINT = content.getCourse("desert-sprint");
-const CANYON = content.getCourse("desert-canyon");
+const RIDGE = content.getCourse("ridge");
+const SPRINT = content.getCourse("sprint");
+const CANYON = content.getCourse("canyon");
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const QUIET: Ruleset = {
   ...SPEC_RULESET,
@@ -53,14 +53,12 @@ function fixture(style: Style, over: Partial<RaceEntry> = {}, lane = 0): RaceEnt
 }
 
 function frozen(frameId: string, course: Course, lane = 0, over: Partial<EntryInput> = {}) {
-  const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
   const input: EntryInput = {
     runnerId: `r-${lane}`,
     kind: "rival",
     falconessId: null,
     baseStats: S600,
     mood: 0,
-    biomeAptitude: B,
     styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
     frameId,
     parts: [],
@@ -92,7 +90,6 @@ function flatCourse(segments: Course["segments"]): Course {
   return {
     id: "test-course",
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     segments,
@@ -583,12 +580,12 @@ describe("reserves and budgets (docs/race-engine.md 14.4, 9.3)", () => {
     expect(hiT.tables.jr[is(0, 0)]).toBe(40_000);
   });
 
-  it("capFinal: neutral dive sprint 99 000, ridge 134 000 (jump 2 skipped), canyon 188 000 (cut at 2778.6 m)", () => {
+  it("capFinal: neutral dive sprint 99 000, ridge 134 000 (jump 2 skipped), canyon 203 000 (no wind, ADR-0007)", () => {
     expect(capOf(tablesOf([fixture("dive")], SPRINT))).toBe(99_000);
     expect(capOf(tablesOf([fixture("dive")], RIDGE))).toBe(134_000);
     const canyon = tablesOf([fixture("dive")], CANYON);
-    expect(capOf(canyon)).toBe(188_000);
-    expect(exhaustM(canyon)).toBe(27_786);
+    expect(capOf(canyon)).toBe(203_000);
+    expect(exhaustM(canyon)).toBe(27_942);
     // hover plans from 70 %: a shorter window
     expect(capOf(tablesOf([fixture("hover")], SPRINT))).toBe(90_000);
     // broken wings: a slower cruise gives more final ticks, still bounded by the heat budget
@@ -596,13 +593,13 @@ describe("reserves and budgets (docs/race-engine.md 14.4, 9.3)", () => {
     expect(capOf(A, 0, 1)).toBeGreaterThanOrEqual(capOf(A, 0, 0) ?? 0);
   });
 
-  it("capFinal of a pulse frame counts max cadence (12/42): shiden 52 800 / 25 200 / 16 800", () => {
+  it("capFinal of a pulse frame counts max cadence (12/42): shiden 52 800 / 25 200 / 15 600", () => {
     const sh = (c: Course) => tablesOf([frozen("shiden", c)], c);
     const sprint = sh(SPRINT);
     const ridge = sh(RIDGE);
     const canyon = sh(CANYON);
-    expect([capOf(sprint), capOf(ridge), capOf(canyon)]).toEqual([52_800, 25_200, 16_800]);
-    expect([exhaustM(sprint), exhaustM(ridge), exhaustM(canyon)]).toEqual([11_232, 15_197, 21_286]);
+    expect([capOf(sprint), capOf(ridge), capOf(canyon)]).toEqual([52_800, 25_200, 15_600]);
+    expect([exhaustM(sprint), exhaustM(ridge), exhaustM(canyon)]).toEqual([11_232, 15_197, 21_008]);
   });
 
   it("an empty final window gives capFinal 0", () => {

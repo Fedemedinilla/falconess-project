@@ -7,19 +7,19 @@ import { neutralTerms, type RuleSpec } from "./rule-spec.js";
 /**
  * Kōryū (docs/race-engine.md 12): boost comes in bursts of `pulseTicks` (12) at ×`pulseBoostMult`
  * thrust and ×`pulseCostMult` cost, then `pulseCooldownTicks` (30) of cooldown. Rule term (13.1):
- * intake air, burst thrust ×`pulseAirPm[segment type]` × `pulseBiomePm[biome]` (desert 1.15,
- * descent ×1.2, water ×0.6); the plan's `Bon` carries the biome factor.
+ * intake air, burst thrust ×`pulseAirPm[segment type]` × `pulseBasePm` (one value on
+ * every course since ADR-0007); the plan's `Bon` carries the base factor.
  */
 export const PULSE: RuleSpec = {
   rule: "pulse",
   code: RULE_PULSE,
-  compile: (R, biome) => {
-    const biomePm = R.pulseBiomePm[biome];
+  compile: (R) => {
+    const basePm = R.pulseBasePm;
     return {
       ...neutralTerms(RULE_PULSE),
       pulses: true,
-      pulseAirPm: R.pulseAirPm.map((pm) => floorDiv(pm * biomePm, 1000)),
-      pulseBiomePm: biomePm,
+      pulseAirPm: R.pulseAirPm.map((pm) => floorDiv(pm * basePm, 1000)),
+      pulseBasePm: basePm,
     };
   },
 };

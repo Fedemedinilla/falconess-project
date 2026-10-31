@@ -1,5 +1,5 @@
 import { floorDiv } from "@falconess/rng";
-import { BIOMES, RACE_RULES } from "@falconess/schema";
+import { RACE_RULES } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { raceProperties } from "../../tests/support/race-properties.js";
 import { compileRule } from "../rules/index.js";
@@ -48,11 +48,11 @@ describe("2^53 bounds of docs/race-engine.md 1.5 on the live constants", () => {
   const CHAIN = 1000; // pulse-chain-accel accelBonus ≤ 1 (schema)
   const SKILL_SPEED = 3000; // mm/s per active skill (schema: speed ≤ 3 m/s)
 
-  // the live per-mille multipliers: the style terms and every rule's terms on every biome
-  const terms = RACE_RULES.flatMap((rule) => BIOMES.map((biome) => compileRule(R, rule, biome)));
+  // the live per-mille multipliers: the style terms and every rule's terms
+  const terms = RACE_RULES.map((rule) => compileRule(R, rule));
   const STYLE_PACE = Math.max(...Object.values(R.stylePace).flat());
   const AIR = Math.max(...terms.flatMap((t) => t.pulseAirPm));
-  const BIOME_PULSE = Math.max(...terms.map((t) => t.pulseBiomePm));
+  const BASE_PULSE = Math.max(...terms.map((t) => t.pulseBasePm));
   const MULT = Math.max(
     R.style.diveStoopPm,
     R.style.hoverDraftPm,
@@ -76,7 +76,7 @@ describe("2^53 bounds of docs/race-engine.md 1.5 on the live constants", () => {
   // the plan's thrust per boosted tick as the tables build it (3.3 `Bon`): a pulse frame takes
   // the unchained burst × the biome term × the stoop, a continuous frame the boost × the stoop
   const Bp = pulseThrustVu(R, KBOOST, pwb);
-  const bonPulse = floorDiv(floorDiv(Bp * BIOME_PULSE, 1000) * R.style.diveStoopPm, 1000);
+  const bonPulse = floorDiv(floorDiv(Bp * BASE_PULSE, 1000) * R.style.diveStoopPm, 1000);
   const sPulse = floorDiv(bonPulse * R.pulseTicks, R.pulseTicks + R.pulseCooldownTicks);
   const bonCont = floorDiv(boostThrustVu(KBOOST, pwb) * R.style.diveStoopPm, 1000);
   const accMax = accelVu(R, STAT, pwc, F, { accelPm: MULT });

@@ -1,5 +1,5 @@
 import { ceilDiv, clamp, floorDiv, scale } from "@falconess/rng";
-import type { Biome, RaceEntry, RaceTraits, Style } from "@falconess/schema";
+import type { RaceEntry, RaceTraits, Style } from "@falconess/schema";
 import type { RuleTerms } from "../rules/rule-spec.js";
 import type { RaceConstants } from "../rulesets/index.js";
 import type { CourseGeometry } from "./geometry.js";
@@ -28,13 +28,13 @@ export function baseSegmentFactor(
   type: number,
   gradePm: number,
   dragPm: number,
-  windPm: number,
   agility: number,
   curvesScalePm: number,
 ): number {
   switch (type) {
     case SEG_FLAT:
     case SEG_JUMP:
+    case SEG_CANYON:
       return 1000;
     case SEG_CLIMB:
       return 1000 - floorDiv(R.kClimb * gradePm, 1000);
@@ -42,8 +42,6 @@ export function baseSegmentFactor(
       return 1000 + floorDiv(R.kDescent * gradePm, 1000);
     case SEG_WATER:
       return 1000 - floorDiv(R.kWater * dragPm, 1000);
-    case SEG_CANYON:
-      return 1000 + floorDiv(R.kWind * windPm, 1000);
     case SEG_CURVES:
       return (
         1000 - floorDiv(R.kCurves * (1200 - Math.min(agility, 1200)) * curvesScalePm, 1_200_000)
@@ -73,7 +71,6 @@ export function segmentFactor(
     type,
     G.gradePm[s] ?? 0,
     G.dragPm[s] ?? 0,
-    G.windPm[s] ?? 0,
     agility,
     curvesScale,
   );
@@ -133,18 +130,17 @@ export function drainCoefficients(
 /**
  * Heat removed per tick without boost (table 3.3 `coolTick`), mh:
  * `max(1, fl(cool0 × coolRule, 1000))` with
- * `cool0 = max(1, fl(R.kCool × R.biomeCool[biome] × dissF, 1 000 000))` and
+ * `cool0 = max(1, fl(R.kCool × dissF, 1000))` (no biome term since ADR-0007) and
  * `dissF = 1000 + fl(R.coolDissWeight × (fl(dissipation × 1000, R.dissRef) − 1000), 1000)`.
  */
 export function coolTick(
   R: RaceConstants,
-  biome: Biome,
   dissipation: number,
   terms: Pick<RuleTerms, "coolPm">,
 ): number {
   const dissF =
     1000 + floorDiv(R.coolDissWeight * (floorDiv(dissipation * 1000, R.dissRef) - 1000), 1000);
-  const cool0 = Math.max(1, floorDiv(R.kCool * R.biomeCool[biome] * dissF, 1_000_000));
+  const cool0 = Math.max(1, floorDiv(R.kCool * dissF, 1000));
   return Math.max(1, floorDiv(cool0 * terms.coolPm, 1000));
 }
 

@@ -2409,7 +2409,7 @@ descents ≈ 0.7 s − boost 13 m ≈ 0.55 s + two landings ≈ 2 × 0.58 s (14.
 the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing on the ridge's jumps
 (86.46 s against 86.91-87.13 s for the flyers).
 
-**desert-sprint**
+**sprint**
 
 | Build | Time | Phase splits S/M/F (s) | Boost ticks S/M/F | Pulses | Plan (first) | Energy left | hp end | Overheat ticks / durability end |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -2431,7 +2431,7 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | cernicala-signature (hover, telemetry, PW 0.85) | 62.25 s | 10.63/31.40/20.21 | 17/6/108 | - | 1.15 m/s from 841 m | 0.2 | 374 / 915 hp | 0 / 100 |
 | caracara-signature (ground, repairable, PW 0.70) | 77.20 s | 12.58/38.65/25.97 | 31/61/59 | - | 0.40 m/s from 823 m | 0.1 | 431 / 915 hp | 0 / 180 |
 
-**desert-ridge**
+**ridge**
 
 | Build | Time | Phase splits S/M/F (s) | Boost ticks S/M/F | Pulses | Plan (first) | Energy left | hp end | Overheat ticks / durability end |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -2453,27 +2453,27 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | cernicala-signature (hover, telemetry, PW 0.85) | 100.52 s | 17.40/50.05/33.07 | 4/4/96 | - | 0.75 m/s from 1415 m | 0.7 | 307 / 1235 hp | 0 / 100 |
 | caracara-signature (ground, repairable, PW 0.70) | 120.33 s | 20.72/59.69/39.92 | 22/62/74 | - | 0.30 m/s from 1370 m | 0.1 | 368 / 1235 hp | 0 / 180 |
 
-**desert-canyon**
+**canyon**
 
 | Build | Time | Phase splits S/M/F (s) | Boost ticks S/M/F | Pulses | Plan (first) | Energy left | hp end | Overheat ticks / durability end |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| neutral dive | 135.94 s | 23.57/67.59/44.78 | 0/0/100 | - | 1.80 m/s from 2365 m (hp-limited) | 0.0 | empty at 2818 m | 0 / 90 |
-| neutral hover | 136.16 s | 23.57/67.59/45.00 | 0/0/100 | - | 1.30 m/s from 2414 m (hp-limited) | 0.0 | empty at 2828 m | 0 / 90 |
-| neutral glide | 135.20 s | 23.39/67.60/44.21 | 0/0/100 | - | 1.30 m/s from 2423 m (hp-limited) | 0.0 | empty at 2873 m | 0 / 90 |
-| neutral ground | 136.22 s | 23.44/67.18/45.59 | 15/46/39 | - | 2.50 m/s from 2713 m (hp-limited) | 0.0 | empty at 2830 m | 0 / 95 |
-| falke (glide, mass-thrust, PW 1.00) | 134.66 s | 23.21/66.92/44.53 | 2/0/116 | - | 0.70 m/s from 2000 m (hp-limited) | 2.0 | empty at 2851 m | 0 / 130 |
-| erzherzog (ground, mass-thrust, PW 1.00) | 136.22 s | 23.44/67.18/45.59 | 15/46/39 | - | 1.20 m/s from 2633 m (hp-limited) | 0.0 | empty at 2830 m | 0 / 140 |
-| sylphe (hover, regen, PW 1.20) | 118.44 s | 21.25/53.94/43.24 | 107/270/65 | - | 2.10 m/s from 2101 m (hp-limited) | 60.0 | empty at 2372 m | 0 / 70 |
-| etoile (dive, regen, PW 1.40) | 106.93 s | 20.44/46.51/39.98 | 111/232/40 | - | 4.38 m/s from 2002 m (hp-limited) | 60.0 | empty at 2173 m | 0 / 50 |
-| shiden (dive, pulse, PW 1.40) | 108.72 s | 20.57/48.59/39.55 | 60/0/12 | 6 | 2.61 m/s from 2001 m (hp-limited) | 13.6 | empty at 2230 m | 0 / 90 |
-| hayate (ground, pulse, PW 1.20) | 120.47 s | 21.70/56.02/42.74 | 36/24/12 | 6 | 1.60 m/s from 2224 m (hp-limited) | 13.6 | empty at 2431 m | 0 / 55 |
-| nimbus (hover, telemetry, PW 0.85) | 155.87 s | 25.98/79.54/50.35 | 0/0/120 | - | 1.05 m/s from 2538 m | 0.0 | 281 / 1635 hp | 0 / 90 |
-| horizon (glide, telemetry, PW 1.00) | 133.59 s | 23.71/67.36/42.53 | 0/35/140 | - | 1.20 m/s from 2364 m | 0.0 | 81 / 1635 hp | 0 / 90 |
-| mule (ground, repairable, PW 0.70) | 188.46 s | 31.14/95.88/61.45 | 20/64/56 | - | 1.00 m/s from 2804 m | 0.0 | 390 / 1635 hp | 0 / 177 |
-| kite (glide, repairable, PW 0.70) | 188.35 s | 31.26/96.46/60.64 | 0/0/140 | - | 0.80 m/s from 2518 m | 0.0 | 414 / 1635 hp | 0 / 172 |
-| peregrina-signature (dive, pulse, PW 1.40) | 108.54 s | 20.52/48.46/39.57 | 60/0/12 | 6 | 2.61 m/s from 2001 m (hp-limited) | 13.6 | empty at 2227 m | 0 / 90 |
-| cernicala-signature (hover, telemetry, PW 0.85) | 155.62 s | 25.93/79.39/50.31 | 6/16/127 | - | 0.55 m/s from 2150 m | 0.3 | 277 / 1635 hp | 0 / 90 |
-| caracara-signature (ground, repairable, PW 0.70) | 187.94 s | 31.13/95.74/61.08 | 21/63/85 | - | 0.30 m/s from 2304 m | 0.2 | 386 / 1635 hp | 0 / 180 |
+| neutral dive | 134.90 s | 23.57/64.52/46.80 | 0/0/100 | - | 1.80 m/s from 2401 m (hp-limited) | 0.0 | empty at 2822 m | 0 / 90 |
+| neutral hover | 135.15 s | 23.57/64.52/47.05 | 0/0/100 | - | 1.30 m/s from 2433 m (hp-limited) | 0.0 | empty at 2831 m | 0 / 90 |
+| neutral glide | 134.21 s | 23.39/64.52/46.29 | 0/0/100 | - | 1.30 m/s from 2457 m (hp-limited) | 0.0 | empty at 2877 m | 0 / 90 |
+| neutral ground | 135.24 s | 23.43/64.15/47.66 | 16/44/39 | - | 2.30 m/s from 2719 m (hp-limited) | 1.0 | empty at 2833 m | 0 / 95 |
+| falke (glide, mass-thrust, PW 1.00) | 133.58 s | 23.23/63.83/46.52 | 0/0/120 | - | 0.70 m/s from 2011 m (hp-limited) | 0.0 | empty at 2854 m | 0 / 130 |
+| erzherzog (ground, mass-thrust, PW 1.00) | 135.23 s | 23.43/64.15/47.65 | 16/44/40 | - | 1.30 m/s from 2660 m (hp-limited) | 0.0 | empty at 2833 m | 10 / 130 |
+| sylphe (hover, regen, PW 1.20) | 118.69 s | 21.25/51.56/45.89 | 107/258/71 | - | 2.10 m/s from 2101 m (hp-limited) | 60.0 | empty at 2359 m | 0 / 70 |
+| etoile (dive, regen, PW 1.40) | 107.09 s | 20.44/44.44/42.22 | 111/223/35 | - | 4.88 m/s from 2002 m (hp-limited) | 60.0 | empty at 2132 m | 0 / 50 |
+| shiden (dive, pulse, PW 1.40) | 108.60 s | 20.57/46.33/41.70 | 60/0/12 | 6 | 2.61 m/s from 2001 m (hp-limited) | 13.6 | empty at 2195 m | 0 / 90 |
+| hayate (ground, pulse, PW 1.20) | 120.47 s | 21.70/53.46/45.32 | 36/24/12 | 6 | 1.60 m/s from 2258 m (hp-limited) | 13.6 | empty at 2429 m | 0 / 55 |
+| nimbus (hover, telemetry, PW 0.85) | 154.62 s | 25.98/75.91/52.73 | 0/0/120 | - | 1.05 m/s from 2555 m | 0.0 | 282 / 1635 hp | 0 / 90 |
+| horizon (glide, telemetry, PW 1.00) | 132.48 s | 23.71/64.23/44.54 | 0/36/140 | - | 1.20 m/s from 2393 m | 0.0 | 81 / 1635 hp | 0 / 90 |
+| mule (ground, repairable, PW 0.70) | 187.12 s | 31.13/91.63/64.37 | 21/62/57 | - | 1.00 m/s from 2808 m | 0.0 | 392 / 1635 hp | 0 / 177 |
+| kite (glide, repairable, PW 0.70) | 187.05 s | 31.26/92.16/63.64 | 0/0/140 | - | 0.80 m/s from 2539 m | 0.0 | 417 / 1635 hp | 0 / 172 |
+| peregrina-signature (dive, pulse, PW 1.40) | 108.42 s | 20.52/46.24/41.66 | 60/0/12 | 6 | 2.61 m/s from 2001 m (hp-limited) | 13.6 | empty at 2189 m | 0 / 90 |
+| cernicala-signature (hover, telemetry, PW 0.85) | 154.32 s | 25.93/75.77/52.62 | 6/16/127 | - | 0.55 m/s from 2183 m | 0.3 | 279 / 1635 hp | 0 / 90 |
+| caracara-signature (ground, repairable, PW 0.70) | 186.61 s | 31.12/91.49/64.00 | 22/62/84 | - | 0.20 m/s from 2009 m | 1.0 | 389 / 1635 hp | 0 / 180 |
 
 **Other measured anchors (same prototype):**
 

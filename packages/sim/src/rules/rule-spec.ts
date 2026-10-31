@@ -1,4 +1,4 @@
-import type { Biome, RaceRule } from "@falconess/schema";
+import type { RaceRule } from "@falconess/schema";
 import type { RaceConstants } from "../rulesets/index.js";
 
 /**
@@ -51,23 +51,23 @@ export type RuleTerms = {
   /** × `acc` (`accRule`, table 3.3). */
   readonly accelPm: number;
   /**
-   * Burst thrust per segment type, `SEGMENT_TYPES` order, biome included:
-   * `fl(R.pulseAirPm[k] × R.pulseBiomePm[biome], 1000)` (table 3.3 `airPm`). The engine applies
+   * Burst thrust per segment type, `SEGMENT_TYPES` order, base factor included:
+   * `fl(R.pulseAirPm[k] × R.pulseBasePm, 1000)` (table 3.3 `airPm`). The engine applies
    * it only to pulse frames (`pulses && !traits.noPulse`); 1000 everywhere for other rules.
    */
   readonly pulseAirPm: readonly number[];
-  /** The plan's biome factor on `Bp` (`Bon`, table 3.3); applied only to pulse frames. */
-  readonly pulseBiomePm: number;
+  /** The plan's base factor on `Bp` (`Bon`, table 3.3); applied only to pulse frames. */
+  readonly pulseBasePm: number;
 };
 
 /**
  * One manufacturer rule (`packages/sim/src/rules/<rule>.ts`). `compile` reads the ruleset's race
- * constants and the course biome; it runs once per runner at race start.
+ * constants; it runs once per runner at race start.
  */
 export type RuleSpec = {
   readonly rule: RaceRule;
   readonly code: number;
-  compile(R: RaceConstants, biome: Biome): RuleTerms;
+  compile(R: RaceConstants): RuleTerms;
 };
 
 /** Every term neutral: the base of each rule and the whole of the `none` fixture rule. */
@@ -90,6 +90,6 @@ export function neutralTerms(code: number): RuleTerms {
     drainPm: 1000,
     accelPm: 1000,
     pulseAirPm: [1000, 1000, 1000, 1000, 1000, 1000, 1000],
-    pulseBiomePm: 1000,
+    pulseBasePm: 1000,
   };
 }

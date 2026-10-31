@@ -10,7 +10,7 @@ import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 const content = loadContent();
 const R = SPEC_RULESET;
-const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"] as const;
+const COURSES = ["sprint", "ridge", "canyon"] as const;
 const BONEYARD_FRAMES = new Set(["kite", "mule", "caracara-signature"]);
 
 function inputFor(
@@ -25,7 +25,6 @@ function inputFor(
     falconessId,
     baseStats: f.baseStats,
     mood: 0,
-    biomeAptitude: f.biomeAptitude,
     styleAptitude: f.styleAptitude,
     frameId,
     parts: [],
@@ -43,11 +42,11 @@ function curvesByHand(agility: number, curvesScale: number): number {
 
 /**
  * f_seg per segment from the section 7 formulas by hand: flat/jump 1000, climb 0.25 → 963,
- * descent 0.3 → 1030 and 0.2 → 1020, canyon −0.1 → 900 and +0.15 → 1150, water 0.2 → 800, curves
+ * descent 0.3 → 1030 and 0.2 → 1020, canyon 1000 (no wind since ADR-0007), water 0.2 → 800, curves
  * from agility (×1.5 penalty on Boneyard frames); falke's no-climb-loss overrides climb to 1000;
  * Peregrina's talon-lock multiplies descent by 1.005 (1030 → 1035, 1020 → 1025) and canyon by
- * 1.006 (900 → 905, 1150 → 1156), Caracara's scrap-armor descent by 1.003 (1030 → 1033,
- * 1020 → 1023) and canyon by 1.004 (900 → 903, 1150 → 1154), flooring each product (ADR-0005).
+ * 1.006 (1000 → 1006), Caracara's scrap-armor descent by 1.003 (1030 → 1033, 1020 → 1023) and
+ * canyon by 1.004 (1000 → 1004), flooring each product (ADR-0005).
  */
 function factorsByHand(courseId: string, frameId: string, agility: number): number[] {
   const c = curvesByHand(agility, BONEYARD_FRAMES.has(frameId) ? 1500 : 1000);
@@ -56,17 +55,17 @@ function factorsByHand(courseId: string, frameId: string, agility: number): numb
   const pick = (base: number, ifTalon: number, ifScrap: number) =>
     talon ? ifTalon : scrap ? ifScrap : base;
   switch (courseId) {
-    case "desert-sprint":
+    case "sprint":
       return [1000, c, 1000, c, 1000];
-    case "desert-ridge":
+    case "ridge":
       return [1000, pick(1030, 1035, 1033), 1000, 1000, pick(1020, 1025, 1023), 1000, 1000];
-    case "desert-canyon":
+    case "canyon":
       return [
         1000,
         frameId === "falke" ? 1000 : 963,
-        pick(900, 905, 903),
+        pick(1000, 1006, 1004),
         1000,
-        pick(1150, 1156, 1154),
+        pick(1000, 1006, 1004),
         800,
         1000,
       ];
@@ -193,13 +192,12 @@ describe("freezeEntry (docs/race-engine.md 3.1): every frame × Falconess × cou
             frame.stats.durability,
           ]);
 
-          // letters applied: course biome on agility, frame style on intelligence (mood 0)
-          const bLetter = f.biomeAptitude[course.biome];
+          // letter applied: frame style on intelligence (mood 0); agility has none (ADR-0007)
           const sLetter = f.styleAptitude[frame.style];
-          expect([e.biomeAptitude, e.styleAptitude]).toEqual([bLetter, sLetter]);
+          expect(e.styleAptitude).toBe(sLetter);
           const b = f.baseStats;
           expect(e.stats).toEqual({
-            agility: Math.floor((b.agility * R.aptitudeMult[bLetter]) / 1000),
+            agility: b.agility,
             stamina: b.stamina,
             technique: b.technique,
             courage: b.courage,
@@ -215,7 +213,7 @@ describe("freezeEntry (docs/race-engine.md 3.1): every frame × Falconess × cou
           );
 
           // per-segment factor table
-          const terms = compileRule(R.race, e.rule, course.biome);
+          const terms = compileRule(R.race, e.rule);
           expect(Array.from(segmentFactors(R.race, G, e, terms))).toEqual(
             factorsByHand(courseId, frameId, e.stats.agility),
           );
@@ -223,36 +221,36 @@ describe("freezeEntry (docs/race-engine.md 3.1): every frame × Falconess × cou
       });
 
   it("spot values of the hand table: curves at the content agilities", () => {
-    // Peregrina desert A: 110 → 115; Cernícala and Caracara desert B: 85, 80
-    expect([curvesByHand(115, 1000), curvesByHand(115, 1500)]).toEqual([820, 729]);
+    // Peregrina 110 (no biome A since ADR-0007); Cernícala and Caracara 85, 80
+    expect([curvesByHand(110, 1000), curvesByHand(110, 1500)]).toEqual([819, 728]);
     expect([curvesByHand(85, 1000), curvesByHand(85, 1500)]).toEqual([815, 722]);
     expect([curvesByHand(80, 1000), curvesByHand(80, 1500)]).toEqual([814, 720]);
-    const sprint = content.getCourse("desert-sprint");
+    const sprint = content.getCourse("sprint");
     const G = buildCourseGeometry(R, sprint);
     const e = freezeEntry(R, content, inputFor("peregrina", "kite"), sprint, 0);
-    expect(e.stats.agility).toBe(115);
-    expect(Array.from(segmentFactors(R.race, G, e, compileRule(R.race, e.rule, "desert")))).toEqual(
-      [1000, 729, 1000, 729, 1000],
+    expect(e.stats.agility).toBe(110);
+    expect(Array.from(segmentFactors(R.race, G, e, compileRule(R.race, e.rule)))).toEqual(
+      [1000, 728, 1000, 728, 1000],
     );
   });
 
-  it("600-balanced stats: curves 900 (Boneyard 850), 905 with desert A (Boneyard 858)", () => {
-    const sprint = content.getCourse("desert-sprint");
+  it("600-balanced stats: curves 900 (Boneyard 850) for every Falconess (ADR-0007)", () => {
+    const sprint = content.getCourse("sprint");
     const G = buildCourseGeometry(R, sprint);
     const base = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
     const curves = (fid: string, frameId: string) => {
       const e = freezeEntry(R, content, inputFor(fid, frameId, { baseStats: base }), sprint, 0);
-      return segmentFactors(R.race, G, e, compileRule(R.race, e.rule, "desert"))[1];
+      return segmentFactors(R.race, G, e, compileRule(R.race, e.rule))[1];
     };
     expect(curves("cernicala", "nimbus")).toBe(900);
     expect(curves("cernicala", "mule")).toBe(850);
-    expect(curves("peregrina", "shiden")).toBe(905); // A 630
-    expect(curves("peregrina", "kite")).toBe(858);
+    expect(curves("peregrina", "shiden")).toBe(900);
+    expect(curves("peregrina", "kite")).toBe(850);
   });
 });
 
 describe("freezeEntry details", () => {
-  const sprint = content.getCourse("desert-sprint");
+  const sprint = content.getCourse("sprint");
   const base600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 
   it("falconess-stat deltas land after mood and aptitude (koryu-firmware: I +30 effective)", () => {

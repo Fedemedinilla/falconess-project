@@ -64,15 +64,16 @@ export function addStatDeltas(ruleset: Ruleset, stats: RaceStats, delta: RaceSta
 
 /**
  * Freeze one runner for a race on `course` (docs/race-engine.md 3.1; content side, outside the
- * pure race): frame build, effective stats with the course biome and the frame's style,
+ * pure race): frame build, effective stats with the frame's style,
  * `falconess-stat` deltas, id-sorted frozen actives, compiled traits and starting durability.
- * Always writes the frame manufacturer's rule; only the fixtures of 3.4 write "none".
+ * Always writes the frame manufacturer's rule; only the fixtures of 3.4 write "none". The course
+ * stays in the signature of 23 but no longer changes the entry (ADR-0007 removed its biome).
  */
 export function freezeEntry(
   ruleset: Ruleset,
   content: ContentIndex,
   input: EntryInput,
-  course: Course,
+  _course: Course,
   laneIndex: number,
 ): RaceEntry {
   const lanes = ruleset.race.maxRunners;
@@ -89,14 +90,12 @@ export function freezeEntry(
   );
   const frame = content.getFrame(input.frameId);
 
-  // 2. effective stats: mood on all five, biome letter on agility, frame-style letter on intelligence
+  // 2. effective stats: mood on all five, frame-style letter on intelligence
   const eff = effectiveStats(
     ruleset,
     input.baseStats,
     input.mood,
-    input.biomeAptitude,
     input.styleAptitude,
-    course.biome,
     fb.style,
   );
 
@@ -133,7 +132,6 @@ export function freezeEntry(
     parts: [...fb.parts],
     quirks: [...fb.quirks],
     mood: input.mood,
-    biomeAptitude: input.biomeAptitude[course.biome],
     styleAptitude: input.styleAptitude[fb.style],
     stats,
     powerToWeight: fb.powerToWeight,

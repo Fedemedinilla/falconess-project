@@ -25,7 +25,6 @@ describe("neutralFixtureEntry (docs/race-engine.md 3.4)", () => {
       parts: [],
       quirks: [],
       mood: 0,
-      biomeAptitude: "B",
       styleAptitude: "B",
       stats,
       powerToWeight: 1000,

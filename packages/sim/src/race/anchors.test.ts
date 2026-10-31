@@ -25,10 +25,9 @@ const QUIET: Ruleset = {
 };
 /** A boost tick costs more than any tank: the physics without the controller's thrust. */
 const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kE: 1_000_000 } };
-const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"].map((id) =>
+const COURSES = ["sprint", "ridge", "canyon"].map((id) =>
   content.getCourse(id),
 );
-const APT_B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 
 function stats(over: Partial<RaceEntry["stats"]> = {}): RaceEntry["stats"] {
   return { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600, ...over };
@@ -46,7 +45,6 @@ function frame(frameId: string, course: Course, st = stats(), lane = 0): RaceEnt
     falconessId: null,
     baseStats: st,
     mood: 0,
-    biomeAptitude: APT_B,
     styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
     frameId,
     parts: [],
@@ -60,7 +58,6 @@ function course(id: string, segments: Course["segments"]): Course {
   return {
     id,
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     segments,
@@ -221,12 +218,13 @@ describe("17.3 / 25.4 same-build dispersion: σ/mean over 300 seeds (disp.mjs se
       }
       cv[label] = cells.join(" / ");
     }
+    // canyon column: the prototype's disp.mjs on the windless canyon gives the same (ADR-0007)
     expect(cv).toEqual({
-      "dive I600": "1.18 / 1.31 / 0.99",
-      "dive I300": "1.21 / 1.33 / 1.00",
-      "dive I1000": "1.14 / 1.27 / 0.99",
-      shiden: "0.61 / 0.78 / 1.08",
-      falke: "1.21 / 1.32 / 1.00",
+      "dive I600": "1.18 / 1.31 / 0.97",
+      "dive I300": "1.21 / 1.33 / 0.99",
+      "dive I1000": "1.14 / 1.27 / 0.97",
+      shiden: "0.61 / 0.78 / 1.07",
+      falke: "1.21 / 1.32 / 0.96",
     });
     const shift = (label: string) => {
       const a = mean[label] ?? [];

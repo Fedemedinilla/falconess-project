@@ -648,7 +648,7 @@ export function buildTables(
     const e = E[i];
     if (e === undefined) continue;
     const tr = e.traits;
-    const terms = compileRule(R, e.rule, G.biome);
+    const terms = compileRule(R, e.rule);
     const st = styleCode(e.style);
     const rc = ruleCode(e.rule);
     const { agility, stamina, technique, courage, intelligence } = e.stats;
@@ -714,7 +714,7 @@ export function buildTables(
     T.D[i] = D;
     T.heatCap[i] = heatCap;
     T.capLim[i] = terms.capLimRaw ? D : heatCap;
-    T.coolTick[i] = coolTick(R, G.biome, e.dissipation, terms);
+    T.coolTick[i] = coolTick(R, e.dissipation, terms);
     T.dmgTick[i] = overheatDamage(R, e.style, terms);
     T.regenTick[i] = terms.regenMe + tr.regenMe;
     T.Emax[i] = e.energy * 1000;
@@ -766,7 +766,7 @@ export function buildTables(
     T.costOn[i] = pulseFrame ? pulseCostMe : R.kE;
     for (let b = 0; b < 2; b++) {
       const base = pulseFrame
-        ? floorDiv((T.Bp[ib(i, b)] ?? 0) * terms.pulseBiomePm, 1000)
+        ? floorDiv((T.Bp[ib(i, b)] ?? 0) * terms.pulseBasePm, 1000)
         : (T.B[ib(i, b)] ?? 0);
       const Bon = floorDiv(base * stoopPlan, 1000);
       const unit = pulseFrame ? Bon * R.pulseTicks : Bon;

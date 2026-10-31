@@ -17,7 +17,7 @@ import { SPEC_RULESET } from "./testing/spec-ruleset.js";
  */
 
 const content = loadContent();
-const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"] as const;
+const COURSES = ["sprint", "ridge", "canyon"] as const;
 const course = (id: string) => content.getCourse(id);
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
@@ -40,14 +40,12 @@ function fixture(style: Style, lane: number, over: Partial<RaceEntry> = {}): Rac
 }
 
 function frozen(frameId: string, c: Course, lane: number, learnedSkills: string[] = []): RaceEntry {
-  const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
   const input: EntryInput = {
     runnerId: `r-${lane}`,
     kind: "rival",
     falconessId: null,
     baseStats: S600,
     mood: 0,
-    biomeAptitude: B,
     styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
     frameId,
     parts: [],
@@ -84,16 +82,17 @@ function byLane(log: RaceLog) {
 }
 
 describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () => {
-  // .work/proto/proto2/engine.mjs (written from spec revision 2), seed "ref-seed"
+  // .work/proto/proto2/engine.mjs (written from spec revision 2), seed "ref-seed"; canyon re-run on
+  // the prototype without wind (ADR-0007), which gives these times exactly
   const QUIET_MILLI: Record<string, number[]> = {
-    "desert-sprint": [811_731, 817_093, 814_407, 817_402],
-    "desert-ridge": [1_303_652, 1_306_911, 1_304_010, 1_296_912],
-    "desert-canyon": [2_039_108, 2_042_391, 2_028_014, 2_043_225],
+    "sprint": [811_731, 817_093, 814_407, 817_402],
+    "ridge": [1_303_652, 1_306_911, 1_304_010, 1_296_912],
+    "canyon": [2_023_437, 2_027_179, 2_013_084, 2_028_598],
   };
   const NOISY_MILLI: Record<string, number[]> = {
-    "desert-sprint": [815_547, 820_687, 818_367, 820_408],
-    "desert-ridge": [1_311_738, 1_314_973, 1_312_152, 1_304_771],
-    "desert-canyon": [2_052_085, 2_054_727, 2_041_527, 2_055_678],
+    "sprint": [815_547, 820_687, 818_367, 820_408],
+    "ridge": [1_311_738, 1_314_973, 1_312_152, 1_304_771],
+    "canyon": [2_030_975, 2_034_525, 2_021_124, 2_035_740],
   };
 
   for (const id of COURSES)
@@ -117,9 +116,10 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
   // 708 147 → 707 082). Re-checked 2026-10-28: the prototype gives these 24 times and skill lists
   // exactly, so none is pinned to the engine's own output; D50 matches the prototype and D51-D55
   // change nothing in this field (no once: false skill, no short course, D54 and D55 are log only).
+  // ADR-0007 (no wind): the canyon lanes are the prototype's re-run on the windless canyon.
   it("an eight-runner field of real frames with actives matches the prototype (finish, skills)", () => {
     const want: Record<string, { milli: number[]; skills: string[] }> = {
-      "desert-sprint": {
+      "sprint": {
         milli: [822_021, 824_890, 689_635, 626_683, 640_368, 707_082, 923_593, 795_707],
         skills: [
           "corner-carver+last-gasp",
@@ -132,7 +132,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
           "clean-start",
         ],
       },
-      "desert-ridge": {
+      "ridge": {
         milli: [
           1_322_759, 1_311_267, 1_178_912, 1_075_128, 1_075_772, 1_152_758, 1_493_352, 1_277_827,
         ],
@@ -147,9 +147,9 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
           "clean-start+gravity-friend",
         ],
       },
-      "desert-canyon": {
+      "canyon": {
         milli: [
-          2_056_408, 2_060_669, 1_779_095, 1_610_097, 1_650_306, 1_802_143, 2_305_539, 1_968_370,
+          2_035_730, 2_043_705, 1_783_953, 1_615_122, 1_652_298, 1_796_124, 2_294_358, 1_950_659,
         ],
         skills: [
           "last-gasp",
@@ -199,7 +199,6 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
     const short = (segments: Course["segments"]): Course => ({
       id: "short-course",
       version: 1,
-      biome: "desert",
       traits: [],
       entries: 8,
       segments,
@@ -211,7 +210,6 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
       short([{ type: "water", length: 50, drag: 0.2 }]),
     ]) {
       const log = simulateRace(SPEC_RULESET, neutralField(), c, "short");
-      expect(log.geometry.biome).toBe("desert");
       expect(log.geometry.reserveAtMm).toBe(0);
       expect(log.geometry.denseFromMm).toBe(25_000);
       expect(log.derived.map((d) => d.kickAtMm)).toEqual(new Array(8).fill(0));
@@ -228,10 +226,10 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
     expect([sixty.geometry.reserveAtMm, at(sixty.derived, 0).kickAtMm]).toEqual([0, 0]);
   });
 
-  it("an etoile (Lumière regen) on desert-sprint logs 2 boostMode events instead of ~300 (ADR-0003 D54)", () => {
+  it("an etoile (Lumière regen) on sprint logs 2 boostMode events instead of ~300 (ADR-0003 D54)", () => {
     // REGEN-overflow and OFF alternate every 2-3 ticks before the plan point: ~300 raw changes,
     // none holding a second, so the log keeps only the plan and the kick (each held > 15 ticks)
-    const c = course("desert-sprint");
+    const c = course("sprint");
     const e = frozen("etoile", c, 0);
     expect(e.rule).toBe("regen");
     let changes = 0;
@@ -251,7 +249,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
   });
 
   it("the ridge flyers lift twice (35 energy) and land twice; ground detours both jumps", () => {
-    const log = simulateRace(SPEC_RULESET, neutralField(), course("desert-ridge"), "ridge");
+    const log = simulateRace(SPEC_RULESET, neutralField(), course("ridge"), "ridge");
     for (const r of log.results) {
       const ground = at(log.entries, r.lane).style === "ground";
       expect([r.ledger.jumpsOk, r.ledger.jumpsFailed, r.ledger.detours]).toEqual(
@@ -267,7 +265,7 @@ describe("smoke on the three content courses (docs/race-engine.md 18)", () => {
 
 describe("determinism and options (properties P1, P7)", () => {
   it("same inputs give a byte-identical JSON log; entry order is irrelevant; inputs never mutate", () => {
-    const c = course("desert-canyon");
+    const c = course("canyon");
     const entries = realField(c);
     const before = JSON.stringify(entries);
     const courseBefore = JSON.stringify(c);
@@ -281,7 +279,7 @@ describe("determinism and options (properties P1, P7)", () => {
   });
 
   it("the log never aliases the caller's entries", () => {
-    const c = course("desert-sprint");
+    const c = course("sprint");
     const entries = neutralField();
     const log = simulateRace(SPEC_RULESET, entries, c, "alias");
     at(log.entries, 0).skills.push(at(realField(c)[0]?.skills, 0));
@@ -314,8 +312,8 @@ describe("determinism and options (properties P1, P7)", () => {
   });
 
   it("rejects a geometry built for another course", () => {
-    const sprint = course("desert-sprint");
-    const geometry = buildCourseGeometry(SPEC_RULESET, course("desert-ridge"));
+    const sprint = course("sprint");
+    const geometry = buildCourseGeometry(SPEC_RULESET, course("ridge"));
     expect(() => simulateRace(SPEC_RULESET, neutralField(), sprint, "g", { geometry })).toThrow(
       /geometry/,
     );
@@ -462,7 +460,7 @@ describe("log consistency (properties P5, P8)", () => {
     });
 
   it("margins: the k-th finisher's gap at the (k − 1)-th's crossing, 0 for the winner", () => {
-    const c = course("desert-sprint");
+    const c = course("sprint");
     const entries = [
       fixture("hover", 0, { stats: { ...S600, agility: 650 } }),
       fixture("hover", 1),
@@ -498,7 +496,7 @@ describe("log consistency (properties P5, P8)", () => {
 
 describe("race-wide sampling (docs/race-engine.md 20.4)", () => {
   it("rows: T = 0, every tick of the first second, every 15th, finish ticks, last 25 m, last tick", () => {
-    const c = course("desert-sprint");
+    const c = course("sprint");
     const entries = [fixture("glide", 0), fixture("hover", 1, { powerToWeight: 900 })];
     const G = buildCourseGeometry(SPEC_RULESET, c);
     const expected = [0];
@@ -529,7 +527,7 @@ describe("race-wide sampling (docs/race-engine.md 20.4)", () => {
   });
 
   it("frame columns: positions in mm, speeds in mm/s, hp in milli-hp; row 0 is the gun", () => {
-    const c = course("desert-ridge");
+    const c = course("ridge");
     const log = simulateRace(QUIET, [fixture("hover", 0)], c, "cols");
     const r = at(log.frames?.runners, 0);
     expect([

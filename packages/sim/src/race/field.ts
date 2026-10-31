@@ -1,6 +1,5 @@
 import { clamp, Rng } from "@falconess/rng";
 import type {
-  BiomeAptitudes,
   ContentIndex,
   Course,
   EntryInput,
@@ -61,21 +60,11 @@ export function rivalPool(ruleset: Ruleset, content: ContentIndex, playerFrameId
     .slice(0, F.rivalMinPool);
 }
 
-/** Every biome "B"; "A" for the frame's style and "B" for the others (21.1). */
-function rivalAptitudes(style: Style): {
-  biomeAptitude: BiomeAptitudes;
-  styleAptitude: StyleAptitudes;
-} {
-  const biomeAptitude: BiomeAptitudes = {
-    desert: "B",
-    mountain: "B",
-    coast: "B",
-    urban: "B",
-    tundra: "B",
-  };
+/** "A" for the frame's style and "B" for the others (21.1). */
+function rivalAptitudes(style: Style): { styleAptitude: StyleAptitudes } {
   const styleAptitude: StyleAptitudes = { dive: "B", hover: "B", glide: "B", ground: "B" };
   styleAptitude[style] = "A";
-  return { biomeAptitude, styleAptitude };
+  return { styleAptitude };
 }
 
 /**
@@ -168,7 +157,6 @@ export function playerEntryInput(state: SeasonState): EntryInput {
     falconessId: state.falconessId,
     baseStats: { ...state.stats },
     mood: state.mood,
-    biomeAptitude: { ...state.biomeAptitude },
     styleAptitude: { ...state.styleAptitude },
     frameId,
     parts: [...state.installedParts],

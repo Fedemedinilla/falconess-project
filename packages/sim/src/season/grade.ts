@@ -1,5 +1,5 @@
 import { fnv1a32 } from "@falconess/rng";
-import type { Aptitude, Biome, BlackBox, Grade, RunInput, Style } from "@falconess/schema";
+import type { Aptitude, BlackBox, Grade, RunInput, Style } from "@falconess/schema";
 import { aptitudeRank, highestStat, statTotal } from "../stats.js";
 import type { Draft, SimContext } from "./context.js";
 
@@ -41,19 +41,12 @@ export function createBlackBox(ctx: SimContext, d: Draft, inputs: readonly RunIn
   const stars = v >= 1000 ? 3 : v >= 800 ? 2 : 1;
 
   let best: BlackBox["factors"]["aptitude"] | undefined;
-  const consider = (kind: "biome" | "style", key: Biome | Style, letter: Aptitude) => {
+  const consider = (key: Style, letter: Aptitude) => {
     const s = letter === "S" ? 3 : letter === "A" ? 2 : 1;
-    if (!best || aptitudeRank(letter) > aptitudeRank(best.letter)) {
-      best =
-        kind === "biome"
-          ? { kind, key: key as Biome, letter, stars: s }
-          : { kind, key: key as Style, letter, stars: s };
-    }
+    if (!best || aptitudeRank(letter) > aptitudeRank(best.letter))
+      best = { kind: "style", key, letter, stars: s };
   };
-  for (const [k, l] of Object.entries(d.biomeAptitude) as [Biome, Aptitude][])
-    consider("biome", k, l);
-  for (const [k, l] of Object.entries(d.styleAptitude) as [Style, Aptitude][])
-    consider("style", k, l);
+  for (const [k, l] of Object.entries(d.styleAptitude) as [Style, Aptitude][]) consider(k, l);
 
   const wins = new Map<string, number>();
   for (const r of d.raceResults) {

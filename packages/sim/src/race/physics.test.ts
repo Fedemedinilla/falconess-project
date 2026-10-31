@@ -45,18 +45,17 @@ import {
   weightedPower,
 } from "./physics.js";
 import { SPEC_RULESET } from "./testing/spec-ruleset.js";
-import { engineUnits, SEG_CURVES, SEG_JUMP } from "./units.js";
+import { engineUnits, SEG_CANYON, SEG_CURVES, SEG_JUMP } from "./units.js";
 
 const content = loadContent();
 const R = SPEC_RULESET.race;
-const NONE = compileRule(R, "none", "desert");
+const NONE = compileRule(R, "none");
 const stats600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 
 function course(segments: Course["segments"]): Course {
   return {
     id: "test-course",
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     segments,
@@ -69,7 +68,7 @@ function factors(
   opts: { agility?: number; modifiers?: unknown[]; rule?: "repairable" } = {},
 ) {
   const traits = compileTraits((opts.modifiers ?? []).map((m) => RaceModifier.parse(m)));
-  const terms = opts.rule ? compileRule(R, opts.rule, "desert") : NONE;
+  const terms = opts.rule ? compileRule(R, opts.rule) : NONE;
   const G = buildCourseGeometry(SPEC_RULESET, c);
   return Array.from(
     segmentFactors(R, G, { stats: { ...stats600, agility: opts.agility ?? 600 }, traits }, terms),
@@ -77,14 +76,14 @@ function factors(
 }
 
 describe("segment factor f_seg (docs/race-engine.md 7)", () => {
-  it("content values: 963, 1030, 1020, 800, 900, 1150", () => {
-    expect(factors(content.getCourse("desert-canyon"))).toEqual([
-      1000, 963, 900, 1000, 1150, 800, 1000,
+  it("content values: 963, 1030, 1020, 800, 900; canyon 1000 without wind (ADR-0007)", () => {
+    expect(factors(content.getCourse("canyon"))).toEqual([
+      1000, 963, 1000, 1000, 1000, 800, 1000,
     ]);
-    expect(factors(content.getCourse("desert-ridge"))).toEqual([
+    expect(factors(content.getCourse("ridge"))).toEqual([
       1000, 1030, 1000, 1000, 1020, 1000, 1000,
     ]);
-    expect(factors(content.getCourse("desert-sprint"))).toEqual([1000, 900, 1000, 900, 1000]);
+    expect(factors(content.getCourse("sprint"))).toEqual([1000, 900, 1000, 900, 1000]);
   });
 
   it("curves: 900 at A 600, 950 with the stabilizer, 1000 at A ≥ 1200, 800 at A 0", () => {
@@ -95,7 +94,7 @@ describe("segment factor f_seg (docs/race-engine.md 7)", () => {
     ]);
     expect(factors(c, { agility: 1200 })).toEqual([1000]);
     expect(factors(c, { agility: 2000 })).toEqual([1000]);
-    expect(baseSegmentFactor(R, SEG_CURVES, 0, 0, 0, 0, 1000)).toBe(800);
+    expect(baseSegmentFactor(R, SEG_CURVES, 0, 0, 0, 1000)).toBe(800);
   });
 
   it("Boneyard curve term (13.1): 850 at A 600, 925 with the stabilizer", () => {
@@ -107,8 +106,8 @@ describe("segment factor f_seg (docs/race-engine.md 7)", () => {
   });
 
   it("modifiers: falke override, thin-air 1011 / 978, mud-runner 1000, max of two overrides", () => {
-    const canyon = content.getCourse("desert-canyon");
-    const ridge = content.getCourse("desert-ridge");
+    const canyon = content.getCourse("canyon");
+    const ridge = content.getCourse("ridge");
     expect(factors(canyon, { modifiers: content.getPassive("no-climb-loss").modifiers })[1]).toBe(
       1000,
     );
@@ -133,18 +132,19 @@ describe("segment factor f_seg (docs/race-engine.md 7)", () => {
     const c = course([
       { type: "water", length: 100, drag: 0.5 },
       { type: "descent", length: 100, grade: 1 },
-      { type: "canyon", length: 100, wind: -0.3 },
+      { type: "canyon", length: 100 },
     ]);
-    expect(factors(c)).toEqual([500, 1100, 700]);
+    expect(factors(c)).toEqual([500, 1100, 1000]);
     const low = [{ kind: "segment-factor", segment: "water", mode: "multiply", value: 0.5 }];
     expect(factors(c, { modifiers: low })[0]).toBe(500);
     const high = [{ kind: "segment-factor", segment: "descent", mode: "multiply", value: 1.5 }];
     expect(factors(c, { modifiers: high })[1]).toBe(1500);
   });
 
-  it("jump and flat are 1000", () => {
-    expect(baseSegmentFactor(R, SEG_JUMP, 0, 0, 0, 600, 1000)).toBe(1000);
-    expect(() => baseSegmentFactor(R, 7, 0, 0, 0, 600, 1000)).toThrow();
+  it("jump, flat and canyon are 1000", () => {
+    expect(baseSegmentFactor(R, SEG_JUMP, 0, 0, 600, 1000)).toBe(1000);
+    expect(baseSegmentFactor(R, SEG_CANYON, 0, 0, 600, 1000)).toBe(1000);
+    expect(() => baseSegmentFactor(R, 7, 0, 0, 600, 1000)).toThrow();
   });
 
   it("is monotone non-decreasing in agility (curves only)", () => {
@@ -160,7 +160,7 @@ describe("segment factor f_seg (docs/race-engine.md 7)", () => {
 
 describe("scalar helpers of table 3.3 with the rule terms of 13.1", () => {
   const T = (rule: "mass-thrust" | "regen" | "pulse" | "telemetry" | "repairable" | "none") =>
-    compileRule(R, rule, "desert");
+    compileRule(R, rule);
 
   it("acceleration: 400 vu/tick at T 600 (telemetry 340), 300 at T 300, 500 at T 900", () => {
     expect(accelVu(R, 600, 1000, 1000, T("none"))).toBe(400);
@@ -179,13 +179,12 @@ describe("scalar helpers of table 3.3 with the rule terms of 13.1", () => {
     expect(f2000).toBe(n2000);
   });
 
-  it("cooling: 1000 mh at neutral knobs, Steinhaus desert 500 (mountain 1250)", () => {
-    expect(coolTick(R, "desert", 60, T("none"))).toBe(1000);
-    expect(coolTick(R, "desert", 45, T("mass-thrust"))).toBe(500);
-    expect(coolTick(R, "mountain", 45, compileRule(R, "mass-thrust", "mountain"))).toBe(1250);
+  it("cooling: 1000 mh at neutral knobs, Steinhaus 500 on every course (ADR-0007)", () => {
+    expect(coolTick(R, 60, T("none"))).toBe(1000);
+    expect(coolTick(R, 45, T("mass-thrust"))).toBe(500);
     // the dissipation knob (0 = brief) scales cooling with dissipation / dissRef
-    expect(coolTick({ ...R, coolDissWeight: 1000 }, "desert", 120, T("none"))).toBe(2000);
-    expect(coolTick({ ...R, coolDissWeight: 1000 }, "desert", 30, T("none"))).toBe(500);
+    expect(coolTick({ ...R, coolDissWeight: 1000 }, 120, T("none"))).toBe(2000);
+    expect(coolTick({ ...R, coolDissWeight: 1000 }, 30, T("none"))).toBe(500);
   });
 
   it("overheat damage: 1000 md, Steinhaus 2000, ground 500, Steinhaus ground 1000", () => {
@@ -213,7 +212,7 @@ describe("scalar helpers of table 3.3 with the rule terms of 13.1", () => {
 
   it("defaults trait object is untouched by the helpers", () => {
     const d = defaultTraits();
-    factors(content.getCourse("desert-sprint"));
+    factors(content.getCourse("sprint"));
     expect(defaultTraits()).toEqual(d);
   });
 });
@@ -455,7 +454,7 @@ describe("2^53 bounds of docs/race-engine.md 1.5: the helpers at the maxima", ()
   const vA = agilityCruiseVu(R, VBASE, R.maxEffectiveStat);
   const vC = cruiseVu(vA, weightedPower(R.pwCruiseWeight, PW), F, 1000, PACE);
   const Bpc = chainThrustVu(pulseThrustVu(R, KBOOST, weightedPower(R.pwBoostWeight, PW)), 1000);
-  const air = Math.max(...compileRule(R, "pulse", "desert").pulseAirPm);
+  const air = Math.max(...compileRule(R, "pulse").pulseAirPm);
   const burst = Math.floor((Math.floor((Bpc * air) / 1000) * R.style.diveStoopPm) / 1000);
   const V_MAX = vC + burst + R.maxSkills * 3000 * engineUnits(R).velPerMms;
   const [, DK_MAX] = drainCoefficients(R, 1, 0, { drainPm: 1000 });

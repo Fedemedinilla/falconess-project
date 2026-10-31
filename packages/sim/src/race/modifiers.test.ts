@@ -258,22 +258,22 @@ describe("the 11 content passives", () => {
     });
 
   it("segment passives act on the f table: no-climb-loss climb 1000, talon-lock canyon × 1.006, scrap-armor × 1.004", () => {
-    const canyon = buildCourseGeometry(SPEC_RULESET, content.getCourse("desert-canyon"));
+    const canyon = buildCourseGeometry(SPEC_RULESET, content.getCourse("canyon"));
     const stats = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
-    const none = compileRule(R, "none", "desert");
+    const none = compileRule(R, "none");
     const plain = segmentFactors(R, canyon, { stats, traits: D }, none);
-    expect(Array.from(plain)).toEqual([1000, 963, 900, 1000, 1150, 800, 1000]);
+    expect(Array.from(plain)).toEqual([1000, 963, 1000, 1000, 1000, 800, 1000]); // no wind (ADR-0007)
     const falke = compileTraits(content.getPassive("no-climb-loss").modifiers);
     expect(Array.from(segmentFactors(R, canyon, { stats, traits: falke }, none))).toEqual([
-      1000, 1000, 900, 1000, 1150, 800, 1000,
+      1000, 1000, 1000, 1000, 1000, 800, 1000,
     ]);
     const talon = compileTraits(content.getPassive("talon-lock").modifiers);
     expect(Array.from(segmentFactors(R, canyon, { stats, traits: talon }, none))).toEqual([
-      1000, 963, 905, 1000, 1156, 800, 1000,
+      1000, 963, 1006, 1000, 1006, 800, 1000,
     ]);
     const scrap = compileTraits(content.getPassive("scrap-armor").modifiers);
     expect(Array.from(segmentFactors(R, canyon, { stats, traits: scrap }, none))).toEqual([
-      1000, 963, 903, 1000, 1154, 800, 1000,
+      1000, 963, 1004, 1000, 1004, 800, 1000,
     ]);
   });
 });

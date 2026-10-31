@@ -10,7 +10,7 @@ import { buildCourseGeometry } from "./geometry.js";
 import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 
 /**
- * Sanity numbers of docs/race-engine.md 25.4: every build of the three desert tables (neutral
+ * Sanity numbers of docs/race-engine.md 25.4: every build of the three course tables (neutral
  * fixtures and the 13 real frames, all five stats 600, noise off, no skills, solo) pinned exactly
  * against the spec prototype (.work/proto/proto2/engine.mjs, which produced the spec's numbers):
  * finish milli-ticks, boost ticks per phase, pulses, energy left, durability at the line, where hp
@@ -24,7 +24,6 @@ const QUIET: Ruleset = {
   ...SPEC_RULESET,
   race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
-const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 
 /** [build, finishMilli, boost ticks S/M/F, pulses, energy left (me), durability end (md), hp empty (mm), first plan level (mm/s), reason] */
 type Row = [
@@ -41,9 +40,10 @@ type Row = [
 
 // prototype output (spec revision 2 constants = SPEC_RULESET, current content); seconds of 25.4 =
 // finishMilli / 15 000. Mule, kite and caracara carry the ADR-0005 energy 140 (metric 2) and the
-// three signature rows its redesigned passives (metrics 3 and 4).
+// three signature rows its redesigned passives (metrics 3 and 4). The canyon rows are the engine's
+// own run without wind (ADR-0007): the prototype's canyon had wind, so it no longer is their oracle.
 const TABLE: Record<string, Row[]> = {
-  "desert-sprint": [
+  "sprint": [
     ["neutral-dive", 811731, [1, 0, 99], 0, 0, 100000, null, 1800, "planned"],
     ["neutral-hover", 817093, [10, 0, 90], 0, 0, 100000, null, 1300, "planned"],
     ["neutral-glide", 814407, [1, 0, 99], 0, 0, 100000, null, 1300, "planned"],
@@ -62,7 +62,7 @@ const TABLE: Record<string, Row[]> = {
     ["cernicala-signature", 933706, [17, 6, 108], 0, 242, 100000, null, 1150, "planned"],
     ["caracara-signature", 1158042, [31, 61, 59], 0, 88, 180000, null, 400, "planned"],
   ],
-  "desert-ridge": [
+  "ridge": [
     ["neutral-dive", 1303652, [15, 0, 50], 0, 0, 100000, null, 2600, "planned"],
     ["neutral-hover", 1306911, [0, 0, 65], 0, 0, 100000, null, 1500, "planned"],
     ["neutral-glide", 1304010, [0, 0, 65], 0, 0, 100000, null, 1500, "planned"],
@@ -81,24 +81,24 @@ const TABLE: Record<string, Row[]> = {
     ["cernicala-signature", 1507739, [4, 4, 96], 0, 656, 100000, null, 750, "planned"],
     ["caracara-signature", 1805013, [22, 62, 74], 0, 128, 180000, null, 300, "planned"],
   ],
-  "desert-canyon": [
-    ["neutral-dive", 2039108, [0, 0, 100], 0, 0, 90000, 2818357, 1800, "hp-limited"],
-    ["neutral-hover", 2042391, [0, 0, 100], 0, 0, 90000, 2827861, 1300, "hp-limited"],
-    ["neutral-glide", 2028014, [0, 0, 100], 0, 0, 90000, 2872589, 1300, "hp-limited"],
-    ["neutral-ground", 2043225, [15, 46, 39], 0, 0, 95000, 2830206, 2500, "hp-limited"],
-    ["falke", 2019852, [2, 0, 116], 0, 2000, 130000, 2851313, 700, "hp-limited"],
-    ["erzherzog", 2043225, [15, 46, 39], 0, 0, 140000, 2830206, 1200, "hp-limited"],
-    ["sylphe", 1776525, [107, 270, 65], 0, 60000, 70000, 2371576, 2100, "hp-limited"],
-    ["etoile", 1603997, [111, 232, 40], 0, 60000, 50000, 2173160, 4380, "hp-limited"],
-    ["shiden", 1630746, [60, 0, 12], 6, 13600, 90000, 2229911, 2608, "hp-limited"],
-    ["hayate", 1806976, [36, 24, 12], 6, 13600, 55000, 2430552, 1596, "hp-limited"],
-    ["nimbus", 2338049, [0, 0, 120], 0, 0, 90000, null, 1050, "planned"],
-    ["horizon", 2003923, [0, 35, 140], 0, 0, 90000, null, 1200, "planned"],
-    ["mule", 2826928, [20, 64, 56], 0, 0, 177000, null, 1000, "planned"],
-    ["kite", 2825303, [0, 0, 140], 0, 0, 172000, null, 800, "planned"],
-    ["peregrina-signature", 1628173, [60, 0, 12], 6, 13600, 90000, 2227050, 2608, "hp-limited"],
-    ["cernicala-signature", 2334310, [6, 16, 127], 0, 252, 90000, null, 550, "planned"],
-    ["caracara-signature", 2819156, [21, 63, 85], 0, 161, 180000, null, 300, "planned"],
+  "canyon": [
+    ["neutral-dive", 2023437, [0, 0, 100], 0, 0, 90000, 2822410, 1800, "hp-limited"],
+    ["neutral-hover", 2027179, [0, 0, 100], 0, 0, 90000, 2831391, 1300, "hp-limited"],
+    ["neutral-glide", 2013084, [0, 0, 100], 0, 0, 90000, 2877044, 1300, "hp-limited"],
+    ["neutral-ground", 2028598, [16, 44, 39], 0, 1000, 95000, 2833073, 2300, "hp-limited"],
+    ["falke", 2003662, [0, 0, 120], 0, 0, 130000, 2853736, 700, "hp-limited"],
+    ["erzherzog", 2028421, [16, 44, 40], 0, 0, 130000, 2833273, 1300, "hp-limited"],
+    ["sylphe", 1780396, [107, 258, 71], 0, 60000, 70000, 2358985, 2100, "hp-limited"],
+    ["etoile", 1606346, [111, 223, 35], 0, 60000, 50000, 2132302, 4880, "hp-limited"],
+    ["shiden", 1629049, [60, 0, 12], 6, 13600, 90000, 2194653, 2608, "hp-limited"],
+    ["hayate", 1807123, [36, 24, 12], 6, 13600, 55000, 2428670, 1596, "hp-limited"],
+    ["nimbus", 2319340, [0, 0, 120], 0, 0, 90000, null, 1050, "planned"],
+    ["horizon", 1987159, [0, 36, 140], 0, 0, 90000, null, 1200, "planned"],
+    ["mule", 2806860, [21, 62, 57], 0, 0, 177000, null, 1000, "planned"],
+    ["kite", 2805785, [0, 0, 140], 0, 0, 172000, null, 800, "planned"],
+    ["peregrina-signature", 1626359, [60, 0, 12], 6, 13600, 90000, 2189424, 2608, "hp-limited"],
+    ["cernicala-signature", 2314800, [6, 16, 127], 0, 280, 90000, null, 550, "planned"],
+    ["caracara-signature", 2799155, [22, 62, 84], 0, 952, 180000, null, 200, "planned"],
   ],
 };
 
@@ -116,7 +116,6 @@ function entryOf(name: string, course: Course): RaceEntry {
     falconessId: null,
     baseStats: S600,
     mood: 0,
-    biomeAptitude: B,
     styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
     frameId: name,
     parts: [],
@@ -149,12 +148,12 @@ describe("sanity numbers of docs/race-engine.md 25.4 (solo, 600 stats, noise off
       }
     });
 
-  it("the spec's rounded times: 54.12 / 86.91 / 135.94 s for the neutral dive, 54.47 s for the hover", () => {
+  it("the spec's rounded times: 54.12 / 86.91 / 134.90 s for the neutral dive, 54.47 s for the hover", () => {
     const s = (row: Row | undefined) => ((row?.[1] ?? 0) / 15_000).toFixed(2);
-    expect(s(TABLE["desert-sprint"]?.[0])).toBe("54.12");
-    expect(s(TABLE["desert-ridge"]?.[0])).toBe("86.91");
-    expect(s(TABLE["desert-canyon"]?.[0])).toBe("135.94");
-    expect(s(TABLE["desert-sprint"]?.[1])).toBe("54.47");
+    expect(s(TABLE["sprint"]?.[0])).toBe("54.12");
+    expect(s(TABLE["ridge"]?.[0])).toBe("86.91");
+    expect(s(TABLE["canyon"]?.[0])).toBe("134.90");
+    expect(s(TABLE["sprint"]?.[1])).toBe("54.47");
   });
 });
 
@@ -172,7 +171,7 @@ describe("the 25.4 tables of docs/race-engine.md, cell by cell", () => {
   const rows: Record<string, string[]> = {};
   let current = "";
   for (const line of doc.slice(from, to).split("\n")) {
-    const head = /^\*\*(desert-[a-z]+)\*\*$/.exec(line.trim());
+    const head = /^\*\*(sprint|ridge|canyon)\*\*$/.exec(line.trim());
     if (head?.[1]) {
       current = head[1];
       rows[current] = [];
@@ -186,7 +185,7 @@ describe("the 25.4 tables of docs/race-engine.md, cell by cell", () => {
   }
 
   it("the spec holds 3 tables of 17 builds", () => {
-    expect(Object.keys(rows)).toEqual(["desert-sprint", "desert-ridge", "desert-canyon"]);
+    expect(Object.keys(rows)).toEqual(["sprint", "ridge", "canyon"]);
     for (const list of Object.values(rows)) expect(list).toHaveLength(17);
   });
 
@@ -233,7 +232,7 @@ describe("the 25.4 tables of docs/race-engine.md, cell by cell", () => {
     return `| ${label} | ${(fin / 15_000).toFixed(2)} s | ${splits} | ${r.ledger.boostTicks.join("/")} | ${r.ledger.pulses || "-"} | ${planText} | ${(r.energyEnd / 1000).toFixed(1)} | ${hp} | ${r.ledger.overheatTicks} / ${r.durabilityEnd / 1000} |`;
   }
 
-  for (const courseId of ["desert-sprint", "desert-ridge", "desert-canyon"])
+  for (const courseId of ["sprint", "ridge", "canyon"])
     it(`${courseId}: the engine prints the spec's rows`, () => {
       const course = content.getCourse(courseId);
       const printed = (rows[courseId] ?? []).map((line) => {

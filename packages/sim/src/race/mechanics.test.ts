@@ -59,7 +59,6 @@ function testCourse(segments: Course["segments"]): Course {
   return {
     id: "test-course",
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     segments,
@@ -181,7 +180,7 @@ describe("speed: start dash, acceleration, deceleration (docs/race-engine.md 5)"
   });
 
   it("glide's launch: 440 vu per tick in the start phase only, 400 in the middle", () => {
-    const sprint = content.getCourse("desert-sprint");
+    const sprint = content.getCourse("sprint");
     const { rows } = trace(QUIET, [fixture("glide")], sprint);
     const G = buildCourseGeometry(QUIET, sprint);
     const steps = rows.slice(10, 400).map((r, k) => ({
@@ -214,7 +213,7 @@ describe("speed: start dash, acceleration, deceleration (docs/race-engine.md 5)"
 
 describe("hover slipstream and glide lead (docs/race-engine.md 9.7, 9.8)", () => {
   it("hover drafts ×1.02 only in the middle phase while in the middle pack, never solo", () => {
-    const course = content.getCourse("desert-canyon");
+    const course = content.getCourse("canyon");
     const entries = [
       fixture("hover", 0, { stats: { ...S600, agility: 700 } }),
       fixture("hover", 1),
@@ -235,7 +234,7 @@ describe("hover slipstream and glide lead (docs/race-engine.md 9.7, 9.8)", () =>
   });
 
   it("a glide holding the lead drains ×0.98; caught, it loses the discount", () => {
-    const sprint = content.getCourse("desert-sprint");
+    const sprint = content.getCourse("sprint");
     const hover = at(simulateRace(QUIET, [fixture("hover")], sprint, "g").results, 0);
     const glide = at(simulateRace(QUIET, [fixture("glide")], sprint, "g").results, 0);
     expect(glide.hpEnd).toBeGreaterThan(hover.hpEnd);
@@ -256,7 +255,7 @@ describe("hover slipstream and glide lead (docs/race-engine.md 9.7, 9.8)", () =>
 
 describe("hp and exhaustion (docs/race-engine.md 6)", () => {
   it("St 1 empties on the canyon: hpEmpty once, target vMin (17 m/s at the line), hp stays 0", () => {
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     const { log, rows } = trace(
       QUIET,
       [fixture("dive", 0, { stats: { ...S600, stamina: 1 } })],
@@ -335,7 +334,7 @@ describe("overheat, durability and broken wings (docs/race-engine.md 8)", () => 
   });
 
   it("a runner that starts at durability 0 runs the broken table (PW × 0.75) with no event", () => {
-    const sprint = content.getCourse("desert-sprint");
+    const sprint = content.getCourse("sprint");
     const intact = at(simulateRace(QUIET, [fixture("hover")], sprint, "b").results, 0);
     const brokenLog = simulateRace(
       QUIET,
@@ -350,7 +349,7 @@ describe("overheat, durability and broken wings (docs/race-engine.md 8)", () => 
   });
 
   it("wings broken by a water hit: one durabilityBroken event (PW 750), then the broken table", () => {
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     const { log, rows } = trace(QUIET, [fixture("glide", 0, { durabilityStart: 3 })], canyon);
     const ev = events(log, "durabilityBroken");
     expect(ev.map((e) => e.powerToWeight)).toEqual([750]);
@@ -372,7 +371,7 @@ describe("brokenSpeedPm (docs/race-engine.md 8.4, ADR-0003 D56)", () => {
   };
 
   it("overridden to 750 with a neutral PW cut it runs the spec's race; only the event's PW changes", () => {
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     const field = [
       fixture("glide", 0, { durabilityStart: 3 }), // breaks in the water
       fixture("hover", 1, { durabilityStart: 0 }), // broken from the start
@@ -451,7 +450,7 @@ describe("broken wings under the live ruleset (RULESET_V1; ADR-0005 pass 2, ADR-
   });
 
   it("a broken frame loses about 25 % of its mean speed on every v1 course, for PW 0.7, 1.0 and 1.4", () => {
-    for (const courseId of ["desert-sprint", "desert-ridge", "desert-canyon"]) {
+    for (const courseId of ["sprint", "ridge", "canyon"]) {
       const course = content.getCourse(courseId);
       for (const powerToWeight of [700, 1000, 1400]) {
         const e = fixture("hover", 0, { powerToWeight });
@@ -475,7 +474,7 @@ describe("broken wings under the live ruleset (RULESET_V1; ADR-0005 pass 2, ADR-
 
 describe("Boneyard repair (docs/race-engine.md 13)", () => {
   it("+2 durability on entering each flat segment past the first, capped, events only when it rose", () => {
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     const worn = fixture("ground", 0, { rule: "repairable", durabilityStart: 90 });
     const log = simulateRace(QUIET, [worn], canyon, "rep");
     const r = at(log.results, 0);
@@ -489,7 +488,7 @@ describe("Boneyard repair (docs/race-engine.md 13)", () => {
   });
 
   it("repairs never clear broken wings", () => {
-    const ridge = content.getCourse("desert-ridge");
+    const ridge = content.getCourse("ridge");
     const log = simulateRace(
       QUIET,
       [fixture("ground", 0, { rule: "repairable", durabilityStart: 0 })],
@@ -706,7 +705,7 @@ describe("jumps (docs/race-engine.md 14)", () => {
   });
 
   it("the sprint plan is (re)asked at the plan point and on each jump exit inside it", () => {
-    const ridge = content.getCourse("desert-ridge");
+    const ridge = content.getCourse("ridge");
     const count = (style: Style) => {
       const { rows } = trace(QUIET, [fixture(style)], ridge);
       return at(rows, rows.length - 1).planCount;
@@ -718,7 +717,7 @@ describe("jumps (docs/race-engine.md 14)", () => {
 });
 
 describe("water (docs/race-engine.md 14.6)", () => {
-  const canyon = content.getCourse("desert-canyon");
+  const canyon = content.getCourse("canyon");
   const hit = (e: RaceEntry) => {
     const log = simulateRace(QUIET, [e], canyon, "water");
     return [events(log, "waterHit").map((x) => x.damage), at(log.results, 0).ledger.stallTicks];
@@ -807,7 +806,7 @@ describe("segment-0 pre-step (docs/race-engine.md 1.3, 18 P4)", () => {
 
 describe("heat-to-energy (docs/race-engine.md 16 #12)", () => {
   it("on the first tick of the final phase: gained = min(Emax − energy, heat × ratio), heat → 0", () => {
-    const sprint = content.getCourse("desert-sprint");
+    const sprint = content.getCourse("sprint");
     const G = buildCourseGeometry(NO_BOOST, sprint);
     const holder = withTraits(fixture("glide"), { heatToEnergyPm: 500 });
     let primed = false;
@@ -853,7 +852,7 @@ describe("rank snapshot (docs/race-engine.md 9.1)", () => {
 });
 
 describe("DNF guard (docs/race-engine.md 19)", () => {
-  const sprint = content.getCourse("desert-sprint");
+  const sprint = content.getCourse("sprint");
   const tiny = (base: number): Ruleset => ({
     ...QUIET,
     race: { ...QUIET.race, dnfTicksPerMeter: 0, dnfTicksBase: base },
@@ -896,7 +895,7 @@ describe("DNF guard (docs/race-engine.md 19)", () => {
 
   it("maxTicks = 8 × L_m + 2400 (sprint 12 000, canyon 26 400)", () => {
     expect(simulateRace(QUIET, [fixture("hover")], sprint, "m").maxTicks).toBe(12_000);
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     expect(simulateRace(QUIET, [fixture("hover")], canyon, "m").maxTicks).toBe(26_400);
   });
 });
@@ -904,7 +903,7 @@ describe("DNF guard (docs/race-engine.md 19)", () => {
 describe("real content passives in the loop (docs/race-engine.md 16)", () => {
   // scrap-armor dropped its water override in ADR-0005; the pair is now armor plus mud-runner
   it("obstacle-armor and mud-runner's water override keep a frame unharmed on the canyon", () => {
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     const skill = freezeSkill(content, "water-skimmer");
     const e = withTraits(fixture("ground", 0, { skills: [skill] }), {
       obstacleArmor: true,
@@ -995,7 +994,7 @@ describe("instantaneous terms and rule regen (docs/race-engine.md 5, 8.1, 13)", 
   });
 
   it("broken wings inside the plan window ask for a replan (plan count +1)", () => {
-    const canyon = content.getCourse("desert-canyon");
+    const canyon = content.getCourse("canyon");
     const { rows } = trace(QUIET, [fixture("glide", 0, { durabilityStart: 3 })], canyon);
     // plan at the final (2000 m), then the water hit at 2400 m breaks the wings
     expect(at(rows, rows.length - 1).planCount).toBe(2);
@@ -1004,7 +1003,7 @@ describe("instantaneous terms and rule regen (docs/race-engine.md 5, 8.1, 13)", 
   });
 
   it("Lumière regenerates 500 me on every non-boost tick: the ridge lifts are refilled", () => {
-    const ridge = content.getCourse("desert-ridge");
+    const ridge = content.getCourse("ridge");
     const { log, rows } = trace(NO_BOOST, [fixture("hover", 0, { rule: "regen" })], ridge);
     const ok = events(log, "jumpOk");
     expect(ok).toHaveLength(2);

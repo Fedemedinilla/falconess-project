@@ -1,6 +1,5 @@
 import { clamp, floorDiv } from "@falconess/rng";
 import type {
-  BiomeAptitudes,
   ContentIndex,
   Course,
   EntryInput,
@@ -74,7 +73,6 @@ function byLane(inputs: (content: ContentIndex) => EntryInput[]): FieldBuilder {
 /** [agility, stamina, technique, courage, intelligence] */
 type Stats5 = readonly [number, number, number, number, number];
 
-const ALL_B: BiomeAptitudes = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" };
 const STYLE_B: StyleAptitudes = { dive: "B", hover: "B", glide: "B", ground: "B" };
 const S600: Stats5 = [600, 600, 600, 600, 600];
 
@@ -99,7 +97,6 @@ function rival(runnerId: string, frameId: Slug, o: RunnerOpts = {}): EntryInput 
     falconessId: null,
     baseStats: stats(o.stats ?? S600),
     mood: o.mood ?? 0,
-    biomeAptitude: { ...ALL_B },
     styleAptitude: { ...(o.styleAptitude ?? STYLE_B) },
     frameId,
     parts: [...(o.parts ?? [])],
@@ -191,7 +188,6 @@ function goalPlayer(content: ContentIndex, f: FalconessSetup, turn: 24 | 46): En
     falconessId: f.id,
     baseStats: stats(parStats(turn, content.getFrame(f.frameId).style)),
     mood: f.mood[turn],
-    biomeAptitude: { ...falconess.biomeAptitude },
     styleAptitude: { ...falconess.styleAptitude },
     frameId: f.frameId,
     parts: [...f.parts[turn]],
@@ -299,18 +295,18 @@ function scenario(
 
 /** The twelve golden races of 24.3, in file order. */
 export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = [
-  scenario("g01-sprint-generic", "desert-sprint", "generic", GENERIC_SPRINT),
-  scenario("g02-ridge-generic", "desert-ridge", "generic", GENERIC_RIDGE),
-  scenario("g03-canyon-generic", "desert-canyon", "generic", GENERIC_CANYON),
-  scenario("g04-sprint-caracara-t24", "desert-sprint", "turn-24", goalField(CARACARA, 24)),
-  scenario("g05-ridge-peregrina-t24", "desert-ridge", "turn-24", goalField(PEREGRINA, 24)),
-  scenario("g06-canyon-cernicala-t24", "desert-canyon", "turn-24", goalField(CERNICALA, 24)),
-  scenario("g07-sprint-caracara-t46", "desert-sprint", "turn-46", goalField(CARACARA, 46)),
-  scenario("g08-ridge-peregrina-t46", "desert-ridge", "turn-46", goalField(PEREGRINA, 46)),
-  scenario("g09-canyon-cernicala-t46", "desert-canyon", "turn-46", goalField(CERNICALA, 46)),
-  scenario("g10-sprint-edge", "desert-sprint", "edge", byLane(edgeField)),
-  scenario("g11-ridge-edge", "desert-ridge", "edge", byLane(edgeField)),
-  scenario("g12-canyon-edge", "desert-canyon", "edge", byLane(edgeField)),
+  scenario("g01-sprint-generic", "sprint", "generic", GENERIC_SPRINT),
+  scenario("g02-ridge-generic", "ridge", "generic", GENERIC_RIDGE),
+  scenario("g03-canyon-generic", "canyon", "generic", GENERIC_CANYON),
+  scenario("g04-sprint-caracara-t24", "sprint", "turn-24", goalField(CARACARA, 24)),
+  scenario("g05-ridge-peregrina-t24", "ridge", "turn-24", goalField(PEREGRINA, 24)),
+  scenario("g06-canyon-cernicala-t24", "canyon", "turn-24", goalField(CERNICALA, 24)),
+  scenario("g07-sprint-caracara-t46", "sprint", "turn-46", goalField(CARACARA, 46)),
+  scenario("g08-ridge-peregrina-t46", "ridge", "turn-46", goalField(PEREGRINA, 46)),
+  scenario("g09-canyon-cernicala-t46", "canyon", "turn-46", goalField(CERNICALA, 46)),
+  scenario("g10-sprint-edge", "sprint", "edge", byLane(edgeField)),
+  scenario("g11-ridge-edge", "ridge", "edge", byLane(edgeField)),
+  scenario("g12-canyon-edge", "canyon", "edge", byLane(edgeField)),
 ];
 
 /**
@@ -318,7 +314,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = [
  * against the first rival of her generated field, a 2-runner race like every S3 race of the batch.
  */
 export const DETERMINISM_EXTRAS: readonly GoldenScenario[] = [
-  scenario("x01-ridge-duel", "desert-ridge", "duel", (content, course, seed) => {
+  scenario("x01-ridge-duel", "ridge", "duel", (content, course, seed) => {
     const field = goalField(PEREGRINA, 46)(content, course, seed);
     const player = field.find((e) => e.kind === "player");
     const rival = field.find((e) => e.kind === "rival");

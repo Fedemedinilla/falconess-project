@@ -28,7 +28,7 @@ import { PH_FINAL, PH_MIDDLE, PH_START, SEG_DESCENT, SEG_FLAT, SEG_WATER } from 
 
 const content = loadContent();
 const R = SPEC_RULESET.race;
-const SPRINT = content.getCourse("desert-sprint");
+const SPRINT = content.getCourse("sprint");
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
 
 /** A u32 that maps to exactly `x` ‰ with `uPm`. */

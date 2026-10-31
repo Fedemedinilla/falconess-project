@@ -18,8 +18,8 @@ import { SPEC_RULESET } from "./testing/spec-ruleset.js";
 const content = loadContent();
 const R = SPEC_RULESET;
 const ctx: SimContext = { ruleset: R, content };
-const SPRINT = content.getCourse("desert-sprint");
-const CANYON = content.getCourse("desert-canyon");
+const SPRINT = content.getCourse("sprint");
+const CANYON = content.getCourse("canyon");
 
 function withField(field: Partial<FieldConstants>): Ruleset {
   return { ...R, field: { ...R.field, ...field } };
@@ -33,7 +33,6 @@ function player(frameId: string, over: Partial<EntryInput> = {}): EntryInput {
     falconessId: f.id,
     baseStats: { agility: 400, stamina: 400, technique: 400, courage: 400, intelligence: 400 },
     mood: 1,
-    biomeAptitude: f.biomeAptitude,
     styleAptitude: f.styleAptitude,
     frameId,
     parts: [],
@@ -110,7 +109,6 @@ function fieldByHand(
           falconessId: null,
           baseStats,
           mood: 0,
-          biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
           styleAptitude: {
             dive: frame.style === "dive" ? "A" : "B",
             hover: frame.style === "hover" ? "A" : "B",
@@ -179,10 +177,10 @@ describe("rivalPool (21.1 relative band)", () => {
 describe("generateField (21.1)", () => {
   it("is deterministic and follows the exact draw order of the spec", () => {
     for (const [courseId, frameId, turn] of [
-      ["desert-sprint", "peregrina-signature", 12],
-      ["desert-ridge", "falke", 24],
-      ["desert-canyon", "caracara-signature", 46],
-      ["desert-canyon", "cernicala-signature", 0],
+      ["sprint", "peregrina-signature", 12],
+      ["ridge", "falke", 24],
+      ["canyon", "caracara-signature", 46],
+      ["canyon", "cernicala-signature", 0],
     ] as const) {
       const args = { course: content.getCourse(courseId), turn, raceSeed: `s/${courseId}` };
       const p = player(frameId);
@@ -240,7 +238,6 @@ describe("generateField (21.1)", () => {
           expect(e.parts).toEqual([]);
           expect(e.quirks).toEqual([]);
           expect(e.mood).toBe(0);
-          expect(e.biomeAptitude).toBe("B");
           expect(e.styleAptitude).toBe("A");
           expect(e.falconessId).toBeNull();
           expect(e.durabilityStart).toBe(e.durabilityMax);
@@ -311,7 +308,7 @@ describe("generateField (21.1)", () => {
 });
 
 describe("goalRaceSetup (21.2)", () => {
-  const goal: SeasonGoal = { turn: 12, courseId: "desert-sprint", minPlace: 5 };
+  const goal: SeasonGoal = { turn: 12, courseId: "sprint", minPlace: 5 };
 
   it("freezes the season state as the player against generateField's rivals", () => {
     const s0 = startSeason(ctx, "setup", {
@@ -329,7 +326,7 @@ describe("goalRaceSetup (21.2)", () => {
     };
     expect(state.equippedFrame).toBe("mule");
     const setup = goalRaceSetup(ctx, state, goal);
-    expect(setup.course).toEqual(content.getCourse("desert-sprint"));
+    expect(setup.course).toEqual(content.getCourse("sprint"));
     expect(setup.raceSeed).toBe("setup/race/12");
     const input: EntryInput = {
       runnerId: "player",
@@ -337,7 +334,6 @@ describe("goalRaceSetup (21.2)", () => {
       falconessId: "caracara",
       baseStats: state.stats,
       mood: -1,
-      biomeAptitude: state.biomeAptitude,
       styleAptitude: state.styleAptitude,
       frameId: "mule",
       parts: ["steinhaus-turbine"],

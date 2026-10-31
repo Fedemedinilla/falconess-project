@@ -57,8 +57,8 @@ const QUIET: Ruleset = {
   ...SPEC_RULESET,
   race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
-const SPRINT = content.getCourse("desert-sprint");
-const RIDGE = content.getCourse("desert-ridge");
+const SPRINT = content.getCourse("sprint");
+const RIDGE = content.getCourse("ridge");
 const M = 225_000; // pu per metre
 
 function at<T>(arr: readonly T[] | undefined, i: number): T {
@@ -82,7 +82,6 @@ function testCourse(segments: Course["segments"]): Course {
   return {
     id: "test-course",
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     segments,
@@ -213,7 +212,6 @@ describe("modes of docs/race-engine.md 9.4 from a constructed state", () => {
         falconessId: null,
         baseStats: S600,
         mood: 0,
-        biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
         styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
         frameId: "shiden",
         parts: [],
@@ -506,7 +504,6 @@ describe("overheat licence (docs/race-engine.md 9.3, D11)", () => {
           falconessId: null,
           baseStats: S600,
           mood: 0,
-          biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
           styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
           frameId: "falke",
           parts: [],
@@ -636,7 +633,6 @@ describe("free-first-boost on continuous frames (docs/race-engine.md 16 #8, D26)
 });
 
 describe("Kōryū through the controller (docs/race-engine.md 12, 13.1)", () => {
-  const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
   const shiden = (course: Course) =>
     freezeEntry(
       QUIET,
@@ -647,7 +643,6 @@ describe("Kōryū through the controller (docs/race-engine.md 12, 13.1)", () => 
         falconessId: null,
         baseStats: S600,
         mood: 0,
-        biomeAptitude: B,
         styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
         frameId: "shiden",
         parts: [],
@@ -761,7 +756,7 @@ describe("PREHEAT through simulateRace (docs/race-engine.md 9.4, 16 #12, ADR-000
 
   it("every style on the three courses: consecutive boost ticks up to final entry, heat h0 + kH × ticks, within the room", () => {
     const kH = SPEC_RULESET.race.kH;
-    for (const course of [SPRINT, RIDGE, content.getCourse("desert-canyon")])
+    for (const course of [SPRINT, RIDGE, content.getCourse("canyon")])
       for (const style of ["dive", "hover", "glide", "ground"] as const) {
         const run = preheat(withTraits(fixture(style), { heatToEnergyPm: 500 }), course);
         const n = run.ticks.length;

@@ -127,7 +127,7 @@ describe("BRIEF §9 invariant 1: no Part or Quirk in gacha.json", () => {
 });
 
 describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, growth or aptitudes", () => {
-  const FALCONESS_FIELDS = ["baseStats", "growth", "biomeAptitude", "styleAptitude"];
+  const FALCONESS_FIELDS = ["baseStats", "growth", "styleAptitude"];
 
   it("a frame carries no Falconess stat, growth or aptitude field; growth lives only in the Falconess content", () => {
     // `Frame.stats` is the wing's own FrameStats (PW, energy, dissipation, durability)
@@ -181,7 +181,6 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
                 falconessId: fid,
                 baseStats: f.baseStats,
                 mood,
-                biomeAptitude: f.biomeAptitude,
                 styleAptitude: f.styleAptitude,
                 frameId,
                 parts: [],
@@ -194,15 +193,12 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
                 RULESET_V1,
                 f.baseStats,
                 mood,
-                f.biomeAptitude,
                 f.styleAptitude,
-                course.biome,
                 frame.style,
               );
               expect(entry.stats, `${fid} ${frameId} ${quirks.join("+")} ${course.id}`).toEqual(
                 own,
               );
-              expect(entry.biomeAptitude).toBe(f.biomeAptitude[course.biome]);
               expect(entry.styleAptitude).toBe(f.styleAptitude[frame.style]);
             }
         }
@@ -253,7 +249,7 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
                         )[lowestStat(s.stats)],
                       };
               s = advanceSeason(ctx, s, input);
-              seen.push([s.turn, s.stats, s.biomeAptitude, s.styleAptitude]);
+              seen.push([s.turn, s.stats, s.styleAptitude]);
             }
             return seen;
           });

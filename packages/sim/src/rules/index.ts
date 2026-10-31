@@ -1,4 +1,4 @@
-import type { Biome, RaceRule } from "@falconess/schema";
+import type { RaceRule } from "@falconess/schema";
 import type { RaceConstants } from "../rulesets/index.js";
 import { MASS_THRUST } from "./mass-thrust.js";
 import { NONE } from "./none.js";
@@ -21,9 +21,9 @@ export const RULES: Readonly<Record<RaceRule, RuleSpec>> = {
   none: NONE,
 };
 
-/** The rule's numeric fields for one course biome (compiled once per runner at race start). */
-export function compileRule(R: RaceConstants, rule: RaceRule, biome: Biome): RuleTerms {
-  return RULES[rule].compile(R, biome);
+/** The rule's numeric fields (compiled once per runner at race start). */
+export function compileRule(R: RaceConstants, rule: RaceRule): RuleTerms {
+  return RULES[rule].compile(R);
 }
 
 export {

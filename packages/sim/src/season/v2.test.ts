@@ -309,7 +309,7 @@ describe("v2 grades and rival field (ADR-0006)", () => {
       field: { ...RULESET_V2.field, rivalNoise: 0, rivalStatJitter: 0 },
     };
     const player = playerEntryInput(at(V2, "field"));
-    const course = content.getCourse("desert-ridge");
+    const course = content.getCourse("ridge");
     for (const [turn, mu] of [
       [12, 192],
       [24, 324],

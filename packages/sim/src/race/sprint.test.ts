@@ -36,11 +36,10 @@ const QUIET: Ruleset = {
   ...SPEC_RULESET,
   race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
-const SPRINT = content.getCourse("desert-sprint");
-const RIDGE = content.getCourse("desert-ridge");
-const CANYON = content.getCourse("desert-canyon");
+const SPRINT = content.getCourse("sprint");
+const RIDGE = content.getCourse("ridge");
+const CANYON = content.getCourse("canyon");
 const M = 225_000; // pu per metre
-const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 
 function at<T>(arr: readonly T[] | undefined, i: number): T {
   const v = arr?.[i];
@@ -65,7 +64,6 @@ function frame(frameId: string, course: Course, ruleset: Ruleset = QUIET): RaceE
       falconessId: null,
       baseStats: S600,
       mood: 0,
-      biomeAptitude: B,
       styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
       frameId,
       parts: [],
@@ -82,7 +80,6 @@ function testCourse(segments: Course["segments"]): Course {
   return {
     id: "test-course",
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     segments,
@@ -194,21 +191,21 @@ describe("worked values of docs/race-engine.md 11.4 (neutral dive, 600 stats, no
     expect(((r.finishMilli ?? 0) / 15_000).toFixed(2)).toBe("86.91");
   });
 
-  it("canyon: hp binds; hp-limited window [2001, 2758) m, 1.80 m/s from 2365 m, 99 on-ticks, empty at 2818 m with the tank spent", () => {
+  it("canyon: hp binds; hp-limited window [2001, 2771) m, 1.80 m/s from 2401 m, 99 on-ticks, empty at 2822 m with the tank spent (no wind, ADR-0007)", () => {
     const log = simulateRace(QUIET, [fixture("dive")], CANYON, "w");
     expect(plans(log)).toHaveLength(1);
     expect(at(plans(log), 0)).toMatchObject({
-      posMm: 2_000_870,
+      posMm: 2_000_978,
       reason: "hp-limited",
-      startMm: 2_364_921,
-      endMm: 2_758_233,
+      startMm: 2_400_516,
+      endMm: 2_770_766,
       levelMms: 1800,
       onTicks: 99,
       clean: true,
     });
     const r = at(log.results, 0);
-    expect([r.ledger.hpEmptyMm, r.energyEnd, r.exhausted]).toEqual([2_818_357, 0, true]);
-    expect(((r.finishMilli ?? 0) / 15_000).toFixed(2)).toBe("135.94");
+    expect([r.ledger.hpEmptyMm, r.energyEnd, r.exhausted]).toEqual([2_822_410, 0, true]);
+    expect(((r.finishMilli ?? 0) / 15_000).toFixed(2)).toBe("134.90");
   });
 
   it("a neutral hover plans at 70 %: 1.30 m/s from 841 m on the sprint", () => {

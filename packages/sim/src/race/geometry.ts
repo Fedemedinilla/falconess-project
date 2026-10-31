@@ -1,5 +1,5 @@
 import { floorDiv, toPermille } from "@falconess/rng";
-import type { Biome, Course, RaceGeometry, Segment } from "@falconess/schema";
+import type { Course, RaceGeometry, Segment } from "@falconess/schema";
 import { SEGMENT_TYPES } from "@falconess/schema";
 import type { Ruleset } from "../rulesets/index.js";
 import {
@@ -7,7 +7,6 @@ import {
   PH_FINAL,
   PH_MIDDLE,
   PH_START,
-  SEG_CANYON,
   SEG_CLIMB,
   SEG_CURVES,
   SEG_DESCENT,
@@ -24,7 +23,6 @@ import {
 export type CourseGeometry = {
   readonly courseId: string;
   readonly courseVersion: number;
-  readonly biome: Biome;
   readonly lengthMm: number;
   /** lengthMm × 225 (pu). */
   readonly L: number;
@@ -37,8 +35,6 @@ export type CourseGeometry = {
   readonly segType: Uint8Array;
   readonly gradePm: Int32Array;
   readonly dragPm: Int32Array;
-  /** Signed: + tail, − head. */
-  readonly windPm: Int32Array;
   /** Content ints; 0 where not applicable. */
   readonly radius: Int32Array;
   readonly liftReq: Int32Array;
@@ -81,7 +77,6 @@ export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeo
   const segType = new Uint8Array(S);
   const gradePm = new Int32Array(S);
   const dragPm = new Int32Array(S);
-  const windPm = new Int32Array(S);
   const radius = new Int32Array(S);
   const liftReq = new Int32Array(S);
   const jumps: number[] = [];
@@ -102,9 +97,6 @@ export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeo
       case "water":
         dragPm[s] = toPermille(seg.drag);
         break;
-      case "canyon":
-        windPm[s] = toPermille(seg.wind);
-        break;
       case "curves":
         radius[s] = seg.radius;
         break;
@@ -113,6 +105,7 @@ export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeo
         jumps.push(s);
         break;
       case "flat":
+      case "canyon":
         break;
       default:
         assertNever(seg);
@@ -131,7 +124,6 @@ export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeo
   return {
     courseId: course.id,
     courseVersion: course.version,
-    biome: course.biome,
     lengthMm,
     L: lengthMm * posPerMm,
     S,
@@ -140,7 +132,6 @@ export function buildCourseGeometry(ruleset: Ruleset, course: Course): CourseGeo
     segType,
     gradePm,
     dragPm,
-    windPm,
     radius,
     liftReq,
     jumpIdx: Int32Array.from(jumps),
@@ -165,7 +156,7 @@ export function phaseOf(G: CourseGeometry, x: number): number {
   return x < G.startEnd ? PH_START : x < G.finalStart ? PH_MIDDLE : PH_FINAL;
 }
 
-/** The `geometry` block of a `RaceLog` (20.1), in public units, with the biome (ADR-0003 D55). */
+/** The `geometry` block of a `RaceLog` (20.1), in public units (no biome since ADR-0007). */
 export function logGeometry(ruleset: Ruleset, G: CourseGeometry): RaceGeometry {
   const { posPerMm } = engineUnits(ruleset.race);
   const segments: RaceGeometry["segments"] = [];
@@ -181,7 +172,6 @@ export function logGeometry(ruleset: Ruleset, G: CourseGeometry): RaceGeometry {
     });
   }
   return {
-    biome: G.biome,
     lengthMm: G.lengthMm,
     startEndMm: G.startEndMm,
     finalStartMm: G.finalStartMm,
@@ -192,7 +182,7 @@ export function logGeometry(ruleset: Ruleset, G: CourseGeometry): RaceGeometry {
   };
 }
 
-/** grade‰ (climb, descent), drag‰ (water), wind‰ signed (canyon), radius (curves), lift (jump). */
+/** grade‰ (climb, descent), drag‰ (water), radius (curves), lift (jump). */
 function segmentParam(G: CourseGeometry, s: number, code: number): number {
   switch (code) {
     case SEG_CLIMB:
@@ -200,8 +190,6 @@ function segmentParam(G: CourseGeometry, s: number, code: number): number {
       return G.gradePm[s] ?? 0;
     case SEG_WATER:
       return G.dragPm[s] ?? 0;
-    case SEG_CANYON:
-      return G.windPm[s] ?? 0;
     case SEG_CURVES:
       return G.radius[s] ?? 0;
     case SEG_JUMP:

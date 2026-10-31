@@ -8,20 +8,19 @@ import { effectiveStats, lowestStat, upgradeAptitude } from "./stats.js";
 const content = loadContent();
 const R = SPEC_RULESET;
 const base = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
-const biomeApt = { desert: "A", mountain: "B", coast: "C", urban: "D", tundra: "G" } as const;
-const styleApt = { dive: "S", hover: "B", glide: "E", ground: "F" } as const;
+const styleApt = { dive: "S", hover: "B", glide: "E", ground: "G" } as const;
 
 describe("effective stats", () => {
-  it("applies mood to every stat, biome aptitude to agility and style aptitude to intelligence", () => {
-    const eff = effectiveStats(R, base, 0, biomeApt, styleApt, "desert", "dive");
+  it("applies mood to every stat and style aptitude to intelligence; agility has no letter (ADR-0007)", () => {
+    const eff = effectiveStats(R, base, 0, styleApt, "dive");
     expect(eff).toEqual({
-      agility: 630,
+      agility: 600,
       stamina: 600,
       technique: 600,
       courage: 600,
       intelligence: 660,
     });
-    const sad = effectiveStats(R, base, -2, biomeApt, styleApt, "mountain", "hover");
+    const sad = effectiveStats(R, base, -2, styleApt, "hover");
     expect(sad).toEqual({
       agility: 570,
       stamina: 570,
@@ -31,9 +30,9 @@ describe("effective stats", () => {
     });
   });
 
-  it("aptitude G costs 30 % of agility, S gives 10 %", () => {
-    expect(effectiveStats(R, base, 0, biomeApt, styleApt, "tundra", "hover").agility).toBe(420);
-    expect(effectiveStats(R, base, 0, biomeApt, styleApt, "coast", "dive").intelligence).toBe(660);
+  it("aptitude G costs 30 % of intelligence, S gives 10 %", () => {
+    expect(effectiveStats(R, base, 0, styleApt, "ground").intelligence).toBe(420);
+    expect(effectiveStats(R, base, 0, styleApt, "dive").intelligence).toBe(660);
   });
 
   it("is monotonic in base stats and in mood", () => {
@@ -43,18 +42,14 @@ describe("effective stats", () => {
           R,
           { ...base, agility: a },
           mood,
-          biomeApt,
           styleApt,
-          "urban",
           "glide",
         );
         const hi = effectiveStats(
           R,
           { ...base, agility: a + 1 },
           mood + 1,
-          biomeApt,
           styleApt,
-          "urban",
           "glide",
         );
         return hi.agility >= lo.agility && hi.stamina >= lo.stamina;

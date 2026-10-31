@@ -21,7 +21,7 @@ const QUIET: Ruleset = {
   ...SPEC_RULESET,
   race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
-const COURSES = ["desert-sprint", "desert-ridge", "desert-canyon"].map((id) =>
+const COURSES = ["sprint", "ridge", "canyon"].map((id) =>
   content.getCourse(id),
 );
 const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
@@ -55,7 +55,7 @@ function batch() {
 }
 
 describe("S1 and S2 of 25.2 at their 25.4 sample sizes (s1.mjs, s2eq.mjs seeds)", () => {
-  it("S1: style wins 35/31/23/11, 20/19/23/38, 22/29/33/16 % (desert mean 25.6/26.3/26.2/22.0) and the mean phase splits", {
+  it("S1: style wins 35/31/23/11, 20/19/23/38, 24/29/32/16 % (mean 26.2/26.3/25.8/21.8; canyon without wind, ADR-0007) and the mean phase splits", {
     timeout: 60_000,
   }, () => {
     // two neutral fixtures per style, lanes rotated per seed, 800 races per course, noise on
@@ -111,13 +111,13 @@ describe("S1 and S2 of 25.2 at their 25.4 sample sizes (s1.mjs, s2eq.mjs seeds)"
           .join(", "),
       );
     }
-    expect(wins).toEqual(["35/31/23/11", "20/19/23/38", "22/29/33/16"]);
-    expect(mean.map((x) => (100 * x).toFixed(1)).join("/")).toBe("25.6/26.3/26.2/22.0");
+    expect(wins).toEqual(["35/31/23/11", "20/19/23/38", "24/29/32/16"]);
+    expect(mean.map((x) => (100 * x).toFixed(1)).join("/")).toBe("26.2/26.3/25.8/21.8");
     // dive / hover / glide / ground, start / middle / final (s)
     expect(splits).toEqual([
       "10.44 / 26.95 / 16.76, 10.35 / 26.51 / 17.28, 10.04 / 26.83 / 17.49, 10.28 / 26.56 / 17.66",
       "16.15 / 42.62 / 28.25, 16.17 / 42.27 / 28.50, 16.04 / 42.61 / 28.36, 16.19 / 42.07 / 28.29",
-      "23.59 / 67.64 / 44.80, 23.45 / 66.73 / 45.45, 23.01 / 67.64 / 45.27, 23.47 / 67.19 / 45.63",
+      "23.59 / 64.57 / 46.81, 23.45 / 63.69 / 47.56, 23.01 / 64.57 / 47.33, 23.47 / 64.14 / 47.70",
     ]);
   });
 
@@ -154,7 +154,7 @@ describe("S1 and S2 of 25.2 at their 25.4 sample sizes (s1.mjs, s2eq.mjs seeds)"
     expect(out).toEqual([
       "0.01 -2.93 -0.13 0.77 2.89 | 4 82 5 1 0 | none 8",
       "0.00 0.60 -0.09 0.71 -0.99 | 13 2 15 3 37 | none 31",
-      "0.07 -2.09 0.09 -1.22 0.00 | 4 48 3 35 4 | none 7",
+      "0.04 -2.02 0.10 -1.27 0.00 | 4 48 3 34 4 | none 8",
     ]);
   });
 });

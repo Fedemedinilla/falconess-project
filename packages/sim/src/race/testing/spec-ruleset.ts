@@ -60,7 +60,6 @@ const SPEC_RACE = deepFreeze<RaceConstants>({
   kClimb: 150,
   kDescent: 100,
   kWater: 1_000,
-  kWind: 1_000,
   kCurves: 200,
   segFactorMin: 500,
   segFactorMax: 1_500,
@@ -72,7 +71,6 @@ const SPEC_RACE = deepFreeze<RaceConstants>({
   kCool: 1_000,
   coolDissWeight: 0,
   dissRef: 60,
-  biomeCool: { desert: 1_000, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 },
   heatToleranceCourage: 300,
   heatPenaltyMult: 920,
   overheatDurPerTick: 1_000,
@@ -107,10 +105,10 @@ const SPEC_RACE = deepFreeze<RaceConstants>({
   telemetryPowerCap: 1_100,
 
   // rule terms (13.1)
-  massThrustCoolPm: { desert: 500, mountain: 1_250, coast: 1_000, urban: 500, tundra: 1_250 },
+  massThrustCoolPm: 500, // ADR-0007: the spec's desert value
   regenLandLossPm: 2_000,
   pulseAirPm: [1_000, 1_000, 1_200, 1_000, 600, 1_000, 1_000],
-  pulseBiomePm: { desert: 1_150, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 },
+  pulseBasePm: 1_150, // ADR-0007: the spec's desert value
   telemetryDrainPm: 900,
   telemetryAccelPm: 850,
   repairableRuggedPm: 500,

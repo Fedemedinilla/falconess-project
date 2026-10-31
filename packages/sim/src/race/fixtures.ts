@@ -106,7 +106,6 @@ export function neutralFixtureEntry(args: {
     parts: b ? [...b.parts] : [],
     quirks: b ? [...b.quirks] : [],
     mood: 0,
-    biomeAptitude: "B",
     styleAptitude: "B",
     stats: b ? addStatDeltas(RULESET_V1, args.stats, b.statDelta) : { ...args.stats },
     powerToWeight: b ? b.powerToWeight : NEUTRAL_FRAME.powerToWeight,
