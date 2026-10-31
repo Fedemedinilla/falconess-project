@@ -13,6 +13,13 @@
   (`modifiers.ts`, `skill.ts`, `course.ts`, `frame.ts`, `manufacturer.ts`, `season.ts`); the
   existing `resolveFrameBuild`, `effectiveStats`, `RACE` constants and `@falconess/rng`.
 - This document stands alone: an implementer needs nothing else from the design round.
+- **ADR-0007 (2026-10-31): no biomes, no wind.** Courses have no biome and the canyon no wind;
+  entries, states and logs carry no biome letter; agility takes no aptitude; `kWind` and
+  `biomeCool` are gone; `massThrustCoolPm` (50) and `pulseBasePm` (1450, was `pulseBiomePm`) are
+  one value each; course ids lost `desert-` (`sprint`, `ridge`, `canyon`). The normative parts
+  below (2, 3.1, 3.3, 7, 12, 13.1, 20.1, 21.1, 25.2, 25.4) say so; elsewhere "desert" and
+  "biome" are the history of the v1 courses, which were all desert, so every number keeps its
+  value except the canyon's (25.4) and Peregrina's (she lost her desert A).
 
 ## 0. How this spec was built, and how to read it
 
@@ -228,12 +235,12 @@ callers (the batch) may cache it by `courseId@version`.
 
 ```ts
 type CourseGeometry = {
-  courseId: string; courseVersion: number; biome: Biome;
+  courseId: string; courseVersion: number;           // no biome (ADR-0007)
   lengthMm: number; L: number;                      // L = lengthMm × 225 (pu)
   S: number;                                        // segment count, 1..24
   segStart: Float64Array; segEnd: Float64Array;     // pu; segEnd[S − 1] = L
   segType: Uint8Array;                              // index into SEGMENT_TYPES
-  gradePm: Int32Array; dragPm: Int32Array; windPm: Int32Array;   // ‰; wind signed (+ tail)
+  gradePm: Int32Array; dragPm: Int32Array;          // ‰ (no wind since ADR-0007)
   radius: Int32Array; liftReq: Int32Array;          // content ints; 0 where not applicable
   jumpIdx: Int32Array;                              // indices of jump segments, ascending
   startEndMm: number; finalStartMm: number; hoverAttackMm: number;
@@ -244,7 +251,7 @@ type CourseGeometry = {
 - Segment lengths `len_s = length_m × 225 000`; `segStart[0] = 0`; `segEnd[s] = segStart[s] + len_s`;
   `segStart[s + 1] = segEnd[s]`.
 - Content decimals become ‰ here, with `toPermille` (content-load rounding, the only one of a course):
-  `gradePm`, `dragPm`, `windPm`.
+  `gradePm`, `dragPm`.
 - Boundaries in mm, then × 225: `startEndMm = fl(Lmm, 6)`, `finalStartMm = fl(2 × Lmm, 3)`,
   `hoverAttackMm = fl(Lmm × R.style.hoverAttackAt, 1000)`,
   `reserveAtMm = max(0, Lmm − R.finalSprintReserveMeters × 1000)`, `denseFromMm = Lmm − R.log.denseLastMeters × 1000`.
@@ -259,9 +266,9 @@ type CourseGeometry = {
 
 | Course | L (m) | startEnd | finalStart | hoverAttack | reserveAt | denseFrom |
 | --- | --- | --- | --- | --- | --- | --- |
-| desert-sprint | 1200 | 200 000 mm | 800 000 | 840 000 | 1 140 000 | 1 175 000 |
-| desert-ridge | 2000 | 333 333 | 1 333 333 | 1 400 000 | 1 940 000 | 1 975 000 |
-| desert-canyon | 3000 | 500 000 | 2 000 000 | 2 100 000 | 2 940 000 | 2 975 000 |
+| sprint | 1200 | 200 000 mm | 800 000 | 840 000 | 1 140 000 | 1 175 000 |
+| ridge | 2000 | 333 333 | 1 333 333 | 1 400 000 | 1 940 000 | 1 975 000 |
+| canyon | 3000 | 500 000 | 2 000 000 | 2 100 000 | 2 940 000 | 2 975 000 |
 
 Ridge segments: flat 0-300 m, descent 0.3 300-700, jump (20) 700-800, flat 800-1200, descent 0.2
 1200-1500, jump (15) 1500-1580, flat 1580-2000. The second jump lies in the final phase.
@@ -278,7 +285,7 @@ EntryInput = {                       // zod schema in packages/schema/src/race.t
   kind: "player" | "rival" | "ghost";
   falconessId: Slug | null;
   baseStats: FalconessStats; mood: Mood;
-  biomeAptitude: BiomeAptitudes; styleAptitude: StyleAptitudes;
+  styleAptitude: StyleAptitudes;     // no biome letters (ADR-0007)
   frameId: Slug; parts: Slug[]; quirks: Slug[];
   learnedSkills: Slug[];
   durability: number | null;         // season frameDurability; null = full
@@ -290,9 +297,9 @@ Steps (integers only):
 1. `fb = resolveFrameBuild(content, frameId, parts, quirks)` (existing). It already applies the
    telemetry PW cap 1100 and `power-cap`, and clamps PW to [500, 1600], energy to [20, 200],
    dissipation to [20, 120], durability to [20, 260].
-2. `eff = effectiveStats(ruleset, baseStats, mood, biomeAptitude, styleAptitude, course.biome,
-   fb.style)` (existing): mood on all five stats, biome letter on agility, style letter **of the
-   frame's style** on intelligence.
+2. `eff = effectiveStats(ruleset, baseStats, mood, styleAptitude, fb.style)` (existing): mood on
+   all five stats, style letter **of the frame's style** on intelligence; agility takes no letter
+   (ADR-0007 removed the biome letter).
 3. `falconess-stat` modifiers: `eff[stat] = clamp(eff[stat] + Σ delta, 1, 2000)`, after step 2
    ("intelligence efectiva +30" is +30 effective).
 4. Skills: every id of `learnedSkills` resolved through content; it must be `kind: "active"` (a
@@ -308,7 +315,7 @@ Steps (integers only):
 runnerId: string, kind, falconessId: Slug | null, laneIndex: 0..7,
 frameId, manufacturer, rule: RaceRule, style: Style,            // RaceRule: section 3.4
 passive: Slug | null, parts: Slug[] (≤ 4), quirks: Slug[] (≤ 2),
-mood, biomeAptitude: Aptitude, styleAptitude: Aptitude,       // the letters actually applied
+mood, styleAptitude: Aptitude,                               // the letter actually applied
 stats: { agility, stamina, technique, courage, intelligence },  // effective, 1..2000
 powerToWeight: 500..1600 (‰, after caps), energy: 20..200, dissipation: 20..120,
 durabilityMax: 20..260, durabilityStart: 0..durabilityMax,      // content units
@@ -379,7 +386,7 @@ values are copied to `log.derived` (20.3). Two PW variants `b ∈ {0 intact, 1 b
 | `D` | `dissipation × 1000` | 60 000 mh |
 | `heatCap` | `fl(D × tol, 1000)` (overheat threshold, everyone) | 69 000 |
 | `capLim` | `rule == telemetry ? D : heatCap` (boost governor limit) | 69 000 |
-| `coolTick` | `max(1, fl(cool0 × coolRule, 1000))`, `cool0 = max(1, fl(R.kCool × R.biomeCool[biome] × dissF, 1 000 000))`, `dissF = 1000 + fl(R.coolDissWeight × (fl(dissipation × 1000, R.dissRef) − 1000), 1000)`, `coolRule = rule == mass-thrust ? R.massThrustCoolPm[biome] : 1000` (13.1) | 1000 (neutral knobs; Steinhaus in the desert 500) |
+| `coolTick` | `max(1, fl(cool0 × coolRule, 1000))`, `cool0 = max(1, fl(R.kCool × dissF, 1000))`, `dissF = 1000 + fl(R.coolDissWeight × (fl(dissipation × 1000, R.dissRef) − 1000), 1000)`, `coolRule = rule == mass-thrust ? R.massThrustCoolPm : 1000` (13.1) | 1000 (neutral knobs; Steinhaus 500 in the spec, 50 in v1) |
 | `dmgTick` | `fl(R.overheatDurPerTick × ruleMult × styleDmg, 1 000 000)`, `ruleMult = rule == mass-thrust ? R.massThrustDurMult : 1000`, `styleDmg = style == ground ? R.groundDamagePm : 1000` | 1000 md |
 | `regenTick` | `(rule == regen ? R.regenPerTick : 0) + traits.regenMe` | 0 |
 | `liftF` | `fl((600 + T) × (1000 + traits.liftBonusPm), 1200)` (‰ of energy) | 1000 |
@@ -389,9 +396,9 @@ values are copied to `log.derived` (20.3). Two PW variants `b ∈ {0 intact, 1 b
 | `need[j]` | `ceilDiv(liftReq_j × 1 000 000, liftF)` me | 20 000 / 15 000 (ridge) |
 | `jr[s]` | 14.4 (jump reserve; 0 for ground) | ridge before jump 1: 35 000 |
 | `pulseFrame` | `rule == pulse && !traits.noPulse` | false |
-| `airPm[s]` | pulse frames: `fl(R.pulseAirPm[segType[s]] × R.pulseBiomePm[biome], 1000)` (13.1); others 1000 | desert flat 1150, descent 1380, water 690 |
+| `airPm[s]` | pulse frames: `fl(R.pulseAirPm[segType[s]] × R.pulseBasePm, 1000)` (13.1); others 1000 | flat 1150, descent 1380, water 690 |
 | `stoop[s][ph]` | dive only: `R.style.diveStoopPm` when `segType[s] == descent` or `ph == PH_FINAL` (9.8); else 1000 | 1000 (dive final 1400) |
-| `Bon[b]`, `costOn`, `unit[b]`, `sMax[b]` | the plan's thrust per on-tick, cost, accumulator unit, top level: `base = pulseFrame ? fl(Bp[b] × R.pulseBiomePm[biome], 1000) : B[b]`; `Bon = fl(base × (style == dive ? R.style.diveStoopPm : 1000), 1000)`; `pulseFrame ? (Bon, pulseCostMe, Bon × R.pulseTicks, fl(unit, R.pulseTicks + R.pulseCooldownTicks)) : (Bon, R.kE, Bon, Bon)`; `pulseCostMe = fl(R.kE × R.pulseCostMult, 1000)`. Ground's level mode uses the same formula without the stoop (ground is never dive). Section 12's Plan row and the accumulator of 9.5 use exactly these values | 45 000, 1000, 45 000, 45 000 (dive 63 000); desert pulse frames: shiden 136 929, 1200, 1 643 148, 39 122; hayate 83 835, 1200, 1 006 020, 23 952 |
+| `Bon[b]`, `costOn`, `unit[b]`, `sMax[b]` | the plan's thrust per on-tick, cost, accumulator unit, top level: `base = pulseFrame ? fl(Bp[b] × R.pulseBasePm, 1000) : B[b]`; `Bon = fl(base × (style == dive ? R.style.diveStoopPm : 1000), 1000)`; `pulseFrame ? (Bon, pulseCostMe, Bon × R.pulseTicks, fl(unit, R.pulseTicks + R.pulseCooldownTicks)) : (Bon, R.kE, Bon, Bon)`; `pulseCostMe = fl(R.kE × R.pulseCostMult, 1000)`. Ground's level mode uses the same formula without the stoop (ground is never dive). Section 12's Plan row and the accumulator of 9.5 use exactly these values | 45 000, 1000, 45 000, 45 000 (dive 63 000); desert pulse frames: shiden 136 929, 1200, 1 643 148, 39 122; hayate 83 835, 1200, 1 006 020, 23 952 |
 | `capFinal[b]` | 9.3 (thrust-capable ticks only) | sprint 99 000 me |
 | `groundLevel[b]` | 9.3 (ground only) | |
 | `pAct`, `pSkill[j]` | section 15 | 850 |
@@ -425,7 +432,7 @@ export type RaceRule = z.infer<typeof RaceRule>;
   `packages/sim/src/race/fixtures.ts`, exported from `@falconess/sim` (the batch in `apps/cli` and
   the tests use it). It builds the entry directly, without `freezeEntry` and without content, with
   these fixed values: `kind: "rival"`, `falconessId: null`, `frameId: "fixture-neutral"`,
-  `manufacturer: "none"`, `rule: "none"`, `passive: null`, `mood: 0`, `biomeAptitude: "B"`,
+  `manufacturer: "none"`, `rule: "none"`, `passive: null`, `mood: 0`,
   `styleAptitude: "B"`, `stats` as given (already effective), and, when `build` is absent,
   `parts: []`, `quirks: []`, `powerToWeight: 1000`, `energy: 100`, `dissipation: 60`,
   `durabilityMax: 100`, `durabilityStart: 100`, `traits: compileTraits([])` (every default).
@@ -579,7 +586,7 @@ hp    = sub0(hp, drain)
 
 ## 7. Segment factor f_seg (item 7)
 
-Computed once per runner per segment at race start (`gradePm`, `dragPm`, `windPm` from geometry):
+Computed once per runner per segment at race start (`gradePm`, `dragPm` from geometry):
 
 | Type | Base `f` (‰) | Content values |
 | --- | --- | --- |
@@ -587,7 +594,7 @@ Computed once per runner per segment at race start (`gradePm`, `dragPm`, `windPm
 | climb | `1000 − fl(R.kClimb × gradePm, 1000)`, kClimb 150 | grade 0.25 → 963 |
 | descent | `1000 + fl(R.kDescent × gradePm, 1000)`, kDescent 100 | 0.3 → 1030; 0.2 → 1020 |
 | water | `1000 − fl(R.kWater × dragPm, 1000)`, kWater 1000 | drag 0.2 → 800 |
-| canyon | `1000 + fl(R.kWind × windPm, 1000)`, kWind 1000; wind signed (+ tail, − head) | −0.1 → 900; +0.15 → 1150 |
+| canyon | `1000` (ADR-0007: no wind; was `1000 + fl(R.kWind × windPm, 1000)`) | 1000 |
 | curves | `1000 − fl(R.kCurves × (1200 − min(A, 1200)) × curvesScale, 1 200 000)`, kCurves 200 | A 600 → 900; with lumiere-stabilizer (500) → 950 |
 | jump | `1000` (the brief lists none; used by the airborne crossing, the crash run-through and the ground detour) | 1000 |
 
@@ -1095,7 +1102,7 @@ event `sprintPlan` with that reason and `levelMms = 0`. Integer bounds: `s × Ep
 - **Sustained level → per-tick boost:** the accumulator (9.5), `PLAN` mode in
   `[planStartPos, planEndPos)`, `HOLD` before the spurt (the runner cools and regenerates), `KICK`
   from `kickAt`.
-- **Pulse frames:** `Bon = fl(Bp × pulseBiomePm, 1000)` (× stoop for dive), `costOn = 1200`, `unit = Bon × 12`, `sMax = fl(unit, 42)` (max
+- **Pulse frames:** `Bon = fl(Bp × pulseBasePm, 1000)` (× stoop for dive), `costOn = 1200`, `unit = Bon × 12`, `sMax = fl(unit, 42)` (max
   cadence 12/42); `pulse-cooldown` shortenings and chain bonuses are ignored by the estimate (they
   only make spending easier). The heat estimate uses the same budget formula.
 - **Cost:** ≤ ~70 candidates × ~25 integer ops + three O(S) walks, at most 5 times per runner per
@@ -1115,8 +1122,9 @@ as revision 1 (sprint 1.30 m/s from 841 m).
   costs 20 and its landing −14 % of speed (14.2); at 1334 m `Ep = 65 − 15 (jump 2 reserve) = 50`,
   `thrustDist` skips jump 2 (1500-1580 m), and the plan picks **2.60 m/s from 1800 m** (after jump 2:
   the latest clean spurt); the jump-exit replan at 1580 m confirms it. Finish 86.91 s.
-- Canyon: hp binds (600 St empties at ≈ 2.82 km): `hp-limited`, window `[2001, 2758)` m, **1.80 m/s
-  from 2365 m**, 99 on-ticks; exhaustion at 2818 m with the tank empty (no energy wasted).
+- Canyon (no wind, ADR-0007): hp binds (600 St empties at ≈ 2.82 km): `hp-limited`, window
+  `[2001, 2771)` m, **1.80 m/s from 2401 m**, 99 on-ticks; exhaustion at 2822 m with the tank empty
+  (no energy wasted). With the wind it was `[2001, 2758)`, 2365 m and 2818 m.
 - Fixtures for the jump rules of this section (unit tests, 24.1): course `[flat 1000, jump 100
   (lift 20)]`: `kickAt = 1000 m`, the plan ends at 1000 m, no planned on-tick lies in the jump;
   revision 1 left 12 (dive) and 16 (hover) energy at the line, revision 2 leaves 6 and 4 (heat-gate
@@ -1137,7 +1145,7 @@ Applies when `pulseFrame` (`rule == pulse && !traits.noPulse`).
 | `pulse-chain-accel` | a pulse whose `chain % traits.pulseChainIndex == 0` uses `Bpc = Bp × (1 + accelBonus)` for its whole burst (third-pulse: every 3rd consecutive pulse +20 %; pulse, pulse, big pulse) |
 | `no-pulse` | the frame boosts continuously (`B`, `kE`, `kH`, continuous gates); no effect on frames of other rules |
 | `free-first-boost` | the first pulse fired on a segment of the masked type costs 0 for its 12 ticks |
-| Plan | the definitions of table 3.3 and 11.3, nothing else: `Bon = fl(fl(Bp × R.pulseBiomePm[biome], 1000) × (style == dive ? R.style.diveStoopPm : 1000), 1000)`, `costOn = pulseCostMe`, `unit = Bon × R.pulseTicks`, `sMax = fl(unit, R.pulseTicks + R.pulseCooldownTicks)` (max cadence 12/42). Desert values: shiden (dive, PW 1.4) `Bp` 85 050 → 97 807 → `Bon` 136 929, `unit` 1 643 148, `sMax` **39 122 vu (2.61 m/s)**; hayate (ground, PW 1.2) `Bp` 72 900 → `Bon` 83 835, `unit` 1 006 020, `sMax` **23 952 vu (1.60 m/s)** (25.4 sanity rows). Accumulator accrues every tick (burst and cooldown included), capped at `unit + level` (9.5) |
+| Plan | the definitions of table 3.3 and 11.3, nothing else: `Bon = fl(fl(Bp × R.pulseBasePm, 1000) × (style == dive ? R.style.diveStoopPm : 1000), 1000)`, `costOn = pulseCostMe`, `unit = Bon × R.pulseTicks`, `sMax = fl(unit, R.pulseTicks + R.pulseCooldownTicks)` (max cadence 12/42). Desert values: shiden (dive, PW 1.4) `Bp` 85 050 → 97 807 → `Bon` 136 929, `unit` 1 643 148, `sMax` **39 122 vu (2.61 m/s)**; hayate (ground, PW 1.2) `Bp` 72 900 → `Bon` 83 835, `unit` 1 006 020, `sMax` **23 952 vu (1.60 m/s)** (25.4 sanity rows). Accumulator accrues every tick (burst and cooldown included), capped at `unit + level` (9.5) |
 | Kick | fire whenever ready |
 
 ```
@@ -1206,7 +1214,7 @@ the fastest frame on the ridge, and Steinhaus and Boneyard had no time term. Rev
 rule's file (`rules/<rule>.ts`), but that code location does not put them inside the rule's
 mechanism.
 
-- Two act inside their rule's mechanism, keyed to a biome or a segment type: Steinhaus's cooling
+- Two act inside their rule's mechanism, keyed to a segment type or to every course (ADR-0007): Steinhaus's cooling
   (heat and the licence) and Kōryū's burst thrust (pulses).
 - Three act outside it:
   - Lumière's landing loss is a jump term; regen is untouched.
@@ -1227,9 +1235,9 @@ trait directly.
 
 | Rule | Term (constants) | Exact rule | Where it acts | Stat equivalent (600 stats, PW 1.0) | Intended cells (v1 desert) |
 | --- | --- | --- | --- | --- | --- |
-| `mass-thrust` | **ambient cooling** `massThrustCoolPm[biome]` (desert 500, urban 500, coast 1000, mountain 1250, tundra 1250) | `coolTick × massThrustCoolPm[biome]` for Steinhaus frames (table `coolTick`, 3.3): the heavy engine needs cold air; its licence turns the missing headroom into ×2 durability wear | inside the rule (heat, licence); keyed to the biome | none: at the neutral knobs of D38 no stat moves cooling. At the heat cap a governed runner's sustained duty falls from 1/3 to 1/5 (`cool / (kH + cool)`), and the licence's cooling tail doubles | weak desert (all three courses); home tundra/mountain (no v1 course) |
+| `mass-thrust` | **ambient cooling** `massThrustCoolPm` (spec 500, v1 50: one value since ADR-0007, the desert one) | `coolTick × massThrustCoolPm` for Steinhaus frames (table `coolTick`, 3.3): the heavy engine needs cold air; its licence turns the missing headroom into ×2 durability wear | inside the rule (heat, licence); keyed to the biome | none: at the neutral knobs of D38 no stat moves cooling. At the heat cap a governed runner's sustained duty falls from 1/3 to 1/5 (`cool / (kH + cool)`), and the licence's cooling tail doubles | weak desert (all three courses); home tundra/mountain (no v1 course) |
 | `regen` | **light airframe** `regenLandLossPm` 2000 | the landing loss of 14.2 is doubled for Lumière frames (table `landPm`) | outside the rule (landings on jump segments; regen untouched) | none: T 600 keeps 720 ‰ of speed, and no technique gives that (T 0 keeps 800). ≈ 54 m lost per landing against 13.5 m (+40 m), more than the whole technique range moves a landing (T 0 → 1200: 27.6 → 4.4 m) | weak on jump courses (ridge); home coast/urban (no v1 course) |
-| `pulse` | **intake air** `pulseAirPm[segType]` (descent 1200, water 600, others 1000), `pulseBiomePm[biome]` (desert 1150, others 1000) | every burst tick's thrust × `airPm[seg]` (12, table `airPm`); the plan's `Bon` carries the biome factor | inside the rule (bursts); keyed to segment type and biome | no Falconess stat moves thrust. Burst thrust ×1.15 in the desert (descent ×1.38, water ×0.69) is the thrust of +0.15 PW at PW 1.0 (`pwBoostWeight` 1000; cruise unchanged) | home desert and descents; weak water (canyon: desert and water, neutral by D40) |
+| `pulse` | **intake air** `pulseAirPm[segType]` (descent 1200, water 600, others 1000), `pulseBasePm` (spec 1150, v1 1450; was `pulseBiomePm`, desert value, ADR-0007) | every burst tick's thrust × `airPm[seg]` (12, table `airPm`); the plan's `Bon` carries the base factor | inside the rule (bursts); keyed to segment type and biome | no Falconess stat moves thrust. Burst thrust ×1.15 in the desert (descent ×1.38, water ×0.69) is the thrust of +0.15 PW at PW 1.0 (`pwBoostWeight` 1000; cruise unchanged) | home desert and descents; weak water (canyon: desert and water, neutral by D40) |
 | `telemetry` | **power governor** `telemetryDrainPm` 900, `telemetryAccelPm` 850 | hp drain × 0.9 (`dK`, section 6) and acceleration × 0.85 (`acc`), on top of rules (1)-(4) | outside the rule (heat gate, activation and PW cap untouched); **global**: every segment of every course | drain ×0.9 ≈ **+178 St** at St 600 (+144 at 300, +211 at 900: `St' = (1000 + St) / 0.9 − 1000`); acceleration ×0.85 ≈ **−180 T** at T 600 (−135 at 300, −225 at 900: `T' = 0.85 T − 90`). The T swap acts on acceleration only; landing and lift read the true T | home long courses (hp binds: canyon); weak sprints (the launch is a large share of a short race) |
 | `repairable` | **rugged but clumsy** `repairableRuggedPm` 500, `repairableCurvesPm` 1500 | the landing loss (14.2) and the extra length of the ground detour (`detour`) are halved; the curve penalty is × 1.5 (section 7, applied to `curvesScale`) | outside the rule (landings and detours on jump segments, curve segments; repair untouched) | landing: T 600 keeps 930 ‰, the landing of T 1300 (+700 T, beyond the 1200 cap of the landing formula; T 1200 keeps 920), ≈ 3.4 m per landing instead of 13.5 m. Detour 1.05 instead of 1.10, ≈ −9 m on the ridge's 180 m of jumps (ground only). Curves 850 instead of 900, the curve penalty of A 300 (−300 A on curve segments only) | home obstacles (ridge); weak pure speed (sprint, the only curvy course) |
 
@@ -1646,11 +1654,11 @@ RaceLog = z.strictObject({
   rulesetVersion: RulesetVersion, engine: z.literal("v1"), seed: z.string().min(1),
   courseId: Slug, courseVersion: Int, tickHz: z.literal(15),
   detail: z.enum(["full", "results"]), ticks: Int /* ticks simulated */, maxTicks: Int,
-  geometry: { biome: Biome,             // ADR-0003 D55: the viewer never reads content for it
+  geometry: { // no biome since ADR-0007 (ADR-0003 D55 logged it)
               lengthMm, startEndMm, finalStartMm, hoverAttackMm, reserveAtMm, denseFromMm: Int,
               // reserveAtMm ≥ 0 (ADR-0003 D53, section 2)
               segments: [{ type: SegmentType, startMm: Int, endMm: Int, param: Int }] },
-              // param: grade‰ (climb, descent), drag‰ (water), wind‰ signed (canyon), radius (curves), liftRequired (jump), 0 (flat)
+              // param: grade‰ (climb, descent), drag‰ (water), 0 (canyon), radius (curves), liftRequired (jump), 0 (flat)
   entries: RaceEntry[1..8],             // lane order (3.1)
   derived: RunnerDerived[],             // lane order (20.3)
   frames: RaceFrames.optional(),        // absent with detail "results"
@@ -1811,7 +1819,7 @@ generateField(ruleset, content, { course, turn, raceSeed, player: EntryInput }):
     m      = min(F.rivalMaxSkills, fl(turn, F.rivalTurnsPerSkill))
     skills = frng.shuffle("race", skillPool).slice(0, m)
     entry  = freezeEntry(ruleset, content, { runnerId: `rival-${k}`, kind: "rival", falconessId: null,
-               baseStats: base, mood: 0, biomeAptitude: every biome "B",
+               baseStats: base, mood: 0,
                styleAptitude: "A" for `style`, "B" for the others, frameId: frame.id, parts: [],
                quirks, learnedSkills: skills, durability: null }, course, lane)
   player entry = freezeEntry(ruleset, content, player, course, playerLane)
@@ -1950,7 +1958,7 @@ Budget: 8 runners × 3000 m < 5 ms per race in Node; 10 000 mixed races < 60 s.
   `(frameId, parts, quirks)`: the 10 000 races of the `pr` profile (25.2.1: 7 300 eight-runner and
   2 700 two-runner races) ≈ 5-11 s single-threaded; the nightly `full` profile ≈ 3-5 min.
 - **Bench:** `packages/sim/bench/race.bench.ts` (vitest bench, already excluded from the purity
-  scan): 8 mixed frames, 4 skills each, desert-canyon, `full` and `results`; CI fails if p95 > 5 ms;
+  scan): 8 mixed frames, 4 skills each, canyon, `full` and `results`; CI fails if p95 > 5 ms;
   numbers pasted in the PR. ROADMAP rule: if a race exceeds 5 ms at D10, stop and optimise.
 
 ## 23. Public API and files (item 23)
@@ -2122,7 +2130,7 @@ budget of 20 min and is not part of this gate.
 
 | # | Metric (target) | Knobs → direction |
 | --- | --- | --- |
-| 1 | Style win rate per biome, equal stats (15-35 %) | First the style terms of 9.8: `diveStoopPm` (dive: final and descents), `hoverDraftPm` (hover: middle pack), `glideStartAccelPm` (glide: start), `groundDetourMult` ↓ and `landBasePm`/`landTechPm` ↓ (ground vs flyers on jump courses: detour 1250 → 1100 moved ground from 6 % to 38 % on the ridge in the spec prototype, with the landing loss); `glideLeadDrainPm` ↓ helps glide on long courses (950 → 980 moved canyon glide from 44 % to 33 %); then `diveKeep`/`hoverKeep`/`glideKeep`, `hoverAttackAt`, `packLo`/`packHi`, `groundPreShare`, `groundDamagePm`; `paceHalfWidth` ↑ pulls every style towards 25 %. `stylePace[style][phase]` stays at 1000: a flat per-phase speed bonus is the last resort, not the identity (ADR-0003 D44). Measure with S1 (neutral fixture frames) and its phase-split table; real frames are diagnostics. |
+| 1 | Style win rate over every course, equal stats (15-35 %; per biome until ADR-0007) | First the style terms of 9.8: `diveStoopPm` (dive: final and descents), `hoverDraftPm` (hover: middle pack), `glideStartAccelPm` (glide: start), `groundDetourMult` ↓ and `landBasePm`/`landTechPm` ↓ (ground vs flyers on jump courses: detour 1250 → 1100 moved ground from 6 % to 38 % on the ridge in the spec prototype, with the landing loss); `glideLeadDrainPm` ↓ helps glide on long courses (950 → 980 moved canyon glide from 44 % to 33 %); then `diveKeep`/`hoverKeep`/`glideKeep`, `hoverAttackAt`, `packLo`/`packHi`, `groundPreShare`, `groundDamagePm`; `paceHalfWidth` ↑ pulls every style towards 25 %. `stylePace[style][phase]` stays at 1000: a flat per-phase speed bonus is the last resort, not the identity (ADR-0003 D44). Measure with S1 (neutral fixture frames) and its phase-split table; real frames are diagnostics. |
 | 2 | Manufacturer home 30-45 %, weak ≤ 15 % (one designated entry per manufacturer, fair share 12.5 %, 25.2) | The rule terms of 13.1 (numeric, ADR-0003 D45) carry the cells: `pulseAirPm`, `pulseBiomePm` (Kōryū home desert/descents, weak water); `regenLandLossPm` (Lumière weak jumps); `telemetryDrainPm`, `telemetryAccelPm` (Altair home long, weak sprint); `repairableRuggedPm`, `repairableCurvesPm` (Boneyard home obstacles, weak pure speed); `massThrustCoolPm[biome]` (Steinhaus weak desert). The thrust- and heat-keyed terms (pulse, mass-thrust) need the energy game first: `kE` ↓ (25.3 step 2). `regenPerTick` ↓ before anything else touches Lumière (at 500 it wins 82 % of the equal-PW sprint field, R9). PW compression (`pwCruiseWeight`/`pwBoostWeight` ↓) comes **after** the terms are tuned, so the cells survive it. The global `biomeCool` must not be used for Steinhaus's desert cell: it cools every rule and helps the licence holder relative to governed rivals. Only desert exists: only some cells are measurable in v1. Measure with S2 and its equal-PW, same-style variant. |
 | 3 | Generic vs signature (0.85-0.90, i.e. the signature wins 52.6-54.1 % of 1v1 races, ≈ 0.11-0.18 % faster) | content values of the signature passives (talon-lock, still-air, scrap-armor: tickets in R14); `pulse-chain-accel` semantics (every Nth: shiden's generic third-pulse); the `PREHEAT` rule (heat-to-energy); `regen` trait value (still-air's 0.25 per tick); `waterHitPerDrag` (scrap-armor's water override); `activationNumerator`/`activationFloor` (activation passives) |
 | 4 | Skill leave-one-out (0.5-8 m) | content `speed × duration` (instant speed: gain ≈ speed × duration × p / 15 per tick); `activationNumerator` ↑ / `activationFloor` ↓ lower p; `kAcc` ↑ shrinks accel skills (they only act below target); `hpPerKm` (speed skills lose part of their value where hp binds); iron-wings and gravity-friend need content edits |
@@ -2146,7 +2154,8 @@ interval of its sweep rates (ADR-0005 «Pasada 2»); for σ/mean, `σ × (1 ± 1
 - **S1 style:** 8 runners, 2 per style, built with `neutralFixtureEntry` (3.4: PW 1.0, energy 100,
   dissipation 60, durability 100, `rule: "none"`, no passive, no parts, no quirks; batch fixture,
   not content), stats 600, no actives, lanes shuffled per seed; races per course in 25.2.1; gate on
-  the per-biome mean; a real-frame variant is reported as diagnostics. Reason: every dive frame in
+  the mean of every course (ADR-0007; it was the per-biome mean, and all v1 courses were
+  desert); a real-frame variant is reported as diagnostics. Reason: every dive frame in
   content is PW 1.4, so a real-frame style metric measures frame power, not style.
 - **S2 manufacturer (revision 4: one designated entry per manufacturer, exact counting rule;
   ADR-0003 D40):** 8 runners, lanes shuffled per seed.
@@ -2172,8 +2181,8 @@ interval of its sweep rates (ADR-0005 «Pasada 2»); for σ/mean, `σ × (1 ± 1
     share at 12.5 %, the weak ceiling sits 2.5 points above it: it stops a weak manufacturer from
     beating its fair share, but it does not require it to fall below that share. The home band asks
     for 2.4-3.6 × the fair share.
-  - **Cells:** a course is home or weak for a manufacturer if its biome, a trait or a segment type
-    matches; if both match, the cell is neutral (Kōryū on the canyon: desert home, water weak).
+  - **Cells:** a course is home or weak for a manufacturer if a trait or a segment type matches
+    (ADR-0007: no biome; the v1 cells below were derived with the desert one); if both match, the cell is neutral (Kōryū on the canyon: desert home, water weak).
     There is one verdict (25.2.1) per (manufacturer, course) home or weak cell; neutral cells are
     only reported. v1 desert cells: Kōryū home sprint and ridge; Steinhaus weak on all three
     courses; Lumière weak ridge; Altair home canyon, weak sprint; Boneyard home ridge, weak sprint.
@@ -2189,7 +2198,7 @@ interval of its sweep rates (ADR-0005 «Pasada 2»); for σ/mean, `σ × (1 ± 1
   caracara-signature vs mule (ground).
   - **Build: both entries are the same Falconess.** Each is built with `freezeEntry` (3.1) from
     `{ runnerId: "signature" | "generic", kind: "player", falconessId: <her id>, baseStats: 600 on
-    all five stats, mood: 0, biomeAptitude and styleAptitude: her content maps, frameId, parts: [],
+    all five stats, mood: 0, styleAptitude: her content map (no biome letters, ADR-0007), frameId, parts: [],
     quirks: [], learnedSkills: her uniqueSkills, durability: null }`. So the only active is her
     unique skill (stoop-strike, wind-hover, scavenger-stride), with no generic active. Effective
     stats on the desert courses, with the style letter of the shared frame style: Peregrina A 630
@@ -2223,6 +2232,8 @@ interval of its sweep rates (ADR-0005 «Pasada 2»); for σ/mean, `σ × (1 ± 1
     ridge has) have no v1 course in that biome. For those two, gating every desert course is
     stricter than the brief, which asks for the band in the home biome only. When an urban or
     mountain course exists, their gate moves to their home-biome cells with an ADR line (D47).
+    ADR-0007 removed biomes: every course is a home-biome cell for the three pairs, which is what
+    the batch already gated.
   - Samples per pair and course in 25.2.1: 150 in `pr`; 4000 in `full`, doubled (up to 8000)
     while the interval straddles a band edge (band ±0.025 in ratio). Expected values at v1: R14.
 - **S4 skill leave-one-out (revision 3, exact):** one cell per active skill and course where its
@@ -2405,7 +2416,8 @@ against −23 % to +43 % here).
 descents ≈ 0.7 s − boost 13 m ≈ 0.55 s + two landings ≈ 2 × 0.58 s (14.2) ≈ 87.4 s (prototype
 87.13 s). Canyon: 127.7 s + launch 2.4 s + climb 0.8 s + headwind 2.8 s − tailwind 2.2 s + water
 2.1 s (+ 1 s of re-acceleration) − boost 0.85 s + crawl at 17 m/s after hp runs out at 2.83 km
-≈ 1.3 s ≈ 136 s (prototype 136.16 s). Style terms on top (9.8): dive's stoop is worth ≈ 0.35 s on
+≈ 1.3 s ≈ 136 s (prototype 136.16 s; without the wind terms, ADR-0007, ≈ 135.6 s against the
+prototype's and the engine's 135.15 s). Style terms on top (9.8): dive's stoop is worth ≈ 0.35 s on
 the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing on the ridge's jumps
 (86.46 s against 86.91-87.13 s for the flyers).
 
@@ -2494,6 +2506,13 @@ the sprint (54.12 s); glide's launch ≈ 0.2 s (54.29 s); ground loses nothing o
 | Symmetry | identical builds (noise off) tie exactly on the 3 courses for every style |
 | Cost | 4.4 ms (revision 1 code) and 5.3 ms (revision 2 code) per 8-runner mixed canyon race with 4 skills each in the object-based prototype on the same machine (closures and per-tick arrays; the new terms cost one multiply each); the SoA implementation of section 22 targets 1-2 ms |
 
+**ADR-0007 (no wind):** the canyon cells above are the windy canyon's. Without wind the canyon is
+flat speed on its two canyon segments (23.50 m/s at A 600) and the engine, which still matches the
+prototype run without wind to the milli-tick, gives: same-build σ/mean on the canyon 0.97 % (I
+600), 0.99 % (I 300), 0.97 % (I 1000), shiden 1.07 %, falke 0.96 %; S1 on the canyon 24 / 29 / 32 /
+16 % and the mean of the three courses 26.2 / 26.3 / 25.8 / 21.8 %; S2 v1 on the canyon +0.04 % /
+4 %, −2.02 % / 48 %, +0.10 % / 3 %, −1.27 % / 34 %, 0.00 % / 4 %, none 8 %.
+
 **S2 equal-PW variant** (13.1; hover, PW 1.0, energy 100, dissipation 60, durability 100, stats
 600; solo time vs `none`, then the win rate in a field of the five rules plus three `none`
 fixtures, 600 races per course; this is the S2 field and counting of 25.2, one designated entry
@@ -2581,7 +2600,6 @@ export const RACE = {
   kClimb: 150, // ‰ per 1.0 of grade lost on climbs (1 − 0.15·grade)
   kDescent: 100, // ‰ per 1.0 of grade gained on descents (1 + 0.10·grade)
   kWater: 1_000, // ‰ weight of drag (1 − drag)
-  kWind: 1_000, // ‰ weight of signed wind (1 + wind)
   kCurves: 200, // ‰, curve penalty at agility 0 (1 − 0.20·(1 − A/1200))
   segFactorMin: 500, // ‰, new: clamp of f_seg (schema bounds of segment-factor)
   segFactorMax: 1_500, // ‰, new
@@ -2593,7 +2611,6 @@ export const RACE = {
   kCool: 1_000, // mh per tick without boost (k_cool 1.0)
   coolDissWeight: 0, // ‰, new knob: cooling ∝ dissipation / dissRef; 0 = brief
   dissRef: 60, // dissipation (content units), new: reference of coolDissWeight
-  biomeCool: { desert: 1_000, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰, new knob; 1000 = brief
   heatToleranceCourage: 300, // ‰ per 1200 courage, new: heatCap = D × (1 + 0.3·C/1200) (BRIEF tolerance)
   heatPenaltyMult: 920, // ‰ speed while overheated
   overheatDurPerTick: 1_000, // md per overheated tick, new (BRIEF "durability −= 1")
@@ -2628,10 +2645,10 @@ export const RACE = {
   telemetryPowerCap: 1_100, // ‰ PW cap (applied by resolveFrameBuild)
 
   // rule terms (new, revision 2; numeric, BRIEF §7 deviation; section 13.1, ADR-0003 D45)
-  massThrustCoolPm: { desert: 500, mountain: 1_250, coast: 1_000, urban: 500, tundra: 1_250 }, // ‰ of coolTick, Steinhaus
+  massThrustCoolPm: 500, // ‰ of coolTick, Steinhaus (ADR-0007: the desert value of the spec's per-biome map)
   regenLandLossPm: 2_000, // ‰ of the landing loss, Lumière (light airframe)
   pulseAirPm: [1_000, 1_000, 1_200, 1_000, 600, 1_000, 1_000], // ‰ burst thrust per segment type (SEGMENT_TYPES order), Kōryū
-  pulseBiomePm: { desert: 1_150, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰ burst thrust per biome, Kōryū
+  pulseBasePm: 1_150, // ‰ burst thrust, Kōryū (ADR-0007: was pulseBiomePm, the desert value)
   telemetryDrainPm: 900, // ‰ of hp drain, Altair
   telemetryAccelPm: 850, // ‰ of acceleration, Altair
   repairableRuggedPm: 500, // ‰ of the landing loss and of the detour's extra length, Boneyard
@@ -2848,7 +2865,7 @@ ADR-0003 accepted **whole**, gaps included (CLAUDE.md "preguntar antes de decidi
   `${raceSeed}/field`; race seed `${seed}/race/${turn}`; D12 reports S7 (grade ≥ B per Falconess)
   with the goal pass-rate table per Falconess and goal turn as a diagnostic.
 - **D38 [literal] Knobs at brief-neutral defaults:** `pwCruiseWeight`, `pwBoostWeight`,
-  `stylePace`, `coolDissWeight`/`dissRef`, `biomeCool`, `kWater`, `kWind`; changing any is a balance
+  `stylePace`, `coolDissWeight`/`dissRef`, `kWater` (`biomeCool` and `kWind` removed by ADR-0007); changing any is a balance
   change with a batch report and an ADR line.
 - **D39 [gap] Effective stats are validated ≤ 2000, not clamped at 1200** (only the curves term and
   the Intelligence windows use `min(x, 1200)`); course length ≤ 10 km in the race validator.
@@ -2887,10 +2904,11 @@ ADR-0003 accepted **whole**, gaps included (CLAUDE.md "preguntar antes de decidi
   numérica", and the five rule texts] Rule terms (numeric, revision 4 wording):** each rule gains
   one numeric term, compiled with its `RuleSpec` (13.1).
   - **The terms and their stat equivalents** (600 stats, PW 1.0):
-    - Steinhaus: cooling ×0.5 in the desert (×1.25 in tundra and mountain). No stat equivalent;
+    - Steinhaus: cooling ×0.5 (spec; v1 ×0.05) on every course since ADR-0007 (it was the desert
+      value; ×1.25 in tundra and mountain, which had no course). No stat equivalent;
       at the cap the governed duty falls from 1/3 to 1/5.
-    - Kōryū: burst thrust by segment type and biome (desert ×1.15, descent ×1.2, water ×0.6).
-      Thrust of +0.15 PW in the desert, cruise unchanged.
+    - Kōryū: burst thrust by segment type (descent ×1.2, water ×0.6) and a base ×1.15 on every
+      course (ADR-0007: the desert value). Thrust of +0.15 PW, cruise unchanged.
     - Lumière: landing loss ×2. ≈ +40 m per landing, beyond the whole technique range.
     - Altair: drain ×0.9 and acceleration ×0.85 on every segment of every course, ≈ +178 St and
       −180 T.
@@ -2917,7 +2935,7 @@ ADR-0003 accepted **whole**, gaps included (CLAUDE.md "preguntar antes de decidi
     (no generic actives); no parts. The generic carries no quirks.
   - **Verdict:** one verdict per (pair, course) cell, 9 cells, no pooling.
   - **Home biome:** "bioma casa" reads as desert for all three pairs in v1, because no urban or
-    mountain course exists. Peregrina: desert A, Kōryū home. Cernícala: urban A, Altair home
+    mountain course exists (ADR-0007 removed biomes: superseded). Peregrina: desert A, Kōryū home. Cernícala: urban A, Altair home
     urban. Caracara: mountain A; Boneyard's home is obstacle courses. Their gate moves to the
     home-biome cells, with an ADR line, once such a course exists.
   - **Intervals:** S3 and S8 are judged with a 95 % interval; S3 doubles its samples while
