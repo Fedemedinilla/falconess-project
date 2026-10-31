@@ -1,4 +1,4 @@
-import { BIOMES, courseLength, PART_TYPES, STYLES } from "@falconess/schema";
+import { courseLength, PART_TYPES, STYLES } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { loadContent } from "./node.js";
 
@@ -55,13 +55,12 @@ describe("MVP content", () => {
     }
   });
 
-  it("each Falconess has exactly one unique active skill and aptitudes for every biome", () => {
+  it("each Falconess has exactly one unique active skill and an A in its own style", () => {
     for (const f of idx.falconess.values()) {
       expect(f.uniqueSkills.length).toBe(1);
       const sk = idx.getSkill(f.uniqueSkills[0] ?? "");
       expect(sk.kind).toBe("active");
       expect(sk.uniqueTo).toBe(f.id);
-      for (const b of BIOMES) expect(f.biomeAptitude[b]).toBeDefined();
       expect(f.styleAptitude[f.preferredStyle]).toBe("A");
     }
   });
@@ -75,9 +74,9 @@ describe("MVP content", () => {
   });
 
   it("courses have the planned lengths and cover every segment type", () => {
-    expect(courseLength(idx.getCourse("desert-sprint"))).toBe(1200);
-    expect(courseLength(idx.getCourse("desert-ridge"))).toBe(2000);
-    expect(courseLength(idx.getCourse("desert-canyon"))).toBe(3000);
+    expect(courseLength(idx.getCourse("sprint"))).toBe(1200);
+    expect(courseLength(idx.getCourse("ridge"))).toBe(2000);
+    expect(courseLength(idx.getCourse("canyon"))).toBe(3000);
     const types = new Set([...idx.courses.values()].flatMap((c) => c.segments.map((s) => s.type)));
     expect([...types].sort()).toEqual([
       "canyon",

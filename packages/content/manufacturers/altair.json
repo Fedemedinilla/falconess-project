@@ -12,7 +12,6 @@
     "textKey": "crew.altair"
   },
   "home": {
-    "biomes": ["urban"],
     "traits": ["long"]
   },
   "weak": {

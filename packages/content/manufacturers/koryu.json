@@ -12,7 +12,6 @@
     "textKey": "crew.koryu"
   },
   "home": {
-    "biomes": ["desert"],
     "segments": ["descent"]
   },
   "weak": {

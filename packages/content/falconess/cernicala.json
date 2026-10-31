@@ -15,13 +15,6 @@
     "courage": 0,
     "intelligence": 0.2
   },
-  "biomeAptitude": {
-    "desert": "B",
-    "mountain": "C",
-    "coast": "B",
-    "urban": "A",
-    "tundra": "C"
-  },
   "styleAptitude": {
     "dive": "C",
     "hover": "A",
@@ -34,22 +27,22 @@
   "seasonGoals": [
     {
       "turn": 12,
-      "courseId": "desert-sprint",
+      "courseId": "sprint",
       "minPlace": 7
     },
     {
       "turn": 24,
-      "courseId": "desert-canyon",
+      "courseId": "canyon",
       "minPlace": 6
     },
     {
       "turn": 36,
-      "courseId": "desert-ridge",
+      "courseId": "ridge",
       "minPlace": 5
     },
     {
       "turn": 46,
-      "courseId": "desert-canyon",
+      "courseId": "canyon",
       "minPlace": 3
     }
   ],

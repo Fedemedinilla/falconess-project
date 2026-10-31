@@ -11,12 +11,6 @@
     "signatureEvent": "steinhaus-maintenance-1",
     "textKey": "crew.steinhaus"
   },
-  "home": {
-    "biomes": ["tundra", "mountain"]
-  },
-  "weak": {
-    "biomes": ["urban", "desert"]
-  },
   "sponsors": [],
   "inGacha": true,
   "version": 1,

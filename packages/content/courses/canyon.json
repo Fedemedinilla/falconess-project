@@ -1,6 +1,5 @@
 {
-  "id": "desert-canyon",
-  "biome": "desert",
+  "id": "canyon",
   "traits": ["long"],
   "segments": [
     {
@@ -14,8 +13,7 @@
     },
     {
       "type": "canyon",
-      "length": 600,
-      "wind": -0.1
+      "length": 600
     },
     {
       "type": "flat",
@@ -23,8 +21,7 @@
     },
     {
       "type": "canyon",
-      "length": 400,
-      "wind": 0.15
+      "length": 400
     },
     {
       "type": "water",
@@ -37,5 +34,5 @@
     }
   ],
   "version": 1,
-  "textKey": "course.desert-canyon"
+  "textKey": "course.canyon"
 }

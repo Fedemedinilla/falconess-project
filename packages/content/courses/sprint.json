@@ -1,6 +1,5 @@
 {
-  "id": "desert-sprint",
-  "biome": "desert",
+  "id": "sprint",
   "traits": ["sprint", "pure-speed"],
   "segments": [
     {
@@ -27,5 +26,5 @@
     }
   ],
   "version": 1,
-  "textKey": "course.desert-sprint"
+  "textKey": "course.sprint"
 }

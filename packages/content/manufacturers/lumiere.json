@@ -11,9 +11,6 @@
     "signatureEvent": "lumiere-calibration-1",
     "textKey": "crew.lumiere"
   },
-  "home": {
-    "biomes": ["coast", "urban"]
-  },
   "weak": {
     "segments": ["jump"]
   },

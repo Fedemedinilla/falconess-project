@@ -1,6 +1,5 @@
 {
-  "id": "desert-ridge",
-  "biome": "desert",
+  "id": "ridge",
   "traits": ["obstacles"],
   "segments": [
     {
@@ -37,5 +36,5 @@
     }
   ],
   "version": 1,
-  "textKey": "course.desert-ridge"
+  "textKey": "course.ridge"
 }
