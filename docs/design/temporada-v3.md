@@ -845,6 +845,13 @@ Falconess tiene una letra por estilo:
   hagas lo que hagas. Como en Umamusume, la Falconess se entrena para enfrentar primero la pista,
   sobrevivirla y ser mejor que las otras mejorando sus puntos débiles. Hay que rediseñar sin ciclo.
 - **El Pelotón se ve aburrido:** necesita algo divertido que hacer.
+- **Batallas internas por posición** (como en Umamusume): cada posición tiene su pelea dentro de la
+  carrera. Una de Remate puede ir delante de las otras de Remate, en el medio, encerrada por ellas o
+  atrás por falta de velocidad. El Pelotón pelea por la punta del grupo contra las otras del
+  Pelotón; la Punta sola marca el paso tranquila, pero con otra Punta (o un Acecho encima) se
+  desgastan peleando el primer lugar. Hay habilidades que solo se activan si ganó su pelea en un
+  punto de la pista (por ejemplo, ir primera en cierto tramo). Una mala largada deja a la Punta
+  trabada en el grupo. Las peleas se ganan con sus stats y no son demasiado explícitas.
 
 ## T22 · La radio: los gritos del jugador
 
