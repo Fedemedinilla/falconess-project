@@ -853,6 +853,26 @@ Falconess tiene una letra por estilo:
   punto de la pista (por ejemplo, ir primera en cierto tramo). Una mala largada deja a la Punta
   trabada en el grupo. Las peleas se ganan con sus stats y no son demasiado explícitas.
 
+**Propuesta v2 sin ciclo (2026-10-31), pendiente de aprobación.** Informe local:
+`.work/design4/t21/v2/propuesta-t21-v2.md`. Maqueta (misma URL, versión 2):
+https://claude.ai/artifact/LifhfwWfzL2Ajidojd2yHQ
+
+- **La pista es la rival, el puesto se pelea.** Ninguna regla mira la posición de la rival; los
+  bonos de pista son de la banda de vuelo, no de la etiqueta. Juntarse castiga hacia adentro.
+- Cada posición tiene **un puesto** que pelea con las de su misma posición y **una stat dueña**:
+  Punta (la punta; Resistencia), Pelotón (la proa del grupo; Inteligencia), Acecho (la mira en
+  banda alta; Técnica), Remate (a tiro y carril limpio; Coraje). La Agilidad decide largada,
+  pique, proa y llegar a tiro.
+- Peleas y fallas: largada (Punta trabada en el grupo), pique entre Puntas, encierro y hueco en el
+  Pelotón, cola para caer en Acecho, techo y carril ocupados en Remate (escalera de picadas).
+- **Habilidades de puesto:** solo se activan si tiene el puesto en un punto de la pista (todo o
+  nada por defecto).
+- **Pelotón:** relevos en «serrucho», el hueco (zoom, Inteligencia y Coraje) y **el Abanico** en el
+  final: el grupo abre las alas en cadena y la proa sale disparada.
+- Tarjeta de requisitos y panel «Microbatallas» después de la carrera: cada derrota apunta a una
+  stat de ella, nunca a «elegiste mal contra esa rival».
+- Costo XL (L si se lanza después de E3, sin nervio), en 5 etapas.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.

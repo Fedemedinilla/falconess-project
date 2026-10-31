@@ -1,7 +1,7 @@
 <title>Posiciones de carrera</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Maqueta animada de las cuatro posiciones de T21: Punta, Pelotón, Acecho y Remate, con la prueba de nervio y la tarjeta de elección.">
+<meta name="description" content="Maqueta animada de T21 v2: cuatro posiciones sin ciclo. La pista es la rival y cada posición pelea su puesto con las que eligieron lo mismo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,62 +45,94 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .ib{width:48px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--btn);display:grid;place-items:center}
 .ib svg{width:18px;height:18px;fill:currentColor}
 input[type=range]{flex:1;min-width:0;accent-color:var(--focus);height:44px}
-.cap{min-height:44px;margin:6px 0 0;font:600 16px/1.3 var(--cond);letter-spacing:.01em}
+.cap{min-height:3.9em;margin:6px 0 0;font:600 16px/1.3 var(--cond);letter-spacing:.01em}
 .cap b{color:var(--gold)}
 .seg{display:grid;gap:6px}
 .seg.c5{grid-template-columns:repeat(5,1fr)}
+.seg.c4{grid-template-columns:repeat(4,1fr)}
 .seg.c3{grid-template-columns:repeat(3,1fr)}
-.seg button{min-height:48px;padding:4px 2px;border-radius:10px;border:1px solid var(--line);background:var(--btn);font:700 14px/1.05 var(--cond);letter-spacing:.02em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.seg button{min-height:48px;padding:4px 2px;border-radius:10px;border:1px solid var(--line);background:var(--btn);font:700 14px/1.05 var(--cond);letter-spacing:.02em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
 .seg button .ic{font-size:16px;line-height:1}
 .seg button[aria-pressed=true]{background:var(--on);color:var(--on-ink);border-color:var(--on)}
 .lbl{font:700 13px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
-.panel h3{margin:0 0 4px;font:800 22px/1 var(--cond);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.panel h3{margin:0 0 4px;font:800 22px/1 var(--cond);text-transform:uppercase;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panel h3 small{font:700 13px/1 var(--cond);color:var(--muted);letter-spacing:.04em}
 .panel p{margin:0}
-.panel .two{min-height:3em}
+.panel h4{margin:14px 0 4px;font:800 14px/1.1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip{font:700 13px/1 var(--cond);letter-spacing:.03em;text-transform:uppercase;padding:6px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.chip.own{background:var(--on);color:var(--on-ink);border-color:var(--on)}
 .meter{margin-top:12px}
 .meter .bar{position:relative;height:12px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
 .meter .fill{position:absolute;top:0;bottom:0;border-radius:6px;opacity:.9}
-.meter .now{position:absolute;top:0;bottom:0;left:0;width:5%;background:var(--muted);opacity:.5}
-.meter .t{display:flex;justify-content:space-between;font:600 13px/1.2 var(--cond);color:var(--muted);margin-top:4px}
-.cycle{display:flex;align-items:center;justify-content:space-between;gap:2px;margin-top:10px;font:800 15px/1 var(--cond);text-transform:uppercase}
-.cycle span.a{color:var(--muted);font-weight:600}
+.meter .t{display:flex;justify-content:space-between;gap:8px;font:600 13px/1.2 var(--cond);color:var(--muted);margin-top:4px}
 .prof{width:100%;height:34px;display:block;margin-top:10px}
-.nerve{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin-top:10px;font-size:14px}
-.nerve b{font:800 16px/1.2 var(--cond)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;margin-top:8px;font-size:14px}
+.kv dt{font:700 13px/1.35 var(--cond);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:1px}
+.kv dd{margin:0}
+.weak{color:var(--danger);font-weight:600}
+.comp{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px}
+.comp div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 6px 7px;font-size:13px;line-height:1.25}
+.comp div b{display:block;font:800 13px/1 var(--cond);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.skl{list-style:none;padding:0;margin:4px 0 0;font-size:14px}
+.skl li{padding:5px 0;border-top:1px solid var(--line)}
+.skl li:first-child{border-top:0}
+.skl b{font:800 15px/1 var(--cond);text-transform:uppercase;letter-spacing:.02em}
+.tbl{display:grid;grid-template-columns:auto auto 1fr;gap:0;margin-top:10px;font-size:14px}
+.tbl>*{padding:7px 6px;border-top:1px solid var(--line)}
+.tbl .h{font:700 12px/1.1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:0;padding-top:0}
+.tbl .p{font:800 16px/1.1 var(--cond);text-transform:uppercase;white-space:nowrap}
+.nerve{display:grid;grid-template-columns:1fr auto;gap:6px 10px;margin-top:10px;font-size:14px;align-items:baseline}
+.nerve b{font:800 17px/1.2 var(--cond);white-space:nowrap}
 .note{font-size:13px;color:var(--muted);margin-top:8px}
+/* microbatallas */
+.mb{list-style:none;padding:0;margin:6px 0 0}
+.mb li{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+.mb li:first-child{border-top:0}
+.mb .m{font:800 18px/1 var(--cond);text-align:center;padding-top:1px}
+.mb .ok{color:var(--ok)} .mb .ko{color:var(--danger)}
+.mb .tr{display:block;font:700 13px/1.2 var(--cond);letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.why{margin-top:10px;border-radius:12px;padding:10px 12px;background:var(--panel2);border:1px solid var(--line);font-size:14px}
+.why b{font:800 15px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:3px}
+.why.lose b{color:var(--danger)} .why.win b{color:var(--ok)}
 /* pre-race card */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:10px}
 .card .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .card .hd b{font:800 20px/1 var(--cond);text-transform:uppercase}
 .card .hd span{font:600 13px/1.2 var(--cond);color:var(--muted);text-transform:uppercase;text-align:right}
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.opt{position:relative;text-align:left;border-radius:14px;border:2px solid var(--line);background:var(--btn);padding:10px 10px 10px;min-height:150px;display:flex;flex-direction:column;gap:4px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.opt{position:relative;text-align:left;border-radius:14px;border:2px solid var(--line);background:var(--btn);padding:10px 9px;min-height:150px;display:flex;flex-direction:column;gap:5px;min-width:0}
 .opt[aria-pressed=true]{border-color:var(--c);box-shadow:0 0 0 2px var(--c) inset}
-.opt .top{display:flex;justify-content:space-between;align-items:flex-start}
-.opt .nm{font:800 19px/1 var(--cond);text-transform:uppercase;color:var(--c)}
-.opt .lt{font:800 34px/.9 var(--cond)}
+.opt .top{display:flex;justify-content:space-between;align-items:flex-start;gap:4px}
+.opt .nm{font:800 18px/1 var(--cond);text-transform:uppercase;color:var(--c)}
+.opt .lt{font:800 32px/.9 var(--cond)}
 .opt .lt.A{color:var(--ok)} .opt .lt.D{color:var(--danger)}
-.opt .cb{font:600 13px/1.2 Barlow,sans-serif;color:var(--ink)}
+.opt .ex{display:block}
+.opt .ex .k{display:flex;justify-content:space-between;gap:4px;font:700 12px/1.1 var(--cond);letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.opt .ex .k i{font-style:normal;color:var(--ink)}
+.opt .ex.bad .k i,.opt .ex.bad .k{color:var(--danger)}
+.opt .ex .b{position:relative;display:block;height:7px;border-radius:4px;background:var(--panel2);margin-top:3px;overflow:visible}
+.opt .ex .b .h{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c)}
+.opt .ex.bad .b .h{background:var(--danger)}
+.opt .ex .b .n{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);border-radius:1px}
+.opt .cb{font:500 12.5px/1.25 Barlow,sans-serif;color:var(--ink)}
 .opt .nv{font:700 13px/1.1 var(--cond);color:var(--muted);text-transform:uppercase;margin-top:auto}
 .opt .sug{position:absolute;top:-9px;left:10px;font:800 11px/1 var(--cond);letter-spacing:.05em;text-transform:uppercase;background:var(--c);color:var(--bg);padding:3px 6px;border-radius:6px}
-.opt svg{width:100%;height:24px;display:block}
 .go{width:100%;min-height:52px;margin-top:12px;border-radius:12px;border:0;background:var(--on);color:var(--on-ink);font:800 20px/1 var(--cond);text-transform:uppercase;letter-spacing:.04em}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:370px){.seg.c5 button{font-size:12.5px}.opt .nm{font-size:16px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
 <div class="wrap">
   <h1>Posiciones de carrera</h1>
-  <p class="sub">T21 · cuatro formas de correr, que se ven por la <b>altura</b> y la <b>forma</b> de las alas. Maqueta, no es el motor.</p>
+  <p class="sub">T21 v2 · sin ciclo. <b>La pista es la rival y el puesto se pelea</b>: cada posición tiene su buen lugar y lo disputa con las que eligieron lo mismo. Maqueta, no es el motor.</p>
 
-  <div class="stage"><canvas id="cv" role="img" aria-label="Vista lateral animada: Punta vuela bajo adelante, Pelotón corre en grupo por el suelo, Acecho vuela alto y cae en picada, Remate sube al techo y cae en la gran picada."></canvas></div>
+  <div class="stage"><canvas id="cv" role="img" aria-label="Vista lateral animada: dos Puntas pelean la punta en un pique sobre el agua; tres corredoras del Pelotón pelean la proa con relevos, una queda encerrada y busca el hueco; el grupo abre las alas en cadena en el Abanico; el Acecho cae en picada; el Remate sube al techo y cae en la gran picada."></canvas></div>
   <div class="ctrl">
     <button class="ib" id="play" aria-label="Pausa"><svg viewBox="0 0 20 20" id="playIc"><rect x="4" y="3" width="4" height="14"/><rect x="12" y="3" width="4" height="14"/></svg></button>
-    <input type="range" id="scrub" min="0" max="14" step="0.05" value="0" aria-label="Momento de la carrera">
+    <input type="range" id="scrub" min="0" max="18" step="0.05" value="0" aria-label="Momento de la carrera">
   </div>
   <p class="cap" id="cap" aria-live="off"></p>
 
@@ -114,30 +146,40 @@ input[type=range]{flex:1;min-width:0;accent-color:var(--focus);height:44px}
   </div>
   <div class="panel" id="info"></div>
 
-  <div class="lbl">Prueba de nervio · Coraje</div>
+  <div class="lbl">Prueba de nervio · Coraje de ella</div>
   <div class="seg c3" id="nerveSeg">
     <button data-n="auto" aria-pressed="true">Alterna</button>
     <button data-n="low" aria-pressed="false">Coraje 300</button>
     <button data-n="high" aria-pressed="false">Coraje 900</button>
   </div>
   <div class="panel">
-    <p><b>A más Coraje propio, menos chance de achicarse. A más Coraje de la rival, más asusta.</b></p>
+    <p><b>A más Coraje propio, menos chance de achicarse. A más Coraje de la otra, más asusta.</b> Se tira solo en roces entre dos corredoras, nunca por la posición.</p>
     <div class="nerve">
-      <span>La sombra del Acecho sobre la Punta</span><b id="pS">35 %</b>
-      <span>La gran picada del Remate contra el muro</span><b id="pM">27 %</b>
+      <span>El hueco del Pelotón: pasar entre dos cuerpos (la mejor de las dos tiene Coraje 700)</span><b id="pH">27 %</b>
+      <span>Picada cruzada del Remate: ventana pisada (la mejor de abajo tiene Coraje 700)</span><b id="pC">32 %</b>
     </div>
-    <p class="note">Si se achica: visor rojo, alas que tiemblan y se pliegan, propulsor que tose, 3 a 5 m perdidos. Si aguanta: destello dorado «AGUANTA» y las alas se abren de golpe. Rivales con Coraje 600; el muro tiene Coraje 700.</p>
+    <p class="note">El Coraje también actúa sin tirada: fija el hueco más chico que se anima a tomar. Coraje 300: 3,5 m. Coraje 900: 2,5 m. El hueco de la maqueta mide 3,6 m.</p>
   </div>
 
+  <h2>Después de la carrera</h2>
+  <p class="sub">Panel «Microbatallas». Una línea por chequeo, con la causa, la stat y los metros. Cada derrota apunta a una stat de ella, nunca a «elegiste mal».</p>
+  <div class="seg c4" id="mbSeg">
+    <button data-m="punta" aria-pressed="false" style="color:var(--punta)"><span class="ic">&#9650;</span>Punta</button>
+    <button data-m="peloton" aria-pressed="true" style="color:var(--peloton)"><span class="ic">&#9632;</span>Pelotón</button>
+    <button data-m="acecho" aria-pressed="false" style="color:var(--acecho)"><span class="ic">&#9670;</span>Acecho</button>
+    <button data-m="remate" aria-pressed="false" style="color:var(--remate)"><span class="ic">&#9660;</span>Remate</button>
+  </div>
+  <div class="panel" id="mb"></div>
+
   <h2>Antes de largar</h2>
-  <p class="sub">Un toque. La mejor letra viene marcada. Cada tarjeta muestra la combinación con sus alas y la chance de achicarse en el momento más duro.</p>
+  <p class="sub">Un toque. Viene marcada la de <b>menor faltante</b> contra la pista, no la de mejor letra. Cada tarjeta muestra lo que pide la pista contra lo que ella tiene, cuántas comparten su posición y la chance de achicarse en su roce más duro.</p>
   <div class="seg c3" id="fal">
     <button data-k="peregrina" aria-pressed="true">Peregrina<span style="font-weight:600;font-size:12px;opacity:.75">Picada</span></button>
     <button data-k="cernicala" aria-pressed="false">Cernícala<span style="font-weight:600;font-size:12px;opacity:.75">Suspensión</span></button>
     <button data-k="caracara" aria-pressed="false">Caracara<span style="font-weight:600;font-size:12px;opacity:.75">Rasante</span></button>
   </div>
   <div class="card" id="card"></div>
-  <p class="note">Letras y Coraje de ejemplo (Peregrina 700, Cernícala 550, Caracara 800). Rival típica con Coraje 600.</p>
+  <p class="note">Barra: lo que ella tiene. Raya: lo que pide la pista. En rojo, su punto débil para esta carrera. Stats y letras de ejemplo.</p>
 </div>
 
 <script>
@@ -151,42 +193,65 @@ const RMq=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matc
 let RM=RMq.matches;
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 let W=360,H=380,DPR=1;
-const T=14, CAMV=18; // loop seconds; world m/s of the camera; screen = 100 m
+const T=18, CAMV=20; // loop seconds; camera m/s; screen = 100 m
 
 /* ---------- positions ---------- */
 const POS={
-  punta:{n:'Punta',ic:'▲',c1:'#1d5fc4',c2:'#9fe3ff',glow:'#5cc8ff',lane:0,heat:0},
-  peloton:{n:'Pelotón',ic:'■',c1:'#1f8a5c',c2:'#7ff0c0',glow:'#4be3a0',lane:2,heat:.2},
-  acecho:{n:'Acecho',ic:'◆',c1:'#c2711a',c2:'#ffd27a',glow:'#ffb340',lane:1,heat:.35},
-  remate:{n:'Remate',ic:'▼',c1:'#6a35c4',c2:'#d6b8ff',glow:'#b48cff',lane:4,heat:.3}
+  punta:{n:'Punta',ic:'▲',ho:'△',c1:'#1d5fc4',c2:'#9fe3ff',glow:'#5cc8ff',heat:0},
+  peloton:{n:'Pelotón',ic:'■',ho:'□',c1:'#1f8a5c',c2:'#7ff0c0',glow:'#4be3a0',heat:.2},
+  acecho:{n:'Acecho',ic:'◆',ho:'◇',c1:'#c2711a',c2:'#ffd27a',glow:'#ffb340',heat:.35},
+  remate:{n:'Remate',ic:'▼',ho:'▽',c1:'#6a35c4',c2:'#d6b8ff',glow:'#b48cff',heat:.3}
 };
-const MATE={c1:'#56606e',c2:'#aab3c2',glow:'#8a95a8',heat:.25,lane:2};
-// keyframes [t, xFrac, altitudeBand]
+const RIV={};for(const k in POS){const c=POS[k];RIV[k]={c1:null,c2:'#b9c2d0',glow:c.glow,heat:c.heat};}
+/* entities: her = la corredora que seguimos en esa posición; las otras son rivales de la MISMA posición */
+const ENTS=[
+  {k:'re',pos:'remate',her:1,lane:4,i:0},
+  {k:'e1',pos:'peloton',lane:0,i:1},
+  {k:'eE',pos:'peloton',her:1,lane:2,i:2},
+  {k:'e2',pos:'peloton',lane:4,i:3},
+  {k:'ac',pos:'acecho',her:1,lane:1,i:4},
+  {k:'pB',pos:'punta',lane:0,i:5,nm:'H. ROJO'},
+  {k:'pA',pos:'punta',her:1,lane:3,i:6}
+];
+// keyframes [t, xFrac, altitudeBand]; hi = Coraje 900, lo = Coraje 300
+const pelE=[[0,.46,0],[2.4,.47,0],[2.7,.50,.9],[3.0,.53,0],[3.8,.53,0],[5.4,.52,0],[6.6,.51,0]];
+const pel1=[[0,.51,0],[4.8,.505,0],[5.1,.535,.9],[5.4,.555,0],[6.6,.56,0]];
+const pel2=[[0,.49,0],[3.8,.50,0],[4.1,.525,.9],[4.4,.545,0],[6.6,.545,0],[7.1,.53,0]];
+const reC=[[0,.15,0],[10.85,.36,0],[11.6,.44,3],[12.0,.47,3]];
 const K={
-  punta:{hi:[[0,.60,0],[.8,.64,0],[1.5,.72,1],[3,.78,1],[4.6,.80,1],[5,.80,0],[5.7,.80,0],[6.1,.80,1],[7,.80,1],[7.6,.78,1],[8.3,.75,0],[14,.74,0]],
-         lo:[[0,.60,0],[.8,.64,0],[1.5,.72,1],[3,.78,1],[3.5,.78,1],[4.3,.73,.5],[4.8,.72,0],[6.2,.71,0],[6.7,.71,1],[7.6,.70,1],[8.3,.68,0],[14,.68,0]]},
-  peloton:{hi:[[0,.48,0],[8,.50,0],[11,.57,0],[14,.58,0]]},
-  acecho:{hi:[[0,.36,0],[1,.38,0],[2.2,.54,2],[3.2,.74,2],[6.6,.76,2],[7,.74,2.1],[7.8,.86,0],[9,.87,0],[14,.84,0]]},
-  remate:{hi:[[0,.15,0],[8.4,.19,0],[9.4,.29,3],[9.9,.33,3],[10.65,.57,.04],[10.75,.59,0],[12.4,.92,0],[14,.95,0]],
-          lo:[[0,.15,0],[8.4,.19,0],[9.4,.29,3],[9.9,.33,3],[10.2,.40,2.1],[10.6,.44,1.6],[11.3,.50,0],[12.4,.62,0],[14,.66,0]]}
+  pA:{hi:[[0,.60,0],[.8,.64,0],[1.1,.675,.6],[1.5,.72,1],[3.6,.77,1],[4.4,.80,1],[7,.82,1],[8.6,.80,1],[9.6,.76,1],[10.4,.73,0],[18,.74,0]]},
+  pB:{hi:[[0,.58,0],[.8,.62,0],[1.2,.665,.6],[1.6,.715,1],[3.4,.765,1],[3.9,.755,.9],[4.6,.72,.8],[8.6,.70,.8],[9.6,.67,.6],[10.4,.65,0],[18,.64,0]]},
+  eE:{hi:pelE.concat([[7.1,.58,0],[8.6,.59,0],[8.75,.61,.35],[9.2,.665,1],[9.7,.71,1],[10.1,.73,0],[13,.76,0],[18,.78,0]]),
+      lo:pelE.concat([[7.1,.505,0],[8.6,.51,0],[10,.50,0],[18,.53,0]])},
+  e1:{hi:pel1.concat([[7.1,.57,0],[8.85,.575,0],[9.0,.595,.35],[9.4,.635,.6],[9.8,.665,0],[18,.70,0]]),
+      lo:pel1.concat([[7.1,.578,0],[8.6,.585,0],[8.75,.61,.35],[9.2,.67,1],[9.7,.71,1],[10.1,.72,0],[18,.75,0]])},
+  e2:{hi:pel2.concat([[9.1,.535,0],[9.25,.555,.35],[9.6,.59,.5],[10.0,.62,0],[18,.66,0]]),
+      lo:pel2.concat([[8.85,.54,0],[9.0,.56,.35],[9.4,.60,.5],[9.8,.63,0],[18,.67,0]])},
+  ac:{hi:[[0,.40,0],[1,.42,0],[2.2,.48,2],[3.2,.50,2],[9.8,.52,2],[10.1,.50,2.1],[10.9,.80,0],[12,.82,0],[18,.80,0]]},
+  re:{hi:reC.concat([[12.75,.70,.04],[12.85,.72,0],[14.3,.92,0],[18,.95,0]]),
+      lo:reC.concat([[12.3,.53,2.1],[12.7,.57,1.6],[13.4,.63,0],[14.8,.70,0],[18,.72,0]])}
 };
+// Abanico: despegue en cadena por ranking real
+const OPEN={hi:[['eE',8.6],['e1',8.85],['e2',9.1]],lo:[['e1',8.6],['e2',8.85]]};
+const openT=(k,b)=>{const r=OPEN[b?'hi':'lo'].find(o=>o[0]===k);return r?r[1]:null;};
 function kf(a,t){if(t<=a[0][0])return [a[0][1],a[0][2]];for(let i=0;i<a.length-1;i++){const p=a[i],q=a[i+1];if(t<=q[0]){let f=(t-p[0])/(q[0]-p[0]);f=f*f*(3-2*f);return [lerp(p[1],q[1],f),lerp(p[2],q[2],f)];}}const l=a[a.length-1];return [l[1],l[2]];}
-const keys=(id,brave)=>K[id][brave?'hi':'lo']||K[id].hi;
+const keys=(k,b)=>K[k][b?'hi':'lo']||K[k].hi;
 
 /* ---------- track (world metres) ---------- */
-const WATER=[80,142], JUMP=[150,162], FINAL=210;
+const WATER=[60,150], CP=[[168,'50 %'],[208,'60 %'],[228,'FINAL'],[250,'75 %']], FALLW=298;
 const cam=t=>CAMV*t;
-function jumpArc(wx){if(wx>JUMP[0]-1&&wx<JUMP[1]+1){const f=clamp((wx-JUMP[0]+1)/(JUMP[1]-JUMP[0]+2),0,1);return .6*Math.sin(PI*f);}return 0;}
+const PQ=[1.5,3.8]; // pique
 
 /* ---------- state ---------- */
 let t=0,playing=!RM,focus='',nerveMode='auto',loopN=0,last=performance.now(),NOW=0;
-if(RM)t=4.0;
+if(RM)t=8.95;
 const brave=()=>nerveMode==='high'?true:nerveMode==='low'?false:(loopN%2===1);
 
-/* nerve chance, permil */
-const fl=(n)=>Math.floor(n);
-function pNerve(extra,cRival,cOwn){return clamp(250+extra+fl(200*Math.min(cRival,1200)/1200)-fl(400*Math.min(cOwn,1200)/1200),30,600);}
-const pct=p=>Math.round(p/10)+' %';
+/* nerve chance, permil: p = clamp(200 + extra + fl(200·Cotra/1200) − fl(400·Cpropio/1200), 30, 600) */
+const fl=n=>Math.floor(n);
+function pNerve(extra,cOther,cOwn){return clamp(200+extra+fl(200*Math.min(cOther,1200)/1200)-fl(400*Math.min(cOwn,1200)/1200),30,600);}
+const pct=p=>Math.round(p/10)+'\u00a0%';
+const pH=c=>pNerve(50,700,c), pC=c=>pNerve(100,700,c);
 
 /* ---------- geometry ---------- */
 let gy,bandH,S;
@@ -194,18 +259,27 @@ function layout(){const r=cv.getBoundingClientRect();W=Math.max(280,r.width||cv.
   cv.style.height=H+'px';cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);
   gy=H*.80;bandH=(gy-H*.17)/3;S=H*.115;}
 
-/* runner state at time tt */
-function stateOf(id,tt,b,dx){const k=keys(id,b);const [x,a]=kf(k,tt);const xx=x+(dx||0);const wx=cam(tt)+xx*100;
-  return {x:xx,a:Math.max(a,jumpArc(wx)),a0:a,wx};}
-function velOf(id,tt,b,dx){const d=.04;const p=stateOf(id,Math.max(0,tt-d),b,dx),q=stateOf(id,Math.min(T,tt+d),b,dx);const dt=(Math.min(T,tt+d)-Math.max(0,tt-d))||1;
+function braid(k,tt){if(k!=='pA'&&k!=='pB')return [0,0];if(tt<PQ[0]||tt>PQ[1])return [0,0];
+  const env=Math.sin(PI*(tt-PQ[0])/(PQ[1]-PQ[0]));const s=Math.sin(tt*6.3)*env,c=Math.sin(tt*3.1)*env;return k==='pA'?[.012*c,.15*s]:[-.012*c,-.15*s];}
+function stateOf(k,tt,b){const [x0,a0]=kf(keys(k,b),tt);const [bx,ba]=braid(k,tt);const x=x0+bx;return {x,a:Math.max(0,a0+ba),a0,wx:cam(tt)+x*100};}
+function velOf(k,tt,b){const d=.04;const t0=Math.max(0,tt-d),t1=Math.min(T,tt+d);const p=stateOf(k,t0,b),q=stateOf(k,t1,b);const dt=(t1-t0)||1;
   return {vx:((q.x-p.x)*W)/dt+CAMV/100*W,vy:-((q.a-p.a)*bandH)/dt};}
+function ranking(tt,b){return ENTS.map(e=>({k:e.k,x:stateOf(e.k,tt,b).x})).sort((p,q)=>q.x-p.x);}
+function tiro(b){const R=ranking(10.85,b);const re=R.find(r=>r.k==='re');return Math.round((R[2].x-re.x)*100);}
+const boxed=(k,tt,b)=>k==='eE'&&((tt>=5.4&&tt<6.75)||(!b&&tt>=7.1&&tt<9.9));
+function held(e,tt,b,R,st){
+  if(e.pos==='punta')return R[0].k===e.k;
+  if(e.pos==='peloton'){const tri=['e1','eE','e2'].map(k=>[k,stateOf(k,tt,b).x]).sort((p,q)=>q[1]-p[1]);return !boxed(e.k,tt,b)&&(tri[0][0]===e.k||tri[1][0]===e.k);}
+  if(e.pos==='acecho'){const ref=R[2];return st.a>1.6&&ref.k!=='ac'&&Math.abs(st.x-ref.x)<=.10;}
+  if(e.pos==='remate')return tt>=10.85&&tiro(b)<=40;
+  return false;}
 
 /* ---------- drawing helpers ---------- */
 function hexA(hex,a){const n=parseInt(hex.slice(1),16);return 'rgba('+(n>>16)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
 function shade(hex,k){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const f=k<0?0:255,m=Math.abs(k);r=Math.round(lerp(r,f,m));g=Math.round(lerp(g,f,m));b=Math.round(lerp(b,f,m));return 'rgb('+r+','+g+','+b+')';}
 function heatCol(hf,a){const r=lerp(140,255,clamp(hf*1.6,0,1)),g=lerp(230,120,clamp(hf*1.4,0,1)),b=lerp(255,40,clamp(hf*1.8,0,1));return 'rgba('+(r|0)+','+(g|0)+','+(b|0)+','+a+')';}
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-function chip(x,y,text,bg,fg,size,align){ctx.font=FONT(700,size||13);const w=ctx.measureText(text).width+12,h=(size||13)+8;let x0=align==='c'?x-w/2:x;x0=clamp(x0,4,W-w-4);
+function chip(x,y,text,bg,fg,size,align){ctx.font=FONT(700,size||13);const w=ctx.measureText(text).width+12,h=(size||13)+8;let x0=align==='c'?x-w/2:align==='r'?x-w:x;x0=clamp(x0,4,W-w-4);
   ctx.fillStyle=bg;rr(x0,y-h/2,w,h,h/2);ctx.fill();ctx.fillStyle=fg;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(text,x0+6,y+1);}
 function drawFlame(x,y,dx,dy,len,wid,hf){if(len<1)return;const jit=RM?1:(0.85+0.3*hash(Math.floor(NOW*30)+x));const L=len*jit;const nx=-dy,ny=dx;
   ctx.save();ctx.globalCompositeOperation='lighter';
@@ -262,38 +336,47 @@ function drawFig(x,y,s,c,p){
   return {hx:x+hdX,hy:y+hdY-bob};
 }
 
-/* pose for a position at time tt */
-function poseOf(id,tt,b,st,v,c){
+
+/* pose for an entity at time tt */
+const RED=()=>(RM||Math.sin(NOW*14)>-.3)?'#ff3b4f':'#a3121f', COUGH=v=>(RM||Math.sin(NOW*26)>.2)?v:0;
+function poseOf(e,tt,b,st,v,c){
   const air=st.a>.04;const vAng=Math.atan2(v.vy,v.vx);
-  const p={run:!air,lean:air?clamp(1.25+vAng*.95,.15,2.7):.28,wa:PI*.62,wl:.55,fan:.1,vs:.1,flame:air?.6:.35,glow:.3,visor:c.c2,heat:c.heat,seed:c.lane*1.7,flap:0};
+  const p={run:!air,lean:air?clamp(1.25+vAng*.95,.15,2.7):.28,wa:PI*.62,wl:.55,fan:.1,vs:.1,flame:air?.6:.35,glow:e.her?.3:.18,visor:c.c2,heat:c.heat,seed:e.i*1.7,flap:0};
   const n=Math.hypot(v.vx,v.vy)||1;p.fdx=-v.vx/n;p.fdy=-v.vy/n*.9+.12;const m=Math.hypot(p.fdx,p.fdy);p.fdx/=m;p.fdy/=m;
-  if(id==='punta'){
+  const k=e.k;
+  if(e.pos==='punta'){
     if(air){p.lean=clamp(1.3+vAng*.9,.6,1.8);p.wa=PI*1.03;p.wl=1;p.fan=.22;p.vs=.12;p.flame=.75;p.glow=.7;}
-    else{p.wa=PI*.82;p.wl=.75;p.fan=.18;p.lean=tt>8.3?.38:.3;p.flame=tt>8.3?.7:.4;p.glow=.5;}
-    const t0=3.4;
-    if(!b&&tt>=t0&&tt<t0+1.6){p.tremble=1;p.visor=(RM||Math.sin(NOW*14)>-.3)?'#ff3b4f':'#a3121f';p.look=-.9;p.wl=.7;p.fan=.05;p.flame=(RM||Math.sin(NOW*26)>.2)?.12:0;p.cough=1;p.glow=.15;}
-    if(b&&tt>=t0&&tt<t0+.5){p.wl=1.2;p.fan=.4;p.glow=1.2;p.wingCol='#ffc83d';}
-  }else if(id==='peloton'){
-    p.sparks=1;p.lean=tt>8?.36:.26;p.glow=.35;
-    if(air){p.wa=PI*1.1;p.wl=.85;p.fan=.25;p.lean=.5;}
-    if(tt>=10&&tt<10.7){p.wa=PI*1.2;p.wl=1.05;p.fan=.42;p.glow=1.2;p.wingCol='#35e0ff';}
-  }else if(id==='acecho'){
-    if(tt>=2.4&&tt<6.9&&air){p.lean=.55;p.wa=PI*1.36;p.wl=1.15;p.fan=.3;p.vs=.32;p.flap=3;p.flame=.25;p.glow=.75;}
-    else if(air&&tt>=6.9&&tt<7.85){p.wa=p.lean+PI/2-.22;p.wl=.95;p.fan=.06;p.vs=.04;p.flame=1;p.glow=1;p.heat=.9;}
+    else{p.wa=PI*.82;p.wl=.75;p.fan=.18;p.lean=.32;p.flame=.45;p.glow=.45;}
+    if(tt>=PQ[0]&&tt<PQ[1]){p.flame=1.1;p.heat=.8;p.glow=1;}
+    if(k==='pB'&&tt>=PQ[1]){p.flame=.35;p.glow=.22;p.wl=.85;}
+    if(k==='pA'&&tt>=4.4&&tt<8.6){p.glow=.95;}
+  }else if(e.pos==='peloton'){
+    p.sparks=1;p.lean=tt>8.6?.36:.26;
+    if(air){p.wa=PI*1.1;p.wl=.9;p.fan=.28;p.lean=.5;p.flame=.75;if(tt<8.5){p.wingCol='#35e0ff';p.glow=1.1;}}
+    if(boxed(k,tt,b)){p.wa=PI*.55;p.wl=.42;p.fan=.02;p.glow=.12;p.look=-.25;}
+    if(k==='eE'){
+      if(b&&tt>=6.75&&tt<7.1){p.wl=.36;p.fan=.02;p.lean=.4;}
+      if(b&&tt>=7.1&&tt<7.5){p.wa=PI*1.15;p.wl=1.2;p.fan=.45;p.glow=1.3;p.wingCol='#ffc83d';}
+      if(!b&&tt>=6.85&&tt<7.55){p.tremble=1;p.visor=RED();p.look=-.8;p.flame=COUGH(.15);p.cough=1;}
+    }
+    const o=openT(k,b);if(o!==null&&tt>=o&&tt<o+.6){p.wa=PI*1.22;p.wl=1.18;p.fan=.48;p.glow=1.35;p.wingCol='#35e0ff';p.flame=1.15;p.heat=.5;}
+  }else if(e.pos==='acecho'){
+    if(tt>=2.4&&tt<10.1&&air){p.lean=.55;p.wa=PI*1.36;p.wl=1.15;p.fan=.3;p.vs=.32;p.flap=3;p.flame=.25;p.glow=.75;}
+    else if(air&&tt>=10.1&&tt<11.05){p.wa=p.lean+PI/2-.22;p.wl=.95;p.fan=.06;p.vs=.04;p.flame=1;p.glow=1;p.heat=.9;}
     else if(air){p.wa=PI*1.25;p.wl=1;p.fan=.3;p.flame=1;p.flap=6;}
-    else{p.wa=PI*.7;p.wl=.6;p.lean=tt>7.8?.42:.28;p.glow=.4;}
-  }else if(id==='remate'){
-    const charge=clamp(tt/8.4,0,1);
-    if(!air&&tt<8.4){p.wa=PI*.6;p.wl=.55;p.fan=.06;p.glow=.2+charge*.9*(RM?1:(.8+.2*Math.sin(NOW*6)));p.lean=.24;}
-    else if(air&&tt<9.85){p.wa=PI*1.28;p.wl=1.05;p.fan=.32;p.flame=1.2;p.flap=7;p.glow=1;p.heat=.6;}
-    else if(air&&tt<10.8){
-      if(b||tt<10.0){p.wa=p.lean+PI/2-.18;p.wl=.95;p.fan=.05;p.vs=.03;p.flame=1.1;p.glow=1.1;p.heat=1;}
-      else{p.wa=PI*1.12;p.wl=1.1;p.fan=.46;p.tremble=1;p.visor=(RM||Math.sin(NOW*14)>-.3)?'#ff3b4f':'#a3121f';p.look=.6;p.flame=(RM||Math.sin(NOW*26)>.2)?.15:0;p.cough=1;p.glow=.3;p.lean=clamp(p.lean,.6,1.4);}
+    else{p.wa=PI*.7;p.wl=.6;p.lean=tt>10.9?.42:.28;p.glow=.4;}
+  }else if(e.pos==='remate'){
+    const charge=clamp(tt/10.85,0,1);
+    if(!air&&tt<10.85){p.wa=PI*.6;p.wl=.55;p.fan=.06;p.glow=.2+charge*.9*(RM?1:(.8+.2*Math.sin(NOW*6)));p.lean=.24;}
+    else if(air&&tt<12.0){p.wa=PI*1.28;p.wl=1.05;p.fan=.32;p.flame=1.2;p.flap=7;p.glow=1;p.heat=.6;}
+    else if(air&&tt<12.95){
+      if(b||tt<12.1){p.wa=p.lean+PI/2-.18;p.wl=.95;p.fan=.05;p.vs=.03;p.flame=1.1;p.glow=1.1;p.heat=1;}
+      else{p.wa=PI*1.12;p.wl=1.1;p.fan=.46;p.tremble=1;p.visor=RED();p.look=.6;p.flame=COUGH(.15);p.cough=1;p.glow=.3;p.lean=clamp(p.lean,.6,1.4);}
     }else if(air){p.wa=PI*1.1;p.wl=1;p.fan=.3;}
     else{p.wa=PI*.7;p.wl=.6;p.lean=.42;p.flame=b?.9:.5;p.glow=b?.8:.3;}
-    if(b&&tt>=10&&tt<10.5){p.glow=1.3;p.wingCol='#ffc83d';}
+    if(b&&tt>=12.1&&tt<12.6){p.glow=1.3;p.wingCol='#ffc83d';}
+    if(!b&&tt>=12.1&&tt<13.7&&!air){p.tremble=1;p.visor='#ff3b4f';}
   }
-  if(!b&&id==='remate'&&tt>=10&&tt<11.6&&!air){p.tremble=1;p.visor='#ff3b4f';}
   return p;
 }
 
@@ -305,127 +388,199 @@ function drawMesas(hz,off,scale,col,seed){ctx.fillStyle=col;ctx.beginPath();ctx.
     ctx.lineTo(x,hz+1);ctx.lineTo(x+6*scale,hz-hg);ctx.lineTo(x+w,hz-hg);ctx.lineTo(x+w+6*scale,hz+1);}ctx.lineTo(W,hz+1);ctx.closePath();ctx.fill();}
 const X=(wx,tt)=>(wx-cam(tt))/100*W;
 function drawGround(tt){
-  ctx.fillStyle='#9c6440';ctx.fillRect(0,gy,W,H-gy);
+  ctx.fillStyle='#9c6440';ctx.fillRect(0,gy,W,H*1.5-gy);
   const bh=H*.07;
   ctx.fillStyle='#b8794a';ctx.fillRect(0,gy-2,W,bh);
   const xa=X(WATER[0],tt),xb=X(WATER[1],tt);if(xb>0&&xa<W){ctx.fillStyle='#2f7fb8';ctx.fillRect(xa,gy-2,xb-xa,bh);
     ctx.strokeStyle='rgba(200,235,255,.55)';ctx.lineWidth=1.5;for(let i=0;i<3;i++){ctx.beginPath();for(let x=Math.max(0,xa);x<=Math.min(W,xb);x+=6){ctx.lineTo(x,gy+6+i*bh/3.5+Math.sin(x*.12+NOW*3+i)*1.6);}ctx.stroke();}
-    const vw=Math.min(W,xb)-Math.max(0,xa);if(vw>150){ctx.font=FONT(700,12);ctx.fillStyle='#d8f0ff';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('AGUA · FRENA EN EL SUELO',(Math.max(0,xa)+Math.min(W,xb))/2,gy+bh+16);}}
-  const ja=X(JUMP[0],tt),jb=X(JUMP[1],tt);if(jb>0&&ja<W){ctx.fillStyle='#1a0e0a';ctx.beginPath();ctx.moveTo(ja,gy-2);ctx.lineTo(ja+5,H);ctx.lineTo(jb-5,H);ctx.lineTo(jb,gy-2);ctx.closePath();ctx.fill();
-    ctx.font=FONT(700,12);ctx.fillStyle='#ffc8a8';ctx.textAlign='center';ctx.fillText('SALTO',(ja+jb)/2,H-10);}
+    const vw=Math.min(W,xb)-Math.max(0,xa);if(vw>170){ctx.font=FONT(700,12);ctx.fillStyle='#d8f0ff';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.textBaseline='middle';ctx.fillText('AGUA · A RAS RINDE, EN EL SUELO FRENA',(Math.max(0,xa)+Math.min(W,xb))/2,gy+bh*.5);}}
   ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,gy-2);ctx.lineTo(W,gy-2);ctx.stroke();
-  // distance posts
-  for(let m=Math.ceil(cam(tt)/25)*25;m<=cam(tt)+100;m+=25){const x=X(m,tt);if(m>JUMP[0]&&m<JUMP[1])continue;ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,gy-12);ctx.lineTo(x,gy-2);ctx.stroke();}
-  const fx=X(FINAL,tt);if(fx>-4&&fx<W+4){ctx.strokeStyle='#ffc83d';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(fx,gy+bh);ctx.lineTo(fx,H*.24);ctx.stroke();ctx.setLineDash([]);
-    chip(fx+4,H*.24,'FASE FINAL','#ffc83d','#1a1200',12);}
+  for(let m=Math.ceil(cam(tt)/25)*25;m<=cam(tt)+100;m+=25){const x=X(m,tt);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,gy-12);ctx.lineTo(x,gy-2);ctx.stroke();}
+  // checkpoints: el puesto se chequea acá
+  for(const [w,l] of CP){const x=X(w,tt);if(x<-30||x>W+30)continue;const gold=l==='FINAL';
+    ctx.strokeStyle=gold?'rgba(255,200,61,.9)':'rgba(255,255,255,.38)';ctx.lineWidth=gold?2:1.2;ctx.setLineDash(gold?[5,4]:[2,5]);ctx.beginPath();ctx.moveTo(x,gy+bh);ctx.lineTo(x,H*.2);ctx.stroke();ctx.setLineDash([]);
+    chip(x,gy+bh+11,l,gold?'#ffc83d':'rgba(8,10,16,.75)',gold?'#1a1200':'#fff',11,'c');}
 }
 function drawBands(){const names=['SUELO','BAJA','ALTA','TECHO'];
   for(let k=1;k<=3;k++){const y=gy-k*bandH-S*.45;ctx.fillStyle=k%2?'rgba(255,255,255,.035)':'rgba(255,255,255,.0)';ctx.fillRect(0,y-bandH/2,W,bandH);
     ctx.strokeStyle='rgba(255,255,255,.14)';ctx.setLineDash([3,6]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,y+bandH/2);ctx.lineTo(W,y+bandH/2);ctx.stroke();ctx.setLineDash([]);}
   ctx.font=FONT(700,11);ctx.textAlign='left';ctx.textBaseline='middle';
-  for(let k=0;k<=3;k++){const y=k===0?gy-S*.5:gy-k*bandH-S*.45;ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillText(names[k],8,k===0?gy-S*1.25:y);}
+  for(let k=0;k<=3;k++){const y=gy-k*bandH-S*.45;ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillText(names[k],8,k===0?gy-S*1.25:y);}
 }
 const altPx=a=>a*bandH;
+function bolt(x,y,s,col){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x+.15*s,y-.5*s);ctx.lineTo(x-.25*s,y+.08*s);ctx.lineTo(x,y+.08*s);ctx.lineTo(x-.15*s,y+.5*s);ctx.lineTo(x+.28*s,y-.12*s);ctx.lineTo(x+.02*s,y-.12*s);ctx.closePath();ctx.fill();}
+function bar(x,y,w,h,v,col,lab){ctx.fillStyle='rgba(255,255,255,.16)';rr(x,y,w,h,h/2);ctx.fill();ctx.fillStyle=col;rr(x,y,Math.max(h,w*v/100),h,h/2);ctx.fill();
+  ctx.font=FONT(700,10);ctx.fillStyle='#e8eef8';ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(lab,x-4,y+h/2+.5);ctx.textAlign='left';ctx.fillText(String(Math.round(v)),x+w+4,y+h/2+.5);}
 
 /* ---------- frame ---------- */
 const ENT=[];
 function frame(){
   const b=brave();
-  ctx.clearRect(0,0,W,H);
-  drawSky();drawMesas(gy-H*.02,cam(t)*W/100*.06,1.1,'#5a3346',3);drawMesas(gy+1,cam(t)*W/100*.18,.9,'#7a3f3c',9);
-  drawBands();drawGround(t);
-  // speed lines
-  const nl=RM?0:10;for(let i=0;i<nl;i++){const y=H*(.1+.62*hash(i*1.3));const q=(NOW*1.6+hash(i+4))%1;const x=W*(1.1-q*1.3);ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+40,y);ctx.stroke();}
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
   // build entities
   ENT.length=0;
-  const add=(id,c,dx,laneOff,mate)=>{const st=stateOf(id,t,b,dx),v=velOf(id,t,b,dx);ENT.push({id,c,st,v,dx,mate,lane:c.lane+(laneOff||0),p:poseOf(id,t,b,st,v,c)});};
-  add('remate',POS.remate);add('peloton',MATE,-.055,-1,1);add('peloton',POS.peloton);add('peloton',MATE,.052,1,1);add('acecho',POS.acecho);add('punta',POS.punta);
-  const dim=e=>focus&&e.id!==focus?.25:1;
-  const sx=e=>e.st.x*W, fy=e=>gy+4+e.lane*3;
+  for(const d of ENTS){const st=stateOf(d.k,t,b),v=velOf(d.k,t,b);const c=d.her?POS[d.pos]:Object.assign({},RIV[d.pos],{c1:shade(POS[d.pos].c1,-.38)});
+    ENT.push(Object.assign({st,v,c,p:poseOf(d,t,b,st,v,c)},d));}
+  const E=k=>ENT.find(e=>e.k===k);
+  const R=ranking(t,b);
+  const dim=e=>focus&&e.pos!==focus?.25:1, dimP=pos=>focus&&focus!==pos?.25:1;
+  const sx=e=>e.st.x*W, fy=e=>gy+3+e.lane*2.2, hy=e=>fy(e)-altPx(e.st.a);
+  // hueco zoom (solo para ella, 0,5 s)
+  const zq=(t>=6.7&&t<7.2&&!RM)?(t-6.7)/.5:-1;
+  ctx.save();
+  if(zq>=0){const z=1+.42*Math.sin(PI*zq),eE=E('eE'),cx=sx(eE),cy=fy(eE)-S*.5;ctx.translate(cx,cy);ctx.scale(z,z);ctx.translate(-cx,-cy);}
+  drawSky();drawMesas(gy-H*.02,cam(t)*W/100*.06,1.1,'#5a3346',3);drawMesas(gy+1,cam(t)*W/100*.18,.9,'#7a3f3c',9);
+  drawBands();drawGround(t);
+  const nl=RM?0:10;for(let i=0;i<nl;i++){const y=H*(.1+.62*hash(i*1.3));const q=(NOW*1.6+hash(i+4))%1;const x=W*(1.1-q*1.3);ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+40,y);ctx.stroke();}
   // shadows
-  for(const e of ENT){ctx.globalAlpha=dim(e);const a=e.st.a;const big=e.id==='acecho'?1.7:1;
-    ctx.fillStyle='rgba(0,0,0,'+(clamp(.42-a*.06,.18,.42)*(e.id==='acecho'&&a>1?1.5:1))+')';ctx.beginPath();ctx.ellipse(sx(e)+(a>0.05?-6:0),fy(e),S*(.2+a*.08)*big,S*.035*(1+a*.3),0,0,TAU);ctx.fill();}
+  for(const e of ENT){ctx.globalAlpha=dim(e);const a=e.st.a;const big=e.pos==='acecho'?1.7:1;
+    ctx.fillStyle='rgba(0,0,0,'+(clamp(.42-a*.06,.18,.42)*(e.pos==='acecho'&&a>1?1.5:1))+')';ctx.beginPath();ctx.ellipse(sx(e)+(a>0.05?-6:0),fy(e),S*(.2+a*.08)*big,S*.035*(1+a*.3),0,0,TAU);ctx.fill();}
   ctx.globalAlpha=1;
-  // trails (deterministic: sampled from the keyframes)
-  for(const e of ENT){if(e.mate)continue;let col=null;
-    if(e.id==='punta'&&e.st.a>.3)col='rgba(120,210,255,';
-    if(e.id==='acecho'&&t>6.9&&t<8.1)col='rgba(255,70,60,';
-    if(e.id==='remate'&&t>9.85&&t<11.1&&(b||t<10.05))col='rgba(255,70,90,';
-    if(e.id==='remate'&&t>8.4&&t<9.9)col='rgba(200,160,255,';
-    if(!col)continue;ctx.globalAlpha=dim(e);ctx.lineCap='round';
-    for(let k=1;k<12;k++){const d=k*.05,d0=(k-1)*.05;const p0=stateOf(e.id,Math.max(0,t-d0),b),p1=stateOf(e.id,Math.max(0,t-d),b);
+  // reference of the field: 3.ª del ranking (mira del Acecho y a tiro del Remate)
+  const ref=E(R[2].k);
+  const showMira=t>3&&t<9.8, showTiro=t>10.3&&t<11.6;
+  if(showMira&&zq<0&&ref&&ref.k!=='ac'){ctx.globalAlpha=dimP('acecho');const y=gy-2*bandH-S*.45,x0=(ref.st.x-.10)*W,x1=(ref.st.x+.10)*W;
+    ctx.fillStyle='rgba(255,179,64,.07)';ctx.fillRect(x0,y-bandH*.45,x1-x0,bandH*.9);ctx.strokeStyle='rgba(255,179,64,.45)';ctx.lineWidth=1;ctx.setLineDash([2,4]);ctx.strokeRect(x0,y-bandH*.45,x1-x0,bandH*.9);ctx.setLineDash([]);
+    ctx.font=FONT(700,10);ctx.fillStyle='rgba(255,210,140,.85)';ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText('MIRA · ±10 m DE LA 3.ª',x0+4,y+bandH*.45-3);ctx.globalAlpha=1;}
+  if(showMira&&ref){ctx.globalAlpha=showTiro?dimP('remate'):dimP('acecho');ctx.strokeStyle='rgba(255,210,140,.9)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(sx(ref),gy+H*.07-4);ctx.lineTo(sx(ref),gy+2);ctx.moveTo(sx(ref),gy+H*.07+24);ctx.lineTo(sx(ref),gy+H*.07-4);ctx.stroke();
+    chip(sx(ref),gy+H*.07+31,'3.ª · REF','#ffd27a','#1a1200',10,'c');ctx.globalAlpha=1;}
+  // trails
+  const trail=(e,col,w)=>{ctx.globalAlpha=dim(e);ctx.lineCap='round';
+    for(let k=1;k<12;k++){const d=k*.05,d0=(k-1)*.05;const p0=stateOf(e.k,Math.max(0,t-d0),b),p1=stateOf(e.k,Math.max(0,t-d),b);
       const x0=p0.x*W-CAMV/100*W*d0,y0=fy(e)-altPx(p0.a)-S*.45,x1=p1.x*W-CAMV/100*W*d,y1=fy(e)-altPx(p1.a)-S*.45;
-      ctx.strokeStyle=col+(.7*(1-k/12))+')';ctx.lineWidth=(e.id==='punta'?3:5)*(1-k/14);ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();}
+      ctx.strokeStyle=col+(.7*(1-k/12))+')';ctx.lineWidth=w*(1-k/14);ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();}ctx.globalAlpha=1;};
+  for(const e of ENT){
+    if(e.pos==='punta'&&e.st.a>.3){const pq=t>=PQ[0]&&t<PQ[1];trail(e,pq?(e.her?'rgba(255,220,120,':'rgba(255,150,90,'):(e.her?'rgba(120,210,255,':'rgba(150,170,200,'),e.her&&t>4.4?4.5:3);}
+    if(e.k==='ac'&&t>10.1&&t<11.3)trail(e,'rgba(255,70,60,',5);
+    if(e.k==='re'&&t>12.0&&t<13.3&&(b||t<12.2))trail(e,'rgba(255,70,90,',5);
+    if(e.k==='re'&&t>10.85&&t<12.0)trail(e,'rgba(200,160,255,',5);
+    if(e.pos==='peloton'){const o=openT(e.k,b);if(o!==null&&t>o&&t<o+1.1)trail(e,'rgba(53,224,255,',o===8.6?6:4);else if(e.st.a>.2&&t<8.5)trail(e,'rgba(53,224,255,',3);}
+  }
+  // remate: techo libre
+  if(t>10.75&&t<12.0){const e=E('re');ctx.globalAlpha=dim(e)*(t<11.05?(t-10.75)/.3:1);const x0=stateOf('re',10.85,b).x*W-CAMV/100*W*(t-10.85);
+    ctx.strokeStyle='rgba(214,184,255,.55)';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(x0,gy);ctx.lineTo(x0+gy*.32,0);ctx.stroke();ctx.setLineDash([]);
+    chip(x0+gy*.17,gy*.40,'TECHO LIBRE · SUBE','rgba(30,14,60,.85)','#e6d6ff',12);ctx.globalAlpha=1;}
+  // a tiro: Remate contra la 3.ª
+  if(showTiro&&ref){const e=E('re');ctx.globalAlpha=dimP('remate');const y=gy+H*.07+22,x0=sx(e),x1=sx(ref);const ok=tiro(b)<=40;
+    ctx.strokeStyle=ok?'rgba(214,184,255,.9)':'rgba(170,170,180,.8)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x0,y-5);ctx.lineTo(x0,y+5);ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.moveTo(x1,y-5);ctx.lineTo(x1,y+5);ctx.stroke();
+    chip((x0+x1)/2,y+14,(ok?'A TIRO · ':'FUERA DE TIRO · ')+tiro(b)+'/40 m',ok?'#b48cff':'#56606e',ok?'#140828':'#fff',11,'c');ctx.globalAlpha=1;}
+  // acecho: mira hacia el punto de caída
+  const ac=E('ac');
+  if(t>2.6&&t<10.15&&ac.st.a>1.5){ctx.globalAlpha=dimP('acecho');const ax=sx(ac),ay=hy(ac)-S*.7;const fx=X(FALLW,t);const off=fx>W-18;const tx=Math.min(fx,W-18),ty=gy+2;
+    ctx.strokeStyle='rgba(255,179,64,.85)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(tx,ty);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle='#ffb340';ctx.lineWidth=2;ctx.beginPath();ctx.arc(tx,ty,7,0,TAU);ctx.moveTo(tx-11,ty);ctx.lineTo(tx-3,ty);ctx.moveTo(tx+3,ty);ctx.lineTo(tx+11,ty);ctx.moveTo(tx,ty-11);ctx.lineTo(tx,ty-3);ctx.stroke();
+    if(off)chip(W-8,ty-20,'CAÍDA '+Math.round(FALLW-cam(t)-100+ (W-18)/W*0)+' m ›','rgba(8,10,16,.82)','#ffd27a',11,'r');
     ctx.globalAlpha=1;}
-  // remate steep climb guide
-  if(t>8.3&&t<9.9){const e=ENT[0];ctx.globalAlpha=dim(e)*(t<8.6?(t-8.3)/.3:1);const x0=stateOf('remate',8.4,b).x*W-CAMV/100*W*(t-8.4);
-    ctx.strokeStyle='rgba(214,184,255,.55)';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(x0,gy);ctx.lineTo(x0+(gy-0)*.32,0);ctx.stroke();ctx.setLineDash([]);
-    chip(x0+gy*.16,gy*.42,'SUBE AL TECHO · 75 %','rgba(30,14,60,.85)','#e6d6ff',12);ctx.globalAlpha=1;}
-  // acecho sight line + brackets (T19)
-  const ac=ENT.find(e=>e.id==='acecho'),pu=ENT.find(e=>e.id==='punta'),re=ENT[0];
-  if(t>2.6&&t<7.6){ctx.globalAlpha=focus&&focus!=='acecho'&&focus!=='punta'?.25:1;const ax=sx(ac),ay=fy(ac)-altPx(ac.st.a)-S*.7,px=sx(pu),py=fy(pu)-altPx(pu.st.a)-S*.55;
-    ctx.strokeStyle='rgba(255,179,64,.8)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(px,py);ctx.stroke();ctx.setLineDash([]);
-    const bw=S*.42,bh=S*.62,L=8;ctx.strokeStyle='#ffb340';ctx.lineWidth=2;
-    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([i,j])=>{const cx=px+i*bw,cy=py+j*bh;ctx.beginPath();ctx.moveTo(cx-i*L,cy);ctx.lineTo(cx,cy);ctx.lineTo(cx,cy-j*L);ctx.stroke();});ctx.globalAlpha=1;}
-  // draft lines in the pack
-  for(const e of ENT){if(e.id!=='peloton'||RM)continue;ctx.globalAlpha=dim(e);ctx.strokeStyle='rgba(180,240,220,.45)';ctx.lineWidth=1.4;
-    for(let i=0;i<3;i++){const q=(NOW*2+i/3+e.dx*7)%1;const x=sx(e)-S*.25-q*S*.5,y=fy(e)-S*(.55+i*.12)-altPx(e.st.a);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-S*.22,y);ctx.stroke();}}
+  // estela del grupo
+  for(const e of ENT){if(e.pos!=='peloton'||RM||e.st.a>.2)continue;ctx.globalAlpha=dim(e);ctx.strokeStyle='rgba(180,240,220,.4)';ctx.lineWidth=1.3;
+    for(let i=0;i<3;i++){const q=(NOW*2+i/3+e.i*.37)%1;const x=sx(e)-S*.25-q*S*.5,y=fy(e)-S*(.55+i*.12);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-S*.22,y);ctx.stroke();}}
   ctx.globalAlpha=1;
-  // water splashes for ground runners
-  for(const e of ENT){if(e.st.a>.04||RM)continue;if(e.st.wx>WATER[0]&&e.st.wx<WATER[1]){ctx.globalAlpha=dim(e);ctx.fillStyle='rgba(200,235,255,.8)';
-    for(let i=0;i<5;i++){const q=(NOW*2.2+i/5)%1;ctx.beginPath();ctx.arc(sx(e)-q*S*.4,fy(e)-Math.sin(q*PI)*S*.25,2,0,TAU);ctx.fill();}}}
+  // agua: salpica en el suelo, cortina de espuma a ras
+  for(const e of ENT){if(RM)continue;if(e.st.wx<WATER[0]||e.st.wx>WATER[1])continue;ctx.globalAlpha=dim(e);
+    if(e.st.a<=.04){ctx.fillStyle='rgba(200,235,255,.8)';for(let i=0;i<5;i++){const q=(NOW*2.2+i/5+e.i*.2)%1;ctx.beginPath();ctx.arc(sx(e)-q*S*.4,fy(e)-Math.sin(q*PI)*S*.25,2,0,TAU);ctx.fill();}}
+    else if(e.st.a<1.4){const top=hy(e)-S*.15;for(let i=0;i<9;i++){const q=(NOW*2.6+i/9+e.i*.13)%1;const x=sx(e)-S*.2-q*S*1.1;const hgt=(gy-top)*(1-q)*(.55+.45*hash(i+e.i));
+      ctx.strokeStyle='rgba(225,245,255,'+(.55*(1-q))+')';ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(x,gy+4);ctx.lineTo(x+3,gy+4-hgt);ctx.stroke();}}}
   ctx.globalAlpha=1;
-  // runners: sorted by altitude so flyers draw on top
-  const ord=ENT.slice().sort((a,b2)=>(a.mate?0:1)-(b2.mate?0:1)||a.st.a-b2.st.a);
+  // runners
+  const ord=ENT.slice().sort((p,q)=>((p.st.a>.3)-(q.st.a>.3))||(p.lane-q.lane)||(p.her-q.her));
   const heads={};
-  for(const e of ord){ctx.globalAlpha=dim(e);const h=drawFig(sx(e),fy(e)-altPx(e.st.a),S*(e.mate?.88:1),e.c,e.p);if(!e.mate)heads[e.id]=h;}
+  for(const e of ord){ctx.globalAlpha=dim(e);heads[e.k]=drawFig(sx(e),hy(e),S*(e.her?1:.9),e.c,e.p);}
   ctx.globalAlpha=1;
-  // wall flash
-  if(t>=10&&t<10.7){const ps=ENT.filter(e=>e.id==='peloton');const k=1-(t-10)/.7;ctx.globalAlpha=(focus&&focus!=='peloton'&&focus!=='remate')?.25:1;
-    const x0=Math.min(...ps.map(sx))-S*.2,x1=Math.max(...ps.map(sx))+S*.2;ctx.fillStyle='rgba(53,224,255,'+(.25*k)+')';rr(x0,gy-S*1.6,x1-x0,S*1.6,8);ctx.fill();
-    ctx.strokeStyle='rgba(53,224,255,'+(.9*k)+')';ctx.lineWidth=2;ctx.stroke();chip((x0+x1)/2,gy-S*1.85,'MURO','#35e0ff','#04131a',13,'c');ctx.globalAlpha=1;}
+  // encerrada: alas apretadas y ⊏⊐
+  const eE=E('eE');
+  if(boxed('eE',t,b)){ctx.globalAlpha=dimP('peloton');const x=sx(eE),y=hy(eE)-S*.5;ctx.font=FONT(800,Math.round(S*.5));ctx.fillStyle='#ff9f6b';ctx.textAlign='center';ctx.textBaseline='middle';
+    const j=RM?0:Math.sin(NOW*8)*1.2;ctx.fillText('⊏',x-S*.42-j,y);ctx.fillText('⊐',x+S*.42+j,y);ctx.globalAlpha=1;}
+  // el hueco entre dos cuerpos
+  if(t>=6.2&&t<7.15){ctx.globalAlpha=dimP('peloton');const e1=E('e1'),e2=E('e2');const x0=sx(e2)+S*.12,x1=sx(e1)-S*.05,y=fy(e1)-S*1.12;
+    ctx.strokeStyle='#ffc83d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0,y-6);ctx.lineTo(x0,y+6);ctx.moveTo(x1,y-6);ctx.lineTo(x1,y+6);ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+    ctx.globalAlpha=1;}
+  // Abanico: cadena de alas, anillos y dominó
+  const OP=OPEN[b?'hi':'lo'];
+  OP.forEach(([k,o],i)=>{const e=E(k);if(t<o||t>o+.9)return;const q=(t-o)/.9;ctx.globalAlpha=dimP('peloton')*(1-q);
+    ctx.strokeStyle='#35e0ff';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(sx(e),fy(e),S*(.25+q*1.1),S*(.06+q*.2),0,0,TAU);ctx.stroke();
+    if(i>0){const pe=E(OP[i-1][0]);const h0=heads[pe.k],h1=heads[k];ctx.setLineDash([4,4]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(h0.hx,h0.hy);ctx.quadraticCurveTo((h0.hx+h1.hx)/2,Math.min(h0.hy,h1.hy)-S*.6,h1.hx,h1.hy);ctx.stroke();ctx.setLineDash([]);}
+    ctx.globalAlpha=1;});
   // landing rings
   const ring=(e,t0)=>{if(t>=t0&&t<t0+.6){const q=(t-t0)/.6;ctx.globalAlpha=dim(e)*(1-q);ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(sx(e),fy(e),S*(.2+q*.8),S*(.05+q*.12),0,0,TAU);ctx.stroke();ctx.globalAlpha=1;}};
-  ring(ac,7.8);if(b)ring(re,10.72);
-  // labels
+  ring(ac,10.9);if(b)ring(E('re'),12.82);
+  // labels: ella lleva nombre; las rivales de su posición, solo el ícono. Lleno = tiene su puesto.
   ctx.textBaseline='middle';
-  const placed=[];
-  for(const e of ENT.slice().sort((a,b2)=>heads[b2.id]&&heads[a.id]?heads[b2.id].hy-heads[a.id].hy:0)){if(e.mate)continue;const h=heads[e.id];ctx.globalAlpha=dim(e)<1?.5:1;
-    let y=h.hy-S*.42;for(let i=0;i<4;i++){if(placed.some(q=>Math.abs(q[0]-h.hx)<S*1.1&&Math.abs(q[1]-y)<22))y-=24;}placed.push([h.hx,y]);
-    chip(h.hx,y,e.c.ic+' '+e.c.n.toUpperCase(),'rgba(8,10,16,.82)',e.c.c2,12,'c');}
+  const placed=[],labY={};
+  for(const e of ENT.slice().sort((p,q)=>heads[p.k].hy-heads[q.k].hy)){const h=heads[e.k];ctx.globalAlpha=dim(e)<1?.45:1;
+    const has=held(e,t,b,R,e.st);const ic=has?POS[e.pos].ic:POS[e.pos].ho;
+    let y=h.hy-S*.42;for(let i=0;i<5;i++){if(placed.some(q=>Math.abs(q[0]-h.hx)<S*1.05&&Math.abs(q[1]-y)<20))y-=21;}placed.push([h.hx,y]);labY[e.k]=y;
+    if(e.her)chip(h.hx,y,ic+' '+POS[e.pos].n.toUpperCase(),'rgba(8,10,16,.85)',POS[e.pos].c2,12,'c');
+    else chip(h.hx,y,ic+(e.nm?' '+e.nm:''),'rgba(8,10,16,.6)','#c5ccd8',11,'c');}
   ctx.globalAlpha=1;
-  // nerve moments
-  const pS=b?pNerve(100,600,900):pNerve(100,600,300),pM=b?pNerve(0,700,900):pNerve(0,700,300);
-  const nerve=(id,t0,label,p,okText)=>{const h=heads[id];if(!h)return;ctx.globalAlpha=focus&&focus!==id?.3:1;
-    if(t>=t0-.6&&t<t0)chip(h.hx,h.hy-S*.85,label+' · NERVIO '+pct(p),'rgba(8,10,16,.9)','#ffffff',12,'c');
-    if(t>=t0&&t<t0+1.6){if(b){if(t<t0+1){const q=(t-t0);ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle='rgba(255,200,61,'+(1-q)+')';ctx.lineWidth=3;ctx.beginPath();ctx.arc(h.hx,h.hy+S*.25,S*(.5+q*.6),0,TAU);ctx.stroke();ctx.restore();
-          chip(h.hx,h.hy-S*.85,'AGUANTA','#ffc83d','#1a1200',15,'c');}}
-      else{chip(h.hx,h.hy-S*.85,'!  '+okText,'#ff3b4f','#ffffff',14,'c');}}
+  // habilidades de puesto: solo la que tiene el puesto
+  const skill=(k,t0,t1,txt,ok)=>{if(t<t0||t>=t1)return;const e=E(k),h=heads[k];ctx.globalAlpha=dim(e)<1?.4:Math.min(1,(t-t0)/.15);
+    chip(h.hx,labY[k]-21,txt,ok?'#ffc83d':'#3a4250',ok?'#1a1200':'#c5ccd8',12,'c');ctx.globalAlpha=1;};
+  skill('pA',4.4,5.7,'ESCAPADA ✓',1);skill('pB',4.8,5.9,'ESCAPADA ✗',0);
+  if(t>=5.9&&t<7.4){const h=heads.pA;ctx.globalAlpha=dimP('punta');chip(h.hx,labY.pA-21,'RITMO PROPIO','rgba(20,60,120,.9)','#cfeaff',11,'c');ctx.globalAlpha=1;}
+  skill('eE',7.5,8.5,b?'PROA ✓ +6':'PROA ✗',b);
+  skill('ac',7.85,8.5,'OJO DE HALCÓN ✓',1);
+  skill('re',10.85,11.75,'DESDE EL CIELO ✓',1);
+  if(b)skill('eE',9.15,9.95,'PUERTA ABIERTA ✓',1);
+  // ¡PROA! en el Abanico
+  {const [k,o]=OP[0];if(t>=o&&t<o+.95){const h=heads[k];ctx.globalAlpha=dimP('peloton');chip(h.hx,labY[k]-23,'¡PROA!','#35e0ff','#04131a',15,'c');ctx.globalAlpha=1;}}
+  if(!b&&t>=8.6&&t<9.9){ctx.globalAlpha=dimP('peloton');chip(heads.eE.hx,labY.eE-21,'NO SE ABRE','#3a4250','#ffb3a0',11,'c');ctx.globalAlpha=1;}
+  // pique: dos Puntas a la par, las dos se queman
+  if(t>=PQ[0]-.1&&t<4.5){const a=heads.pA,c=heads.pB;ctx.globalAlpha=dimP('punta');const mx=(a.hx+c.hx)/2,top=Math.min(labY.pA,labY.pB)-26;
+    const bw=124,bh2=46,x0=clamp(mx-bw/2,6,W-bw-6),y0=top-bh2;
+    ctx.fillStyle='rgba(8,10,16,.88)';rr(x0,y0,bw,bh2,9);ctx.fill();
+    const q=clamp((t-PQ[0])/(PQ[1]-PQ[0]),0,1);
+    if(t<PQ[1]){bolt(x0+14,y0+13,16,'#ffc83d');ctx.font=FONT(800,13);ctx.fillStyle='#ffc83d';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('PIQUE',x0+26,y0+13);
+      if(!RM&&Math.sin(NOW*20)>0){bolt(mx,(a.hy+c.hy)/2-S*.2,14,'rgba(255,220,120,.95)');}}
+    else{ctx.font=FONT(800,12);ctx.fillStyle='#ffb3a0';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('H. ROJO CEDE · SEGUNDA',x0+8,y0+13);}
+    bar(x0+52,y0+25,48,5,100-22*q,'#6fb8ff','ELLA');bar(x0+52,y0+36,48,5,100-30*q,'#ff8a5c','H. ROJO');
+    ctx.globalAlpha=1;}
+  // nervio
+  const nerve=(k,t0,label,p,koText)=>{const h=heads[k];ctx.globalAlpha=focus&&E(k).pos!==focus?.3:1;const y=labY[k]-23;
+    if(t>=t0-.6&&t<t0)chip(h.hx,y,label+' · NERVIO '+pct(p),'rgba(8,10,16,.92)','#ffffff',12,'c');
+    if(t>=t0&&t<t0+1.2){if(b){if(t<t0+1){const q=(t-t0);ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle='rgba(255,200,61,'+(1-q)+')';ctx.lineWidth=3;ctx.beginPath();ctx.arc(h.hx,h.hy+S*.25,S*(.5+q*.6),0,TAU);ctx.stroke();ctx.restore();}
+        chip(h.hx,y,'AGUANTA','#ffc83d','#1a1200',15,'c');}
+      else chip(h.hx,y,'!  '+koText,'#ff3b4f','#ffffff',14,'c');}
     ctx.globalAlpha=1;};
-  nerve('punta',3.4,'SOMBRA',pS,'SE ACHICA · −4 m');
-  nerve('remate',10,'MURO',pM,'ABRE LA PICADA');
-  // camera cut for the great dive (T16)
-  if(t>=9.45&&t<10.95){const bh=H*.06;ctx.fillStyle='#000';ctx.fillRect(0,0,W,bh);ctx.fillRect(0,H-bh,W,bh);
-    if(t<9.6&&!RM){ctx.fillStyle='rgba(255,255,255,'+(1-(t-9.45)/.15)*.7+')';ctx.fillRect(0,0,W,H);}
-    chip(W/2,bh/2,'GRAN PICADA','#b48cff','#140828',13,'c');}
-  // HUD
-  else{chip(10,18,b?'CORAJE 900':'CORAJE 300',b?'#ffc83d':'#ff5468',b?'#1a1200':'#fff',12);
-    chip(W-10-90,18,t<7.2?'FASE MEDIA':'FASE FINAL','rgba(8,10,16,.82)','#fff',12);}
-  // loop fade
+  const cOwn=b?900:300;
+  nerve('eE',6.85,'EL HUECO 3,6 m',pH(cOwn),'SE ACHICA');
+  nerve('re',12.1,'PICADA CRUZADA',pC(cOwn),'ABRE LA PICADA');
+  ctx.restore();
+  // overlays (sin zoom)
+  if(zq>=0){const k=Math.sin(PI*zq);const g=ctx.createRadialGradient(W/2,H/2,W*.3,W/2,H/2,W*.85);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+(.6*k)+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    chip(W/2,20,'EL HUECO','#ffc83d','#1a1200',13,'c');}
+  const letter=(txt,bg,fg)=>{const bh=H*.06;ctx.fillStyle='#000';ctx.fillRect(0,0,W,bh);ctx.fillRect(0,H-bh,W,bh);chip(W/2,bh/2,txt,bg,fg,13,'c');return bh;};
+  if(t>=8.5&&t<9.95){const bh=letter('EL ABANICO','#35e0ff','#04131a');
+    if(t<8.62&&!RM){ctx.fillStyle='rgba(53,224,255,'+(1-(t-8.5)/.12)*.35+')';ctx.fillRect(0,0,W,H);}
+    // vista cenital: dominó de alas
+    const w=128,h=66,x0=W-w-8,y0=bh+8;ctx.globalAlpha=dimP('peloton');ctx.fillStyle='rgba(8,10,16,.86)';rr(x0,y0,w,h,8);ctx.fill();ctx.strokeStyle='rgba(53,224,255,.5)';ctx.lineWidth=1;ctx.stroke();
+    ctx.font=FONT(700,10);ctx.fillStyle='#9fdcf0';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('DESDE ARRIBA',x0+7,y0+5);
+    for(const k of ['e1','eE','e2']){const e=E(k);const px=x0+12+clamp((e.st.x-.48)/.26,0,1)*(w-24),py=y0+26+e.lane*8;const o=openT(k,b);const op=o!==null&&t>=o;
+      const sp=op?clamp((t-o)/.25,0,1):0;const col=e.her?POS.peloton.glow:'#aab3c2';
+      ctx.strokeStyle=op?'#35e0ff':'rgba(170,180,195,.7)';ctx.lineWidth=2;const wl=5+sp*9,ang=.35+sp*.9;
+      ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-Math.cos(ang)*wl,py-Math.sin(ang)*wl);ctx.moveTo(px,py);ctx.lineTo(px-Math.cos(ang)*wl,py+Math.sin(ang)*wl);ctx.stroke();
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,py,e.her?4:3,0,TAU);ctx.fill();
+      if(e.her&&!b){ctx.font=FONT(800,12);ctx.fillStyle='#ff9f6b';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⊏',px-9,py);ctx.fillText('⊐',px+9,py);}}
+    ctx.globalAlpha=1;}
+  else if(t>=11.55&&t<13.05){letter('GRAN PICADA','#b48cff','#140828');if(t<11.7&&!RM){ctx.fillStyle='rgba(255,255,255,'+(1-(t-11.55)/.15)*.7+')';ctx.fillRect(0,0,W,H);}}
+  else if(zq<0){chip(10,18,b?'CORAJE 900':'CORAJE 300',b?'#ffc83d':'#ff5468',b?'#1a1200':'#fff',12);
+    chip(W-10,18,t<7.4?'FASE MEDIA':'FASE FINAL','rgba(8,10,16,.82)','#fff',12,'r');}
   if(t>T-.45){ctx.fillStyle='rgba(7,9,15,'+((t-(T-.45))/.45)+')';ctx.fillRect(0,0,W,H);}
 }
 
 /* ---------- caption ---------- */
 function caption(){const b=brave();let s;
-  if(t<1)s='Salida. Las cuatro arrancan por el suelo.';
-  else if(t<2.6)s='La <b>Punta</b> despega y vuela bajo sobre el agua. El <b>Acecho</b> sube alto.';
-  else if(t<3.4)s='El <b>Pelotón</b> corre en grupo, por el suelo, con rebufo. El agua lo frena.';
-  else if(t<5)s=b?'La sombra del Acecho pasa sobre la Punta. Tiene Coraje: <b>aguanta</b>.':'La sombra asusta a la Punta: <b>se achica</b>, aterriza y pierde 4 m.';
-  else if(t<7)s='El Pelotón cruza el salto: es lo único que vuela. El <b>Remate</b> espera atrás, cargando las alas.';
-  else if(t<8.4)s='Fase final. El Acecho cae en <b>picada</b> sobre la Punta y la pasa.';
-  else if(t<9.9)s='Al 75 %, el Remate sube al <b>techo</b>.';
-  else if(t<11.6)s=b?'Gran picada contra el <b>muro</b> del Pelotón. Con Coraje no se abre.':'El muro asusta al Remate: <b>abre la picada</b> y aterriza sin bono.';
-  else s=b?'Picada completa: el Remate pasa a todas.':'Sin el bono de picada, el Remate no alcanza.';
+  if(t<1.5)s='Largada. Dos <b>Puntas</b> pelean el despegue: sale primera la de más Agilidad.';
+  else if(t<3.8)s='<b>Pique</b> sobre el agua: dos Puntas a la par. Las dos se queman por ser primera. En el Pelotón, los relevos pelean la proa.';
+  else if(t<4.4)s='Halcón Rojo cede y pasa a <b>segunda</b>: va en la estela. La otra se queda la punta.';
+  else if(t<5.4)s='50 %: «Escapada» se activa solo para la que tiene la punta. La que perdió el pique, nada.';
+  else if(t<6.25)s='Pelotón: los relevos la dejaron tercera y <b>encerrada</b>. ⊏⊐ Busca el hueco: lo ve antes con Inteligencia.';
+  else if(t<7.5)s=b?'<b>El hueco</b>: 3,6 m entre dos cuerpos. Coraje 900: aguanta y pasa.':'<b>El hueco</b>: 3,6 m entre dos cuerpos. Coraje 300: se achica y sigue encerrada.';
+  else if(t<8.5)s=b?'60 %: ella tiene la proa y «Proa» se activa. El Acecho tiene la mira.':'60 %: sin proa, «Proa» no se activa. El Acecho tiene la mira.';
+  else if(t<9.95)s=b?'<b>El Abanico</b>: las alas se abren en cadena por orden real. Ella es la proa: sale primera.':'<b>El Abanico</b>: la cadena se abre sin ella. Encerrada, no despega.';
+  else if(t<10.85)s='El Acecho pliega en flecha y cae en <b>picada</b>, con su carril libre.';
+  else if(t<11.6)s='75 %: el Remate está <b>a tiro</b> de la 3.ª. «Desde el cielo» se activa y sube al techo, que está libre.';
+  else if(t<13.4)s=b?'Ventana pisada: <b>picada cruzada</b>. Coraje 900: no se abre.':'Ventana pisada: <b>picada cruzada</b>. Coraje 300: abre la picada y aterriza sin bono.';
+  else s='Llegada. Ninguna ganó por su posición: cada una ganó o perdió su propia pelea.';
   const el=document.getElementById('cap');if(el._s!==s){el._s=s;el.innerHTML=s;}}
 
 /* ---------- loop ---------- */
@@ -443,19 +598,18 @@ scrub.oninput=()=>{t=+scrub.value;setPlay(false);};
 cv.onclick=()=>setPlay(!playing);
 function press(group,btn){group.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===btn?'true':'false'));}
 const focusSeg=document.getElementById('focus');
-function setFocus(f){focus=f;press(focusSeg,focusSeg.querySelector('[data-f="'+f+'"]'));renderInfo();}
+function setFocus(f){focus=f;press(focusSeg,focusSeg.querySelector('[data-f="'+f+'"]'));renderInfo();if(f)setMb(f);}
 focusSeg.onclick=e=>{const b=e.target.closest('button');if(b)setFocus(b.dataset.f);};
 const nerveSeg=document.getElementById('nerveSeg');
-nerveSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;nerveMode=b.dataset.n;press(nerveSeg,b);
-  if(nerveMode!=='auto'&&!playing){} renderNerve();};
+nerveSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;nerveMode=b.dataset.n;press(nerveSeg,b);renderNerve();renderMb();};
 function renderNerve(){const lo=nerveMode==='low',hi=nerveMode==='high';
-  const s=(c)=>pct(pNerve(100,600,c)),m=(c)=>pct(pNerve(0,700,c));
-  document.getElementById('pS').textContent=hi?s(900):lo?s(300):s(300)+' / '+s(900);
-  document.getElementById('pM').textContent=hi?m(900):lo?m(300):m(300)+' / '+m(900);}
+  const f=fn=>hi?pct(fn(900)):lo?pct(fn(300)):pct(fn(300))+' / '+pct(fn(900));
+  document.getElementById('pH').textContent=f(pH);document.getElementById('pC').textContent=f(pC);}
 
+/* ---------- info per position ---------- */
 const PROF={
-  punta:'M0 28 L8 28 L13 20 L42 20 L46 28 L52 28 L56 20 L70 20 L74 28 L100 28',
-  peloton:'M0 28 L55 28 Q58 21 61 28 L100 28',
+  punta:'M0 28 L8 28 L13 20 L100 20',
+  peloton:'M0 28 L20 28 Q23 22 26 28 L35 28 Q38 22 41 28 L80 28 L84 22 L100 22',
   acecho:'M0 28 L10 28 L20 12 L62 12 L70 28 L100 28',
   remate:'M0 28 L70 28 L78 4 L82 4 L88 28 L100 28'
 };
@@ -463,47 +617,125 @@ function profSvg(id,h){return '<svg class="prof" viewBox="0 0 100 32" preserveAs
   [4,12,20,28].map(y=>'<line x1="0" x2="100" y1="'+y+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".15" stroke-width=".6" vector-effect="non-scaling-stroke"/>').join('')+
   '<path d="'+PROF[id]+'" fill="none" stroke="var(--'+id+')" stroke-width="2.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';}
 const INFO={
-  punta:{l:['Sale con lanzamiento y vuela <b>bajo</b>, a ras, sobre agua, curvas y subidas.','Le gana a <b>Remate</b>. Pierde con <b>Acecho</b>, que la cubre desde arriba.'],st:['Agilidad','Resistencia','Coraje','Técnica'],air:[40,60],look:'Alas planas, estela recta, llama azul'},
-  peloton:{l:['Corre por el <b>suelo</b>, en el medio del grupo, con rebufo. Solo vuela en los saltos.','Llega con el tanque lleno. Le gana a <b>Acecho</b>, pierde con <b>Remate</b>.'],st:['Inteligencia','Resistencia','Coraje'],air:[0,10],look:'Bloque apretado, alas plegadas, muro cian'},
-  acecho:{l:['Vuela <b>alto</b> detrás del grupo. Su sombra cae sobre la que lidera.','En el final cae en <b>picada</b>. Le gana a <b>Punta</b>, pierde con <b>Pelotón</b>.'],st:['Técnica','Inteligencia','Coraje'],air:[50,70],look:'Alas en V, sombra, línea de mira ámbar'},
-  remate:{l:['Espera atrás, en el suelo, con las alas cargando.','Al 75 % sube al <b>techo</b> y cae en la gran picada. Le gana a <b>Pelotón</b>, pierde con <b>Punta</b>.'],st:['Coraje','Técnica','Resistencia'],air:[15,30],look:'Alas que brillan, subida empinada, caída vertical'}
+  punta:{uma:'Nige · Front',st:'Resistencia',puesto:'La punta. Lugar para una.',
+    track:'Despega al terminar la largada y vuela en banda baja, adelante. A ras sobre agua y curvas avanza más. Lidera sin estela: gasta parejo y necesita tanque.',
+    fight:'Sola, marca el paso: el ritmo propio le baja el gasto. Con otra Punta arranca el pique: las dos se queman hasta que una cede y pasa a segunda.',
+    peleas:'Largada: Agilidad (Int en la reacción). Pique: Resistencia y Agilidad; Int para ceder a tiempo.',
+    fails:'Trabada en el grupo: si otra despegó justo delante, queda en el suelo dentro del bloque. Sale por un hueco o subiendo de banda.',
+    cps:'Fin de la largada, 50 %, entrada al final.',
+    skills:[['Escapada','lidera al 50 %: +0,35 m/s durante 4 s.'],['Viento propio','10 s de ritmo propio en la fase media: +8 de energía.'],['Dueña de la curva','lidera al entrar a la última curva o al agua: a ras rinde ×1,5.']],
+    epic:'«El filo del agua»: sola, a ras, con cortina de espuma. Con dos Puntas: el pique, dos alas a la par hasta que una se abre.',
+    tracks:'Curvas, agua y sprints.',weak:'Resistencia (pierde el pique o se apaga) y Agilidad (queda trabada en la largada).',
+    comp:['Ritmo propio','Pique: 8 a 15 de energía cada una','Una trabada en la largada, las otras se queman'],here:1,air:[40,60]},
+  peloton:{uma:'Senkō · Pace',st:'Inteligencia',puesto:'La proa: las dos primeras del grupo en el suelo.',
+    track:'Corre en el suelo, dentro del grupo. Cobra la estela casi todo el tiempo y llega al final con el tanque lleno. Vuela solo en relevos, saltos y el Abanico.',
+    fight:'Pelea la proa con relevos: saltitos sobre la de adelante. La que queda atrás puede quedar encerrada y tiene que ver el hueco a tiempo. Dos formas de jugarla: ganar la proa, o ir en la estela con «Respirar en el grupo» y salir en el hueco y el Abanico.',
+    peleas:'Proa y relevos: Agilidad. Encierro y hueco: Inteligencia para verlo; el Coraje fija qué tan chico se anima a tomarlo.',
+    fails:'Encerrada: dos adelante, más lentas, a 3 m o menos. Le tapan la velocidad hasta que sale (30 ticks como mucho).',
+    cps:'50 %, 60 %, entrada al final.',
+    skills:[['Proa','en la proa al 60 %: +6 de energía.'],['Puerta abierta','en la proa al entrar al final: despega 10 ticks antes en el Abanico.'],['Respirar en el grupo','regenera solo si NO está en la proa.']],
+    epic:'«El hueco»: zoom cuando pasa entre dos cuerpos y «AGUANTA». Y «El Abanico»: el grupo abre las alas en cadena y la proa sale disparada con «¡PROA!».',
+    tracks:'Largas, con fase media extensa y poco terreno raro.',weak:'Inteligencia: ve los huecos tarde y llega al Abanico encerrada.',
+    comp:['Proa fácil, poca estela','Proa disputada, buena estela','Guerra de relevos y encierros'],here:2,air:[0,15]},
+  acecho:{uma:'Sashi · Late',st:'Técnica',puesto:'La mira: banda alta, a 10 m o menos de la 3.ª del ranking, con aire limpio adelante. Lugar para una.',
+    track:'Vuela largo en banda alta en la fase media; en bajadas, la térmica le abarata el vuelo. Al inicio del final cae en picada.',
+    fight:'Detrás de otra Acecho vuela más barato, pero queda en cola para caer. Adelante paga el aire limpio y cae primera.',
+    peleas:'Línea alta y aterrizaje: Técnica. Cuándo despega: Inteligencia. Picada cruzada: Coraje.',
+    fails:'Aterrizó antes: sin Técnica o sin energía, baja dentro del grupo y no hay caída. Intrusa: si se pega a la que lidera entra al pique, y se queman las dos.',
+    cps:'60 % y punto de caída.',
+    skills:[['Ojo de halcón','mira al 60 %: +40 ‰ al aterrizar.'],['Caída limpia','carril libre: +10 ticks de ataque.']],
+    epic:'«La sombra que cae»: quieta en V, la mira ámbar apunta al punto de caída. Pliega en flecha y cae con estela roja.',
+    tracks:'Crestas y bajadas en la fase media.',weak:'Técnica: no sostiene la banda alta y aterriza antes, dentro del grupo.',
+    comp:['Mira limpia','Cola para caer','La tercera vuela sin puesto o se tira cruzada'],here:0,air:[50,70]},
+  remate:{uma:'Oikomi · End',st:'Coraje',puesto:'A tiro y con carril limpio: al 75 %, a 40 m o menos de la 3.ª (en esta pista).',
+    track:'Espera atrás, en el suelo, ahorrando. Al 75 % sube al techo y cae casi vertical. Necesita una recta final de 250 m o más, sin saltos.',
+    fight:'El techo es para una: con otra Remate, una espera o cae desde más abajo. La ventana busca un hueco del tamaño que pide su Coraje; si no lo hay, la picada es cruzada.',
+    peleas:'A tiro: Agilidad. Alcance de la ventana: Inteligencia. Picada y cruzada: Coraje.',
+    fails:'Fuera de tiro: le faltó crucero o quedó encerrada atrás. Igual pica, pero sin habilidades de puesto.',
+    cps:'75 % (a tiro) y punto de caída (carril).',
+    skills:[['Desde el cielo','a tiro al 75 %: sube 30 % más rápido.'],['Primera en caer','carril limpio: +50 ‰ al aterrizar.']],
+    epic:'«La gran picada»: corte de cámara, sola en el techo, cae casi vertical y nivela con un anillo.',
+    tracks:'Recta final larga sin saltos, finales en bajada.',weak:'Coraje: se abre en la caída. Agilidad: queda fuera de tiro.',
+    comp:['Techo y carril limpios','Escalera para subir','Picadas en cascada; la última sin carril'],here:0,air:[15,30]}
 };
+const IDS=['punta','peloton','acecho','remate'];
 function renderInfo(){const el=document.getElementById('info');
-  if(!focus){el.innerHTML='<h3>Las cuatro</h3><p class="two">Se reconocen por la altura: Punta baja, Pelotón en el suelo, Acecho alta, Remate en el techo al final.</p>'+
-    '<div class="cycle" aria-label="Ciclo de contras"><span style="color:var(--acecho)">&#9670; Acecho</span><span class="a">&gt;</span><span style="color:var(--punta)">&#9650; Punta</span><span class="a">&gt;</span><span style="color:var(--remate)">&#9660; Remate</span><span class="a">&gt;</span><span style="color:var(--peloton)">&#9632; Pelotón</span></div>'+
-    '<p class="note">Cada una le gana a la de la derecha. El Pelotón le gana al Acecho y cierra el ciclo. El terreno inclina la balanza.</p>';return;}
+  if(!focus){el.innerHTML='<h3>Sin ciclo</h3><p>Ninguna posición le gana a otra por diseño. Primero pelea contra <b>la pista</b>; después, contra <b>las que eligieron lo mismo</b>. Juntarse castiga hacia adentro: dos Puntas se queman entre ellas, tres Pelotón se encierran.</p>'+
+    '<div class="tbl"><span class="h">Posición</span><span class="h">Stat dueña</span><span class="h">Su puesto</span>'+
+    IDS.map(id=>'<span class="p" style="color:var(--'+id+')">'+POS[id].ic+' '+POS[id].n+'</span><span>'+INFO[id].st+'</span><span>'+({punta:'La punta',peloton:'La proa del grupo',acecho:'La mira, arriba',remate:'A tiro y carril limpio'})[id]+'</span>').join('')+'</div>'+
+    '<p class="note">La pista inclina: agua y curvas, Punta; fase media larga, Pelotón; bajadas, Acecho; recta final larga, Remate. Con +80 a +100 en la stat que le falta, otra posición la alcanza. Ícono lleno en la carrera: tiene su puesto. Vacío: lo perdió.</p>';return;}
   const P=POS[focus],I=INFO[focus];
-  el.innerHTML='<h3 style="color:var(--'+focus+')"><span>'+P.ic+'</span>'+P.n+'</h3><p class="two">'+I.l[0]+'<br>'+I.l[1]+'</p>'+
-    profSvg(focus)+'<div class="meter"><div class="bar"><div class="fill" style="left:'+I.air[0]+'%;width:'+(I.air[1]-I.air[0])+'%;background:var(--'+focus+')"></div><div class="now"></div></div>'+
-    '<div class="t"><span>Tiempo en el aire: meta '+I.air[0]+' a '+I.air[1]+' %</span><span>hoy &lt; 5 %</span></div></div>'+
-    '<div class="row">'+I.st.map(s=>'<span class="chip">'+s+'</span>').join('')+'</div><p class="note">'+I.look+'.</p>';}
+  el.innerHTML='<h3 style="color:var(--'+focus+')"><span>'+P.ic+'</span>'+P.n+' <small>'+I.uma+'</small></h3>'+
+    '<p>'+I.track+'</p>'+profSvg(focus)+
+    '<dl class="kv"><dt>Stat dueña</dt><dd><b>'+I.st+'</b> (la letra de posición la multiplica)</dd><dt>Su puesto</dt><dd>'+I.puesto+'</dd><dt>Su pelea</dt><dd>'+I.fight+'</dd><dt>Quién gana</dt><dd>'+I.peleas+'</dd><dt>Falla</dt><dd>'+I.fails+'</dd><dt>Chequeos</dt><dd>'+I.cps+'</dd></dl>'+
+    '<h4>Habilidades de puesto · todo o nada</h4><ul class="skl">'+I.skills.map(s=>'<li><b>'+s[0]+'</b>: '+s[1]+'</li>').join('')+'</ul>'+
+    '<h4>Cuántas comparten su posición</h4><div class="comp">'+['Sola','Con 2','Con 3'].map((h,i)=>'<div'+(i===I.here?' style="border-color:var(--'+focus+');box-shadow:0 0 0 1px var(--'+focus+') inset"':'')+'><b>'+h+(i===I.here?' · acá':'')+'</b>'+I.comp[i]+'</div>').join('')+'</div>'+
+    '<dl class="kv"><dt>Momento épico</dt><dd>'+I.epic+'</dd><dt>Pistas buenas</dt><dd>'+I.tracks+'</dd><dt>Para entrenar</dt><dd class="weak">'+I.weak+'</dd></dl>'+
+    '<div class="meter"><div class="bar"><div class="fill" style="left:'+I.air[0]+'%;width:'+(I.air[1]-I.air[0])+'%;background:var(--'+focus+')"></div></div>'+
+    '<div class="t"><span>Tiempo en el aire: meta '+I.air[0]+' a '+I.air[1]+' %</span><span>hoy &lt; 5 %</span></div></div>';}
+
+/* ---------- microbatallas ---------- */
+let mbPos='peloton';
+const mbSeg=document.getElementById('mbSeg');
+function setMb(p){mbPos=p;press(mbSeg,mbSeg.querySelector('[data-m="'+p+'"]'));renderMb();}
+mbSeg.onclick=e=>{const b=e.target.closest('button');if(b)setMb(b.dataset.m);};
+function mbData(pos,b){const c=b?900:300;
+  if(pos==='punta')return {L:[[1,'Largada: despegaste 2 ticks antes que Halcón Rojo.','Agilidad 700 contra 640'],
+      [1,'Pique: 2,3 s a la par sobre el agua. Halcón Rojo cedió primero.','Energía 78 contra 70 · Resistencia 640 contra 560'],
+      [1,'50 %: tenías la punta. «Escapada» se activó.','+0,35 m/s durante 4 s · +3 m'],
+      [0,'Fase media: 7 s de ritmo propio de los 10 que pide «Viento propio». No se activó.','El pique te comió 2,3 s'],
+      [0,'Final: el Acecho cayó y te pasó. Llegaste con 22 de energía menos.','Resistencia 640']],
+    why:[0,'Por qué no ganaste: el pique (−6 m)','Re-simulada sin pique, llegabas 6 m más adelante. Entrená Resistencia para pelear la punta sin apagarte.']};
+  if(pos==='peloton'){const A=[[0,'50 %: perdiste la proa en los relevos. Saltaste 1 vez; ellas, 2.','Agilidad 560 · típica 600'],[0,'Encerrada 1,2 s detrás de dos. Viste el hueco a los 14 ticks.','Inteligencia 600']];
+    return b?{L:A.concat([[1,'El hueco: 3,6 m entre dos cuerpos. Aguantaste.','Coraje 900 contra 700 · chance '+pct(pH(900))],[1,'60 %: proa. «Proa» se activó.','+6 de energía'],[1,'Final: abriste el Abanico primera. «Puerta abierta» se activó.','Despegue 10 ticks antes · +4 m']]),
+      why:[1,'Lo que más te dio: el hueco (+9 m)','Sin pasarlo, llegabas encerrada al Abanico. Para no depender de él, entrená Agilidad y ganá la proa en los relevos.']}
+     :{L:A.concat([[0,'El hueco: 3,6 m entre dos cuerpos. Te achicaste.','Coraje 300 contra 700 · chance '+pct(pH(300))],[0,'60 %: sin proa. «Proa» no se activó.','La tenían las dos rivales del Pelotón'],[0,'Final: encerrada en el Abanico. La cadena siguió sin vos.','−9 m']]),
+      why:[0,'Por qué perdiste: el hueco (−9 m)','Re-simulada con el hueco a favor, recuperás 9 m. Entrená Coraje: con 600 el hueco mínimo baja a 3,0 m y la chance de achicarte a '+pct(pH(600))+'.']};}
+  if(pos==='acecho')return {L:[[1,'Despegue: tomaste la línea alta primera, sin nadie adelante.','Inteligencia 600'],
+      [1,'60 %: mira tomada, a 7 m de la 3.ª. «Ojo de halcón» se activó.','Técnica 680 · +40 ‰ al aterrizar'],
+      [1,'Punto de caída: carril libre. «Caída limpia» se activó.','+10 ticks de ataque'],
+      [1,'Sola en Acecho: sin cola para caer.','Con otra Acecho, la de atrás espera hasta 30 ticks']],
+    why:[1,'Lo que más te dio: la mira (+5 m)','Tu punto débil acá sigue siendo Técnica: con 600 aterrizabas antes, dentro del grupo.']};
+  const d=tiro(b);const A=[[1,'75 %: a tiro, '+d+'/40 m de la 3.ª. «Desde el cielo» se activó.','Agilidad 600 · sube 30 % más rápido'],[1,'Techo libre: subiste sin esperar.','Sola en Remate'],[0,'Ventana pisada: el Abanico ocupó tu carril. «Primera en caer» no se activó.','Inteligencia 600 · ventana de 40 m']];
+  return b?{L:A.concat([[1,'Picada cruzada: aguantaste. Bono de picada completo.','Coraje 900 contra 700 · chance '+pct(pC(900))]]),why:[1,'Lo que más te dio: la cruzada (+11 m)','Con la ventana limpia ganabas 2 m más. La Inteligencia alarga la ventana y encuentra el hueco antes.']}
+   :{L:A.concat([[0,'Picada cruzada: te abriste. Aterrizaje sin bono.','Coraje 300 contra 700 · chance '+pct(pC(300))+' · −11 m']]),why:[0,'Por qué perdiste: la cruzada (−11 m)','Re-simulada aguantando, recuperás 11 m. Entrená Coraje: es la stat dueña del Remate.']};}
+function renderMb(){const b=nerveMode==='high';const D=mbData(mbPos,b);const P=POS[mbPos];
+  document.getElementById('mb').innerHTML='<h3 style="color:var(--'+mbPos+')"><span>'+P.ic+'</span>'+P.n+' <small>ella · Coraje '+(b?900:300)+(nerveMode==='auto'?' (cambialo arriba)':'')+'</small></h3>'+
+    '<ul class="mb">'+D.L.map(l=>'<li><span class="m '+(l[0]?'ok':'ko')+'" aria-label="'+(l[0]?'ganada':'perdida')+'">'+(l[0]?'✓':'✗')+'</span><span>'+l[1]+'<span class="tr">'+l[2]+'</span></span></li>').join('')+'</ul>'+
+    '<div class="why '+(D.why[0]?'win':'lose')+'"><b>'+D.why[1]+'</b>'+D.why[2]+'</div>';}
 
 /* ---------- pre-race card ---------- */
+const SN={Res:'Resistencia',Agi:'Agilidad',Int:'Inteligencia',Tec:'Técnica',Cor:'Coraje'};
+const EXAM={punta:[['Res',680,''],['Agi',620,'largada']],peloton:[['Int',600,''],['Agi',560,'relevos']],acecho:[['Tec',620,''],['Int',520,'despegue']],remate:[['Cor',640,''],['Agi',580,'a tiro']]};
+const COMP={punta:F=>'1 rival · Largada: Agi '+F.s.Agi+' contra 700 (Halcón Rojo)',peloton:F=>'2 rivales · Proa: Int '+F.s.Int+' contra 620 típica',acecho:()=>'Sola · mira limpia',remate:()=>'Sola · techo libre · recta final 380 m ✓'};
+const NERV={punta:['el pique',0,650],peloton:['el hueco',50,700],acecho:['la cruzada',100,600],remate:['la cruzada',100,700]};
 const FAL={
-  peregrina:{n:'Peregrina',w:'Picada',c:700,L:{punta:'C',peloton:'B',acecho:'B',remate:'A'},cb:{punta:'Salida en picada: brilla en crestas',peloton:'Sprint fuerte en bajadas',acecho:'★ La sombra que cae',remate:'★ La gran picada'}},
-  cernicala:{n:'Cernícala',w:'Suspensión',c:550,L:{punta:'B',peloton:'B',acecho:'A',remate:'C'},cb:{punta:'Aguanta la presión regenerando',peloton:'★ Grupo que regenera',acecho:'★ La sombra que no se cansa',remate:'Sube rápido, convierte poco'}},
-  caracara:{n:'Caracara',w:'Rasante',c:800,L:{punta:'B',peloton:'A',acecho:'D',remate:'C'},cb:{punta:'Punta por el suelo, fuerte con obstáculos',peloton:'★ El muro: no la encajonan',acecho:'· Acecho de suelo: sin sombra',remate:'· Embestida por el suelo'}}
+  peregrina:{n:'Peregrina',w:'Picada',s:{Res:560,Agi:700,Int:540,Tec:640,Cor:620},L:{punta:'B',peloton:'C',acecho:'A',remate:'A'}},
+  cernicala:{n:'Cernícala',w:'Suspensión',s:{Res:720,Agi:560,Int:680,Tec:560,Cor:550},L:{punta:'A',peloton:'A',acecho:'B',remate:'C'}},
+  caracara:{n:'Caracara',w:'Rasante',s:{Res:620,Agi:640,Int:500,Tec:480,Cor:800},L:{punta:'B',peloton:'B',acecho:'D',remate:'A'}}
 };
-const MOM={punta:['la sombra',100,600],peloton:['la picada',200,600],acecho:['el muro',0,700],remate:['el muro',50,700]};
 let falK='peregrina',pick=null;
 const rank=l=>'ABCDE'.indexOf(l);
-function renderCard(){const F=FAL[falK];const ids=['punta','peloton','acecho','remate'];
-  const best=ids.slice().sort((a,b)=>rank(F.L[a])-rank(F.L[b]))[0];if(!pick)pick=best;
+const deficit=(F,id)=>EXAM[id].reduce((s,[k,n])=>s+Math.max(0,n-F.s[k]),0);
+const margin=(F,id)=>Math.min(...EXAM[id].map(([k,n])=>F.s[k]-n));
+function renderCard(){const F=FAL[falK];
+  const best=IDS.slice().sort((a,b)=>deficit(F,a)-deficit(F,b)||margin(F,b)-margin(F,a)||rank(F.L[a])-rank(F.L[b]))[0];if(!pick)pick=best;
   document.getElementById('card').innerHTML='<div class="hd"><b>Elegí posición</b><span>'+F.n+' · alas '+F.w+'<br>Cresta del Halcón · 2400 m</span></div><div class="opts" role="group" aria-label="Posición">'+
-    ids.map(id=>{let extra=MOM[id][1];if(falK==='caracara'&&id==='punta')extra-=50;const p=pNerve(extra,MOM[id][2],F.c);
-      return '<button class="opt" data-id="'+id+'" aria-pressed="'+(pick===id)+'" style="--c:var(--'+id+')">'+(id===best?'<span class="sug">Sugerida</span>':'')+
+    IDS.map(id=>{const [mn,ex,co]=NERV[id];const p=pNerve(ex,co,F.s.Cor);const ex2=EXAM[id];
+      const weakI=ex2.map(([k,n])=>F.s[k]-n).reduce((wi,v,i,a)=>v<a[wi]?i:wi,0);
+      const rows=ex2.map(([k,n,lab],i)=>{const h=F.s[k],bad=i===weakI&&h<n;return '<span class="ex'+(bad?' bad':'')+'"><span class="k"><span>'+SN[k].slice(0,3)+(lab?' · '+lab:'')+'</span><i>'+h+' / '+n+'</i></span><span class="b"><span class="h" style="width:'+Math.min(100,h/10)+'%"></span><span class="n" style="left:'+(n/10)+'%"></span></span></span>';}).join('');
+      return '<button class="opt" data-id="'+id+'" aria-pressed="'+(pick===id)+'" style="--c:var(--'+id+')">'+(id===best?'<span class="sug">Menor faltante</span>':'')+
       '<span class="top"><span class="nm">'+POS[id].ic+' '+POS[id].n+'</span><span class="lt '+F.L[id]+'">'+F.L[id]+'</span></span>'+
-      profSvg(id,24)+'<span class="cb">'+F.cb[id]+'</span><span class="nv">Nervio en '+MOM[id][0]+': '+pct(p)+'</span></button>';}).join('')+
+      rows+'<span class="cb">'+COMP[id](F)+'</span><span class="nv">Nervio en '+mn+': '+pct(p)+'</span></button>';}).join('')+
     '</div><button class="go" type="button">Correr como '+POS[pick].n+'</button>';}
 document.getElementById('card').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;pick=b.dataset.id;renderCard();setFocus(pick);};
 const falSeg=document.getElementById('fal');
 falSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;falK=b.dataset.k;pick=null;press(falSeg,b);renderCard();};
 
 /* ---------- boot ---------- */
-layout();renderInfo();renderNerve();renderCard();setPlay(playing);scrub.value=t;
+layout();renderInfo();renderNerve();renderMb();renderCard();setPlay(playing);scrub.value=t;
 window.addEventListener('resize',layout);
 if(RMq.addEventListener)RMq.addEventListener('change',e=>{RM=e.matches;});
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 requestAnimationFrame(tick);
 })();
 </script>
