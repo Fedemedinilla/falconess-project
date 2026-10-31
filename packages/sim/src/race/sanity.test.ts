@@ -43,7 +43,7 @@ type Row = [
 // three signature rows its redesigned passives (metrics 3 and 4). The canyon rows are the engine's
 // own run without wind (ADR-0007): the prototype's canyon had wind, so it no longer is their oracle.
 const TABLE: Record<string, Row[]> = {
-  "sprint": [
+  sprint: [
     ["neutral-dive", 811731, [1, 0, 99], 0, 0, 100000, null, 1800, "planned"],
     ["neutral-hover", 817093, [10, 0, 90], 0, 0, 100000, null, 1300, "planned"],
     ["neutral-glide", 814407, [1, 0, 99], 0, 0, 100000, null, 1300, "planned"],
@@ -62,7 +62,7 @@ const TABLE: Record<string, Row[]> = {
     ["cernicala-signature", 933706, [17, 6, 108], 0, 242, 100000, null, 1150, "planned"],
     ["caracara-signature", 1158042, [31, 61, 59], 0, 88, 180000, null, 400, "planned"],
   ],
-  "ridge": [
+  ridge: [
     ["neutral-dive", 1303652, [15, 0, 50], 0, 0, 100000, null, 2600, "planned"],
     ["neutral-hover", 1306911, [0, 0, 65], 0, 0, 100000, null, 1500, "planned"],
     ["neutral-glide", 1304010, [0, 0, 65], 0, 0, 100000, null, 1500, "planned"],
@@ -81,7 +81,7 @@ const TABLE: Record<string, Row[]> = {
     ["cernicala-signature", 1507739, [4, 4, 96], 0, 656, 100000, null, 750, "planned"],
     ["caracara-signature", 1805013, [22, 62, 74], 0, 128, 180000, null, 300, "planned"],
   ],
-  "canyon": [
+  canyon: [
     ["neutral-dive", 2023437, [0, 0, 100], 0, 0, 90000, 2822410, 1800, "hp-limited"],
     ["neutral-hover", 2027179, [0, 0, 100], 0, 0, 90000, 2831391, 1300, "hp-limited"],
     ["neutral-glide", 2013084, [0, 0, 100], 0, 0, 90000, 2877044, 1300, "hp-limited"],

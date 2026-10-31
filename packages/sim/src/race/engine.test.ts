@@ -85,14 +85,14 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
   // .work/proto/proto2/engine.mjs (written from spec revision 2), seed "ref-seed"; canyon re-run on
   // the prototype without wind (ADR-0007), which gives these times exactly
   const QUIET_MILLI: Record<string, number[]> = {
-    "sprint": [811_731, 817_093, 814_407, 817_402],
-    "ridge": [1_303_652, 1_306_911, 1_304_010, 1_296_912],
-    "canyon": [2_023_437, 2_027_179, 2_013_084, 2_028_598],
+    sprint: [811_731, 817_093, 814_407, 817_402],
+    ridge: [1_303_652, 1_306_911, 1_304_010, 1_296_912],
+    canyon: [2_023_437, 2_027_179, 2_013_084, 2_028_598],
   };
   const NOISY_MILLI: Record<string, number[]> = {
-    "sprint": [815_547, 820_687, 818_367, 820_408],
-    "ridge": [1_311_738, 1_314_973, 1_312_152, 1_304_771],
-    "canyon": [2_030_975, 2_034_525, 2_021_124, 2_035_740],
+    sprint: [815_547, 820_687, 818_367, 820_408],
+    ridge: [1_311_738, 1_314_973, 1_312_152, 1_304_771],
+    canyon: [2_030_975, 2_034_525, 2_021_124, 2_035_740],
   };
 
   for (const id of COURSES)
@@ -119,7 +119,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
   // ADR-0007 (no wind): the canyon lanes are the prototype's re-run on the windless canyon.
   it("an eight-runner field of real frames with actives matches the prototype (finish, skills)", () => {
     const want: Record<string, { milli: number[]; skills: string[] }> = {
-      "sprint": {
+      sprint: {
         milli: [822_021, 824_890, 689_635, 626_683, 640_368, 707_082, 923_593, 795_707],
         skills: [
           "corner-carver+last-gasp",
@@ -132,7 +132,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
           "clean-start",
         ],
       },
-      "ridge": {
+      ridge: {
         milli: [
           1_322_759, 1_311_267, 1_178_912, 1_075_128, 1_075_772, 1_152_758, 1_493_352, 1_277_827,
         ],
@@ -147,7 +147,7 @@ describe("cross-check with the spec prototype (docs/race-engine.md 25.4)", () =>
           "clean-start+gravity-friend",
         ],
       },
-      "canyon": {
+      canyon: {
         milli: [
           2_035_730, 2_043_705, 1_783_953, 1_615_122, 1_652_298, 1_796_124, 2_294_358, 1_950_659,
         ],

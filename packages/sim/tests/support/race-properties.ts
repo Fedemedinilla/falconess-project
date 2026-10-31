@@ -57,9 +57,7 @@ export function noBoost(R: Ruleset): Ruleset {
   return { ...Q, race: { ...Q.race, kBoost: 0, kH: 0 } };
 }
 
-const COURSES = ["sprint", "ridge", "canyon"].map((id) =>
-  content.getCourse(id),
-);
+const COURSES = ["sprint", "ridge", "canyon"].map((id) => content.getCourse(id));
 const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
 const ACTIVE_IDS = [...content.skills.values()]
   .filter((s) => s.kind === "active")

@@ -25,9 +25,7 @@ const QUIET: Ruleset = {
 };
 /** A boost tick costs more than any tank: the physics without the controller's thrust. */
 const NO_BOOST: Ruleset = { ...QUIET, race: { ...QUIET.race, kE: 1_000_000 } };
-const COURSES = ["sprint", "ridge", "canyon"].map((id) =>
-  content.getCourse(id),
-);
+const COURSES = ["sprint", "ridge", "canyon"].map((id) => content.getCourse(id));
 
 function stats(over: Partial<RaceEntry["stats"]> = {}): RaceEntry["stats"] {
   return { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600, ...over };

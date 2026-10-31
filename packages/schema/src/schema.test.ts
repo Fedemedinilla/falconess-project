@@ -104,7 +104,12 @@ describe("courses", () => {
     );
   });
   it("a course has no biome and a canyon no wind (ADR-0007)", () => {
-    const c = { id: "c", version: 1, textKey: "course.c", segments: [{ type: "flat", length: 400 }] };
+    const c = {
+      id: "c",
+      version: 1,
+      textKey: "course.c",
+      segments: [{ type: "flat", length: 400 }],
+    };
     expect(Course.safeParse({ ...c, biome: "desert" }).success).toBe(false);
     const canyon = { type: "canyon", length: 400 };
     expect(Course.safeParse({ ...c, segments: [canyon] }).success).toBe(true);

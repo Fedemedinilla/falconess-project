@@ -23,10 +23,11 @@ describe("pnpm sim:race through the port", () => {
   it("builds the field, simulates through the port and prints the log's text view", () => {
     const log = loadRaceFixture("sprint");
     const { engine, calls } = fakeEngine(log);
-    const out = runSimRace(
-      ["--seed", "pt1-sprint", "--course", "sprint", "--detail", "results"],
-      { engine, ctx, readText: noFiles },
-    );
+    const out = runSimRace(["--seed", "pt1-sprint", "--course", "sprint", "--detail", "results"], {
+      engine,
+      ctx,
+      readText: noFiles,
+    });
     expect(out).toBe(renderRace(log, contentLabels(ctx.content)).join("\n"));
     expect(calls.map((c) => c.op)).toEqual(["generateField", "simulateRace"]);
     const sim = calls[1];

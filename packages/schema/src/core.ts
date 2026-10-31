@@ -37,7 +37,6 @@ export const Style = z.enum(["dive", "hover", "glide", "ground"]);
 export type Style = z.infer<typeof Style>;
 export const STYLES = Style.options;
 
-
 export const SegmentType = z.enum([
   "flat",
   "climb",

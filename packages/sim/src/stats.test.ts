@@ -38,20 +38,8 @@ describe("effective stats", () => {
   it("is monotonic in base stats and in mood", () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 1199 }), fc.integer({ min: -2, max: 1 }), (a, mood) => {
-        const lo = effectiveStats(
-          R,
-          { ...base, agility: a },
-          mood,
-          styleApt,
-          "glide",
-        );
-        const hi = effectiveStats(
-          R,
-          { ...base, agility: a + 1 },
-          mood + 1,
-          styleApt,
-          "glide",
-        );
+        const lo = effectiveStats(R, { ...base, agility: a }, mood, styleApt, "glide");
+        const hi = effectiveStats(R, { ...base, agility: a + 1 }, mood + 1, styleApt, "glide");
         return hi.agility >= lo.agility && hi.stamina >= lo.stamina;
       }),
     );

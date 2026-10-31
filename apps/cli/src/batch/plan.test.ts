@@ -97,9 +97,7 @@ describe("run budget (§25.2.1)", () => {
 
 describe("seeds and jobs", () => {
   it("names seeds <profile>/<scenario>/<course>/<cell>/<k>, optionally prefixed", () => {
-    expect(seedFor("", "pr", "S1", "sprint", "field", 0)).toBe(
-      "pr/S1/sprint/field/0",
-    );
+    expect(seedFor("", "pr", "S1", "sprint", "field", 0)).toBe("pr/S1/sprint/field/0");
     expect(seedFor("nightly", "full", "S4", "ridge", "stoop-strike", 7)).toBe(
       "nightly/full/S4/ridge/stoop-strike/7",
     );

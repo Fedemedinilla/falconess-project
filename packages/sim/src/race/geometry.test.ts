@@ -20,9 +20,9 @@ const M = 225_000; // pu per metre
 
 /** The table of docs/race-engine.md 2, in mm. */
 const BOUNDARIES: Record<string, readonly [number, number, number, number, number, number]> = {
-  "sprint": [1_200_000, 200_000, 800_000, 840_000, 1_140_000, 1_175_000],
-  "ridge": [2_000_000, 333_333, 1_333_333, 1_400_000, 1_940_000, 1_975_000],
-  "canyon": [3_000_000, 500_000, 2_000_000, 2_100_000, 2_940_000, 2_975_000],
+  sprint: [1_200_000, 200_000, 800_000, 840_000, 1_140_000, 1_175_000],
+  ridge: [2_000_000, 333_333, 1_333_333, 1_400_000, 1_940_000, 1_975_000],
+  canyon: [3_000_000, 500_000, 2_000_000, 2_100_000, 2_940_000, 2_975_000],
 };
 
 describe("buildCourseGeometry (docs/race-engine.md 2)", () => {
@@ -144,9 +144,9 @@ describe("buildCourseGeometry (docs/race-engine.md 2)", () => {
 describe("raceMaxTicks (docs/race-engine.md 19, ADR-0003 D33)", () => {
   it("is 8 ticks per whole metre + 2400 on the three courses", () => {
     const expected: Record<string, number> = {
-      "sprint": 8 * 1200 + 2400,
-      "ridge": 8 * 2000 + 2400,
-      "canyon": 8 * 3000 + 2400,
+      sprint: 8 * 1200 + 2400,
+      ridge: 8 * 2000 + 2400,
+      canyon: 8 * 3000 + 2400,
     };
     for (const course of content.courses.values())
       expect(raceMaxTicks(R, buildCourseGeometry(R, course)), course.id).toBe(expected[course.id]);

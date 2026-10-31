@@ -66,14 +66,7 @@ export function segmentFactor(
 ): number {
   const type = G.segType[s] ?? SEG_FLAT;
   const curvesScale = floorDiv(traits.curvesScalePm * terms.curvesPm, 1000);
-  let f = baseSegmentFactor(
-    R,
-    type,
-    G.gradePm[s] ?? 0,
-    G.dragPm[s] ?? 0,
-    agility,
-    curvesScale,
-  );
+  let f = baseSegmentFactor(R, type, G.gradePm[s] ?? 0, G.dragPm[s] ?? 0, agility, curvesScale);
   const override = traits.segOverridePm[type] ?? 0;
   if (override > 0) f = override;
   f = floorDiv(f * (traits.segMultiplyPm[type] ?? 1000), 1000);

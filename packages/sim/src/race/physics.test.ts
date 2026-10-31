@@ -77,12 +77,8 @@ function factors(
 
 describe("segment factor f_seg (docs/race-engine.md 7)", () => {
   it("content values: 963, 1030, 1020, 800, 900; canyon 1000 without wind (ADR-0007)", () => {
-    expect(factors(content.getCourse("canyon"))).toEqual([
-      1000, 963, 1000, 1000, 1000, 800, 1000,
-    ]);
-    expect(factors(content.getCourse("ridge"))).toEqual([
-      1000, 1030, 1000, 1000, 1020, 1000, 1000,
-    ]);
+    expect(factors(content.getCourse("canyon"))).toEqual([1000, 963, 1000, 1000, 1000, 800, 1000]);
+    expect(factors(content.getCourse("ridge"))).toEqual([1000, 1030, 1000, 1000, 1020, 1000, 1000]);
     expect(factors(content.getCourse("sprint"))).toEqual([1000, 900, 1000, 900, 1000]);
   });
 

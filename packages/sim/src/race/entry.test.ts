@@ -229,9 +229,9 @@ describe("freezeEntry (docs/race-engine.md 3.1): every frame × Falconess × cou
     const G = buildCourseGeometry(R, sprint);
     const e = freezeEntry(R, content, inputFor("peregrina", "kite"), sprint, 0);
     expect(e.stats.agility).toBe(110);
-    expect(Array.from(segmentFactors(R.race, G, e, compileRule(R.race, e.rule)))).toEqual(
-      [1000, 728, 1000, 728, 1000],
-    );
+    expect(Array.from(segmentFactors(R.race, G, e, compileRule(R.race, e.rule)))).toEqual([
+      1000, 728, 1000, 728, 1000,
+    ]);
   });
 
   it("600-balanced stats: curves 900 (Boneyard 850) for every Falconess (ADR-0007)", () => {

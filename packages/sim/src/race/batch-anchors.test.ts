@@ -21,9 +21,7 @@ const QUIET: Ruleset = {
   ...SPEC_RULESET,
   race: { ...SPEC_RULESET.race, paceHalfWidth: 0, paceCentreSpan: 0, planErrorMax: 0 },
 };
-const COURSES = ["sprint", "ridge", "canyon"].map((id) =>
-  content.getCourse(id),
-);
+const COURSES = ["sprint", "ridge", "canyon"].map((id) => content.getCourse(id));
 const STYLES: readonly Style[] = ["dive", "hover", "glide", "ground"];
 
 function stats(over: Partial<RaceEntry["stats"]> = {}): RaceEntry["stats"] {

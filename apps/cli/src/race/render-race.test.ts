@@ -116,16 +116,13 @@ describe("header", () => {
 
   it("prints course name, length, seed, ruleset and a legend of the types present", () => {
     const [title, strip, legend, phases] = renderRace(loadRaceFixture("ridge"), labels);
-    expect(title).toBe(
-      "Pista de saltos · 2000 m · semilla pt1-ridge · ruleset v1 · motor v1",
-    );
+    expect(title).toBe("Pista de saltos · 2000 m · semilla pt1-ridge · ruleset v1 · motor v1");
     expect(strip).toContain("1 car = 50 m");
     expect(legend?.trim()).toBe("_ Llano  \\ Bajada  ^ Salto");
     expect(phases?.trim()).toBe(
       "fases: salida hasta 333 m · medio hasta 1333 m · final hasta 2000 m",
     );
   });
-
 });
 
 describe("classification", () => {

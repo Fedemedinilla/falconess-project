@@ -1,13 +1,5 @@
 import { z } from "zod";
-import {
-  CourseTrait,
-  HexColor,
-  SegmentType,
-  Slug,
-  StatName,
-  TextKey,
-  Version,
-} from "./core.js";
+import { CourseTrait, HexColor, SegmentType, Slug, StatName, TextKey, Version } from "./core.js";
 
 /**
  * Each manufacturer has exactly one mechanical rule, implemented as code in packages/sim/src/rules/.

@@ -1,13 +1,5 @@
 import { z } from "zod";
-import {
-  FalconessStats,
-  Slug,
-  StatName,
-  Style,
-  StyleAptitudes,
-  TextKey,
-  Version,
-} from "./core.js";
+import { FalconessStats, Slug, StatName, Style, StyleAptitudes, TextKey, Version } from "./core.js";
 
 export const SeasonGoal = z.strictObject({
   turn: z.number().int().min(1).max(48),

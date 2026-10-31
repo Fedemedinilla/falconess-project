@@ -91,13 +91,7 @@ export function freezeEntry(
   const frame = content.getFrame(input.frameId);
 
   // 2. effective stats: mood on all five, frame-style letter on intelligence
-  const eff = effectiveStats(
-    ruleset,
-    input.baseStats,
-    input.mood,
-    input.styleAptitude,
-    fb.style,
-  );
+  const eff = effectiveStats(ruleset, input.baseStats, input.mood, input.styleAptitude, fb.style);
 
   // 3. falconess-stat deltas after step 2, clamped to [1, maxEffectiveStat]
   const stats = addStatDeltas(ruleset, eff, statDeltas(fb.modifiers));
