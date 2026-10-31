@@ -12,8 +12,10 @@ import { mixedPolicy } from "./testing/mixed-policy.js";
 
 /**
  * ADR-0006: ruleset v1 plays exactly as it did before the season engine learned v2. The digests
- * were recorded at commit 5f0fd65 (the engine the owner's playtest 1 ran on) by replaying the
- * owner's run and 30 seasons of `mixedPolicy` under RULESET_V1. The state without its log must
+ * were first recorded at commit 5f0fd65 (the engine the owner's playtest 1 ran on) by replaying
+ * the owner's run and 30 seasons of `mixedPolicy` under RULESET_V1; ADR-0007 removed biomes and
+ * wind from v1 as well (the state lost `biomeAptitude`, Peregrina her desert A, the canyon its
+ * wind), so they were re-recorded on that change, the same way (`v1-invariance-adr0007.json`). The state without its log must
  * match after every input, draw for draw; the log may only gain what ADR-0006 adds to it (the
  * mood and vigor notes, `moodDelta`, `fatigueDelta` and `event`), which is stripped before hashing.
  */
@@ -31,7 +33,7 @@ type Fixture = {
 
 const fixture = (name: string): string =>
   readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
-const expected = JSON.parse(fixture("v1-invariance-5f0fd65.json")) as Fixture;
+const expected = JSON.parse(fixture("v1-invariance-adr0007.json")) as Fixture;
 const run1 = JSON.parse(fixture("playtest-run1.json")) as {
   rulesetVersion: string;
   seed: string;
@@ -47,7 +49,7 @@ function rulesDigest(s: SeasonState): string {
   return hash(rest);
 }
 
-/** The log as 5f0fd65 wrote it: ADR-0006's additions removed. */
+/** The log as 5f0fd65 wrote it: ADR-0006's additions removed (the digests of ADR-0007 hash it the same way). */
 function legacyLog(log: readonly TurnLogEntry[]): unknown[] {
   return log.map((e) => {
     const { moodDelta: _m, fatigueDelta: _f, event: _e, ...rest } = e;
@@ -75,7 +77,7 @@ describe("ruleset v1 invariance (ADR-0006)", () => {
     expect(s.raceResults.map((r) => r.place)).toEqual(expected.run1.final.places);
   });
 
-  it("plays 30 mixed-policy seasons exactly as 5f0fd65 did", () => {
+  it("plays 30 mixed-policy seasons exactly as recorded (5f0fd65, re-recorded by ADR-0007)", () => {
     for (const m of expected.mixed) {
       let s = startSeason(ctx, m.seed, {
         kind: "start",

@@ -18,11 +18,11 @@ const HANGAR = ["shiden", "mule", "nimbus", "falke"] as const;
 const content = getContent();
 const ctx = { ruleset: CURRENT_RULESET, content };
 
-/** The owner's playtest 1 (ruleset v1) and the digests 5f0fd65 recorded for it (packages/sim). */
+/** The owner's playtest 1 (ruleset v1) and its digests (5f0fd65, re-recorded by ADR-0007; packages/sim). */
 const FIXTURES = new URL("../../../../packages/sim/src/season/__fixtures__/", import.meta.url);
 const RUN1_TEXT = readFileSync(new URL("playtest-run1.json", FIXTURES), "utf8");
 const V1_DIGESTS = JSON.parse(
-  readFileSync(new URL("v1-invariance-5f0fd65.json", FIXTURES), "utf8"),
+  readFileSync(new URL("v1-invariance-adr0007.json", FIXTURES), "utf8"),
 );
 
 /** sha256 of the state without its log, as v1-invariance.test.ts hashes it. */
@@ -276,7 +276,7 @@ describe("GameController", () => {
     expect(a.startsWith("v1|s|2|")).toBe(true);
   });
 
-  it("loads the owner's v1 playtest under v1: the same final state as 5f0fd65, input for input", () => {
+  it("loads the owner's v1 playtest under v1: the same final state as recorded, input for input", () => {
     const game = new GameController(content, memoryStore());
     expect(game.loadText(RUN1_TEXT)).toBe(true);
     const run = game.getSnapshot().run;
