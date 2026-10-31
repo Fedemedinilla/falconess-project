@@ -31,7 +31,7 @@ describe("engine adapter", () => {
   it("binds the real engine, generateField included", () => {
     const port = createEngineAdapter();
     expect(port.engineId).toBe("v1");
-    const course = content.getCourse("desert-sprint");
+    const course = content.getCourse("sprint");
     const field = port.generateField(RULESET_V1, content, {
       course,
       turn: 1,
@@ -42,7 +42,6 @@ describe("engine adapter", () => {
         falconessId: "peregrina",
         baseStats: { agility: 1, stamina: 1, technique: 1, courage: 1, intelligence: 1 },
         mood: 0,
-        biomeAptitude: { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" },
         styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
         frameId: "peregrina-signature",
         parts: [],
@@ -58,15 +57,15 @@ describe("engine adapter", () => {
   it("runs one job of every race scenario on the real engine without a DNF", () => {
     const ctx = createExecContext(createEngineAdapter(), RULESET_V1, content, catalog);
     const jobs = [
-      { id: 0, scenario: "S1", course: "desert-canyon", k: 0, seed: "r/s1" },
-      { id: 1, scenario: "S2", variant: "real", course: "desert-ridge", k: 0, seed: "r/s2" },
-      { id: 2, scenario: "S2", variant: "equal-pw", course: "desert-ridge", k: 0, seed: "r/s2e" },
-      { id: 3, scenario: "S3", pair: "cernicala", course: "desert-sprint", k: 0, seed: "r/s3" },
+      { id: 0, scenario: "S1", course: "canyon", k: 0, seed: "r/s1" },
+      { id: 1, scenario: "S2", variant: "real", course: "ridge", k: 0, seed: "r/s2" },
+      { id: 2, scenario: "S2", variant: "equal-pw", course: "ridge", k: 0, seed: "r/s2e" },
+      { id: 3, scenario: "S3", pair: "cernicala", course: "sprint", k: 0, seed: "r/s3" },
       {
         id: 4,
         scenario: "S4",
         skill: "water-skimmer",
-        course: "desert-canyon",
+        course: "canyon",
         k: 0,
         seed: "r/s4",
       },
@@ -74,11 +73,11 @@ describe("engine adapter", () => {
         id: 5,
         scenario: "S5",
         part: "boneyard-battery",
-        course: "desert-sprint",
+        course: "sprint",
         k: 3,
         seed: "r/s5",
       },
-      { id: 6, scenario: "S8", style: "glide", course: "desert-ridge", k: 5, seed: "r/s8" },
+      { id: 6, scenario: "S8", style: "glide", course: "ridge", k: 5, seed: "r/s8" },
     ] as const;
     for (const job of jobs) {
       const r = runJob(ctx, job);
@@ -103,17 +102,17 @@ describe("job execution", () => {
     };
     const ctx = createExecContext(port, RULESET_V1, content, catalog);
     for (let k = 0; k < 3; k++)
-      runJob(ctx, { id: k, scenario: "S1", course: "desert-sprint", k, seed: `s/${k}` });
+      runJob(ctx, { id: k, scenario: "S1", course: "sprint", k, seed: `s/${k}` });
     runJob(ctx, {
       id: 3,
       scenario: "S4",
       skill: "canyon-sense",
-      course: "desert-canyon",
+      course: "canyon",
       k: 0,
       seed: "s4",
     });
     expect(arenaUses.get(ctx.arena)).toBe(5);
-    expect([...ctx.geometry.keys()]).toEqual(["desert-sprint", "desert-canyon"]);
+    expect([...ctx.geometry.keys()]).toEqual(["sprint", "canyon"]);
     expect(new Set(details)).toEqual(new Set(["results"]));
     expect(ctx.timing.races).toBe(5);
   });
@@ -131,7 +130,7 @@ describe("job execution", () => {
       },
     };
     const ctx = createExecContext(port, RULESET_V1, content, catalog);
-    const r = runJob(ctx, { id: 0, scenario: "S1", course: "desert-ridge", k: 0, seed: "x" });
+    const r = runJob(ctx, { id: 0, scenario: "S1", course: "ridge", k: 0, seed: "x" });
     expect(r.dnf).toBe(1);
     expect(r.races[0]?.finish[3]).toBeNull();
     expect(r.races[0]?.finish.filter((t) => t !== null)).toHaveLength(7);
@@ -223,8 +222,8 @@ describe("runBatch with the fake engine", () => {
     });
     await expect(
       pool.run([
-        { id: 0, scenario: "S1", course: "desert-sprint", k: 0, seed: "ok" },
-        { id: 1, scenario: "S3", pair: "nobody", course: "desert-sprint", k: 0, seed: "bad" },
+        { id: 0, scenario: "S1", course: "sprint", k: 0, seed: "ok" },
+        { id: 1, scenario: "S3", pair: "nobody", course: "sprint", k: 0, seed: "bad" },
       ]),
     ).rejects.toThrow(/S3: unknown pair nobody/);
     const timing = await pool.close();

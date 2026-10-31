@@ -97,11 +97,11 @@ describe("run budget (§25.2.1)", () => {
 
 describe("seeds and jobs", () => {
   it("names seeds <profile>/<scenario>/<course>/<cell>/<k>, optionally prefixed", () => {
-    expect(seedFor("", "pr", "S1", "desert-sprint", "field", 0)).toBe(
-      "pr/S1/desert-sprint/field/0",
+    expect(seedFor("", "pr", "S1", "sprint", "field", 0)).toBe(
+      "pr/S1/sprint/field/0",
     );
-    expect(seedFor("nightly", "full", "S4", "desert-ridge", "stoop-strike", 7)).toBe(
-      "nightly/full/S4/desert-ridge/stoop-strike/7",
+    expect(seedFor("nightly", "full", "S4", "ridge", "stoop-strike", 7)).toBe(
+      "nightly/full/S4/ridge/stoop-strike/7",
     );
   });
 
@@ -116,13 +116,13 @@ describe("seeds and jobs", () => {
     expect(plan.jobs[0]).toEqual({
       id: 0,
       scenario: "S1",
-      course: "desert-sprint",
+      course: "sprint",
       k: 0,
-      seed: "pr/S1/desert-sprint/field/0",
+      seed: "pr/S1/sprint/field/0",
     });
     const s8 = plan.jobs.filter((j) => j.scenario === "S8");
     expect(s8).toHaveLength(12 * 20);
-    expect(s8[0]?.seed).toBe("pr/S8/desert-sprint/dive/0");
+    expect(s8[0]?.seed).toBe("pr/S8/sprint/dive/0");
     expect(plan.jobs.filter((j) => j.scenario === "S7")[0]?.seed).toBe("pr/S7/season/caracara/0");
   });
 
@@ -152,14 +152,14 @@ describe("seeds and jobs", () => {
   it("doubles the samples of the requested S3 cells, continuing k (full)", () => {
     const plan = buildPlan({ profile: "full", runs: 1, scenarios: ["S3"], seedBase: "" }, catalog);
     expect(plan.jobs).toHaveLength(9 * 4000);
-    const { plan: next, jobs } = extendS3(plan, [{ pair: "peregrina", course: "desert-ridge" }]);
+    const { plan: next, jobs } = extendS3(plan, [{ pair: "peregrina", course: "ridge" }]);
     expect(jobs).toHaveLength(4000);
     expect(jobs[0]).toMatchObject({
       id: 36_000,
       pair: "peregrina",
-      course: "desert-ridge",
+      course: "ridge",
       k: 4000,
-      seed: "full/S3/desert-ridge/peregrina/4000",
+      seed: "full/S3/ridge/peregrina/4000",
     });
     expect(next.jobs).toHaveLength(40_000);
     const line = next.lines.find((l) => l.row.key === "S3");

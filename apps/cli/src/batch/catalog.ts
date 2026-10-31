@@ -4,7 +4,6 @@
  * and the part, quirk and Falconess lists. Pure: a function of the content index only.
  */
 import {
-  type Biome,
   type ContentIndex,
   type Course,
   courseLength,
@@ -33,8 +32,6 @@ export type S4Cell = { skillId: Slug; courseId: Slug };
 export type Catalog = {
   /** Courses sorted by length, then id (sprint, ridge, canyon in v1). */
   courses: readonly Course[];
-  /** Courses grouped by biome, in course order (only desert in v1). */
-  biomes: readonly { biome: Biome; courseIds: readonly Slug[] }[];
   /** Manufacturer ids in id order (S2 designated entries, roles 0..4). */
   manufacturers: readonly Slug[];
   rules: ReadonlyMap<Slug, ManufacturerRule>;
@@ -55,12 +52,11 @@ function byId(a: { id: string }, b: { id: string }): number {
 }
 
 function matchesTerrain(terrain: Manufacturer["home"], course: Course): boolean {
-  if (terrain.biomes.includes(course.biome)) return true;
   if (terrain.traits.some((t) => course.traits.includes(t))) return true;
   return terrain.segments.some((s) => course.segments.some((seg) => seg.type === s));
 }
 
-/** §25.2 S2 "Cells": biome, trait or segment type; home and weak at once is neutral. */
+/** §25.2 S2 "Cells": trait or segment type (no biome since ADR-0007); home and weak at once is neutral. */
 export function manufacturerCell(m: Manufacturer, course: Course): CellKind {
   const home = matchesTerrain(m.home, course);
   const weak = matchesTerrain(m.weak, course);
@@ -111,12 +107,6 @@ export function buildCatalog(content: ContentIndex): Catalog {
   const courses = [...content.courses.values()].sort(
     (a, b) => courseLength(a) - courseLength(b) || byId(a, b),
   );
-  const biomes: { biome: Biome; courseIds: Slug[] }[] = [];
-  for (const c of courses) {
-    const group = biomes.find((g) => g.biome === c.biome);
-    if (group) group.courseIds.push(c.id);
-    else biomes.push({ biome: c.biome, courseIds: [c.id] });
-  }
 
   const mfrs = [...content.manufacturers.values()].sort(byId);
   const frames = [...content.frames.values()].sort(byId);
@@ -167,7 +157,6 @@ export function buildCatalog(content: ContentIndex): Catalog {
 
   return {
     courses,
-    biomes,
     manufacturers: mfrs.map((m) => m.id),
     rules,
     s2Frames,

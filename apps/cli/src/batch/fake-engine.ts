@@ -85,8 +85,9 @@ function ruleTerm(rule: RaceEntry["rule"], course: Course): number {
     if (course.traits.includes("long")) v += 600;
     if (course.traits.includes("sprint")) v -= 900;
   }
-  if (rule === "mass-thrust" && course.biome === "desert") v -= 200;
-  if (rule === "pulse" && course.biome === "desert") v += 200;
+  // every course (ADR-0007: v1's courses were all desert, where these terms applied)
+  if (rule === "mass-thrust") v -= 200;
+  if (rule === "pulse") v += 200;
   return v;
 }
 

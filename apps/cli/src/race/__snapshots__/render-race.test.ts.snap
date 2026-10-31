@@ -1,9 +1,9 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`renderRace snapshots > renders the canyon fixture 1`] = `
-"Garganta del Viento Rojo · 3000 m · Desierto · semilla pt1-canyon · ruleset v1 · motor v1
+"Pista larga · 3000 m · semilla pt1-canyon · ruleset v1 · motor v1
 pista  [________//////////||||||||||||__________||||||||~~~~________]  1 car = 50 m
-       _ Llano  / Subida  ~ Agua  | Cañón
+       _ Llano  / Colina  ~ Terreno líquido  | Pasillo
        fases: salida hasta 500 m · medio hasta 2000 m · final hasta 3000 m
 
 CLASIFICACIÓN
@@ -47,20 +47,20 @@ EVENTOS
      69.0 s  2002 m  plan de sprint (phase): 2.61 m/s de 2002 m a 2184 m · hp-limited · limpio · E 28.0 (percibe 27.6) · hp 240 (percibe 236) · 27 cand.
      71.8 s  2099 m  pulso · cadena máx 1
      74.9 s  2216 m  hp agotada: sin boost, a velocidad mínima
-     81.1 s  2400 m  agua -10.0 durabilidad
-     81.1 s  2400 m  habilidad Rasante de agua (p 965 > u 882)
+     81.1 s  2400 m  terreno líquido -10.0 durabilidad
+     81.1 s  2400 m  habilidad Rasante (p 965 > u 882)
     109.7 s  3000 m  meta 2º
   rival-1 (carril 2)
      18.1 s   400 m  habilidad Pulmones de cuesta (p 857 > u 805)
      82.1 s  2002 m  plan de sprint (phase): 0.80 m/s de 2029 m a 2559 m · hp-limited · limpio · E 71.0 (percibe 72.0) · hp 484 (percibe 491) · 33 cand.
-     95.7 s  2400 m  agua -10.0 durabilidad
+     95.7 s  2400 m  terreno líquido -10.0 durabilidad
     102.9 s  2564 m  hp agotada: sin boost, a velocidad mínima
     127.6 s  3000 m  meta 4º
   rival-2 (carril 3)
-     41.7 s   900 m  habilidad Sentido del cañón (p 1000 > u 648)
+     41.7 s   900 m  habilidad Sentido del pasillo (p 1000 > u 648)
      93.0 s  2001 m  calor a energía: 70.0 calor → +35.0 energía
      93.0 s  2001 m  plan de sprint (phase): 1.30 m/s de 2564 m a 2940 m · planned · limpio · E 94.0 (percibe 99.5) · hp 724 (percibe 767) · 30 cand.
-    108.7 s  2401 m  agua -10.0 durabilidad
+    108.7 s  2401 m  terreno líquido -10.0 durabilidad
     128.5 s  2812 m  habilidad Segundo aliento (p 1000 > u 977)
     128.5 s  2812 m  replan 1 (refund): 3.00 m/s de 2888 m a 2940 m · planned · limpio · E 29.0 (percibe 30.7) · hp 207 (percibe 219) · 30 cand.
     136.4 s  3000 m  meta 5º
@@ -68,13 +68,13 @@ EVENTOS
      20.5 s   501 m  habilidad Guardia de punta (p 846 > u 340)
      65.4 s  2001 m  plan de sprint (phase): 2.98 m/s de 2001 m a 2080 m · hp-limited · limpio · E 32.0 (percibe 31.5) · hp 123 (percibe 122) · 59 cand.
      68.2 s  2107 m  hp agotada: sin boost, a velocidad mínima
-     78.4 s  2401 m  agua -10.0 durabilidad
+     78.4 s  2401 m  terreno líquido -10.0 durabilidad
     106.0 s  3000 m  meta 1º
   rival-4 (carril 5)
       0.0 s     0 m  habilidad Alas de hierro (p 831 > u 43)
      98.3 s  1501 m  reparación +2.0 durabilidad
     129.9 s  2000 m  plan de sprint (phase): 0.70 m/s de 2107 m a 2940 m · planned · limpio · E 123.5 (percibe 119.4) · hp 938 (percibe 907) · 21 cand.
-    151.9 s  2401 m  agua -5.0 durabilidad
+    151.9 s  2401 m  terreno líquido -5.0 durabilidad
     163.9 s  2600 m  reparación +2.0 durabilidad
     188.1 s  3000 m  meta 8º
   rival-5 (carril 6)
@@ -83,20 +83,20 @@ EVENTOS
      74.4 s  2111 m  pulso · cadena máx 1
      78.8 s  2273 m  hp agotada: sin boost, a velocidad mínima
      82.9 s  2401 m  alas rotas (P/W 1.05)
-     82.9 s  2401 m  agua -10.0 durabilidad
+     82.9 s  2401 m  terreno líquido -10.0 durabilidad
      82.9 s  2401 m  replan 1 (broken): ninguno (exhausted)
     118.9 s  3000 m  meta 3º
   Cernícala (carril 7)
-     44.9 s   900 m  habilidad Sentido del cañón (p 1000 > u 585)
+     44.9 s   900 m  habilidad Sentido del pasillo (p 1000 > u 585)
     100.9 s  2000 m  calor a energía: 73.0 calor → +18.3 energía
     105.6 s  2101 m  plan de sprint (phase): 0.65 m/s de 2101 m a 2940 m · planned · limpio · E 59.3 (percibe 61.4) · hp 779 (percibe 807) · 26 cand.
-    118.2 s  2401 m  agua -10.0 durabilidad
+    118.2 s  2401 m  terreno líquido -10.0 durabilidad
     150.0 s  3000 m  meta 7º
   rival-7 (carril 8)
       0.0 s     0 m  habilidad Salida limpia (p 846 > u 374)
      93.1 s  2001 m  plan de sprint (phase): 1.40 m/s de 2749 m a 2875 m · hp-limited · limpio · E 39.0 (percibe 37.1) · hp 646 (percibe 615) · 30 cand.
-    108.9 s  2402 m  agua sin daño
-    109.0 s  2402 m  habilidad Rasante de agua (p 846 > u 808)
+    108.9 s  2402 m  terreno líquido sin daño
+    109.0 s  2402 m  habilidad Rasante (p 846 > u 808)
     132.2 s  2872 m  sobrecalentada 1 tick (calor 52.0 → 51.5)
     132.3 s  2875 m  sobrecalentada 4 ticks (calor 53.5 → 51.5)
     135.8 s  2954 m  hp agotada: sin boost, a velocidad mínima
@@ -126,7 +126,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/32.5 · / 0.96/31.8 · | 0.90/29.7 · _ 1.00/33.0 · | 1.15/37.3 · ~ 0.80/26.0 · _ 1.00/32.5  (f / crucero m/s)
      energía      gastada 86.4 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 13.6
      cuerpo       hp final 0 · durabilidad -10.0 +0.0 → 90.0
-     habilidades  ✓ Último suspiro (p 792 > u 423) · ✓ Rasante de agua (p 965 > u 882)
+     habilidades  ✓ Último suspiro (p 792 > u 423) · ✓ Rasante (p 965 > u 882)
   3º rival-5  118.90 s  (+12.89 s)
      fases        salida 20.60 s (+0.13) · medio 50.40 s (+5.47) · final 47.93 s (+7.27)
      ganancias    boost 60/0/12 ticks · 6 pulsos
@@ -162,7 +162,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/22.9 · / 0.96/21.9 · | 0.90/20.4 · _ 1.00/22.7 · | 1.15/26.8 · ~ 0.80/18.6 · _ 1.00/23.3  (f / crucero m/s)
      energía      gastada 205.0 · lift 0.0 · regen +0.0 · reembolso +10.0 · calor +35.0 · queda 0.0
      cuerpo       hp final 84 · durabilidad -10.0 +0.0 → 90.0
-     habilidades  ✓ Sentido del cañón (p 1000 > u 648) · ✓ Segundo aliento (p 1000 > u 977)
+     habilidades  ✓ Sentido del pasillo (p 1000 > u 648) · ✓ Segundo aliento (p 1000 > u 977)
      consejo      Agilidad · crucero más lento: agilidad 600 contra 640 · ≈0.69 s
   6º rival-7  138.22 s  (+32.21 s)
      fases        salida 22.93 s (+2.47) · medio 70.13 s (+25.20) · final 45.20 s (+4.53)
@@ -174,7 +174,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/24.0 · / 0.96/21.7 · | 0.90/20.2 · _ 1.00/22.5 · | 1.15/25.9 · ~ 0.80/18.0 · _ 1.00/22.6  (f / crucero m/s)
      energía      gastada 100.0 · lift 0.0 · regen +0.0 · reembolso +0.0 · calor +0.0 · queda 0.0
      cuerpo       hp final 0 · durabilidad -5.0 +0.0 → 155.0
-     habilidades  ✓ Salida limpia (p 846 > u 374) · ✓ Rasante de agua (p 846 > u 808)
+     habilidades  ✓ Salida limpia (p 846 > u 374) · ✓ Rasante (p 846 > u 808)
      consejo      Agilidad · crucero más lento: agilidad 600 contra 640 · ≈0.69 s
      consejo      Coraje · sobrecalor 5 ticks con tope de calor 51.5
   7º Cernícala  149.99 s  (+43.97 s)
@@ -187,7 +187,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      tramos       _ 1.00/19.8 · / 0.96/19.6 · | 0.90/18.3 · _ 1.00/20.3 · | 1.15/23.2 · ~ 0.80/16.2 · _ 1.00/20.2  (f / crucero m/s)
      energía      gastada 560.0 · lift 0.0 · regen +422.5 · reembolso +0.0 · calor +18.3 · queda 0.8
      cuerpo       hp final 294 · durabilidad -10.0 +0.0 → 90.0
-     habilidades  ✓ Sentido del cañón (p 1000 > u 585)
+     habilidades  ✓ Sentido del pasillo (p 1000 > u 585)
   8º rival-4  188.11 s  (+82.10 s)
      fases        salida 30.60 s (+10.13) · medio 99.33 s (+54.40) · final 58.20 s (+17.53)
      ganancias    boost 93/298/254 ticks · 1 habilidad(es)
@@ -204,7 +204,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
 `;
 
 exports[`renderRace snapshots > renders the results fixture 1`] = `
-"Sprint de las Dunas · 1200 m · Desierto · semilla pt1-sprint · ruleset v1 · motor v1
+"Sprint · 1200 m · semilla pt1-sprint · ruleset v1 · motor v1
 pista  [____________))))))))____________))))))__________]  1 car = 25 m
        _ Llano  ) Curvas
        fases: salida hasta 200 m · medio hasta 800 m · final hasta 1200 m
@@ -317,7 +317,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
 `;
 
 exports[`renderRace snapshots > renders the ridge fixture 1`] = `
-"Cresta del Espinazo · 2000 m · Desierto · semilla pt1-ridge · ruleset v1 · motor v1
+"Pista de saltos · 2000 m · semilla pt1-ridge · ruleset v1 · motor v1
 pista  [______\\\\\\\\\\\\\\\\^^________\\\\\\\\\\\\^^________]  1 car = 50 m
        _ Llano  \\ Bajada  ^ Salto
        fases: salida hasta 333 m · medio hasta 1333 m · final hasta 2000 m
@@ -495,7 +495,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
 `;
 
 exports[`renderRace snapshots > renders the sprint fixture 1`] = `
-"Sprint de las Dunas · 1200 m · Desierto · semilla pt1-sprint · ruleset v1 · motor v1
+"Sprint · 1200 m · semilla pt1-sprint · ruleset v1 · motor v1
 pista  [____________))))))))____________))))))__________]  1 car = 25 m
        _ Llano  ) Curvas
        fases: salida hasta 200 m · medio hasta 800 m · final hasta 1200 m

@@ -11,7 +11,6 @@
       "intelligence": 580
     },
     "mood": 1,
-    "biomeAptitude": { "desert": "A", "mountain": "B", "coast": "B", "urban": "C", "tundra": "D" },
     "styleAptitude": { "dive": "A", "hover": "C", "glide": "B", "ground": "E" },
     "frameId": "peregrina-signature",
     "parts": ["koryu-firmware"],
@@ -31,7 +30,6 @@
       "intelligence": 600
     },
     "mood": 0,
-    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
     "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
     "frameId": "falke",
     "parts": ["steinhaus-turbine"],
@@ -51,7 +49,6 @@
       "intelligence": 600
     },
     "mood": 0,
-    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
     "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
     "frameId": "horizon",
     "parts": ["altair-battery"],
@@ -71,7 +68,6 @@
       "intelligence": 560
     },
     "mood": 0,
-    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
     "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
     "frameId": "etoile",
     "parts": [],
@@ -91,7 +87,6 @@
       "intelligence": 520
     },
     "mood": -1,
-    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
     "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
     "frameId": "mule",
     "parts": ["boneyard-battery"],
@@ -111,7 +106,6 @@
       "intelligence": 600
     },
     "mood": 0,
-    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
     "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
     "frameId": "shiden",
     "parts": [],
@@ -131,7 +125,6 @@
       "intelligence": 680
     },
     "mood": 2,
-    "biomeAptitude": { "desert": "B", "mountain": "A", "coast": "B", "urban": "B", "tundra": "C" },
     "styleAptitude": { "dive": "C", "hover": "A", "glide": "B", "ground": "D" },
     "frameId": "cernicala-signature",
     "parts": ["altair-firmware"],
@@ -151,7 +144,6 @@
       "intelligence": 560
     },
     "mood": 0,
-    "biomeAptitude": { "desert": "B", "mountain": "B", "coast": "B", "urban": "B", "tundra": "B" },
     "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
     "frameId": "erzherzog",
     "parts": ["steinhaus-stabilizer"],

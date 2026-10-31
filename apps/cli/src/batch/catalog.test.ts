@@ -7,35 +7,28 @@ const content = loadContent();
 const catalog = buildCatalog(content);
 
 describe("catalog from v1 content (§25.2)", () => {
-  it("orders the courses sprint, ridge, canyon and groups them by biome", () => {
-    expect(catalog.courses.map((c) => c.id)).toEqual([
-      "desert-sprint",
-      "desert-ridge",
-      "desert-canyon",
-    ]);
-    expect(catalog.biomes).toEqual([
-      { biome: "desert", courseIds: ["desert-sprint", "desert-ridge", "desert-canyon"] },
-    ]);
+  it("orders the courses sprint, ridge, canyon", () => {
+    expect(catalog.courses.map((c) => c.id)).toEqual(["sprint", "ridge", "canyon"]);
   });
 
-  it("derives exactly the v1 desert cells listed in S2", () => {
+  it("derives exactly the S2 cells from traits and segments (no biome, ADR-0007)", () => {
     const cells = Object.fromEntries(catalog.s2Cells);
     expect(cells).toEqual({
-      "altair/desert-sprint": "weak",
-      "altair/desert-ridge": "none",
-      "altair/desert-canyon": "home",
-      "boneyard/desert-sprint": "weak",
-      "boneyard/desert-ridge": "home",
-      "boneyard/desert-canyon": "none",
-      "koryu/desert-sprint": "home",
-      "koryu/desert-ridge": "home",
-      "koryu/desert-canyon": "neutral",
-      "lumiere/desert-sprint": "none",
-      "lumiere/desert-ridge": "weak",
-      "lumiere/desert-canyon": "none",
-      "steinhaus/desert-sprint": "weak",
-      "steinhaus/desert-ridge": "weak",
-      "steinhaus/desert-canyon": "weak",
+      "altair/sprint": "weak",
+      "altair/ridge": "none",
+      "altair/canyon": "home",
+      "boneyard/sprint": "weak",
+      "boneyard/ridge": "home",
+      "boneyard/canyon": "none",
+      "koryu/sprint": "none",
+      "koryu/ridge": "home",
+      "koryu/canyon": "weak",
+      "lumiere/sprint": "none",
+      "lumiere/ridge": "weak",
+      "lumiere/canyon": "none",
+      "steinhaus/sprint": "none",
+      "steinhaus/ridge": "none",
+      "steinhaus/canyon": "none",
     });
   });
 
@@ -61,10 +54,10 @@ describe("catalog from v1 content (§25.2)", () => {
     expect(catalog.s4Cells).toHaveLength(31);
     const coursesOf = (id: string) =>
       catalog.s4Cells.filter((c) => c.skillId === id).map((c) => c.courseId);
-    expect(coursesOf("stoop-strike")).toEqual(["desert-ridge"]);
-    expect(coursesOf("canyon-sense")).toEqual(["desert-canyon"]);
-    expect(coursesOf("corner-carver")).toEqual(["desert-sprint"]);
-    expect(coursesOf("water-skimmer")).toEqual(["desert-canyon"]);
+    expect(coursesOf("stoop-strike")).toEqual(["ridge"]);
+    expect(coursesOf("canyon-sense")).toEqual(["canyon"]);
+    expect(coursesOf("corner-carver")).toEqual(["sprint"]);
+    expect(coursesOf("water-skimmer")).toEqual(["canyon"]);
     expect(coursesOf("last-gasp")).toHaveLength(3);
     expect(coursesOf("wind-hover")).toHaveLength(3);
     expect(coursesOf("still-air")).toEqual([]);
@@ -81,7 +74,6 @@ describe("static trigger check (S4)", () => {
   const course: Course = {
     id: "test-course",
     version: 1,
-    biome: "desert",
     traits: [],
     entries: 8,
     textKey: "course.test",

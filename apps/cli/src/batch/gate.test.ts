@@ -74,10 +74,10 @@ function report(
 const gate = report(
   [
     m3([
-      cell("peregrina/desert-sprint", 1.34, "fail"),
-      cell("peregrina/desert-ridge", 0.14, "fail"),
-      cell("peregrina/desert-canyon", 0.6, "fail"),
-      cell("caracara/desert-sprint", 0.87, "pass"),
+      cell("peregrina/sprint", 1.34, "fail"),
+      cell("peregrina/ridge", 0.14, "fail"),
+      cell("peregrina/canyon", 0.6, "fail"),
+      cell("caracara/sprint", 0.87, "pass"),
     ]),
   ],
   { profile: "full" },
@@ -87,16 +87,16 @@ describe("judgeGate (§25.2.1: fail until a PR fixes the metric or moves the tar
   it("lifts a gate fail the PR fixes, keeps one it leaves inconclusive or failing", () => {
     const current = report([
       m3([
-        cell("peregrina/desert-sprint", 0.88, "pass"),
-        cell("peregrina/desert-ridge", 0.86, "inconclusive", BAND, 0.05),
-        cell("peregrina/desert-canyon", 0.6, "fail"),
-        cell("caracara/desert-sprint", 0.87, "pass"),
+        cell("peregrina/sprint", 0.88, "pass"),
+        cell("peregrina/ridge", 0.86, "inconclusive", BAND, 0.05),
+        cell("peregrina/canyon", 0.6, "fail"),
+        cell("caracara/sprint", 0.87, "pass"),
       ]),
     ]);
     expect(judgeGate(gate, current).map((g) => [g.cell, g.status])).toEqual([
-      ["peregrina/desert-sprint", "lifted"],
-      ["peregrina/desert-ridge", "failing"],
-      ["peregrina/desert-canyon", "failing"],
+      ["peregrina/sprint", "lifted"],
+      ["peregrina/ridge", "failing"],
+      ["peregrina/canyon", "failing"],
     ]);
   });
 
@@ -104,23 +104,23 @@ describe("judgeGate (§25.2.1: fail until a PR fixes the metric or moves the tar
     const wide = { min: 0.1, max: 1.4 };
     const current = report([
       m3([
-        cell("peregrina/desert-sprint", 1.34, "inconclusive", wide, 0.1),
-        cell("peregrina/desert-ridge", 0.14, "inconclusive", { min: 0.5, max: 1.4 }, 0.5),
-        cell("peregrina/desert-canyon", 0.6, "inconclusive", { min: 0.8, max: 0.95 }, 0.3),
+        cell("peregrina/sprint", 1.34, "inconclusive", wide, 0.1),
+        cell("peregrina/ridge", 0.14, "inconclusive", { min: 0.5, max: 1.4 }, 0.5),
+        cell("peregrina/canyon", 0.6, "inconclusive", { min: 0.8, max: 0.95 }, 0.3),
       ]),
     ]);
     const out = judgeGate(gate, current);
     expect(out.map((g) => [g.cell, g.status])).toEqual([
-      ["peregrina/desert-sprint", "lifted"],
+      ["peregrina/sprint", "lifted"],
       // moved, but the gate's [0.12, 0.16] still lies outside [0.5, 1.4]
-      ["peregrina/desert-ridge", "failing"],
-      ["peregrina/desert-canyon", "failing"],
+      ["peregrina/ridge", "failing"],
+      ["peregrina/canyon", "failing"],
     ]);
     expect(out[0]?.reason).toMatch(/target moved/);
   });
 
   it("lifts a cell the PR removed, but not one of a scenario the run left out", () => {
-    const removed = report([m3([cell("caracara/desert-sprint", 0.87, "pass")])]);
+    const removed = report([m3([cell("caracara/sprint", 0.87, "pass")])]);
     expect(new Set(judgeGate(gate, removed).map((g) => g.status))).toEqual(new Set(["lifted"]));
     const subset = report([], { scenarios: ["S1"] });
     expect(new Set(judgeGate(gate, subset).map((g) => g.status))).toEqual(new Set(["failing"]));
@@ -130,9 +130,9 @@ describe("judgeGate (§25.2.1: fail until a PR fixes the metric or moves the tar
 describe("exitDecision", () => {
   const passing = report([
     m3([
-      cell("peregrina/desert-sprint", 0.88, "pass"),
-      cell("peregrina/desert-ridge", 0.87, "pass"),
-      cell("peregrina/desert-canyon", 0.86, "pass"),
+      cell("peregrina/sprint", 0.88, "pass"),
+      cell("peregrina/ridge", 0.87, "pass"),
+      cell("peregrina/canyon", 0.86, "pass"),
     ]),
   ]);
   const checks = { failOnVerdict: true, maxWallMs: undefined, gate: undefined };
@@ -146,9 +146,9 @@ describe("exitDecision", () => {
   it("blocks a PR that leaves a gate fail in place, naming the cells", () => {
     const untouched = report([
       m3([
-        cell("peregrina/desert-sprint", 0.88, "pass"),
-        cell("peregrina/desert-ridge", 0.86, "inconclusive", BAND, 0.05),
-        cell("peregrina/desert-canyon", 0.87, "pass"),
+        cell("peregrina/sprint", 0.88, "pass"),
+        cell("peregrina/ridge", 0.86, "inconclusive", BAND, 0.05),
+        cell("peregrina/canyon", 0.87, "pass"),
       ]),
     ]);
     const d = exitDecision(untouched, {
@@ -158,7 +158,7 @@ describe("exitDecision", () => {
     });
     expect(d.code).toBe(1);
     expect(d.lines.join("\n")).toMatch(/out\/full\/balance.json holds 1 fail cell/);
-    expect(d.lines.join("\n")).toContain("3. m3-signature peregrina/desert-ridge");
+    expect(d.lines.join("\n")).toContain("3. m3-signature peregrina/ridge");
   });
 
   it("fails on the report's own fail verdict, a DNF, and the wall-time budget", () => {
@@ -193,7 +193,7 @@ describe("exitDecision", () => {
 describe("parseReportText (finding T3)", () => {
   const text = JSON.stringify(passing());
   function passing(): BalanceReport {
-    return report([m3([cell("peregrina/desert-sprint", 0.88, "pass")])]);
+    return report([m3([cell("peregrina/sprint", 0.88, "pass")])]);
   }
 
   it("reads a report of this revision", () => {

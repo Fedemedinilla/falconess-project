@@ -5,8 +5,6 @@
  */
 import { Rng } from "@falconess/rng";
 import {
-  BIOMES,
-  type BiomeAptitudes,
   type ContentIndex,
   type Course,
   type FalconessStats,
@@ -78,7 +76,6 @@ function allB<K extends string>(keys: readonly K[]): Record<K, "B"> {
   return Object.fromEntries(keys.map((k) => [k, "B"])) as Record<K, "B">;
 }
 
-const ALL_B_BIOMES: BiomeAptitudes = allB(BIOMES);
 const ALL_B_STYLES: StyleAptitudes = allB(STYLES);
 
 function fixture(
@@ -151,7 +148,6 @@ function buildS2(
         falconessId: null,
         baseStats: { ...BASE_600 },
         mood: 0,
-        biomeAptitude: { ...ALL_B_BIOMES },
         styleAptitude: { ...ALL_B_STYLES },
         frameId,
         parts: [],
@@ -199,7 +195,6 @@ function buildS3(
     falconessId: f.id,
     baseStats: { ...BASE_600 },
     mood: 0,
-    biomeAptitude: { ...f.biomeAptitude },
     styleAptitude: { ...f.styleAptitude },
     frameId,
     parts: [],

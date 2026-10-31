@@ -139,7 +139,7 @@ export function parseRaceArgs(argv: readonly string[]): RaceCliOptions {
   return {
     help: flag("help"),
     seed: value("seed") ?? "42",
-    courseId: value("course") ?? "desert-sprint",
+    courseId: value("course") ?? "sprint",
     detail,
     json: flag("json"),
     field,

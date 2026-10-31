@@ -100,7 +100,6 @@ describe("header", () => {
 
   it("never drops a segment shorter than half a char", () => {
     const geometry: RaceGeometry = {
-      biome: "desert",
       lengthMm: 3_000_000,
       startEndMm: 500_000,
       finalStartMm: 2_000_000,
@@ -115,10 +114,10 @@ describe("header", () => {
     expect(segmentStrip(geometry).strip).toBe(`${"_".repeat(60)}^`);
   });
 
-  it("prints course name, length, biome, seed, ruleset and a legend of the types present", () => {
+  it("prints course name, length, seed, ruleset and a legend of the types present", () => {
     const [title, strip, legend, phases] = renderRace(loadRaceFixture("ridge"), labels);
     expect(title).toBe(
-      "Cresta del Espinazo · 2000 m · Desierto · semilla pt1-ridge · ruleset v1 · motor v1",
+      "Pista de saltos · 2000 m · semilla pt1-ridge · ruleset v1 · motor v1",
     );
     expect(strip).toContain("1 car = 50 m");
     expect(legend?.trim()).toBe("_ Llano  \\ Bajada  ^ Salto");
@@ -127,14 +126,6 @@ describe("header", () => {
     );
   });
 
-  it("names the biome the log carries, else the content course's", () => {
-    const log = loadRaceFixture("ridge");
-    const geometry = { ...log.geometry, biome: "tundra" as const };
-    const [title] = renderRace({ ...log, geometry }, labels);
-    expect(title).toContain(" · Tundra · ");
-    expect(labels.biomeName("desert-ridge")).toBe("Desierto");
-    expect(labels.biomeName("moon-ridge")).toBe("?");
-  });
 });
 
 describe("classification", () => {
@@ -481,7 +472,9 @@ describe("events", () => {
     }
     for (const e of eventsOf(canyon, "waterHit"))
       expect(texts(canyon, e.lane)).toContain(
-        e.damage === 0 ? "agua sin daño" : `agua -${tenths(e.damage)} durabilidad`,
+        e.damage === 0
+          ? "terreno líquido sin daño"
+          : `terreno líquido -${tenths(e.damage)} durabilidad`,
       );
     const heat = eventsOf(canyon, "heatToEnergy");
     expect(heat.length).toBeGreaterThan(0);

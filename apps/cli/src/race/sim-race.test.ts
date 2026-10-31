@@ -24,7 +24,7 @@ describe("pnpm sim:race through the port", () => {
     const log = loadRaceFixture("sprint");
     const { engine, calls } = fakeEngine(log);
     const out = runSimRace(
-      ["--seed", "pt1-sprint", "--course", "desert-sprint", "--detail", "results"],
+      ["--seed", "pt1-sprint", "--course", "sprint", "--detail", "results"],
       { engine, ctx, readText: noFiles },
     );
     expect(out).toBe(renderRace(log, contentLabels(ctx.content)).join("\n"));
@@ -32,7 +32,7 @@ describe("pnpm sim:race through the port", () => {
     const sim = calls[1];
     if (sim?.op !== "simulateRace") throw new Error("expected simulateRace");
     expect(sim.seed).toBe("pt1-sprint");
-    expect(sim.courseId).toBe("desert-sprint");
+    expect(sim.courseId).toBe("sprint");
     expect(sim.opts).toEqual({ detail: "results" });
     expect(sim.entries).toHaveLength(8);
   });
@@ -40,7 +40,7 @@ describe("pnpm sim:race through the port", () => {
   it("prints the RaceLog as JSON with --json", () => {
     const log = loadRaceFixture("ridge");
     const { engine } = fakeEngine(log);
-    const out = runSimRace(["--course", "desert-ridge", "--neutral", "--json"], {
+    const out = runSimRace(["--course", "ridge", "--neutral", "--json"], {
       engine,
       ctx,
       readText: noFiles,
@@ -56,7 +56,6 @@ describe("pnpm sim:race through the port", () => {
       falconessId: "peregrina",
       baseStats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
       mood: 0,
-      biomeAptitude: { desert: "A", mountain: "B", coast: "B", urban: "C", tundra: "D" },
       styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
       frameId: "peregrina-signature",
       parts: [],
@@ -69,7 +68,7 @@ describe("pnpm sim:race through the port", () => {
       "broken.json": "[{",
     };
     const readText = (path: string) => files[path] ?? noFiles(path);
-    runSimRace(["--course", "desert-canyon", "--entries", "field.json"], { engine, ctx, readText });
+    runSimRace(["--course", "canyon", "--entries", "field.json"], { engine, ctx, readText });
     expect(calls.map((c) => c.op)).toEqual(["freezeEntry", "simulateRace"]);
     expect(() => runSimRace(["--entries", "broken.json"], { engine, ctx, readText })).toThrow(
       /^broken\.json: /,
@@ -81,7 +80,7 @@ describe("pnpm sim:race through the port", () => {
     expect(runSimRace(["--help"], { engine, ctx, readText: noFiles })).toBe(RACE_USAGE);
     expect(() =>
       runSimRace(["--course", "moon-sprint"], { engine, ctx, readText: noFiles }),
-    ).toThrow('unknown course "moon-sprint" (known: desert-canyon, desert-ridge, desert-sprint)');
+    ).toThrow('unknown course "moon-sprint" (known: canyon, ridge, sprint)');
     expect(calls).toEqual([]);
   });
 });
@@ -111,7 +110,7 @@ describe("pnpm sim:race on the real engine", () => {
   });
 
   it("fills the default field with the player and seven rivals of her PW class", () => {
-    const out = runSimRace(["--seed", "7", "--course", "desert-ridge", "--json"], real);
+    const out = runSimRace(["--seed", "7", "--course", "ridge", "--json"], real);
     const log = RaceLog.parse(JSON.parse(out));
     expect(log.entries).toHaveLength(8);
     const players = log.entries.filter((e) => e.kind === "player");
@@ -124,9 +123,9 @@ describe("pnpm sim:race on the real engine", () => {
   });
 
   it("builds the player field with the engine's generateField (21.1)", () => {
-    const args = ["--seed", "7", "--course", "desert-canyon", "--stats", "500", "--turn", "30"];
+    const args = ["--seed", "7", "--course", "canyon", "--stats", "500", "--turn", "30"];
     const log = RaceLog.parse(JSON.parse(runSimRace([...args, "--json"], real)));
-    const course = ctx.content.getCourse("desert-canyon");
+    const course = ctx.content.getCourse("canyon");
     const player = playerEntryInput(ctx.content, {
       kind: "player",
       falconessId: "peregrina",

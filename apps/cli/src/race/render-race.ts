@@ -135,11 +135,6 @@ export function segmentStrip(geometry: RaceGeometry): { strip: string; unitM: nu
   return { strip, unitM };
 }
 
-/** `geometry.biome` once the log carries it; older logs leave the biome to the content course. */
-function loggedBiome(g: RaceGeometry): string | undefined {
-  return "biome" in g && typeof g.biome === "string" ? g.biome : undefined;
-}
-
 function header(log: RaceLog, labels: RaceLabels): string[] {
   const g = log.geometry;
   const { strip, unitM } = segmentStrip(g);
@@ -147,7 +142,7 @@ function header(log: RaceLog, labels: RaceLabels): string[] {
     .map((t) => `${SEGMENT_CHAR[t]} ${labels.segmentName(t)}`)
     .join("  ");
   return [
-    `${labels.courseName(log.courseId)} · ${metres(g.lengthMm)} m · ${labels.biomeName(log.courseId, loggedBiome(g))} · semilla ${log.seed} · ruleset ${log.rulesetVersion} · motor ${log.engine}`,
+    `${labels.courseName(log.courseId)} · ${metres(g.lengthMm)} m · semilla ${log.seed} · ruleset ${log.rulesetVersion} · motor ${log.engine}`,
     `pista  [${strip}]  1 car = ${unitM} m`,
     `       ${legend}`,
     `       fases: salida hasta ${metres(g.startEndMm)} m · medio hasta ${metres(g.finalStartMm)} m · final hasta ${metres(g.lengthMm)} m`,
@@ -280,7 +275,9 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
     case "detour":
       return `desvío por tierra (tramo ${item.segment + 1})`;
     case "waterHit":
-      return item.damage === 0 ? "agua sin daño" : `agua -${milliUnits(item.damage)} durabilidad`;
+      return item.damage === 0
+        ? "terreno líquido sin daño"
+        : `terreno líquido -${milliUnits(item.damage)} durabilidad`;
     case "hpEmpty":
       return "hp agotada: sin boost, a velocidad mínima";
     case "durabilityBroken": {

@@ -65,31 +65,31 @@ describe("S1 style metric and S6 dispersion", () => {
   });
   // Roles: dive-1, dive-2, hover-1, hover-2, glide-1, glide-2, ground-1, ground-2.
   const rows = [
-    s1("desert-sprint", 0, [900, 1000, 1001, 1002, 1003, 1004, 1005, 1006]),
-    s1("desert-sprint", 1, [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]),
-    s1("desert-sprint", 2, [1010, 1010, 1010, 1010, 990, 1010, 1010, 1010]),
+    s1("sprint", 0, [900, 1000, 1001, 1002, 1003, 1004, 1005, 1006]),
+    s1("sprint", 1, [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]),
+    s1("sprint", 2, [1010, 1010, 1010, 1010, 990, 1010, 1010, 1010]),
   ];
 
-  it("counts style wins with dead heats split and gates the per-biome mean with Wilson", () => {
+  it("counts style wins with dead heats split and gates the mean of the courses with Wilson", () => {
     const out = computeMetrics(input(rows, ["S1", "S6"]));
     const m1 = metric(out, "m1-style");
-    const dive = m1.cells.find((c) => c.id === "desert/dive");
+    const dive = m1.cells.find((c) => c.id === "all/dive");
     // Race 0: dive wins; race 1: 8-way dead heat (2/8 to each style); race 2: glide wins.
     expect(dive?.value).toBeCloseTo((1 + 0.25) / 3, 6);
-    expect(m1.cells.find((c) => c.id === "desert/glide")?.value).toBeCloseTo((0.25 + 1) / 3, 6);
-    expect(m1.cells.find((c) => c.id === "desert/ground")?.value).toBeCloseTo(0.25 / 3, 6);
+    expect(m1.cells.find((c) => c.id === "all/glide")?.value).toBeCloseTo((0.25 + 1) / 3, 6);
+    expect(m1.cells.find((c) => c.id === "all/ground")?.value).toBeCloseTo(0.25 / 3, 6);
     const ci = wilson(1.25, 3);
     expect(dive?.interval.lo).toBeCloseTo(ci.lo ?? Number.NaN, 6);
     expect(dive?.n).toBe(3);
     const phases = out.diagnostics.find((d) => d.id === "s1-phases");
-    expect(phases?.rows[0]).toEqual(["desert-sprint", "dive", 6.67, 20, 13.33]);
+    expect(phases?.rows[0]).toEqual(["sprint", "dive", 6.67, 20, 13.33]);
   });
 
   it("measures σ/mean per runner over the S1 seeds and averages the 8 runners", () => {
     const out = computeMetrics(input(rows, ["S1", "S6"]));
     const m6 = metric(out, "m6-dispersion");
     const cell = m6.cells[0];
-    expect(cell?.id).toBe("desert-sprint");
+    expect(cell?.id).toBe("sprint");
     const cv = (xs: number[]) => {
       const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
       const sd = Math.sqrt(xs.reduce((a, b) => a + (b - mean) ** 2, 0) / (xs.length - 1));
@@ -114,7 +114,7 @@ describe("S2 manufacturer cells", () => {
       [8, 2, 3, 4, 5, 1, 7, 8],
       [1, 1, 3, 4, 5, 6, 7, 8],
     ].map((finish, k) => ({
-      job: { scenario: "S2", variant: "real", course: "desert-sprint", k },
+      job: { scenario: "S2", variant: "real", course: "ridge", k },
       races: [race(finish)],
       extra: {
         frames: [
@@ -131,17 +131,13 @@ describe("S2 manufacturer cells", () => {
     }));
     const out = computeMetrics(input(rows, ["S2"]));
     const m2 = metric(out, "m2-manufacturer");
-    // Sprint: altair weak, boneyard weak, koryu home, steinhaus weak; lumiere has no cell.
-    expect(m2.cells.map((c) => c.id)).toEqual([
-      "altair/desert-sprint",
-      "boneyard/desert-sprint",
-      "koryu/desert-sprint",
-      "steinhaus/desert-sprint",
-    ]);
+    // Ridge (no biomes, ADR-0007): boneyard home (obstacles), koryu home (descent), lumiere weak
+    // (jump); altair and steinhaus have no cell.
+    expect(m2.cells.map((c) => c.id)).toEqual(["boneyard/ridge", "koryu/ridge", "lumiere/ridge"]);
     expect(m2.cells[0]?.value).toBeCloseTo(1.5 / 4, 6);
-    expect(m2.cells[1]?.value).toBeCloseTo(1.5 / 4, 6);
-    expect(m2.cells[0]?.target).toEqual({ min: null, max: 0.15 });
-    expect(m2.cells[2]?.target).toEqual({ min: 0.3, max: 0.45 });
+    expect(m2.cells[1]?.value).toBeCloseTo(0, 6);
+    expect(m2.cells[0]?.target).toEqual({ min: 0.3, max: 0.45 });
+    expect(m2.cells[2]?.target).toEqual({ min: null, max: 0.15 });
     const table = out.diagnostics.find((d) => d.id === "s2-real");
     const fillers = table?.rows.find((r) => String(r[0]).startsWith("none"));
     expect(fillers?.[3]).toBe(25);
@@ -151,7 +147,7 @@ describe("S2 manufacturer cells", () => {
 
 describe("S3 signature ratio", () => {
   const s3 = (k: number, a: number[], b: number[]): Row => ({
-    job: { scenario: "S3", pair: "peregrina", course: "desert-ridge", k },
+    job: { scenario: "S3", pair: "peregrina", course: "ridge", k },
     races: [race(a), race(b)],
   });
 
@@ -195,7 +191,7 @@ describe("S3 signature ratio", () => {
     expect(never?.verdict).toBe("fail");
   });
 
-  it("no longer false-fails 4 sweeps in 150 samples (alt1 cernicala/desert-ridge, ADR-0005)", () => {
+  it("no longer false-fails 4 sweeps in 150 samples (alt1 cernicala/ridge, ADR-0005)", () => {
     // ADR-0005 «Métricas 3 y 4», propuesta 1: alt1 read 51.3 % (4 sweeps, 146 splits) while
     // 8000 samples read 52.9 %, inside the band. The old interval, the normal interval of the
     // mean share, used the sample's own variance: 4 sweeps gave ±1.3 points and a fail.
@@ -285,7 +281,7 @@ describe("S3 signature ratio", () => {
   });
 
   it("keeps a 95 % fail near the band inconclusive in pr (4 and 19-20 sweeps of 150)", () => {
-    // 4 sweeps (alt1 cernicala/desert-ridge; 8000 samples read 52.9 %, inside the band) and the
+    // 4 sweeps (alt1 cernicala/ridge; 8000 samples read 52.9 %, inside the band) and the
     // 19-20 sweeps of a sprint cell in the default, alt1 and alt2 bases (ADR-0005 «Pasada 2»).
     for (const sweeps of [4, 19, 20]) {
       const [pr, full] = verdicts(sweepRows(150, sweeps));
@@ -316,7 +312,7 @@ describe("S3 signature ratio", () => {
 describe("S4 skill gain in metres", () => {
   it("averages (timeOff − timeOn) × L / timeOff over runners, then over seeds", () => {
     const rows: Row[] = [0, 1, 2].map((k) => ({
-      job: { scenario: "S4", skill: "last-gasp", course: "desert-sprint", k },
+      job: { scenario: "S4", skill: "last-gasp", course: "sprint", k },
       races: [
         race([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]),
         race([1001, 1002, 1003, 1004, 1000, 1000, 1000, 1000 + k]),
@@ -327,7 +323,7 @@ describe("S4 skill gain in metres", () => {
     const L = 1200;
     const seed = (k: number) =>
       [1, 2, 3, 4, 0, 0, 0, k].reduce((a, d) => a + (d * L) / (1000 + d), 0) / 8;
-    expect(cell?.id).toBe("last-gasp/desert-sprint");
+    expect(cell?.id).toBe("last-gasp/sprint");
     expect(cell?.value).toBeCloseTo((seed(0) + seed(1) + seed(2)) / 3, 6);
     expect(cell?.interval.method).toBe("paired-normal");
   });
@@ -335,13 +331,13 @@ describe("S4 skill gain in metres", () => {
 
 describe("S5 part ablation", () => {
   const s1Rows: Row[] = [0, 1, 2, 3].map((k) => ({
-    job: { scenario: "S1", course: "desert-sprint", k },
+    job: { scenario: "S1", course: "sprint", k },
     races: [
       race([1000, 1010, 990, 1000, 1005, 995, 1000, 1000].map((t, r) => t + ((r + k) % 3) * 7)),
     ],
   }));
   const s5Rows: Row[] = [0, 1, 2].map((k) => ({
-    job: { scenario: "S5", part: "altair-battery", course: "desert-sprint", k },
+    job: { scenario: "S5", part: "altair-battery", course: "sprint", k },
     races: [
       race([998, 1001, 1002, 1003, 1004, 1005, 1006, 1007]),
       race([1000, 999, 1002, 1003, 1004, 1005, 1006, 1007]),
@@ -420,7 +416,7 @@ describe("S7 season grade", () => {
       "won / reached %",
       "flag",
     ]);
-    expect(goals?.rows[0]).toEqual(["peregrina", 12, "desert-sprint", 7, 100, 80, 80, 0, ""]);
+    expect(goals?.rows[0]).toEqual(["peregrina", 12, "sprint", 7, 100, 80, 80, 0, ""]);
     // no season reached T24: no rate and no flag
     expect(goals?.rows[1]?.slice(4)).toEqual([0, 0, null, null, ""]);
   });
@@ -489,7 +485,7 @@ describe("S8 Intelligence monotonicity", () => {
   const won = [999, 1000, 1001, 1002, 1003, 1004, 1005, 1006];
   const lost = [1100, 1000, 1001, 1002, 1003, 1004, 1005, 1006];
   const s8 = (k: number, pattern: boolean[]): Row => ({
-    job: { scenario: "S8", style: "hover", course: "desert-ridge", k },
+    job: { scenario: "S8", style: "hover", course: "ridge", k },
     races: pattern.map((w) => race(w ? won : lost)),
   });
 
@@ -507,8 +503,8 @@ describe("S8 Intelligence monotonicity", () => {
     const rows = [0, 1, 2].map((k) => s8(k, [false, true, true, true, true]));
     const m8 = metric(computeMetrics(input(rows, ["S8"], "full")), "m8-intelligence");
     expect(m8.cells).toHaveLength(8);
-    expect(m8.cells[0]?.id).toBe("hover/desert-ridge/300-510/win");
+    expect(m8.cells[0]?.id).toBe("hover/ridge/300-510/win");
     expect(m8.cells[0]?.value).toBe(1);
-    expect(m8.cells[1]?.id).toBe("hover/desert-ridge/300-510/top3");
+    expect(m8.cells[1]?.id).toBe("hover/ridge/300-510/top3");
   });
 });

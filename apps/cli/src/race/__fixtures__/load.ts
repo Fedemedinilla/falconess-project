@@ -12,17 +12,20 @@ import { RaceLog } from "@falconess/schema";
  *   pnpm exec vitest run --project cli -u
  *
  * The logs predate ADR-0003 D56: `derived[].brokenSpeedPm` was added by hand as 1000, the neutral
- * factor of the engine that wrote them (its broken wings went through the PW alone).
+ * factor of the engine that wrote them (its broken wings went through the PW alone). They also
+ * predate ADR-0007: `geometry.biome` and `derived[].biomeAptitude` were removed by hand, the
+ * course ids lost their `desert-` prefix and the canyon `param` (its wind) became 0; the canyon
+ * race itself is still the one the windy engine ran.
  */
 export const RACE_FIXTURES = {
-  /** desert-sprint, player field: Peregrina at 600 with three actives against turn-46 rivals. */
+  /** sprint, player field: Peregrina at 600 with three actives against turn-46 rivals. */
   sprint: {
     file: "sprint.json",
     args: [
       "--seed",
       "pt1-sprint",
       "--course",
-      "desert-sprint",
+      "sprint",
       "--stats",
       "600",
       "--turn",
@@ -31,18 +34,18 @@ export const RACE_FIXTURES = {
       "corner-carver,last-gasp,stoop-strike",
     ],
   },
-  /** desert-ridge, six mixed real frames: jumps and landings, ground detours, repairs, drafting. */
+  /** ridge, six mixed real frames: jumps and landings, ground detours, repairs, drafting. */
   ridge: {
     file: "ridge.json",
-    args: ["--seed", "pt1-ridge", "--course", "desert-ridge", "--entries", "ridge-entries.json"],
+    args: ["--seed", "pt1-ridge", "--course", "ridge", "--entries", "ridge-entries.json"],
   },
   /**
-   * desert-canyon, eight mixed real frames: hp empties, worn wings break in the water, heat to
+   * canyon, eight mixed real frames: hp empties, worn wings break in the water, heat to
    * energy, an overheat, repairs and the regen/ground-constant mode churn.
    */
   canyon: {
     file: "canyon.json",
-    args: ["--seed", "pt1-canyon", "--course", "desert-canyon", "--entries", "canyon-entries.json"],
+    args: ["--seed", "pt1-canyon", "--course", "canyon", "--entries", "canyon-entries.json"],
   },
   /** The sprint again with detail "results": no frames, no events. */
   results: {
@@ -51,7 +54,7 @@ export const RACE_FIXTURES = {
       "--seed",
       "pt1-sprint",
       "--course",
-      "desert-sprint",
+      "sprint",
       "--stats",
       "600",
       "--turn",

@@ -8,7 +8,7 @@ describe("parseRaceArgs", () => {
     expect(parse("")).toEqual({
       help: false,
       seed: "42",
-      courseId: "desert-sprint",
+      courseId: "sprint",
       detail: "full",
       json: false,
       field: {
@@ -25,12 +25,12 @@ describe("parseRaceArgs", () => {
 
   it("reads the player field, lists and numbers, and tolerates pnpm's bare `--`", () => {
     const opts = parse(
-      "-- --seed s1 --course desert-ridge --falconess caracara --frame mule --parts boneyard-battery,steinhaus-stabilizer --skills last-gasp, --stats 600 --turn 24 --detail results --json",
+      "-- --seed s1 --course ridge --falconess caracara --frame mule --parts boneyard-battery,steinhaus-stabilizer --skills last-gasp, --stats 600 --turn 24 --detail results --json",
     );
     expect(opts).toEqual({
       help: false,
       seed: "s1",
-      courseId: "desert-ridge",
+      courseId: "ridge",
       detail: "results",
       json: true,
       field: {

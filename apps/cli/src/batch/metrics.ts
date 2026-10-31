@@ -205,9 +205,11 @@ function s1ByCourse(input: MetricsInput): Map<Slug, S1Course> {
 
 function s1Metric(input: MetricsInput, byCourse: Map<Slug, S1Course>): MetricsOutput {
   const cells: BalanceCell[] = [];
-  for (const { biome, courseIds } of input.catalog.biomes) {
-    const courses = courseIds.filter((id) => (byCourse.get(id)?.races ?? 0) > 0);
-    if (courses.length === 0) continue;
+  // one group of every course (ADR-0007: no biomes; v1's only biome held all three courses)
+  const courses = input.catalog.courses
+    .map((c) => c.id)
+    .filter((id) => (byCourse.get(id)?.races ?? 0) > 0);
+  if (courses.length > 0) {
     const n = courses.reduce((s, id) => s + (byCourse.get(id)?.races ?? 0), 0);
     for (const style of STYLES) {
       const rates = courses.map((id) => {
@@ -217,7 +219,7 @@ function s1Metric(input: MetricsInput, byCourse: Map<Slug, S1Course>): MetricsOu
       const value = mean(rates) ?? 0;
       cells.push(
         makeCell(
-          `${biome}/${style}`,
+          `all/${style}`,
           value,
           wilson(value * n, n),
           "wilson",
@@ -241,14 +243,14 @@ function s1Metric(input: MetricsInput, byCourse: Map<Slug, S1Course>): MetricsOu
       id: "m1-style",
       number: 1,
       scenario: "S1",
-      title: "Style win rate per biome, equal stats",
+      title: "Style win rate over all courses, equal stats",
       unit: "rate",
-      targetText: "each style 15-35 % in each biome (per-biome mean of the course rates)",
+      targetText: "each style 15-35 % (mean of the course rates)",
     },
     cells,
     [
       "S1: 8 neutral fixtures (rule none, PW 1.0), 2 per style, stats 600, no skills, lanes shuffled per seed; dead heats for first split the win.",
-      "Interval: Wilson at the biome mean with n = the biome's races.",
+      "Interval: Wilson at the mean of the courses with n = their races.",
     ],
   );
   return {
@@ -626,7 +628,6 @@ function s3Metric(input: MetricsInput): MetricsOutput {
             `pr: a metric 3 cell fails only when its z = ${S3_PR_FAIL_Z} score interval lies outside the band as well (ADR-0005 Pasada 2: false fail ≤ 5e-7 per cell at a band edge; at 150 samples, 40 or more signature sweeps, share ≥ 63.3 %, or 16 or more generic sweeps, share ≤ 44.7 %). The band is 1.4 points of share and a 150-sample 95 % interval 2.5-5.5, so a 95 % fail alone cannot be told from a cell near a band edge and the fixed pr seeds would repeat it on every PR: it reads inconclusive and says so in its note, and the full profile (4000-8000 samples per cell) decides. No pr cell can pass at 150 samples, so a full fail of metric 3 is lifted only by a fix that carries the balance-adr label (§25.2.1).`,
           ]
         : []),
-      "Home biome read as desert for all three pairs in v1 (D47).",
     ],
   );
   return { metrics: metric ? [metric] : [], diagnostics: [] };

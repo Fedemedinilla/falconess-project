@@ -78,9 +78,9 @@ describe("baseline diff", () => {
         "m1-style",
         1,
         [
-          cell("desert/dive", 0.3, "pass"),
-          cell("desert/ground", 0.2, "pass"),
-          cell("desert/old", 0.25, "pass"),
+          cell("all/dive", 0.3, "pass"),
+          cell("all/ground", 0.2, "pass"),
+          cell("all/old", 0.25, "pass"),
         ],
         "pass",
       ),
@@ -93,13 +93,13 @@ describe("baseline diff", () => {
         "m1-style",
         1,
         [
-          cell("desert/dive", 0.36, "inconclusive"),
-          cell("desert/ground", 0.21, "pass"),
-          cell("desert/new", 0.4, "fail"),
+          cell("all/dive", 0.36, "inconclusive"),
+          cell("all/ground", 0.21, "pass"),
+          cell("all/new", 0.4, "fail"),
         ],
         "fail",
       ),
-      metric("m6-dispersion", 6, [cell("desert-sprint", 0.012, "pass")], "pass"),
+      metric("m6-dispersion", 6, [cell("sprint", 0.012, "pass")], "pass"),
     ],
     "fail",
     1000,
@@ -107,15 +107,15 @@ describe("baseline diff", () => {
 
   it("matches cells by metric and cell id, with deltas and verdict changes", () => {
     const diff = diffReports(baseline, current);
-    const dive = diff.rows.find((r) => r.cell === "desert/dive");
+    const dive = diff.rows.find((r) => r.cell === "all/dive");
     expect(dive?.delta).toBeCloseTo(0.06, 10);
     expect(dive && verdictChange(dive)).toBe("pass → inconclusive");
-    const ground = diff.rows.find((r) => r.cell === "desert/ground");
+    const ground = diff.rows.find((r) => r.cell === "all/ground");
     expect(ground && verdictChange(ground)).toBe("=");
-    const old = diff.rows.find((r) => r.cell === "desert/old");
+    const old = diff.rows.find((r) => r.cell === "all/old");
     expect(old?.current).toBeUndefined();
     expect(old && verdictChange(old)).toBe("removed (was pass)");
-    const fresh = diff.rows.find((r) => r.cell === "desert/new");
+    const fresh = diff.rows.find((r) => r.cell === "all/new");
     expect(fresh && verdictChange(fresh)).toBe("new (fail)");
     expect(diff.metrics.map((m) => [m.id, m.baseline, m.current])).toEqual([
       ["m1-style", "pass", "fail"],
@@ -128,7 +128,7 @@ describe("baseline diff", () => {
     const md = renderDiffMarkdown(diffReports(baseline, current));
     expect(md).toContain("| Metric | Cell | Baseline | Current | Delta | Verdict change |");
     expect(md).toContain(
-      "| 1. m1-style | desert/dive | 30.0 % | 36.0 % | +6.0 pp | pass → inconclusive |",
+      "| 1. m1-style | all/dive | 30.0 % | 36.0 % | +6.0 pp | pass → inconclusive |",
     );
     expect(md).toContain("Cells whose verdict changed (4)");
     expect(md).toContain("Not like for like: runs 10000 → 1000.");

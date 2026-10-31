@@ -32,7 +32,7 @@ function isPermutation(lanes: readonly number[]): boolean {
 
 describe("S1 field", () => {
   it("is 8 neutral fixtures, 2 per style, stats 600, lanes shuffled per seed", () => {
-    const entries = neutralField(ctx, "pr/S1/desert-sprint/field/0");
+    const entries = neutralField(ctx, "pr/S1/sprint/field/0");
     expect(entries.map((e) => e.runnerId)).toEqual(S1_ROLES);
     expect(entries.map((e) => e.style)).toEqual([
       "dive",
@@ -51,7 +51,7 @@ describe("S1 field", () => {
       expect(e.skills).toEqual([]);
       expect(Object.values(e.stats).every((v) => v === 600)).toBe(true);
     }
-    expect(neutralField(ctx, "pr/S1/desert-sprint/field/0")).toEqual(entries);
+    expect(neutralField(ctx, "pr/S1/sprint/field/0")).toEqual(entries);
     const lanesBySeed = new Set(
       Array.from({ length: 20 }, (_, k) => shuffledLanes(`seed/${k}`, 8).join(",")),
     );
@@ -68,9 +68,9 @@ describe("S2 field (revision 4: one designated entry per manufacturer)", () => {
         job({
           scenario: "S2",
           variant: "real",
-          course: "desert-ridge",
+          course: "ridge",
           k,
-          seed: `pr/S2/desert-ridge/real/${k}`,
+          seed: `pr/S2/ridge/real/${k}`,
         }),
       );
       const race = spec.races[0];
@@ -113,9 +113,9 @@ describe("S2 field (revision 4: one designated entry per manufacturer)", () => {
       job({
         scenario: "S2",
         variant: "equal-pw",
-        course: "desert-sprint",
+        course: "sprint",
         k: 0,
-        seed: "pr/S2/desert-sprint/equal-pw/0",
+        seed: "pr/S2/sprint/equal-pw/0",
       }),
     );
     const entries = spec.races[0]?.entries ?? [];
@@ -142,9 +142,9 @@ describe("S3 build (revision 4, D47)", () => {
       job({
         scenario: "S3",
         pair: "peregrina",
-        course: "desert-ridge",
+        course: "ridge",
         k: 3,
-        seed: "pr/S3/desert-ridge/peregrina/3",
+        seed: "pr/S3/ridge/peregrina/3",
       }),
     );
     expect(spec.races).toHaveLength(2);
@@ -161,9 +161,9 @@ describe("S3 build (revision 4, D47)", () => {
       expect(e?.kind).toBe("player");
       expect(e?.skills.map((s) => s.id)).toEqual(["stoop-strike"]);
       expect(e?.quirks).toEqual([]);
-      // Desert A on agility, dive A on intelligence: 630 / 600 / 600 / 600 / 630.
+      // No letter on agility (ADR-0007), dive A on intelligence: 600 / 600 / 600 / 600 / 630.
       expect(e?.stats).toEqual({
-        agility: 630,
+        agility: 600,
         stamina: 600,
         technique: 600,
         courage: 600,
@@ -178,9 +178,9 @@ describe("S3 build (revision 4, D47)", () => {
       job({
         scenario: "S3",
         pair: "caracara",
-        course: "desert-canyon",
+        course: "canyon",
         k: 0,
-        seed: "pr/S3/desert-canyon/caracara/0",
+        seed: "pr/S3/canyon/caracara/0",
       }),
     );
     const gen = spec.races[0]?.entries[1];
@@ -197,9 +197,9 @@ describe("S4 skill ablation (D49)", () => {
       job({
         scenario: "S4",
         skill: "wind-hover",
-        course: "desert-sprint",
+        course: "sprint",
         k: 0,
-        seed: "pr/S4/desert-sprint/wind-hover/0",
+        seed: "pr/S4/sprint/wind-hover/0",
       }),
     );
     const [on, off] = spec.races;
@@ -217,10 +217,10 @@ describe("S4 skill ablation (D49)", () => {
 describe("S5 part ablation (revision 3)", () => {
   it("puts the part on the runner in lane k mod 8 and leaves everyone else identical", () => {
     for (const k of [0, 5, 9]) {
-      const seed = `pr/S5/desert-sprint/steinhaus-turbine/${k}`;
+      const seed = `pr/S5/sprint/steinhaus-turbine/${k}`;
       const spec = buildRaceJob(
         ctx,
-        job({ scenario: "S5", part: "steinhaus-turbine", course: "desert-sprint", k, seed }),
+        job({ scenario: "S5", part: "steinhaus-turbine", course: "sprint", k, seed }),
       );
       const [withPart, without] = spec.races;
       const c = spec.carrierRole ?? -1;
@@ -241,9 +241,9 @@ describe("S5 part ablation (revision 3)", () => {
       job({
         scenario: "S5",
         part: "koryu-firmware",
-        course: "desert-ridge",
+        course: "ridge",
         k: 2,
-        seed: "pr/S5/desert-ridge/koryu-firmware/2",
+        seed: "pr/S5/ridge/koryu-firmware/2",
       }),
     );
     const c = spec.carrierRole ?? -1;
@@ -258,16 +258,16 @@ describe("S8 Intelligence sweep", () => {
       job({
         scenario: "S8",
         style: "glide",
-        course: "desert-canyon",
+        course: "canyon",
         k: 11,
-        seed: "pr/S8/desert-canyon/glide/11",
+        seed: "pr/S8/canyon/glide/11",
       }),
     );
     expect(spec.races.map((r) => r.entries[0]?.stats.intelligence)).toEqual([
       300, 510, 600, 630, 1000,
     ]);
     for (const race of spec.races) {
-      expect(race.seed).toBe("pr/S8/desert-canyon/glide/11");
+      expect(race.seed).toBe("pr/S8/canyon/glide/11");
       expect(race.roles).toEqual(S8_ROLES);
       expect(race.entries[0]?.laneIndex).toBe(3);
       expect(isPermutation(race.entries.map((e) => e.laneIndex))).toBe(true);
@@ -284,9 +284,9 @@ describe("stat diagnostic", () => {
       job({
         scenario: "stats",
         stat: "courage",
-        course: "desert-sprint",
+        course: "sprint",
         k: 0,
-        seed: "full/stats/desert-sprint/courage/0",
+        seed: "full/stats/sprint/courage/0",
       }),
     );
     expect(spec.races.map((r) => r.entries.length)).toEqual([1, 1]);

@@ -7,7 +7,7 @@ import type { EntryInput } from "./engine-port.js";
 import { buildField, type FieldSpec, parseEntryInputs, playerEntryInput } from "./field.js";
 
 const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
-const sprint = ctx.content.getCourse("desert-sprint");
+const sprint = ctx.content.getCourse("sprint");
 const player = (over: Partial<Extract<FieldSpec, { kind: "player" }>> = {}) =>
   ({
     kind: "player",
@@ -26,7 +26,6 @@ const validInput: EntryInput = {
   falconessId: "caracara",
   baseStats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
   mood: 1,
-  biomeAptitude: { desert: "A", mountain: "B", coast: "B", urban: "C", tundra: "D" },
   styleAptitude: { dive: "C", hover: "B", glide: "B", ground: "A" },
   frameId: "caracara-signature",
   parts: ["boneyard-battery"],
@@ -44,7 +43,6 @@ describe("playerEntryInput", () => {
       falconessId: "peregrina",
       baseStats: peregrina.baseStats,
       mood: 0,
-      biomeAptitude: peregrina.biomeAptitude,
       styleAptitude: peregrina.styleAptitude,
       frameId: "peregrina-signature",
       parts: [],
