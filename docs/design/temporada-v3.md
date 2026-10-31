@@ -228,6 +228,18 @@ En negrita, la mejor de cada columna. Intervalos de ± 3 a 4,5 puntos por Falcon
 - **Debuffs:** el rol y su implementación quedan para después (ver T19, pendiente).
 - **Pistas ★:** que lo descubra el jugador; no se les sube el premio ni se avisa.
 
+**Estudio de la opción A (2026-10-31), pendiente de aprobación.** Informe local:
+`.work/design4/t3a/informe-t3a.md`. 4 bases de semillas × 500 temporadas por Falconess.
+
+- 2 stats al azar por carrera; premio al ganar ≈ 1,5 semanas base de entrenamiento.
+- Tope: las primeras 10 opcionales al 100 %, las siguientes al 50 %.
+- **Hallazgo:** con el tope solo, guardar las carreras para la segunda mitad queda ≈ 2 puntos debajo
+  de no correr nunca (no por el tope, sino por los puntos de habilidad que se ganan antes).
+  Propuesta: desde la semana 25 el premio en stats vale ×1,25 (a decidir por el dueño).
+- Cuadrillas: hasta +50 % de puntos o +5 % de stats por opcional.
+- Meta de activas: 0-1 nunca corre, 5-6 con plan, 6-7 farmea, 2,5-4,5 guarda carreras.
+- Riesgo: el premio es un filo (±3 %); hace falta un test de robustez antes del ADR.
+
 ## T4 · Taller
 
 **Hoy y estudio (`.work/design2/taller.md`):** nadie va porque la visita cuesta la semana y rinde
@@ -806,6 +818,22 @@ Falconess tiene una letra por estilo:
 - **Que usen más las alas:** hoy corren mucho y vuelan poco (el motor solo vuela en los saltos).
 - **Le gusta la picada atada al Coraje:** a más Coraje, menos chance de que la Falconess se
   intimide.
+
+**Propuesta del estudio (2026-10-31), pendiente de aprobación.** Informe local:
+`.work/design4/t21/propuesta-t21.md`. Maqueta: https://claude.ai/artifact/LifhfwWfzL2Ajidojd2yHQ
+(fuente: `docs/design/prototipo/falconess-posiciones.html`).
+
+- Cuatro posiciones que se leen por **altura y forma**: Punta vuela bajo y adelante; Pelotón por el
+  suelo en bloque (rebufo, «muro»); Acecho vuela alto detrás del grupo, su sombra cae sobre la que
+  lidera y cae en picada en el final; Remate espera atrás y hace la «gran picada» desde el techo.
+- Ciclo: Acecho > Punta > Remate > Pelotón > Acecho; el terreno inclina la balanza.
+- Vuelo: el cruce de saltos se generaliza a vuelos propios con despegue, costo por Técnica y
+  aterrizaje en picada; meta 30-45 % del tiempo en el aire (hoy < 5 %).
+- **Prueba de nervio por Coraje:** a más Coraje propio, menos chance de achicarse; a más Coraje de
+  la rival, más asusta. Momentos: la sombra, la picada, la alcanzan, el muro. Como mucho 4 por
+  carrera; la chance se ve antes de elegir.
+- Letra por posición (multiplica la Inteligencia); las alas ponen el cómo.
+- Costo: L tirando a XL (ruleset v3 + ADR, recalibrar 16 combinaciones), en 4 etapas.
 
 ## T22 · La radio: los gritos del jugador
 
