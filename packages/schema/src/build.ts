@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BiomeAptitudes, FalconessStats, RulesetVersion, Slug, StyleAptitudes } from "./core.js";
+import { FalconessStats, RulesetVersion, Slug, StyleAptitudes } from "./core.js";
 import { RunInput } from "./season.js";
 
 /** The only object that travels between players (BRIEF §10). Exportable from the MVP; signed later. */
@@ -7,7 +7,6 @@ export const Build = z.strictObject({
   rulesetVersion: RulesetVersion,
   falconessId: Slug,
   finalStats: FalconessStats,
-  biomeAptitude: BiomeAptitudes,
   styleAptitude: StyleAptitudes,
   frameId: Slug,
   parts: z.array(Slug).max(4),

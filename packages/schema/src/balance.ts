@@ -67,7 +67,7 @@ export const BalanceTarget = z
 export type BalanceTarget = z.infer<typeof BalanceTarget>;
 
 export const BalanceCell = z.strictObject({
-  /** Stable key used by the baseline diff, e.g. `koryu/desert-sprint`. */
+  /** Stable key used by the baseline diff, e.g. `koryu/sprint`. */
   id: z.string().min(1),
   /** `null` when the estimate is undefined (a ratio over zero signature wins). */
   value: z.number().nullable(),

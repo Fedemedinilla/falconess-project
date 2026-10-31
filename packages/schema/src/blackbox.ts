@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Aptitude, Biome, Grade, RulesetVersion, Slug, StatName, Style } from "./core.js";
+import { Aptitude, Grade, RulesetVersion, Slug, StatName, Style } from "./core.js";
 
 const Stars = z.number().int().min(1).max(3);
 
@@ -12,7 +12,6 @@ export const BlackBox = z.strictObject({
   factors: z.strictObject({
     stat: z.strictObject({ stat: StatName, stars: Stars }),
     aptitude: z.discriminatedUnion("kind", [
-      z.strictObject({ kind: z.literal("biome"), key: Biome, letter: Aptitude, stars: Stars }),
       z.strictObject({ kind: z.literal("style"), key: Style, letter: Aptitude, stars: Stars }),
     ]),
     skills: z.array(Slug).max(3),

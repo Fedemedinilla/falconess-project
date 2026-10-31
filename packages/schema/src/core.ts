@@ -37,9 +37,6 @@ export const Style = z.enum(["dive", "hover", "glide", "ground"]);
 export type Style = z.infer<typeof Style>;
 export const STYLES = Style.options;
 
-export const Biome = z.enum(["desert", "mountain", "coast", "urban", "tundra"]);
-export type Biome = z.infer<typeof Biome>;
-export const BIOMES = Biome.options;
 
 export const SegmentType = z.enum([
   "flat",
@@ -83,9 +80,7 @@ export const FalconessStats = z.strictObject({
 });
 export type FalconessStats = z.infer<typeof FalconessStats>;
 
-/** Exhaustive letter per biome / per style. */
-export const BiomeAptitudes = z.record(Biome, Aptitude);
-export type BiomeAptitudes = z.infer<typeof BiomeAptitudes>;
+/** Exhaustive letter per style. */
 export const StyleAptitudes = z.record(Style, Aptitude);
 export type StyleAptitudes = z.infer<typeof StyleAptitudes>;
 

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  Biome,
   CourseTrait,
   HexColor,
   SegmentType,
@@ -33,7 +32,6 @@ export const Crew = z.strictObject({
 export type Crew = z.infer<typeof Crew>;
 
 const Terrain = z.strictObject({
-  biomes: z.array(Biome).default([]),
   segments: z.array(SegmentType).default([]),
   traits: z.array(CourseTrait).default([]),
 });

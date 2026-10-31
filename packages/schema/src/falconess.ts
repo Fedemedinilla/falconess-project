@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  BiomeAptitudes,
   FalconessStats,
   Slug,
   StatName,
@@ -27,7 +26,6 @@ export const Falconess = z.strictObject({
   species: z.string().min(1),
   baseStats: FalconessStats,
   growth: z.record(StatName, z.number().min(0).max(0.3)),
-  biomeAptitude: BiomeAptitudes,
   styleAptitude: StyleAptitudes,
   preferredStyle: Style,
   uniqueSkills: z.array(Slug).max(2),

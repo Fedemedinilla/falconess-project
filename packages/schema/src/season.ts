@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { BlackBox } from "./blackbox.js";
 import {
-  BiomeAptitudes,
   FalconessStats,
   Grade,
   Mood,
@@ -118,7 +117,6 @@ export const SeasonState = z.strictObject({
   turn: z.number().int().min(0).max(48),
   falconessId: Slug,
   stats: FalconessStats,
-  biomeAptitude: BiomeAptitudes,
   styleAptitude: StyleAptitudes,
   mood: Mood,
   fatigue: z.number().int().min(0).max(100),

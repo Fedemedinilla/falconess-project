@@ -91,7 +91,6 @@ describe("courses", () => {
     const c = Course.parse({
       id: "c",
       version: 1,
-      biome: "desert",
       textKey: "course.c",
       segments: [
         { type: "flat", length: 400 },
@@ -103,6 +102,13 @@ describe("courses", () => {
     expect(Course.safeParse({ ...c, segments: [{ type: "jump", length: 100 }] }).success).toBe(
       false,
     );
+  });
+  it("a course has no biome and a canyon no wind (ADR-0007)", () => {
+    const c = { id: "c", version: 1, textKey: "course.c", segments: [{ type: "flat", length: 400 }] };
+    expect(Course.safeParse({ ...c, biome: "desert" }).success).toBe(false);
+    const canyon = { type: "canyon", length: 400 };
+    expect(Course.safeParse({ ...c, segments: [canyon] }).success).toBe(true);
+    expect(Course.safeParse({ ...c, segments: [{ ...canyon, wind: 0.1 }] }).success).toBe(false);
   });
 });
 
@@ -228,12 +234,11 @@ describe("buildContentIndex", () => {
         species: "Falco peregrinus",
         baseStats: { agility: 100, stamina: 90, technique: 80, courage: 70, intelligence: 60 },
         growth: { agility: 0.2, stamina: 0, technique: 0.1, courage: 0, intelligence: 0 },
-        biomeAptitude: { desert: "A", mountain: "B", coast: "C", urban: "B", tundra: "D" },
         styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
         preferredStyle: "dive",
         uniqueSkills: [],
         sponsor: "koryu",
-        seasonGoals: [{ turn: 12, courseId: "desert-sprint", minPlace: 5 }],
+        seasonGoals: [{ turn: 12, courseId: "sprint", minPlace: 5 }],
         textKey: "falconess.peregrina",
       },
     ],
@@ -282,10 +287,9 @@ describe("buildContentIndex", () => {
     ],
     courses: [
       {
-        id: "desert-sprint",
+        id: "sprint",
         version: 1,
-        biome: "desert",
-        textKey: "course.desert-sprint",
+        textKey: "course.sprint",
         segments: [{ type: "flat", length: 1200 }],
       },
     ],
@@ -296,7 +300,7 @@ describe("buildContentIndex", () => {
       "quirk.cheap-fuel": "Combustible barato",
       "ev.koryu.data1": "Sesión de datos",
       "ev.koryu.data1.a": "Analizar toda la noche",
-      "course.desert-sprint": "Sprint del desierto",
+      "course.sprint": "Sprint",
     },
   });
 

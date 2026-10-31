@@ -74,7 +74,6 @@ const entry: RaceEntry = {
   parts: [],
   quirks: [],
   mood: 0,
-  biomeAptitude: "B",
   styleAptitude: "B",
   stats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
   powerToWeight: 1000,
@@ -185,7 +184,6 @@ function minimalLog(): RaceLog {
     ticks: 818,
     maxTicks: 12_000,
     geometry: {
-      biome: "desert",
       lengthMm: 1_200_000,
       startEndMm: 200_000,
       finalStartMm: 800_000,
@@ -302,7 +300,6 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       falconessId: "peregrina",
       baseStats: { agility: 110, stamina: 80, technique: 95, courage: 100, intelligence: 85 },
       mood: 0,
-      biomeAptitude: { desert: "A", mountain: "B", coast: "B", urban: "C", tundra: "D" },
       styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
       frameId: "peregrina-signature",
       parts: [],
@@ -383,15 +380,8 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       ["dnf with a finish time", (l) => ({ ...l, results: [{ ...result, dnf: true }] })],
       ["finisher without a time", (l) => ({ ...l, results: [{ ...result, timeTicks: null }] })],
       [
-        "geometry without a biome (ADR-0003 D55)",
-        (l) => {
-          const { biome: _drop, ...rest } = l.geometry;
-          return { ...l, geometry: rest };
-        },
-      ],
-      [
-        "geometry of an unknown biome",
-        (l) => ({ ...l, geometry: { ...l.geometry, biome: "moon" } }),
+        "geometry with a biome (removed by ADR-0007)",
+        (l) => ({ ...l, geometry: { ...l.geometry, biome: "desert" } }),
       ],
       [
         "negative reserveAtMm (ADR-0003 D53)",
