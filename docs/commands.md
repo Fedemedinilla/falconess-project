@@ -31,7 +31,7 @@ this list and the scripts in sync). Arguments after `--` go to the script.
   with the lowest-stat one, as `5f0fd65` did (ADR-0006 «Métrica 7 en v2 y CI»).
 - `pnpm sim:season-batch -- --runs 500`: seasons with the ruleset's reference policy (v2: careful,
   v1: lowest stat, byte for byte the v1 output of `5f0fd65` apart from the `ruleset v1` header
-  line), stat curve and grades, goal races won and by place, goal pass rates. `--ruleset` as in
+  line, until ADR-0007 removed biomes and wind), stat curve and grades, goal races won and by place, goal pass rates. `--ruleset` as in
   `pnpm sim` (default v2).
 - `pnpm dev`: the web tester app (apps/web) on the Vite dev server, with hot reload.
 - `pnpm web:build`: apps/web to dist/ and the single-file tester page to dist-artifact/.
