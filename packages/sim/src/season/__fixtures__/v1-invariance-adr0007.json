@@ -71,12 +71,7 @@
       "status": "ended",
       "grade": "B",
       "turn": 48,
-      "places": [
-        1,
-        1,
-        2,
-        1
-      ]
+      "places": [1, 1, 2, 1]
     }
   },
   "mixed": [
