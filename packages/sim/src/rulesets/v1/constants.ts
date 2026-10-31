@@ -213,7 +213,6 @@ const RACE_V1 = {
   kClimb: 150, // ‰ per 1.0 of grade lost on climbs (1 − 0.15·grade)
   kDescent: 100, // ‰ per 1.0 of grade gained on descents (1 + 0.10·grade)
   kWater: 1_000, // ‰ weight of drag (1 − drag)
-  kWind: 1_000, // ‰ weight of signed wind (1 + wind)
   kCurves: 200, // ‰, curve penalty at agility 0 (1 − 0.20·(1 − A/1200))
   segFactorMin: 500, // ‰, new: clamp of f_seg (schema bounds of segment-factor)
   segFactorMax: 1_500, // ‰, new
@@ -225,7 +224,6 @@ const RACE_V1 = {
   kCool: 1_000, // mh per tick without boost (k_cool 1.0)
   coolDissWeight: 0, // ‰, new knob: cooling ∝ dissipation / dissRef; 0 = brief
   dissRef: 60, // dissipation (content units), new: reference of coolDissWeight
-  biomeCool: { desert: 1_000, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰, new knob; 1000 = brief
   heatToleranceCourage: 300, // ‰ per 1200 courage, new: heatCap = D × (1 + 0.3·C/1200) (BRIEF tolerance)
   heatPenaltyMult: 920, // ‰ speed while overheated
   overheatDurPerTick: 1_000, // md per overheated tick, new (BRIEF "durability −= 1")
@@ -260,10 +258,10 @@ const RACE_V1 = {
   telemetryPowerCap: 1_100, // ‰ PW cap (applied by resolveFrameBuild)
 
   // rule terms (new, revision 2; numeric, BRIEF §7 deviation; section 13.1, ADR-0003 D45)
-  massThrustCoolPm: { desert: 50, mountain: 1_250, coast: 1_000, urban: 500, tundra: 1_250 }, // ‰ of coolTick, Steinhaus (ADR-0005: desert 500 → 50; urban stays 500, no v1 course)
+  massThrustCoolPm: 50, // ‰ of coolTick, Steinhaus (ADR-0005: desert 500 → 50; ADR-0007: one value, the desert one)
   regenLandLossPm: 2_000, // ‰ of the landing loss, Lumière (light airframe)
   pulseAirPm: [1_000, 1_000, 2_500, 1_000, 600, 1_000, 1_000], // ‰ burst thrust per segment type (SEGMENT_TYPES order), Kōryū (ADR-0005: descent 1200 → 2500)
-  pulseBiomePm: { desert: 1_450, mountain: 1_000, coast: 1_000, urban: 1_000, tundra: 1_000 }, // ‰ burst thrust per biome, Kōryū (ADR-0005: desert 1150 → 1450)
+  pulseBasePm: 1_450, // ‰ burst thrust on every course, Kōryū (ADR-0005: desert 1150 → 1450; ADR-0007: was pulseBiomePm, collapsed to the desert value)
   telemetryDrainPm: 950, // ‰ of hp drain, Altair (ADR-0005: 900 → 950)
   telemetryAccelPm: 800, // ‰ of acceleration, Altair (ADR-0005: 850 → 800)
   repairableRuggedPm: 0, // ‰ of the landing loss and of the detour's extra length, Boneyard (ADR-0005: 500 → 0)
