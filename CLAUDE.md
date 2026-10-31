@@ -43,7 +43,7 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 
 pnpm typecheck · pnpm test · pnpm test:golden · pnpm lint · pnpm content:validate · pnpm bench
 pnpm sim -- --seed 42 --falconess peregrina · pnpm play -- --seed 42 --falconess peregrina
-pnpm sim:race -- --seed 1 --course desert-ridge · pnpm sim:batch -- --runs 10000
+pnpm sim:race -- --seed 1 --course ridge · pnpm sim:batch -- --runs 10000
 pnpm sim:season-batch -- --runs 500 · pnpm golden:update -- --yes (solo el líder, con ADR)
 Detalle de cada comando: docs/commands.md.
 

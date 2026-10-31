@@ -76,6 +76,12 @@ Esto cambia la regla del BRIEF «el hangar reemplaza a las support cards»: va c
 
 ## T3 · Carreras opcionales
 
+> **Nota del 2026-10-31 (ADR-0007):** el dueño quitó los biomas y el clima de las pistas. Lo que
+> esta sección propone por bioma (el calendario por «mejor bioma», las 8 pistas en 4 biomas, el
+> viento en contra o cruzado) queda en suspenso; el texto de abajo se conserva como registro. Una
+> pista nueva se describe solo por sus rasgos (Salto, Terreno líquido, Colina, Bajada, curvas) y
+> la incomodidad de una opcional sale de los segmentos y rasgos que su escuela tiene como débiles.
+
 **Propuesta del dueño:** como en Umamusume, que el jugador decida entre correr y entrenar: correr
 da más puntos de habilidad; entrenar da lo normal, pero fijo.
 
@@ -314,6 +320,10 @@ ADR; v1 y v2 conservan el taller que gasta la semana.
 | Farmeadora táctica                                                 | 6,3     | 208               | 650 / 165 |
 
 ## T5 · Fabricantes como escuelas
+
+> **Nota del 2026-10-31 (ADR-0007):** sin biomas, la casa y la debilidad de una escuela salen solo
+> de los rasgos y segmentos de la pista (BRIEF §7); lo que abajo dice «bioma casa y débil» queda en
+> suspenso.
 
 **Propuesta del dueño:** cada fabricante es un bando o escuela, como las academias de Umamusume:
 sus colores, su metodología, más agresiva o más prudente. Un jugador puede enamorarse de una

@@ -224,15 +224,15 @@ def build(out):
                                        "habilidades.", "cell")],
     ], [34 * mm, CW - 34 * mm], head=["CUALIDAD", "PARA QUÉ SIRVE EN CARRERA"]))
     s += [Spacer(1, 8), P("Aptitudes", "h2"),
-          P("Cada corredora rinde mejor en ciertos <b>terrenos</b> (desierto, montaña, costa, ciudad, tundra) y "
-            "con ciertos <b>estilos de vuelo</b>. Se marcan con una letra, de la <b>S</b> (ideal) a la <b>G</b> "
-            "(muy incómoda). Volar en su terreno y con su estilo la hace rendir más sin entrenar nada extra."),
+          P("Cada corredora rinde mejor con ciertos <b>estilos de vuelo</b>. Se marcan con una letra, de la "
+            "<b>S</b> (ideal) a la <b>G</b> (muy incómoda). Volar con su estilo la hace rendir más sin entrenar "
+            "nada extra."),
           P("Habilidades", "h2"),
           P("Son trucos que se activan solos en carrera cuando se da la situación: una bajada, el tramo final, ir "
             "en el medio del grupo. Cada corredora trae una <b>habilidad única</b> y puede aprender otras en el "
             "taller. Con más Inteligencia, se activan más seguido."),
-          tip("Mirá las letras antes de elegir: una corredora con <b>A</b> en desierto y en Picada ya parte con "
-              "ventaja en las pistas del desierto si vuela con alas de Picada.")]
+          tip("Mirá las letras antes de elegir: una corredora con <b>A</b> en Picada ya parte con ventaja si "
+              "vuela con alas de Picada.")]
 
     # --- 2. alas
     s += section(2, "LAS ALAS", "Bastidores, fabricantes y estilos")

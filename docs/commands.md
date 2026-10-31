@@ -9,7 +9,7 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm test:watch`: Vitest in watch mode.
 - `pnpm test:golden`: only the golden logs and determinism checks (`race/golden.test.ts`).
 - `pnpm golden:update -- --yes [--only g01-sprint-generic]`: rewrite tests/golden/v1 (lead + ADR).
-- `pnpm bench`: race benchmark; fails if the desert-canyon p95 exceeds 5 ms per race.
+- `pnpm bench`: race benchmark; fails if the canyon p95 exceeds 5 ms per race.
 - `pnpm lint`: Biome format and lint check, read only (CI runs it).
 - `pnpm lint:fix`: Biome with `--write`; review `git diff docs/` afterwards (it formats Markdown).
 - `pnpm content:validate`: parse every content JSON and check the cross references.
@@ -23,7 +23,7 @@ this list and the scripts in sync). Arguments after `--` go to the script.
   chance from the sim; after a goal race finished 3rd or worse it says what to train (race-view's
   `raceAdvice`). `--ruleset` as in `pnpm sim`; on exit it prints the run in the web's save
   format, ruleset version included.
-- `pnpm sim:race -- --seed 1 --course desert-ridge`: one race, classification, timeline and events;
+- `pnpm sim:race -- --seed 1 --course ridge`: one race, classification, timeline and events;
   the "why" of each runner ends with what to train ("consejo").
 - `pnpm sim:batch -- --runs 10000`: balance batch of BRIEF §12 (docs/balance-batch.md).
   `--ruleset v1|v2`, default `CURRENT_RULESET` (v2, what CI measures); S7 plays the ruleset's

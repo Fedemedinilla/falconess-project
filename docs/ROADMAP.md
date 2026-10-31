@@ -107,7 +107,7 @@ Tareas, en orden:
   `training`, `events`, `race`, `gacha`, `quirks`, estado serializable. Punto fijo: `mul`, `div`
   con redondeo definido, `clamp`. Tests: vectores conocidos, independencia de streams, misma
   semilla → misma secuencia tras serializar y restaurar.
-- [x] D3 · `packages/schema/core.ts`: `Slug`, `Stat`, `Aptitude`, `Style`, `Biome`, `SegmentType`,
+- [x] D3 · `packages/schema/core.ts`: `Slug`, `Stat`, `Aptitude`, `Style`, `Biome` (quitado por ADR-0007), `SegmentType`,
   `FalconessStats`, `Falconess`, `Manufacturer` (con `Crew`), `Frame`, `Part`, `Quirk`.
   `Event`, `Course`, `Skill` se completan en D5 y D8.
 - [x] D4 · `SeasonState` y `RunInput` (8 acciones del brief §8). `loadContent()` con índice único y
@@ -171,7 +171,8 @@ Tareas, en orden (cada día cierra con un test de propiedad nuevo):
   en el resto), eventos (`skill`, `pulse`, `jumpOk`, `jumpFail`, `overheat`, `finish`), márgenes
   en milímetros. 12 golden en `tests/golden/v1/`. Benchmark en `packages/sim/bench/`: 8
   corredoras, 3.000 m, objetivo < 5 ms.
-- [x] D13 · Bioma del MVP: `desert` (recomendado, ver §7) con 3 pistas: `desert-sprint` (1.200 m,
+- [x] D13 · Bioma del MVP: `desert` (recomendado, ver §7) con 3 pistas (ADR-0007, 2026-10-31: sin
+  biomas; las pistas pasaron a `sprint`, `ridge` y `canyon`, sin viento): `desert-sprint` (1.200 m,
   `flat` + `curves`), `desert-ridge` (2.000 m, `descent` + `jump` + `flat`), `desert-canyon`
   (3.000 m, `climb` + `canyon` + `flat`). Cubren los cuatro estilos y los tres fabricantes del MVP.
 - [x] D14 · `pnpm sim:batch -- --runs 10000 --report out/balance.json` con las 7 métricas del brief
@@ -327,12 +328,12 @@ evento recordás? 8) ¿Cuánto tardó la temporada? 9) ¿Qué sacarías? 10) ¿Q
 
 ## 5. Alcance del MVP: dentro, fuera y recortes propuestos
 
-**Dentro (brief §1):** 3 Falconess, 1 bioma con 3 pistas, 4 bastidores gacha (uno por fabricante) +
+**Dentro (brief §1):** 3 Falconess, 3 pistas sin biomas (ADR-0007), 4 bastidores gacha (uno por fabricante) +
 2 Boneyard, 3 firmas, 8 piezas, 15 habilidades, 40 eventos, 12 peculiaridades, 1 temporada completa
 en navegador, caja negra y herencia, exportación de `Build`, guardado local, itch.io.
 
 **Fuera (brief §1 y §14):** dinero real, multiplayer, Supabase, audio, localización (solo claves),
-Claude en runtime, build de escritorio, Falconess 4–6, biomas 2–5, arte.
+Claude en runtime, build de escritorio, Falconess 4–6, biomas (ADR-0007: fuera hasta que hagan falta), arte.
 
 **Recortes propuestos respecto al brief (cada uno requiere ADR):**
 
@@ -369,7 +370,8 @@ Ninguna bloquea la fase 0. Se recomienda cerrarlas con ADR antes de la fase indi
 2. **Gacha fuera del MVP.** Decidido: sí; queda esquema, JSON y monedas como base.
 3. **Bioma del MVP.** Recomendación: `desert`. Es casa de Kōryū (Peregrina), débil para Steinhaus, y
    sus tres pistas pueden cubrir `curves`, `descent`, `jump`, `climb` y `canyon` sin forzar el bioma.
-   Alternativa: `urban` (casa de Altair y Lumière). Antes de D13.
+   Alternativa: `urban` (casa de Altair y Lumière). Antes de D13. **Superado por ADR-0007
+   (2026-10-31):** no hay biomas; todas las pistas son el mismo terreno y el mismo clima.
 4. **Vista de carrera.** Recomendación: lateral. Antes de D22.
 5. **Avatar del jugador** (entrenador/a con presencia o taller sin rostro). Afecta el tono de los 40
    eventos. Recomendación para el MVP: taller sin rostro, los eventos hablan en segunda persona; es
@@ -397,7 +399,8 @@ El hito de decisión (D37) no forma parte de "terminado": es lo que se hace con 
 ## 9. Después del MVP (orden tentativo, sin fechas)
 
 1. Pantalla de gacha sobre `rollGacha` y moneda ganada.
-2. Falconess 4–6 y biomas 2–5, con biblias de voz y evaluación para cada una.
+2. Falconess 4–6, con biblias de voz y evaluación para cada una. Biomas solo si hacen falta
+   (ADR-0007).
 3. Supabase: saves, firma de `Build`, ligas asíncronas, clase Chatarra (brief §10).
 4. Carriles y bloqueos (v1) solo si el lote muestra que `hover` y `glide` son indistinguibles.
 5. Prueba de arte y página de Steam (condicionadas al hito de decisión).

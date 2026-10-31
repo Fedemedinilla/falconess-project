@@ -4,7 +4,7 @@
 #   tests/golden/v1 and the determinism checks included: packages/sim/src/race/golden.test.ts) and
 #   the content validation.
 # - bench: `pnpm bench` in its own job, so timing noise never hides the verify results. The bench
-#   writes the ms per race to the job summary and fails only on its own gate: the desert-canyon
+#   writes the ms per race to the job summary and fails only on its own gate: the canyon
 #   p95 over 5 ms (packages/sim/bench/race.bench.ts).
 # - batch-smoke: the CI smoke of docs/race-engine.md 24.4, 1000 mixed races of the real batch in
 #   under 6 s (`--max-wall-ms 6000`; it also fails on any DNF). It times the harness the bench

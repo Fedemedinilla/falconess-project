@@ -17,7 +17,8 @@ Redondeo: floor, salvo que se diga otra cosa.
 Intención: una sola conversión de stats base a stats "del día" antes de entrenar o correr.
 `S_eff = floor(S_base × m_mood × a_aptitud / 1000 / 1000)` con `m_mood ∈ {1100,1050,1000,980,950}`
 (v1; v2 en "Temporada v2") para ánimo +2…−2 y `a_aptitud` por letra S…G = 1100, 1050, 1000, 950, 900, 850, 800, 700.
-La aptitud de bioma multiplica `agility`; la de estilo multiplica `intelligence`. Rango: 1–1320.
+La aptitud de estilo multiplica `intelligence`; `agility` no lleva letra (ADR-0007 quitó la aptitud de
+bioma). Rango: 1–1320.
 
 ### Ganancia de entrenamiento
 
@@ -217,8 +218,8 @@ empuje `B = fl(KBOOST × pwb, 1000)` (pulso: `Bp = fl(KBOOST × pwb × pulseBoos
 PW 0,7 y 1100 a PW 1,4). El empuje de un tick de pulso pasa además por
 el aire de Kōryū (`airPm`, ver "Términos de regla"), y el de dive por la picada: ×`diveStoopPm`
 (1400) en descensos y en la fase final ("gasta todo en descensos y en el sprint final"). Rango:
-+3 m/s (PW 1,0; dive en la final 4,2), pulso +4,05 m/s (5,87 en el desierto; 14,7 en un descenso
-del desierto). Constantes: `kBoost` 3000 mm/s, `pwBoostWeight` 250, `heatPenaltyMult` 920, `style.diveStoopPm` 1400.
++3 m/s (PW 1,0; dive en la final 4,2), pulso +4,05 m/s antes de su base (5,87 con la base ×1,45 de
+toda pista; 14,7 en un descenso). Constantes: `kBoost` 3000 mm/s, `pwBoostWeight` 250, `heatPenaltyMult` 920, `style.diveStoopPm` 1400.
 
 ### hp máximo
 
@@ -247,12 +248,12 @@ Rango: 17 m/s con PW 1,0 en llano. Constante: `exhaustSpeedPm` 850.
 
 Intención: cada terreno pide algo distinto. `flat` 1000; `climb` `1000 − fl(kClimb × grade‰, 1000)`;
 `descent` `1000 + fl(kDescent × grade‰, 1000)`; `water` `1000 − fl(kWater × drag‰, 1000)`; `canyon`
-`1000 + fl(kWind × wind‰, 1000)` (viento con signo); `curves`
+1000 (sin viento desde ADR-0007); `curves`
 `1000 − fl(kCurves × (1200 − min(A, 1200)) × curvesScale, 1 200 000)`; `jump` 1000. Modificadores:
 override = máximo de los override, luego producto de los multiply, acotado a [500, 1500]. Boneyard
 multiplica `curvesScale` por `repairableCurvesPm` (1500; término de regla). Rango de contenido: 800
-(agua 0,2) a 1150 (viento a favor 0,15); curvas 900 a A 600 (Boneyard 850). Constantes: `kClimb`
-150, `kDescent` 100, `kWater` 1000, `kWind` 1000, `kCurves` 200, `segFactorMin` 500, `segFactorMax`
+(agua 0,2) a 1030 (bajada 0,3); curvas 900 a A 600 (Boneyard 850). Constantes: `kClimb`
+150, `kDescent` 100, `kWater` 1000, `kCurves` 200, `segFactorMin` 500, `segFactorMax`
 1500, `repairableCurvesPm` 1500.
 
 ### Boost, energía y calor
@@ -260,10 +261,10 @@ multiplica `curvesScale` por `repairableCurvesPm` (1500; término de regla). Ran
 Intención: el boost gasta energía y calienta; sin boost se enfría y, si el bastidor lo permite,
 regenera. Por tick con boost: `energía −= kE` (pulso `fl(kE × pulseCostMult, 1000)`), `calor += kH`;
 sin boost: `calor −= coolTick`, `energía += regenTick` (×multiplicador en el pelotón medio), con
-`coolTick = fl(kCool × biomeCool × dissF, 10^6)` (neutro = `kCool`), ×`massThrustCoolPm[bioma]` en
-Steinhaus (desierto 50; término de regla). Ninguna cantidad baja de 0 ni pasa su máximo. Rango:
+`coolTick = fl(kCool × dissF, 1000)` (neutro = `kCool`), ×`massThrustCoolPm` en Steinhaus (50 en
+toda pista, el valor del desierto; término de regla; ADR-0007). Ninguna cantidad baja de 0 ni pasa su máximo. Rango:
 100 de energía ≈ 100 ticks ≈ 20 m a PW 1,0. Constantes: `kE` 1000, `kH` 2000, `kCool` 1000,
-`regenPerTick` 100 (brief 0,5 por tick; ADR-0005), `coolDissWeight` 0, `dissRef` 60, `biomeCool` 1000, `massThrustCoolPm`.
+`regenPerTick` 100 (brief 0,5 por tick; ADR-0005), `coolDissWeight` 0, `dissRef` 60, `massThrustCoolPm` 50.
 
 ### Umbral de sobrecalentamiento y gobernador
 
@@ -301,7 +302,7 @@ empuje `Bp` (cada `chainIndex`-ésima consecutiva ×(1 + bono)), coste 1200 por 
 luego `pulseCooldownTicks` (o el `pulse-cooldown` del tipo de segmento del disparo). El empuje de
 cada tick de ráfaga ×`airPm[segmento]` (ver "Términos de regla"). Dispara si
 `energía − 14 400 ≥ reserva de salto` y `calor + 24 000 ≤ heatCap`. Rango: un pulso cada 42 ticks como
-máximo; 4,05 m/s × 12 ticks = 3,24 m por pulso a PW 1,0 (3,73 m en llano del desierto). Constantes:
+máximo; 4,05 m/s × 12 ticks = 3,24 m por pulso a PW 1,0 (3,73 m en llano con la base de Kōryū). Constantes:
 `pulseTicks` 12, `pulseCooldownTicks` 30, `pulseBoostMult` 1350, `pulseCostMult` 1200.
 
 ### Salto
@@ -360,13 +361,13 @@ ganancia neta (empates: el nivel más alto). Para quien no es ground el tramo cu
 ticks fuera de los saltos (en el aire no hay empuje): el arranque del esfuerzo se corre hacia atrás
 lo que mida el salto y el acumulador no suma dentro de él. Desde `kickAt`, remate con lo que quede.
 Bastidores de pulsos (una sola definición, la de `docs/race-engine.md` §3.3):
-`Bon = fl(fl(Bp × pulseBiomePm[bioma], 1000) × (dive ? diveStoopPm : 1000), 1000)`,
+`Bon = fl(fl(Bp × pulseBasePm, 1000) × (dive ? diveStoopPm : 1000), 1000)`,
 `costOn = fl(kE × pulseCostMult, 1000)`, `unit = Bon × pulseTicks`,
 `sMax = fl(unit, pulseTicks + pulseCooldownTicks)` (cadencia máxima 12/42). Rango (dive con picada):
 1,8 m/s desde 801 m en el sprint; 2,6 m/s desde 1800 m en el ridge (hover: 1,3 m/s desde 841 m y
-1,5 m/s desde 1723 m); nivel máximo de pulsos en el desierto: shiden 38 758 vu (2,58 m/s), hayate
-26 426 vu (1,76 m/s) (`pwBoostWeight` 250, `pulseBiomePm` 1450). Constantes: `finalSprintReserveMeters` 60, `sprintLevelStepMms` 100,
-`maxReplans` 4, `pulseTicks`, `pulseCooldownTicks`, `pulseBiomePm`, `style.diveStoopPm`.
+1,5 m/s desde 1723 m); nivel máximo de pulsos: shiden 38 758 vu (2,58 m/s), hayate
+26 426 vu (1,76 m/s) (`pwBoostWeight` 250, `pulseBasePm` 1450). Constantes: `finalSprintReserveMeters` 60, `sprintLevelStepMms` 100,
+`maxReplans` 4, `pulseTicks`, `pulseCooldownTicks`, `pulseBasePm`, `style.diveStoopPm`.
 
 ### Controladores de estilo
 
@@ -377,8 +378,9 @@ media guardando el 60 %; ground gasta el 60 % del tanque de forma uniforme antes
 brilla cada uno; con energía lineal los controladores solos dan tiempos iguales): dive, picada
 (empuje ×1,4 en descensos y en la final); hover, rebufo (objetivo ×1,02 en la fase media dentro
 del pelotón medio); glide, salida (aceleración ×1,1 en la fase de salida); ground, ruta de
-obstáculos (desvío 1,10 sin aterrizaje ni energía de salto). Rango: S1 medias del desierto 25,6 /
-26,3 / 26,2 / 22,0 % (dive / hover / glide / ground), ground gana el ridge (38 %). Constantes:
+obstáculos (desvío 1,10 sin aterrizaje ni energía de salto). Rango: S1 media de las tres pistas 26,2 /
+26,3 / 25,8 / 21,8 % (dive / hover / glide / ground; 25,6 / 26,3 / 26,2 / 22,0 con el viento del
+cañón, antes de ADR-0007), ground gana el ridge (38 %). Constantes:
 `style.*` (incluidos `diveStoopPm` 1400, `hoverDraftPm` 1020, `glideStartAccelPm` 1100),
 `surplusHeatPm` 800, `regenOverflowHeatPm` 900, `freeBoostMaxTicks` 12.
 
@@ -388,21 +390,22 @@ Intención: que las casillas casa/débil de §7 salgan de la regla de cada fabri
 un término numérico que se compila con su `RuleSpec`. Son bonificaciones numéricas, en desviación
 de BRIEF §7 («no como bonificación numérica»; ADR-0003 D45).
 
-- Dentro del mecanismo de su regla, ligados a un bioma o a un tipo de segmento:
-  - Steinhaus: `coolTick × massThrustCoolPm[bioma]` (desierto 50, urbano 500, tundra y montaña
-    1250; ADR-0005). Ninguna stat lo iguala; en el desierto enfría 0,05 por tick: el ciclo de boost
+- Dentro del mecanismo de su regla, ligados a un tipo de segmento o a toda pista (ADR-0007):
+  - Steinhaus: `coolTick × massThrustCoolPm` (50 en toda pista: el valor del desierto, ADR-0005 y
+    ADR-0007). Ninguna stat lo iguala; enfría 0,05 por tick: el ciclo de boost
     gobernado en el tope de calor baja de 1/3 a 1/41 y el tanque no se vacía en ninguna pista
     (≈ 46 / 58 / 77 ticks de boost en sprint / ridge / cañón).
-  - Kōryū: empuje de ráfaga × `airPm = fl(pulseAirPm[segmento] × pulseBiomePm[bioma], 1000)`
-    (descenso 2500, agua 600; desierto 1450; ADR-0005). Una ráfaga empuja ×1,45 en el desierto y
-    ×3,625 en un descenso del desierto (agua del desierto ×0,87), con el crucero igual.
+  - Kōryū: empuje de ráfaga × `airPm = fl(pulseAirPm[segmento] × pulseBasePm, 1000)`
+    (descenso 2500, agua 600; base 1450 en toda pista, el valor del desierto; ADR-0005 y ADR-0007).
+    Una ráfaga empuja ×1,45 en llano y ×3,625 en un descenso (terreno líquido ×0,87), con el
+    crucero igual.
 - Fuera del mecanismo de su regla:
   - Lumière: pérdida de aterrizaje × `regenLandLossPm` (2000). ≈ 54 m por aterrizaje en vez de
     13,5 m a T 600; ninguna técnica lo iguala.
   - Boneyard: pérdida de aterrizaje y alargue del desvío × `repairableRuggedPm` (0; ADR-0005):
     aterriza sin perder velocidad y su ruta de suelo mide lo mismo que el salto (−18 m de desvío en
     el ridge); penalización de curvas × `repairableCurvesPm` (1500), la de A 300 en las curvas.
-  - Altair, global (todo segmento de toda pista, sin clave de segmento ni de bioma): drenaje ×
+  - Altair, global (todo segmento de toda pista, sin clave de segmento): drenaje ×
     `telemetryDrainPm` (950) y aceleración × `telemetryAccelPm` (800; ADR-0005). Equivale a ≈ +84
     de stamina y −240 de técnica a 600 / 600: `St' = (1000 + St) / 0,95 − 1000` y `T' = 0,8 T − 120`.
     Sus casillas salen del largo de la pista.
@@ -452,8 +455,8 @@ carreras; un empate en el primer puesto reparte la victoria. La cuota justa es 1
 veredicto por casilla casa o débil (fabricante, pista). La variante de PW igual usa el mismo campo
 y el mismo conteo. Métrica 3: S3 en 1 contra 1 pareado, las dos entradas de la misma Falconess
 (stats base 600, sus letras de aptitud, su habilidad única como única activa, sin piezas, genérico
-sin peculiaridades). Un veredicto por casilla (par, pista); «bioma casa» se lee como desierto en
-v1, porque no hay pistas urbanas ni de montaña (ADR-0003 D47). Métrica 5: los puntos de tasa de
+sin peculiaridades). Un veredicto por casilla (par, pista); toda pista cuenta como casa
+(ADR-0007 quitó los biomas; antes «bioma casa» se leía como desierto, ADR-0003 D47). Métrica 5: los puntos de tasa de
 victoria que gana una corredora `δ` más rápida que las otras siete en un campo igualado con tiempos normales de σ relativa; 3 puntos ≈ `δ`
 0,155 % con σ 0,99 % y 0,185 % con σ 1,18 % (las piezas del contenido inicial valían 5-87 puntos, `docs/race-engine.md`
 R18; ADR-0005 las deja en ≤ 2,3). Métrica 7, literal: cuota de temporadas con `gradeFor ≥ B` ≥ 60 % por Falconess con la

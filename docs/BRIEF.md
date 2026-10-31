@@ -15,7 +15,9 @@ Falconess es un simulador de crianza (raising sim) estilo Umamusume: el jugador 
 3. Simulación con builds únicas: 5 stats de Falconess, 4 stats de alas, 1 regla por fabricante, 3 presupuestos en carrera (resistencia física, energía, calor) más durabilidad.
 4. Gameplay de menús y carrera visible no interactiva: el jugador decide en paneles; la carrera es un log reproducido por Phaser.
 
-**Alcance del MVP (día 30):** 3 Falconess (Peregrina, Cernícala, Caracara), 1 bioma con 3 pistas, 4 bastidores gacha (uno por fabricante) + 2 Boneyard, 8 piezas, 15 habilidades, 40 eventos, 1 temporada completa jugable en navegador, publicada en itch.io con arte provisional.
+**Alcance del MVP (día 30):** 3 Falconess (Peregrina, Cernícala, Caracara), 3 pistas (sin biomas: mismo terreno y mismo clima, ADR-0007), 4 bastidores gacha (uno por fabricante) + 2 Boneyard, 8 piezas, 15 habilidades, 40 eventos, 1 temporada completa jugable en navegador, publicada en itch.io con arte provisional.
+
+**Pistas abstractas (ADR-0007, 2026-10-31):** una pista no conoce biomas ni clima. Solo sabe qué rasgos tiene: Salto (`jump`), Terreno líquido (`water`), Colina (`climb`), Bajada (`descent`), curvas (`curves`), llano (`flat`) y pasillo (`canyon`, hoy sin efecto propio). La piel visual puede cambiar por pista (una colina puede ser una montaña, un edificio o una duna); las reglas no lo leen. No hay viento. Los biomas se agregarán después solo si hacen falta.
 
 **Fuera de alcance en v0:** dinero real, multiplayer, audio final, localización (pero las claves de texto se externalizan desde el día 1), Claude en runtime, build de escritorio.
 
@@ -88,13 +90,13 @@ Once entidades, todas con `id` tipo slug (`kebab-case`), `version` y validación
 | Entidad              | Archivo de contenido              | Rol                                                                                                                       |
 | -------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `Falconess`          | `content/falconess/<id>.json`     | Personaje: stats base, crecimiento, aptitudes, estilo preferido, habilidades únicas, patrocinador, objetivos de temporada |
-| `Manufacturer`       | `content/manufacturers/<id>.json` | Regla mecánica (`rule`), paleta, cuadrilla, bioma casa y débil                                                            |
+| `Manufacturer`       | `content/manufacturers/<id>.json` | Regla mecánica (`rule`), paleta, cuadrilla, pistas casa y débil                                                           |
 | `Frame` (bastidor)   | `content/frames/<id>.json`        | Stats de alas, estilo, fabricante, pasivo, rareza, `signatureOf?`                                                         |
 | `Part` (pieza)       | `content/parts/<id>.json`         | Tipo (`turbine`, `battery`, `stabilizer`, `firmware`), fabricante, modificadores                                          |
 | `Quirk`              | `content/quirks.json`             | Peculiaridades sorteables de Boneyard                                                                                     |
 | `Skill`              | `content/skills/<id>.json`        | Condición de activación, efecto, duración, costo                                                                          |
 | `Event`              | `content/events/<id>.json`        | Evento de entrenamiento: condiciones, opciones, efectos, claves de texto                                                  |
-| `Course` + `Segment` | `content/courses/<id>.json`       | Bioma, longitud, lista de segmentos tipados                                                                               |
+| `Course` + `Segment` | `content/courses/<id>.json`       | Longitud, rasgos, lista de segmentos tipados                                                                              |
 | `Crew`               | dentro de `Manufacturer`          | Cuadrilla: bonificaciones de entrenamiento y eventos propios                                                              |
 | `SeasonState`        | runtime y save                    | Estado de una crianza en curso                                                                                            |
 | `BlackBox`           | save e intercambio                | Herencia: factores azules, rojos y verdes                                                                                 |
@@ -108,7 +110,6 @@ export const Slug = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 export const Stat = z.number().int().min(1).max(1200);
 export const Aptitude = z.enum(["S", "A", "B", "C", "D", "E", "F", "G"]);
 export const Style = z.enum(["dive", "hover", "glide", "ground"]); // Picada, Suspensión, Planeo, Rasante
-export const Biome = z.enum(["desert", "mountain", "coast", "urban", "tundra"]);
 export const SegmentType = z.enum([
   "flat",
   "climb",
@@ -136,7 +137,6 @@ export const Falconess = z.object({
     z.enum(["agility", "stamina", "technique", "courage", "intelligence"]),
     z.number().min(0).max(0.3),
   ),
-  biomeAptitude: z.record(Biome, Aptitude),
   styleAptitude: z.record(Style, Aptitude),
   uniqueSkills: z.array(Slug).max(2),
   sponsor: Slug, // manufacturer id
@@ -203,7 +203,6 @@ export const Build = z.object({
   rulesetVersion: z.string(),
   falconessId: Slug,
   finalStats: FalconessStats,
-  biomeAptitude: z.record(Biome, Aptitude),
   styleAptitude: z.record(Style, Aptitude),
   frameId: Slug,
   parts: z.array(Slug).max(4),
@@ -248,14 +247,14 @@ Cinco stats de Falconess (1–1200, como Umamusume), cuatro stats de alas que so
 | `glide` (Planeo)     | Toma la punta con crucero eficiente; boost mínimo; sufre si la alcanzan            | Salida y media        |
 | `ground` (Rasante)   | Evita `jump` por rutas de suelo más largas; constante; resiste daño                | Pistas con obstáculos |
 
-**Aptitudes:** multiplicadores por letra, iguales para bioma y estilo: S 1,10 · A 1,05 · B 1,00 · C 0,95 · D 0,90 · E 0,85 · F 0,80 · G 0,70. La aptitud de bioma multiplica `agility` efectiva; la de estilo multiplica `intelligence` efectiva (peor estilo = peores decisiones de boost). Es la misma lógica que la aptitud de distancia y de estilo en Umamusume, reconstruida por la comunidad.
+**Aptitudes:** multiplicadores por letra de estilo: S 1,10 · A 1,05 · B 1,00 · C 0,95 · D 0,90 · E 0,85 · F 0,80 · G 0,70. La aptitud de estilo multiplica `intelligence` efectiva (peor estilo = peores decisiones de boost). `agility` no lleva letra (ADR-0007 quitó la aptitud de bioma). Es la misma lógica que la aptitud de distancia y de estilo en Umamusume, reconstruida por la comunidad.
 
 **Ánimo:** cinco niveles que multiplican todas las stats efectivas: 1,10 / 1,05 / 1,00 / 0,98 / 0,95.
 
 **Stats efectivas en carrera (cálculo único al inicio, en enteros):**
 
 ```latex
-S_{eff} = \lfloor S_{base} \cdot m_{animo} \cdot a_{bioma\,o\,estilo} \rfloor
+S_{eff} = \lfloor S_{base} \cdot m_{animo} \cdot a_{estilo} \rfloor
 ```
 
 Las stats efectivas y las de alas se congelan en `RaceEntry` antes del primer tick; el motor nunca vuelve a leer el contenido durante la carrera.
@@ -280,7 +279,7 @@ accel = k_{acc} \cdot \left(0.5 + \frac{T_{eff}}{1200}\right) \cdot PW \cdot f_{
 hp_{drain/tick} = k_{hp} \cdot \left(\frac{v}{v_{base}}\right)^{2} \cdot \frac{1}{1 + k_s \cdot \frac{St_{eff}}{1200}}
 ```
 
-`f_seg` es un multiplicador por tipo de segmento (`flat` 1,00; `climb` 1 − 0,15·grade; `descent` 1 + 0,10·grade; `water` 1 − drag; `canyon` 1 ± wind; `curves` 1 − 0,20·(1 − A\_eff/1200)). El cuadrado se calcula como producto entero; no se usa `Math.pow`.
+`f_seg` es un multiplicador por tipo de segmento (`flat` 1,00; `climb` 1 − 0,15·grade; `descent` 1 + 0,10·grade; `water` 1 − drag; `canyon` 1,00 (sin viento, ADR-0007); `curves` 1 − 0,20·(1 − A\_eff/1200)). El cuadrado se calcula como producto entero; no se usa `Math.pow`.
 
 **Boost:** mientras está activo, `v += k_boost · PW`, `energy −= k_e` por tick y `heat += k_h` por tick. Sin boost, `heat −= k_cool` por tick. Si `heat > dissipation`: velocidad × 0,92 y `durability −= 1` por tick (regla Steinhaus: sin penalización de velocidad, pero `durability −= 2`).
 
@@ -323,13 +322,13 @@ for (tick = 0; !allFinished; tick++) {
 
 Cinco fabricantes, cada uno con una regla mecánica implementada como `ManufacturerRule` en `packages/sim/rules/`, no como bonificación numérica. Cuatro están en el gacha; Boneyard provee los bastidores iniciales, todas las piezas y las peculiaridades re-sorteables.
 
-| id          | Nombre             | Regla (`rule`)                                                                                            | Cuadrilla: stats que refuerza                                              | Bioma casa             | Bioma débil       | Patrocina           |
-| ----------- | ------------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------- | ----------------- | ------------------- |
-| `steinhaus` | Steinhaus Aerowerk | `mass-thrust`: sin penalización de velocidad por calor; calor excedente drena `durability` ×2             | `stamina`, `courage`; evento "mantenimiento" repara durabilidad            | `tundra`, `mountain`   | `urban`, `desert` | Gerifalte           |
-| `lumiere`   | Lumière Aéronef    | `regen`: `energy += 0,5` por tick sin boost; capacidad baja                                               | `technique`, `agility`; evento "calibración" sube aptitud de estilo        | `coast`, `urban`       | pistas con `jump` | Esmerejona          |
-| `koryu`     | Kōryū Racing       | `pulse`: boost en ráfagas (sección 6)                                                                     | `agility`, `intelligence`; evento "sesión de datos" con riesgo de ánimo    | `desert`, descensos    | `water`           | Peregrina           |
-| `altair`    | Altair Systems     | `telemetry`: `heat` nunca supera `dissipation`; activación de habilidades +15 %; `powerToWeight` tope 1,1 | `intelligence`; evento "contrato" (dinero por correr una carrera impuesta) | `urban`, pistas largas | sprints cortos    | Cernícala           |
-| `boneyard`  | Boneyard Works     | `repairable`: `durability += 2` por segmento `flat`; 2 ranuras de peculiaridad                            | `courage`, `technique`; evento "chapuza" de alta varianza                  | pistas con obstáculos  | velocidad pura    | Caracara, Aguilucha |
+| id          | Nombre             | Regla (`rule`)                                                                                            | Cuadrilla: stats que refuerza                                              | Pistas casa           | Pistas débiles    | Patrocina           |
+| ----------- | ------------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------- | ----------------- | ------------------- |
+| `steinhaus` | Steinhaus Aerowerk | `mass-thrust`: sin penalización de velocidad por calor; calor excedente drena `durability` ×2             | `stamina`, `courage`; evento "mantenimiento" repara durabilidad            | —                     | —                 | Gerifalte           |
+| `lumiere`   | Lumière Aéronef    | `regen`: `energy += 0,5` por tick sin boost; capacidad baja                                               | `technique`, `agility`; evento "calibración" sube aptitud de estilo        | —                     | pistas con `jump` | Esmerejona          |
+| `koryu`     | Kōryū Racing       | `pulse`: boost en ráfagas (sección 6)                                                                     | `agility`, `intelligence`; evento "sesión de datos" con riesgo de ánimo    | descensos             | `water`           | Peregrina           |
+| `altair`    | Altair Systems     | `telemetry`: `heat` nunca supera `dissipation`; activación de habilidades +15 %; `powerToWeight` tope 1,1 | `intelligence`; evento "contrato" (dinero por correr una carrera impuesta) | pistas largas         | sprints cortos    | Cernícala           |
+| `boneyard`  | Boneyard Works     | `repairable`: `durability += 2` por segmento `flat`; 2 ranuras de peculiaridad                            | `courage`, `technique`; evento "chapuza" de alta varianza                  | pistas con obstáculos | velocidad pura    | Caracara, Aguilucha |
 
 **Bastidores iniciales (`content/frames/`):** valores numéricos derivados de la escala MB/B/M/A/MA del diseño: `powerToWeight` 0,7 / 0,85 / 1,0 / 1,2 / 1,4; `energy` 60 / 80 / 100 / 120; `dissipation` 45 / 60 / 80; `durability` 60 / 80 / 100 / 140 / 180.
 
@@ -401,7 +400,7 @@ Fuentes de eventos: `crew`, `falconess` (historia personal, escritos a mano), `r
 | Factor            | Origen                                            | Rango      | Efecto al heredar                                |
 | ----------------- | ------------------------------------------------- | ---------- | ------------------------------------------------ |
 | `stat` (azul)     | La stat más alta; ★1–3 según umbral 600/800/1000  | 1 por caja | +stat base ×★×7 al inicio                        |
-| `aptitude` (rojo) | Mejor aptitud de bioma o estilo                   | 1 por caja | Sube una letra con probabilidad 30/55/80 % por ★ |
+| `aptitude` (rojo) | Mejor aptitud de estilo                           | 1 por caja | Sube una letra con probabilidad 30/55/80 % por ★ |
 | `skill` (verde)   | Hasta 3 habilidades aprendidas                    | 0–3        | Posibilidad de aprender con descuento            |
 | `frameAffinity`   | Fabricante del bastidor equipado en más victorias | 1          | +10 % aparición de su cuadrilla                  |
 
@@ -431,7 +430,7 @@ Los repetidos de Falconess suben un nivel de "rango" que solo desbloquea trajes 
 **Invariantes anti pay-to-win (tests en `packages/sim/tests/economy.test.ts`):**
 
 1. Ninguna `Part` ni `Quirk` aparece en `gacha.json`.
-2. Para cada Falconess con alas firma, la tasa de victoria del bastidor genérico de su estilo contra el firma, en su bioma casa y con stats iguales, está entre 0,85 y 0,90 del firma (simulador por lotes, 2000 carreras).
+2. Para cada Falconess con alas firma, la tasa de victoria del bastidor genérico de su estilo contra el firma, en cada pista y con stats iguales, está entre 0,85 y 0,90 del firma (simulador por lotes, 2000 carreras).
 3. Ningún objeto comprable modifica `FalconessStats`, `growth` ni `aptitudes`.
 4. El rango de repetidos no aparece en ninguna fórmula de `packages/sim`.
 5. Existe la liga `scrap-class`: todas las entradas se re-simulan con el bastidor `mule` o `kite` según estilo, sin piezas ni peculiaridades.
@@ -446,15 +445,15 @@ El multiplayer no se construye en v0, pero cinco decisiones tomadas hoy hacen qu
 
 **Esquema de Supabase (fase 2, `supabase/migrations/`):**
 
-| Tabla            | Columnas clave                                                                          | RLS                                                      |
-| ---------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `profiles`       | `id` (auth.uid), `handle`, `created_at`                                                 | Lectura pública de `handle`; escritura propia            |
-| `saves`          | `user_id`, `slot`, `ruleset_version`, `payload jsonb`, `updated_at`                     | Solo el dueño                                            |
-| `black_boxes`    | `id`, `owner_id`, `build jsonb`, `hash`, `signature`, `public bool`                     | Lectura si `public`; escritura solo vía Edge Function    |
-| `leagues`        | `id`, `season`, `class` (`open`/`scrap-class`), `biome`, `seed`, `starts_at`, `ends_at` | Lectura pública                                          |
-| `league_entries` | `league_id`, `user_id`, `build_hash`, `submitted_at`                                    | Inserción solo vía Edge Function; una por usuario y liga |
-| `race_results`   | `league_id`, `heat`, `log_url`, `placings jsonb`, `computed_at`                         | Lectura pública                                          |
-| `telemetry`      | `user_id`, `event`, `props jsonb`, `at`                                                 | Inserción propia; lectura ninguna                        |
+| Tabla            | Columnas clave                                                                 | RLS                                                      |
+| ---------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| `profiles`       | `id` (auth.uid), `handle`, `created_at`                                        | Lectura pública de `handle`; escritura propia            |
+| `saves`          | `user_id`, `slot`, `ruleset_version`, `payload jsonb`, `updated_at`            | Solo el dueño                                            |
+| `black_boxes`    | `id`, `owner_id`, `build jsonb`, `hash`, `signature`, `public bool`            | Lectura si `public`; escritura solo vía Edge Function    |
+| `leagues`        | `id`, `season`, `class` (`open`/`scrap-class`), `seed`, `starts_at`, `ends_at` | Lectura pública                                          |
+| `league_entries` | `league_id`, `user_id`, `build_hash`, `submitted_at`                           | Inserción solo vía Edge Function; una por usuario y liga |
+| `race_results`   | `league_id`, `heat`, `log_url`, `placings jsonb`, `computed_at`                | Lectura pública                                          |
+| `telemetry`      | `user_id`, `event`, `props jsonb`, `at`                                        | Inserción propia; lectura ninguna                        |
 
 **Edge Functions:** `sign-build` (reproduce la crianza y firma), `submit-entry` (valida firma, versión y cuota), `run-league` (programada: agrupa entradas en series de 8, simula con `league.seed`, guarda logs en Storage y resultados en `race_results`). Las tres importan `@falconess/sim` compilado como ESM; es la razón de que `packages/sim` no tenga dependencias de Node.
 
@@ -501,15 +500,15 @@ Seis capas de prueba, y las cuatro primeras corren en cada commit: unitarias, pr
 
 **Métricas del lote (`out/balance.json`, 10.000 carreras en menos de 60 s en una máquina de desarrollo):**
 
-| Métrica                                                              | Objetivo inicial                                       |
-| -------------------------------------------------------------------- | ------------------------------------------------------ |
-| Tasa de victoria por estilo, por bioma, con stats iguales            | Cada estilo entre 15 % y 35 % en cada bioma            |
-| Tasa de victoria por fabricante en su bioma casa frente a los otros  | Casa: 30–45 %; bioma débil: ≤ 15 %                     |
-| Genérico frente a firma (misma Falconess, mismo bioma)               | 0,85–0,90                                              |
-| Ablación "leave-one-out" por habilidad: ganancia media en metros     | Ninguna habilidad > 8 m ni < 0,5 m                     |
-| Ablación por pieza                                                   | Ninguna pieza > 3 % de tasa de victoria                |
-| Dispersión de tiempos con semillas distintas y misma build           | Desviación estándar entre 0,8 % y 2 % del tiempo medio |
-| Resultado de temporada con política fija "entrenar la stat más baja" | `grade` B en el 60 % de los casos                      |
+| Métrica                                                               | Objetivo inicial                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------ |
+| Tasa de victoria por estilo, con stats iguales (media de las pistas)  | Cada estilo entre 15 % y 35 %                          |
+| Tasa de victoria por fabricante en sus pistas casa frente a los otros | Casa: 30–45 %; pista débil: ≤ 15 %                     |
+| Genérico frente a firma (misma Falconess, misma pista)                | 0,85–0,90                                              |
+| Ablación "leave-one-out" por habilidad: ganancia media en metros      | Ninguna habilidad > 8 m ni < 0,5 m                     |
+| Ablación por pieza                                                    | Ninguna pieza > 3 % de tasa de victoria                |
+| Dispersión de tiempos con semillas distintas y misma build            | Desviación estándar entre 0,8 % y 2 % del tiempo medio |
+| Resultado de temporada con política fija "entrenar la stat más baja"  | `grade` B en el 60 % de los casos                      |
 
 Desde el ruleset v2 (ADR-0006 «Métrica 7»), la temporada de la última fila se juega con la política cuidadosa (sigue entrenando la stat más baja, pero descansa o sale antes de que suba el fallo y sale con ánimo bajo +1): sin descanso forzado, la que nunca sale ya no representa a un jugador; en v1 sigue la de la stat más baja. El reporte incluye un diff contra la línea base de `main`; una métrica fuera de rango bloquea el merge salvo que el PR adjunte un ADR que mueva el objetivo. Las políticas de entrenamiento de referencia (`tools/policies/`) son agentes deterministas simples que juegan temporadas completas sin interfaz; sirven para medir la economía y la curva de stats.
 
@@ -623,7 +622,7 @@ Cuatro semanas, una por capa, cada una con un criterio verificable por comando. 
 
 **Hito de decisión (día 30):** si al menos 6 de los 10 testers quieren jugar una segunda temporada sin que se les pida, se encarga la prueba de arte (Peregrina en tres estados y su bastidor firma) y se abre la página de Steam. Si no, se revisa el loop antes de gastar en arte.
 
-**Lo que no entra en los 30 días:** audio, localización (solo claves), Supabase, gacha con dinero real, build de escritorio, Falconess 4 a 6, biomas 2 a 5.
+**Lo que no entra en los 30 días:** audio, localización (solo claves), Supabase, gacha con dinero real, build de escritorio, Falconess 4 a 6. Biomas: fuera hasta nuevo aviso (ADR-0007).
 
 ## 15. Decisiones abiertas y glosario
 
