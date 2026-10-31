@@ -239,6 +239,7 @@ En negrita, la mejor de cada columna. Intervalos de ± 3 a 4,5 puntos por Falcon
 - Cuadrillas: hasta +50 % de puntos o +5 % de stats por opcional.
 - Meta de activas: 0-1 nunca corre, 5-6 con plan, 6-7 farmea, 2,5-4,5 guarda carreras.
 - Riesgo: el premio es un filo (±3 %); hace falta un test de robustez antes del ADR.
+- **Dueño (2026-10-31): aprobada la recomendación,** con el ×1,25 desde la semana 25.
 
 ## T4 · Taller
 
@@ -834,6 +835,16 @@ Falconess tiene una letra por estilo:
   carrera; la chance se ve antes de elegir.
 - Letra por posición (multiplica la Inteligencia); las alas ponen el cómo.
 - Costo: L tirando a XL (ruleset v3 + ADR, recalibrar 16 combinaciones), en 4 etapas.
+
+**Dueño sobre la propuesta (2026-10-31):**
+
+- La maqueta le encantó: despegar y bajar en picada es **el momento épico** que diferencia a
+  Falconess de Umamusume.
+- **Rechaza el ciclo de ventajas** (Acecho > Punta > Remate > Pelotón): es un esquema de
+  «elementos» (agua le gana a fuego) y molesta al entrenar, porque una posición gana por diseño
+  hagas lo que hagas. Como en Umamusume, la Falconess se entrena para enfrentar primero la pista,
+  sobrevivirla y ser mejor que las otras mejorando sus puntos débiles. Hay que rediseñar sin ciclo.
+- **El Pelotón se ve aburrido:** necesita algo divertido que hacer.
 
 ## T22 · La radio: los gritos del jugador
 
