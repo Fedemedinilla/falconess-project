@@ -322,10 +322,10 @@ const TAILWIND = {
   ],
 };
 const TAILWIND_TEXT = {
-  "test.tailwind": "Viento de cola en la pista.",
+  "test.tailwind": "Un día redondo en la pista.",
   "test.tailwind.opt": "Sale a aprovecharlo.",
   "test.tailwind.good": "Vuela como nunca.",
-  "test.tailwind.bad": "Una ráfaga la tumba.",
+  "test.tailwind.bad": "Un mal aterrizaje la tumba.",
 };
 
 /** A luck event at week 4 that only gives a stat: it is no cause of the vigor a training cost. */

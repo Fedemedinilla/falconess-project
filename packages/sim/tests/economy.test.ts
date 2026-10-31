@@ -39,7 +39,7 @@ import {
  * which premium never buys (§9: premium is "equivalente a plumas, nunca a chatarra").
  *
  * 1. No Part or Quirk appears in gacha.json: below, on the real content and against the validator.
- * 2. Generic vs signature 0.85-0.90 in the home biome at equal stats: metric 3 of the balance batch
+ * 2. Generic vs signature 0.85-0.90 in the home cells at equal stats: metric 3 of the balance batch
  *    (`pnpm sim:batch`, scenario S3, docs/race-engine.md 25.2, ADR-0005), not a unit test.
  * 3. No purchasable item modifies FalconessStats, growth or aptitudes: below, on the schemas, the
  *    content, the race entry and the season.

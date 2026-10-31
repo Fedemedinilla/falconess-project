@@ -15,10 +15,10 @@ import { mixedPolicy } from "./testing/mixed-policy.js";
  * events below are test fixtures, not content: stage C writes the real ones.
  */
 const TEXT: Record<string, string> = {
-  "test.tailwind": "Un viento de cola en el circuito de prueba.",
+  "test.tailwind": "Un día redondo en el circuito de prueba.",
   "test.tailwind.opt": "Peregrina lo aprovecha.",
   "test.tailwind.good": "Sale perfecto.",
-  "test.tailwind.bad": "Una ráfaga la tumba.",
+  "test.tailwind.bad": "Un mal aterrizaje la tumba.",
   "test.gust": "Ráfaga de suerte.",
   "test.gust.opt": "Agilidad +2.",
 };
