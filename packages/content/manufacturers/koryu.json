@@ -12,6 +12,7 @@
     "textKey": "crew.koryu"
   },
   "home": {
+    "everywhere": true,
     "segments": ["descent"]
   },
   "weak": {

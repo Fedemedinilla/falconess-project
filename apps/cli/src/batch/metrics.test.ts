@@ -131,13 +131,19 @@ describe("S2 manufacturer cells", () => {
     }));
     const out = computeMetrics(input(rows, ["S2"]));
     const m2 = metric(out, "m2-manufacturer");
-    // Ridge (no biomes, ADR-0007): boneyard home (obstacles), koryu home (descent), lumiere weak
-    // (jump); altair and steinhaus have no cell.
-    expect(m2.cells.map((c) => c.id)).toEqual(["boneyard/ridge", "koryu/ridge", "lumiere/ridge"]);
+    // Ridge (no biomes, ADR-0007): boneyard home (obstacles), koryu home (everywhere, descent),
+    // lumiere weak (jump), steinhaus weak (everywhere); altair has no cell.
+    expect(m2.cells.map((c) => c.id)).toEqual([
+      "boneyard/ridge",
+      "koryu/ridge",
+      "lumiere/ridge",
+      "steinhaus/ridge",
+    ]);
     expect(m2.cells[0]?.value).toBeCloseTo(1.5 / 4, 6);
     expect(m2.cells[1]?.value).toBeCloseTo(0, 6);
     expect(m2.cells[0]?.target).toEqual({ min: 0.3, max: 0.45 });
     expect(m2.cells[2]?.target).toEqual({ min: null, max: 0.15 });
+    expect(m2.cells[3]?.target).toEqual({ min: null, max: 0.15 });
     const table = out.diagnostics.find((d) => d.id === "s2-real");
     const fillers = table?.rows.find((r) => String(r[0]).startsWith("none"));
     expect(fillers?.[3]).toBe(25);

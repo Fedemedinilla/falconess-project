@@ -23,7 +23,13 @@ export const Crew = z.strictObject({
 });
 export type Crew = z.infer<typeof Crew>;
 
+/**
+ * Home or weak terrain of a manufacturer (§25.2 S2 cells). `everywhere` marks every course: it is
+ * what a biome-wide home or weakness collapsed to when ADR-0007 removed biomes (Kōryū home, Steinhaus
+ * weak, both from the desert every v1 course had).
+ */
 const Terrain = z.strictObject({
+  everywhere: z.boolean().default(false),
   segments: z.array(SegmentType).default([]),
   traits: z.array(CourseTrait).default([]),
 });

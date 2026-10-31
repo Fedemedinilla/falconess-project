@@ -11,7 +11,7 @@ describe("catalog from v1 content (§25.2)", () => {
     expect(catalog.courses.map((c) => c.id)).toEqual(["sprint", "ridge", "canyon"]);
   });
 
-  it("derives exactly the S2 cells from traits and segments (no biome, ADR-0007)", () => {
+  it("derives exactly the S2 cells from everywhere, traits and segments (no biome, ADR-0007)", () => {
     const cells = Object.fromEntries(catalog.s2Cells);
     expect(cells).toEqual({
       "altair/sprint": "weak",
@@ -20,15 +20,15 @@ describe("catalog from v1 content (§25.2)", () => {
       "boneyard/sprint": "weak",
       "boneyard/ridge": "home",
       "boneyard/canyon": "none",
-      "koryu/sprint": "none",
+      "koryu/sprint": "home",
       "koryu/ridge": "home",
-      "koryu/canyon": "weak",
+      "koryu/canyon": "neutral",
       "lumiere/sprint": "none",
       "lumiere/ridge": "weak",
       "lumiere/canyon": "none",
-      "steinhaus/sprint": "none",
-      "steinhaus/ridge": "none",
-      "steinhaus/canyon": "none",
+      "steinhaus/sprint": "weak",
+      "steinhaus/ridge": "weak",
+      "steinhaus/canyon": "weak",
     });
   });
 

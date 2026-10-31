@@ -52,11 +52,15 @@ function byId(a: { id: string }, b: { id: string }): number {
 }
 
 function matchesTerrain(terrain: Manufacturer["home"], course: Course): boolean {
+  if (terrain.everywhere) return true;
   if (terrain.traits.some((t) => course.traits.includes(t))) return true;
   return terrain.segments.some((s) => course.segments.some((seg) => seg.type === s));
 }
 
-/** §25.2 S2 "Cells": trait or segment type (no biome since ADR-0007); home and weak at once is neutral. */
+/**
+ * §25.2 S2 "Cells": `everywhere`, a trait or a segment type (no biome since ADR-0007; `everywhere` is
+ * what the desert home or weakness became); home and weak at once is neutral.
+ */
 export function manufacturerCell(m: Manufacturer, course: Course): CellKind {
   const home = matchesTerrain(m.home, course);
   const weak = matchesTerrain(m.weak, course);

@@ -11,6 +11,9 @@
     "signatureEvent": "steinhaus-maintenance-1",
     "textKey": "crew.steinhaus"
   },
+  "weak": {
+    "everywhere": true
+  },
   "sponsors": [],
   "inGacha": true,
   "version": 1,
