@@ -49,9 +49,7 @@ export function defaultForm(content: ContentIndex): FreeRaceForm {
   const falconessId = content.falconess.has("peregrina")
     ? "peregrina"
     : (ids(content.falconess)[0] ?? "");
-  const courseId = content.courses.has("desert-ridge")
-    ? "desert-ridge"
-    : (ids(content.courses)[0] ?? "");
+  const courseId = content.courses.has("ridge") ? "ridge" : (ids(content.courses)[0] ?? "");
   return {
     courseId,
     seed: "1",

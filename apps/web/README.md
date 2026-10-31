@@ -62,7 +62,7 @@ the status panel shows the current level's face), vigor (💪, the bar that drai
 shown, in any ruleset),
 skill points, scrap, feathers, injury, risk (🎲 before every «Fallo», 🩹 before «Lesión»), crew
 and bond, the four frame stats, passive, quirk, part, rule, skill, the race gauges, terrain,
-biomes, styles, the runners' flags and events, goal races, medals, the grade, and how a week's
+styles, the runners' flags and events, goal races, medals, the grade, and how a week's
 training went (✅, and ❌ shared with the DNF). They are presentation, like colors: `Icon` draws one
 `aria-hidden` before the label that names the concept (never instead of it), at a fixed width so
 a column of labels stays aligned, with a thin edge on the light theme (`--emoji-edge`) so pale

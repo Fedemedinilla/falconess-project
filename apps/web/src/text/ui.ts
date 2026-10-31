@@ -22,7 +22,7 @@ export function uiCount(key: string, n: number): string {
   return ui(`${key}.${plural.select(n) === "one" ? "one" : "other"}`, { n });
 }
 
-/** A game text by its content key (`falconess.peregrina`, `course.desert-ridge`...). */
+/** A game text by its content key (`falconess.peregrina`, `course.ridge`...). */
 export function gameText(textKey: string): string {
   return getContent().t(textKey);
 }

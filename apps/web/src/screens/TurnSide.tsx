@@ -7,7 +7,7 @@ import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Icon, WithIcon } from "../ui/Icon";
-import { actionIcon, biomeIcon, type IconName, placeIcon, styleIcon } from "../ui/icons";
+import { actionIcon, type IconName, placeIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -22,14 +22,12 @@ import {
 import { durabilityOf } from "./model/workshop";
 import { CourseStrip } from "./shared/CourseStrip";
 import { FrameCard } from "./shared/FrameCard";
-import { Letter } from "./shared/Letter";
 import s from "./TurnSide.module.css";
 
 // --- goal races ------------------------------------------------------------------------------------
 
 export type GoalsPanelProps = {
   ctx: SimContext;
-  state: SeasonState;
   next: NextGoal | undefined;
   goals: readonly GoalStatus[];
   onViewRace: (turn: number) => void;
@@ -37,7 +35,7 @@ export type GoalsPanelProps = {
 };
 
 /** The next goal race in detail, then every goal of the season with its result. */
-export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: GoalsPanelProps) {
+export function GoalsPanel({ ctx, next, goals, onViewRace, className }: GoalsPanelProps) {
   const course = next && ctx.content.getCourse(next.goal.courseId);
   // one line and the strip's legend: they follow the page's default
   const [detail] = useGlobalDetail();
@@ -58,11 +56,6 @@ export function GoalsPanel({ ctx, state, next, goals, onViewRace, className }: G
             </p>
             <h3 className={s.course}>{gameText(course.textKey)}</h3>
             <p className={s.facts}>
-              <span>
-                <Icon name={biomeIcon(course.biome)} />
-                {gameText(`biome.${course.biome}`)}{" "}
-                <Letter letter={state.biomeAptitude[course.biome] ?? "G"} />
-              </span>
               <span>{ui("ui.goals.field", { n: course.entries })}</span>
               <span className={s.need}>
                 <Icon name="finish" />

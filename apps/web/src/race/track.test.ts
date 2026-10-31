@@ -13,7 +13,6 @@ import {
 } from "./track";
 
 const ridge: RaceGeometry = {
-  biome: "desert",
   lengthMm: 2_000_000,
   startEndMm: 333_333,
   finalStartMm: 1_333_333,

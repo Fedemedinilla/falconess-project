@@ -121,7 +121,6 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
   const g = log.geometry;
   const meta = ui("ui.race.track.meta", {
     m: metres(g.lengthMm),
-    biome: labels.biomeName(log.courseId, g.biome),
   });
 
   if (!view.hasFrames)

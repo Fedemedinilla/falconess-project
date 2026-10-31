@@ -1,10 +1,10 @@
-import { BIOMES, type SeasonState, STYLES } from "@falconess/schema";
+import { type SeasonState, STYLES } from "@falconess/schema";
 import { learnCap, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
 import { formatFixed, formatInt, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
-import { biomeIcon, moodIcon, statIcon, styleIcon } from "../ui/icons";
+import { moodIcon, statIcon, styleIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
 import { StatBar } from "../ui/StatBar";
@@ -244,25 +244,13 @@ export type TurnProfileProps = {
   className?: string | undefined;
 };
 
-/** What changes slowly: aptitude letters by biome and style, and the skills learned. */
+/** What changes slowly: aptitude letters by style, and the skills learned. */
 export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
   const cap = learnCap(ctx, state);
   return (
     <Panel title={ui("ui.turn.profile")} className={className}>
       <div className={s.profile}>
         <div className={s.aptitudes}>
-          <p className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</p>
-          <ul className={s.letters}>
-            {BIOMES.map((b) => (
-              <li key={b}>
-                <span>
-                  <Icon name={biomeIcon(b)} />
-                  {gameText(`biome.${b}`)}
-                </span>
-                <Letter letter={state.biomeAptitude[b] ?? "G"} />
-              </li>
-            ))}
-          </ul>
           <p className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</p>
           <ul className={s.letters}>
             {STYLES.map((st) => (

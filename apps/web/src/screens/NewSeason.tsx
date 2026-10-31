@@ -1,5 +1,5 @@
 import type { ContentIndex, Falconess, RunInput } from "@falconess/schema";
-import { BIOMES, STYLES } from "@falconess/schema";
+import { STYLES } from "@falconess/schema";
 import { STAT_ORDER, startSeason } from "@falconess/sim";
 import { type FormEvent, useMemo, useState } from "react";
 import { ScreenExplainDefault } from "../app/ExplainDefault";
@@ -15,7 +15,7 @@ import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { ExplainSwitch } from "../ui/ExplainSwitch";
 import { Icon } from "../ui/Icon";
-import { biomeIcon, statIcon, styleIcon } from "../ui/icons";
+import { statIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -111,15 +111,6 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
 
       <Fold id={narrow ? `${id}-detalle` : undefined} label={ui("ui.new.runner.more")}>
         <span className={s.aptitudes}>
-          <span className={s.aptRow}>
-            <span className={s.aptLabel}>{ui("ui.turn.aptitude.biome")}</span>
-            {BIOMES.map((b) => (
-              <span key={b} className={s.apt}>
-                <Icon name={biomeIcon(b)} />
-                {gameText(`biome.${b}`)} <Letter letter={f.biomeAptitude[b] ?? "G"} />
-              </span>
-            ))}
-          </span>
           <span className={s.aptRow}>
             <span className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</span>
             {STYLES.map((st) => (

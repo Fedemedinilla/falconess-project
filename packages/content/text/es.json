@@ -827,7 +827,7 @@
   "ui.race.timeline.title": "Línea de tiempo",
   "ui.race.track.label": "{course}, {m} m: {n} corredoras, una por carril, avanzando de izquierda a derecha",
   "ui.race.track.lanes": "Carriles",
-  "ui.race.track.meta": "{m} m · {biome}",
+  "ui.race.track.meta": "{m} m",
   "ui.race.track.metres": "{m} m",
   "ui.race.track.reserve": "Remate",
   "ui.race.track.seed": "Semilla de la carrera: {seed}",

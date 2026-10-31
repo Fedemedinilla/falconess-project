@@ -33,7 +33,7 @@ function canyon(): RaceLog {
   const entries = runners.map(([runnerId, stats], laneIndex) =>
     neutralFixtureEntry({ runnerId, laneIndex, style: "hover", stats: { ...strong, ...stats } }),
   );
-  return simulateRace(ctx.ruleset, entries, ctx.content.getCourse("desert-canyon"), "advice-1", {
+  return simulateRace(ctx.ruleset, entries, ctx.content.getCourse("canyon"), "advice-1", {
     detail: "full",
   });
 }

@@ -49,7 +49,7 @@ describe("the free race form", () => {
     const cli = simulateRace(ctx.ruleset, entries, course, form.seed, { detail: "full" });
     expect(runFreeRace(ctx, form)).toEqual(cli);
     expect(cliArgs(form)).toBe(
-      "pnpm sim:race -- --seed fr-7 --course desert-ridge --falconess peregrina --parts koryu-firmware --skills stoop-strike --stats 420 --turn 20",
+      "pnpm sim:race -- --seed fr-7 --course ridge --falconess peregrina --parts koryu-firmware --skills stoop-strike --stats 420 --turn 20",
     );
   });
 
@@ -66,9 +66,7 @@ describe("the free race form", () => {
       "glide",
       "ground",
     ]);
-    expect(cliArgs(form)).toBe(
-      "pnpm sim:race -- --seed 1 --course desert-ridge --neutral --stats 500",
-    );
+    expect(cliArgs(form)).toBe("pnpm sim:race -- --seed 1 --course ridge --neutral --stats 500");
   });
 
   it("drops choices that do not fit the Falconess and clamps the numbers", () => {

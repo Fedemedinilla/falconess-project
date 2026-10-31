@@ -23,7 +23,7 @@ test("free race: run the default, change course and seed, run a neutral field", 
   // another course and seed, the player's field
   await page.click("#libre-cambiar");
   await expect(page.locator("#libre-form")).toBeVisible();
-  await page.selectOption("#libre-pista", "desert-canyon");
+  await page.selectOption("#libre-pista", "canyon");
   await page.fill("#libre-semilla", "pt-e2e-libre");
   await page.click("#libre-correr");
   await expect(page.locator("#libre-form")).toBeHidden();

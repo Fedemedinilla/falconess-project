@@ -104,10 +104,7 @@ export function SeasonEnd() {
   };
 
   const aptitude = box.factors.aptitude;
-  const aptitudeName =
-    aptitude.kind === "biome"
-      ? gameText(`biome.${aptitude.key}`)
-      : gameText(`style.${aptitude.key}`);
+  const aptitudeName = gameText(`style.${aptitude.key}`);
 
   return (
     <div className={s.end}>

@@ -191,7 +191,7 @@ export function describeSkillEffect(skill: ActiveSkill): string {
   return text;
 }
 
-/** An active skill in one line: "En Cañón: +0,5 m/s durante 3 s". */
+/** An active skill in one line: "En Pasillo: +0,5 m/s durante 3 s". */
 export function describeActiveSkill(skill: ActiveSkill): string {
   const when = describeTrigger(skill.trigger);
   const effect = describeSkillEffect(skill);

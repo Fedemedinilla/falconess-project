@@ -10,7 +10,7 @@ export type TrackSegment = {
   readonly type: SegmentType;
   readonly startMm: number;
   readonly endMm: number;
-  /** grade‰ (climb, descent), drag‰ (water), wind‰ (canyon), radius (curves), lift (jump). */
+  /** grade‰ (climb, descent), drag‰ (water), 0 (canyon), radius (curves), lift (jump). */
   readonly param: number;
   readonly from: number;
   readonly to: number;

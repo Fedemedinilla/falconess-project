@@ -12,15 +12,14 @@
  * 12.0, which Windows 10 draws since 2019. Nothing from 13.0 or later: Windows 10 shows those as empty
  * boxes (the feather 🪶 was one; Plumas use the peacock).
  */
-import type { Biome, SegmentType, StatName, Style, TrainingKind } from "@falconess/schema";
+import type { SegmentType, StatName, Style, TrainingKind } from "@falconess/schema";
 
 type ActionKey = TrainingKind | "workshop" | "rest" | "outing";
 type Family<P extends string, K extends string> = Record<`${P}.${K}`, string>;
-/** Every family is complete: a new stat, action, segment type, biome or style fails the build. */
+/** Every family is complete: a new stat, action, segment type or style fails the build. */
 type Families = Family<"stat", StatName> &
   Family<"action", ActionKey> &
   Family<"segment", SegmentType> &
-  Family<"biome", Biome> &
   Family<"style", Style> &
   Family<"mood", "-2" | "-1" | "0" | "1" | "2"> &
   Record<string, string>;
@@ -87,13 +86,8 @@ export const ICONS = {
   "segment.descent": "🎢",
   "segment.jump": "🦘",
   "segment.water": "💧",
-  "segment.canyon": "💨",
+  "segment.canyon": "🚪",
   "segment.curves": "🌀",
-  "biome.desert": "🏜️",
-  "biome.mountain": "🏔️",
-  "biome.coast": "🌊",
-  "biome.urban": "🏙️",
-  "biome.tundra": "❄️",
 
   // styles
   "style.dive": "🦅",
@@ -156,7 +150,6 @@ export const SHARED_ICONS: readonly (readonly IconName[])[] = [
 export const statIcon = (stat: StatName): IconName => `stat.${stat}`;
 export const actionIcon = (kind: ActionKey): IconName => `action.${kind}`;
 export const segmentIcon = (type: SegmentType): IconName => `segment.${type}`;
-export const biomeIcon = (biome: Biome): IconName => `biome.${biome}`;
 export const styleIcon = (style: Style): IconName => `style.${style}`;
 
 /** The face of a mood level, −2 … +2 (outside the range, the nearest end): the current mood only. */

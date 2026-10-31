@@ -151,7 +151,6 @@ export function Turn() {
           <div className={s.pair}>
             <GoalsPanel
               ctx={ctx}
-              state={state}
               next={next}
               goals={goals}
               onViewRace={viewRace}

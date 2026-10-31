@@ -49,7 +49,7 @@ describe("content in plain words", () => {
   });
 
   it("says when an active skill fires and what it does", () => {
-    expect(describeActiveSkill(active("canyon-sense"))).toBe("En Cañón: +0,5 m/s durante 3 s");
+    expect(describeActiveSkill(active("canyon-sense"))).toBe("En Pasillo: +0,5 m/s durante 3 s");
     expect(describeActiveSkill(active("stoop-strike"))).toBe(
       "En la fase final, en Bajada: +1,5 m/s durante 3 s",
     );
