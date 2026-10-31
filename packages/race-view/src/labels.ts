@@ -11,11 +11,6 @@ export type Livery = { readonly primary: string; readonly secondary: string };
  */
 export type RaceLabels = {
   courseName(courseId: string): string;
-  /**
-   * The biome's name: `loggedBiome` when the log carries one (`geometry.biome`), else the biome of
-   * the content course `courseId` ("?" for a course content does not know).
-   */
-  biomeName(courseId: string, loggedBiome?: string): string;
   /** Falconess name when the entry has one, else its runnerId (rivals, fixtures). */
   runnerName(entry: RaceEntry): string;
   frameName(frameId: string): string;
@@ -36,10 +31,6 @@ export function contentLabels(content: ContentIndex): RaceLabels {
   };
   return {
     courseName: (id) => named(content.courses, id),
-    biomeName: (id, loggedBiome) => {
-      const biome = loggedBiome ?? content.courses.get(id)?.biome;
-      return biome === undefined ? "?" : content.t(`biome.${biome}`);
-    },
     runnerName: (entry) =>
       entry.falconessId === null ? entry.runnerId : named(content.falconess, entry.falconessId),
     frameName: (id) => named(content.frames, id),

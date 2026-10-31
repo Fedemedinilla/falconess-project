@@ -105,7 +105,6 @@ export function playerEntryInput(content: ContentIndex, spec: PlayerFieldSpec): 
     falconessId: falconess.id,
     baseStats: spec.stats === null ? { ...falconess.baseStats } : uniformStats(spec.stats),
     mood: 0,
-    biomeAptitude: { ...falconess.biomeAptitude },
     styleAptitude: { ...falconess.styleAptitude },
     frameId,
     parts: [...spec.parts],

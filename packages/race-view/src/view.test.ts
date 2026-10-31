@@ -32,12 +32,12 @@ function race(courseId: string, seed: string, detail: "full" | "results" = "full
   return simulateRace(ctx.ruleset, entries, course, seed, { detail });
 }
 
-const ridge = race("desert-ridge", "rv-1");
-const canyon = race("desert-canyon", "rv-2");
+const ridge = race("ridge", "rv-1");
+const canyon = race("canyon", "rv-2");
 
 describe("buildField", () => {
   it("builds the player plus class-matched rivals, sorted by lane", () => {
-    const course = ctx.content.getCourse("desert-sprint");
+    const course = ctx.content.getCourse("sprint");
     const entries = buildField(engine, ctx, course, "f1", {
       kind: "player",
       falconessId: "caracara",
@@ -53,7 +53,7 @@ describe("buildField", () => {
   });
 
   it("builds eight neutral fixtures, two per style", () => {
-    const course = ctx.content.getCourse("desert-sprint");
+    const course = ctx.content.getCourse("sprint");
     const entries = buildField(engine, ctx, course, "f1", { kind: "neutral", stats: 450 });
     expect(entries.map((e) => e.style)).toEqual([
       "dive",
@@ -129,7 +129,7 @@ describe("runnerEventLines", () => {
   });
 
   it("is empty without events", () => {
-    expect(runnerEventLines(race("desert-sprint", "rv-3", "results"), 0)).toEqual([]);
+    expect(runnerEventLines(race("sprint", "rv-3", "results"), 0)).toEqual([]);
   });
 });
 
@@ -208,7 +208,7 @@ describe("whyModel", () => {
   });
 
   it("falls back to the ledger's skill lists without events", () => {
-    const log = race("desert-canyon", "rv-2", "results");
+    const log = race("canyon", "rv-2", "results");
     const rs = runnersInPlaceOrder(log);
     const first = rs[0];
     if (!first) throw new Error("no winner");

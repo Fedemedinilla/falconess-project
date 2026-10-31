@@ -72,21 +72,21 @@ const MIX: Spec[] = [
   { id: "broken", patch: { durabilityStart: 0 } },
   { id: "worn", patch: { durabilityStart: 45 } },
 ];
-const canyon = fixtureRace("desert-canyon", "advice-1", MIX);
-const canyonResults = fixtureRace("desert-canyon", "advice-1", MIX, "results");
+// seed "advice-4" since the canyon lost its wind (ADR-0007): "advice-1" let the worn runner win
+const canyon = fixtureRace("canyon", "advice-4", MIX);
+const canyonResults = fixtureRace("canyon", "advice-4", MIX, "results");
 /** The sprint has curves. */
-const sprint = fixtureRace("desert-sprint", "advice-1", [
+const sprint = fixtureRace("sprint", "advice-1", [
   { id: "strong" },
   { id: "agility", stats: { agility: 300 } },
 ]);
 /** The ridge has two jumps: a small tank with no technique cannot lift for either. */
-const ridge = fixtureRace("desert-ridge", "advice-1", [
+const ridge = fixtureRace("ridge", "advice-1", [
   { id: "strong", style: "dive" },
   { id: "tank", style: "dive", stats: { technique: 1 }, patch: { energy: 20 } },
   { id: "landing", style: "dive", stats: { technique: 300 } },
 ]);
 
-const B = { desert: "B", mountain: "B", coast: "B", urban: "B", tundra: "B" } as const;
 function frameInput(
   runnerId: string,
   frameId: string,
@@ -101,7 +101,6 @@ function frameInput(
     falconessId: null,
     baseStats: stats,
     mood: 0,
-    biomeAptitude: { ...B },
     styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "A" },
     frameId,
     parts,
@@ -110,10 +109,14 @@ function frameInput(
     durability,
   };
 }
-/** Real frames: a Steinhaus frame that overheats under its licence, a worn Shiden that breaks. */
+/**
+ * Real frames: a Steinhaus frame that overheats under its licence, a worn Shiden that breaks. Seed
+ * "pt8-canyon" since the canyon lost its wind (ADR-0007): on "pt1-canyon" the Steinhaus no longer
+ * overheats.
+ */
 const frames = (() => {
-  const course = ctx.content.getCourse("desert-canyon");
-  const entries = buildField(engine, ctx, course, "pt1-canyon", {
+  const course = ctx.content.getCourse("canyon");
+  const entries = buildField(engine, ctx, course, "pt8-canyon", {
     kind: "entries",
     inputs: [
       frameInput("horizon", "horizon", ["altair-battery"], uniformStats(600), [], null),
@@ -128,7 +131,7 @@ const frames = (() => {
       ),
     ],
   });
-  return simulateRace(ctx.ruleset, entries, course, "pt1-canyon", { detail: "full" });
+  return simulateRace(ctx.ruleset, entries, course, "pt8-canyon", { detail: "full" });
 })();
 
 function laneOf(log: RaceLog, runnerId: string): number {
