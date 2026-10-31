@@ -37,7 +37,7 @@ y reglas anti pay-to-win), los datos de `packages/content` (fabricantes, bastido
 | T18 | Ritmo y azar de la temporada             | Problema decidido            | Que el azar nunca tire una temporada: propuesta de redes a aprobar                           |
 | T19 | Arquetipos de habilidades                | Abierta (debuffs después)    | Buffer, debuffer y táctica: habilidades que escalan con la mente contra las piernas          |
 | T20 | Modo Némesis                             | Futuro                       | Modo aparte con rivales que recuerdan; pensado para el jugador, no para la tienda            |
-| T21 | Posición en carrera                      | B aprobada (diseño abierto)  | Elegir Punta/Pelotón/Acecho/Remate antes de largar, separado del estilo de las alas          |
+| T21 | Posición en carrera                      | Rebobinada (paso a paso)     | Elegir Punta/Pelotón/Acecho/Remate antes de largar, separado del estilo de las alas          |
 | T22 | La radio                                 | Idea aprobada                | Uno o dos gritos por carrera; la Falconess responde según su personalidad                    |
 | T23 | La veterana                              | Idea aprobada                | La Falconess anterior aparece y entrena a la actual; presencia leve, no evento al azar       |
 
@@ -872,6 +872,10 @@ https://claude.ai/artifact/LifhfwWfzL2Ajidojd2yHQ
 - Tarjeta de requisitos y panel «Microbatallas» después de la carrera: cada derrota apunta a una
   stat de ella, nunca a «elegiste mal contra esa rival».
 - Costo XL (L si se lanza después de E3, sin nervio), en 5 etapas.
+
+**Dueño (2026-10-31), después de la evaluación (`docs/design/evaluacion-t21-umamusume.md`):** se
+rebobina. Las carreras se rediseñan desde cero, partiendo del motor actual y agregando de a una
+cosa por vez, juntos y medida cada una. T21 v1 y v2 quedan como banco de ideas, no como plan.
 
 ## T22 · La radio: los gritos del jugador
 
