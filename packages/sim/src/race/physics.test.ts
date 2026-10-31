@@ -446,7 +446,7 @@ describe("2^53 bounds of docs/race-engine.md 1.5: the helpers at the maxima", ()
   const T_MAX = R.dnfTicksPerMeter * R.maxCourseMeters + R.dnfTicksBase; // 82 400 ticks
 
   // the fastest moved speed under v1: dive cruise at A, PW and f maxima + the chained pulse burst
-  // on a desert descent with the stoop + eight +3 m/s skills (1 949 680 vu ≈ 130 m/s; 1.5: < 2e6)
+  // on a descent with the stoop + eight +3 m/s skills (1 949 680 vu ≈ 130 m/s; 1.5: < 2e6)
   const vA = agilityCruiseVu(R, VBASE, R.maxEffectiveStat);
   const vC = cruiseVu(vA, weightedPower(R.pwCruiseWeight, PW), F, 1000, PACE);
   const Bpc = chainThrustVu(pulseThrustVu(R, KBOOST, weightedPower(R.pwBoostWeight, PW)), 1000);

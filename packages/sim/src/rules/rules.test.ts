@@ -56,20 +56,20 @@ describe("RULES: one RuleSpec per RaceRule (docs/race-engine.md 3.4, 13)", () =>
   });
 
   it("each rule changes only its own mechanism and term", () => {
-    const desert = (rule: RaceRule) => changed(compileRule(R, rule));
-    expect(desert("mass-thrust")).toEqual({
+    const terms = (rule: RaceRule) => changed(compileRule(R, rule));
+    expect(terms("mass-thrust")).toEqual({
       heatPenalty: false,
       licence: "always",
       overheatDurPm: 2000,
       coolPm: 500,
     });
-    expect(desert("regen")).toEqual({ regenMe: 500, landLossPm: 2000 });
-    expect(desert("pulse")).toEqual({
+    expect(terms("regen")).toEqual({ regenMe: 500, landLossPm: 2000 });
+    expect(terms("pulse")).toEqual({
       pulses: true,
       pulseAirPm: [1150, 1150, 1380, 1150, 690, 1150, 1150],
       pulseBasePm: 1150,
     });
-    expect(desert("telemetry")).toEqual({
+    expect(terms("telemetry")).toEqual({
       capLimRaw: true,
       clampHeatAtD: true,
       licence: "never",
@@ -77,13 +77,13 @@ describe("RULES: one RuleSpec per RaceRule (docs/race-engine.md 3.4, 13)", () =>
       drainPm: 900,
       accelPm: 850,
     });
-    expect(desert("repairable")).toEqual({
+    expect(terms("repairable")).toEqual({
       repairMd: 2000,
       landLossPm: 500,
       detourExtraPm: 500,
       curvesPm: 1500,
     });
-    expect(desert("none")).toEqual({});
+    expect(terms("none")).toEqual({});
   });
 
   it("terms read the ruleset (a test ruleset changes them)", () => {
@@ -107,7 +107,7 @@ describe("one case per rule term of 13.1, through the table helpers", () => {
     expect(t("regen").regenMe).toBe(500);
   });
 
-  it("Koryu: burst air ×1.15 in the desert, ×1.38 on descents, ×0.69 on water", () => {
+  it("Koryu: burst air ×1.15 on flat, ×1.38 on descents, ×0.69 on water", () => {
     const air = t("pulse").pulseAirPm;
     expect([air[0], air[2], air[4]]).toEqual([1150, 1380, 690]);
   });

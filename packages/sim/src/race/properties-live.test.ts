@@ -74,7 +74,7 @@ describe("2^53 bounds of docs/race-engine.md 1.5 on the live constants", () => {
   const [, DK_MAX] = drainCoefficients(R, 1, 0, { drainPm: DRAIN_PM });
   const rPm = floorDiv(V * 1000, VBASE);
   // the plan's thrust per boosted tick as the tables build it (3.3 `Bon`): a pulse frame takes
-  // the unchained burst × the biome term × the stoop, a continuous frame the boost × the stoop
+  // the unchained burst × the base term × the stoop, a continuous frame the boost × the stoop
   const Bp = pulseThrustVu(R, KBOOST, pwb);
   const bonPulse = floorDiv(floorDiv(Bp * BASE_PULSE, 1000) * R.style.diveStoopPm, 1000);
   const sPulse = floorDiv(bonPulse * R.pulseTicks, R.pulseTicks + R.pulseCooldownTicks);

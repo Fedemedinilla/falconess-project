@@ -300,7 +300,7 @@ describe("overheat, durability and broken wings (docs/race-engine.md 8)", () => 
     ]);
   });
 
-  it("Steinhaus: no speed penalty, ×2 durability, desert cooling 500", () => {
+  it("Steinhaus: no speed penalty, ×2 durability, cooling 500", () => {
     const mt = fixture("hover", 0, { rule: "mass-thrust" });
     const { log, rows } = trace(NO_BOOST, [mt], LONG_FLAT, "mt", 0, heatAt(400, 79_000));
     expect(rows.filter((r) => r.t > 400 && r.t <= 420).every((r) => r.vOut === r.vCore)).toBe(true);

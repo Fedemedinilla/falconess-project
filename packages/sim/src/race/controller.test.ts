@@ -665,7 +665,7 @@ describe("Kōryū through the controller (docs/race-engine.md 12, 13.1)", () => 
     const rows = pulses.map((e) =>
       e.kind === "pulse" ? [e.tick, e.chain, e.thrustMms, e.free, e.cooldown] : [],
     );
-    // SURPLUS fires three at max cadence in the start phase (desert air: 85 050 × 1.15 = 97 807 vu),
+    // SURPLUS fires three at max cadence in the start phase (base air: 85 050 × 1.15 = 97 807 vu),
     // the third with the chain thrust ×1.2; the plan's three carry dive's stoop ×1.4 in the final
     expect(rows).toEqual([
       [0, 1, 6520, false, 30],
@@ -801,7 +801,7 @@ describe("heat governor (docs/race-engine.md 8.2, 8.4, 24.1 heat row)", () => {
     expect(on).toBe(34 + Math.ceil((10_000 - 35) / 3));
   });
 
-  it("telemetry is governed at raw dissipation (60 000); Steinhaus's desert cooling makes the duty 1/5", () => {
+  it("telemetry is governed at raw dissipation (60 000); Steinhaus cooling makes the duty 1/5", () => {
     const tel = governed(fixture("dive", { rule: "telemetry" }), 10_000);
     expect(Math.max(...tel.heats)).toBe(60_000);
     // Steinhaus in KICK holds a licence: with durability to spare it boosts past the cap until

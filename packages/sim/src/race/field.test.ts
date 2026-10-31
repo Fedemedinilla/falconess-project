@@ -222,7 +222,7 @@ describe("generateField (21.1)", () => {
     expect(rivals(player("shiden"), "other")).not.toEqual(base);
   });
 
-  it("rivals: band frames, no parts or quirks, B biomes, A on their style, generic actives", () => {
+  it("rivals: band frames, no parts or quirks, A on their style, generic actives", () => {
     for (const turn of [0, 11, 12, 24, 36, 46, 48]) {
       for (let s = 0; s < 6; s++) {
         const p = player("peregrina-signature");
@@ -270,7 +270,7 @@ describe("generateField (21.1)", () => {
         if (e.kind !== "rival") continue;
         const w = R.field.rivalWeights[e.style];
         const want = STAT_ORDER.map((_, k) => Math.floor((5 * mu * (w[k] ?? 0)) / 1000));
-        // effective stats: mood 0, biome B (×1.0); intelligence × A (1.05) on the frame's own style
+        // effective stats: mood 0, agility as is; intelligence × A (1.05) on the frame's own style
         expect(e.stats).toEqual({
           agility: want[0],
           stamina: want[1],

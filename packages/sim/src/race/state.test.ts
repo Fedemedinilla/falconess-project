@@ -274,7 +274,7 @@ describe("per-race tables of docs/race-engine.md 3.3 (600-balanced, PW 1.0, nois
     expect([T.dK[0], T.dK[DK_FINAL]]).toEqual([562_500, 731_250]);
     expect([T.capLim[0], T.clampHeat[0], T.licensed[0]]).toEqual([60_000, 1, 0]);
     expect(Array.from(T.actBonus.slice(0, 3))).toEqual([150, 150, 150]);
-    // Steinhaus in the desert: cooling 500, damage 2000, licence, no speed penalty
+    // Steinhaus: cooling 500, damage 2000, licence, no speed penalty
     expect([T.coolTick[1], T.dmgTick[1], T.licensed[1], T.heatPenalty[1]]).toEqual([
       500, 2000, 1, 0,
     ]);
@@ -288,7 +288,7 @@ describe("per-race tables of docs/race-engine.md 3.3 (600-balanced, PW 1.0, nois
     expect([T.heatImmune[4], T.licensed[4], T.immuneUntil[4]]).toEqual([1, 1, 300 * 225_000]);
   });
 
-  it("Kōryū intake air (desert ×1.15, descent ×1.38, water ×0.69) and the pulse plan quantities", () => {
+  it("Kōryū intake air (base ×1.15, descent ×1.38, water ×0.69) and the pulse plan quantities", () => {
     const shiden = frozen("shiden", RIDGE);
     const hayate = frozen("hayate", RIDGE, 1);
     const stutter = frozen("shiden", RIDGE, 2, { quirks: [] });
