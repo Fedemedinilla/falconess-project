@@ -933,7 +933,11 @@ decide(i):                                          // step B7
 ### 9.7 What the qualitative styles mean mechanically
 
 Since ADR-0008 each item below splits in two: the physics stays with the wings, the spending
-moves to the style's default position (9.9). The text keeps the style names of BRIEF §5.
+moves to the style's default position (9.9). The quoted phrases are BRIEF §5's style text before
+ADR-0008; BRIEF now lists only the wings' physics, without the two phrases that are no style term
+of their own: "sufre si la alcanzan" is the lead drain lost when caught (the "crucero eficiente
+mientras lidera" BRIEF keeps), and the regen comes from the frame or the manufacturer's rule on
+any wings.
 
 - **Glide "sufre si la alcanzan":** (a) "crucero eficiente" (wings): while a glide holds the lead
   (`ahead == 0`, shared lead included) its hp drain uses `dK × R.glideLeadDrainPm` (980); caught,
@@ -2284,12 +2288,14 @@ interval of its sweep rates (ADR-0005 «Pasada 2»); for σ/mean, `σ × (1 ± 1
   caracara-signature vs mule (ground).
   - **Build: both entries are the same Falconess.** Each is built with `freezeEntry` (3.1) from
     `{ runnerId: "signature" | "generic", kind: "player", falconessId: <her id>, baseStats: 600 on
-    all five stats, mood: 0, styleAptitude: her content map (no biome letters, ADR-0007), frameId, parts: [],
-    quirks: [], learnedSkills: her uniqueSkills, durability: null }`. So the only active is her
+    all five stats, mood: 0, positionAptitude: her content map (no biome letters, ADR-0007;
+    letters per position, ADR-0008), frameId, parts: [], quirks: [], learnedSkills: her
+    uniqueSkills, durability: null }`. So the only active is her
     unique skill (stoop-strike, wind-hover, scavenger-stride), with no generic active. Effective
-    stats on every course, with the style letter of the shared frame style: Peregrina A 600
-    (no aptitude on agility since ADR-0007; it was 630 with her desert A) and I 630 (dive A);
-    Cernícala A 600 and I 630 (hover A); Caracara A 600 and I 630 (ground A); St, T and C 600 for all three. **The generic carries no
+    stats on every course, with her letter in the default position of the shared frame style
+    (ADR-0008; it was the style letter, the same letter): Peregrina A 600
+    (no aptitude on agility since ADR-0007; it was 630 with her desert A) and I 630 (Remate A);
+    Cernícala A 600 and I 630 (Acecho A); Caracara A 600 and I 630 (Pelotón A); St, T and C 600 for all three. **The generic carries no
     quirks** (caracara-signature has 0 quirk slots; mule's two slots stay empty, so a quirk such as
     loose-rivets, +0.1 PW and ≈ 7 % of time, never decides the metric). Reasons for this build:
     600 is the reference build of S1, S2, S4, S5 and S8 and is close to the T46 par

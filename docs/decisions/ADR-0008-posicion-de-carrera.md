@@ -57,7 +57,7 @@ nuevas, y sin recalibrar ninguna constante.
    | Rasante: todo daño de durabilidad × 0,5 (`groundDamagePm`)               | física   | alas             |
    | Reserva de saltos, `kickAt`, distancia con empuje del plan (vuelan o no) | física   | alas             |
    | `stylePace` (multiplicador de crucero, todo 1000)                        | física   | alas             |
-   | Planeo «gasta hasta el 60 % para retomar la punta»                       | conducta | posición Punta   |
+   | Planeo «gasta hasta quedarse con el 60 % para retomar la punta»          | conducta | posición Punta   |
    | Rasante «constante»                                                      | conducta | posición Pelotón |
    | Suspensión «se queda en el pelotón medio; ataca al 70 %»                 | conducta | posición Acecho  |
    | Picada «conserva energía y hp; gasta en descensos y en la final»         | conducta | posición Remate  |
@@ -167,7 +167,9 @@ nuevas, y sin recalibrar ninguna constante.
 ## Medición
 
 Medido sobre el motor de `e7e1a6c` (ruleset v2; las tres pistas; dos bases de semillas en cada
-medida; Wilson para porcentajes, intervalo pareado para diferencias en la misma carrera). Informe
+medida; Wilson para porcentajes, intervalo pareado para diferencias en la misma carrera). Los
+commits posteriores no tocan el motor ni los datos de carrera; en la revisión se repitió una celda
+(`fields.ts --base pos-a --runs 18000`, 4 procesos) y salió idéntica byte a byte. Informe
 completo, con los scripts y los datos crudos: `.work/pos1/measure/informe-medicion.md` (local).
 
 | Pregunta del dueño                                                                     | Resultado                                                                                                                                                                                                                                                                                             | Veredicto  |
@@ -180,7 +182,7 @@ completo, con los scripts y los datos crudos: `.work/pos1/measure/informe-medici
 Además:
 
 - **La letra decide la elección.** Con todas las letras en B, Caracara y Cernícala corren casi igual
-  en las cuatro posiciones (±2 puntos de victoria); Peregrina sigue necesitando Remate (−6 a −12
+  en las cuatro posiciones (±2-3 puntos de victoria); Peregrina sigue necesitando Remate (−6 a −12
   puntos en sprint con otra): el empuje en picada de la final rinde si guarda energía para ella.
 - **Matriz ala × posición** (stats y letras iguales): juntando las pistas, las 16 celdas quedan
   entre 10,4 y 14,9 % (media 12,5 %). Por pista pasan de 1,5 × la media las cuatro de Rasante en
@@ -195,6 +197,26 @@ Además:
 - Ninguna constante cambió. Lo que sugiere para el paso 2 (a decidir por el dueño): hoy la
   posición tiene poco peso propio y la de las alas siempre es la mejor, así que elegir solo puede
   costar.
+
+## Revisión (dos revisiones: código y diseño; las dos aprobaron)
+
+- **Textos que nombraban las alas o chocaban con las posiciones** (corregidos, la redacción es del
+  dueño): los modos de la carrera («Por qué») decían «caza en planeo», «rasante constante»,
+  «alcance en suspensión», «picada en bajada» aunque la corredora corriera en otra posición; ahora
+  dicen lo que hace la posición: «caza de la punta», «ritmo parejo», «alcance al grupo medio»,
+  «gasto en bajada». La marca de los últimos 60 m, su leyenda y el modo final decían «Remate»; ahora
+  «A fondo». El botón de vista «Pelotón» es «Grupo». Los textos cortos de las posiciones ya no
+  prometen de más (Punta deja de perseguir al 60 %, Pelotón sprinta en la final, Acecho ataca al
+  70 % del recorrido); la tarjeta marca la elegida con «Corre en esta». Los ids del log no cambian.
+- **CLI:** escribir el número de la posición de sus alas es no elegir, como en la web (la entrada
+  queda sin `position`); una respuesta inválida dice «1-4 o Enter». En una semana con lesión el
+  taller no cambia de alas, y la posición por defecto que muestran la CLI y la web lo respeta.
+- **`goalRaceState`** rechaza una posición en una semana sin carrera, igual que `advanceSeason`.
+- **`DEFAULT_POSITION`** está congelado (`Object.freeze`) como los rulesets.
+- **Propiedades:** P4, P5 y P6 sortean posiciones distintas de la de las alas (la mitad de las
+  corredoras), además de los tests dirigidos.
+- **Pendiente del dueño:** rechazar una posición en una semana sin carrera es una regla nueva de
+  validación (no cambia ninguna carrera); y la redacción de los textos de arriba.
 
 ## Consecuencias
 

@@ -110,6 +110,7 @@ export const Slug = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 export const Stat = z.number().int().min(1).max(1200);
 export const Aptitude = z.enum(["S", "A", "B", "C", "D", "E", "F", "G"]);
 export const Style = z.enum(["dive", "hover", "glide", "ground"]); // Picada, Suspensión, Planeo, Rasante
+export const Position = z.enum(["lead", "pack", "stalk", "closer"]); // Punta, Pelotón, Acecho, Remate (ADR-0008)
 export const SegmentType = z.enum([
   "flat",
   "climb",
@@ -137,7 +138,8 @@ export const Falconess = z.object({
     z.enum(["agility", "stamina", "technique", "courage", "intelligence"]),
     z.number().min(0).max(0.3),
   ),
-  styleAptitude: z.record(Style, Aptitude),
+  positionAptitude: z.record(Position, Aptitude), // ADR-0008: la letra es de la posición
+  preferredPosition: Position,
   uniqueSkills: z.array(Slug).max(2),
   sponsor: Slug, // manufacturer id
   seasonGoals: z.array(
@@ -203,7 +205,7 @@ export const Build = z.object({
   rulesetVersion: z.string(),
   falconessId: Slug,
   finalStats: FalconessStats,
-  styleAptitude: z.record(Style, Aptitude),
+  positionAptitude: z.record(Position, Aptitude),
   frameId: Slug,
   parts: z.array(Slug).max(4),
   quirks: z.array(Slug).max(2),
@@ -243,16 +245,16 @@ Cinco stats de Falconess (1–1200, como Umamusume), cuatro stats de alas que so
 | Estilo (alas)        | Física de las alas (sigue en cualquier posición)                                             | Posición por defecto |
 | -------------------- | -------------------------------------------------------------------------------------------- | -------------------- |
 | `dive` (Picada)      | Empuje × 1,4 en descensos y en el sprint final                                               | Remate               |
-| `hover` (Suspensión) | Rebufo en el pelotón medio (fase media); regenera si el bastidor lo permite                  | Acecho               |
-| `glide` (Planeo)     | Aceleración × 1,1 en la salida; crucero eficiente mientras lidera; sufre si la alcanzan      | Punta                |
+| `hover` (Suspensión) | Rebufo en el pelotón medio (fase media)                                                      | Acecho               |
+| `glide` (Planeo)     | Aceleración × 1,1 en la salida; crucero eficiente mientras lidera                            | Punta                |
 | `ground` (Rasante)   | Evita `jump` por rutas de suelo más largas, sin despegue ni aterrizaje; resiste daño (× 0,5) | Pelotón              |
 
-| Posición          | Cómo administra la energía (controlador)                                               | Fase donde brilla      |
-| ----------------- | -------------------------------------------------------------------------------------- | ---------------------- |
-| `lead` (Punta)    | Gasta en la salida y la fase media para tomar la punta y no soltarla (guarda el 60 %)  | Salida y media         |
-| `pack` (Pelotón)  | Ritmo parejo hasta el final: gasta el 60 % del tanque menos lo que piden los saltos    | Constante              |
-| `stalk` (Acecho)  | Se queda en el pelotón medio, recupera si queda atrás (guarda el 50 %) y ataca al 70 % | Media y ataque al 70 % |
-| `closer` (Remate) | Conserva energía y hp; gasta en los descensos y en el sprint final (guarda el 50 %)    | Final                  |
+| Posición          | Cómo administra la energía (controlador)                                                   | Fase donde brilla      |
+| ----------------- | ------------------------------------------------------------------------------------------ | ---------------------- |
+| `lead` (Punta)    | Gasta en la salida y la fase media para tomar la punta mientras le queda más del 60 %      | Salida y media         |
+| `pack` (Pelotón)  | Ritmo parejo (60 % del tanque menos los saltos) hasta la final; ahí sprinta como todas     | Constante              |
+| `stalk` (Acecho)  | En el pelotón medio, recupera si queda atrás (guarda el 50 %); ataca al 70 % del recorrido | Media y ataque al 70 % |
+| `closer` (Remate) | Conserva energía y hp; gasta en los descensos y en el sprint final (guarda el 50 %)        | Final                  |
 
 Las rivales corren en la posición de sus alas (ADR-0008, por ahora). El jugador la elige en la semana de carrera (si no elige, corre en la de sus alas).
 
