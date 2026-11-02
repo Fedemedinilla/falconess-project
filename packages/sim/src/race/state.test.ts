@@ -59,7 +59,7 @@ function frozen(frameId: string, course: Course, lane = 0, over: Partial<EntryIn
     falconessId: null,
     baseStats: S600,
     mood: 0,
-    styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+    positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
     frameId,
     parts: [],
     quirks: [],

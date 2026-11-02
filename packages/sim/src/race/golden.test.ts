@@ -143,7 +143,7 @@ describe("golden scenarios (docs/race-engine.md 24.3)", () => {
         falconessId: player.falconessId,
         baseStats: { agility: 300, stamina: 300, technique: 300, courage: 300, intelligence: 300 },
         mood: 0,
-        styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+        positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
         frameId: player.frameId,
         parts: [],
         quirks: [],

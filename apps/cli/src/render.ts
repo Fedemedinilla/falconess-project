@@ -1,11 +1,13 @@
 import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
-import type {
-  ContentIndex,
-  EventEffects,
-  Mood,
-  RunInput,
-  SeasonState,
-  TrainingKind,
+import {
+  type ContentIndex,
+  DEFAULT_POSITION,
+  type EventEffects,
+  type Mood,
+  POSITIONS,
+  type RunInput,
+  type SeasonState,
+  type TrainingKind,
 } from "@falconess/schema";
 import {
   facilityLevel,
@@ -107,6 +109,36 @@ export function frameLine(ctx: SimContext, s: SeasonState): string {
   return `alas: ${c.t(c.getFrame(s.equippedFrame).textKey)} [${c.t(c.getManufacturer(b.manufacturer).textKey)} · ${c.t(`style.${b.style}`)}]  P/W ${(b.powerToWeight / 1000).toFixed(2)}  E ${b.energy}  D ${b.dissipation}  dur ${dur}/${b.durabilityMax}${parts ? `  piezas: ${parts}` : ""}${quirks ? `  peculiaridades: ${quirks}` : ""}`;
 }
 
+/**
+ * The wings she races with this week: the last frame a workshop input equips, else the equipped
+ * one. Their style gives the default race position (ADR-0008).
+ */
+export function raceWings(s: SeasonState, input: RunInput): string {
+  if (input.kind !== "workshop") return s.equippedFrame;
+  let frameId = s.equippedFrame;
+  for (const op of input.ops) if (op.op === "equip-frame") frameId = op.frameId;
+  return frameId;
+}
+
+/**
+ * The race-week question of `pnpm play` (ADR-0008): the goal race, then the four positions with
+ * her letter and what each does; the default (Enter) is the position of the wings she races with.
+ * Empty when the week has no goal race.
+ */
+export function positionMenu(ctx: SimContext, s: SeasonState, frameId: string): string[] {
+  const c = ctx.content;
+  const goal = goalForTurn(ctx, s);
+  if (!goal) return [];
+  const wings = DEFAULT_POSITION[c.getFrame(frameId).style];
+  return [
+    `  🏁 Carrera objetivo: ${c.t(c.getCourse(goal.courseId).textKey)}. ¿En qué posición corre? (Enter: ${c.t(`position.${wings}`)}, la de sus alas)`,
+    ...POSITIONS.map(
+      (p, i) =>
+        `    ${i + 1}. ${c.t(`position.${p}`)} ${s.positionAptitude[p]}${p === wings ? " (alas)" : ""} · ${c.t(`position.${p}.brief`)}`,
+    ),
+  ];
+}
+
 /** A per-mille chance as a percent with at most one decimal ("1.6 %", "12 %"). */
 export function pmPercent(pm: number): string {
   return `${(pm / 10).toFixed(1).replace(/\.0$/, "")} %`;
@@ -203,7 +235,7 @@ export function turnSummary(ctx: SimContext, s: SeasonState, prev: SeasonState):
   const race = s.raceResults.at(-1);
   if (race && race.turn === prev.turn && s.raceResults.length > prev.raceResults.length) {
     lines.push(
-      `  🏁 ${c.t(c.getCourse(race.courseId).textKey)}: ${race.place}º de ${race.fieldSize}  (${(race.timeTicks / 15).toFixed(1)} s, motor ${race.engine})`,
+      `  🏁 ${c.t(c.getCourse(race.courseId).textKey)}: ${race.place}º de ${race.fieldSize} en ${c.t(`position.${race.position}`)}  (${(race.timeTicks / 15).toFixed(1)} s, motor ${race.engine})`,
     );
   }
   return lines;

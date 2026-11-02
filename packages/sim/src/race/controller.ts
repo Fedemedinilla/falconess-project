@@ -28,22 +28,24 @@ import {
   MODE_REGEN,
   MODE_SURPLUS,
   PH_FINAL,
+  POS_CLOSER,
+  POS_LEAD,
+  POS_PACK,
+  POS_STALK,
   RULE_MASS_THRUST,
   SEG_DESCENT,
   SEG_JUMP,
-  STYLE_DIVE,
-  STYLE_GLIDE,
   STYLE_GROUND,
-  STYLE_HOVER,
 } from "./units.js";
 
 /**
- * Rank and style controllers of docs/race-engine.md 9 (step B7): the rank snapshot (9.1), the
+ * Rank and position controllers of docs/race-engine.md 9 (step B7): the rank snapshot (9.1), the
  * reserves and keeps (9.2), the gates and the overheat licence (9.3), the modes and their
- * precedence with the style table and the style hold (9.4), the integer level accumulator (9.5)
- * and the continuous decision (9.6); pulse frames hand the decision to `pulseStep` (12). A pure
- * function of the runner's own state, its tables and the rank snapshot; never draws randomness and
- * never allocates.
+ * precedence with the position table and the position hold (9.4), the integer level accumulator
+ * (9.5) and the continuous decision (9.6); pulse frames hand the decision to `pulseStep` (12). The
+ * race position picks the row (ADR-0008); the wing style only enters through its physics (a flyer
+ * cannot thrust on a jump). A pure function of the runner's own state, its tables and the rank
+ * snapshot; never draws randomness and never allocates.
  */
 
 /** Finished runners rank ahead of every unfinished runner, by finish time (9.1). */
@@ -137,10 +139,12 @@ export function keepOk(
 }
 
 /**
- * Mode of 9.4, first match wins: KICK, PLAN, HOLD, PREHEAT, SURPLUS, REGEN, the style row, OFF.
+ * Mode of 9.4, first match wins: KICK, PLAN, HOLD, PREHEAT, SURPLUS, REGEN, the position row, OFF.
  * Writes the mode's level and its want into `ctl` (a level mode's want comes from the
- * accumulator, 9.5) and sets the style hold of hover and glide on continuous frames when their
- * intent fires. `seg`, `ph` and `b` are the runner's tick-start segment, phase and PW variant.
+ * accumulator, 9.5) and sets the position hold of stalk and lead on continuous frames when their
+ * intent fires. The rows keep the mode names of the wing styles they came from (ADR-0008): lead
+ * runs `GLIDE_CHASE`, pack `GROUND_CONSTANT`, stalk `HOVER_CATCHUP`, closer `DIVE_DESCENT`.
+ * `seg`, `ph` and `b` are the runner's tick-start segment, phase and PW variant.
  */
 export function selectMode(
   R: RaceConstants,
@@ -195,33 +199,33 @@ export function selectMode(
     }
   }
 
-  // 7. style row
-  const style = T.style[i] ?? 0;
-  if ((style === STYLE_HOVER || style === STYLE_GLIDE) && (S.holdLeft[i] ?? 0) > 0) {
-    ctl.want = true; // style hold: intent and keep ignored, gates still apply
-    return style === STYLE_HOVER ? MODE_HOVER_CATCHUP : MODE_GLIDE_CHASE;
+  // 7. position row (ADR-0008)
+  const position = T.position[i] ?? 0;
+  if ((position === POS_STALK || position === POS_LEAD) && (S.holdLeft[i] ?? 0) > 0) {
+    ctl.want = true; // position hold: intent and keep ignored, gates still apply
+    return position === POS_STALK ? MODE_HOVER_CATCHUP : MODE_GLIDE_CHASE;
   }
   let mode = MODE_OFF;
-  switch (style) {
-    case STYLE_DIVE:
+  switch (position) {
+    case POS_CLOSER:
       if (ph !== PH_FINAL && G.segType[seg] === SEG_DESCENT) {
         mode = MODE_DIVE_DESCENT;
         ctl.want = keepOk(R, T, S, i, R.style.diveKeep);
       }
       break;
-    case STYLE_HOVER:
+    case POS_STALK:
       if ((S.posFrac[i] ?? 0) > R.style.packHi) {
         mode = MODE_HOVER_CATCHUP;
         ctl.want = keepOk(R, T, S, i, R.style.hoverKeep);
       }
       break;
-    case STYLE_GLIDE:
+    case POS_LEAD:
       if (ph !== PH_FINAL && (S.ahead[i] ?? 0) > 0) {
         mode = MODE_GLIDE_CHASE;
         ctl.want = keepOk(R, T, S, i, R.style.glideKeep);
       }
       break;
-    case STYLE_GROUND:
+    case POS_PACK:
       if (
         ph !== PH_FINAL &&
         energy - jr >= floorDiv(Emax * (1000 - R.style.groundPreShare), 1000)

@@ -1,5 +1,11 @@
 import { loadContent } from "@falconess/content";
-import { type EntryInput, ManufacturerRule, RaceEntry, RaceSkill } from "@falconess/schema";
+import {
+  DEFAULT_POSITION,
+  type EntryInput,
+  ManufacturerRule,
+  RaceEntry,
+  RaceSkill,
+} from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { compileRule } from "../rules/index.js";
 import { freezeEntry, freezeSkill } from "./entry.js";
@@ -25,7 +31,7 @@ function inputFor(
     falconessId,
     baseStats: f.baseStats,
     mood: 0,
-    styleAptitude: f.styleAptitude,
+    positionAptitude: f.positionAptitude,
     frameId,
     parts: [],
     quirks: [],
@@ -192,9 +198,11 @@ describe("freezeEntry (docs/race-engine.md 3.1): every frame × Falconess × cou
             frame.stats.durability,
           ]);
 
-          // letter applied: frame style on intelligence (mood 0); agility has none (ADR-0007)
-          const sLetter = f.styleAptitude[frame.style];
-          expect(e.styleAptitude).toBe(sLetter);
+          // letter applied: the position of the frame's style on intelligence (mood 0, ADR-0008);
+          // agility has none (ADR-0007)
+          expect(e.position).toBe(DEFAULT_POSITION[frame.style]);
+          const sLetter = f.positionAptitude[e.position];
+          expect(e.positionAptitude).toBe(sLetter);
           const b = f.baseStats;
           expect(e.stats).toEqual({
             agility: b.agility,

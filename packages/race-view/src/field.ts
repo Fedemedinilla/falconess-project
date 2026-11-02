@@ -9,6 +9,7 @@ import {
   type Course,
   type EntryInput,
   type FalconessStats,
+  type Position,
   type RaceEntry,
   STYLES,
 } from "@falconess/schema";
@@ -36,6 +37,8 @@ export type PlayerFieldSpec = {
   stats: number | null;
   /** The rivals' level follows the turn: 95 + 9 × turn per stat (21.1). */
   turn: number;
+  /** Her race position (ADR-0008); null = the default of her frame's style. Rivals keep theirs. */
+  position: Position | null;
 };
 
 export type FieldSpec =
@@ -84,7 +87,7 @@ function known<T>(map: ReadonlyMap<string, T>, id: string, kind: string): T {
 
 /**
  * Spec 21.2 step 2 for a race outside the season: the player's EntryInput from content (base or
- * uniform stats, mood 0, her aptitudes, full durability, no quirks).
+ * uniform stats, mood 0, her position letters and the chosen position, full durability, no quirks).
  */
 export function playerEntryInput(content: ContentIndex, spec: PlayerFieldSpec): EntryInput {
   const falconess = known(content.falconess, spec.falconessId, "falconess");
@@ -105,7 +108,8 @@ export function playerEntryInput(content: ContentIndex, spec: PlayerFieldSpec): 
     falconessId: falconess.id,
     baseStats: spec.stats === null ? { ...falconess.baseStats } : uniformStats(spec.stats),
     mood: 0,
-    styleAptitude: { ...falconess.styleAptitude },
+    positionAptitude: { ...falconess.positionAptitude },
+    ...(spec.position === null ? {} : { position: spec.position }),
     frameId,
     parts: [...spec.parts],
     quirks: [],

@@ -32,10 +32,32 @@ export const Aptitude = z.enum(["S", "A", "B", "C", "D", "E", "F", "G"]);
 export type Aptitude = z.infer<typeof Aptitude>;
 export const APTITUDES = Aptitude.options;
 
-/** Race controller archetypes: Picada, Suspensión, Planeo, Rasante. */
+/**
+ * Wing styles: Picada, Suspensión, Planeo, Rasante. Since ADR-0008 the style sets only the wings'
+ * physics (stoop, slipstream, launch, ground route); how she spends energy is her `Position`.
+ */
 export const Style = z.enum(["dive", "hover", "glide", "ground"]);
 export type Style = z.infer<typeof Style>;
 export const STYLES = Style.options;
+
+/**
+ * Race position, chosen before each race (ADR-0008): how she manages her energy. Punta (lead),
+ * Pelotón (pack), Acecho (stalk), Remate (closer), front to back.
+ */
+export const Position = z.enum(["lead", "pack", "stalk", "closer"]);
+export type Position = z.infer<typeof Position>;
+export const POSITIONS = Position.options;
+
+/**
+ * The position each wing style raced before ADR-0008, and the default when none is chosen: a race
+ * in these positions is the race of ruleset v1 as it was.
+ */
+export const DEFAULT_POSITION: Readonly<Record<Style, Position>> = {
+  dive: "closer",
+  hover: "stalk",
+  glide: "lead",
+  ground: "pack",
+};
 
 export const SegmentType = z.enum([
   "flat",
@@ -79,9 +101,9 @@ export const FalconessStats = z.strictObject({
 });
 export type FalconessStats = z.infer<typeof FalconessStats>;
 
-/** Exhaustive letter per style. */
-export const StyleAptitudes = z.record(Style, Aptitude);
-export type StyleAptitudes = z.infer<typeof StyleAptitudes>;
+/** Exhaustive letter per race position (ADR-0008: the letter moved from the wing style). */
+export const PositionAptitudes = z.record(Position, Aptitude);
+export type PositionAptitudes = z.infer<typeof PositionAptitudes>;
 
 /** Wing stats as content authors write them (decimals). The engine converts to per-mille on freeze. */
 export const FrameStats = z.strictObject({

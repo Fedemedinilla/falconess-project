@@ -1,13 +1,17 @@
 import { FIELD_LIMITS } from "@falconess/race-view";
+import { POSITIONS, type Position } from "@falconess/schema";
 import { parseArgs } from "../args.js";
 
 export const RACE_USAGE = `pnpm sim:race -- --seed <s> --course <courseId> [field] [--detail full|results] [--json]
 
 field (one of):
   --falconess <id> [--frame <frameId>] [--parts a,b] [--skills x,y] [--stats <n>] [--turn <t>]
+      [--position lead|pack|stalk|closer]
       the player plus class-matched rivals on generic frames of her PW class (default: peregrina
       on her signature frame, base stats, turn 1; --stats gives every stat the same value; the
-      rivals' level follows --turn: 95 + 9 × turn per stat; generateField, docs/race-engine.md 21.1)
+      rivals' level follows --turn: 95 + 9 × turn per stat; generateField, docs/race-engine.md 21.1);
+      --position is her race position (Punta, Pelotón, Acecho, Remate; default: the one of her
+      wings' style, ADR-0008); the rivals run in the position of their wings
   --entries <file.json>
       a JSON array of 1..8 EntryInput objects (docs/race-engine.md 3.1), lane = array index
   --neutral [--stats <n>]
@@ -33,6 +37,8 @@ export type FieldRequest =
       /** Uniform value for every stat; null = the Falconess's base stats. */
       stats: number | null;
       turn: number;
+      /** Her race position; null = the default of her frame's style (ADR-0008). */
+      position: Position | null;
     }
   | { kind: "entries"; file: string }
   | { kind: "neutral"; stats: number };
@@ -55,11 +61,12 @@ const VALUE_KEYS = [
   "skills",
   "stats",
   "turn",
+  "position",
   "entries",
   "detail",
 ] as const;
 const FLAG_KEYS = ["json", "neutral", "help"] as const;
-const PLAYER_KEYS = ["falconess", "frame", "parts", "skills", "turn"] as const;
+const PLAYER_KEYS = ["falconess", "frame", "parts", "skills", "turn", "position"] as const;
 // `pnpm sim:race -- --seed 1` may pass the bare `--` through; parseArgs records it as key "".
 const KNOWN = new Set<string>(["", ...VALUE_KEYS, ...FLAG_KEYS]);
 
@@ -80,6 +87,14 @@ function list(raw: string | undefined): string[] {
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
+}
+
+/** `--position`: one of `POSITIONS` (ADR-0008). */
+function position(raw: string): Position {
+  const p = POSITIONS.find((x) => x === raw);
+  if (p === undefined)
+    throw new RaceArgsError(`--position must be one of ${POSITIONS.join(", ")}, got "${raw}"`);
+  return p;
 }
 
 /** Parses `pnpm sim:race` arguments; throws RaceArgsError with a message for the user. */
@@ -125,6 +140,7 @@ export function parseRaceArgs(argv: readonly string[]): RaceCliOptions {
     field = { kind: "neutral", stats: stats ?? FIELD_LIMITS.neutralStats };
   } else {
     const turnRaw = value("turn");
+    const positionRaw = value("position");
     field = {
       kind: "player",
       falconessId: value("falconess") ?? "peregrina",
@@ -133,6 +149,7 @@ export function parseRaceArgs(argv: readonly string[]): RaceCliOptions {
       skills: list(value("skills")),
       stats,
       turn: turnRaw === undefined ? 1 : intInRange(turnRaw, "turn", 0, MAX_TURN),
+      position: positionRaw === undefined ? null : position(positionRaw),
     };
   }
 

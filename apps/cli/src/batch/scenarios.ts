@@ -8,8 +8,9 @@ import {
   type ContentIndex,
   type Course,
   type FalconessStats,
+  POSITIONS,
+  type PositionAptitudes,
   STYLES,
-  type StyleAptitudes,
 } from "@falconess/schema";
 import type { Ruleset } from "@falconess/sim";
 import type { Catalog } from "./catalog.js";
@@ -76,7 +77,7 @@ function allB<K extends string>(keys: readonly K[]): Record<K, "B"> {
   return Object.fromEntries(keys.map((k) => [k, "B"])) as Record<K, "B">;
 }
 
-const ALL_B_STYLES: StyleAptitudes = allB(STYLES);
+const ALL_B_LETTERS: PositionAptitudes = allB(POSITIONS);
 
 function fixture(
   ctx: BuildContext,
@@ -148,7 +149,7 @@ function buildS2(
         falconessId: null,
         baseStats: { ...BASE_600 },
         mood: 0,
-        styleAptitude: { ...ALL_B_STYLES },
+        positionAptitude: { ...ALL_B_LETTERS },
         frameId,
         parts: [],
         quirks: [],
@@ -195,7 +196,7 @@ function buildS3(
     falconessId: f.id,
     baseStats: { ...BASE_600 },
     mood: 0,
-    styleAptitude: { ...f.styleAptitude },
+    positionAptitude: { ...f.positionAptitude },
     frameId,
     parts: [],
     quirks: [],

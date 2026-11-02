@@ -7,15 +7,15 @@ pista  [________//////////||||||||||||__________||||||||~~~~________]  1 car = 5
        fases: salida hasta 500 m · medio hasta 2000 m · final hasta 3000 m
 
 CLASIFICACIÓN
-   #  corredora    tiempo     margen  alas · fabricante · estilo
-   1  rival-3    106.01 s          —  Étoile · Lumière Aéronef · Picada
-  »2  Peregrina  109.66 s   +83.45 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
-   3  rival-5    118.90 s  +161.92 m  Shiden · Kōryū Racing · Picada
-   4  rival-1    127.57 s  +159.07 m  Falke · Steinhaus Aerowerk · Planeo
-   5  rival-2    136.44 s  +209.76 m  Horizon · Altair Systems · Planeo
-   6  rival-7    138.22 s   +32.39 m  Erzherzog · Steinhaus Aerowerk · Rasante
-   7  Cernícala  149.99 s  +244.02 m  Nimbus Vigil (firma de Cernícala) · Altair Systems · Suspensión
-   8  rival-4    188.11 s  +635.79 m  Mule · Boneyard Works · Rasante
+   #  corredora    tiempo     margen  posición   alas · fabricante · estilo
+   1  rival-3    106.01 s          —  Remate A   Étoile · Lumière Aéronef · Picada
+  »2  Peregrina  109.66 s   +83.45 m  Remate A   Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
+   3  rival-5    118.90 s  +161.92 m  Remate A   Shiden · Kōryū Racing · Picada
+   4  rival-1    127.57 s  +159.07 m  Punta A    Falke · Steinhaus Aerowerk · Planeo
+   5  rival-2    136.44 s  +209.76 m  Punta A    Horizon · Altair Systems · Planeo
+   6  rival-7    138.22 s   +32.39 m  Pelotón A  Erzherzog · Steinhaus Aerowerk · Rasante
+   7  Cernícala  149.99 s  +244.02 m  Acecho A   Nimbus Vigil (firma de Cernícala) · Altair Systems · Suspensión
+   8  rival-4    188.11 s  +635.79 m  Pelotón A  Mule · Boneyard Works · Rasante
 
 LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
               10%   20%   30%   40%   50%    60%    70%    80%    90%   100%
@@ -200,7 +200,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      cuerpo       hp final 431 · durabilidad -5.0 +4.0 → 11.0
      habilidades  ✓ Alas de hierro (p 831 > u 43)
      consejo      Agilidad · crucero más lento: agilidad 548 contra 640 · ≈2.31 s
-     consejo      Inteligencia · ritmo +9/-44/-24 ‰ contra -43/+37/0 ‰, peor en el medio; centro -2 contra 0 ‰ · ≈0.37 s"
+     consejo      Inteligencia · ritmo +9/-44/-24 ‰ contra -43/+37/0 ‰, peor en el medio; centro -2 contra 0 ‰ (letra A en Pelotón) · ≈0.37 s"
 `;
 
 exports[`renderRace snapshots > renders the results fixture 1`] = `
@@ -210,15 +210,15 @@ pista  [____________))))))))____________))))))__________]  1 car = 25 m
        fases: salida hasta 200 m · medio hasta 800 m · final hasta 1200 m
 
 CLASIFICACIÓN
-   #  corredora   tiempo    margen  alas · fabricante · estilo
-   1  rival-6    42.66 s         —  Étoile · Lumière Aéronef · Picada
-  »2  Peregrina  42.92 s   +8.67 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
-   3  rival-4    43.28 s  +10.34 m  Shiden · Kōryū Racing · Picada
-   4  rival-1    43.29 s   +0.46 m  Shiden · Kōryū Racing · Picada
-   5  rival-3    43.36 s   +1.62 m  Étoile · Lumière Aéronef · Picada
-   6  rival-7    44.11 s  +17.92 m  Étoile · Lumière Aéronef · Picada
-   7  rival-2    44.61 s  +12.28 m  Shiden · Kōryū Racing · Picada
-   8  rival-5    44.69 s   +1.86 m  Shiden · Kōryū Racing · Picada
+   #  corredora   tiempo    margen  posición  alas · fabricante · estilo
+   1  rival-6    42.66 s         —  Remate A  Étoile · Lumière Aéronef · Picada
+  »2  Peregrina  42.92 s   +8.67 m  Remate A  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
+   3  rival-4    43.28 s  +10.34 m  Remate A  Shiden · Kōryū Racing · Picada
+   4  rival-1    43.29 s   +0.46 m  Remate A  Shiden · Kōryū Racing · Picada
+   5  rival-3    43.36 s   +1.62 m  Remate A  Étoile · Lumière Aéronef · Picada
+   6  rival-7    44.11 s  +17.92 m  Remate A  Étoile · Lumière Aéronef · Picada
+   7  rival-2    44.61 s  +12.28 m  Remate A  Shiden · Kōryū Racing · Picada
+   8  rival-5    44.69 s   +1.86 m  Remate A  Shiden · Kōryū Racing · Picada
 
 LÍNEA DE TIEMPO
   (sin frames: detail "results")
@@ -323,13 +323,13 @@ pista  [______\\\\\\\\\\\\\\\\^^________\\\\\\\\\\\\^^________]  1 car = 50 m
        fases: salida hasta 333 m · medio hasta 1333 m · final hasta 2000 m
 
 CLASIFICACIÓN
-   #  corredora    tiempo     margen  alas · fabricante · estilo
-   1  rival-4     71.05 s          —  Shiden · Kōryū Racing · Picada
-   2  rival-5     77.21 s  +129.20 m  Sylphe · Lumière Aéronef · Suspensión
-   3  rival-3     86.58 s  +227.59 m  Erzherzog · Steinhaus Aerowerk · Rasante
-   4  rival-2    102.03 s  +318.00 m  Nimbus · Altair Systems · Suspensión
-   5  rival-1    118.40 s  +279.93 m  Kite · Boneyard Works · Planeo
-  »6  Caracara   121.00 s   +43.14 m  Mule Carancho (firma de Caracara) · Boneyard Works · Rasante
+   #  corredora    tiempo     margen  posición   alas · fabricante · estilo
+   1  rival-4     71.05 s          —  Remate A   Shiden · Kōryū Racing · Picada
+   2  rival-5     77.21 s  +129.20 m  Acecho A   Sylphe · Lumière Aéronef · Suspensión
+   3  rival-3     86.58 s  +227.59 m  Pelotón A  Erzherzog · Steinhaus Aerowerk · Rasante
+   4  rival-2    102.03 s  +318.00 m  Acecho A   Nimbus · Altair Systems · Suspensión
+   5  rival-1    118.40 s  +279.93 m  Punta A    Kite · Boneyard Works · Planeo
+  »6  Caracara   121.00 s   +43.14 m  Pelotón A  Mule Carancho (firma de Caracara) · Boneyard Works · Rasante
 
 LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
              10%   20%   30%   40%   50%   60%   70%   80%    90%   100%
@@ -436,7 +436,7 @@ POR QUÉ · fases con la diferencia contra la ganadora, ganancias y pérdidas de
      cuerpo       hp final 0 · durabilidad -0.0 +0.0 → 80.0
      habilidades  ✓ Salida limpia (p 857 > u 751)
      consejo      Agilidad · crucero más lento: agilidad 600 contra 651 · ≈0.44 s
-     consejo      Inteligencia · ritmo +8/-37/-14 ‰ contra -18/-7/-6 ‰, peor en el medio; centro +1 contra +3 ‰ · ≈0.13 s
+     consejo      Inteligencia · ritmo +8/-37/-14 ‰ contra -18/-7/-6 ‰, peor en el medio; centro +1 contra +3 ‰ (letra A en Acecho) · ≈0.13 s
   3º rival-3  86.58 s  (+15.53 s)
      fases        salida 16.13 s (+1.00) · medio 42.20 s (+10.20) · final 28.27 s (+4.33)
      ganancias    boost 17/44/39 ticks
@@ -501,15 +501,15 @@ pista  [____________))))))))____________))))))__________]  1 car = 25 m
        fases: salida hasta 200 m · medio hasta 800 m · final hasta 1200 m
 
 CLASIFICACIÓN
-   #  corredora   tiempo    margen  alas · fabricante · estilo
-   1  rival-6    42.66 s         —  Étoile · Lumière Aéronef · Picada
-  »2  Peregrina  42.92 s   +8.67 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
-   3  rival-4    43.28 s  +10.34 m  Shiden · Kōryū Racing · Picada
-   4  rival-1    43.29 s   +0.46 m  Shiden · Kōryū Racing · Picada
-   5  rival-3    43.36 s   +1.62 m  Étoile · Lumière Aéronef · Picada
-   6  rival-7    44.11 s  +17.92 m  Étoile · Lumière Aéronef · Picada
-   7  rival-2    44.61 s  +12.28 m  Shiden · Kōryū Racing · Picada
-   8  rival-5    44.69 s   +1.86 m  Shiden · Kōryū Racing · Picada
+   #  corredora   tiempo    margen  posición  alas · fabricante · estilo
+   1  rival-6    42.66 s         —  Remate A  Étoile · Lumière Aéronef · Picada
+  »2  Peregrina  42.92 s   +8.67 m  Remate A  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada
+   3  rival-4    43.28 s  +10.34 m  Remate A  Shiden · Kōryū Racing · Picada
+   4  rival-1    43.29 s   +0.46 m  Remate A  Shiden · Kōryū Racing · Picada
+   5  rival-3    43.36 s   +1.62 m  Remate A  Étoile · Lumière Aéronef · Picada
+   6  rival-7    44.11 s  +17.92 m  Remate A  Étoile · Lumière Aéronef · Picada
+   7  rival-2    44.61 s  +12.28 m  Remate A  Shiden · Kōryū Racing · Picada
+   8  rival-5    44.69 s   +1.86 m  Remate A  Shiden · Kōryū Racing · Picada
 
 LÍNEA DE TIEMPO · segundos al cruzar cada 10 % de la pista (100 % = meta)
              10%   20%   30%   40%   50%   60%   70%   80%   90%  100%

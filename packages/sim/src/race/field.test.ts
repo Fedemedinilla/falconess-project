@@ -1,6 +1,7 @@
 import { loadContent } from "@falconess/content";
 import { Rng } from "@falconess/rng";
 import {
+  DEFAULT_POSITION,
   type EntryInput,
   type FalconessStats,
   RaceEntry,
@@ -33,7 +34,7 @@ function player(frameId: string, over: Partial<EntryInput> = {}): EntryInput {
     falconessId: f.id,
     baseStats: { agility: 400, stamina: 400, technique: 400, courage: 400, intelligence: 400 },
     mood: 1,
-    styleAptitude: f.styleAptitude,
+    positionAptitude: f.positionAptitude,
     frameId,
     parts: [],
     quirks: [],
@@ -109,11 +110,11 @@ function fieldByHand(
           falconessId: null,
           baseStats,
           mood: 0,
-          styleAptitude: {
-            dive: frame.style === "dive" ? "A" : "B",
-            hover: frame.style === "hover" ? "A" : "B",
-            glide: frame.style === "glide" ? "A" : "B",
-            ground: frame.style === "ground" ? "A" : "B",
+          positionAptitude: {
+            lead: frame.style === "glide" ? "A" : "B",
+            pack: frame.style === "ground" ? "A" : "B",
+            stalk: frame.style === "hover" ? "A" : "B",
+            closer: frame.style === "dive" ? "A" : "B",
           },
           frameId: frame.id,
           parts: [],
@@ -238,7 +239,8 @@ describe("generateField (21.1)", () => {
           expect(e.parts).toEqual([]);
           expect(e.quirks).toEqual([]);
           expect(e.mood).toBe(0);
-          expect(e.styleAptitude).toBe("A");
+          expect(e.positionAptitude).toBe("A");
+          expect(e.position).toBe(DEFAULT_POSITION[e.style]);
           expect(e.falconessId).toBeNull();
           expect(e.durabilityStart).toBe(e.durabilityMax);
           expect(e.skills).toHaveLength(Math.min(3, Math.floor(turn / 12)));
@@ -334,7 +336,7 @@ describe("goalRaceSetup (21.2)", () => {
       falconessId: "caracara",
       baseStats: state.stats,
       mood: -1,
-      styleAptitude: state.styleAptitude,
+      positionAptitude: state.positionAptitude,
       frameId: "mule",
       parts: ["steinhaus-turbine"],
       quirks: state.frameQuirks.mule ?? [],

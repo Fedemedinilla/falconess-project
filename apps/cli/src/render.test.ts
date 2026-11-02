@@ -16,6 +16,8 @@ import {
   headerLine,
   moodLabel,
   pmPercent,
+  positionMenu,
+  raceWings,
   trainingMenu,
   turnSummary,
   vigorBar,
@@ -179,5 +181,45 @@ describe("v2 in the text season", () => {
     expect(pmPercent(16)).toBe("1.6 %");
     expect(pmPercent(120)).toBe("12 %");
     expect(pmPercent(1000)).toBe("100 %");
+  });
+});
+
+describe("the race position in the text season (ADR-0008)", () => {
+  /** Peregrina at her first goal race (turn 12), resting through every week. */
+  function atGoal(ctx: SimContext) {
+    let s = startSeason(ctx, "pos", START);
+    while (s.turn < 12)
+      s = advanceSeason(
+        ctx,
+        s,
+        s.pendingEvent ? { kind: "event:choose", option: 0 } : { kind: "rest" },
+      );
+    return s;
+  }
+
+  it("asks for the position on a race week with her letters, the default being her wings'", () => {
+    const s = atGoal(V2);
+    expect(positionMenu(V2, s, s.equippedFrame)).toEqual([
+      "  🏁 Carrera objetivo: Sprint. ¿En qué posición corre? (Enter: Remate, la de sus alas)",
+      `    1. Punta B · ${content.t("position.lead.brief")}`,
+      `    2. Pelotón E · ${content.t("position.pack.brief")}`,
+      `    3. Acecho C · ${content.t("position.stalk.brief")}`,
+      `    4. Remate A (alas) · ${content.t("position.closer.brief")}`,
+    ]);
+    // wings equipped in the same week's workshop give the default
+    const workshop: RunInput = {
+      kind: "workshop",
+      ops: [{ op: "equip-frame", frameId: "mule" }],
+    };
+    expect(raceWings(s, workshop)).toBe("mule");
+    expect(raceWings(s, { kind: "rest" })).toBe(s.equippedFrame);
+    expect(positionMenu(V2, s, "mule")[0]).toContain("(Enter: Pelotón, la de sus alas)");
+    expect(positionMenu(V2, startSeason(V2, "pos", START), "shiden")).toEqual([]);
+  });
+
+  it("names the position she raced in on the week's race line", () => {
+    const s = atGoal(V2);
+    const after = advanceSeason(V2, s, { kind: "rest", position: "stalk" });
+    expect(turnSummary(V2, after, s).find((l) => l.includes("🏁"))).toMatch(/ en Acecho {2}\(/);
   });
 });

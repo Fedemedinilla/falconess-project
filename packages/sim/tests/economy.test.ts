@@ -6,6 +6,7 @@ import {
   BlackBox,
   Build,
   buildContentIndex,
+  DEFAULT_POSITION,
   Economy,
   EntryInput,
   Falconess,
@@ -127,7 +128,7 @@ describe("BRIEF §9 invariant 1: no Part or Quirk in gacha.json", () => {
 });
 
 describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, growth or aptitudes", () => {
-  const FALCONESS_FIELDS = ["baseStats", "growth", "styleAptitude"];
+  const FALCONESS_FIELDS = ["baseStats", "growth", "positionAptitude"];
 
   it("a frame carries no Falconess stat, growth or aptitude field; growth lives only in the Falconess content", () => {
     // `Frame.stats` is the wing's own FrameStats (PW, energy, dissipation, durability)
@@ -159,7 +160,7 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
     expect(() => Economy.shape.premiumEnabled.parse(true)).toThrow();
   });
 
-  it("in a race any frame, pooled or not, with any quirk it can roll only picks the style letter: the stats are the Falconess's", () => {
+  it("in a race any frame, pooled or not, with any quirk it can roll only picks the default position and its letter: the stats are the Falconess's", () => {
     // every frame, not only the pooled ones: quirks roll only on Boneyard frames (two slots), and
     // the pool's one Boneyard frame (caracara-signature) has none
     const quirkIds = [...content.quirks.keys()].sort();
@@ -181,7 +182,7 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
                 falconessId: fid,
                 baseStats: f.baseStats,
                 mood,
-                styleAptitude: f.styleAptitude,
+                positionAptitude: f.positionAptitude,
                 frameId,
                 parts: [],
                 quirks,
@@ -193,13 +194,14 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
                 RULESET_V1,
                 f.baseStats,
                 mood,
-                f.styleAptitude,
-                frame.style,
+                f.positionAptitude,
+                DEFAULT_POSITION[frame.style],
               );
               expect(entry.stats, `${fid} ${frameId} ${quirks.join("+")} ${course.id}`).toEqual(
                 own,
               );
-              expect(entry.styleAptitude).toBe(f.styleAptitude[frame.style]);
+              expect(entry.position).toBe(DEFAULT_POSITION[frame.style]);
+              expect(entry.positionAptitude).toBe(f.positionAptitude[entry.position]);
             }
         }
     }
@@ -249,7 +251,7 @@ describe("BRIEF §9 invariant 3: no purchasable item modifies FalconessStats, gr
                         )[lowestStat(s.stats)],
                       };
               s = advanceSeason(ctx, s, input);
-              seen.push([s.turn, s.stats, s.styleAptitude]);
+              seen.push([s.turn, s.stats, s.positionAptitude]);
             }
             return seen;
           });

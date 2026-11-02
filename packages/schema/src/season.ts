@@ -4,10 +4,11 @@ import {
   FalconessStats,
   Grade,
   Mood,
+  Position,
+  PositionAptitudes,
   RulesetVersion,
   Slug,
   StatName,
-  StyleAptitudes,
 } from "./core.js";
 
 /** Workshop operations, batched into one `workshop` input. */
@@ -22,6 +23,12 @@ export const WorkshopOp = z.discriminatedUnion("op", [
 export type WorkshopOp = z.infer<typeof WorkshopOp>;
 
 /**
+ * The race position of a goal race week (ADR-0008), on the week's action input: absent, she runs in
+ * the position of the wings she races with. Only a week with a goal race accepts it.
+ */
+const RaceWeek = { position: Position.optional() };
+
+/**
  * Every player decision. A run is `seed + RunInput[]`; state is never saved, only replayed.
  * Kinds follow BRIEF §8 literally; `start` and `event:choose` are the two structural inputs.
  */
@@ -32,14 +39,18 @@ export const RunInput = z.discriminatedUnion("kind", [
     hangar: z.array(Slug).min(1).max(4),
     parents: z.array(BlackBox).max(2).default([]),
   }),
-  z.strictObject({ kind: z.literal("train:agility") }),
-  z.strictObject({ kind: z.literal("train:stamina") }),
-  z.strictObject({ kind: z.literal("train:technique") }),
-  z.strictObject({ kind: z.literal("train:risk-flight") }),
-  z.strictObject({ kind: z.literal("train:simulator") }),
-  z.strictObject({ kind: z.literal("workshop"), ops: z.array(WorkshopOp).min(1).max(8) }),
-  z.strictObject({ kind: z.literal("rest") }),
-  z.strictObject({ kind: z.literal("outing"), manufacturer: Slug.optional() }),
+  z.strictObject({ kind: z.literal("train:agility"), ...RaceWeek }),
+  z.strictObject({ kind: z.literal("train:stamina"), ...RaceWeek }),
+  z.strictObject({ kind: z.literal("train:technique"), ...RaceWeek }),
+  z.strictObject({ kind: z.literal("train:risk-flight"), ...RaceWeek }),
+  z.strictObject({ kind: z.literal("train:simulator"), ...RaceWeek }),
+  z.strictObject({
+    kind: z.literal("workshop"),
+    ops: z.array(WorkshopOp).min(1).max(8),
+    ...RaceWeek,
+  }),
+  z.strictObject({ kind: z.literal("rest"), ...RaceWeek }),
+  z.strictObject({ kind: z.literal("outing"), manufacturer: Slug.optional(), ...RaceWeek }),
   z.strictObject({ kind: z.literal("event:choose"), option: z.number().int().min(0).max(2) }),
 ]);
 export type RunInput = z.infer<typeof RunInput>;
@@ -65,6 +76,8 @@ export const RaceResultEntry = z.strictObject({
   /** Finish time in ticks (1/15 s). */
   timeTicks: z.number().int().min(0),
   frameId: Slug,
+  /** The position she raced in (ADR-0008): the one the week chose, or her wings' default. */
+  position: Position,
   /** `stub` while the race engine is not wired in (phase 1); `v1` once it is. */
   engine: z.enum(["stub", "v1"]),
 });
@@ -117,7 +130,7 @@ export const SeasonState = z.strictObject({
   turn: z.number().int().min(0).max(48),
   falconessId: Slug,
   stats: FalconessStats,
-  styleAptitude: StyleAptitudes,
+  positionAptitude: PositionAptitudes,
   mood: Mood,
   fatigue: z.number().int().min(0).max(100),
   injuryTurns: z.number().int().min(0),

@@ -66,7 +66,7 @@ export function adviceEvidence(item: AdviceItem, labels: RaceLabels, fixed: Fixe
     }
     case "pace": {
       const ev = item.evidence;
-      return `ritmo ${ev.pace.map(pm).join("/")} ‰ contra ${ev.winnerPace.map(pm).join("/")} ‰, peor en ${PHASE_NAMES[ev.phase] ?? ""}; centro ${pm(ev.centrePm)} contra ${pm(ev.winnerCentrePm)} ‰${cost}`;
+      return `ritmo ${ev.pace.map(pm).join("/")} ‰ contra ${ev.winnerPace.map(pm).join("/")} ‰, peor en ${PHASE_NAMES[ev.phase] ?? ""}; centro ${pm(ev.centrePm)} contra ${pm(ev.winnerCentrePm)} ‰ (letra ${ev.letter} en ${labels.positionName(ev.position)})${cost}`;
     }
     case "plan": {
       const ev = item.evidence;

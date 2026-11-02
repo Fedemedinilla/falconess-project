@@ -1,4 +1,4 @@
-import { courseLength, PART_TYPES, STYLES } from "@falconess/schema";
+import { courseLength, DEFAULT_POSITION, PART_TYPES, STYLES } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { loadContent } from "./node.js";
 
@@ -37,12 +37,12 @@ describe("MVP content", () => {
       ).toBe(true);
   });
 
-  it("each Falconess has a signature frame of her preferred style with identical stats to a generic", () => {
+  it("each Falconess has a signature frame whose default is her preferred position, with identical stats to a generic", () => {
     for (const f of idx.falconess.values()) {
       const sig = [...idx.frames.values()].find((fr) => fr.signatureOf === f.id);
       expect(sig, f.id).toBeDefined();
       if (!sig) continue;
-      expect(sig.style).toBe(f.preferredStyle);
+      expect(DEFAULT_POSITION[sig.style]).toBe(f.preferredPosition);
       expect(sig.manufacturer).toBe(f.sponsor);
       const generic = [...idx.frames.values()].find(
         (fr) =>
@@ -55,13 +55,13 @@ describe("MVP content", () => {
     }
   });
 
-  it("each Falconess has exactly one unique active skill and an A in its own style", () => {
+  it("each Falconess has exactly one unique active skill and an A in her preferred position", () => {
     for (const f of idx.falconess.values()) {
       expect(f.uniqueSkills.length).toBe(1);
       const sk = idx.getSkill(f.uniqueSkills[0] ?? "");
       expect(sk.kind).toBe("active");
       expect(sk.uniqueTo).toBe(f.id);
-      expect(f.styleAptitude[f.preferredStyle]).toBe("A");
+      expect(f.positionAptitude[f.preferredPosition]).toBe("A");
     }
   });
 

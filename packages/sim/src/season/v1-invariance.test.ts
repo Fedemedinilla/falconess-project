@@ -18,6 +18,9 @@ import { mixedPolicy } from "./testing/mixed-policy.js";
  * wind), so they were re-recorded on that change, the same way (`v1-invariance-adr0007.json`). The state without its log must
  * match after every input, draw for draw; the log may only gain what ADR-0006 adds to it (the
  * mood and vigor notes, `moodDelta`, `fatigueDelta` and `event`), which is stripped before hashing.
+ * ADR-0008 renamed two things and the digests were not re-recorded for it: the state is hashed in
+ * the shape they were taken in (`legacyState`), so these races in the default positions are proven
+ * to be the races of the wing styles, draw for draw.
  */
 type Fixture = {
   run1: { perInput: string[]; finalLog: string; final: { grade: string; places: number[] } };
@@ -44,9 +47,21 @@ const ctx: SimContext = { ruleset: RULESET_V1, content: loadContent() };
 const hash = (v: unknown): string =>
   createHash("sha256").update(canonicalJson(v)).digest("hex").slice(0, 16);
 
+/**
+ * The state as the digests' engine wrote it (ADR-0008 undone): the letters back on the wing style
+ * whose default each position is, and each race result without the position she ran.
+ */
+function legacyState(s: SeasonState): unknown {
+  const { log: _log, positionAptitude: p, raceResults, ...rest } = s;
+  return {
+    ...rest,
+    styleAptitude: { dive: p.closer, hover: p.stalk, glide: p.lead, ground: p.pack },
+    raceResults: raceResults.map(({ position: _p, ...r }) => r),
+  };
+}
+
 function rulesDigest(s: SeasonState): string {
-  const { log: _log, ...rest } = s;
-  return hash(rest);
+  return hash(legacyState(s));
 }
 
 /** The log as 5f0fd65 wrote it: ADR-0006's additions removed (the digests of ADR-0007 hash it the same way). */

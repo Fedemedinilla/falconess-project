@@ -11,7 +11,7 @@
       "intelligence": 540
     },
     "mood": 0,
-    "styleAptitude": { "dive": "D", "hover": "C", "glide": "B", "ground": "A" },
+    "positionAptitude": { "lead": "B", "pack": "A", "stalk": "C", "closer": "D" },
     "frameId": "caracara-signature",
     "parts": ["boneyard-battery"],
     "quirks": ["cheap-fuel"],
@@ -30,7 +30,7 @@
       "intelligence": 600
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
+    "positionAptitude": { "lead": "A", "pack": "B", "stalk": "B", "closer": "B" },
     "frameId": "kite",
     "parts": [],
     "quirks": ["glider-tape"],
@@ -49,7 +49,7 @@
       "intelligence": 640
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "A", "glide": "B", "ground": "B" },
+    "positionAptitude": { "lead": "B", "pack": "B", "stalk": "A", "closer": "B" },
     "frameId": "nimbus",
     "parts": [],
     "quirks": [],
@@ -68,7 +68,7 @@
       "intelligence": 560
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
+    "positionAptitude": { "lead": "B", "pack": "A", "stalk": "B", "closer": "B" },
     "frameId": "erzherzog",
     "parts": [],
     "quirks": [],
@@ -87,7 +87,7 @@
       "intelligence": 600
     },
     "mood": 1,
-    "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
+    "positionAptitude": { "lead": "B", "pack": "B", "stalk": "B", "closer": "A" },
     "frameId": "shiden",
     "parts": ["koryu-firmware"],
     "quirks": [],
@@ -106,7 +106,7 @@
       "intelligence": 600
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "A", "glide": "B", "ground": "B" },
+    "positionAptitude": { "lead": "B", "pack": "B", "stalk": "A", "closer": "B" },
     "frameId": "sylphe",
     "parts": ["lumiere-turbine"],
     "quirks": [],

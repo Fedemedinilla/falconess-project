@@ -9,6 +9,7 @@ import {
   goalForTurn,
   goalRaceSetup,
   goalRaceState,
+  inputPosition,
   type SimContext,
   simulateRace,
 } from "@falconess/sim";
@@ -24,7 +25,7 @@ export function goalRaceLog(
   const at = goalRaceState(ctx, before, input);
   const goal = at && goalForTurn(ctx, at);
   if (!at || !goal) return undefined;
-  const { course, raceSeed, entries } = goalRaceSetup(ctx, at, goal);
+  const { course, raceSeed, entries } = goalRaceSetup(ctx, at, goal, inputPosition(input));
   return simulateRace(ctx.ruleset, entries, course, raceSeed, { detail: "full" });
 }
 

@@ -1,3 +1,4 @@
+import { POSITIONS } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../content/load";
 import { describeActiveSkill, describeModifier, describeSource } from "../screens/model/describe";
@@ -131,6 +132,8 @@ describe("brief texts", () => {
       ...[...content.quirks.values()].map((x) => x.textKey),
       ...[...content.parts.values()].map((x) => x.textKey),
       ...[...content.manufacturers.values()].map((m) => `rule.${m.rule}`),
+      // the race positions (ADR-0008): `pnpm play` and `pnpm sim:race` show them before the race
+      ...POSITIONS.map((p) => `position.${p}`),
     ]);
     const orphans = [...content.text.keys()]
       .filter((k) => k.endsWith(".brief"))

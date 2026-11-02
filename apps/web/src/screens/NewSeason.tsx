@@ -1,5 +1,5 @@
 import type { ContentIndex, Falconess, RunInput } from "@falconess/schema";
-import { STYLES } from "@falconess/schema";
+import { POSITIONS } from "@falconess/schema";
 import { STAT_ORDER, startSeason } from "@falconess/sim";
 import { type FormEvent, useMemo, useState } from "react";
 import { ScreenExplainDefault } from "../app/ExplainDefault";
@@ -15,7 +15,7 @@ import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { ExplainSwitch } from "../ui/ExplainSwitch";
 import { Icon } from "../ui/Icon";
-import { statIcon, styleIcon } from "../ui/icons";
+import { statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
@@ -112,16 +112,15 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
       <Fold id={narrow ? `${id}-detalle` : undefined} label={ui("ui.new.runner.more")}>
         <span className={s.aptitudes}>
           <span className={s.aptRow}>
-            <span className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</span>
-            {STYLES.map((st) => (
-              <span key={st} className={cx(s.apt, st === f.preferredStyle && s.preferred)}>
-                <Icon name={styleIcon(st)} />
-                {gameText(`style.${st}`)} <Letter letter={f.styleAptitude[st] ?? "G"} />
+            <span className={s.aptLabel}>{ui("ui.turn.aptitude.position")}</span>
+            {POSITIONS.map((p) => (
+              <span key={p} className={cx(s.apt, p === f.preferredPosition && s.preferred)}>
+                {gameText(`position.${p}`)} <Letter letter={f.positionAptitude[p] ?? "G"} />
               </span>
             ))}
           </span>
           <span className={s.prefers}>
-            {ui("ui.new.preferred", { style: gameText(`style.${f.preferredStyle}`) })}
+            {ui("ui.new.preferred", { position: gameText(`position.${f.preferredPosition}`) })}
           </span>
         </span>
 

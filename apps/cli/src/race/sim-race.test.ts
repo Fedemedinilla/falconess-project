@@ -57,7 +57,7 @@ describe("pnpm sim:race through the port", () => {
       falconessId: "peregrina",
       baseStats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
       mood: 0,
-      styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
+      positionAptitude: { lead: "B", pack: "E", stalk: "C", closer: "A" },
       frameId: "peregrina-signature",
       parts: [],
       quirks: [],
@@ -135,6 +135,7 @@ describe("pnpm sim:race on the real engine", () => {
       skills: [],
       stats: 500,
       turn: 30,
+      position: null,
     });
     expect(log.entries).toEqual(
       generateField(RULESET_V1, ctx.content, { course, turn: 30, raceSeed: "7", player }),

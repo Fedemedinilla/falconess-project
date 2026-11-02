@@ -3,12 +3,13 @@ import {
   Aptitude,
   FalconessStats,
   Mood,
+  Position,
+  PositionAptitudes,
   RacePhase,
   RulesetVersion,
   SegmentType,
   Slug,
   Style,
-  StyleAptitudes,
   Version,
 } from "./core.js";
 import { ManufacturerRule } from "./manufacturer.js";
@@ -48,7 +49,9 @@ export const EntryInput = z.strictObject({
   falconessId: Slug.nullable(),
   baseStats: FalconessStats,
   mood: Mood,
-  styleAptitude: StyleAptitudes,
+  positionAptitude: PositionAptitudes,
+  /** The race position (ADR-0008); absent = the default of her frame's style (`DEFAULT_POSITION`). */
+  position: Position.optional(),
   frameId: Slug,
   parts: z.array(Slug).max(4),
   quirks: z.array(Slug).max(2),
@@ -147,14 +150,17 @@ export const RaceEntry = z
     frameId: Slug,
     manufacturer: Slug,
     rule: RaceRule,
+    /** The wings' style: their physics (9.8). */
     style: Style,
+    /** The race position: how she spends energy (9.4, ADR-0008). */
+    position: Position,
     /** Sources of the traits, for the "why" panel; the engine reads only `traits`. */
     passive: Slug.nullable(),
     parts: z.array(Slug).max(4),
     quirks: z.array(Slug).max(2),
     mood: Mood,
-    /** The letter actually applied (frame style). */
-    styleAptitude: Aptitude,
+    /** The letter actually applied: the race position's (ADR-0008). */
+    positionAptitude: Aptitude,
     stats: RaceStats,
     /** Per-mille, after caps and clamps. */
     powerToWeight: Int.min(500).max(1600),
@@ -239,6 +245,10 @@ export const RunnerDerived = z.strictObject({
   jumpNeed: z.array(Nat),
   /** me */
   capFinal: Nat,
+  /**
+   * The even level of the pack position (9.3), 0 in any other position. The name keeps the wing
+   * style whose row the pack position reuses (Rasante, ADR-0008).
+   */
   groundLevelMms: Nat,
   /**
    * ‰ of cruise, acceleration, vMin and thrust kept once the wings break (8.4, ADR-0003 D56), on

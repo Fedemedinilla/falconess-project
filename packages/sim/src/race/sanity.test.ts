@@ -116,7 +116,7 @@ function entryOf(name: string, course: Course): RaceEntry {
     falconessId: null,
     baseStats: S600,
     mood: 0,
-    styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+    positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
     frameId: name,
     parts: [],
     quirks: [],

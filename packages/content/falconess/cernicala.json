@@ -15,13 +15,13 @@
     "courage": 0,
     "intelligence": 0.2
   },
-  "styleAptitude": {
-    "dive": "C",
-    "hover": "A",
-    "glide": "B",
-    "ground": "D"
+  "positionAptitude": {
+    "lead": "B",
+    "pack": "D",
+    "stalk": "A",
+    "closer": "C"
   },
-  "preferredStyle": "hover",
+  "preferredPosition": "stalk",
   "uniqueSkills": ["wind-hover"],
   "sponsor": "altair",
   "seasonGoals": [

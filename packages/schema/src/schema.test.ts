@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { buildContentIndex, ContentError, type RawContent } from "./content-index.js";
-import { FrameMods } from "./core.js";
+import { DEFAULT_POSITION, FrameMods, POSITIONS, Position, STYLES } from "./core.js";
 import { Course, courseLength } from "./course.js";
 import { GameEvent } from "./event.js";
+import { Falconess } from "./falconess.js";
 import { Part } from "./frame.js";
 import { GachaPool } from "./gacha.js";
 import { RaceModifier } from "./modifiers.js";
-import { RunInput, TurnLogEntry } from "./season.js";
+import { RaceResultEntry, RunInput, TurnLogEntry } from "./season.js";
 import { Skill } from "./skill.js";
 
 describe("primitives and defaults", () => {
@@ -228,6 +229,71 @@ describe("RunInput", () => {
     expect(RunInput.safeParse({ kind: "workshop", ops: [{ op: "repair" }] }).success).toBe(true);
     expect(RunInput.safeParse({ kind: "train:courage" }).success).toBe(false);
   });
+
+  it("an action input may carry a race position; start and event:choose may not (ADR-0008)", () => {
+    for (const kind of ["train:agility", "rest", "outing"])
+      expect(RunInput.safeParse({ kind, position: "stalk" }).success, kind).toBe(true);
+    expect(
+      RunInput.safeParse({ kind: "workshop", ops: [{ op: "repair" }], position: "lead" }).success,
+    ).toBe(true);
+    expect(RunInput.safeParse({ kind: "rest", position: "front" }).success).toBe(false);
+    expect(RunInput.safeParse({ kind: "event:choose", option: 0, position: "lead" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("race positions (ADR-0008)", () => {
+  it("are four, front to back, and each wing style defaults to a different one", () => {
+    expect(POSITIONS).toEqual(["lead", "pack", "stalk", "closer"]);
+    expect(Position.safeParse("dive").success).toBe(false);
+    expect(STYLES.map((s) => DEFAULT_POSITION[s])).toEqual(["closer", "stalk", "lead", "pack"]);
+    expect(new Set(Object.values(DEFAULT_POSITION))).toEqual(new Set(POSITIONS));
+  });
+
+  it("a Falconess has one letter per position and a preferred position; the style fields are gone", () => {
+    const f = {
+      id: "peregrina",
+      version: 1,
+      species: "Falco peregrinus",
+      baseStats: { agility: 100, stamina: 90, technique: 80, courage: 70, intelligence: 60 },
+      growth: { agility: 0.2, stamina: 0, technique: 0.1, courage: 0, intelligence: 0 },
+      positionAptitude: { lead: "B", pack: "E", stalk: "C", closer: "A" },
+      preferredPosition: "closer",
+      uniqueSkills: [],
+      sponsor: "koryu",
+      seasonGoals: [{ turn: 12, courseId: "sprint", minPlace: 5 }],
+      textKey: "falconess.peregrina",
+    };
+    expect(Falconess.parse(f)).toEqual(f);
+    const { closer: _c, ...three } = f.positionAptitude;
+    expect(Falconess.safeParse({ ...f, positionAptitude: three }).success).toBe(false);
+    expect(Falconess.safeParse({ ...f, preferredPosition: "dive" }).success).toBe(false);
+    const { positionAptitude: _p, preferredPosition: _q, ...rest } = f;
+    expect(
+      Falconess.safeParse({
+        ...rest,
+        styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
+        preferredStyle: "dive",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("a season race result records the position she ran", () => {
+    const r = {
+      courseId: "ridge",
+      turn: 12,
+      place: 2,
+      fieldSize: 8,
+      timeTicks: 1300,
+      frameId: "shiden",
+      position: "closer",
+      engine: "v1",
+    };
+    expect(RaceResultEntry.parse(r)).toEqual(r);
+    const { position: _p, ...without } = r;
+    expect(RaceResultEntry.safeParse(without).success).toBe(false);
+  });
 });
 
 describe("buildContentIndex", () => {
@@ -239,8 +305,8 @@ describe("buildContentIndex", () => {
         species: "Falco peregrinus",
         baseStats: { agility: 100, stamina: 90, technique: 80, courage: 70, intelligence: 60 },
         growth: { agility: 0.2, stamina: 0, technique: 0.1, courage: 0, intelligence: 0 },
-        styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
-        preferredStyle: "dive",
+        positionAptitude: { lead: "B", pack: "E", stalk: "C", closer: "A" },
+        preferredPosition: "closer",
         uniqueSkills: [],
         sponsor: "koryu",
         seasonGoals: [{ turn: 12, courseId: "sprint", minPlace: 5 }],

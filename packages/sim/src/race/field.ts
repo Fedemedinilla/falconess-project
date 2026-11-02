@@ -5,12 +5,14 @@ import type {
   EntryInput,
   FalconessStats,
   Frame,
+  Position,
+  PositionAptitudes,
   RaceEntry,
   SeasonGoal,
   SeasonState,
   Style,
-  StyleAptitudes,
 } from "@falconess/schema";
+import { DEFAULT_POSITION } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
 import type { Ruleset } from "../rulesets/index.js";
 import type { SimContext } from "../season/context.js";
@@ -60,11 +62,14 @@ export function rivalPool(ruleset: Ruleset, content: ContentIndex, playerFrameId
     .slice(0, F.rivalMinPool);
 }
 
-/** "A" for the frame's style and "B" for the others (21.1). */
-function rivalAptitudes(style: Style): { styleAptitude: StyleAptitudes } {
-  const styleAptitude: StyleAptitudes = { dive: "B", hover: "B", glide: "B", ground: "B" };
-  styleAptitude[style] = "A";
-  return { styleAptitude };
+/**
+ * "A" for the position of the frame's style and "B" for the others (21.1). A rival runs in that
+ * position (no `position` in its input: ADR-0008 leaves the choice to the player for now).
+ */
+function rivalAptitudes(style: Style): { positionAptitude: PositionAptitudes } {
+  const positionAptitude: PositionAptitudes = { lead: "B", pack: "B", stalk: "B", closer: "B" };
+  positionAptitude[DEFAULT_POSITION[style]] = "A";
+  return { positionAptitude };
 }
 
 /**
@@ -145,11 +150,11 @@ export function generateField(
 }
 
 /**
- * The player's `EntryInput` for a goal race (21.2 step 2): stats, mood, both aptitude maps, the
- * equipped frame with its installed parts and rolled quirks, learned skills, and the frame's
- * persisted durability (D35; absent = full).
+ * The player's `EntryInput` for a goal race (21.2 step 2): stats, mood, her position letters and
+ * the race position (absent = her wings' default, ADR-0008), the equipped frame with its installed
+ * parts and rolled quirks, learned skills, and the frame's persisted durability (D35; absent = full).
  */
-export function playerEntryInput(state: SeasonState): EntryInput {
+export function playerEntryInput(state: SeasonState, position?: Position): EntryInput {
   const frameId = state.equippedFrame;
   return {
     runnerId: PLAYER_RUNNER_ID,
@@ -157,7 +162,8 @@ export function playerEntryInput(state: SeasonState): EntryInput {
     falconessId: state.falconessId,
     baseStats: { ...state.stats },
     mood: state.mood,
-    styleAptitude: { ...state.styleAptitude },
+    positionAptitude: { ...state.positionAptitude },
+    ...(position === undefined ? {} : { position }),
     frameId,
     parts: [...state.installedParts],
     quirks: [...(state.frameQuirks[frameId] ?? [])],
@@ -171,11 +177,14 @@ export function playerEntryInput(state: SeasonState): EntryInput {
  * both freeze identical entries: the goal's course, `raceSeed = `${seed}/race/${turn}`` and the
  * field of `generateField` around the player's entry. `state` is the season state at the race
  * (after the turn's action, before the race); the goal's turn is the state's turn there.
+ * `position` is the one the week's input chose (`inputPosition`); absent = her wings' default
+ * (ADR-0008). A viewer passes the same input's position, so both runs freeze the same player.
  */
 export function goalRaceSetup(
   ctx: SimContext,
   state: SeasonState,
   goal: SeasonGoal,
+  position?: Position,
 ): GoalRaceSetup {
   const course = ctx.content.getCourse(goal.courseId);
   const raceSeed = `${state.seed}/race/${goal.turn}`;
@@ -183,7 +192,7 @@ export function goalRaceSetup(
     course,
     turn: goal.turn,
     raceSeed,
-    player: playerEntryInput(state),
+    player: playerEntryInput(state, position),
   });
   return { course, raceSeed, entries };
 }

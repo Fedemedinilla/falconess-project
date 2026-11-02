@@ -131,6 +131,8 @@ export function fieldSpecOf(form: FreeRaceForm): FieldSpec {
     skills: [...form.skills],
     stats: form.statsMode === "base" ? null : form.stats,
     turn: form.turn,
+    // the pre-race position card is the web's own stage (ADR-0008): her wings' default until then
+    position: null,
   };
 }
 

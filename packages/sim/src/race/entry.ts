@@ -8,7 +8,7 @@ import type {
   RaceStats,
   Slug,
 } from "@falconess/schema";
-import { STAT_NAMES } from "@falconess/schema";
+import { DEFAULT_POSITION, STAT_NAMES } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
 import type { Ruleset } from "../rulesets/index.js";
 import { effectiveStats } from "../stats.js";
@@ -64,8 +64,8 @@ export function addStatDeltas(ruleset: Ruleset, stats: RaceStats, delta: RaceSta
 
 /**
  * Freeze one runner for a race on `course` (docs/race-engine.md 3.1; content side, outside the
- * pure race): frame build, effective stats with the frame's style,
- * `falconess-stat` deltas, id-sorted frozen actives, compiled traits and starting durability.
+ * pure race): frame build, the race position (the input's, else the default of the frame's style,
+ * ADR-0008), effective stats with that position's letter, `falconess-stat` deltas, id-sorted frozen actives, compiled traits and starting durability.
  * Always writes the frame manufacturer's rule; only the fixtures of 3.4 write "none". The course
  * stays in the signature of 23 but no longer changes the entry (ADR-0007 removed its biome).
  */
@@ -90,8 +90,15 @@ export function freezeEntry(
   );
   const frame = content.getFrame(input.frameId);
 
-  // 2. effective stats: mood on all five, frame-style letter on intelligence
-  const eff = effectiveStats(ruleset, input.baseStats, input.mood, input.styleAptitude, fb.style);
+  // 2. effective stats: mood on all five, the race position's letter on intelligence (ADR-0008)
+  const position = input.position ?? DEFAULT_POSITION[fb.style];
+  const eff = effectiveStats(
+    ruleset,
+    input.baseStats,
+    input.mood,
+    input.positionAptitude,
+    position,
+  );
 
   // 3. falconess-stat deltas after step 2, clamped to [1, maxEffectiveStat]
   const stats = addStatDeltas(ruleset, eff, statDeltas(fb.modifiers));
@@ -122,11 +129,12 @@ export function freezeEntry(
     manufacturer: fb.manufacturer,
     rule: fb.rule,
     style: fb.style,
+    position,
     passive: frame.passive ?? null,
     parts: [...fb.parts],
     quirks: [...fb.quirks],
     mood: input.mood,
-    styleAptitude: input.styleAptitude[fb.style],
+    positionAptitude: input.positionAptitude[position],
     stats,
     powerToWeight: fb.powerToWeight,
     energy: fb.energy,

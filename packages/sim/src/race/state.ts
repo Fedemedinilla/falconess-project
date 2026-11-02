@@ -1,6 +1,6 @@
 import { ceilDiv, floorDiv, U32_RANGE, uPm, uRange } from "@falconess/rng";
 import type { Course, RaceEntry, RacePhase, SegmentType } from "@falconess/schema";
-import { RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
+import { POSITIONS, RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
 import { compileRule, createPulseState, initPulseLane, type PulseState } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
 import { type CourseGeometry, MAX_SEGMENTS } from "./geometry.js";
@@ -36,13 +36,15 @@ import {
   engineUnits,
   MODE_OFF,
   PH_FINAL,
+  POS_PACK,
+  POS_STALK,
+  positionCode,
   ruleCode,
   SEG_DESCENT,
   SEG_JUMP,
   STYLE_DIVE,
   STYLE_GLIDE,
   STYLE_GROUND,
-  STYLE_HOVER,
   styleCode,
 } from "./units.js";
 
@@ -136,7 +138,10 @@ const NK = MAX_LANES * MAX_SKILLS;
 
 /** Per-race tables of docs/race-engine.md 3.3, built before tick 0 and read-only in the loop. */
 export type RaceTables = {
+  /** The wings' style: their physics (9.8). */
   readonly style: Int32Array;
+  /** The race position: the controller row, its keep, hold and plan point (9.4, ADR-0008). */
+  readonly position: Int32Array;
   readonly rule: Int32Array;
   /** `PW₁` (‰), for the `durabilityBroken` event. */
   readonly pwBroken: Int32Array;
@@ -158,7 +163,7 @@ export type RaceTables = {
   readonly costOn: Int32Array;
   /** Energy the final plan window can actually spend, me, per PW variant (9.3; `SURPLUS`). */
   readonly capFinal: Float64Array;
-  /** Ground's constant level, vu, per PW variant (9.3; 0 for other styles). */
+  /** The pack position's even level, vu, per PW variant (9.3; 0 in other positions). */
   readonly groundLevel: Float64Array;
   /** Where hpMax runs out at cruise from the gun, pu, per PW variant (9.3 `exhaust0`). */
   readonly exhaust0: Float64Array;
@@ -180,12 +185,14 @@ export type RaceTables = {
   /** Ground only (table 3.3); 1000 for every other style (they never detour). */
   readonly detour: Int32Array;
   readonly kickAt: Float64Array;
-  /** Where the first plan is made: `finalStart`, hover `hoverAttack` (11.1). */
+  /** Where the first plan is made: `finalStart`, stalk `hoverAttack` (11.1). */
   readonly planPoint: Float64Array;
   /** Energy a jump segment needs (`need[j]`), 0 on other segments. */
   readonly need: Int32Array;
   /** Jump reserve per segment, me (14.4): what the jumps still ahead need; 0 for ground. */
   readonly jr: Int32Array;
+  /** The jump reserve at the gun, me: `R` of the course's first jump (14.4); 0 for ground. */
+  readonly jrStart: Int32Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
   readonly stoop: Int32Array;
@@ -340,6 +347,7 @@ function createTables(): RaceTables {
   const NPS = NS * 3;
   return {
     style: i32(N),
+    position: i32(N),
     rule: i32(N),
     pwBroken: i32(N),
     pwc: i32(N * 2),
@@ -380,6 +388,7 @@ function createTables(): RaceTables {
     planPoint: f64(N),
     need: i32(NS),
     jr: i32(NS),
+    jrStart: i32(N),
     pulseFrame: u8(N),
     airPm: i32(NS),
     stoop: i32(NPS),
@@ -557,6 +566,8 @@ export function validateRace(
     ids.add(e.runnerId);
     if (!RACE_RULES.includes(e.rule)) throw new Error(`simulateRace: ${who} has rule ${e.rule}`);
     if (!STYLES.includes(e.style)) throw new Error(`simulateRace: ${who} has style ${e.style}`);
+    if (!POSITIONS.includes(e.position))
+      throw new Error(`simulateRace: ${who} has position ${e.position}`);
     for (const [k, v] of Object.entries(e.stats)) checkInt(`${who} ${k}`, v, 1, R.maxEffectiveStat);
     checkInt(`${who} powerToWeight`, e.powerToWeight, 500, 1600);
     checkInt(`${who} energy`, e.energy, 20, 200);
@@ -650,9 +661,11 @@ export function buildTables(
     const tr = e.traits;
     const terms = compileRule(R, e.rule);
     const st = styleCode(e.style);
+    const pc = positionCode(e.position);
     const rc = ruleCode(e.rule);
     const { agility, stamina, technique, courage, intelligence } = e.stats;
     T.style[i] = st;
+    T.position[i] = pc;
     T.rule[i] = rc;
 
     // Intelligence: pace judgement per phase and plan perception (10), from slots 0..3
@@ -748,7 +761,7 @@ export function buildTables(
           break;
         }
     T.kickAt[i] = Math.max(0, kickAt); // ADR-0003 D53 (reserveAt and segStart are already ≥ 0)
-    T.planPoint[i] = st === STYLE_HOVER ? G.hoverAttack : G.finalStart;
+    T.planPoint[i] = pc === POS_STALK ? G.hoverAttack : G.finalStart; // position (ADR-0008)
 
     // style and rule thrust terms (9.8, 13.1) and the plan's thrust quantities (3.3)
     const pulseFrame = terms.pulses && !tr.noPulse;
@@ -841,7 +854,8 @@ export function thrustable(G: CourseGeometry, T: RaceTables, i: number, s: numbe
  * Jump reserve of 14.4, a backward pass over the jumps (non-ground runners only):
  * `R_j = need_j > Emax ? R_{j+1} : max(need_j, liftReq_j × 1000 + R_{j+1})` (a jump the tank can
  * never make is skipped: it fails anyway and a failure spends no lift energy), and `jr[s]` is the
- * `R_j` of the first jump whose segment index is above s (0 if none).
+ * `R_j` of the first jump whose segment index is above s (0 if none). `jrStart` is the `R` of the
+ * course's first jump: what the tank must keep for the jumps at the gun.
  */
 function jumpReserve(G: CourseGeometry, T: RaceTables, i: number): void {
   if (T.style[i] === STYLE_GROUND) return; // zero-filled by reset
@@ -853,6 +867,7 @@ function jumpReserve(G: CourseGeometry, T: RaceTables, i: number): void {
     const need = T.need[is(i, s)] ?? 0;
     if (need <= Emax) ahead = Math.max(need, (G.liftReq[s] ?? 0) * 1000 + ahead);
   }
+  T.jrStart[i] = ahead;
 }
 
 /** hp drained per tick at constant speed v (section 6): `fl(r × r × dK, 10^6)`, `r = fl(v × 1000, VBASE)`. */
@@ -866,8 +881,9 @@ function drainAt(v: number, vBase: number, dK: number): number {
  * pieces of the course split at segment boundaries, `startEnd` and `finalStart`), then
  * `capFinal` (energy the final window `[planPoint, min(kickAt, exhaust0))` can absorb over its
  * thrust-capable ticks: heat-aware from cold for continuous frames, max cadence for pulse frames)
- * and, for ground runners, `groundLevel` (the level that spends `groundPreShare` of the tank evenly
- * before the final).
+ * and, in the pack position, `groundLevel`: the level that spends `groundPreShare` of the tank,
+ * less the jump reserve at the gun, evenly over the thrust-capable ticks before the final
+ * (ADR-0008; for ground wings, which never jump, the reserve is 0 and every tick can thrust).
  */
 function budgetTables(
   R: RaceConstants,
@@ -933,10 +949,11 @@ function budgetTables(
   }
   T.capFinal[ib(i, b)] = cap;
 
-  // groundLevel over the pieces of [0, finalStart)
-  if (!ground) return;
+  // groundLevel over the thrust-capable pieces of [0, finalStart) (the pack position, ADR-0008)
+  if (T.position[i] !== POS_PACK) return;
   let pre = 0;
   for (let s = 0; s < G.S; s++) {
+    if (!thrustable(G, T, i, s)) continue; // a flyer's jump: no thrust, no accrual (9.5)
     const s0 = G.segStart[s] ?? 0;
     const s1 = G.segEnd[s] ?? 0;
     for (let ph = 0; ph < 2; ph++) {
@@ -946,7 +963,10 @@ function budgetTables(
       pre += ceilDiv(routeDist(G, T, i, s, z - a), T.vC[ibps(i, b, ph, s)] ?? 1);
     }
   }
-  const share = floorDiv((T.Emax[i] ?? 0) * R.style.groundPreShare, 1000);
+  const share = Math.max(
+    0,
+    floorDiv((T.Emax[i] ?? 0) * R.style.groundPreShare, 1000) - (T.jrStart[i] ?? 0),
+  );
   T.groundLevel[ib(i, b)] = Math.min(
     T.sMax[ib(i, b)] ?? 0,
     floorDiv((T.Bon[ib(i, b)] ?? 0) * share, Math.max(1, pre) * (T.costOn[i] ?? 1)),

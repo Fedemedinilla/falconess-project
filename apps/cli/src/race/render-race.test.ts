@@ -144,7 +144,7 @@ describe("classification", () => {
     expect(formatMargin({ ...second, marginMm: 5, deadHeat: false })).toBe("+0.01 m");
   });
 
-  it("lists runners in place order with frame, manufacturer and style, the player marked", () => {
+  it("lists runners in place order with position and letter, frame, manufacturer and style, the player marked", () => {
     for (const name of full) {
       const log = loadRaceFixture(name);
       const lines = renderRace(log, labels);
@@ -156,6 +156,9 @@ describe("classification", () => {
         const mark = entry.kind === "player" ? "»" : " ";
         expect(row.startsWith(`  ${mark}${r.place}  ${labels.runnerName(entry)} `)).toBe(true);
         expect(row).toContain(` ${formatTime(r)} `);
+        expect(row).toContain(
+          `  ${labels.positionName(entry.position)} ${entry.positionAptitude}  `,
+        );
         expect(
           row.endsWith(
             `${labels.frameName(entry.frameId)} · ${labels.manufacturerName(entry.manufacturer)} · ${labels.styleName(entry.style)}`,
@@ -165,7 +168,7 @@ describe("classification", () => {
     }
     const canyon = renderRace(loadRaceFixture("canyon"), labels);
     expect(canyon).toContain(
-      "  »2  Peregrina  109.66 s   +83.45 m  Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada",
+      "  »2  Peregrina  109.66 s   +83.45 m  Remate A   Shiden Kaminari (firma de Peregrina) · Kōryū Racing · Picada",
     );
   });
 
@@ -200,7 +203,7 @@ describe("classification", () => {
     };
     const lines = renderRace(dnfLog, labels);
     expect(lines.find((l) => l.startsWith(`   ${last.place}  neutral-hover-1 `))).toMatch(
-      / {2}neutral-hover-1 +DNF +fixture-neutral · none · Suspensión$/,
+      / {2}neutral-hover-1 +DNF +Acecho B +fixture-neutral · none · Suspensión$/,
     );
     expect(lines).toContain(`  ${last.place}º neutral-hover-1  DNF`);
     expect(lines).toContain('  (sin frames: detail "results")');

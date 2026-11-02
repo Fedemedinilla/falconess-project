@@ -5,11 +5,11 @@ import type {
   EntryInput,
   FalconessStats,
   Mood,
+  PositionAptitudes,
   RaceEntry,
   RaceLog,
   Slug,
   Style,
-  StyleAptitudes,
 } from "@falconess/schema";
 import { RULESET_V1 } from "../rulesets/index.js";
 import { simulateRace } from "./engine.js";
@@ -73,7 +73,7 @@ function byLane(inputs: (content: ContentIndex) => EntryInput[]): FieldBuilder {
 /** [agility, stamina, technique, courage, intelligence] */
 type Stats5 = readonly [number, number, number, number, number];
 
-const STYLE_B: StyleAptitudes = { dive: "B", hover: "B", glide: "B", ground: "B" };
+const LETTERS_B: PositionAptitudes = { lead: "B", pack: "B", stalk: "B", closer: "B" };
 const S600: Stats5 = [600, 600, 600, 600, 600];
 
 function stats([agility, stamina, technique, courage, intelligence]: Stats5): FalconessStats {
@@ -87,7 +87,7 @@ type RunnerOpts = {
   readonly quirks?: readonly Slug[];
   readonly mood?: Mood;
   readonly durability?: number | null;
-  readonly styleAptitude?: StyleAptitudes;
+  readonly positionAptitude?: PositionAptitudes;
 };
 
 function rival(runnerId: string, frameId: Slug, o: RunnerOpts = {}): EntryInput {
@@ -97,7 +97,7 @@ function rival(runnerId: string, frameId: Slug, o: RunnerOpts = {}): EntryInput 
     falconessId: null,
     baseStats: stats(o.stats ?? S600),
     mood: o.mood ?? 0,
-    styleAptitude: { ...(o.styleAptitude ?? STYLE_B) },
+    positionAptitude: { ...(o.positionAptitude ?? LETTERS_B) },
     frameId,
     parts: [...(o.parts ?? [])],
     quirks: [...(o.quirks ?? [])],
@@ -188,7 +188,7 @@ function goalPlayer(content: ContentIndex, f: FalconessSetup, turn: 24 | 46): En
     falconessId: f.id,
     baseStats: stats(parStats(turn, content.getFrame(f.frameId).style)),
     mood: f.mood[turn],
-    styleAptitude: { ...falconess.styleAptitude },
+    positionAptitude: { ...falconess.positionAptitude },
     frameId: f.frameId,
     parts: [...f.parts[turn]],
     quirks: [],

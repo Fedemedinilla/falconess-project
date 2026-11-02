@@ -17,6 +17,7 @@ const player = (over: Partial<Extract<FieldSpec, { kind: "player" }>> = {}) =>
     skills: [],
     stats: null,
     turn: 1,
+    position: null,
     ...over,
   }) satisfies FieldSpec;
 
@@ -26,7 +27,7 @@ const validInput: EntryInput = {
   falconessId: "caracara",
   baseStats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
   mood: 1,
-  styleAptitude: { dive: "C", hover: "B", glide: "B", ground: "A" },
+  positionAptitude: { lead: "B", pack: "A", stalk: "B", closer: "C" },
   frameId: "caracara-signature",
   parts: ["boneyard-battery"],
   quirks: [],
@@ -43,7 +44,7 @@ describe("playerEntryInput", () => {
       falconessId: "peregrina",
       baseStats: peregrina.baseStats,
       mood: 0,
-      styleAptitude: peregrina.styleAptitude,
+      positionAptitude: peregrina.positionAptitude,
       frameId: "peregrina-signature",
       parts: [],
       quirks: [],

@@ -90,8 +90,8 @@ describe("startSeason", () => {
       factors: {
         stat: { stat: "stamina" as const, stars: 3 as const },
         aptitude: {
-          kind: "style" as const,
-          key: "ground" as const,
+          kind: "position" as const,
+          key: "pack" as const,
           letter: "S" as const,
           stars: 3 as const,
         },

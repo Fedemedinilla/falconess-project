@@ -268,7 +268,7 @@ export function frameEntry(
       falconessId: null,
       baseStats: stats,
       mood: 0,
-      styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+      positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
       frameId,
       parts: [],
       quirks: [],

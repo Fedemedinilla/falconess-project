@@ -42,7 +42,7 @@ describe("engine adapter", () => {
         falconessId: "peregrina",
         baseStats: { agility: 1, stamina: 1, technique: 1, courage: 1, intelligence: 1 },
         mood: 0,
-        styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+        positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
         frameId: "peregrina-signature",
         parts: [],
         quirks: [],

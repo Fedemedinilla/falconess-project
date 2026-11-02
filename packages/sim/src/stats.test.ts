@@ -8,11 +8,11 @@ import { effectiveStats, lowestStat, upgradeAptitude } from "./stats.js";
 const content = loadContent();
 const R = SPEC_RULESET;
 const base = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
-const styleApt = { dive: "S", hover: "B", glide: "E", ground: "G" } as const;
+const positionApt = { closer: "S", stalk: "B", lead: "E", pack: "G" } as const;
 
 describe("effective stats", () => {
-  it("applies mood to every stat and style aptitude to intelligence; agility has no letter (ADR-0007)", () => {
-    const eff = effectiveStats(R, base, 0, styleApt, "dive");
+  it("applies mood to every stat and the race position's letter to intelligence (ADR-0008); agility has no letter (ADR-0007)", () => {
+    const eff = effectiveStats(R, base, 0, positionApt, "closer");
     expect(eff).toEqual({
       agility: 600,
       stamina: 600,
@@ -20,7 +20,7 @@ describe("effective stats", () => {
       courage: 600,
       intelligence: 660,
     });
-    const sad = effectiveStats(R, base, -2, styleApt, "hover");
+    const sad = effectiveStats(R, base, -2, positionApt, "stalk");
     expect(sad).toEqual({
       agility: 570,
       stamina: 570,
@@ -31,15 +31,15 @@ describe("effective stats", () => {
   });
 
   it("aptitude G costs 30 % of intelligence, S gives 10 %", () => {
-    expect(effectiveStats(R, base, 0, styleApt, "ground").intelligence).toBe(420);
-    expect(effectiveStats(R, base, 0, styleApt, "dive").intelligence).toBe(660);
+    expect(effectiveStats(R, base, 0, positionApt, "pack").intelligence).toBe(420);
+    expect(effectiveStats(R, base, 0, positionApt, "closer").intelligence).toBe(660);
   });
 
   it("is monotonic in base stats and in mood", () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 1199 }), fc.integer({ min: -2, max: 1 }), (a, mood) => {
-        const lo = effectiveStats(R, { ...base, agility: a }, mood, styleApt, "glide");
-        const hi = effectiveStats(R, { ...base, agility: a + 1 }, mood + 1, styleApt, "glide");
+        const lo = effectiveStats(R, { ...base, agility: a }, mood, positionApt, "lead");
+        const hi = effectiveStats(R, { ...base, agility: a + 1 }, mood + 1, positionApt, "lead");
         return hi.agility >= lo.agility && hi.stamina >= lo.stamina;
       }),
     );

@@ -1,5 +1,6 @@
 import type { Rng } from "@falconess/rng";
 import type { Aptitude, BlackBox, RunInput, SeasonState, TrainingKind } from "@falconess/schema";
+import { DEFAULT_POSITION } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
 import { upgradeAptitude } from "../stats.js";
 import { type Draft, note, rngForInput, type SimContext } from "./context.js";
@@ -25,15 +26,16 @@ function applyInheritance(ctx: SimContext, d: Draft, parents: readonly BlackBox[
     const apt = p.factors.aptitude;
     const chance = S.aptitudeInheritChance[apt.stars - 1] ?? 300;
     if (rng.chancePermille("training", chance)) {
-      d.styleAptitude[apt.key] = upgradeAptitude(d.styleAptitude[apt.key] as Aptitude);
+      d.positionAptitude[apt.key] = upgradeAptitude(d.positionAptitude[apt.key] as Aptitude);
     }
   }
 }
 
 /**
- * Build the turn-1 state from the `start` input. Boneyard frames get their quirks rolled here
- * (stream `quirks`), durability starts full, and the first crew presence is rolled so the player
- * sees who is around before choosing.
+ * Build the turn-1 state from the `start` input. She starts on the first hangar wings whose
+ * default position is her preferred one (ADR-0008; the first wings if none). Boneyard frames get
+ * their quirks rolled here (stream `quirks`), durability starts full, and the first crew presence
+ * is rolled so the player sees who is around before choosing.
  */
 export function startSeason(ctx: SimContext, seed: string, input: StartInput): SeasonState {
   const falconess = ctx.content.getFalconess(input.falconessId);
@@ -43,7 +45,7 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
 
   const rng = rngForInput(seed, 0);
   const preferred = input.hangar.find(
-    (f) => ctx.content.getFrame(f).style === falconess.preferredStyle,
+    (f) => DEFAULT_POSITION[ctx.content.getFrame(f).style] === falconess.preferredPosition,
   );
   const equipped = preferred ?? input.hangar[0];
   if (!equipped) throw new Error("hangar is empty");
@@ -70,7 +72,7 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
     turn: 1,
     falconessId: falconess.id,
     stats: { ...falconess.baseStats },
-    styleAptitude: { ...falconess.styleAptitude },
+    positionAptitude: { ...falconess.positionAptitude },
     mood: 0,
     fatigue: 0,
     injuryTurns: 0,

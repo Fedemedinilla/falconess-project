@@ -11,7 +11,7 @@
       "intelligence": 580
     },
     "mood": 1,
-    "styleAptitude": { "dive": "A", "hover": "C", "glide": "B", "ground": "E" },
+    "positionAptitude": { "lead": "B", "pack": "E", "stalk": "C", "closer": "A" },
     "frameId": "peregrina-signature",
     "parts": ["koryu-firmware"],
     "quirks": [],
@@ -30,7 +30,7 @@
       "intelligence": 600
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
+    "positionAptitude": { "lead": "A", "pack": "B", "stalk": "B", "closer": "B" },
     "frameId": "falke",
     "parts": ["steinhaus-turbine"],
     "quirks": [],
@@ -49,7 +49,7 @@
       "intelligence": 600
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "B", "glide": "A", "ground": "B" },
+    "positionAptitude": { "lead": "A", "pack": "B", "stalk": "B", "closer": "B" },
     "frameId": "horizon",
     "parts": ["altair-battery"],
     "quirks": [],
@@ -68,7 +68,7 @@
       "intelligence": 560
     },
     "mood": 0,
-    "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
+    "positionAptitude": { "lead": "B", "pack": "B", "stalk": "B", "closer": "A" },
     "frameId": "etoile",
     "parts": [],
     "quirks": [],
@@ -87,7 +87,7 @@
       "intelligence": 520
     },
     "mood": -1,
-    "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
+    "positionAptitude": { "lead": "B", "pack": "A", "stalk": "B", "closer": "B" },
     "frameId": "mule",
     "parts": ["boneyard-battery"],
     "quirks": ["scrap-heart", "mud-runner"],
@@ -106,7 +106,7 @@
       "intelligence": 600
     },
     "mood": 0,
-    "styleAptitude": { "dive": "A", "hover": "B", "glide": "B", "ground": "B" },
+    "positionAptitude": { "lead": "B", "pack": "B", "stalk": "B", "closer": "A" },
     "frameId": "shiden",
     "parts": [],
     "quirks": [],
@@ -125,7 +125,7 @@
       "intelligence": 680
     },
     "mood": 2,
-    "styleAptitude": { "dive": "C", "hover": "A", "glide": "B", "ground": "D" },
+    "positionAptitude": { "lead": "B", "pack": "D", "stalk": "A", "closer": "C" },
     "frameId": "cernicala-signature",
     "parts": ["altair-firmware"],
     "quirks": [],
@@ -144,7 +144,7 @@
       "intelligence": 560
     },
     "mood": 0,
-    "styleAptitude": { "dive": "B", "hover": "B", "glide": "B", "ground": "A" },
+    "positionAptitude": { "lead": "B", "pack": "A", "stalk": "B", "closer": "B" },
     "frameId": "erzherzog",
     "parts": ["steinhaus-stabilizer"],
     "quirks": [],

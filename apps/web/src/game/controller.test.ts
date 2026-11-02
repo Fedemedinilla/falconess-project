@@ -25,10 +25,18 @@ const V1_DIGESTS = JSON.parse(
   readFileSync(new URL("v1-invariance-adr0007.json", FIXTURES), "utf8"),
 );
 
-/** sha256 of the state without its log, as v1-invariance.test.ts hashes it. */
+/**
+ * sha256 of the state without its log, as v1-invariance.test.ts hashes it: in the shape the
+ * digests were taken in (ADR-0008 undone: the letters back on the wing styles, no race position).
+ */
 function rulesDigest(state: SeasonState): string {
-  const { log: _log, ...rest } = state;
-  return createHash("sha256").update(canonicalJson(rest)).digest("hex").slice(0, 16);
+  const { log: _log, positionAptitude: p, raceResults, ...rest } = state;
+  const legacy = {
+    ...rest,
+    styleAptitude: { dive: p.closer, hover: p.stalk, glide: p.lead, ground: p.pack },
+    raceResults: raceResults.map(({ position: _p, ...r }) => r),
+  };
+  return createHash("sha256").update(canonicalJson(legacy)).digest("hex").slice(0, 16);
 }
 
 function memoryStore(): KeyValueStore & { data: Map<string, string> } {

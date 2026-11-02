@@ -15,13 +15,13 @@
     "courage": 0.1,
     "intelligence": 0
   },
-  "styleAptitude": {
-    "dive": "D",
-    "hover": "C",
-    "glide": "B",
-    "ground": "A"
+  "positionAptitude": {
+    "lead": "B",
+    "pack": "A",
+    "stalk": "C",
+    "closer": "D"
   },
-  "preferredStyle": "ground",
+  "preferredPosition": "pack",
   "uniqueSkills": ["scavenger-stride"],
   "sponsor": "boneyard",
   "seasonGoals": [

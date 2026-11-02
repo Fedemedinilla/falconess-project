@@ -1,12 +1,13 @@
 import type {
   ContentIndex,
+  Position,
   RaceEntry,
   RaceStats,
   RaceTraits,
   Slug,
   Style,
 } from "@falconess/schema";
-import { RaceSkill } from "@falconess/schema";
+import { DEFAULT_POSITION, RaceSkill } from "@falconess/schema";
 import { applyBuild } from "../frame-build.js";
 import { RULESET_V1 } from "../rulesets/index.js";
 import { addStatDeltas, compareIds } from "./entry.js";
@@ -69,14 +70,15 @@ export function fixtureBuild(
 
 /**
  * A neutral fixture entry with fixed values: kind rival, no Falconess, frame "fixture-neutral",
- * manufacturer and rule "none", no passive, mood 0, letters B, `stats` as given (already
- * effective), and the neutral frame (or `build`). `skills` must already be frozen
+ * manufacturer and rule "none", no passive, mood 0, letter B, `stats` as given (already
+ * effective), and the neutral frame (or `build`). `position` defaults to the style's (ADR-0008). `skills` must already be frozen
  * (`freezeSkill`), unique and id-sorted, at most `maxSkills`; throws otherwise.
  */
 export function neutralFixtureEntry(args: {
   runnerId: string;
   laneIndex: number;
   style: Style;
+  position?: Position;
   stats: RaceStats;
   skills?: readonly RaceSkill[];
   build?: FixtureBuild;
@@ -102,11 +104,12 @@ export function neutralFixtureEntry(args: {
     manufacturer: FIXTURE_MANUFACTURER,
     rule: "none",
     style: args.style,
+    position: args.position ?? DEFAULT_POSITION[args.style],
     passive: null,
     parts: b ? [...b.parts] : [],
     quirks: b ? [...b.quirks] : [],
     mood: 0,
-    styleAptitude: "B",
+    positionAptitude: "B",
     stats: b ? addStatDeltas(RULESET_V1, args.stats, b.statDelta) : { ...args.stats },
     powerToWeight: b ? b.powerToWeight : NEUTRAL_FRAME.powerToWeight,
     energy: b ? b.energy : NEUTRAL_FRAME.energy,

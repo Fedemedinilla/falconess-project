@@ -64,7 +64,7 @@ function frame(frameId: string, course: Course, ruleset: Ruleset = QUIET): RaceE
       falconessId: null,
       baseStats: S600,
       mood: 0,
-      styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+      positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
       frameId,
       parts: [],
       quirks: [],

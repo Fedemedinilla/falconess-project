@@ -9,11 +9,12 @@
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { loadContent } from "@falconess/content";
-import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
+import { POSITIONS, type RunInput, type SeasonState, type WorkshopOp } from "@falconess/schema";
 import {
   actionBlock,
   advanceSeason,
   blackBoxFor,
+  goalForTurn,
   rerollCost,
   restOptions,
   type SimContext,
@@ -27,6 +28,8 @@ import {
   frameLine,
   headerLine,
   pmPercent,
+  positionMenu,
+  raceWings,
   statsLine,
   trainingMenu,
   turnSummary,
@@ -128,6 +131,22 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
   }
 }
 
+/**
+ * A goal race week asks for her race position after the action (ADR-0008): Enter keeps the one of
+ * the wings she races with (no `position` in the input), 1-4 picks one.
+ */
+async function choosePosition(s: SeasonState, input: RunInput): Promise<RunInput> {
+  if (s.pendingEvent || input.kind === "start" || input.kind === "event:choose") return input;
+  if (!goalForTurn(ctx, s)) return input;
+  for (const line of positionMenu(ctx, s, raceWings(s, input))) console.log(line);
+  for (;;) {
+    const a = await ask("posición> ");
+    if (a === "") return input;
+    const position = POSITIONS[Number.parseInt(a, 10) - 1];
+    if (position) return { ...input, position };
+  }
+}
+
 async function main(): Promise<void> {
   const start: RunInput = { kind: "start", falconessId, hangar, parents: [] };
   let state = startSeason(ctx, seed, start);
@@ -137,7 +156,7 @@ async function main(): Promise<void> {
   );
   try {
     while (state.status === "active") {
-      const input = await chooseInput(state);
+      const input = await choosePosition(state, await chooseInput(state));
       try {
         const next = advanceSeason(ctx, state, input);
         inputs.push(input);

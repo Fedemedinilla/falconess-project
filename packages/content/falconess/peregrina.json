@@ -15,13 +15,13 @@
     "courage": 0.1,
     "intelligence": 0
   },
-  "styleAptitude": {
-    "dive": "A",
-    "hover": "C",
-    "glide": "B",
-    "ground": "E"
+  "positionAptitude": {
+    "lead": "B",
+    "pack": "E",
+    "stalk": "C",
+    "closer": "A"
   },
-  "preferredStyle": "dive",
+  "preferredPosition": "closer",
   "uniqueSkills": ["stoop-strike"],
   "sponsor": "koryu",
   "seasonGoals": [

@@ -2,7 +2,7 @@ import type { Rng } from "@falconess/rng";
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { changeFatigue, type Draft, draft, note, rngForInput, type SimContext } from "./context.js";
 import { resolveEvent, rollEvent } from "./events.js";
-import { goalForTurn, runGoalRace } from "./goals.js";
+import { goalForTurn, inputPosition, runGoalRace } from "./goals.js";
 import { gradeFor } from "./grade.js";
 import { rollCrewPresence } from "./hangar.js";
 import { actionBlock } from "./rules.js";
@@ -20,9 +20,12 @@ function endSeason(ctx: SimContext, d: Draft, reason: "completed" | "goal-failed
   note(d, reason === "goal-failed" ? "log.goal.failed" : "log.season.end");
 }
 
-/** Close the turn: race if due, roll an event, and either wait for the choice or move on. */
-function closeTurn(ctx: SimContext, d: Draft, rng: Rng): void {
-  const outcome = runGoalRace(ctx, d);
+/**
+ * Close the turn: race if due (in the position the week's input chose, ADR-0008), roll an event,
+ * and either wait for the choice or move on.
+ */
+function closeTurn(ctx: SimContext, d: Draft, rng: Rng, input: RunInput): void {
+  const outcome = runGoalRace(ctx, d, inputPosition(input));
   rollEvent(ctx, d, rng);
   if (d.pendingEvent) return; // the next input must be event:choose; the turn advances after it
   finishTurn(ctx, d, rng, outcome === "goal-failed");
@@ -74,13 +77,22 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
     return d;
   }
   if (input.kind === "event:choose") throw new InvalidInputError("no event is pending");
+  checkPosition(ctx, d, input);
 
   applyAction(ctx, d, input, rng);
-  closeTurn(ctx, d, rng);
+  closeTurn(ctx, d, rng, input);
   return d;
 }
 
 type ActionInput = Exclude<RunInput, { kind: "start" } | { kind: "event:choose" }>;
+
+/** A race position belongs to a goal race week (ADR-0008): any other week rejects it. */
+function checkPosition(ctx: SimContext, s: SeasonState, input: RunInput): void {
+  if (inputPosition(input) !== undefined && !goalForTurn(ctx, s))
+    throw new InvalidInputError(
+      `turn ${s.turn} has no goal race: a position is only for a race week`,
+    );
+}
 
 /**
  * The turn's action: an injured turn rests whatever the input (recovering `−fatigueCost.rest`, no
@@ -136,6 +148,7 @@ export function goalRaceState(
   if (input.kind === "start" || input.kind === "event:choose") return undefined;
   const d = draft(state);
   if (!goalForTurn(ctx, d)) return undefined;
+  checkPosition(ctx, d, input);
   const rng = rngForInput(d.seed, d.inputsApplied);
   d.inputsApplied += 1;
   applyAction(ctx, d, input, rng);

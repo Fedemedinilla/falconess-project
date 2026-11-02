@@ -171,12 +171,13 @@ function classification(runners: readonly Runner[], labels: RaceLabels): string[
     labels.runnerName(entry),
     formatTime(result),
     formatMargin(result),
+    `${labels.positionName(entry.position)} ${entry.positionAptitude}`,
     `${labels.frameName(entry.frameId)} · ${labels.manufacturerName(entry.manufacturer)} · ${labels.styleName(entry.style)}`,
   ]);
   return [
     "CLASIFICACIÓN",
     ...padTable(
-      [[" #", "corredora", "tiempo", "margen", "alas · fabricante · estilo"], ...rows],
+      [[" #", "corredora", "tiempo", "margen", "posición", "alas · fabricante · estilo"], ...rows],
       [0, 2, 3],
     ).map((l) => `  ${l}`),
   ];

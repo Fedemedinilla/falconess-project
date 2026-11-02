@@ -134,6 +134,8 @@ describe("the tips in words", () => {
           centrePm: -2,
           winnerCentrePm: 0,
           phase: 1,
+          position: "closer",
+          letter: "A",
         },
       },
       {
@@ -162,7 +164,7 @@ describe("the tips in words", () => {
       "2 aterrizajes -8.49 m/s; conserva 830 ‰ contra 890 ‰ de la ganadora",
       "sobrecalor 5 ticks con tope de calor 51.5",
       "el calor frenó el boost desde los 1450 m (tope 69.0); energía sin usar 30.0",
-      "ritmo +9/-44/-24 ‰ contra -43/+37/0 ‰, peor en el medio; centro -2 contra 0 ‰ · ≈2.31 s",
+      "ritmo +9/-44/-24 ‰ contra -43/+37/0 ‰, peor en el medio; centro -2 contra 0 ‰ (letra A en Remate) · ≈2.31 s",
       "energía sin usar 30.0: el plan no vio 40.0 (error -120 ‰)",
       `no se activaron ${labels.skillName("last-gasp")} y ${labels.skillName("corner-carver")} (p 857 ‰)`,
       "alas gastadas: 35 de 100 de durabilidad",

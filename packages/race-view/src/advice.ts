@@ -13,7 +13,7 @@
  * | `landings` | landings with a worse landing factor and technique than the winner | technique sets the landing loss (14.2) |
  * | `overheat` | overheated ticks, with a cap courage moves | courage raises the heat cap (8.2, 8.3) |
  * | `heatCapped` | heat at the boost gate in the final while energy was left at the line | courage raises the heat cap (8.2, 9.3) |
- * | `pace` | a slower pace judgement than the winner's, from a lower window centre | intelligence raises the centre of the pace window (10.2) |
+ * | `pace` | a slower pace judgement than the winner's, from a lower window centre | intelligence raises the centre of the pace window (10.2); the race position's letter scales it (10, ADR-0008) |
  * | `plan` | energy left at the line that the sprint plan did not see | intelligence narrows the plan error (10.3) |
  * | `skills` | skills whose trigger held and whose roll failed | intelligence sets activation (15.2) |
  * | `broken` | broken wings | the workshop repairs durability (8.4) |
@@ -28,6 +28,8 @@
  * break at `brokenSpeedPm`. Nothing is simulated again; words belong to each reader.
  */
 import {
+  type Aptitude,
+  type Position,
   type RaceEntry,
   type RaceGeometry,
   type RaceLog,
@@ -115,6 +117,12 @@ export type AdviceItem =
         readonly winnerCentrePm: number;
         /** The phase where her judgement was the slowest (0 start, 1 middle, 2 final). */
         readonly phase: number;
+        /**
+         * Her race position and its letter, which scales the Intelligence the centre follows
+         * (10, ADR-0008): a worse letter is a lower centre, whatever she trained.
+         */
+        readonly position: Position;
+        readonly letter: Aptitude;
       }
     >
   | Item<
@@ -429,6 +437,8 @@ function pace({ log, r, w }: Pair): AdviceItem | undefined {
       centrePm: d.paceCentrePm,
       winnerCentrePm: wd.paceCentrePm,
       phase,
+      position: r.entry.position,
+      letter: r.entry.positionAptitude,
     },
   };
 }

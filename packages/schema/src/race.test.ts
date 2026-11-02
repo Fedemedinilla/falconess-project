@@ -70,11 +70,12 @@ const entry: RaceEntry = {
   manufacturer: "none",
   rule: "none",
   style: "hover",
+  position: "stalk",
   passive: null,
   parts: [],
   quirks: [],
   mood: 0,
-  styleAptitude: "B",
+  positionAptitude: "B",
   stats: { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 },
   powerToWeight: 1000,
   energy: 100,
@@ -300,7 +301,7 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       falconessId: "peregrina",
       baseStats: { agility: 110, stamina: 80, technique: 95, courage: 100, intelligence: 85 },
       mood: 0,
-      styleAptitude: { dive: "A", hover: "C", glide: "B", ground: "E" },
+      positionAptitude: { lead: "B", pack: "E", stalk: "C", closer: "A" },
       frameId: "peregrina-signature",
       parts: [],
       quirks: [],
@@ -308,6 +309,11 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       durability: null,
     };
     expect(EntryInput.parse(input)).toEqual(input);
+    expect(EntryInput.parse({ ...input, position: "pack" })).toEqual({
+      ...input,
+      position: "pack",
+    });
+    expect(EntryInput.safeParse({ ...input, position: "dive" }).success).toBe(false);
     expect(EntryInput.safeParse({ ...input, durability: -1 }).success).toBe(false);
     expect(EntryInput.safeParse({ ...input, kind: "boss" }).success).toBe(false);
   });
@@ -323,6 +329,14 @@ describe("race schema (docs/race-engine.md 3, 16, 20)", () => {
       ["no entries", (l) => ({ ...l, entries: [], derived: [], results: [] })],
       ["nine entries", (l) => ({ ...l, entries: Array.from({ length: 9 }, () => entry) })],
       ["entry out of lane order", (l) => ({ ...l, entries: [{ ...entry, laneIndex: 1 }] })],
+      [
+        "entry without a race position (ADR-0008)",
+        (l) => ({ ...l, entries: [(({ position: _p, ...e }) => e)(entry)] }),
+      ],
+      [
+        "entry with the old letter field (ADR-0008)",
+        (l) => ({ ...l, entries: [{ ...entry, styleAptitude: "B" }] }),
+      ],
       ["derived missing", (l) => ({ ...l, derived: [] })],
       ["result place not in place order", (l) => ({ ...l, results: [{ ...result, place: 2 }] })],
       ["frames with detail results", (l) => ({ ...l, frames: fullLog().frames })],

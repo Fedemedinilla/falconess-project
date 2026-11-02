@@ -99,6 +99,8 @@ const EVERY: AdviceItem[] = [
       centrePm: -21,
       winnerCentrePm: 11,
       phase: 1,
+      position: "closer",
+      letter: "A",
     },
   },
   {

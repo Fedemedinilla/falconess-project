@@ -104,7 +104,7 @@ export function SeasonEnd() {
   };
 
   const aptitude = box.factors.aptitude;
-  const aptitudeName = gameText(`style.${aptitude.key}`);
+  const aptitudeName = gameText(`position.${aptitude.key}`);
 
   return (
     <div className={s.end}>

@@ -3,9 +3,9 @@ import type {
   Aptitude,
   FalconessStats,
   Mood,
+  Position,
+  PositionAptitudes,
   StatName,
-  Style,
-  StyleAptitudes,
 } from "@falconess/schema";
 import type { Ruleset } from "./rulesets/index.js";
 
@@ -27,18 +27,19 @@ export function moodMultiplier(ruleset: Ruleset, mood: Mood): number {
 
 /**
  * Stats "of the day", computed once before training or racing (BRIEF §5):
- * S_eff = floor(S_base × m_mood × a), where style aptitude scales intelligence
- * (agility carries no aptitude since ADR-0007 removed biomes). Integers in, integers out.
+ * S_eff = floor(S_base × m_mood × a), where the letter of the race position scales intelligence
+ * (ADR-0008: it was the wing style's; agility carries no aptitude since ADR-0007 removed biomes).
+ * Integers in, integers out.
  */
 export function effectiveStats(
   ruleset: Ruleset,
   base: FalconessStats,
   mood: Mood,
-  styleApt: StyleAptitudes,
-  style: Style,
+  positionApt: PositionAptitudes,
+  position: Position,
 ): FalconessStats {
   const m = moodMultiplier(ruleset, mood);
-  const s = aptitudeMult(ruleset, styleApt[style]);
+  const s = aptitudeMult(ruleset, positionApt[position]);
   return {
     agility: scale(base.agility, m),
     stamina: scale(base.stamina, m),

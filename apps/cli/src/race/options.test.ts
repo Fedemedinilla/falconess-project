@@ -19,6 +19,7 @@ describe("parseRaceArgs", () => {
         skills: [],
         stats: null,
         turn: 1,
+        position: null,
       },
     });
   });
@@ -41,8 +42,28 @@ describe("parseRaceArgs", () => {
         skills: ["last-gasp"],
         stats: 600,
         turn: 24,
+        position: null,
       },
     });
+  });
+
+  it("reads her race position (ADR-0008); without it she runs in her wings' default", () => {
+    for (const p of ["lead", "pack", "stalk", "closer"] as const)
+      expect(parse(`--falconess cernicala --position ${p}`).field).toMatchObject({
+        kind: "player",
+        falconessId: "cernicala",
+        position: p,
+      });
+    expect(parse("--falconess cernicala").field).toMatchObject({ position: null });
+    expect(() => parse("--position front")).toThrow(
+      '--position must be one of lead, pack, stalk, closer, got "front"',
+    );
+    expect(() => parse("--neutral --position lead")).toThrow(
+      "--neutral cannot be combined with --position",
+    );
+    expect(() => parse("--entries f.json --position lead")).toThrow(
+      "--entries cannot be combined with --position",
+    );
   });
 
   it("reads --entries and --neutral fields", () => {

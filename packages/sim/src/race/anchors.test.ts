@@ -43,7 +43,7 @@ function frame(frameId: string, course: Course, st = stats(), lane = 0): RaceEnt
     falconessId: null,
     baseStats: st,
     mood: 0,
-    styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "B" },
+    positionAptitude: { lead: "B", pack: "B", stalk: "B", closer: "B" },
     frameId,
     parts: [],
     quirks: [],

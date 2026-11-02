@@ -1,5 +1,5 @@
 import { fnv1a32 } from "@falconess/rng";
-import type { Aptitude, BlackBox, Grade, RunInput, Style } from "@falconess/schema";
+import type { Aptitude, BlackBox, Grade, Position, RunInput } from "@falconess/schema";
 import { aptitudeRank, highestStat, statTotal } from "../stats.js";
 import type { Draft, SimContext } from "./context.js";
 
@@ -34,6 +34,12 @@ export function stableInputsHash(inputs: readonly RunInput[]): string {
   return fnv1a32(JSON.stringify(inputs)).toString(16).padStart(8, "0");
 }
 
+/**
+ * The order the box reads her letters in, so a tie goes to the first: the wing-style order it used
+ * before the letters moved to the positions (dive, hover, glide, ground; ADR-0008).
+ */
+const BOX_TIE_ORDER: readonly Position[] = ["closer", "stalk", "lead", "pack"];
+
 /** Inheritance record (BRIEF §8, caja negra). Produced once at season end. */
 export function createBlackBox(ctx: SimContext, d: Draft, inputs: readonly RunInput[]): BlackBox {
   const stat = highestStat(d.stats);
@@ -41,12 +47,12 @@ export function createBlackBox(ctx: SimContext, d: Draft, inputs: readonly RunIn
   const stars = v >= 1000 ? 3 : v >= 800 ? 2 : 1;
 
   let best: BlackBox["factors"]["aptitude"] | undefined;
-  const consider = (key: Style, letter: Aptitude) => {
+  const consider = (key: Position, letter: Aptitude) => {
     const s = letter === "S" ? 3 : letter === "A" ? 2 : 1;
     if (!best || aptitudeRank(letter) > aptitudeRank(best.letter))
-      best = { kind: "style", key, letter, stars: s };
+      best = { kind: "position", key, letter, stars: s };
   };
-  for (const [k, l] of Object.entries(d.styleAptitude) as [Style, Aptitude][]) consider(k, l);
+  for (const k of BOX_TIE_ORDER) consider(k, d.positionAptitude[k]);
 
   const wins = new Map<string, number>();
   for (const r of d.raceResults) {
@@ -69,8 +75,8 @@ export function createBlackBox(ctx: SimContext, d: Draft, inputs: readonly RunIn
     factors: {
       stat: { stat, stars },
       aptitude: best ?? {
-        kind: "style",
-        key: ctx.content.getFalconess(d.falconessId).preferredStyle,
+        kind: "position",
+        key: ctx.content.getFalconess(d.falconessId).preferredPosition,
         letter: "B",
         stars: 1,
       },

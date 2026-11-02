@@ -8,7 +8,7 @@ import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
-import { statIcon, styleIcon } from "../ui/icons";
+import { statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { SeasonStrip } from "../ui/SeasonStrip";
@@ -62,11 +62,8 @@ function Roster() {
                 </div>
               ))}
               <div className={s.fact}>
-                <dt>{ui("ui.home.roster.style")}</dt>
-                <dd>
-                  <Icon name={styleIcon(f.preferredStyle)} />
-                  {gameText(`style.${f.preferredStyle}`)}
-                </dd>
+                <dt>{ui("ui.home.roster.position")}</dt>
+                <dd>{gameText(`position.${f.preferredPosition}`)}</dd>
               </div>
               {signature && (
                 <div className={cx(s.fact, s.signature)}>

@@ -1,10 +1,10 @@
-import { type SeasonState, STYLES } from "@falconess/schema";
+import { POSITIONS, type SeasonState } from "@falconess/schema";
 import { learnCap, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
 import { formatFixed, formatInt, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
-import { moodIcon, statIcon, styleIcon } from "../ui/icons";
+import { moodIcon, statIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
 import { StatBar } from "../ui/StatBar";
@@ -244,22 +244,19 @@ export type TurnProfileProps = {
   className?: string | undefined;
 };
 
-/** What changes slowly: aptitude letters by style, and the skills learned. */
+/** What changes slowly: aptitude letters by race position (ADR-0008), and the skills learned. */
 export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
   const cap = learnCap(ctx, state);
   return (
     <Panel title={ui("ui.turn.profile")} className={className}>
       <div className={s.profile}>
         <div className={s.aptitudes}>
-          <p className={s.aptLabel}>{ui("ui.turn.aptitude.style")}</p>
+          <p className={s.aptLabel}>{ui("ui.turn.aptitude.position")}</p>
           <ul className={s.letters}>
-            {STYLES.map((st) => (
-              <li key={st}>
-                <span>
-                  <Icon name={styleIcon(st)} />
-                  {gameText(`style.${st}`)}
-                </span>
-                <Letter letter={state.styleAptitude[st] ?? "G"} />
+            {POSITIONS.map((p) => (
+              <li key={p}>
+                <span>{gameText(`position.${p}`)}</span>
+                <Letter letter={state.positionAptitude[p] ?? "G"} />
               </li>
             ))}
           </ul>

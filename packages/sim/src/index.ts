@@ -39,7 +39,7 @@ export {
 export { advanceSeason, goalRaceState, InvalidInputError } from "./season/advance.js";
 export { type MoodCause, rngForInput, type SimContext, seasonContext } from "./season/context.js";
 export { eligibleEvents } from "./season/events.js";
-export { goalForTurn } from "./season/goals.js";
+export { goalForTurn, inputPosition } from "./season/goals.js";
 export { createBlackBox, gradeFor, seasonScore, stableInputsHash } from "./season/grade.js";
 export { bondLevel, hangarManufacturers } from "./season/hangar.js";
 export { blackBoxFor, replaySeason } from "./season/replay.js";

@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { FalconessStats, Slug, StatName, Style, StyleAptitudes, TextKey, Version } from "./core.js";
+import {
+  FalconessStats,
+  Position,
+  PositionAptitudes,
+  Slug,
+  StatName,
+  TextKey,
+  Version,
+} from "./core.js";
 
 export const SeasonGoal = z.strictObject({
   turn: z.number().int().min(1).max(48),
@@ -18,8 +26,10 @@ export const Falconess = z.strictObject({
   species: z.string().min(1),
   baseStats: FalconessStats,
   growth: z.record(StatName, z.number().min(0).max(0.3)),
-  styleAptitude: StyleAptitudes,
-  preferredStyle: Style,
+  /** One letter per race position (ADR-0008); it scales her Intelligence in that position. */
+  positionAptitude: PositionAptitudes,
+  /** Her best position: the season starts on the first hangar wings whose default it is. */
+  preferredPosition: Position,
   uniqueSkills: z.array(Slug).max(2),
   sponsor: Slug,
   seasonGoals: z.array(SeasonGoal).min(1).max(8),

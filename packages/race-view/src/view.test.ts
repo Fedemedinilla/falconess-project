@@ -28,6 +28,7 @@ function race(courseId: string, seed: string, detail: "full" | "results" = "full
     skills: ["stoop-strike", "last-gasp"],
     stats: 400,
     turn: 30,
+    position: null,
   });
   return simulateRace(ctx.ruleset, entries, course, seed, { detail });
 }
@@ -46,6 +47,7 @@ describe("buildField", () => {
       skills: [],
       stats: null,
       turn: 1,
+      position: null,
     });
     expect(entries).toHaveLength(course.entries);
     expect(entries.map((e) => e.laneIndex)).toEqual(entries.map((_, i) => i));
@@ -76,6 +78,7 @@ describe("buildField", () => {
       skills: ["scavenger-stride"],
       stats: null,
       turn: 1,
+      position: null,
     };
     expect(() => playerEntryInput(ctx.content, spec)).toThrow(FieldError);
     const offered = learnableSkills(ctx.content, "peregrina");

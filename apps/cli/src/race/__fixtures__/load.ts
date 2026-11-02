@@ -15,7 +15,10 @@ import { RaceLog } from "@falconess/schema";
  * factor of the engine that wrote them (its broken wings went through the PW alone). They also
  * predate ADR-0007: `geometry.biome` and `derived[].biomeAptitude` were removed by hand, the
  * course ids lost their `desert-` prefix and the canyon `param` (its wind) became 0; the canyon
- * race itself is still the one the windy engine ran.
+ * race itself is still the one the windy engine ran. And they predate ADR-0008: each entry gained
+ * `position` (the default of its style) and its letter field `styleAptitude` became
+ * `positionAptitude` by hand (the `--entries` files moved each letter to its style's position),
+ * the race the engine ran in those positions unchanged.
  */
 export const RACE_FIXTURES = {
   /** sprint, player field: Peregrina at 600 with three actives against turn-46 rivals. */

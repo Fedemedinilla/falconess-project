@@ -101,7 +101,7 @@ function frameInput(
     falconessId: null,
     baseStats: stats,
     mood: 0,
-    styleAptitude: { dive: "B", hover: "B", glide: "B", ground: "A" },
+    positionAptitude: { lead: "B", pack: "A", stalk: "B", closer: "B" },
     frameId,
     parts,
     quirks: [],

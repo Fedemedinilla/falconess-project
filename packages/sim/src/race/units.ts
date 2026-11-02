@@ -1,6 +1,8 @@
 import {
   BOOST_MODES,
   type BoostMode,
+  POSITIONS,
+  type Position,
   RACE_RULES,
   type RaceRule,
   SEGMENT_TYPES,
@@ -88,6 +90,16 @@ export const STYLE_GROUND = 3;
 
 export function styleCode(style: Style): number {
   return STYLES.indexOf(style);
+}
+
+// --- race positions, `POSITIONS` order (ADR-0008: they decide how she spends energy, 9.4) -----
+export const POS_LEAD = 0;
+export const POS_PACK = 1;
+export const POS_STALK = 2;
+export const POS_CLOSER = 3;
+
+export function positionCode(position: Position): number {
+  return POSITIONS.indexOf(position);
 }
 
 // --- rules, `RACE_RULES` order (3.4: RULE_NONE = 5) ------------------------------------------------
