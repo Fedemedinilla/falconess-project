@@ -204,6 +204,34 @@ goal's consequence, the crews' note, the race legend) follow the default.
   clock's frames without React renders; React hears a coarse snapshot for the controls and the
   live order. "Pelotón" frames the stretch where the runners are, "Pista entera" the course.
 
+## Race position (ADR-0008)
+
+Before a race the player picks how she spends energy: ▲ Punta, ■ Pelotón, ◆ Acecho, ▼ Remate
+(`ui/PositionMark.tsx` draws the shapes, so the four have one size on every system; like an
+emoji, a shape never stands without the position's name). The card
+(`screens/shared/PositionPicker.tsx`) shows the four, front to back, each with her letter in it
+and its one-line `position.<id>.brief`; the position of the wings she races with comes chosen
+and says «La de sus alas». Tapping another chooses it; tapping her wings' one again is no choice
+at all (the race follows the wings she races with). Native radios: arrows move, and the Turn
+screen's digit keys are left alone inside them. Options are 44 px targets or more, two by two on
+a phone and in one row from a 40rem container (never three and one).
+
+- **Season** (`Turn`, `TurnActions`): on a goal race week (`model/position.ts` `isRaceWeek`: the
+  week's goal is due, no event waits, the season is on) the card sits right above the actions;
+  the week's action confirms it, and `withPosition` puts `position` on that input (none without
+  a choice, so the save stays what it was). The workshop of that week carries it too and says
+  which race runs after the order and in which position (the wings it leaves her on, when none
+  was chosen). A choice holds for its week only.
+- **«Lo que pasó»** leads the race's context line with the position she ran in (from
+  `raceResults[].position`), in the accent when it was not her wings'.
+- **Free race**: the card and «Correr la carrera» stay under the summary when the form folds, so
+  a rerun in another position is two taps; the summary and the `pnpm sim:race` line
+  (`--position`) name a chosen position. Rivals keep their wings' position.
+- **Replay** (`RaceReplay`): a line over the lanes says the player's position, whether it is her
+  wings' one or chosen before the gun, and her letter in it.
+- Aptitude rows (status panel, new season, roster, SeasonEnd's black box) draw the shape before
+  each position's name.
+
 ## Published page contract
 
 `build:artifact` post-processes the single-file build (`scripts/artifact.ts`) and fails when the
@@ -234,6 +262,12 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
   stats and vigor, and the loaded run plays on identically; "Continuar" after a reload; undo;
   storage blocked and the copy fallback (the text is selected).
 - `free-race.spec.ts`: the default race, another course and seed, the neutral field.
+- `position.spec.ts`: Caracara's T12 race week (v1, seed "a"): her wings' position comes chosen
+  and labelled, another one tapped goes on the week's action (the save's input carries it), and
+  «Lo que pasó» and the replay name it; tapping her wings' one again leaves the input bare; the
+  free race in another position (summary, `--position`, replay); at 360 and 430 px the four
+  options are 44 px targets and nothing scrolls sideways. `position-shots.spec.ts` shoots the card,
+  the workshop note, the result, the replay and the free race (`E2E_SHOTS=1`, never in CI).
 - `advice.spec.ts`: a loaded run whose T12 race ends 7th: «Lo que pasó» with the place, the goal
   and the tip (brief and full; Enter on its switch switches, it does not close), the same tip atop
   the replay's "Por qué", none for the winner, and back on the season the week stays read, also

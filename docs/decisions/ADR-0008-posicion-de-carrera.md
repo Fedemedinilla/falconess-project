@@ -2,13 +2,13 @@
 
 - Estado: **aprobado por el dueño (2026-11-02, paso 1 de la reconstrucción de las carreras); implementado
   en la rama `position-step1`, pendiente de que el líder lo integre**. La medición queda para la etapa
-  siguiente («Medición», sin llenar). La tarjeta de la web es otra etapa.
+  siguiente («Medición», sin llenar). La tarjeta de la web llegó en una etapa aparte (abajo).
 - Fecha: 2026-11-02
 - Alcance: schema (`core`, `falconess`, `season`, `build`, `race`, `blackbox`), content (las tres
   Falconess, `text/es.json`), sim (controlador, tablas de carrera, `freezeEntry`, campo de rivales,
-  temporada, caja negra, golden), race-view, cli, web (solo lo que el cambio de nombres obliga),
-  docs (`race-engine.md` §3, §9, §10, §11, §20, §21, §23, §24; BRIEF §5; `formulas.md`;
-  `commands.md`).
+  temporada, caja negra, golden), race-view, cli, web (los nombres; la tarjeta antes de la
+  carrera, en una etapa aparte), docs (`race-engine.md` §3, §9, §10, §11, §20, §21, §23, §24;
+  BRIEF §5; `formulas.md`; `commands.md`).
 - Contexto de diseño: `docs/design/temporada-v3.md`, T21, «Paso 1 aprobado». Opción A del dueño
   para la letra de aptitud: **la letra pasa a la posición**.
 
@@ -129,8 +129,14 @@ nuevas, y sin recalibrar ninguna constante.
   (Enter = la de sus alas), con su letra y su texto corto; la clasificación de `sim:race` muestra
   posición y letra de cada corredora y la línea de carrera de la semana dice en qué posición corrió.
   El consejo de Inteligencia nombra la letra y la posición.
-- **Web:** una tarjeta de un toque antes de la carrera (etapa aparte). Mientras tanto la web corre en
-  la posición de las alas y muestra las letras por posición donde antes mostraba las de estilo.
+- **Web:** una tarjeta de un toque antes de la carrera, con las cuatro posiciones de adelante hacia
+  atrás (▲ Punta, ■ Pelotón, ◆ Acecho, ▼ Remate), su letra en cada una y una línea de cómo gasta;
+  la de sus alas viene elegida y lo dice («La de sus alas»). En la semana de carrera va justo
+  arriba de las acciones y la acción de la semana la confirma (el taller de esa semana la lleva
+  también y dice en qué posición se corre después); en la carrera libre queda a la vista con
+  «Correr la carrera» aunque el formulario esté plegado. Volver a tocar la de sus alas no es
+  elegir: la entrada queda sin `position`, como antes. «Lo que pasó» y la repetición dicen en qué
+  posición corrió y si era la de sus alas; las filas de aptitud llevan la forma de cada posición.
 
 ## Invariancia (prueba)
 
