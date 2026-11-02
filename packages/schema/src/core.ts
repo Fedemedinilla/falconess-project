@@ -52,12 +52,12 @@ export const POSITIONS = Position.options;
  * The position each wing style raced before ADR-0008, and the default when none is chosen: a race
  * in these positions is the race of ruleset v1 as it was.
  */
-export const DEFAULT_POSITION: Readonly<Record<Style, Position>> = {
+export const DEFAULT_POSITION: Readonly<Record<Style, Position>> = Object.freeze({
   dive: "closer",
   hover: "stalk",
   glide: "lead",
   ground: "pack",
-};
+});
 
 export const SegmentType = z.enum([
   "flat",

@@ -249,6 +249,8 @@ describe("race positions (ADR-0008)", () => {
     expect(Position.safeParse("dive").success).toBe(false);
     expect(STYLES.map((s) => DEFAULT_POSITION[s])).toEqual(["closer", "stalk", "lead", "pack"]);
     expect(new Set(Object.values(DEFAULT_POSITION))).toEqual(new Set(POSITIONS));
+    // every default race (and the invariance proof) reads it: frozen like the rulesets
+    expect(Object.isFrozen(DEFAULT_POSITION)).toBe(true);
   });
 
   it("a Falconess has one letter per position and a preferred position; the style fields are gone", () => {
