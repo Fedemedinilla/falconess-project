@@ -1,8 +1,8 @@
 # ADR-0008: Posición de carrera elegida antes de largar
 
 - Estado: **aprobado por el dueño (2026-11-02, paso 1 de la reconstrucción de las carreras); implementado
-  en la rama `position-step1`, pendiente de que el líder lo integre**. La medición queda para la etapa
-  siguiente («Medición», sin llenar). La tarjeta de la web llegó en una etapa aparte (abajo).
+  en la rama `position-step1`, pendiente de que el líder lo integre**. La medición y la tarjeta de la web
+  llegaron en etapas aparte (abajo).
 - Fecha: 2026-11-02
 - Alcance: schema (`core`, `falconess`, `season`, `build`, `race`, `blackbox`), content (las tres
   Falconess, `text/es.json`), sim (controlador, tablas de carrera, `freezeEntry`, campo de rivales,
@@ -165,9 +165,35 @@ nuevas, y sin recalibrar ninguna constante.
 
 ## Medición
 
-_Pendiente: se llena después de la etapa de medición._ Preguntas aprobadas por el dueño: ninguna
-posición gana siempre (18-32 % con stats iguales), la mejor cambia según la pista, cuánto pesan las
-rivales y si elegir otra posición a veces paga.
+Medido sobre el motor de `e7e1a6c` (ruleset v2; las tres pistas; dos bases de semillas en cada
+medida; Wilson para porcentajes, intervalo pareado para diferencias en la misma carrera). Informe
+completo, con los scripts y los datos crudos: `.work/pos1/measure/informe-medicion.md` (local).
+
+| Pregunta del dueño                                                                     | Resultado                                                                                                                                                                                                                                                                                             | Veredicto  |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Ninguna posición gana siempre (18-32 % con stats iguales, ninguna > 38 % en una pista) | Campos de 8 con 2 por posición y las alas rotadas (18 000 carreras por pista y base): 21,0-28,7 % en todas; media de las 3 pistas Punta 24, Pelotón 23, Acecho 26, Remate 27                                                                                                                          | Pasa       |
+| La mejor cambia según la pista                                                         | Remate es la mejor o empata en las tres (con Acecho en sprint, 28-29 %); ridge sale pareja (24-26 %); Pelotón es la peor en las tres. Por ala, solo Planeo cambia (sprint Remate, canyon Punta)                                                                                                       | No pasa    |
+| Cuánto pesan las rivales                                                               | La mejor posición para un campo concreto difiere de la mejor sin mirar el campo en 0-1 % de los campos confirmados fuera de muestra (4 % con 7 rivales de las mismas alas; 0-0,1 % en carreras objetivo reales); elegir por campo gana 0 puntos                                                       | Casi nada  |
+| Si elegir otra posición a veces paga                                                   | En las carreras objetivo de las tres Falconess (letras y stats reales), la posición de sus alas, donde tienen su A, es la mejor o empata en las 9 combinaciones Falconess × pista. Otra posición da mejor puesto en el 2-3 % de las carreras y peor en todas en el 9 %; salva un objetivo en el 0,1 % | Casi nunca |
+
+Además:
+
+- **La letra decide la elección.** Con todas las letras en B, Caracara y Cernícala corren casi igual
+  en las cuatro posiciones (±2 puntos de victoria); Peregrina sigue necesitando Remate (−6 a −12
+  puntos en sprint con otra): el empuje en picada de la final rinde si guarda energía para ella.
+- **Matriz ala × posición** (stats y letras iguales): juntando las pistas, las 16 celdas quedan
+  entre 10,4 y 14,9 % (media 12,5 %). Por pista pasan de 1,5 × la media las cuatro de Rasante en
+  ridge (≈ 20 %, el ala) y Picada-Remate en sprint (20,5 %); bajan de 8 % Rasante-Punta y
+  Rasante-Pelotón en sprint. Las alas pesan más que la posición: Rasante gana el 39 % en ridge y el
+  16 % en sprint.
+- **Temporada.** Con las posiciones por defecto, `pnpm sim:season-batch -- --runs 500` da la misma
+  salida byte a byte que `3cd5e13`, en v2 y en v1. Ninguna tabla de posiciones por pista mejora la
+  temporada de referencia: la de más victorias por pista es la de defecto salvo Cernícala en sprint
+  (Punta), que pierde 1-2 puntos de la parte ≥ B; una mala elección cuesta hasta 12 puntos
+  (Peregrina en la peor posición de cada pista: 80 → 68 % con B o más).
+- Ninguna constante cambió. Lo que sugiere para el paso 2 (a decidir por el dueño): hoy la
+  posición tiene poco peso propio y la de las alas siempre es la mejor, así que elegir solo puede
+  costar.
 
 ## Consecuencias
 
