@@ -96,7 +96,7 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
   const full = report.ops.length >= MAX_WORKSHOP_OPS;
   // the position of the race after the order: the one chosen, else the wings' it leaves her on
   const racePosition =
-    race && (race.position ?? wingsPosition(content, raceFrame(state.equippedFrame, report.ops)));
+    race && (race.position ?? wingsPosition(content, raceFrame(ctx.ruleset, state, report.ops)));
   const rerollable = rerollableFrames(ctx, state);
   const nextReroll = nextRerollCost(ctx, state, plan);
   const skills = learnableSkills(ctx, state);

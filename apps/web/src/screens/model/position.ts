@@ -13,7 +13,7 @@ import {
   type SeasonState,
   type WorkshopOp,
 } from "@falconess/schema";
-import { goalForTurn, type SimContext } from "@falconess/sim";
+import { actionBlock, goalForTurn, type Ruleset, type SimContext } from "@falconess/sim";
 
 /** A week's action input: the only inputs that carry a race position. */
 export type WeekActionInput = Exclude<RunInput, { kind: "start" | "event:choose" }>;
@@ -25,10 +25,16 @@ export function wingsPosition(content: ContentIndex, frameId: string): Position 
 
 /**
  * The frame she races with after a week's workshop ops: the last one they equip, else the one
- * equipped now (the sim races after the action; apps/cli `raceWings` reads it the same way).
+ * equipped now (the sim races after the action; apps/cli `raceWings` reads it the same way). An
+ * injured week rests whatever the input, so its ops change no wings.
  */
-export function raceFrame(equipped: string, ops: readonly WorkshopOp[] = []): string {
-  let frameId = equipped;
+export function raceFrame(
+  ruleset: Ruleset,
+  state: Pick<SeasonState, "equippedFrame" | "injuryTurns" | "fatigue">,
+  ops: readonly WorkshopOp[] = [],
+): string {
+  let frameId = state.equippedFrame;
+  if (actionBlock(ruleset, state, "workshop") === "injured") return frameId;
   for (const op of ops) if (op.op === "equip-frame") frameId = op.frameId;
   return frameId;
 }

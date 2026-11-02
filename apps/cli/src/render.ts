@@ -5,11 +5,13 @@ import {
   type EventEffects,
   type Mood,
   POSITIONS,
+  type Position,
   type RunInput,
   type SeasonState,
   type TrainingKind,
 } from "@falconess/schema";
 import {
+  actionBlock,
   facilityLevel,
   goalForTurn,
   nextTrainingDriftPm,
@@ -111,10 +113,12 @@ export function frameLine(ctx: SimContext, s: SeasonState): string {
 
 /**
  * The wings she races with this week: the last frame a workshop input equips, else the equipped
- * one. Their style gives the default race position (ADR-0008).
+ * one. An injured week rests whatever the input, so its workshop changes nothing. Their style
+ * gives the default race position (ADR-0008).
  */
-export function raceWings(s: SeasonState, input: RunInput): string {
+export function raceWings(ctx: SimContext, s: SeasonState, input: RunInput): string {
   if (input.kind !== "workshop") return s.equippedFrame;
+  if (actionBlock(ctx.ruleset, s, input.kind) === "injured") return s.equippedFrame;
   let frameId = s.equippedFrame;
   for (const op of input.ops) if (op.op === "equip-frame") frameId = op.frameId;
   return frameId;
@@ -137,6 +141,23 @@ export function positionMenu(ctx: SimContext, s: SeasonState, frameId: string): 
         `    ${i + 1}. ${c.t(`position.${p}`)} ${s.positionAptitude[p]}${p === wings ? " (alas)" : ""} · ${c.t(`position.${p}.brief`)}`,
     ),
   ];
+}
+
+/**
+ * The answer to `positionMenu`: Enter, or the number of the wings' own position, is no choice
+ * ("wings": the input stays without `position`, as on the web's card); 1-4 picks another one;
+ * anything else is undefined (ask again).
+ */
+export function positionAnswer(
+  ctx: SimContext,
+  frameId: string,
+  answer: string,
+): Position | "wings" | undefined {
+  if (answer === "") return "wings";
+  if (!/^[1-4]$/.test(answer)) return undefined;
+  const position = POSITIONS[Number(answer) - 1];
+  if (position === undefined) return undefined;
+  return position === DEFAULT_POSITION[ctx.content.getFrame(frameId).style] ? "wings" : position;
 }
 
 /** A per-mille chance as a percent with at most one decimal ("1.6 %", "12 %"). */

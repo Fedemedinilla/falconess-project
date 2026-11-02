@@ -126,7 +126,8 @@ nuevas, y sin recalibrar ninguna constante.
   `inputPosition(input)` permiten que un visor reconstruya la misma carrera.
 - **CLI:** `pnpm sim:race -- --position lead|pack|stalk|closer` (con el campo de jugador; las
   rivales mantienen la suya); `pnpm play` la pregunta en la semana de carrera, después de la acción
-  (Enter = la de sus alas), con su letra y su texto corto; la clasificación de `sim:race` muestra
+  (Enter, o el número de la de sus alas, = la de sus alas, sin `position` en la entrada, como en la
+  web), con su letra y su texto corto; la clasificación de `sim:race` muestra
   posición y letra de cada corredora y la línea de carrera de la semana dice en qué posición corrió.
   El consejo de Inteligencia nombra la letra y la posición.
 - **Web:** una tarjeta de un toque antes de la carrera, con las cuatro posiciones de adelante hacia

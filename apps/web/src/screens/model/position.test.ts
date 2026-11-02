@@ -45,15 +45,18 @@ describe("the pre-race position (ADR-0008)", () => {
       expect(wingsPosition(content, frame.id)).toBe(DEFAULT_POSITION[frame.style]);
   });
 
-  it("races with the last frame a workshop order equips", () => {
-    expect(raceFrame("shiden")).toBe("shiden");
-    expect(raceFrame("shiden", [{ op: "repair" }])).toBe("shiden");
-    expect(
-      raceFrame("shiden", [
-        { op: "equip-frame", frameId: "mule" },
-        { op: "equip-frame", frameId: "falke" },
-      ]),
-    ).toBe("falke");
+  it("races with the last frame a workshop order equips, none on an injured week", () => {
+    const at = { equippedFrame: "shiden", injuryTurns: 0, fatigue: 0 };
+    const swap = [
+      { op: "equip-frame", frameId: "mule" },
+      { op: "equip-frame", frameId: "falke" },
+    ] as const;
+    expect(raceFrame(RULESET_V2, at)).toBe("shiden");
+    expect(raceFrame(RULESET_V2, at, [{ op: "repair" }])).toBe("shiden");
+    expect(raceFrame(RULESET_V2, at, swap)).toBe("falke");
+    // an injured week rests whatever the input: the wings stay
+    expect(raceFrame(RULESET_V2, { ...at, injuryTurns: 2 }, swap)).toBe("shiden");
+    expect(raceFrame(RULESET_V1, { ...at, injuryTurns: 1 }, swap)).toBe("shiden");
   });
 
   it("lists the four positions front to back with her letters and her wings' one", () => {

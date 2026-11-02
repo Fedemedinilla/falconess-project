@@ -16,6 +16,7 @@ import {
   headerLine,
   moodLabel,
   pmPercent,
+  positionAnswer,
   positionMenu,
   raceWings,
   trainingMenu,
@@ -211,10 +212,26 @@ describe("the race position in the text season (ADR-0008)", () => {
       kind: "workshop",
       ops: [{ op: "equip-frame", frameId: "mule" }],
     };
-    expect(raceWings(s, workshop)).toBe("mule");
-    expect(raceWings(s, { kind: "rest" })).toBe(s.equippedFrame);
+    expect(raceWings(V2, s, workshop)).toBe("mule");
+    expect(raceWings(V2, s, { kind: "rest" })).toBe(s.equippedFrame);
+    // an injured week rests whatever the input: its workshop changes no wings
+    expect(raceWings(V2, { ...s, injuryTurns: 1 }, workshop)).toBe(s.equippedFrame);
     expect(positionMenu(V2, s, "mule")[0]).toContain("(Enter: Pelotón, la de sus alas)");
     expect(positionMenu(V2, startSeason(V2, "pos", START), "shiden")).toEqual([]);
+  });
+
+  it("reads Enter or the wings' own number as no choice, 1-4 as another one, else asks again", () => {
+    const s = atGoal(V2);
+    const wings = s.equippedFrame; // Picada: Remate
+    expect(positionAnswer(V2, wings, "")).toBe("wings");
+    expect(positionAnswer(V2, wings, "4")).toBe("wings");
+    expect(positionAnswer(V2, wings, "1")).toBe("lead");
+    expect(positionAnswer(V2, wings, "2")).toBe("pack");
+    expect(positionAnswer(V2, wings, "3")).toBe("stalk");
+    expect(positionAnswer(V2, "mule", "2")).toBe("wings"); // Rasante: Pelotón
+    expect(positionAnswer(V2, "mule", "4")).toBe("closer");
+    for (const bad of ["0", "5", "12", "1a", "x", "-1"])
+      expect(positionAnswer(V2, wings, bad)).toBeUndefined();
   });
 
   it("names the position she raced in on the week's race line", () => {

@@ -9,7 +9,7 @@
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { loadContent } from "@falconess/content";
-import { POSITIONS, type RunInput, type SeasonState, type WorkshopOp } from "@falconess/schema";
+import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
 import {
   actionBlock,
   advanceSeason,
@@ -28,6 +28,7 @@ import {
   frameLine,
   headerLine,
   pmPercent,
+  positionAnswer,
   positionMenu,
   raceWings,
   statsLine,
@@ -133,17 +134,19 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
 
 /**
  * A goal race week asks for her race position after the action (ADR-0008): Enter keeps the one of
- * the wings she races with (no `position` in the input), 1-4 picks one.
+ * the wings she races with, 1-4 picks one. Picking the wings' own one is no choice either (no
+ * `position` in the input), as on the web's card.
  */
 async function choosePosition(s: SeasonState, input: RunInput): Promise<RunInput> {
   if (s.pendingEvent || input.kind === "start" || input.kind === "event:choose") return input;
   if (!goalForTurn(ctx, s)) return input;
-  for (const line of positionMenu(ctx, s, raceWings(s, input))) console.log(line);
+  const frameId = raceWings(ctx, s, input);
+  for (const line of positionMenu(ctx, s, frameId)) console.log(line);
   for (;;) {
-    const a = await ask("posición> ");
-    if (a === "") return input;
-    const position = POSITIONS[Number.parseInt(a, 10) - 1];
+    const position = positionAnswer(ctx, frameId, await ask("posición> "));
+    if (position === "wings") return input;
     if (position) return { ...input, position };
+    console.log("  1-4 o Enter");
   }
 }
 

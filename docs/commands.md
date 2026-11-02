@@ -22,8 +22,9 @@ this list and the scripts in sync). Arguments after `--` go to the script.
   week summary and, next to each training, its gains, vigor cost and failure, injury and mood-drift
   chance from the sim; after a goal race finished 3rd or worse it says what to train (race-view's
   `raceAdvice`). On a goal race week it asks, after the action, for her race position (Punta,
-  Pelotón, Acecho, Remate, with her letter in each; Enter keeps the one of the wings she races
-  with, ADR-0008) and the week's race line names the position she ran. `--ruleset` as in
+  Pelotón, Acecho, Remate, with her letter in each; Enter, or the number of her wings' own one,
+  keeps the one of the wings she races with and saves no `position`, as the web does, ADR-0008)
+  and the week's race line names the position she ran. `--ruleset` as in
   `pnpm sim`; on exit it prints the run in the web's save format, ruleset version included.
 - `pnpm sim:race -- --seed 1 --course ridge`: one race, classification (with each runner's
   position and letter), timeline and events; the "why" of each runner ends with what to train
