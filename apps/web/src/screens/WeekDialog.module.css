@@ -114,6 +114,19 @@
   font-size: var(--fs-sm);
   line-height: 1.4;
   color: var(--ink-2);
+  /* no lone "s" of the time on a line of its own */
+  text-wrap: pretty;
+}
+
+/* the race position she ran in; one the player chose (not her wings') in the accent */
+.position {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.positionChosen {
+  color: var(--accent-text);
 }
 
 /* --- changes ------------------------------------------------------------------------------------- */

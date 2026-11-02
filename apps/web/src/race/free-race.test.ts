@@ -1,4 +1,5 @@
-import { buildField, contentLabels } from "@falconess/race-view";
+import { buildField, contentLabels, signatureFrameOf } from "@falconess/race-view";
+import { DEFAULT_POSITION, POSITIONS } from "@falconess/schema";
 import {
   freezeEntry,
   generateField,
@@ -11,7 +12,9 @@ import { simContext } from "../content/load";
 import {
   cliArgs,
   defaultForm,
+  type FreeRaceForm,
   fieldSpecOf,
+  formWings,
   frameChoices,
   intField,
   normalizeForm,
@@ -50,6 +53,33 @@ describe("the free race form", () => {
     expect(runFreeRace(ctx, form)).toEqual(cli);
     expect(cliArgs(form)).toBe(
       "pnpm sim:race -- --seed fr-7 --course ridge --falconess peregrina --parts koryu-firmware --skills stoop-strike --stats 420 --turn 20",
+    );
+  });
+
+  it("runs her in the position the card chose, else in her wings' one (ADR-0008)", () => {
+    const wings = formWings(ctx.content, base);
+    expect(wings).toBe(
+      DEFAULT_POSITION[
+        ctx.content.getFrame(signatureFrameOf(ctx.content, "peregrina") ?? "").style
+      ],
+    );
+    const player = (form: FreeRaceForm) =>
+      runFreeRace(ctx, form).entries.find((e) => e.runnerId === PLAYER_RUNNER_ID);
+    expect(player(base)?.position).toBe(wings);
+    const other = POSITIONS.find((p) => p !== wings) ?? "lead";
+    const chosen = normalizeForm(ctx, { ...base, position: other });
+    expect(fieldSpecOf(chosen)).toMatchObject({ kind: "player", position: other });
+    expect(player(chosen)?.position).toBe(other);
+    // the rivals keep the position of their wings
+    for (const e of runFreeRace(ctx, chosen).entries.filter((x) => x.runnerId !== PLAYER_RUNNER_ID))
+      expect(e.position).toBe(DEFAULT_POSITION[e.style]);
+    expect(cliArgs(chosen)).toBe(
+      `pnpm sim:race -- --seed 1 --course ridge --falconess peregrina --turn 1 --position ${other}`,
+    );
+    expect(cliArgs(base)).not.toContain("--position");
+    // another frame brings its own default
+    expect(formWings(ctx.content, { ...base, frameId: "mule" })).toBe(
+      DEFAULT_POSITION[ctx.content.getFrame("mule").style],
     );
   });
 

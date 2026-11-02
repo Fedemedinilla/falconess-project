@@ -23,6 +23,7 @@ import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
 import type {
   EventEffects,
   LoggedEvent,
+  Position,
   RunInput,
   SeasonState,
   StatName,
@@ -33,6 +34,7 @@ import { formatSeconds, formatSigned } from "../../text/format";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { type IconName, placeIcon } from "../../ui/icons";
 import { describeEffects, type EffectLine } from "./describe";
+import { wingsPosition } from "./position";
 import { goalStatuses, logNoteText } from "./season";
 import { type VigorBand, vigorBand, vigorScale } from "./vigor";
 import { durabilityOf } from "./workshop";
@@ -72,6 +74,10 @@ export type WeekRace = {
   readonly minPlace: number;
   readonly met: boolean;
   readonly timeTicks: number;
+  /** The race position she ran in (ADR-0008): the one the week chose, or her wings'. */
+  readonly position: Position;
+  /** Whether that is the position of the wings she raced with (no other was chosen). */
+  readonly fromWings: boolean;
 };
 
 export type WeekStat = { readonly stat: StatName; readonly delta: number };
@@ -498,6 +504,8 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
           minPlace: status.goal.minPlace,
           met: status.met !== false,
           timeTicks: ran.timeTicks,
+          position: ran.position,
+          fromWings: wingsPosition(ctx.content, ran.frameId) === ran.position,
         }
       : undefined;
 

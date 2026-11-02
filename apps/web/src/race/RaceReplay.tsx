@@ -1,19 +1,21 @@
 import { contentLabels, type RaceLabels } from "@falconess/race-view";
-import { type RaceLog, SEGMENT_TYPES } from "@falconess/schema";
+import { DEFAULT_POSITION, type RaceLog, SEGMENT_TYPES } from "@falconess/schema";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useGlobalDetail } from "../app/explain";
 import { getContent } from "../content/load";
+import { Letter } from "../screens/shared/Letter";
 import { uiAt } from "../text/brief";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
+import { PositionMark } from "../ui/PositionMark";
 import { Controls } from "./Controls";
 import { ReplayClock } from "./clock";
 import { type ChartMode, LaneChart } from "./LaneChart";
 import { LivePanel } from "./LivePanel";
 import s from "./RaceViewer.module.css";
 import { Results } from "./Results";
-import { type RaceView, raceView } from "./view";
+import { type RaceView, type RunnerView, raceView } from "./view";
 import { metres } from "./words";
 
 let defaultLabels: RaceLabels | undefined;
@@ -83,6 +85,38 @@ function FlagLegend({ reserve }: { reserve: boolean }) {
         </li>
       )}
     </ul>
+  );
+}
+
+/**
+ * Her race position over the lanes (ADR-0008): its shape, which one, whether it is her wings' or
+ * one chosen before the gun, and her letter in it (it scales her Intelligence).
+ */
+function PlayerPosition({
+  player,
+  labels,
+  idPrefix,
+}: {
+  player: RunnerView;
+  labels: RaceLabels;
+  idPrefix: string;
+}) {
+  const { entry } = player;
+  const wings = DEFAULT_POSITION[entry.style];
+  const vars = {
+    name: player.name,
+    position: labels.positionName(entry.position),
+    wings: labels.positionName(wings),
+  };
+  return (
+    <p className={s.position} id={`${idPrefix}-corre-en`} data-position={entry.position}>
+      <PositionMark position={entry.position} size="lg" />
+      <span className={s.positionText}>
+        {ui(entry.position === wings ? "ui.race.position.wings" : "ui.race.position.chosen", vars)}
+      </span>
+      <span className="visually-hidden">{ui("ui.position.letter")}</span>
+      <Letter letter={entry.positionAptitude} />
+    </p>
   );
 }
 
@@ -162,6 +196,9 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
         className={s.trackPanel}
       >
         <div className={s.trackBody}>
+          {view.player && (
+            <PlayerPosition player={view.player} labels={labels} idPrefix={idPrefix} />
+          )}
           {!revealed && (
             <div className={s.guessBar}>
               <span className={s.select}>

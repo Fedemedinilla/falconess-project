@@ -11,6 +11,7 @@ import { Icon } from "../ui/Icon";
 import { statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
+import { PositionMark } from "../ui/PositionMark";
 import { SeasonStrip } from "../ui/SeasonStrip";
 import s from "./Home.module.css";
 
@@ -63,7 +64,10 @@ function Roster() {
               ))}
               <div className={s.fact}>
                 <dt>{ui("ui.home.roster.position")}</dt>
-                <dd>{gameText(`position.${f.preferredPosition}`)}</dd>
+                <dd>
+                  <PositionMark position={f.preferredPosition} />
+                  {gameText(`position.${f.preferredPosition}`)}
+                </dd>
               </div>
               {signature && (
                 <div className={cx(s.fact, s.signature)}>

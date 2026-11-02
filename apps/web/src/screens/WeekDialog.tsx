@@ -11,6 +11,7 @@ import { cx } from "../ui/cx";
 import { Icon } from "../ui/Icon";
 import { statIcon } from "../ui/icons";
 import { Pill } from "../ui/Pill";
+import { PositionMark } from "../ui/PositionMark";
 import { type WeekNote, weekSummary } from "./model/week";
 import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { actionButtonId } from "./TurnActions";
@@ -170,7 +171,25 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
               <Icon name={headline.icon} size="lg" className={s.titleIcon} />
               <span>{headline.text}</span>
             </h2>
-            {summary.context !== undefined && <p className={s.context}>{summary.context}</p>}
+            {summary.context !== undefined && (
+              <p className={s.context}>
+                {race && (
+                  // the race position she ran in (ADR-0008), first: what the player chose
+                  <>
+                    <span
+                      className={cx(s.position, !race.fromWings && s.positionChosen)}
+                      id="semana-posicion"
+                      data-position={race.position}
+                    >
+                      <PositionMark position={race.position} />
+                      {gameText(`position.${race.position}`)}
+                    </span>
+                    {" · "}
+                  </>
+                )}
+                {summary.context}
+              </p>
+            )}
           </header>
 
           <div className={s.body} id={BODY_ID}>

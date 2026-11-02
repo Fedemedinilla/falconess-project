@@ -1,4 +1,4 @@
-import type { RunInput, SeasonState } from "@falconess/schema";
+import type { Position, SeasonState } from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useGlobalDetail } from "../app/explain";
@@ -27,9 +27,11 @@ import {
   workshopVigor,
 } from "./model/actions";
 import { formatChance } from "./model/describe";
+import type { WeekActionInput } from "./model/position";
 import { type NextGoal, type WeekLog, weekOutcome } from "./model/season";
 import { vigorScale } from "./model/vigor";
 import { durabilityOf } from "./model/workshop";
+import { PositionPicker } from "./shared/PositionPicker";
 import s from "./TurnActions.module.css";
 import { describeInput, InputMark } from "./TurnSide";
 
@@ -42,8 +44,19 @@ export type TurnActionsProps = {
   lastWeek: WeekLog | undefined;
   /** Open «Lo que pasó» for the last step again (its button on that line), when there is one. */
   onReopen?: (() => void) | undefined;
-  /** Apply an action input. */
-  onAct: (input: RunInput) => void;
+  /**
+   * On a goal race week: the pre-race card's state (ADR-0008). `chosen` is the position tapped,
+   * none until then (she runs in her wings' one); the week's action confirms it.
+   */
+  position?:
+    | {
+        readonly wings: Position;
+        readonly chosen: Position | undefined;
+        readonly onChange: (position: Position) => void;
+      }
+    | undefined;
+  /** Apply an action input (the screen adds the race position on a race week). */
+  onAct: (input: WeekActionInput) => void;
   onOpenWorkshop: () => void;
   /** The action under the pointer or the focus (for the board's preview), or none. */
   onPreview: (kind: ActionKind | undefined) => void;
@@ -255,6 +268,7 @@ export function TurnActions({
   next,
   lastWeek,
   onReopen,
+  position,
   onAct,
   onOpenWorkshop,
   onPreview,
@@ -302,7 +316,7 @@ export function TurnActions({
   // one line in a card and the legend: they follow the page's default, with no switch of their own
   const [explain] = useGlobalDetail();
 
-  const inputFor = (kind: ActionKind): RunInput | undefined => {
+  const inputFor = (kind: ActionKind): WeekActionInput | undefined => {
     if (kind === "workshop") return undefined;
     if (kind === "outing")
       return crewChoice !== "" && crewChoice !== outing.crews[0]
@@ -589,6 +603,18 @@ export function TurnActions({
             chance: formatChance(drift.nextPm),
           })}
         </p>
+      )}
+      {/* the race week's position, right above the actions that confirm it (ADR-0008) */}
+      {position && !pending && (
+        <PositionPicker
+          id="turno-posicion"
+          className={s.position}
+          letters={state.positionAptitude}
+          wings={position.wings}
+          value={position.chosen ?? position.wings}
+          onChange={position.onChange}
+          hint={ui("ui.position.hint.season")}
+        />
       )}
       <ul className={s.grid}>{cards}</ul>
       <p className={s.legend}>

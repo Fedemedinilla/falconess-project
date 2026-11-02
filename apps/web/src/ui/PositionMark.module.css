@@ -1,0 +1,17 @@
+/* a race position's shape: the label's color, one fixed width like an emoji (ui/Icon.module.css) */
+.mark {
+  display: inline-block;
+  flex: none;
+  width: 0.85em;
+  height: 0.85em;
+  margin-inline: 0.2em 0.35em;
+  vertical-align: -0.05em;
+  fill: currentColor;
+}
+
+.lg {
+  width: 1.1em;
+  height: 1.1em;
+  margin-inline: 0 0.4em;
+  vertical-align: -0.12em;
+}

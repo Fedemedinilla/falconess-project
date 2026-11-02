@@ -7,6 +7,7 @@ import { Icon } from "../ui/Icon";
 import { moodIcon, statIcon } from "../ui/icons";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
+import { PositionMark } from "../ui/PositionMark";
 import { StatBar } from "../ui/StatBar";
 import {
   type ActionPreview,
@@ -255,7 +256,10 @@ export function TurnProfile({ ctx, state, className }: TurnProfileProps) {
           <ul className={s.letters}>
             {POSITIONS.map((p) => (
               <li key={p}>
-                <span>{gameText(`position.${p}`)}</span>
+                <span>
+                  <PositionMark position={p} />
+                  {gameText(`position.${p}`)}
+                </span>
                 <Letter letter={state.positionAptitude[p] ?? "G"} />
               </li>
             ))}

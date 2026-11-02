@@ -382,6 +382,14 @@ fieldset.section > .legend ~ * {
   text-transform: uppercase;
 }
 
+/* a race week: the race that runs after the order, and in which position */
+.race {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  font-size: var(--fs-sm);
+}
+
 .buttons {
   display: flex;
   flex-wrap: wrap;

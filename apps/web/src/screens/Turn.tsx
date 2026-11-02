@@ -1,4 +1,3 @@
-import type { RunInput } from "@falconess/schema";
 import { useEffect, useRef, useState } from "react";
 import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useGame } from "../game/useGame";
@@ -7,6 +6,14 @@ import { Livery } from "../ui/Livery";
 import { Pill } from "../ui/Pill";
 import { SeasonStrip } from "../ui/SeasonStrip";
 import { type ActionKind, actionBlock, actionPreview } from "./model/actions";
+import {
+  chosenFor,
+  isRaceWeek,
+  type WeekActionInput,
+  type WeekPosition,
+  wingsPosition,
+  withPosition,
+} from "./model/position";
 import { goalStatuses, nextGoal, recentWeeks } from "./model/season";
 import { useViewRace } from "./shared/useViewRace";
 import s from "./Turn.module.css";
@@ -28,6 +35,8 @@ export function Turn() {
   const { game, snap } = useGame();
   const [previewKind, setPreviewKind] = useState<ActionKind | undefined>();
   const [workshopOpen, setWorkshopOpen] = useState(false);
+  // the race position tapped on a race week's card (ADR-0008); none = her wings'
+  const [weekPosition, setWeekPosition] = useState<WeekPosition>();
   const backToActions = useRef(false);
 
   // leaving the workshop puts the focus back on the button that opened it
@@ -53,10 +62,15 @@ export function Turn() {
   const next = nextGoal(ctx, state);
   const preview = previewKind && actionPreview(ctx, state, previewKind);
 
+  // a race week's action carries the position chosen on its card; the workshop's too
+  const raceWeek = isRaceWeek(ctx, state);
+  const wings = wingsPosition(ctx.content, state.equippedFrame);
+  const chosen = raceWeek ? chosenFor(weekPosition, state) : undefined;
+
   // the run this render shows: a click meant for it is ignored once the run has moved on
   const inputsShown = run.inputs.length;
-  const act = (input: RunInput) => {
-    if (!game.act(input, inputsShown)) return;
+  const act = (input: WeekActionInput) => {
+    if (!game.act(withPosition(input, chosen), inputsShown)) return;
     setPreviewKind(undefined);
   };
 
@@ -131,7 +145,14 @@ export function Turn() {
         </div>
         <div className={s.right}>
           {workshopOpen ? (
-            <Workshop className={s.actions} onClose={closeWorkshop} onDone={closeWorkshop} />
+            <Workshop
+              className={s.actions}
+              onClose={closeWorkshop}
+              onDone={closeWorkshop}
+              race={
+                raceWeek && next ? { courseId: next.goal.courseId, position: chosen } : undefined
+              }
+            />
           ) : (
             <TurnActions
               ctx={ctx}
@@ -139,6 +160,19 @@ export function Turn() {
               next={next}
               lastWeek={recentWeeks(state, 1)[0]}
               onReopen={snap.lastStep ? () => game.showStepAgain() : undefined}
+              position={
+                raceWeek
+                  ? {
+                      wings,
+                      chosen,
+                      // her wings' own is no choice: the race follows the wings she races with
+                      onChange: (position) =>
+                        setWeekPosition(
+                          position === wings ? undefined : { turn: state.turn, position },
+                        ),
+                    }
+                  : undefined
+              }
               onAct={act}
               onOpenWorkshop={() => {
                 setPreviewKind(undefined);

@@ -6,6 +6,7 @@ import { useDetail } from "../app/explain";
 import { simContext } from "../content/load";
 import { randomSeed } from "../game/seed";
 import { describeActiveSkill, describeModifier, describeSource } from "../screens/model/describe";
+import { PositionPicker } from "../screens/shared/PositionPicker";
 import { gameBrief, uiAt } from "../text/brief";
 import { gameText, ui } from "../text/ui";
 import { Button } from "../ui/Button";
@@ -20,6 +21,7 @@ import {
   cliArgs,
   defaultForm,
   type FreeRaceForm,
+  formWings,
   frameChoices,
   intField,
   MAX_PARTS,
@@ -62,6 +64,9 @@ function summary(form: FreeRaceForm, content: ContentIndex): string {
   const frameId = form.frameId === "" ? frameChoices(content, form.falconessId)[0] : form.frameId;
   const frame = frameId === undefined ? undefined : content.frames.get(frameId);
   const extras = [
+    ...(form.position !== null
+      ? [ui("ui.freeRace.summary.position", { position: gameText(`position.${form.position}`) })]
+      : []),
     ...(form.skills.length > 0 ? [uiPlural("ui.freeRace.summary.skills", form.skills.length)] : []),
     ...(form.parts.length > 0 ? [uiPlural("ui.freeRace.summary.parts", form.parts.length)] : []),
   ];
@@ -214,6 +219,7 @@ export function FreeRace() {
   const skills = skillChoices(content, form.falconessId);
   const parts = partChoices(content);
   const player = form.field === "player";
+  const wings = formWings(content, form);
   const L = FIELD_LIMITS;
 
   return (
@@ -260,251 +266,271 @@ export function FreeRace() {
           </p>
         </details>
         <form
-          id="libre-form"
+          id="libre-carrera"
           className={s.form}
           onSubmit={submit}
           aria-describedby={`${formKey}-nota`}
-          hidden={!editing}
+          hidden={!editing && !player}
         >
-          <div className={s.row}>
-            <div className={s.field}>
-              <label htmlFor="libre-pista">{ui("ui.freeRace.course")}</label>
-              <select
-                id="libre-pista"
-                value={form.courseId}
-                onChange={(e) => set({ courseId: e.currentTarget.value })}
-              >
-                {[...content.courses.values()].map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {ui("ui.freeRace.course.option", {
-                      name: gameText(c.textKey),
-                      m: metres(c.segments.reduce((sum, seg) => sum + seg.length * 1000, 0)),
-                    })}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={s.field}>
-              <label htmlFor="libre-semilla">{ui("ui.freeRace.seed")}</label>
-              <span className={s.inline}>
-                <input
-                  id="libre-semilla"
-                  type="text"
-                  spellCheck={false}
-                  autoComplete="off"
-                  value={form.seed}
-                  onChange={(e) => set({ seed: e.currentTarget.value })}
-                />
-                <Button
-                  id="libre-semilla-otra"
-                  size="sm"
-                  onClick={() => set({ seed: randomSeed() })}
+          {/* folded after a race: the position card and «Correr» stay, one tap from a rerun */}
+          <div id="libre-form" className={s.fields} hidden={!editing}>
+            <div className={s.row}>
+              <div className={s.field}>
+                <label htmlFor="libre-pista">{ui("ui.freeRace.course")}</label>
+                <select
+                  id="libre-pista"
+                  value={form.courseId}
+                  onChange={(e) => set({ courseId: e.currentTarget.value })}
                 >
-                  {ui("ui.freeRace.seed.other")}
-                </Button>
-              </span>
+                  {[...content.courses.values()].map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {ui("ui.freeRace.course.option", {
+                        name: gameText(c.textKey),
+                        m: metres(c.segments.reduce((sum, seg) => sum + seg.length * 1000, 0)),
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={s.field}>
+                <label htmlFor="libre-semilla">{ui("ui.freeRace.seed")}</label>
+                <span className={s.inline}>
+                  <input
+                    id="libre-semilla"
+                    type="text"
+                    spellCheck={false}
+                    autoComplete="off"
+                    value={form.seed}
+                    onChange={(e) => set({ seed: e.currentTarget.value })}
+                  />
+                  <Button
+                    id="libre-semilla-otra"
+                    size="sm"
+                    onClick={() => set({ seed: randomSeed() })}
+                  >
+                    {ui("ui.freeRace.seed.other")}
+                  </Button>
+                </span>
+              </div>
+              <fieldset className={s.field}>
+                <legend>{ui("ui.freeRace.field")}</legend>
+                <span className={s.segmented}>
+                  <label htmlFor="libre-campo-jugadora" className={cx(s.seg, player && s.segOn)}>
+                    <input
+                      id="libre-campo-jugadora"
+                      type="radio"
+                      name="libre-campo"
+                      checked={player}
+                      onChange={() => set({ field: "player" })}
+                    />
+                    {ui("ui.freeRace.field.player")}
+                  </label>
+                  <label htmlFor="libre-campo-neutral" className={cx(s.seg, !player && s.segOn)}>
+                    <input
+                      id="libre-campo-neutral"
+                      type="radio"
+                      name="libre-campo"
+                      checked={!player}
+                      onChange={() => set({ field: "neutral" })}
+                    />
+                    {ui("ui.freeRace.field.neutral")}
+                  </label>
+                </span>
+              </fieldset>
             </div>
-            <fieldset className={s.field}>
-              <legend>{ui("ui.freeRace.field")}</legend>
-              <span className={s.segmented}>
-                <label htmlFor="libre-campo-jugadora" className={cx(s.seg, player && s.segOn)}>
-                  <input
-                    id="libre-campo-jugadora"
-                    type="radio"
-                    name="libre-campo"
-                    checked={player}
-                    onChange={() => set({ field: "player" })}
+
+            {player ? (
+              <>
+                <div className={s.row}>
+                  <div className={s.field}>
+                    <label htmlFor="libre-corredora">{ui("ui.freeRace.falconess")}</label>
+                    <select
+                      id="libre-corredora"
+                      value={form.falconessId}
+                      onChange={(e) =>
+                        set({
+                          falconessId: e.currentTarget.value,
+                          frameId: "",
+                          skills: [],
+                          position: null,
+                        })
+                      }
+                    >
+                      {[...content.falconess.values()].map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {gameText(f.textKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={s.field}>
+                    <label htmlFor="libre-bastidor">{ui("ui.freeRace.frame")}</label>
+                    <select
+                      id="libre-bastidor"
+                      value={form.frameId === "" ? (frames[0] ?? "") : form.frameId}
+                      onChange={(e) =>
+                        set({
+                          frameId: e.currentTarget.value === frames[0] ? "" : e.currentTarget.value,
+                        })
+                      }
+                    >
+                      {frames.map((id) => {
+                        const fr = content.frames.get(id);
+                        if (!fr) return null;
+                        return (
+                          <option key={id} value={id}>
+                            {ui("ui.freeRace.frame.option", {
+                              name: gameText(fr.textKey),
+                              mfr: gameText(content.getManufacturer(fr.manufacturer).textKey),
+                              style: gameText(`style.${fr.style}`),
+                            })}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    {(() => {
+                      const fr = content.frames.get(
+                        form.frameId === "" ? (frames[0] ?? "") : form.frameId,
+                      );
+                      const mfr = fr && content.manufacturers.get(fr.manufacturer);
+                      return mfr ? (
+                        <p className={s.hint}>
+                          <Livery palette={mfr.palette} size="sm" /> <Icon name="rule" />
+                          {(detail === "brief" && gameBrief(`rule.${mfr.rule}`)) ||
+                            gameText(`rule.${mfr.rule}`)}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+                  <fieldset className={s.field}>
+                    <legend>{ui("ui.freeRace.stats")}</legend>
+                    <span className={s.segmented}>
+                      <label
+                        htmlFor="libre-stats-base"
+                        className={cx(s.seg, form.statsMode === "base" && s.segOn)}
+                      >
+                        <input
+                          id="libre-stats-base"
+                          type="radio"
+                          name="libre-stats-modo"
+                          checked={form.statsMode === "base"}
+                          onChange={() => set({ statsMode: "base" })}
+                        />
+                        {ui("ui.freeRace.stats.base")}
+                      </label>
+                      <label
+                        htmlFor="libre-stats-iguales"
+                        className={cx(s.seg, form.statsMode === "uniform" && s.segOn)}
+                      >
+                        <input
+                          id="libre-stats-iguales"
+                          type="radio"
+                          name="libre-stats-modo"
+                          checked={form.statsMode === "uniform"}
+                          onChange={() => set({ statsMode: "uniform" })}
+                        />
+                        {ui("ui.freeRace.stats.uniform")}
+                      </label>
+                    </span>
+                    {form.statsMode === "base" && falconess ? (
+                      <p className={s.hint}>
+                        {ui("ui.freeRace.stats.baseNote", {
+                          list: Object.entries(falconess.baseStats)
+                            .map(([k, v]) => `${ui(`ui.stat.abbr.${k}`)} ${v}`)
+                            .join(" · "),
+                        })}
+                      </p>
+                    ) : null}
+                  </fieldset>
+                  {form.statsMode === "uniform" && (
+                    <NumberField
+                      id="libre-stats"
+                      label={ui("ui.freeRace.stats.value")}
+                      hint={ui("ui.freeRace.range", { min: L.minStat, max: L.maxStat })}
+                      value={form.stats}
+                      min={L.minStat}
+                      max={L.maxStat}
+                      onChange={(n) => set({ stats: n })}
+                    />
+                  )}
+                  <NumberField
+                    id="libre-semana"
+                    label={ui("ui.freeRace.turn")}
+                    hint={uiAt(detail, "ui.freeRace.turn.note")}
+                    value={form.turn}
+                    min={L.minTurn}
+                    max={L.maxTurn}
+                    onChange={(n) => set({ turn: n })}
                   />
-                  {ui("ui.freeRace.field.player")}
-                </label>
-                <label htmlFor="libre-campo-neutral" className={cx(s.seg, !player && s.segOn)}>
-                  <input
-                    id="libre-campo-neutral"
-                    type="radio"
-                    name="libre-campo"
-                    checked={!player}
-                    onChange={() => set({ field: "neutral" })}
+                </div>
+                <div className={s.lists}>
+                  <CheckList
+                    name="libre-habilidad"
+                    icon="skill"
+                    legend={ui("ui.freeRace.skills")}
+                    note={uiAt(detail, "ui.freeRace.skills.note")}
+                    options={skills.map((id) => {
+                      const skill = content.getSkill(id);
+                      return {
+                        id,
+                        label: gameText(skill.textKey),
+                        desc:
+                          (detail === "brief" && gameBrief(skill.textKey)) ||
+                          (skill.kind === "active"
+                            ? describeActiveSkill(skill)
+                            : skill.modifiers.map(describeModifier).join(" · ")),
+                      };
+                    })}
+                    chosen={form.skills}
+                    max={ctx.ruleset.race.maxSkills}
+                    onChange={(ids) => set({ skills: ids })}
                   />
-                  {ui("ui.freeRace.field.neutral")}
-                </label>
-              </span>
-            </fieldset>
+                  <CheckList
+                    name="libre-pieza"
+                    icon="part"
+                    legend={ui("ui.freeRace.parts")}
+                    note={uiAt(detail, "ui.freeRace.parts.note")}
+                    options={parts.map((id) => {
+                      const part = content.getPart(id);
+                      return {
+                        id,
+                        label: gameText(part.textKey),
+                        desc:
+                          (detail === "brief" && gameBrief(part.textKey)) ||
+                          describeSource(part).join(" · "),
+                      };
+                    })}
+                    chosen={form.parts}
+                    max={MAX_PARTS}
+                    onChange={(ids) => set({ parts: ids })}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className={s.row}>
+                <NumberField
+                  id="libre-neutral-stats"
+                  label={ui("ui.freeRace.neutral.stats")}
+                  hint={uiAt(detail, "ui.freeRace.neutral.note")}
+                  value={form.neutralStats}
+                  min={L.minStat}
+                  max={L.maxStat}
+                  onChange={(n) => set({ neutralStats: n })}
+                />
+              </div>
+            )}
           </div>
 
-          {player ? (
-            <>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label htmlFor="libre-corredora">{ui("ui.freeRace.falconess")}</label>
-                  <select
-                    id="libre-corredora"
-                    value={form.falconessId}
-                    onChange={(e) =>
-                      set({ falconessId: e.currentTarget.value, frameId: "", skills: [] })
-                    }
-                  >
-                    {[...content.falconess.values()].map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {gameText(f.textKey)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className={s.field}>
-                  <label htmlFor="libre-bastidor">{ui("ui.freeRace.frame")}</label>
-                  <select
-                    id="libre-bastidor"
-                    value={form.frameId === "" ? (frames[0] ?? "") : form.frameId}
-                    onChange={(e) =>
-                      set({
-                        frameId: e.currentTarget.value === frames[0] ? "" : e.currentTarget.value,
-                      })
-                    }
-                  >
-                    {frames.map((id) => {
-                      const fr = content.frames.get(id);
-                      if (!fr) return null;
-                      return (
-                        <option key={id} value={id}>
-                          {ui("ui.freeRace.frame.option", {
-                            name: gameText(fr.textKey),
-                            mfr: gameText(content.getManufacturer(fr.manufacturer).textKey),
-                            style: gameText(`style.${fr.style}`),
-                          })}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  {(() => {
-                    const fr = content.frames.get(
-                      form.frameId === "" ? (frames[0] ?? "") : form.frameId,
-                    );
-                    const mfr = fr && content.manufacturers.get(fr.manufacturer);
-                    return mfr ? (
-                      <p className={s.hint}>
-                        <Livery palette={mfr.palette} size="sm" /> <Icon name="rule" />
-                        {(detail === "brief" && gameBrief(`rule.${mfr.rule}`)) ||
-                          gameText(`rule.${mfr.rule}`)}
-                      </p>
-                    ) : null;
-                  })()}
-                </div>
-                <fieldset className={s.field}>
-                  <legend>{ui("ui.freeRace.stats")}</legend>
-                  <span className={s.segmented}>
-                    <label
-                      htmlFor="libre-stats-base"
-                      className={cx(s.seg, form.statsMode === "base" && s.segOn)}
-                    >
-                      <input
-                        id="libre-stats-base"
-                        type="radio"
-                        name="libre-stats-modo"
-                        checked={form.statsMode === "base"}
-                        onChange={() => set({ statsMode: "base" })}
-                      />
-                      {ui("ui.freeRace.stats.base")}
-                    </label>
-                    <label
-                      htmlFor="libre-stats-iguales"
-                      className={cx(s.seg, form.statsMode === "uniform" && s.segOn)}
-                    >
-                      <input
-                        id="libre-stats-iguales"
-                        type="radio"
-                        name="libre-stats-modo"
-                        checked={form.statsMode === "uniform"}
-                        onChange={() => set({ statsMode: "uniform" })}
-                      />
-                      {ui("ui.freeRace.stats.uniform")}
-                    </label>
-                  </span>
-                  {form.statsMode === "base" && falconess ? (
-                    <p className={s.hint}>
-                      {ui("ui.freeRace.stats.baseNote", {
-                        list: Object.entries(falconess.baseStats)
-                          .map(([k, v]) => `${ui(`ui.stat.abbr.${k}`)} ${v}`)
-                          .join(" · "),
-                      })}
-                    </p>
-                  ) : null}
-                </fieldset>
-                {form.statsMode === "uniform" && (
-                  <NumberField
-                    id="libre-stats"
-                    label={ui("ui.freeRace.stats.value")}
-                    hint={ui("ui.freeRace.range", { min: L.minStat, max: L.maxStat })}
-                    value={form.stats}
-                    min={L.minStat}
-                    max={L.maxStat}
-                    onChange={(n) => set({ stats: n })}
-                  />
-                )}
-                <NumberField
-                  id="libre-semana"
-                  label={ui("ui.freeRace.turn")}
-                  hint={uiAt(detail, "ui.freeRace.turn.note")}
-                  value={form.turn}
-                  min={L.minTurn}
-                  max={L.maxTurn}
-                  onChange={(n) => set({ turn: n })}
-                />
-              </div>
-              <div className={s.lists}>
-                <CheckList
-                  name="libre-habilidad"
-                  icon="skill"
-                  legend={ui("ui.freeRace.skills")}
-                  note={uiAt(detail, "ui.freeRace.skills.note")}
-                  options={skills.map((id) => {
-                    const skill = content.getSkill(id);
-                    return {
-                      id,
-                      label: gameText(skill.textKey),
-                      desc:
-                        (detail === "brief" && gameBrief(skill.textKey)) ||
-                        (skill.kind === "active"
-                          ? describeActiveSkill(skill)
-                          : skill.modifiers.map(describeModifier).join(" · ")),
-                    };
-                  })}
-                  chosen={form.skills}
-                  max={ctx.ruleset.race.maxSkills}
-                  onChange={(ids) => set({ skills: ids })}
-                />
-                <CheckList
-                  name="libre-pieza"
-                  icon="part"
-                  legend={ui("ui.freeRace.parts")}
-                  note={uiAt(detail, "ui.freeRace.parts.note")}
-                  options={parts.map((id) => {
-                    const part = content.getPart(id);
-                    return {
-                      id,
-                      label: gameText(part.textKey),
-                      desc:
-                        (detail === "brief" && gameBrief(part.textKey)) ||
-                        describeSource(part).join(" · "),
-                    };
-                  })}
-                  chosen={form.parts}
-                  max={MAX_PARTS}
-                  onChange={(ids) => set({ parts: ids })}
-                />
-              </div>
-            </>
-          ) : (
-            <div className={s.row}>
-              <NumberField
-                id="libre-neutral-stats"
-                label={ui("ui.freeRace.neutral.stats")}
-                hint={uiAt(detail, "ui.freeRace.neutral.note")}
-                value={form.neutralStats}
-                min={L.minStat}
-                max={L.maxStat}
-                onChange={(n) => set({ neutralStats: n })}
-              />
-            </div>
+          {player && falconess && wings && (
+            <PositionPicker
+              id="libre-posicion"
+              letters={falconess.positionAptitude}
+              wings={wings}
+              value={form.position ?? wings}
+              // her wings' own is no choice: another frame brings its own default
+              onChange={(p) => set({ position: p === wings ? null : p })}
+              hint={ui("ui.position.hint.free")}
+            />
           )}
 
           <div className={s.submit}>

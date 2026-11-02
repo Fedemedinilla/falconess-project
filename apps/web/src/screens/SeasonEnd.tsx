@@ -15,6 +15,7 @@ import { placeIcon, statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
+import { PositionMark } from "../ui/PositionMark";
 import { Table } from "../ui/Table";
 import { useNarrow } from "../ui/useMedia";
 import { seasonSummary } from "./model/end";
@@ -339,6 +340,7 @@ export function SeasonEnd() {
               <dt>{ui("ui.end.box.aptitude")}</dt>
               <dd>
                 <span className={s.factorValue}>
+                  <PositionMark position={aptitude.key} />
                   {aptitudeName} <Letter letter={aptitude.letter} />
                 </span>
                 <Stars n={aptitude.stars} />

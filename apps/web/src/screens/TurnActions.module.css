@@ -278,6 +278,11 @@
   font-size: var(--fs-sm);
 }
 
+/* the race week's position card, between its notice and the actions that confirm it */
+.position {
+  margin-bottom: var(--space-4);
+}
+
 .alert {
   border-left: 3px solid var(--accent);
   background: var(--accent-soft);

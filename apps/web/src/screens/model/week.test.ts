@@ -1,6 +1,12 @@
 import { loadRawContent } from "@falconess/content";
 import { resolveLoggedEvent, stepLog } from "@falconess/race-view";
-import { buildContentIndex, type RunInput, type SeasonState } from "@falconess/schema";
+import {
+  buildContentIndex,
+  DEFAULT_POSITION,
+  POSITIONS,
+  type RunInput,
+  type SeasonState,
+} from "@falconess/schema";
 import { advanceSeason, RULESET_V1, RULESET_V2, STAT_ORDER, startSeason } from "@falconess/sim";
 import { beforeAll, describe, expect, it } from "vitest";
 import { getContent } from "../../content/load";
@@ -198,7 +204,11 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
       minPlace: goal?.goal.minPlace,
       met: true,
       timeTicks: result.timeTicks,
+      // no position chosen: her wings' (ADR-0008)
+      position: result.position,
+      fromWings: true,
     });
+    expect(result.position).toBe(DEFAULT_POSITION[content.getFrame(result.frameId).style]);
     expect(w.headline.text).toBe(
       ui("ui.week.title.race.met", { place: result.place, field: result.fieldSize }),
     );
@@ -207,6 +217,18 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
     expect(w.context).toContain(gameText(content.getCourse(result.courseId).textKey));
     expect(w.rows.find((r) => r.id === "scrap")?.cause).toContain(ui("ui.week.cause.race"));
     expect(w.notes.map((n) => n.key)).not.toContain("log.race");
+  });
+
+  it("names the race position the week chose, apart from her wings' one", () => {
+    const step = need(found, "race-met");
+    const wings = DEFAULT_POSITION[content.getFrame(step.before.equippedFrame).style];
+    const other = POSITIONS.find((p) => p !== wings) ?? "lead";
+    if (step.input.kind === "start" || step.input.kind === "event:choose") throw new Error("input");
+    const input = { ...step.input, position: other };
+    const after = advanceSeason(ctx, step.before, input);
+    const w = weekSummary(ctx, { before: step.before, input, after });
+    expect(w.race?.position).toBe(other);
+    expect(w.race?.fromWings).toBe(false);
   });
 
   it("says a goal race that fell short", () => {

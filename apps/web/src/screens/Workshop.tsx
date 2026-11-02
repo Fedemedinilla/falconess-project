@@ -1,4 +1,4 @@
-import type { PartType } from "@falconess/schema";
+import type { PartType, Position } from "@falconess/schema";
 import { useEffect, useRef, useState } from "react";
 import { useDetail } from "../app/explain";
 import { useGame } from "../game/useGame";
@@ -13,9 +13,11 @@ import type { IconName } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
+import { PositionMark } from "../ui/PositionMark";
 import { scrollBehavior } from "../ui/useMedia";
 import { workshopVigor } from "./model/actions";
 import { describeActiveSkill, describeSource } from "./model/describe";
+import { raceFrame, wingsPosition, withPosition } from "./model/position";
 import {
   durabilityOf,
   emptyPlan,
@@ -37,6 +39,11 @@ export type WorkshopProps = {
   onClose: () => void;
   /** The order went through (the week is spent). */
   onDone: () => void;
+  /**
+   * A goal race week: the race runs after the order, in the position chosen on the Turn screen's
+   * card, else in the one of the wings she leaves the workshop with (ADR-0008).
+   */
+  race?: { readonly courseId: string; readonly position: Position | undefined } | undefined;
   className?: string | undefined;
 };
 
@@ -45,7 +52,7 @@ export type WorkshopProps = {
  * is the week's action. Costs and limits are the sim's (model/workshop.ts); what the sim refuses
  * anyway comes back as a WorkshopError and is shown here.
  */
-export function Workshop({ onClose, onDone, className }: WorkshopProps) {
+export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
   const { game, snap } = useGame();
   const run = snap.run;
   const state = run?.state;
@@ -82,10 +89,14 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
   };
   const confirm = () => {
     if (report.ops.length === 0 || report.blocked) return;
-    if (game.act({ kind: "workshop", ops: [...report.ops] }, run.inputs.length)) onDone();
+    const input = withPosition({ kind: "workshop", ops: [...report.ops] }, race?.position);
+    if (game.act(input, run.inputs.length)) onDone();
   };
 
   const full = report.ops.length >= MAX_WORKSHOP_OPS;
+  // the position of the race after the order: the one chosen, else the wings' it leaves her on
+  const racePosition =
+    race && (race.position ?? wingsPosition(content, raceFrame(state.equippedFrame, report.ops)));
   const rerollable = rerollableFrames(ctx, state);
   const nextReroll = nextRerollCost(ctx, state, plan);
   const skills = learnableSkills(ctx, state);
@@ -511,6 +522,15 @@ export function Workshop({ onClose, onDone, className }: WorkshopProps) {
             <p className={s.error} role="alert">
               {ui("ui.error.workshop")}
               <code className={s.detail}>{error.detail}</code>
+            </p>
+          )}
+          {race && racePosition && (
+            <p className={s.race} id="taller-carrera">
+              <PositionMark position={racePosition} />
+              {ui("ui.workshop.race", {
+                course: gameText(content.getCourse(race.courseId).textKey),
+                position: gameText(`position.${racePosition}`),
+              })}
             </p>
           )}
           <div className={s.buttons}>

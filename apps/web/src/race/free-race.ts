@@ -11,7 +11,12 @@ import {
   learnableSkills,
   signatureFrameOf,
 } from "@falconess/race-view";
-import type { ContentIndex, RaceLog } from "@falconess/schema";
+import {
+  type ContentIndex,
+  DEFAULT_POSITION,
+  type Position,
+  type RaceLog,
+} from "@falconess/schema";
 import {
   freezeEntry,
   generateField,
@@ -35,6 +40,8 @@ export type FreeRaceForm = {
   readonly stats: number;
   /** Sets the rivals' level: 95 + 9 × week per stat (spec 21.1). */
   readonly turn: number;
+  /** Her race position (ADR-0008); null = the one of her frame's wings. Rivals keep theirs. */
+  readonly position: Position | null;
   readonly neutralStats: number;
 };
 
@@ -61,6 +68,7 @@ export function defaultForm(content: ContentIndex): FreeRaceForm {
     statsMode: "base",
     stats: 300,
     turn: 1,
+    position: null,
     neutralStats: FIELD_LIMITS.neutralStats,
   };
 }
@@ -83,6 +91,17 @@ export function partChoices(content: ContentIndex): string[] {
 /** Active skills she can carry: generic ones and her own. */
 export function skillChoices(content: ContentIndex, falconessId: string): string[] {
   return learnableSkills(content, falconessId).sort();
+}
+
+/** The frame she races: the one picked, else her signature frame (the first choice). */
+export function formFrame(content: ContentIndex, form: FreeRaceForm): string | undefined {
+  return form.frameId === "" ? frameChoices(content, form.falconessId)[0] : form.frameId;
+}
+
+/** The position of the wings she races with: the card's default (ADR-0008). */
+export function formWings(content: ContentIndex, form: FreeRaceForm): Position | undefined {
+  const frame = content.frames.get(formFrame(content, form) ?? "");
+  return frame && DEFAULT_POSITION[frame.style];
 }
 
 /** An integer in `[min, max]` from a form field; `fallback` for anything else. */
@@ -116,6 +135,7 @@ export function normalizeForm(ctx: SimContext, form: FreeRaceForm): FreeRaceForm
       .slice(0, ctx.ruleset.race.maxSkills),
     stats: clamp(form.stats, L.minStat, L.maxStat),
     turn: clamp(form.turn, L.minTurn, L.maxTurn),
+    position: form.position,
     neutralStats: clamp(form.neutralStats, L.minStat, L.maxStat),
   };
 }
@@ -131,8 +151,7 @@ export function fieldSpecOf(form: FreeRaceForm): FieldSpec {
     skills: [...form.skills],
     stats: form.statsMode === "base" ? null : form.stats,
     turn: form.turn,
-    // the pre-race position card is the web's own stage (ADR-0008): her wings' default until then
-    position: null,
+    position: form.position,
   };
 }
 
@@ -155,6 +174,7 @@ export function cliArgs(form: FreeRaceForm): string {
     if (form.skills.length > 0) args.push("--skills", form.skills.join(","));
     if (form.statsMode === "uniform") args.push("--stats", String(form.stats));
     args.push("--turn", String(form.turn));
+    if (form.position !== null) args.push("--position", form.position);
   }
   const quote = (a: string) => (/^[\w.,:/-]+$/.test(a) ? a : `'${a.replace(/'/g, "'\\''")}'`);
   return `pnpm sim:race -- ${args.map(quote).join(" ")}`;

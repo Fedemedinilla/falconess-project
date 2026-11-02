@@ -19,6 +19,7 @@ import { statIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
+import { PositionMark } from "../ui/PositionMark";
 import { useNarrow } from "../ui/useMedia";
 import { describeActiveSkill, describeModifier, formatFraction } from "./model/describe";
 import {
@@ -115,6 +116,7 @@ function RunnerCard({ falconess: f, content, checked, onPick, scale, narrow }: R
             <span className={s.aptLabel}>{ui("ui.turn.aptitude.position")}</span>
             {POSITIONS.map((p) => (
               <span key={p} className={cx(s.apt, p === f.preferredPosition && s.preferred)}>
+                <PositionMark position={p} />
                 {gameText(`position.${p}`)} <Letter letter={f.positionAptitude[p] ?? "G"} />
               </span>
             ))}
