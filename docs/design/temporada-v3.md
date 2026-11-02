@@ -899,6 +899,16 @@ cosa por vez, juntos y medida cada una. T21 v1 y v2 quedan como banco de ideas, 
 - Se mide: ninguna posición gana siempre (18-32 % con stats iguales), la mejor cambia según la
   pista, cuánto pesan las rivales y si elegir otra posición a veces paga.
 
+**Paso 1 hecho (2026-11-02, ADR-0008).** Medido en ≈ 2,4 millones de carreras:
+
+- Ninguna posición gana siempre (21-29 % con stats y letras iguales).
+- Pero **elegir casi no pesa**: la mejor posición no cambia con la pista (Remate arriba, Pelotón
+  abajo en las tres), las rivales no cambian cuál conviene, y a cada Falconess le conviene siempre
+  la posición de sus alas, que es donde tiene su A. La excepción: Peregrina necesita Remate por la
+  conducta (el empuje de Picada solo rinde si guardó energía).
+- Las alas pesan más que la posición (Rasante 39 % en la Pista de saltos, 16 % en el Sprint).
+- Pelotón es la más floja: primera candidata a revisar.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
