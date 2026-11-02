@@ -219,6 +219,46 @@ export const RUN1: {
 /** The owner's run up to week 19, whose training v1 turned into a forced rest (fatigue 85). */
 export const RUN1_WEEK19 = { ...RUN1, inputs: RUN1.inputs.slice(0, 29) };
 
+/**
+ * Caracara, seed "a", up to her T12 goal race (advice.spec.ts without the week's training): week
+ * 12 waits for its action, and the race runs after it.
+ */
+export const RACE_WEEK = {
+  schemaVersion: 1,
+  rulesetVersion: "v1",
+  seed: "a",
+  inputs: [
+    {
+      kind: "start",
+      falconessId: "caracara",
+      hangar: ["shiden", "mule", "nimbus", "falke"],
+      parents: [],
+    },
+    ...[
+      "train:agility",
+      "train:simulator",
+      "e",
+      "train:risk-flight",
+      "e",
+      "rest",
+      "e",
+      "train:stamina",
+      "e",
+      "train:stamina",
+      "e",
+      "rest",
+      "e",
+      "train:stamina",
+      "e",
+      "train:technique",
+      "e",
+      "rest",
+      "train:simulator",
+      "e",
+    ].map((k) => (k === "e" ? { kind: "event:choose", option: 0 } : { kind: k })),
+  ],
+};
+
 /** Home → Cargar partida → paste `run` → Cargar y reproducir. */
 export async function loadRun(page: Page, run: unknown): Promise<void> {
   await page.goto("#inicio");
