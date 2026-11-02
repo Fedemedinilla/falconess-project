@@ -2,6 +2,7 @@ import { loadContent } from "@falconess/content";
 import { ceilDiv, Rng } from "@falconess/rng";
 import type {
   Course,
+  Position,
   RaceEntry,
   RaceLog,
   RaceRule,
@@ -10,7 +11,7 @@ import type {
   Segment,
   Style,
 } from "@falconess/schema";
-import { RACE_RULES, RaceLog as RaceLogSchema } from "@falconess/schema";
+import { POSITIONS, RACE_RULES, RaceLog as RaceLogSchema } from "@falconess/schema";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { simulateRace, simulateRaceProbed } from "../../src/race/engine.js";
@@ -35,7 +36,7 @@ import type { Ruleset } from "../../src/rulesets/index.js";
  * monotonicity in the three tiers of ADR-0003 D41 with tier (a) as D52 narrows it (and P9 for
  * stamina), P4 bounds on every tick, P5 log consistency (P5b boostMode hysteresis), P6 RNG
  * accounting and isolation (P6b ablation alignment), P7 options invariance and a coverage check
- * of the controller. Every property runs the 500 cases 24.2 asks for (`RUNS`); every case is a
+ * of the controller. P4, P5 and P6 also draw race positions other than the wings' (ADR-0008). Every property runs the 500 cases 24.2 asks for (`RUNS`); every case is a
  * full race. None pins a number measured on a ruleset: `properties.test.ts` runs the suite on
  * SPEC_RULESET (with the pinned D52 counterexamples) and `properties-live.test.ts` on RULESET_V1,
  * so a balance change that breaks an invariant fails there (ADR-0005).
@@ -230,6 +231,28 @@ const fieldArb = (min: number, max: number, maxSkills = 3) =>
   fc
     .array(buildArb(maxSkills), { minLength: min, maxLength: max })
     .map((bs) => bs.map((b, lane) => entryOf(b, lane)));
+
+/**
+ * `fieldArb` with race positions (ADR-0008): each runner keeps her wings' position half the time
+ * and takes any of the four otherwise, so pairings no default field has (a pulse flyer in
+ * Pelotón, Rasante in Punta or Acecho) meet P4, P5 and P6. A separate arbitrary: `fieldArb` and
+ * the pinned D52 counterexamples draw as before.
+ */
+const positionedFieldArb = (min: number, max: number, maxSkills = 3) =>
+  fc
+    .tuple(
+      fieldArb(min, max, maxSkills),
+      fc.array(fc.oneof(fc.constant(undefined), fc.constantFrom(...POSITIONS)), {
+        minLength: max,
+        maxLength: max,
+      }),
+    )
+    .map(([entries, positions]) =>
+      entries.map((e, k): RaceEntry => {
+        const position: Position | undefined = positions[k];
+        return position === undefined ? e : { ...e, position };
+      }),
+    );
 
 const seedArb = fc.string({ minLength: 1, maxLength: 8 });
 
@@ -454,7 +477,7 @@ export function raceProperties(R: Ruleset): void {
       "hp, energy, heat, durability and speed stay in bounds; governed runners never pass capLim; licensed runners never break themselves; the telemetry clamp is a no-op",
       () => {
         fc.assert(
-          fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+          fc.property(positionedFieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
             const bad: string[] = [];
             const n = entries.length;
             const prevPos = new Float64Array(n);
@@ -525,7 +548,7 @@ export function raceProperties(R: Ruleset): void {
       "places, finish events, time intervals, frames, boost counts, pulses, plans, the energy identity",
       () => {
         fc.assert(
-          fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+          fc.property(positionedFieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
             const log = simulateRace(R, entries, course, seed);
             expect(RaceLogSchema.parse(log)).toEqual(log);
             const n = entries.length;
@@ -580,7 +603,7 @@ export function raceProperties(R: Ruleset): void {
         const minTicks = R.race.log.sampleEveryTicks;
         type Change = { tick: number; lane: number; posMm: number; mode: string; levelMms: number };
         fc.assert(
-          fc.property(fieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
+          fc.property(positionedFieldArb(1, 8), courseArb, seedArb, (entries, course, seed) => {
             const n = entries.length;
             // every raw change the controller makes (B7), with the tick-start position
             const changes: Change[][] = Array.from({ length: n }, () => []);
@@ -652,7 +675,7 @@ export function raceProperties(R: Ruleset): void {
       "32 n draws from race and one quirks draw per lucky holder, before tick 0",
       () => {
         fc.assert(
-          fc.property(fieldArb(1, 8, 2), courseArb, (entries, course) => {
+          fc.property(positionedFieldArb(1, 8, 2), courseArb, (entries, course) => {
             const counts = { race: 0, quirks: 0 };
             const rng = new Rng("p6");
             const src = {
@@ -678,7 +701,7 @@ export function raceProperties(R: Ruleset): void {
       () => {
         fc.assert(
           fc.property(
-            fieldArb(2, 8),
+            positionedFieldArb(2, 8),
             buildArb(),
             fc.nat(),
             courseArb,
@@ -706,7 +729,9 @@ export function raceProperties(R: Ruleset): void {
     it(
       "P6b: disabling any skill keeps every draw (pace, plan error, lucky pick, every u) and never fires it",
       () => {
-        const withSkills = fieldArb(1, 8).filter((es) => es.some((e) => e.skills.length > 0));
+        const withSkills = positionedFieldArb(1, 8).filter((es) =>
+          es.some((e) => e.skills.length > 0),
+        );
         fc.assert(
           fc.property(
             withSkills,
