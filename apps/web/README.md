@@ -202,7 +202,7 @@ goal's consequence, the crews' note, the race legend) follow the default.
 - `playback.ts` interpolates the sampled frames for the animation; `clock.ts` moves race time by
   `requestAnimationFrame` (×1/×2/×4/×8). The lane chart (`LaneChart.tsx`) draws itself from the
   clock's frames without React renders; React hears a coarse snapshot for the controls and the
-  live order. "Pelotón" frames the stretch where the runners are, "Pista entera" the course.
+  live order. "Grupo" frames the stretch where the runners are, "Pista entera" the course.
 
 ## Race position (ADR-0008)
 
