@@ -887,6 +887,18 @@ https://claude.ai/artifact/LifhfwWfzL2Ajidojd2yHQ
 rebobina. Las carreras se rediseñan desde cero, partiendo del motor actual y agregando de a una
 cosa por vez, juntos y medida cada una. T21 v1 y v2 quedan como banco de ideas, no como plan.
 
+**Paso 1 aprobado (dueño, 2026-11-02): elegir la posición antes de largar.**
+
+- La posición decide **cómo administra la energía**; las alas, **su física**. Se reutilizan los
+  cuatro comportamientos que ya existen: Punta = adelante (hoy Planeo), Pelotón = parejo (hoy
+  Rasante), Acecho = fase media y ataque al 70 % (hoy Suspensión), Remate = todo al final (hoy
+  Picada).
+- Con la posición de sus alas, la carrera sale idéntica a la de hoy.
+- **La letra de aptitud pasa a la posición** (como en Umamusume); las alas quedan sin letra. ADR.
+- **Las rivales corren en la posición de sus alas** por ahora.
+- Se mide: ninguna posición gana siempre (18-32 % con stats iguales), la mejor cambia según la
+  pista, cuánto pesan las rivales y si elegir otra posición a veces paga.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
