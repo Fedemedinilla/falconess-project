@@ -115,9 +115,12 @@ los cinco íconos de bioma; el ícono del cañón ya no es viento.
    palabras geográficas en el id (no en el texto); la alternativa neutra sería `jumps` y `long`.
 4. **Eventos de clima de la temporada** (`sandstorm-week`, `luck-tailwind`, `luck-sky-gust`,
    `luck-stormy-night`): se conservan (quitarlos cambia los sorteos de eventos); solo cambia el
-   texto de los dos que hablaban de arena y viento de cola. Ráfaga y tormenta quedan como sucesos
-   de la semana, no como clima de una pista.
-5. **`wind-hover`** (única de Cernícala) y `second-wind` conservan id y nombre: no leen viento.
+   texto de los dos que hablaban de arena y viento de cola. **Dueño (2026-11-02):** tampoco quedan
+   ráfaga ni tormenta: `luck-sky-gust` pasa a ser un pulso de prueba del propulsor y
+   `luck-stormy-night` una noche de prueba de motores. Los ids no cambian (cambiarlos movería los
+   sorteos); solo el texto.
+5. **`wind-hover`** (única de Cernícala) y `second-wind` conservan id: no leen viento. **Dueño
+   (2026-11-02):** el nombre visible de `wind-hover` pasa a «Suspensión en el pelotón».
 
 La herencia queda con la aptitud de estilo: hoy las tres Falconess registraban su A de bioma (se
 consideraba primero y ganaba el empate); ahora registran su A de estilo (Peregrina picada, Cernícala
