@@ -32,7 +32,10 @@ fabricantes ligadas al desierto.
 1. Se quitan los biomas de todo, también de los rulesets v1 y v2 (que no se duplican: el dueño
    aceptó que los guardados, las repeticiones y los digests viejos cambien).
 2. Toda constante por bioma pasa a un solo número, **su valor del desierto**, para mover el balance
-   lo menos posible. Las letras de bioma desaparecen (sin multiplicador: ×1000).
+   lo menos posible. Las letras de bioma desaparecen (sin multiplicador: ×1000). Para Peregrina las
+   dos reglas chocan (su letra del desierto era A, ×1050): manda la regla explícita de las letras,
+   y de ahí sale su −4,8 % de `agility`. La casa y la debilidad de un fabricante en el desierto sí
+   siguen la regla del valor del desierto: pasan a valer en todas las pistas (`everywhere`).
 3. Se quita el viento: el segmento `canyon` ya no tiene `wind` y su factor es 1000.
 4. Los ids de pista pierden el prefijo `desert-` y los nombres visibles pasan a ser neutros; el
    agua se presenta como «Terreno líquido».
@@ -49,7 +52,9 @@ fabricantes ligadas al desierto.
 - En el `RaceLog`: `derived[].biomeAptitude` (la letra aplicada) y `geometry.biome` (ADR-0003 D55).
   El `param` de un tramo `canyon` es 0.
 - En la caja negra: la variante `aptitude.kind: "biome"` (queda solo `kind: "style"`).
-- En fabricantes: `Terrain.biomes` de `home` y `weak` (quedan `segments` y `traits`).
+- En fabricantes: `Terrain.biomes` de `home` y `weak` (quedan `segments` y `traits`). Se agrega
+  `Terrain.everywhere` (booleano, `false` por defecto): una casa o debilidad que vale en toda pista,
+  que es lo que fue un bioma que cubría todas las pistas de v1.
 
 **Constantes** (`packages/sim/src/rulesets/v1/constants.ts`; v2 hereda la carrera de v1):
 
@@ -67,8 +72,10 @@ desierto: `massThrustCoolPm` 500 y `pulseBasePm` 1150.
 
 - `biome: "desert"` de las tres pistas; `wind` −0,1 (600 m) y +0,15 (400 m) del cañón.
 - `biomeAptitude` de las tres Falconess (Peregrina tenía A en desierto; Cernícala y Caracara, B).
-- Fabricantes: Kōryū casa `desert`; Altair casa `urban`; Lumière casa `coast` y `urban`;
-  Steinhaus casa `tundra` y `mountain`, débil `urban` y `desert`. Boneyard no tenía biomas.
+- Fabricantes: Kōryū casa `desert` → casa en todas las pistas (`home.everywhere`); Steinhaus
+  débil `desert` → débil en todas (`weak.everywhere`); se quitan Altair casa `urban`, Lumière casa
+  `coast` y `urban`, Steinhaus casa `tundra` y `mountain` y débil `urban`. Boneyard no tenía
+  biomas. Las casillas de la métrica 2 quedan iguales a las de v1.
 - Textos: `biome.coast/desert/mountain/tundra/urban` y `ui.turn.aptitude.biome`;
   `ui.race.track.meta` pierde `{biome}`.
 
