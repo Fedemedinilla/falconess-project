@@ -87,20 +87,20 @@ Todo en TypeScript estricto; no se agrega ningún lenguaje ni runtime adicional.
 
 Once entidades, todas con `id` tipo slug (`kebab-case`), `version` y validación zod en `packages/schema`. Los esquemas de abajo son el punto de partida; Claude Code los completa, pero no cambia nombres de campo sin un ADR en `docs/decisions/`.
 
-| Entidad              | Archivo de contenido              | Rol                                                                                                                       |
-| -------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `Falconess`          | `content/falconess/<id>.json`     | Personaje: stats base, crecimiento, aptitudes, estilo preferido, habilidades únicas, patrocinador, objetivos de temporada |
-| `Manufacturer`       | `content/manufacturers/<id>.json` | Regla mecánica (`rule`), paleta, cuadrilla, pistas casa y débil                                                           |
-| `Frame` (bastidor)   | `content/frames/<id>.json`        | Stats de alas, estilo, fabricante, pasivo, rareza, `signatureOf?`                                                         |
-| `Part` (pieza)       | `content/parts/<id>.json`         | Tipo (`turbine`, `battery`, `stabilizer`, `firmware`), fabricante, modificadores                                          |
-| `Quirk`              | `content/quirks.json`             | Peculiaridades sorteables de Boneyard                                                                                     |
-| `Skill`              | `content/skills/<id>.json`        | Condición de activación, efecto, duración, costo                                                                          |
-| `Event`              | `content/events/<id>.json`        | Evento de entrenamiento: condiciones, opciones, efectos, claves de texto                                                  |
-| `Course` + `Segment` | `content/courses/<id>.json`       | Longitud, rasgos, lista de segmentos tipados                                                                              |
-| `Crew`               | dentro de `Manufacturer`          | Cuadrilla: bonificaciones de entrenamiento y eventos propios                                                              |
-| `SeasonState`        | runtime y save                    | Estado de una crianza en curso                                                                                            |
-| `BlackBox`           | save e intercambio                | Herencia: factores azules, rojos y verdes                                                                                 |
-| `Build`              | intercambio y ligas               | Falconess final + bastidor + piezas + habilidades, firmable                                                               |
+| Entidad              | Archivo de contenido              | Rol                                                                                                                                      |
+| -------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `Falconess`          | `content/falconess/<id>.json`     | Personaje: stats base, crecimiento, aptitudes por posición, posición preferida, habilidades únicas, patrocinador, objetivos de temporada |
+| `Manufacturer`       | `content/manufacturers/<id>.json` | Regla mecánica (`rule`), paleta, cuadrilla, pistas casa y débil                                                                          |
+| `Frame` (bastidor)   | `content/frames/<id>.json`        | Stats de alas, estilo, fabricante, pasivo, rareza, `signatureOf?`                                                                        |
+| `Part` (pieza)       | `content/parts/<id>.json`         | Tipo (`turbine`, `battery`, `stabilizer`, `firmware`), fabricante, modificadores                                                         |
+| `Quirk`              | `content/quirks.json`             | Peculiaridades sorteables de Boneyard                                                                                                    |
+| `Skill`              | `content/skills/<id>.json`        | Condición de activación, efecto, duración, costo                                                                                         |
+| `Event`              | `content/events/<id>.json`        | Evento de entrenamiento: condiciones, opciones, efectos, claves de texto                                                                 |
+| `Course` + `Segment` | `content/courses/<id>.json`       | Longitud, rasgos, lista de segmentos tipados                                                                                             |
+| `Crew`               | dentro de `Manufacturer`          | Cuadrilla: bonificaciones de entrenamiento y eventos propios                                                                             |
+| `SeasonState`        | runtime y save                    | Estado de una crianza en curso                                                                                                           |
+| `BlackBox`           | save e intercambio                | Herencia: factores azules, rojos y verdes                                                                                                |
+| `Build`              | intercambio y ligas               | Falconess final + bastidor + piezas + habilidades, firmable                                                                              |
 
 ```ts
 // packages/schema/src/core.ts (extracto inicial)
@@ -217,7 +217,7 @@ export const Build = z.object({
 
 **Reglas de esquema:** `content:validate` falla el build si un JSON no pasa; los `textKey` deben existir en `text/es.json`; toda referencia por id se resuelve en un índice cargado una sola vez (`loadContent()`), y un id inexistente es error de build, no de runtime.
 
-## 5. Stats, recursos, estilos y aptitudes
+## 5. Stats, recursos, estilos, posiciones y aptitudes
 
 Cinco stats de Falconess (1–1200, como Umamusume), cuatro stats de alas que solo multiplican o presupuestan, y tres recursos que se consumen en carrera más la durabilidad. Cada stat de alas tiene una stat "dueña" para que el jugador sepa qué entrenar.
 
@@ -238,23 +238,32 @@ Cinco stats de Falconess (1–1200, como Umamusume), cuatro stats de alas que so
 
 **Recursos en carrera:** `hp` (física; se agota → velocidad cae a mínimo), `energy` (boost; se agota → sin boost), `heat` (sube con boost, baja sin boost; sobre `dissipation` → penalización de velocidad y daño), `durability` (si llega a 0, `powerToWeight` se reduce un 25 % el resto de la carrera).
 
-**Estilos (`Style`):**
+**Estilos (`Style`) y posiciones (`Position`).** Desde ADR-0008 el estilo es de las **alas** y pone su física; la **posición** se elige antes de cada carrera y decide cómo administra la energía. Cada estilo trae su posición por defecto, que es el comportamiento que tenía antes: con ella la carrera sale idéntica.
 
-| Estilo               | Comportamiento del controlador                                                     | Fase donde brilla     |
-| -------------------- | ---------------------------------------------------------------------------------- | --------------------- |
-| `dive` (Picada)      | Conserva energía y hp; gasta todo en descensos y en el sprint final                | Final                 |
-| `hover` (Suspensión) | Se mantiene en el pelotón medio; regenera si el bastidor lo permite; ataca al 70 % | Media                 |
-| `glide` (Planeo)     | Toma la punta con crucero eficiente; boost mínimo; sufre si la alcanzan            | Salida y media        |
-| `ground` (Rasante)   | Evita `jump` por rutas de suelo más largas; constante; resiste daño                | Pistas con obstáculos |
+| Estilo (alas)        | Física de las alas (sigue en cualquier posición)                                             | Posición por defecto |
+| -------------------- | -------------------------------------------------------------------------------------------- | -------------------- |
+| `dive` (Picada)      | Empuje × 1,4 en descensos y en el sprint final                                               | Remate               |
+| `hover` (Suspensión) | Rebufo en el pelotón medio (fase media); regenera si el bastidor lo permite                  | Acecho               |
+| `glide` (Planeo)     | Aceleración × 1,1 en la salida; crucero eficiente mientras lidera; sufre si la alcanzan      | Punta                |
+| `ground` (Rasante)   | Evita `jump` por rutas de suelo más largas, sin despegue ni aterrizaje; resiste daño (× 0,5) | Pelotón              |
 
-**Aptitudes:** multiplicadores por letra de estilo: S 1,10 · A 1,05 · B 1,00 · C 0,95 · D 0,90 · E 0,85 · F 0,80 · G 0,70. La aptitud de estilo multiplica `intelligence` efectiva (peor estilo = peores decisiones de boost). `agility` no lleva letra (ADR-0007 quitó la aptitud de bioma). Es la misma lógica que la aptitud de distancia y de estilo en Umamusume, reconstruida por la comunidad.
+| Posición          | Cómo administra la energía (controlador)                                               | Fase donde brilla      |
+| ----------------- | -------------------------------------------------------------------------------------- | ---------------------- |
+| `lead` (Punta)    | Gasta en la salida y la fase media para tomar la punta y no soltarla (guarda el 60 %)  | Salida y media         |
+| `pack` (Pelotón)  | Ritmo parejo hasta el final: gasta el 60 % del tanque menos lo que piden los saltos    | Constante              |
+| `stalk` (Acecho)  | Se queda en el pelotón medio, recupera si queda atrás (guarda el 50 %) y ataca al 70 % | Media y ataque al 70 % |
+| `closer` (Remate) | Conserva energía y hp; gasta en los descensos y en el sprint final (guarda el 50 %)    | Final                  |
+
+Las rivales corren en la posición de sus alas (ADR-0008, por ahora). El jugador la elige en la semana de carrera (si no elige, corre en la de sus alas).
+
+**Aptitudes:** multiplicadores por letra de **posición**: S 1,10 · A 1,05 · B 1,00 · C 0,95 · D 0,90 · E 0,85 · F 0,80 · G 0,70. La letra de la posición elegida multiplica `intelligence` efectiva (peor posición = peores decisiones de boost); las alas no tienen letra (ADR-0008: cada letra de estilo pasó a la posición por defecto de ese estilo). `agility` no lleva letra (ADR-0007 quitó la aptitud de bioma). Es la misma lógica que la aptitud de distancia y de estilo de carrera en Umamusume, reconstruida por la comunidad.
 
 **Ánimo:** cinco niveles que multiplican todas las stats efectivas: 1,10 / 1,05 / 1,00 / 0,98 / 0,95.
 
 **Stats efectivas en carrera (cálculo único al inicio, en enteros):**
 
 ```latex
-S_{eff} = \lfloor S_{base} \cdot m_{animo} \cdot a_{estilo} \rfloor
+S_{eff} = \lfloor S_{base} \cdot m_{animo} \cdot a_{posicion} \rfloor
 ```
 
 Las stats efectivas y las de alas se congelan en `RaceEntry` antes del primer tick; el motor nunca vuelve a leer el contenido durante la carrera.
@@ -400,7 +409,7 @@ Fuentes de eventos: `crew`, `falconess` (historia personal, escritos a mano), `r
 | Factor            | Origen                                            | Rango      | Efecto al heredar                                |
 | ----------------- | ------------------------------------------------- | ---------- | ------------------------------------------------ |
 | `stat` (azul)     | La stat más alta; ★1–3 según umbral 600/800/1000  | 1 por caja | +stat base ×★×7 al inicio                        |
-| `aptitude` (rojo) | Mejor aptitud de estilo                           | 1 por caja | Sube una letra con probabilidad 30/55/80 % por ★ |
+| `aptitude` (rojo) | Mejor aptitud de posición (ADR-0008)              | 1 por caja | Sube una letra con probabilidad 30/55/80 % por ★ |
 | `skill` (verde)   | Hasta 3 habilidades aprendidas                    | 0–3        | Posibilidad de aprender con descuento            |
 | `frameAffinity`   | Fabricante del bastidor equipado en más victorias | 1          | +10 % aparición de su cuadrilla                  |
 
@@ -650,7 +659,8 @@ Siete decisiones siguen abiertas; ninguna bloquea las semanas 1 y 2, y cada una 
 | Cuadrilla (`Crew`)      | Personal del fabricante; equivalente de las support cards                                              |
 | Alas firma              | Bastidor hecho por el patrocinador de una Falconess con el pasivo que cierra su kit                    |
 | Caja negra (`BlackBox`) | Registro de herencia de una temporada: factores azul, rojo y verde más afinidad de fabricante          |
-| Estilo (`Style`)        | Controlador de carrera: `dive`, `hover`, `glide`, `ground`                                             |
+| Estilo (`Style`)        | Física de las alas: `dive`, `hover`, `glide`, `ground` (ADR-0008)                                      |
+| Posición (`Position`)   | Cómo administra la energía en carrera, elegida antes de largar: `lead`, `pack`, `stalk`, `closer`      |
 | Ráfaga (pulso)          | Boost discreto de Kōryū: 12 ticks de empuje, 30 de enfriamiento                                        |
 | `RunInput`              | Decisión del jugador registrada para reproducir una temporada                                          |
 | `RaceLog`               | Salida muestreada de una carrera; única fuente de la reproducción y de las curvas                      |

@@ -285,7 +285,8 @@ EntryInput = {                       // zod schema in packages/schema/src/race.t
   kind: "player" | "rival" | "ghost";
   falconessId: Slug | null;
   baseStats: FalconessStats; mood: Mood;
-  styleAptitude: StyleAptitudes;     // no biome letters (ADR-0007)
+  positionAptitude: PositionAptitudes; // one letter per race position (ADR-0008; no biome letters, ADR-0007)
+  position?: Position;               // the race position; absent = DEFAULT_POSITION[frame style]
   frameId: Slug; parts: Slug[]; quirks: Slug[];
   learnedSkills: Slug[];
   durability: number | null;         // season frameDurability; null = full
@@ -297,9 +298,11 @@ Steps (integers only):
 1. `fb = resolveFrameBuild(content, frameId, parts, quirks)` (existing). It already applies the
    telemetry PW cap 1100 and `power-cap`, and clamps PW to [500, 1600], energy to [20, 200],
    dissipation to [20, 120], durability to [20, 260].
-2. `eff = effectiveStats(ruleset, baseStats, mood, styleAptitude, fb.style)` (existing): mood on
-   all five stats, style letter **of the frame's style** on intelligence; agility takes no letter
-   (ADR-0007 removed the biome letter).
+2. `position = input.position ?? DEFAULT_POSITION[fb.style]` (ADR-0008: glide → lead, ground →
+   pack, hover → stalk, dive → closer); `eff = effectiveStats(ruleset, baseStats, mood,
+   positionAptitude, position)`: mood on all five stats, the letter **of the race position** on
+   intelligence (until ADR-0008 it was the frame style's); agility takes no letter (ADR-0007
+   removed the biome letter).
 3. `falconess-stat` modifiers: `eff[stat] = clamp(eff[stat] + Σ delta, 1, 2000)`, after step 2
    ("intelligence efectiva +30" is +30 effective).
 4. Skills: every id of `learnedSkills` resolved through content; it must be `kind: "active"` (a
@@ -313,9 +316,10 @@ Steps (integers only):
 
 ```
 runnerId: string, kind, falconessId: Slug | null, laneIndex: 0..7,
-frameId, manufacturer, rule: RaceRule, style: Style,            // RaceRule: section 3.4
+frameId, manufacturer, rule: RaceRule, style: Style,            // RaceRule: section 3.4; style = the wings' physics (9.8)
+position: Position,                                             // the controller row (9.4, ADR-0008)
 passive: Slug | null, parts: Slug[] (≤ 4), quirks: Slug[] (≤ 2),
-mood, styleAptitude: Aptitude,                               // the letter actually applied
+mood, positionAptitude: Aptitude,                               // the letter actually applied (the position's)
 stats: { agility, stamina, technique, courage, intelligence },  // effective, 1..2000
 powerToWeight: 500..1600 (‰, after caps), energy: 20..200, dissipation: 20..120,
 durabilityMax: 20..260, durabilityStart: 0..durabilityMax,      // content units
@@ -400,13 +404,16 @@ values are copied to `log.derived` (20.3). Two PW variants `b ∈ {0 intact, 1 b
 | `stoop[s][ph]` | dive only: `R.style.diveStoopPm` when `segType[s] == descent` or `ph == PH_FINAL` (9.8); else 1000 | 1000 (dive final 1400) |
 | `Bon[b]`, `costOn`, `unit[b]`, `sMax[b]` | the plan's thrust per on-tick, cost, accumulator unit, top level: `base = pulseFrame ? fl(Bp[b] × R.pulseBasePm, 1000) : B[b]`; `Bon = fl(base × (style == dive ? R.style.diveStoopPm : 1000), 1000)`; `pulseFrame ? (Bon, pulseCostMe, Bon × R.pulseTicks, fl(unit, R.pulseTicks + R.pulseCooldownTicks)) : (Bon, R.kE, Bon, Bon)`; `pulseCostMe = fl(R.kE × R.pulseCostMult, 1000)`. Ground's level mode uses the same formula without the stoop (ground is never dive). Section 12's Plan row and the accumulator of 9.5 use exactly these values | 45 000, 1000, 45 000, 45 000 (dive 63 000); desert pulse frames: shiden 136 929, 1200, 1 643 148, 39 122; hayate 83 835, 1200, 1 006 020, 23 952 |
 | `capFinal[b]` | 9.3 (thrust-capable ticks only) | sprint 99 000 me |
-| `groundLevel[b]` | 9.3 (ground only) | |
+| `groundLevel[b]` | 9.3 (pack position only; ADR-0008) | ground on the sprint 5133 vu |
+| `planPoint` | `position == stalk ? hoverAttack : finalStart` (11.1, ADR-0008) | sprint 800 m |
 | `pAct`, `pSkill[j]` | section 15 | 850 |
 | `luckyIdx` | section 16 (#15) | −1 |
 
-`stylePace` is `R.stylePace[style]` (all 1000 by default); `pace[ph]` is the pace judgement of
+`stylePace` is `R.stylePace[style]` (all 1000 by default; a cruise multiplier, so it stays with the
+wings, ADR-0008); `pace[ph]` is the pace judgement of
 section 10 (0 with noise off). Every style term (9.8) and rule term (13.1) is folded into these
-tables at race start, so the loop reads one scalar per term and never branches on a manufacturer
+tables at race start, and the race position only picks the controller row, its keep, its hold, the
+plan point and `groundLevel` (9.9), so the loop reads one scalar per term and never branches on a manufacturer
 name. The two floors in `vC` and `vMin` are forced by the 2^53 bound,
 lose less than 1 vu each, and are monotone non-decreasing in every input (needed by property P3).
 The intact/broken switch is a table-index change (`b = 1` from the break tick on).
@@ -428,12 +435,13 @@ export type RaceRule = z.infer<typeof RaceRule>;
   is the no-op spec (no regen, `capLim = heatCap`, `ruleMult = 1000`, no activation bonus, no
   repair, no licence, no pulses, no rule term of 13.1). Internal code `RULE_NONE = 5`.
 - `neutralFixtureEntry(args: { runnerId: string; laneIndex: number; style: Style;
-  stats: RaceEntry["stats"]; skills?: readonly RaceSkill[]; build?: FixtureBuild }): RaceEntry` in
+  position?: Position; stats: RaceEntry["stats"]; skills?: readonly RaceSkill[];
+  build?: FixtureBuild }): RaceEntry` in
   `packages/sim/src/race/fixtures.ts`, exported from `@falconess/sim` (the batch in `apps/cli` and
   the tests use it). It builds the entry directly, without `freezeEntry` and without content, with
   these fixed values: `kind: "rival"`, `falconessId: null`, `frameId: "fixture-neutral"`,
   `manufacturer: "none"`, `rule: "none"`, `passive: null`, `mood: 0`,
-  `styleAptitude: "B"`, `stats` as given (already effective), and, when `build` is absent,
+  `position: args.position ?? DEFAULT_POSITION[style]`, `positionAptitude: "B"`, `stats` as given (already effective), and, when `build` is absent,
   `parts: []`, `quirks: []`, `powerToWeight: 1000`, `energy: 100`, `dissipation: 60`,
   `durabilityMax: 100`, `durabilityStart: 100`, `traits: compileTraits([])` (every default).
   `skills` (default `[]`) must already be frozen (`freezeSkill`), unique and id-sorted, at most
@@ -712,11 +720,23 @@ immuneUntil = traits.heatImmuneUntilMm == null ? INF : traits.heatImmuneUntilMm 
   67 000, and 69 000 is first reached at tick 36; from there the governor holds a duty of 1/3
   (67 000 → 69 000 → 68 000 → 67 000), which is exactly heat-neutral (`2d = 1 − d`).
 
-## 9. Rank and style controllers (item 9)
+## 9. Rank and position controllers (item 9)
 
 The controller runs once per runner per tick (step B7) and fixes `boostOn`, `isPulseTick`,
 `freeTick`, `thrust`. It is a pure function of the runner's own state, its tables and the rank
 snapshot. It never draws randomness.
+
+**Position and wings (ADR-0008).** Since ADR-0008 the runner's **race position** (`RaceEntry.position`:
+`lead` Punta, `pack` Pelotón, `stalk` Acecho, `closer` Remate), chosen before the race, decides how
+she spends energy: the row of 9.4, its keep, the hold, the plan point (11.1) and the pack's level
+(9.3). The **wing style** keeps only the physics: the terms of 9.8, the ground route, damage and
+jump rules (14), and the jump reserve and `kickAt` that follow from them. Each style's default
+position (`DEFAULT_POSITION`: glide → lead, ground → pack, hover → stalk, dive → closer) is the row
+that style ran before, so a race in the default positions is the race of v1 as it was. The rows
+keep the mode names of the styles they came from (`GLIDE_CHASE`, `GROUND_CONSTANT`,
+`HOVER_CATCHUP`, `DIVE_DESCENT`) and the constants keep their names under `R.style` (`glideKeep`,
+`groundPreShare`, `hoverKeep`, `hoverAttackAt`, `diveKeep`, `styleHoldTicks`): log, ruleset and
+golden values are unchanged. Section 9.9 lists what went where.
 
 ### 9.1 Rank snapshot, position fraction, middle of the pack
 
@@ -735,7 +755,8 @@ inPack[i]  = R.style.packLo ≤ posFrac[i] ≤ R.style.packHi              // "m
   builds stay symmetric; balance's lane tie-break broke this).
 - For n = 8: posFrac 0, 142, 285, 428, 571, 714, 857, 1000; the pack (250..750) is places 3-6.
 - Finished runners rank ahead of every unfinished runner, by finish time.
-- Consumers: style rules, skill `positionRange`, `regen-pack-multiplier`, glide lead drain.
+- Consumers: the stalk row (9.4), hover's slipstream (9.8), skill `positionRange`,
+  `regen-pack-multiplier`, glide's lead drain (9.7).
 
 ### 9.2 Reserves and keeps
 
@@ -758,7 +779,7 @@ gatesOk   = canThrust && energyOk && heatOk
 `SURPLUS` uses `fl(capLim × R.surplusHeatPm, 1000)` (800) and `REGEN` uses
 `fl(capLim × R.regenOverflowHeatPm, 1000)` (900), so pre-final spending leaves heat headroom.
 `licMode` is true in modes `KICK` and `PLAN` for every licensed runner, and additionally in the
-four style modes for a heat-immunity holder.
+four position modes for a heat-immunity holder.
 
 **Overheat licence** (generalises judge 2's "Steinhaus may run past heatCap while durability is
 above a floor", with the cooling tail counted so a licensed runner can never break its own wings):
@@ -791,7 +812,7 @@ licenceOk = licensed && durAfter > floorDur
   heat-neutral duty `coolTick / (kH + coolTick)` = 1/3.
 
 **Final absorption `capFinal[b]`** (energy the final plan window can actually spend; used by
-`SURPLUS`): window `[planPoint, absorbEnd[b])` with `planPoint = finalStart` (hover:
+`SURPLUS`): window `[planPoint, absorbEnd[b])` with `planPoint = finalStart` (stalk position:
 `hoverAttack`) and `absorbEnd[b] = min(kickAt, exhaust0[b])`, where `exhaust0[b]` is the
 position at which `hpMax` runs out at cruise from the gun: walk the pieces of the course (segments
 split at `startEnd` and `finalStart`), each costing `ceilDiv(piece', vC[b][ph][s])` ticks at
@@ -809,13 +830,24 @@ final. Values (600 stats, PW 1.0, D 60, C 600, noise off): sprint 99 000 me; rid
 80 m excluded; it was 152 000 when jump ticks counted); canyon 188 000 (`absorbEnd` 2778.6 m);
 shiden canyon 16 800 (`absorbEnd` 2128.6 m), ridge 25 200 (`absorbEnd` 1519.7 m), sprint 52 800.
 
-**Ground level `groundLevel[b]`** (vu): `preTicks[b] = Σ ceilDiv(piece', vC[b][ph][s])` over the
-pieces of `[0, finalStart)` split at segment boundaries and at `startEnd` (`piece'` × `detour`/1000 on jump
-segments); `groundLevel = min(sMax[b], fl(Bon[b] × fl(Emax × R.style.groundPreShare, 1000),
-max(1, preTicks) × costOn))`: the level that spends `groundPreShare` (60 %) of the tank evenly
-before the final.
+**Pack level `groundLevel[b]`** (vu; the pack position only, ADR-0008; the name keeps the Rasante
+row it came from): `preTicks[b] = Σ ceilDiv(piece', vC[b][ph][s])` over the **thrust-capable**
+pieces of `[0, finalStart)` split at segment boundaries and at `startEnd` (`piece'` × `detour`/1000
+on jump segments for ground wings; a flyer's jump segment is skipped, as in `capFinal` and 11.3,
+because the accumulator does not accrue there, 9.5); `groundLevel = min(sMax[b], fl(Bon[b] ×
+max(0, fl(Emax × R.style.groundPreShare, 1000) − jrStart), max(1, preTicks) × costOn))` with
+`jrStart` = the jump reserve at the gun (`R` of the course's first jump, 14.4; 0 for ground wings):
+the level that spends `groundPreShare` (60 %) of the tank, less what the jumps will lift, evenly
+before the final. The row's intent condition (`energy − jr[seg] ≥ 40 % of Emax`) keeps the rest:
+a pack flyer reaches the final with 40 % plus the reserve of the jumps still ahead (ridge, T 600,
+neutral: 100 − 25 at the level − 20 lifted at jump 1 = 55 = 40 + 15 for jump 2, ± one on-tick), and
+since every gate keeps `energy − cost ≥ jr`, it fails only the jumps it would fail without ever
+boosting. For ground wings `jrStart = 0` and every piece is thrust-capable: the formula is the v1
+ground level, number for number. Without `jrStart` a flyer's level would plan 60 energy where only
+25 can be spent before the reserve stops it: it would empty its budget early and run the rest of
+the start and middle phases at cruise, which is not the even pace the row promises.
 
-### 9.4 Modes, precedence and the style table
+### 9.4 Modes, precedence and the position table
 
 First match wins. `prevMode`/`prevLevel` are the runner's mode and level of its previous
 non-stalled tick.
@@ -828,11 +860,11 @@ non-stalled tick.
 | 4 | `PREHEAT` | `traits.heatToEnergyPm > 0 && ph ≠ PH_FINAL && finalStart − pos ≤ ceilDiv(max(0, capLim − heat), R.kH) × vC[b][ph][seg]` | every tick (gate at `capLim`, no licence) |
 | 5 | `SURPLUS` | `ph ≠ PH_FINAL && energy − jr[seg] − capFinal[b] ≥ costBoost` | every tick (gate at 800 ‰) |
 | 6 | `REGEN` | `ph ≠ PH_FINAL && regenTick > 0 && energy + 2 × regenTick ≥ Emax` | every tick (gate at 900 ‰) |
-| 7 | style | style table below | per table |
+| 7 | position | position table below | per table |
 | 8 | `OFF` | otherwise | none |
 
-`planActive` becomes 1 at `planPoint` (finalStart; hover: hoverAttack, BRIEF "ataca al 70 %").
-Hover between 2/3 and 70 % keeps its style rule.
+`planActive` becomes 1 at `planPoint` (finalStart; stalk position: hoverAttack, BRIEF "ataca al
+70 %"). A stalk runner between 2/3 and 70 % keeps its position rule.
 
 **`kickAt` (where KICK starts).** For ground runners `kickAt = reserveAt`. For every other runner,
 if a jump segment overlaps `[reserveAt, L)`, `kickAt = min(reserveAt, segStart)` of the first such
@@ -841,19 +873,23 @@ moves the kick and the plan's window end to the jump entry (1000 m), because not
 inside the jump. On the three v1 courses `kickAt = reserveAt`. The jump reserve is still kept by
 every gate, so the kick never spends the lift energy of the terminal jump.
 
-| Style | Mode | Intent condition | Want | Brief text implemented |
+| Position (default wings) | Mode | Intent condition | Want | Brief text implemented |
 | --- | --- | --- | --- | --- |
-| dive | `DIVE_DESCENT` | `ph ≠ PH_FINAL && segType[seg] == DESCENT` | `keepOk(R.style.diveKeep)` (50 %) | "conserva energía y hp; gasta todo en descensos y en el sprint final" |
-| hover | `HOVER_CATCHUP` | `posFrac > R.style.packHi` (behind the middle pack) | `keepOk(R.style.hoverKeep)` (50 %) | "se mantiene en el pelotón medio; ataca al 70 %" |
-| glide | `GLIDE_CHASE` | `ph ≠ PH_FINAL && ahead > 0` (not leading) | `keepOk(R.style.glideKeep)` (60 %) | "toma la punta con crucero eficiente; boost mínimo" |
-| ground | `GROUND_CONSTANT` | `ph ≠ PH_FINAL && energy − jr[seg] ≥ fl(Emax × (1000 − R.style.groundPreShare), 1000)` | level mode at `groundLevel[b]` | "constante" |
+| closer, Remate (dive) | `DIVE_DESCENT` | `ph ≠ PH_FINAL && segType[seg] == DESCENT` | `keepOk(R.style.diveKeep)` (50 %) | "conserva energía y hp; gasta todo en descensos y en el sprint final" |
+| stalk, Acecho (hover) | `HOVER_CATCHUP` | `posFrac > R.style.packHi` (behind the middle pack) | `keepOk(R.style.hoverKeep)` (50 %) | "se mantiene en el pelotón medio; ataca al 70 %" |
+| lead, Punta (glide) | `GLIDE_CHASE` | `ph ≠ PH_FINAL && ahead > 0` (not leading) | `keepOk(R.style.glideKeep)` (60 %) | "toma la punta con crucero eficiente; boost mínimo" |
+| pack, Pelotón (ground) | `GROUND_CONSTANT` | `ph ≠ PH_FINAL && energy − jr[seg] ≥ fl(Emax × (1000 − R.style.groundPreShare), 1000)` | level mode at `groundLevel[b]` | "constante" |
 
-**Style hold** (judge 2's minimum block; legibility): for hover and glide on continuous frames,
-when the intent condition produces `want = 1` and `holdLeft == 0`, set
-`holdLeft = R.style.styleHoldTicks` (12). While `holdLeft > 0` the mode stays the same style mode
-with `want = 1` (intent and keep ignored, gates still apply); `holdLeft` decrements at the end of
-every non-stalled tick and is cleared when a mode of rows 1-6 is selected. This prevents 1-tick
-on/off toggling when ranks swap; two glides fighting for the lead trade 12-tick spans.
+The row is the position's on any wings (ADR-0008): a closer on glide wings spends on descents, a
+pack runner on dive wings runs the even level with its jump reserve (9.3). `jr[seg]` in the keeps
+and in the pack condition is the wings' (0 for ground).
+
+**Position hold** (judge 2's minimum block; legibility): for the stalk and lead positions on
+continuous frames, when the intent condition produces `want = 1` and `holdLeft == 0`, set
+`holdLeft = R.style.styleHoldTicks` (12). While `holdLeft > 0` the mode stays the same position
+mode with `want = 1` (intent and keep ignored, gates still apply); `holdLeft` decrements at the end
+of every non-stalled tick and is cleared when a mode of rows 1-6 is selected. This prevents 1-tick
+on/off toggling when ranks swap; two lead runners fighting for the lead trade 12-tick spans.
 
 ### 9.5 Level modes and the accumulator (from level to binary per-tick boost)
 
@@ -896,23 +932,27 @@ decide(i):                                          // step B7
 
 ### 9.7 What the qualitative styles mean mechanically
 
-- **Glide "sufre si la alcanzan":** (a) "crucero eficiente": while a glide holds the lead
+Since ADR-0008 each item below splits in two: the physics stays with the wings, the spending
+moves to the style's default position (9.9). The text keeps the style names of BRIEF §5.
+
+- **Glide "sufre si la alcanzan":** (a) "crucero eficiente" (wings): while a glide holds the lead
   (`ahead == 0`, shared lead included) its hp drain uses `dK × R.glideLeadDrainPm` (980); caught,
-  it loses that efficiency; (b) when not leading in the start and middle phases it spends energy
+  it loses that efficiency; (b) (lead position) when not leading in the start and middle phases it spends energy
   down to 60 % to retake the lead, so it reaches the sprint with less energy and more heat. Both
   are visible in the log (rank, `GLIDE_CHASE` mode events, ledger). 980 (revision 2, was 950):
   with the launch term of 9.8 glide leads more often, and at 950 it wins 44 % of the canyon in S1
   (revision-2 constants otherwise); at 980 it wins 33 % (at 900 a lone glide skipped canyon
   exhaustion entirely).
-- **Ground "resiste daño":** every durability loss of a ground runner (overheat, water, crash) is
-  multiplied by `R.groundDamagePm` (500); ground detours every jump (never crashes, never lands)
-  and its low constant duty rarely heats.
+- **Ground "resiste daño":** (wings) every durability loss of a ground runner (overheat, water,
+  crash) is multiplied by `R.groundDamagePm` (500); ground detours every jump (never crashes, never
+  lands); (pack position) its low constant duty rarely heats.
 - **Hover "regenera si el bastidor lo permite":** no regen of its own; it collects its frame's regen
-  on unboosted ticks (Lumière, regen traits), multiplied in the pack by `regen-pack-multiplier`;
-  `REGEN` mode spends what a full tank would waste.
-- **Dive "conserva energía y hp":** no boost before the final except on descents, half the tank
-  kept for the sprint; not boosting is how it conserves hp (a boosted tick at 26.5 m/s drains 27 %
-  more than cruise).
+  on unboosted ticks (Lumière, regen traits; the frame's), multiplied in the pack by
+  `regen-pack-multiplier` (a trait); `REGEN` mode (row 6, every position) spends what a full tank
+  would waste.
+- **Dive "conserva energía y hp":** (closer position) no boost before the final except on descents,
+  half the tank kept for the sprint; not boosting is how it conserves hp (a boosted tick at
+  26.5 m/s drains 27 % more than cruise).
 
 ### 9.8 Style terms: the phase where each style shines (BRIEF §5 column "Fase donde brilla")
 
@@ -920,7 +960,10 @@ Under brief constants every energy unit buys the same metres whenever it is spen
 controllers of 9.4 alone give four styles with identical solo times (revision 1 measured dive,
 hover and glide at 54.47 s on the sprint and S1 at 25/27/26 %, noise). Each style therefore has
 **one term whose value depends on phase, position or terrain**, and its controller already
-spends or positions where that term pays. All four are in `R.style` and in the log.
+spends or positions where that term pays. All four are in `R.style` and in the log. All four are
+physics (a thrust, a target speed, an acceleration, a route), none decides when to boost, so since
+ADR-0008 they stay with the **wings** in any race position; the controller that "already spends
+where the term pays" is now the style's default position (9.9).
 
 | Style | Term | Exact rule | Brief text | Phase it serves |
 | --- | --- | --- | --- | --- |
@@ -937,11 +980,42 @@ courses, hover fastest in the middle on the sprint and the canyon (ground on the
 obstacle course), dive fastest in the final on all three, and ground wins the ridge (38 %).
 Tables in 25.4. The constants are first values for the D14 pass, not tuned results.
 
+### 9.9 Position and wings: what went where (ADR-0008)
+
+Every term that depended on the style before ADR-0008, by what it is. Behaviour (decides when or
+how much to boost) follows the **position**; physics (changes speed, thrust, drain, route, damage
+or what can be done on a jump) stays with the **wings**.
+
+| Term (constant) | Was keyed on | Is | Now follows |
+| --- | --- | --- | --- |
+| 9.4 row and its intent condition (`DIVE_DESCENT`, `HOVER_CATCHUP`, `GLIDE_CHASE`, `GROUND_CONSTANT`) | style | behaviour | position (closer, stalk, lead, pack) |
+| keeps `diveKeep` 500, `hoverKeep` 500, `glideKeep` 600 | style | behaviour | position (closer, stalk, lead) |
+| `groundPreShare` 600 (pack condition and level) | style | behaviour | position (pack) |
+| `groundLevel` (9.3) | ground | behaviour | position (pack), with the wings' jump reserve |
+| hold `styleHoldTicks` 12 | hover, glide | behaviour | position (stalk, lead) |
+| plan point `hoverAttackAt` 700 (11.1, `capFinal`) | hover | behaviour | position (stalk) |
+| `packLo`/`packHi` in the stalk condition | hover | behaviour | position (stalk) |
+| stoop `diveStoopPm` 1400 (thrust and the plan's `Bon`) | dive | physics | wings (dive) |
+| slipstream `hoverDraftPm` 1020 (and `packLo`/`packHi` there) | hover | physics | wings (hover) |
+| launch `glideStartAccelPm` 1100 | glide | physics | wings (glide) |
+| lead drain `glideLeadDrainPm` 980 | glide | physics | wings (glide) |
+| route `groundDetourMult`, no lift, no landing, thrust on a jump (14.5) | ground | physics | wings (ground) |
+| `groundDamagePm` 500 | ground | physics | wings (ground) |
+| jump reserve `jr` (14.4), `kickAt` (9.4), thrust-capable distance (11.3), jump-exit replan (11.1) | ground vs flyers | physics (what a jump allows) | wings |
+| `stylePace` (all 1000) | style | physics (cruise multiplier) | wings |
+| letter (`effectiveStats`, section 10) | style | the runner's judgement | position (`positionAptitude`) |
+
+The position decides how much and when; the wings decide what a boost, a jump and a phase are
+worth. With the default position of each style every row reads the same numbers as before, so
+every golden log, ADR-0008's entry fields undone, hashes as before (`position.test.ts`).
+
 ## 10. How Intelligence acts (item 10)
 
-`I` = effective intelligence: mood × **style aptitude of the frame's style** (`effectiveStats`)
-plus `falconess-stat` deltas. A worse style aptitude lowers I and degrades all three channels: the
-brief's "peor estilo = peores decisiones de boost". Every channel is drawn before tick 0 from the
+`I` = effective intelligence: mood × **the letter of the race position** (`effectiveStats`, ADR-0008;
+until then the letter of the frame's style) plus `falconess-stat` deltas. A worse letter lowers I
+and degrades all three channels: the brief's "peor estilo = peores decisiones de boost", now "a
+position she runs badly". A Falconess carries one letter per position (`positionAptitude`; her
+old letter of each style moved to that style's default position); the wings carry none. Every channel is drawn before tick 0 from the
 runner's block (section 17); none draws in the loop.
 
 1. **Skill activation** (main channel, brief formula; section 15): I 300 → 700 ‰, 600 → 850 ‰,
@@ -974,14 +1048,15 @@ revision 2): +100 I from 600 is worth ≈ 0.36 % of speed through the pace centr
 plus 0.2-0.9 m through skills; agility +100 is ≈ 2.5 % (≈ 50 m). Win rate of one runner in an
 otherwise equal 8-runner field (I 600 hovers, noise on, 1500 races per cell): sprint I 300 4.3 %,
 I 510 8.8 %, I 600 11.1 %, I 630 12.3 %, I 1000 31.3 %; ridge 4.5 / 8.9 / 11.0 / 11.6 / 31.3 %;
-canyon 4.2 / 8.6 / 10.5 / 11.3 / 32.5 %. Win rate is non-decreasing in I and in the style letter
+canyon 4.2 / 8.6 / 10.5 / 11.3 / 32.5 %. Win rate is non-decreasing in I and in the position letter
 (A → I 630, E → I 510 at base 600), which the batch now checks (S8, 25.2).
 
 ## 11. Final sprint plan (item 11)
 
 ### 11.1 When
 
-- **First plan:** on the first tick with `pos ≥ planPoint` (finalStart; hover: hoverAttack), at
+- **First plan:** on the first tick with `pos ≥ planPoint` (finalStart; stalk position:
+  hoverAttack, ADR-0008), at
   step B1 `planActive = 1; replan = 1 (cause phase)`; executed at step B6, after heat-to-energy
   (B1), skills (B3) and jump resolution (B4).
 - **Replans** (at most `R.maxReplans` = 4 after the first plan; a replan flag past the cap is
@@ -1110,7 +1185,8 @@ event `sprintPlan` with that reason and `levelMms = 0`. Integer bounds: `s × Ep
 
 ### 11.4 Worked values (600-balanced, PW 1.0, E 100, D 60, C 600, dive, noise off)
 
-Measured with the spec prototype (25.4, revision 2 constants). Dive carries the stoop (9.8), so
+Measured with the spec prototype (25.4, revision 2 constants), each style in its default position
+(dive closer, hover stalk; ADR-0008). Dive carries the stoop (9.8), so
 its `Bon` is 63 000 vu (4.2 m/s) in the final; a neutral hover (no style term solo) plans exactly
 as revision 1 (sprint 1.30 m/s from 841 m).
 
@@ -1670,7 +1746,9 @@ RaceLog = z.strictObject({
 ### 20.2 Entries
 
 `RaceEntry`, `RaceSkill`, `RaceTraits` as in 3.1, 3.2 and section 16; `RaceRule` as in 3.4. Also
-exported: `EntryInput` (3.1, the `freezeEntry` input; used by the season and the batch).
+exported: `EntryInput` (3.1, the `freezeEntry` input; used by the season and the batch). Each entry
+carries its wings' `style`, its race `position` and the letter applied, `positionAptitude`
+(ADR-0008; it was `styleAptitude`, the letter of the frame's style).
 
 ### 20.3 Derived (the explanation table, one per runner)
 
@@ -1683,7 +1761,7 @@ RunnerDerived = {
   landPm, detourPm /* 0 if not ground */, kickAtMm, stoopPm /* 1000 if not dive */,
   airPm: Int[] /* per segment, 1000 if not a pulse frame */,
   boostMms, pulseMms /* 0 if not a pulse frame */, chainMms,
-  liftPm, jumpNeed: Int[] /* me, per jump */, capFinal /* me */, groundLevelMms,
+  liftPm, jumpNeed: Int[] /* me, per jump */, capFinal /* me */, groundLevelMms /* pack position only */,
   brokenSpeedPm /* ‰ ≤ 1000: cruise, accel, vMin and thrust kept once broken (8.4, ADR-0003 D56) */,
   segments: [{ fPm, cruiseMms: [Int, Int, Int] /* per phase */, accelMms2, vMinMms: [Int, Int, Int],
                jumpReserve /* me */ }]                           // intact PW table
@@ -1820,7 +1898,8 @@ generateField(ruleset, content, { course, turn, raceSeed, player: EntryInput }):
     skills = frng.shuffle("race", skillPool).slice(0, m)
     entry  = freezeEntry(ruleset, content, { runnerId: `rival-${k}`, kind: "rival", falconessId: null,
                baseStats: base, mood: 0,
-               styleAptitude: "A" for `style`, "B" for the others, frameId: frame.id, parts: [],
+               positionAptitude: "A" for DEFAULT_POSITION[style], "B" for the others,  // ADR-0008
+               (no position: a rival runs in its wings' default), frameId: frame.id, parts: [],
                quirks, learnedSkills: skills, durability: null }, course, lane)
   player entry = freezeEntry(ruleset, content, player, course, playerLane)
   return all entries sorted by laneIndex
@@ -1911,14 +1990,17 @@ or the grade thresholds and score weights (`SEASON.gradeThresholds`, `scorePerSk
    quirks sequences are unchanged. A per-turn seed gives every policy the same field and draws for
    the same turn (common random numbers for `sim:season-batch`) and lets the UI rebuild the log
    from `(seed, turn)` plus the replayed state.
-2. Player `EntryInput` from the draft: `runnerId "player"`, `kind "player"`, stats, mood, both
-   aptitude maps, equipped frame, installed parts, `frameQuirks[frame]`, learned skills,
-   `durability = frameDurability[frame]`. A shared helper `goalRaceSetup(ctx, draft, goal)` returns
-   `{ course, raceSeed, entries }`, used by `goals.ts` and by any replay or UI viewer, so both
-   produce identical entries.
+2. Player `EntryInput` from the draft: `runnerId "player"`, `kind "player"`, stats, mood, her
+   position letters (`positionAptitude`), the race position the week's action input chose
+   (`input.position`, ADR-0008; absent = her wings' default), equipped frame, installed parts,
+   `frameQuirks[frame]`, learned skills, `durability = frameDurability[frame]`. A shared helper
+   `goalRaceSetup(ctx, draft, goal, position?)` returns `{ course, raceSeed, entries }`, used by
+   `goals.ts` and by any replay or UI viewer (which passes `inputPosition(input)` of the same
+   input), so both produce identical entries. A position on an input of a week without a goal race
+   is an `InvalidInputError`.
 3. `log = simulateRace(ruleset, entries, course, raceSeed, { detail: "results" })`.
-4. Player result → `place`, `timeTicks` (DNF: `maxTicks`), `fieldSize = n`, `engine: "v1"` in
-   `RaceResultEntry`; scrap by place; outcome mapping unchanged (`place > minPlace` → goal-failed;
+4. Player result → `place`, `timeTicks` (DNF: `maxTicks`), `fieldSize = n`, the `position` she ran,
+   `engine: "v1"` in `RaceResultEntry`; scrap by place; outcome mapping unchanged (`place > minPlace` → goal-failed;
    1 → win; ≤ 3 → podium; else lose).
 5. **Durability persists:** `frameDurability[frame] = fl(durabilityEnd, 1000)` (the schema, the
    Steinhaus maintenance event and the workshop `repair` already exist for it). The reference
@@ -1975,12 +2057,14 @@ export function simulateRace(ruleset: Ruleset, entries: readonly RaceEntry[], co
 export function createRaceArena(): RaceArena;
 export function freezeSkill(content: ContentIndex, id: Slug): RaceSkill;           // 3.2; freezeEntry and the batch (S4)
 export function neutralFixtureEntry(args: { runnerId: string; laneIndex: number; style: Style;
-  stats: RaceEntry["stats"]; skills?: readonly RaceSkill[]; build?: FixtureBuild }): RaceEntry;  // 3.4, tests and batch
+  position?: Position; stats: RaceEntry["stats"]; skills?: readonly RaceSkill[];
+  build?: FixtureBuild }): RaceEntry;                                                // 3.4, tests and batch
 export function fixtureBuild(content: ContentIndex, parts: readonly Slug[],
   quirks: readonly Slug[]): FixtureBuild;                                           // 3.4, batch (S5, quirk diagnostic)
 export function disableSkill(entry: RaceEntry, skillId: Slug): RaceEntry;          // 3.2, 3.4, batch (S4)
-export function goalRaceSetup(ctx: SimContext, state: SeasonState,
-  goal: SeasonGoal): { course: Course; raceSeed: string; entries: RaceEntry[] };   // season/goals.ts
+export function goalRaceSetup(ctx: SimContext, state: SeasonState, goal: SeasonGoal,
+  position?: Position): { course: Course; raceSeed: string; entries: RaceEntry[] }; // season/goals.ts; position: ADR-0008
+export function inputPosition(input: RunInput): Position | undefined;                // the race week's choice (21.2)
 export type SimulateOptions = { detail?: "full" | "results"; geometry?: CourseGeometry; arena?: RaceArena };
 export type { CourseGeometry, RaceArena, FixtureBuild };    // FixtureBuild: internal TS type of 3.4, not a data format
 // RaceEntry, RaceLog, RaceEvent, RaceResult, EntryInput, RaceSkill, RaceTraits: z.infer types from @falconess/schema
@@ -2002,7 +2086,7 @@ export type { CourseGeometry, RaceArena, FixtureBuild };    // FixtureBuild: int
 | `packages/sim/src/race/modifiers.ts` | `compileTraits` (16 handlers, exhaustive `switch`) |
 | `packages/sim/src/race/state.ts` | `RaceState`, `createRaceArena`, per-race tables (3.3), `capFinal`, `groundLevel`, jump reserve |
 | `packages/sim/src/race/physics.ts` | `fSeg`, cruise, accel, vMin, drain, lift, approach (pure scalar helpers; unit-test targets) |
-| `packages/sim/src/race/controller.ts` | rank snapshot, modes, gates, licence, style hold, accumulator, `decide` |
+| `packages/sim/src/race/controller.ts` | rank snapshot, modes (the row by race position, ADR-0008), gates, licence, position hold, accumulator, `decide` |
 | `packages/sim/src/race/sprint.ts` | `planSprint` and its segment walks |
 | `packages/sim/src/race/skills.ts` | triggers, checks, effects, timers |
 | `packages/sim/src/race/engine.ts` | `simulateRace`, the tick loop (section 18); test-only probe hook |
@@ -2050,7 +2134,8 @@ an engine invariant or pushes a product past 2^53 fails there.
 | licence | Steinhaus overheats only in `PLAN`/`KICK` and only while projected durability after the tail stays > 25 %; never breaks itself; −2000 md per overheated tick, no speed penalty; the plan never counts the licence; hot-head overheats (style modes included) only if the tail ends inside 300 m |
 | durability | break → `b = 1` tables and replan; repair caps at max and never un-breaks; start at 0 → broken |
 | accumulator | N ticks at level s → exactly `fl(acc0 + N·s, unit)` on-ticks; saturation under a gate block; no accrual on jump-blocked ticks (airborne, or a non-ground runner on a jump segment); reset on mode change |
-| controller | each mode of 9.4 selected by a constructed state; precedence; keeps; style hold 12 ticks; surplus and regen-overflow heat limits; preheat arrives at final entry with the heat the 9.4 formula projects: heat at the PREHEAT point + `kH` × its consecutive boost ticks, below `capLim − kH` because boosting outruns the cruise price (ADR-0003 D51; neutral glide on the sprint: 31 ticks, 62 000); `kickAt` = jump entry when a jump contains `reserveAt`, `reserveAt` otherwise and for ground |
+| controller | each mode of 9.4 selected by a constructed state; precedence; keeps; position hold 12 ticks; surplus and regen-overflow heat limits; preheat arrives at final entry with the heat the 9.4 formula projects: heat at the PREHEAT point + `kH` × its consecutive boost ticks, below `capLim − kH` because boosting outruns the cruise price (ADR-0003 D51; neutral glide on the sprint: 31 ticks, 62 000); `kickAt` = jump entry when a jump contains `reserveAt`, `reserveAt` otherwise and for ground |
+| positions (ADR-0008) | each position runs its row, keep, hold and plan point on each of the four wings; the wings keep stoop, launch, route, damage, jump reserve and `kickAt` in any position; hover drafts in every position and no other wing does; the pack level of a flyer subtracts `jrStart` (ridge, T 600: 35 000) and skips its jump ticks, and a pack flyer reaches the ridge final with 55 energy ± one on-tick and fails only the jumps it would fail without boosting (fast-check); the letter of the chosen position scales I; rivals keep their wings' position; the 12 golden races in the default positions hash, ADR-0008's entry fields undone, as before the change; a season race week records the chosen position, a viewer rebuilds it, another week rejects one (`position.test.ts` in `race/` and `season/`) |
 | pulses | 12/30 cadence (one pulse per 42 ticks); `readyAt` chain counting (fire on readyAt → chain + 1; one idle tick → chain = 1); `Bpc` on chain 3, 6, … (every 3rd); cooldown by fire-tick segment (flat 20); abort on takeoff and exhaustion; no-pulse fallback; free first pulse; burst cost 14 400 |
 | sprint plan | fixtures for every `reason`; highest clean level on exact ties; clean beats unclean; hp window cut; the licence never enters the plan; pulse plan quantities exactly as table 3.3 (`Bon = fl(fl(Bp × pulseBasePm, 1000) × (dive ? diveStoopPm : 1000), 1000)`, `unit = Bon × pulseTicks`, `sMax = fl(unit, pulseTicks + pulseCooldownTicks)`), pinned with the v1 `pulseBasePm`: shiden `Bon` 136 929, `unit` 1 643 148, `sMax` 39 122 vu; hayate `Bon` 83 835, `unit` 1 006 020, `sMax` 23 952 vu; whole-pulse gain; replans on refund, jump exit, break; cap 4; never moves the start before `pos`; worked values of 11.4 pinned by the implementation; **jump fixtures (11.4):** terminal jump `[flat 1000, jump 100]` → window and kick end at 1000 m, no planned on-tick in the jump, energy at the line ≤ one heat-gate rest (≤ 6); jump inside the window (`[flat 1500, jump 100, flat 400]` and the ridge with PW 1.4 or St 350, hp-limited) → `thrustDist` skips the jump, `mapBack` puts the spurt start before the jump by exactly the jump's length, energy at the line ≤ 1; ground on a jump: `route` uses `detour` in every walk |
 | jumps | `lift == required` succeeds; high-T jump spends `min(energy, req)`; failure: no lift spent, 25 000 md, `vCore × 0.4`, stall exactly 20 ticks with frozen `pos`, cooling and regen during the stall; guard → 0 damage; armor → 0 damage, speed kept, stall 30; ridge `jr = 35 000 / 15 000`; impossible jump skipped in the reserve; landing at T 600: 352 500 → 303 150 vu, one `landing` event; ground detour takes `ceilDiv(1.10 × len, v)` ticks (Boneyard 1.05) |

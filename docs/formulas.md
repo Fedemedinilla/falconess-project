@@ -17,8 +17,8 @@ Redondeo: floor, salvo que se diga otra cosa.
 Intención: una sola conversión de stats base a stats "del día" antes de entrenar o correr.
 `S_eff = floor(S_base × m_mood × a_aptitud / 1000 / 1000)` con `m_mood ∈ {1100,1050,1000,980,950}`
 (v1; v2 en "Temporada v2") para ánimo +2…−2 y `a_aptitud` por letra S…G = 1100, 1050, 1000, 950, 900, 850, 800, 700.
-La aptitud de estilo multiplica `intelligence`; `agility` no lleva letra (ADR-0007 quitó la aptitud de
-bioma). Rango: 1–1320.
+La letra de la posición de carrera multiplica `intelligence` (ADR-0008; antes, la del estilo de las
+alas); `agility` no lleva letra (ADR-0007 quitó la aptitud de bioma). Rango: 1–1320.
 
 ### Ganancia de entrenamiento
 
@@ -369,11 +369,19 @@ Bastidores de pulsos (una sola definición, la de `docs/race-engine.md` §3.3):
 26 426 vu (1,76 m/s) (`pwBoostWeight` 250, `pulseBasePm` 1450). Constantes: `finalSprintReserveMeters` 60, `sprintLevelStepMms` 100,
 `maxReplans` 4, `pulseTicks`, `pulseCooldownTicks`, `pulseBasePm`, `style.diveStoopPm`.
 
-### Controladores de estilo
+### Controladores de posición (antes, de estilo)
 
-Intención: §5 hecho exacto. Dive boostea en descensos guardando el 50 %; hover alcanza al pelotón
-medio (`posFrac > 750`) guardando el 50 % y planifica al 70 %; glide persigue la punta en salida y
-media guardando el 60 %; ground gasta el 60 % del tanque de forma uniforme antes de la final.
+Intención: §5 hecho exacto. Desde ADR-0008 el controlador lo elige la **posición** de carrera y los
+términos de estilo son física de las **alas** (`docs/race-engine.md` 9.9). Remate (por defecto de
+dive) boostea en descensos guardando el 50 %; Acecho (hover) alcanza al pelotón medio
+(`posFrac > 750`) guardando el 50 % y planifica al 70 %; Punta (glide) persigue la punta en salida y
+media guardando el 60 %; Pelotón (ground) gasta de forma uniforme antes de la final el 60 % del
+tanque menos la reserva de saltos de la largada:
+`nivel = min(sMax, fl(Bon × max(0, fl(Emax × 600, 1000) − jrStart), max(1, preTicks) × costOn))`,
+con `preTicks` los ticks de crucero en que puede empujar antes de la final (unas alas que vuelan no
+empujan en un salto). Para alas Rasante `jrStart = 0` y la fórmula es la de v1, número por número;
+unas alas que vuelan llegan a la final con el 40 % más la reserva de los saltos que faltan (Pista de
+saltos, T 600: 55 de 100) y nunca fallan un salto que no fallarían sin boostear.
 `posFrac = fl(delante × 1000, n − 1)`; pelotón medio 250–750 ‰. Términos de estilo (la fase donde
 brilla cada uno; con energía lineal los controladores solos dan tiempos iguales): dive, picada
 (empuje ×1,4 en descensos y en la final); hover, rebufo (objetivo ×1,02 en la fase media dentro
