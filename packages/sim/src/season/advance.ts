@@ -147,8 +147,8 @@ export function goalRaceState(
   if (state.status === "ended" || state.pendingEvent) return undefined;
   if (input.kind === "start" || input.kind === "event:choose") return undefined;
   const d = draft(state);
+  checkPosition(ctx, d, input); // the season rejects it, so the rebuild does too
   if (!goalForTurn(ctx, d)) return undefined;
-  checkPosition(ctx, d, input);
   const rng = rngForInput(d.seed, d.inputsApplied);
   d.inputsApplied += 1;
   applyAction(ctx, d, input, rng);

@@ -87,6 +87,11 @@ describe("a goal race week carries the race position (ADR-0008)", () => {
       expect(() => advanceSeason(ctx, s, { kind: "train:agility", position: "lead" })).toThrow(
         InvalidInputError,
       );
+      // the viewer's rebuild rejects it the same way instead of answering "no race"
+      expect(() => goalRaceState(ctx, s, { kind: "train:agility", position: "lead" })).toThrow(
+        InvalidInputError,
+      );
+      expect(goalRaceState(ctx, s, { kind: "train:agility" })).toBeUndefined();
       expect(advanceSeason(ctx, s, { kind: "train:agility" }).turn).toBe(2);
     });
   }
