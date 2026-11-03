@@ -1,6 +1,7 @@
 import { floorDiv } from "@falconess/rng";
 import type {
   BoostMode,
+  FlightLedger,
   RaceEntry,
   RaceEvent,
   RaceFrames,
@@ -12,6 +13,7 @@ import type {
 } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, SEGMENT_TYPES } from "@falconess/schema";
 import type { Ruleset } from "../rulesets/index.js";
+import { type FlightConstants, flightOf, wingOf } from "./flight.js";
 import type { CourseGeometry } from "./geometry.js";
 import {
   ACTIVATION_SLOTS,
@@ -19,6 +21,7 @@ import {
   F_DNF,
   F_EXHAUSTED,
   F_FINISHED,
+  FLIGHTS_MAX,
   ib,
   ibps,
   ibs,
@@ -38,6 +41,7 @@ import { engineUnits, SEG_JUMP, STYLE_DIVE, STYLE_GROUND } from "./units.js";
  */
 
 type Column = number[];
+type WingStyle = FlightLedger["style"];
 type RunnerColumns = {
   posMm: Column;
   vMms: Column;
@@ -75,6 +79,8 @@ export class RaceRecorder {
   private readonly shownLevel: Int32Array;
   /** Indices in `list` of the dropped candidates. */
   private readonly dropped = new Set<number>();
+  /** Index in `list` of the last `skill` event of (lane × 64 + j). */
+  private readonly skillEvent = new Map<number, number>();
 
   constructor(full: boolean, entries: readonly RaceEntry[], modeMinTicks: number) {
     this.full = full;
@@ -194,8 +200,17 @@ export class RaceRecorder {
   skill(tick: number, lane: number, posMm: number, j: number, p: number, u: number, k: number) {
     const skillId = this.skillId(lane, j);
     this.activated[lane]?.push(skillId);
-    if (this.full)
+    if (this.full) {
+      this.skillEvent.set(lane * 64 + j, this.list.length);
       this.list.push({ kind: "skill", tick, lane, posMm, skillId, p, u, activation: k });
+    }
+  }
+
+  /** Ruleset v3 (L7): the last activation of skill j was held `ticks` in the air. */
+  skillHeld(lane: number, j: number, ticks: number): void {
+    const k = this.skillEvent.get(lane * 64 + j);
+    const e = k === undefined ? undefined : this.list[k];
+    if (e !== undefined && e.kind === "skill") e.heldTicks = ticks;
   }
 
   skillMiss(tick: number, lane: number, posMm: number, j: number, p: number, u: number) {
@@ -289,22 +304,54 @@ export class RaceRecorder {
     if (this.full) this.list.push({ kind: "dnf", tick, lane, posMm });
   }
 
-  // ruleset v3 draft (design7): flight events, never emitted by v1 or v2
+  // ruleset v3 (design7 stage 1, diseno-v3-vuelo.md §6.1): flight events, never emitted by v1 or v2
 
-  takeoff(tick: number, lane: number, posMm: number, band: number, cost: number): void {
-    if (this.full) this.list.push({ kind: "takeoff", tick, lane, posMm, band, cost });
+  takeoff(
+    tick: number,
+    lane: number,
+    posMm: number,
+    t: {
+      band: number;
+      cost: number;
+      fromBand: number;
+      climbTicks: number;
+      vMms: number;
+      vAfterMms: number;
+      airPm: number;
+      style: WingStyle;
+    },
+  ): void {
+    if (this.full) this.list.push({ kind: "takeoff", tick, lane, posMm, ...t });
+  }
+
+  bandReached(tick: number, lane: number, posMm: number, band: number): void {
+    if (this.full) this.list.push({ kind: "bandReached", tick, lane, posMm, band });
+  }
+
+  diveStart(
+    tick: number,
+    lane: number,
+    posMm: number,
+    fromBand: number,
+    vMms: number,
+    cause: "plan" | "energy" | "knock",
+  ): void {
+    if (this.full) this.list.push({ kind: "diveStart", tick, lane, posMm, fromBand, vMms, cause });
   }
 
   dive(
     tick: number,
     lane: number,
     posMm: number,
-    fromBand: number,
-    gainMms: number,
-    vBeforeMms: number,
+    d: {
+      fromBand: number;
+      gainMms: number;
+      vBeforeMms: number;
+      surgeTicks: number;
+      surgeMm: number;
+    },
   ): void {
-    if (this.full)
-      this.list.push({ kind: "dive", tick, lane, posMm, fromBand, gainMms, vBeforeMms });
+    if (this.full) this.list.push({ kind: "dive", tick, lane, posMm, ...d });
   }
 
   touchdown(
@@ -313,7 +360,7 @@ export class RaceRecorder {
     posMm: number,
     fromBand: number,
     lossMms: number,
-    cause: "plan" | "energy",
+    cause: "plan" | "energy" | "knock" | "nerve",
   ): void {
     if (this.full)
       this.list.push({ kind: "touchdown", tick, lane, posMm, fromBand, lossMms, cause });
@@ -321,6 +368,37 @@ export class RaceRecorder {
 
   noLift(tick: number, lane: number, posMm: number, need: number, have: number): void {
     if (this.full) this.list.push({ kind: "noLift", tick, lane, posMm, need, have });
+  }
+
+  lineChange(
+    tick: number,
+    lane: number,
+    posMm: number,
+    fromBand: number,
+    toBand: number,
+    cause: "over" | "knock",
+    ticks: number,
+  ): void {
+    if (this.full)
+      this.list.push({ kind: "lineChange", tick, lane, posMm, fromBand, toBand, cause, ticks });
+  }
+
+  /**
+   * A candidate event (`pass`, `airDirty` on) pushed in its natural place; `drop(k)` removes it
+   * later if it did not hold (like the `boostMode` candidates of ADR-0003 D54). −1 in results.
+   */
+  candidate(e: RaceEvent): number {
+    if (!this.full) return -1;
+    this.list.push(e);
+    return this.list.length - 1;
+  }
+
+  drop(k: number): void {
+    if (k >= 0) this.dropped.add(k);
+  }
+
+  airDirtyOff(tick: number, lane: number, posMm: number): void {
+    if (this.full) this.list.push({ kind: "airDirty", tick, lane, posMm, on: false });
   }
 
   // --- frames (20.4) --------------------------------------------------------------------------------
@@ -372,8 +450,10 @@ export function buildDerived(
   E: readonly RaceEntry[],
   G: CourseGeometry,
   A: RaceArena,
+  full = false,
 ): RunnerDerived[] {
   const R = ruleset.race;
+  const F = flightOf(ruleset);
   const T = A.tables;
   const { posPerMm, velPerMms } = engineUnits(R);
   const mms = (vu: number) => floorDiv(vu, velPerMms);
@@ -446,6 +526,18 @@ export function buildDerived(
       brokenSpeedPm: R.brokenSpeedPm,
       segments,
     });
+    const last = out[out.length - 1];
+    // ruleset v3, detail full: the planned flights, the pre-race card (diseno-v3-vuelo.md §6.1)
+    if (F !== null && full && last !== undefined)
+      last.flightPlan = Array.from({ length: T.flN[i] ?? 0 }, (_, k) => {
+        const x = i * FLIGHTS_MAX + k;
+        return {
+          aMm: floorDiv(T.flA[x] ?? 0, posPerMm),
+          bMm: floorDiv(T.flB[x] ?? 0, posPerMm),
+          band: T.flBand[x] ?? 1,
+          cornisa: T.flCorn[x] === 1,
+        };
+      });
   });
   return out;
 }
@@ -457,7 +549,7 @@ export function buildResults(
   E: readonly RaceEntry[],
   A: RaceArena,
   rec: RaceRecorder,
-  flight = false,
+  F: FlightConstants | null = null,
 ): RaceResult[] {
   const S = A.state;
   const out: RaceResult[] = [];
@@ -512,7 +604,7 @@ export function buildResults(
     });
     const last = out[out.length - 1];
     // v3 draft (design7 R1): the flight ledger, a key v1 and v2 never write
-    if (flight && last !== undefined)
+    if (F !== null && last !== undefined)
       last.ledger.flight = {
         airTicks: S.airTicks[i] ?? 0,
         flights: S.flights[i] ?? 0,
@@ -524,6 +616,17 @@ export function buildResults(
         energyHold: S.energyHold[i] ?? 0,
         noLift: S.noLift[i] ?? 0,
         jumpsCovered: S.jumpsCovered[i] ?? 0,
+        passesAir: S.passesAir[i] ?? 0,
+        passesDive: S.passesDive[i] ?? 0,
+        peakMms: S.peakMms[i] ?? 0,
+        apexMax: S.apexMax[i] ?? 0,
+        dirtyTicks: S.dirtyTicks[i] ?? 0,
+        holdExtraMe: floorDiv(S.holdExtra[i] ?? 0, 1),
+        overs: S.overs[i] ?? 0,
+        knocks: S.knocks[i] ?? 0,
+        falls: S.falls[i] ?? 0,
+        belowPlan: S.belowPlan[i] ?? 0,
+        style: wingOf(F, A.tables.style[i] ?? 0).style,
       };
   });
   out.sort((a, b) => a.place - b.place);

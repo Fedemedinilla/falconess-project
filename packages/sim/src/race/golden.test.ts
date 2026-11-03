@@ -163,7 +163,17 @@ describe("golden scenarios (docs/race-engine.md 24.3)", () => {
   it("log every event kind except jumpFail (unreachable with v1 content) and dnf (an engine bug)", () => {
     const seen = new Set(GOLDEN_SCENARIOS.flatMap((s) => eventsOf(s).map((e) => e.kind)));
     // the flight events of the ruleset v3 draft (design7) never appear in a v1/v2 golden
-    const v3Only = new Set(["takeoff", "dive", "touchdown", "noLift"]);
+    const v3Only = new Set([
+      "takeoff",
+      "bandReached",
+      "diveStart",
+      "dive",
+      "touchdown",
+      "noLift",
+      "pass",
+      "airDirty",
+      "lineChange",
+    ]);
     const kinds = RaceEvent.options.map((o) => o.shape.kind.value).filter((k) => !v3Only.has(k));
     expect(kinds.filter((k) => !seen.has(k)).sort()).toEqual(["dnf", "jumpFail"]);
     expect([...seen].filter((k) => v3Only.has(k))).toEqual([]);

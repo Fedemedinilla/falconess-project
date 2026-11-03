@@ -233,9 +233,27 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
     case "touchdown":
       return item.cause === "energy"
         ? ui("ui.race.event.touchdown.energy")
-        : ui("ui.race.event.touchdown");
+        : item.cause === "knock"
+          ? ui("ui.race.event.touchdown.knock")
+          : ui("ui.race.event.touchdown");
     case "noLift":
       return ui("ui.race.event.noLift");
+    case "bandReached":
+      return ui("ui.race.event.bandReached", { band: item.band });
+    case "diveStart":
+      return item.cause === "energy"
+        ? ui("ui.race.event.diveStart.energy", { band: item.fromBand })
+        : item.cause === "knock"
+          ? ui("ui.race.event.diveStart.knock", { band: item.fromBand })
+          : ui("ui.race.event.diveStart", { band: item.fromBand });
+    case "pass":
+      return item.band >= 1 ? ui("ui.race.event.pass") : ui("ui.race.event.pass.dive");
+    case "airDirty":
+      return item.on ? ui("ui.race.event.airDirty") : ui("ui.race.event.airDirty.off");
+    case "lineChange":
+      return item.cause === "over"
+        ? ui("ui.race.event.lineChange.over", { band: item.toBand })
+        : ui("ui.race.event.lineChange.knock", { band: item.toBand });
   }
 }
 
@@ -277,10 +295,15 @@ export function eventIcon(item: EventItem): IconName {
     case "dnf":
       return "dnf";
     case "takeoff":
+    case "bandReached":
+    case "diveStart":
     case "dive":
     case "touchdown":
+    case "pass":
       return "landing";
     case "noLift":
+    case "airDirty":
+    case "lineChange":
       return "trouble";
   }
 }

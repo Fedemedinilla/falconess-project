@@ -45,8 +45,7 @@ export type FlightConstants = {
   /** η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200 ‰ (R7). */
   readonly diveEtaBasePm: number;
   readonly diveEtaCouragePm: number;
-  /** Ticks per band climbed and per band descended (R1). */
-  readonly climbTicks: number;
+  /** Ticks per band descended (R1); the ticks per band climbed are the wing's (S1). */
   readonly diveTicks: number;
   /** Plan geometry, metres (§4). */
   readonly marginM: number;
@@ -78,7 +77,143 @@ export type FlightConstants = {
    * metres are Δv² / (2 kDecel), the design's number, wherever she touches down.
    */
   readonly diveSurge: boolean;
+  // --- step 1.2 «Arriba se lucha» (diseno-v3-vuelo.md §4); each rule is off at its round-2 value
+  /** L1: half-width ‰ of each flight's own air (one pre-drawn byte of slot 28 or 30); 0 = off. */
+  readonly airWPm: number;
+  /** L1: holding costs × (1000 − airHoldK × air) / 1000: a bad air also costs. */
+  readonly airHoldK: number;
+  /** L1: ‰ the centre of the air moves per 1200 technique above 600; the width never moves. */
+  readonly airTechPm: number;
+  /** L2: hold ‰ per band [ground, low, high, ceiling] (all 1000 = off). */
+  readonly bandHoldPm: readonly [number, number, number, number];
+  /** L3: dirty air: another runner in her band, 0 < gap ≤ dirtyM metres ahead (0 = off). */
+  readonly dirtyM: number;
+  /** L3: hold ‰ in dirty air at technique 0; technique 1200 removes dirtyTechPm ‰ of the extra. */
+  readonly dirtyHoldPm: number;
+  readonly dirtyTechPm: number;
+  /** L3: in dirty air the legs do not rest (hp drain ×1.0 instead of airDrainPm). */
+  readonly dirtyNoRest: boolean;
+  /** L4: ticks of dirty air in a row before she tries to go over, once per race (0 = off). */
+  readonly escapeTicks: number;
+  /** L4: knocked a band down after knockTicks + knockCourTicks × min(C, 1200) / 1200 (0 = off). */
+  readonly knockTicks: number;
+  readonly knockCourTicks: number;
+  /** L6: a fall forced by the tank lands with her landPm and no dive (false = off). */
+  readonly forcedLand: boolean;
+  // --- step 1.3 «Cuatro despegues» (§3) and L7
+  /** S1: how each wing takes off and holds, by STYLE code [dive, hover, glide, ground]. */
+  readonly wings: readonly [WingFlight, WingFlight, WingFlight, WingFlight];
+  /** S2: ‰ of the climb ticks from a cornisa, never below cornisaTicksFloor (1000 = off). */
+  readonly cornisaTicksPm: number;
+  readonly cornisaTicksFloor: number;
+  /** L7: a skill that fires in the air is held and released on touchdown, whole (false = off). */
+  readonly heldSkill: boolean;
 };
+
+/** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
+export type WingFlight = {
+  /** Log name of the style. */
+  readonly style: "lance" | "column" | "ramp" | "turbine" | "neutral";
+  /** Ticks per band climbed. */
+  readonly climbTicks: number;
+  /** ‰ of the climb cost. */
+  readonly climbCostPm: number;
+  /** ‰ of the body speed kept when she leaves the ground. */
+  readonly liftSpeedPm: number;
+  /** ‰ of the hold cost. */
+  readonly holdPm: number;
+  /** ‰ of the dive's Δv. */
+  readonly diveWingPm: number;
+};
+
+/** The round-2 flight of every wing (6 ticks per band, no cost or dive term): tests and step 1.2. */
+export const NEUTRAL_WING: WingFlight = {
+  style: "neutral",
+  climbTicks: 6,
+  climbCostPm: 1000,
+  liftSpeedPm: 1000,
+  holdPm: 1000,
+  diveWingPm: 1000,
+};
+/**
+ * S1 (§3): Lanza (Picada) vertical, 3 ticks per band, climbs ×1.25, keeps 960 ‰ of her speed,
+ * dives ×1.25; Columna (Suspensión) in steps of 6 ticks, climbs ×0.9, holds ×0.7; Rampa (Planeo)
+ * a long diagonal of 12 ticks per band, holds ×0.8, keeps all her speed; Turbina (Rasante) never
+ * leaves the ground in stage 1 (ADR-0008), its row is never read.
+ */
+export const WINGS_V3: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
+  {
+    style: "lance",
+    climbTicks: 3,
+    climbCostPm: 1250,
+    liftSpeedPm: 960,
+    holdPm: 1000,
+    diveWingPm: 1250,
+  },
+  {
+    style: "column",
+    climbTicks: 6,
+    climbCostPm: 900,
+    liftSpeedPm: 980,
+    holdPm: 700,
+    diveWingPm: 1000,
+  },
+  {
+    style: "ramp",
+    climbTicks: 12,
+    climbCostPm: 1000,
+    liftSpeedPm: 1000,
+    holdPm: 800,
+    diveWingPm: 1000,
+  },
+  {
+    style: "turbine",
+    climbTicks: 6,
+    climbCostPm: 1000,
+    liftSpeedPm: 1000,
+    holdPm: 1000,
+    diveWingPm: 1000,
+  },
+];
+const NEUTRAL_WINGS: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
+  { ...NEUTRAL_WING, style: "lance" },
+  { ...NEUTRAL_WING, style: "column" },
+  { ...NEUTRAL_WING, style: "ramp" },
+  { ...NEUTRAL_WING, style: "turbine" },
+];
+
+/** The wing row of a STYLE code. */
+export function wingOf(F: FlightConstants, style: number): WingFlight {
+  return F.wings[style] ?? NEUTRAL_WING;
+}
+
+/** S2: ticks per band climbed; from a cornisa (the ground drops away) fewer, never below the floor. */
+export function climbTicksOf(F: FlightConstants, style: number, corn: boolean): number {
+  const t = wingOf(F, style).climbTicks;
+  if (!corn) return t;
+  return Math.min(t, Math.max(F.cornisaTicksFloor, floorDiv(t * F.cornisaTicksPm, 1000)));
+}
+
+/** liftF folded with the wing's holdPm: hold × holdPm / 1000 = hold at liftF × 1000 / holdPm. */
+export function holdLift(F: FlightConstants, style: number, liftF: number): number {
+  return floorDiv(liftF * 1000, Math.max(1, wingOf(F, style).holdPm));
+}
+
+/** L2: band × pu with the band's hold multiplier. */
+export function bandPu(F: FlightConstants, band: number, pu: number): number {
+  return floorDiv(band * pu * (F.bandHoldPm[band] ?? 1000), 1000);
+}
+
+/**
+ * L1: the air of one flight, ‰ of the air cruise: centre − W + ⌊byte × (2W + 1) / 256⌋, with the
+ * centre ⌊airTechPm × (min(T, 1200) − 600) / 1200⌋. The width 2W reads no stat and no wing (AIR-4).
+ */
+export function airOffsetPm(F: FlightConstants, byte: number, technique: number): number {
+  const W = F.airWPm;
+  if (W <= 0) return 0;
+  const centre = floorDiv(F.airTechPm * (Math.min(technique, 1200) - 600), 1200);
+  return centre - W + floorDiv((byte & 255) * (2 * W + 1), 256);
+}
 
 /** A ruleset with flight: the v3 draft. */
 export type RulesetV3 = Ruleset & { readonly flight: FlightConstants };
@@ -113,9 +248,8 @@ export const FLIGHT_V3_E1: FlightConstants = {
   cornisaPm: 500,
   airDrainPm: 975,
   diveVMms: [0, 0, 5_400, 6_000],
-  diveEtaBasePm: 850,
-  diveEtaCouragePm: 300,
-  climbTicks: 6,
+  diveEtaBasePm: 700,
+  diveEtaCouragePm: 600,
   diveTicks: 3,
   marginM: 20,
   lookM: 40,
@@ -135,6 +269,45 @@ export const FLIGHT_V3_E1: FlightConstants = {
   draftGroundOnly: false,
   airCruise: true,
   diveSurge: true,
+  // step 1.2 (§4): the F2 «FIN» package without the nerve (stage 2)
+  airWPm: 26,
+  airHoldK: 10,
+  airTechPm: 30,
+  bandHoldPm: [1000, 1000, 1250, 1250],
+  dirtyM: 6,
+  dirtyHoldPm: 2000,
+  dirtyTechPm: 500,
+  dirtyNoRest: true,
+  escapeTicks: 30,
+  knockTicks: 30,
+  knockCourTicks: 30,
+  forcedLand: true,
+  // step 1.3 (§3, L7)
+  wings: WINGS_V3,
+  cornisaTicksPm: 500,
+  cornisaTicksFloor: 3,
+  heldSkill: true,
+};
+
+/**
+ * The values that turn every rule of steps 1.2 and 1.3 off: v3 with them is the round-2 race
+ * (commit 0a7162c), byte for byte (INV-5). Step 1.2 alone is `FLIGHT_OFF_1_3`.
+ */
+export const FLIGHT_OFF_1_3: Partial<FlightConstants> = {
+  wings: NEUTRAL_WINGS,
+  cornisaTicksPm: 1000,
+  heldSkill: false,
+};
+export const FLIGHT_OFF_1_2: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_1_3,
+  airWPm: 0,
+  bandHoldPm: [1000, 1000, 1000, 1000],
+  dirtyM: 0,
+  escapeTicks: 0,
+  knockTicks: 0,
+  forcedLand: false,
+  diveEtaBasePm: 850,
+  diveEtaCouragePm: 300,
 };
 
 /** Stage 2 (§10 E2): every position flies, the canyon has a ceiling, ground wings grip. */
@@ -418,11 +591,27 @@ export function planFlights(
   liftF: number,
   courage: number,
   velPerMms: number,
+  air: { u28: number; u30: number; technique: number },
 ): void {
-  T.climbMe[i] = ceilDiv(F.climbE * 1_000_000, Math.max(1, liftF));
+  const wing = wingOf(F, T.style[i] ?? 0);
+  T.climbMe[i] = ceilDiv(F.climbE * 1000 * wing.climbCostPm, Math.max(1, liftF));
+  // L5: η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200; S1: × the wing's diveWingPm
   const eta = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(courage, 1200), 1200);
   for (let b = 0; b < 4; b++)
-    T.diveV[i * 4 + b] = floorDiv((F.diveVMms[b] ?? 0) * eta, 1000) * velPerMms;
+    T.diveV[i * 4 + b] =
+      floorDiv((F.diveVMms[b] ?? 0) * eta * wing.diveWingPm, 1_000_000) * velPerMms;
+  // L1: the air of flight k, one byte of slot 28 (k < 4) or 30 (k ≥ 4), drawn before tick 0
+  for (let k = 0; k < FLIGHTS_MAX; k++) {
+    const u = k < 4 ? air.u28 : air.u30;
+    T.airOff[i * FLIGHTS_MAX + k] = airOffsetPm(F, (u >>> (8 * (k % 4))) & 255, air.technique);
+  }
+  // L3: dirty air costs × (1000 + extra − extra × dirtyTechPm × min(T, 1200) / 1.2e6) / 1000
+  const extra = Math.max(0, F.dirtyHoldPm - 1000);
+  T.dirtyPm[i] =
+    1000 + extra - floorDiv(extra * F.dirtyTechPm * Math.min(air.technique, 1200), 1_200_000);
+  // L4: courage holds the line
+  T.knockAt[i] = F.knockTicks + floorDiv(F.knockCourTicks * Math.min(courage, 1200), 1200);
+  const liftH = holdLift(F, T.style[i] ?? 0, liftF);
   T.flN[i] = 0;
   T.flRes0[i] = 0;
   if (T.style[i] === STYLE_GROUND) return;
@@ -454,7 +643,7 @@ export function planFlights(
       Math.max(0, f.band - prev) * (T.climbMe[i] ?? 0) * (f.corn ? F.cornisaPm : 1000),
       1000,
     );
-    const hold = holdMe(F, f.band * (f.b - f.a), posPerMm, liftF);
+    const hold = holdMe(F, bandPu(F, f.band, f.b - f.a), posPerMm, liftH);
     T.flClimb[x] = climb;
     T.flHold[x] = hold;
     res += climb + hold;

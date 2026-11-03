@@ -249,6 +249,11 @@ function brokenSpeedText(speedPm: number | null): string {
   return speedPm === null || speedPm === 1000 ? "" : `velocidad ×${fixed(speedPm, 1000, 2)}`;
 }
 
+/** The takeoff style of the v3 draft (diseno-v3-vuelo.md §3), as the CLI names it. */
+function styleName(style: string): string {
+  return { lance: "Lanza", column: "Columna", ramp: "Rampa", turbine: "Turbina" }[style] ?? style;
+}
+
 function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: RaceLog): string {
   switch (item.kind) {
     case "pulses": {
@@ -294,13 +299,25 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
     case "dnf":
       return "DNF";
     case "takeoff":
-      return `despega a banda ${item.band} (−${milliUnits(item.cost)} energía)`;
+      return `despega (${styleName(item.style)}) a banda ${item.band} (−${milliUnits(item.cost)} energía, ${mps(item.vMms)} → ${mps(item.vAfterMms)} m/s, aire ${item.airPm >= 0 ? "+" : ""}${item.airPm} ‰)`;
     case "dive":
-      return `PICADA desde banda ${item.fromBand}: +${mps(item.gainMms)} m/s`;
+      return `PICADA desde banda ${item.fromBand}: +${mps(item.gainMms)} m/s (pico ${mps(item.vBeforeMms + item.gainMms)} m/s)`;
     case "touchdown":
-      return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? " (sin energía para sostener)" : ""}`;
+      return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? ` (sin energía para sostener, −${mps(item.lossMms)} m/s)` : item.cause === "knock" ? " (le bajaron la línea)" : ""}`;
     case "noLift":
       return `SIN ENERGÍA: no despega (${milliUnits(item.have)} < ${milliUnits(item.need)})`;
+    case "bandReached":
+      return `alcanza la banda ${item.band}`;
+    case "diveStart":
+      return `pliega las alas desde banda ${item.fromBand} a ${mps(item.vMms)} m/s${item.cause === "plan" ? "" : item.cause === "energy" ? " (sin energía)" : " (perdió la línea)"}`;
+    case "pass":
+      return `${item.band >= 1 ? "pasa en el aire" : "pasa con el impulso de la picada"} a la de carril ${item.otherLane + 1}`;
+    case "airDirty":
+      return item.on ? "aire sucio: otra adelante en su banda" : "sale del aire sucio";
+    case "lineChange":
+      return item.cause === "over"
+        ? `¡POR ARRIBA! sube a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`
+        : `LA BAJARON a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`;
   }
 }
 

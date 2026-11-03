@@ -256,6 +256,18 @@ export const RunnerDerived = z.strictObject({
    */
   brokenSpeedPm: Pm,
   segments: z.array(DerivedSegment).min(1).max(24),
+  /** Ruleset v3, detail full only: the planned flights (the pre-race card). */
+  flightPlan: z
+    .array(
+      z.strictObject({
+        aMm: Nat,
+        bMm: Nat,
+        band: Int.min(1).max(3),
+        cornisa: z.boolean(),
+      }),
+    )
+    .max(8)
+    .optional(),
 });
 export type RunnerDerived = z.infer<typeof RunnerDerived>;
 
@@ -284,6 +296,8 @@ export const RACE_FRAME_FLAGS = {
    */
   altLow: 32768,
   altHigh: 65536,
+  /** Dirty air (ruleset v3 stage 1.2, L3): another runner in her band 0-6 m ahead while she holds. */
+  dirtyAir: 131072,
 } as const;
 
 const Column = z.array(Int);
@@ -392,7 +406,14 @@ export const RaceEvent = z.discriminatedUnion("kind", [
     onTicks: Nat,
     clean: z.boolean(),
   }),
-  raceEvent("skill", { skillId: Slug, p: Pm, u: Pm.max(999), activation: Nat }),
+  raceEvent("skill", {
+    skillId: Slug,
+    p: Pm,
+    u: Pm.max(999),
+    activation: Nat,
+    /** Ruleset v3 (L7): it fired in the air and was held this many ticks, then released whole. */
+    heldTicks: Nat.optional(),
+  }),
   raceEvent("skillMiss", { skillId: Slug, p: Pm, u: Pm.max(999) }),
   raceEvent("jumpOk", { lift: Nat, required: Nat, energyBefore: Nat }),
   raceEvent("jumpFail", {
@@ -414,15 +435,63 @@ export const RaceEvent = z.discriminatedUnion("kind", [
   raceEvent("finish", { finishMilli: Nat, place: Int.min(1) }),
   raceEvent("dnf", {}),
   // ruleset v3 draft (design7 «Despegar y caer»): v1 and v2 never emit these
-  /** A planned flight left the ground (or a jump) for `band`, paying `cost` me. */
-  raceEvent("takeoff", { band: Int.min(1).max(3), cost: Nat }),
-  /** The flight ended in a dive from `fromBand` (≥ 2): `gainMms` added to the body speed. */
-  raceEvent("dive", { fromBand: Int.min(2).max(3), gainMms: Nat, vBeforeMms: Nat }),
-  /** Every end of a flight; `cause` plan (planned point) or energy (could not pay to hold). */
+  /**
+   * A planned flight left the ground (or a jump, or a lower band of a chained flight) for `band`,
+   * paying `cost` me: from `fromBand`, one band every `climbTicks`, body speed `vMms` before and
+   * `vAfterMms` after the launch (S1), the flight's own air `airPm` (L1) and the wing's `style`.
+   */
+  raceEvent("takeoff", {
+    band: Int.min(1).max(3),
+    cost: Nat,
+    fromBand: Int.min(0).max(2),
+    climbTicks: Int.min(1),
+    vMms: Nat,
+    vAfterMms: Nat,
+    airPm: Int,
+    style: z.enum(["lance", "column", "ramp", "turbine", "neutral"]),
+  }),
+  /** The climb reached `band` (one event per band gained after the takeoff's first). */
+  raceEvent("bandReached", { band: Int.min(1).max(3) }),
+  /** The wings fold: the descent starts from `fromBand` at body speed `vMms`. */
+  raceEvent("diveStart", {
+    fromBand: Int.min(1).max(3),
+    vMms: Nat,
+    cause: z.enum(["plan", "energy", "knock"]),
+  }),
+  /**
+   * The flight ended in a dive from `fromBand` (≥ 2): `gainMms` on top of the body speed
+   * `vBeforeMms` (the peak is their sum), decaying over `surgeTicks` ticks, `surgeMm` nominal mm.
+   */
+  raceEvent("dive", {
+    fromBand: Int.min(2).max(3),
+    gainMms: Nat,
+    vBeforeMms: Nat,
+    surgeTicks: Nat,
+    surgeMm: Nat,
+  }),
+  /**
+   * Every end of a flight; `cause` plan (planned point), energy (could not pay to hold: no dive,
+   * the landing loss `lossMms`), knock (knocked down to the low band, the dive was lost) or nerve.
+   */
   raceEvent("touchdown", {
     fromBand: Int.min(1).max(3),
     lossMms: Nat,
-    cause: z.enum(["plan", "energy"]),
+    cause: z.enum(["plan", "energy", "knock", "nerve"]),
+  }),
+  /**
+   * She passed `otherLane` in the air (`band` ≥ 1) or in her dive surge, and the new order held
+   * 8 ticks; the event carries the tick the pass happened.
+   */
+  raceEvent("pass", { otherLane: Lane, band: Int.min(0).max(3), otherBand: Int.min(0).max(3) }),
+  /** Dirty air on (held ≥ 15 ticks, at the tick it began) or off (L3). */
+  raceEvent("airDirty", { on: z.boolean() }),
+  /** L4: she went over the runner ahead (`over`) or was knocked a band down (`knock`). */
+  raceEvent("lineChange", {
+    fromBand: Int.min(1).max(3),
+    toBand: Int.min(1).max(3),
+    cause: z.enum(["over", "knock"]),
+    /** Ticks of dirty air in a row before the change. */
+    ticks: Nat,
   }),
   /** A planned takeoff the tank (or an exhausted body) could not afford: she stays on the ground. */
   raceEvent("noLift", { need: Nat, have: Nat }),
@@ -444,6 +513,24 @@ export const FlightLedger = z.strictObject({
   energyHold: Nat,
   noLift: Nat,
   jumpsCovered: Nat,
+  // ruleset v3 stage 1 (diseno-v3-vuelo.md §6.1)
+  /** `pass` events in the air and in the dive surge. */
+  passesAir: Nat,
+  passesDive: Nat,
+  /** Highest peak of a dive (vBeforeMms + gainMms) and the highest band reached. */
+  peakMms: Nat,
+  apexMax: Int.min(0).max(3),
+  /** L3: ticks in dirty air and the me it cost over a clean line. */
+  dirtyTicks: Nat,
+  holdExtraMe: Nat,
+  /** L4: times she went over, times she was knocked down; L6: falls forced by the tank. */
+  overs: Nat,
+  knocks: Nat,
+  falls: Nat,
+  /** Planned flights flown below their plan: noLift, a lower band, knocked down or forced down. */
+  belowPlan: Nat,
+  /** S1: the takeoff style of her wings. */
+  style: z.enum(["lance", "column", "ramp", "turbine", "neutral"]),
 });
 export type FlightLedger = z.infer<typeof FlightLedger>;
 

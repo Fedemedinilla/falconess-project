@@ -223,6 +223,11 @@ export type RaceTables = {
   readonly diveV: Int32Array;
   /** Air cruise at the pace-window centre (no draw), same index as vC. */
   readonly vCAir: Int32Array;
+  /** L1 (step 1.2): the air of flight k, ‰ of the air cruise, index i × FLIGHTS_MAX + k. */
+  readonly airOff: Int32Array;
+  /** L3: ‰ of the hold in dirty air for her technique; L4: dirty ticks before a knock (courage). */
+  readonly dirtyPm: Int32Array;
+  readonly knockAt: Int32Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
   readonly stoop: Int32Array;
@@ -381,6 +386,41 @@ export type RaceState = {
   readonly jumpsCovered: Int32Array;
   /** vu of dive surge still on top of the body speed (`diveSurge` knob only). */
   readonly surge: Int32Array;
+  // ruleset v3 stage 1 (diseno-v3-vuelo.md): the struggle up there, the log and the held skill
+  /** Position at the end of tick t − 1 (step A), for the dirty air and the passes. */
+  readonly pos0: Float64Array;
+  /** L3: 1 = in dirty air this tick (step A, from the t − 1 snapshot). */
+  readonly dirty: Uint8Array;
+  /** L4: ticks of dirty air in a row, and 1 once she has tried to go over (once per race). */
+  readonly dirtyRun: Int32Array;
+  readonly escaped: Uint8Array;
+  /** 1 = the current flight was knocked down (its dive is lost: touchdown cause knock). */
+  readonly knocked: Uint8Array;
+  /** 1 = the current flight already counted as below its plan (RISK-1). */
+  readonly belowCounted: Uint8Array;
+  /** Tick (+ 1) the current dirty run began, for the `airDirty` event (0 = none). */
+  readonly dirtySince: Int32Array;
+  /** Highest band reached in the current flight, and its ticks per band climbed (S1, S2). */
+  readonly flApex: Int32Array;
+  readonly climbTk: Int32Array;
+  /** Ledger of stage 1. */
+  readonly passesAir: Int32Array;
+  readonly passesDive: Int32Array;
+  readonly peakMms: Int32Array;
+  readonly apexMax: Int32Array;
+  readonly dirtyTicks: Int32Array;
+  readonly holdExtra: Float64Array;
+  readonly overs: Int32Array;
+  readonly knocks: Int32Array;
+  readonly falls: Int32Array;
+  readonly belowPlan: Int32Array;
+  /** `pass` candidates (lane i over lane j), index i × MAX_LANES + j: start tick + 1 (0 = none). */
+  readonly passSince: Int32Array;
+  /** Bit 1: passer in the air at the start; bit 2: passer in her dive surge. */
+  readonly passKind: Uint8Array;
+  /** L7: 1 = the skill fired in the air and is held; ticks held. Index ik(i, j). */
+  readonly skHeld: Uint8Array;
+  readonly skHeldTicks: Int32Array;
 };
 
 /**
@@ -466,6 +506,9 @@ function createTables(): RaceTables {
     climbMe: i32(N),
     diveV: i32(N * 4),
     vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
+    airOff: i32(N * FLIGHTS_MAX),
+    dirtyPm: i32(N),
+    knockAt: i32(N),
     pulseFrame: u8(N),
     airPm: i32(NS),
     stoop: i32(NPS),
@@ -597,6 +640,29 @@ function createState(): RaceState {
     noLift: i32(N),
     jumpsCovered: i32(N),
     surge: i32(N),
+    pos0: f64(N),
+    dirty: u8(N),
+    dirtyRun: i32(N),
+    escaped: u8(N),
+    knocked: u8(N),
+    belowCounted: u8(N),
+    dirtySince: i32(N),
+    flApex: i32(N),
+    climbTk: i32(N),
+    passesAir: i32(N),
+    passesDive: i32(N),
+    peakMms: i32(N),
+    apexMax: i32(N),
+    dirtyTicks: i32(N),
+    holdExtra: f64(N),
+    overs: i32(N),
+    knocks: i32(N),
+    falls: i32(N),
+    belowPlan: i32(N),
+    passSince: i32(N * N),
+    passKind: u8(N * N),
+    skHeld: u8(N * MAX_SKILLS),
+    skHeldTicks: i32(N * MAX_SKILLS),
   };
 }
 
@@ -900,7 +966,12 @@ export function buildTables(
     }
 
     // v3 draft R2-R3: the flight plan, before the jump reserve (a covered jump needs no lift)
-    if (F !== null) planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms);
+    if (F !== null)
+      planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms, {
+        u28: A.U[i * block + 28] ?? 0,
+        u30: A.U[i * block + 30] ?? 0,
+        technique,
+      });
 
     // reserves and budgets that read the tables above (14.4, 9.3)
     jumpReserve(G, T, i);

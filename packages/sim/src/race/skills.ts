@@ -151,15 +151,22 @@ function activate(T: RaceTables, S: RaceState, i: number, j: number): void {
 
 /**
  * Skill effect timers of runner i (step B13, and stalled ticks): each running effect counts down
- * and is removed when it reaches 0. Effects of different skills stack additively.
+ * and is removed when it reaches 0. Effects of different skills stack additively. `held` (ruleset
+ * v3, L7) marks the skills that fired in the air: their timer waits for the touchdown.
  */
-export function tickSkillTimers(T: RaceTables, S: RaceState, i: number): void {
+export function tickSkillTimers(
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  held: Uint8Array | null = null,
+): void {
   if ((S.activeSkills[i] ?? 0) === 0) return;
   const nSkills = T.nSkills[i] ?? 0;
   for (let j = 0; j < nSkills; j++) {
     const k = ik(i, j);
     const left = S.activeLeft[k] ?? 0;
     if (left <= 0) continue;
+    if (held !== null && held[k] === 1) continue; // ruleset v3 (L7): held in the air, not spent
     S.activeLeft[k] = left - 1;
     if (left === 1) {
       S.activeSkills[i] = (S.activeSkills[i] ?? 0) - 1;

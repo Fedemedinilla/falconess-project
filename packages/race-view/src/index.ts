@@ -42,6 +42,12 @@ export {
   signatureFrameOf,
   uniformStats,
 } from "./field.js";
+export {
+  type FlightBeat,
+  type FlightPlanEntry,
+  flightBeats,
+  flightProblems,
+} from "./flight.js";
 export { contentLabels, type Livery, type RaceLabels } from "./labels.js";
 export {
   crossingMilliTicks,

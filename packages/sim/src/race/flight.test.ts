@@ -6,14 +6,16 @@ import { describe, expect, it } from "vitest";
 import { RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { flightOf, RULESET_V3, rulesetV3 } from "./flight.js";
+import { FLIGHT_OFF_1_2, flightOf, RULESET_V3, rulesetV3 } from "./flight.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock, FLIGHTS_MAX } from "./state.js";
 
 /**
  * The ruleset v3 draft (design7 «Despegar y caer», stage 1): flight plans by position, energy
- * paid to climb and hold, rest in the air and the dive. v1 and v2 never fly.
+ * paid to climb and hold, rest in the air and the dive. v1 and v2 never fly. The tests of the
+ * round-2 rules run with `FLIGHT_OFF_1_2` (steps 1.2 and 1.3 off); stage1.test.ts covers those.
  */
+const R2 = rulesetV3(1, FLIGHT_OFF_1_2);
 
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
@@ -139,7 +141,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
   });
 
   it("closers make the great dive and stalks dive from high; the ledger and events agree", () => {
-    const log = simulateRace(RULESET_V3, defaultField(), content.getCourse("sprint"), "dives");
+    const log = simulateRace(R2, defaultField(), content.getCourse("sprint"), "dives");
     const ev = log.events ?? [];
     for (const e of log.entries) {
       const r = log.results.find((x) => x.lane === e.laneIndex);
@@ -169,7 +171,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
   });
 
   it("an empty tank cannot take off: noLift, no damage, she stays on the ground", () => {
-    const R = rulesetV3(1, { climbE: 250 }); // even the low band costs more than any tank (≤ 200)
+    const R = rulesetV3(1, { ...FLIGHT_OFF_1_2, climbE: 250 }); // more than any tank (≤ 200)
     const log = simulateRace(R, defaultField(), content.getCourse("sprint"), "nolift");
     const closers = log.entries.filter((e) => e.position === "closer").map((e) => e.laneIndex);
     for (const lane of closers) {
@@ -186,15 +188,20 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect((log.events ?? []).filter((e) => e.kind === "takeoff")).toHaveLength(0);
   });
 
-  it("courage sets the dive: η = 850 + 300·C/1200 ‰", () => {
-    const run = (c: number) => {
+  it("courage sets the dive: η = 850 + 300·C/1200 ‰ in round 2, 700 + 600·C/1200 ‰ with L5", () => {
+    const run = (R: typeof RULESET_V3, c: number) => {
       const stats = { ...S600, courage: c };
-      const log = simulateRace(RULESET_V3, defaultField(stats), content.getCourse("sprint"), "eta");
-      const d = (log.events ?? []).find((e) => e.kind === "dive" && e.fromBand === 3);
+      const log = simulateRace(R, defaultField(stats), content.getCourse("sprint"), "eta");
+      const d = (log.events ?? []).find(
+        (e) => e.kind === "dive" && e.fromBand === 3 && log.entries[e.lane]?.style === "dive",
+      );
       return d?.kind === "dive" ? d.gainMms : -1;
     };
-    expect(run(1)).toBe(5100);
-    expect(run(1200)).toBe(6900);
+    expect(run(R2, 1)).toBe(5100);
+    expect(run(R2, 1200)).toBe(6900);
+    // L5 and the Lanza's dive ×1.25 (S1): 6000 × 0.7 × 1.25 and 6000 × 1.3 × 1.25
+    expect(run(RULESET_V3, 1)).toBe(5250);
+    expect(run(RULESET_V3, 1200)).toBe(9750);
   });
 
   it("the hover draft reaches a flight only with draftGroundOnly off (round 1 default)", () => {
@@ -209,6 +216,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(RULESET_V3.flight.draftGroundOnly).toBe(false);
     expect(rows(RULESET_V3).length).toBeGreaterThan(0);
     expect(rows(rulesetV3(1, { draftGroundOnly: true }))).toHaveLength(0);
+    expect(rows(rulesetV3(1, { ...FLIGHT_OFF_1_2, draftGroundOnly: true }))).toHaveLength(0);
   });
 
   it("the catalogue tracks validate and keep their lengths (design7 §6)", () => {
