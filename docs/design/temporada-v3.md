@@ -915,6 +915,11 @@ suelo propulsadas por el bastidor, subiendo en horizontal), que el jugador sient
 volar, y que volar no sea fácil: **arriba también tienen que luchar**. Se aplica como prioridad a todo
 el diseño de carrera v3 («Despegar y caer», `.work/design7/`).
 
+**Plan del dueño (2026-11-03):** dejar terminar el trabajo de carrera v3 y quedarse con una
+**etapa 1 chica** (despegues, lucha arriba y picadas). **En vez de avanzar a nuevas etapas, pulir la
+base.** La sensación del vuelo la juzga el dueño mirando la carrera en movimiento en el teléfono; los
+agentes equilibran y miden.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
