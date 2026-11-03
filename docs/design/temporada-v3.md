@@ -920,6 +920,13 @@ el diseño de carrera v3 («Despegar y caer», `.work/design7/`).
 base.** La sensación del vuelo la juzga el dueño mirando la carrera en movimiento en el teléfono; los
 agentes equilibran y miden.
 
+**Dueño sobre la Agilidad (2026-11-03):** que la Agilidad valga más que el resto está bien, como la
+Velocidad en Umamusume, donde la máxima se volvió el mínimo y toda build se arma alrededor de ella. No
+se busca aplanarla. Lo que sí: cada otra stat tiene que tener un papel y un umbral claros
+(Resistencia en pistas largas y para sostener la altura, Técnica en subidas, líneas y aterrizajes,
+Coraje en picadas entre el tráfico, Inteligencia en el momento justo y las habilidades). Una Falconess
+con menos Agilidad se arregla con su propio kit, no bajando la Agilidad.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
