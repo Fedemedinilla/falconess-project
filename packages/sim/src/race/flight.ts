@@ -9,7 +9,7 @@
  * which carry no `flight` constants, never reach a line of this file.
  */
 import { ceilDiv, floorDiv } from "@falconess/rng";
-import type { RaceConstants, Ruleset } from "../rulesets/index.js";
+import type { FieldConstants, RaceConstants, Ruleset } from "../rulesets/index.js";
 import { RULESET_V2 } from "../rulesets/index.js";
 import type { CourseGeometry } from "./geometry.js";
 import { FLIGHTS_MAX, is, type RaceState, type RaceTables } from "./state.js";
@@ -98,6 +98,12 @@ export const BAND_CEILING = 3;
  * - `stalkFromDiv` 3 → 4: the stalk flies from L/4 (more air, the field stays ≥ 10 % up);
  * - `closerLenDiv` 12 → 30: the closer holds ≥ max(100 m, L/30), so in the canyon her ceiling fits
  *   100 m before the final instead of after the water at 2620 m, where low-stat legs are gone.
+ * Round 2 (measure/round-2.md) moved two more:
+ * - `diveVMms` high band 4900 → 5400: the stalk flies 45 % of every track at the centre of her pace
+ *   window and loses wins to variance, not metres; her dive from high now gives ≈ 4.9 m (was 4.0)
+ *   and the great dive stays the biggest (6 m). Stalk + hover in the sprint at 750 went 17.6 → 21 %;
+ * - `closerPreFinalM` 100 → 150: more air for the closer (sprint 650-800, canyon 1850-2000) and
+ *   Picada + closer in the sprint at 750 back to 34-37 % (was 38-41 %).
  */
 export const FLIGHT_V3_E1: FlightConstants = {
   stage: 1,
@@ -106,7 +112,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   holdE: 1,
   cornisaPm: 500,
   airDrainPm: 975,
-  diveVMms: [0, 0, 4_900, 6_000],
+  diveVMms: [0, 0, 5_400, 6_000],
   diveEtaBasePm: 850,
   diveEtaCouragePm: 300,
   climbTicks: 6,
@@ -117,7 +123,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   stalkFromDiv: 4,
   closerMinM: 100,
   closerLenDiv: 30,
-  closerPreFinalM: 100,
+  closerPreFinalM: 150,
   jumpLipM: 10,
   leadJoinM: 60,
   packFanDiv: 10,
@@ -145,17 +151,35 @@ export const FLIGHT_V3_E2: FlightConstants = {
  * Round 1 brings R8's landing (880 / 60) into stage 1: a flight crosses a jump with no landing,
  * so with today's landing (800 / 120) covering one jump was worth 15-20 m and the lead and pack
  * fell to 5-9 % of the ridge at 300-450. The ground route goes half way (1100 → 1050); stage 2
- * takes it to 1000 together with the grip.
+ * takes it to 1000 together with the grip. Round 2: covering a jump in flight was still worth
+ * 8-10 paired metres in the ridge, so a landing keeps 900 ‰ at technique 0 (930 at 600) and the
+ * ground route goes to 1025: hover in the ridge at 450 went 30 → 28 %, ground 16-17 → 20 %.
  */
 const RACE_V3_E1: Partial<RaceConstants> = {
   maxReplans: 6,
-  landBasePm: 880,
+  landBasePm: 900,
   landTechPm: 60,
-  groundDetourMult: 1_050,
+  groundDetourMult: 1_025,
 };
 const RACE_V3_E2: Partial<RaceConstants> = {
   ...RACE_V3_E1,
   groundDetourMult: 1_000,
+};
+
+/**
+ * Rival field of the draft. Round 2 brings stage 3's rival technique (design §3 R11: 170 → 185 ‰,
+ * D's rows) forward for the two rival classes that fly in stage 1, Picada (closers) and Suspensión
+ * (stalks): same total power, less agility and courage. In the air the cruise reads agility (until
+ * R11), so Peregrina's Picada rivals (agility 750-905 against her 662 at T46) outflew her.
+ * Glide and ground rivals do not fly in stage 1 and keep v2's rows.
+ */
+const FIELD_V3: FieldConstants = {
+  ...RULESET_V2.field,
+  rivalWeights: {
+    ...RULESET_V2.field.rivalWeights,
+    dive: [245, 180, 185, 215, 175],
+    hover: [215, 195, 185, 170, 235],
+  },
 };
 
 /**
@@ -172,6 +196,7 @@ export function rulesetV3(
   return {
     ...RULESET_V2,
     version: "v3",
+    field: FIELD_V3,
     race: { ...RULESET_V2.race, ...raceStage, ...race },
     flight: { ...F, ...flight },
   };

@@ -89,12 +89,12 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
         T.flCorn[x],
       ];
     };
-    // round 1: the stalk flies from L/4; the closer holds ≥ max(100 m, L/30)
+    // round 1: the stalk flies from L/4; the closer holds ≥ max(100 m, L/30); round 2: 150 m before the final
     expect(at("sprint", "stalk")).toEqual([1, 300, 840, 2, 0]);
-    expect(at("sprint", "closer")).toEqual([1, 700, 800, 3, 0]);
+    expect(at("sprint", "closer")).toEqual([1, 650, 800, 3, 0]);
     expect(at("ridge", "stalk")).toEqual([1, 500, 1400, 2, 0]);
     expect(at("ridge", "closer")).toEqual([1, 1200, 1600, 3, 1]); // cornisa, covers jump 2
-    expect(at("canyon", "closer")).toEqual([1, 1900, 2000, 3, 0]); // 100 m before the final
+    expect(at("canyon", "closer")).toEqual([1, 1850, 2000, 3, 0]); // 150 m before the final
     // stage 1: lead and pack keep today's ground row
     expect(at("ridge", "lead")[0]).toBe(0);
     expect(at("ridge", "pack")[0]).toBe(0);
