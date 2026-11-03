@@ -909,6 +909,12 @@ cosa por vez, juntos y medida cada una. T21 v1 y v2 quedan como banco de ideas, 
 - Las alas pesan más que la posición (Rasante 39 % en la Pista de saltos, 16 % en el Sprint).
 - Pelotón es la más floja: primera candidata a revisar.
 
+**Dueño (2026-11-03): la clave es la sensación de volar.** «Eso es lo que nos diferencia: la
+picada, el despegue». Pide estilos de despegue distintos (en vertical hacia arriba, corriendo por el
+suelo propulsadas por el bastidor, subiendo en horizontal), que el jugador sienta satisfacción al
+volar, y que volar no sea fácil: **arriba también tienen que luchar**. Se aplica como prioridad a todo
+el diseño de carrera v3 («Despegar y caer», `.work/design7/`).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
