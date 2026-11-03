@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_1_2, flightOf, RULESET_V3, rulesetV3 } from "./flight.js";
+import { FLIGHT_OFF_1_2, FLIGHT_OFF_R5, flightOf, RULESET_V3, rulesetV3 } from "./flight.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock, FLIGHTS_MAX } from "./state.js";
 
@@ -115,7 +115,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(b.flRes0[3]).toBe(a.flRes0[3]);
   });
 
-  it("every tick: altitude 0-3, no boost in the air, ground wings never rise, energy never below 0", () => {
+  it("every tick: altitude 0-3, no boost in the air, ground wings skim at most band 1, energy never below 0", () => {
     const tracks = [
       ...["sprint", "ridge", "canyon"].map((c) => content.getCourse(c)),
       ...loadCatalogueCourses(),
@@ -131,8 +131,9 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
             const alt = S.alt[i] ?? 0;
             if (alt < 0 || alt > 3) bad ||= `alt ${alt} at ${t}`;
             if (alt > 0 && S.boostOn[i] === 1) bad ||= `boost in the air, lane ${i} tick ${t}`;
-            if (entries[i]?.style === "ground" && alt > 0)
-              bad ||= `ground wing rose, lane ${i} tick ${t}`;
+            // round 5 (F8): the Turbina skims the low band, never higher
+            if (entries[i]?.style === "ground" && alt > 1)
+              bad ||= `ground wing rose to ${alt}, lane ${i} tick ${t}`;
             if ((S.energy[i] ?? 0) < 0) bad ||= `negative energy lane ${i}`;
           }
         });
@@ -192,19 +193,21 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     const run = (R: typeof RULESET_V3, c: number) => {
       const stats = { ...S600, courage: c };
       const log = simulateRace(R, defaultField(stats), content.getCourse("sprint"), "eta");
+      // round 5: without the nerve (F9) and the won line (F3), which multiply the dive on top
       const d = (log.events ?? []).find(
         (e) => e.kind === "dive" && e.fromBand === 3 && log.entries[e.lane]?.style === "dive",
       );
       return d?.kind === "dive" ? d.gainMms : -1;
     };
+    const L5 = rulesetV3(1, { nerveM: 0, overDivePm: 0, diveVMms: [0, 0, 5_400, 6_000] });
     expect(run(R2, 1)).toBe(5100);
     expect(run(R2, 1200)).toBe(6900);
     // L5 and the Lanza's dive ×1.25 (S1): 6000 × 0.7 × 1.25 and 6000 × 1.3 × 1.25
-    expect(run(RULESET_V3, 1)).toBe(5250);
-    expect(run(RULESET_V3, 1200)).toBe(9750);
+    expect(run(L5, 1)).toBe(5250);
+    expect(run(L5, 1200)).toBe(9750);
   });
 
-  it("the hover draft reaches a flight only with draftGroundOnly off (round 1 default)", () => {
+  it("round 4: the hover draft reaches a flight only with draftGroundOnly off; round 5 tows by band (F6)", () => {
     const drafting = RACE_FRAME_FLAGS.drafting;
     const rows = (R: typeof RULESET_V3) => {
       const log = simulateRace(R, defaultField(), content.getCourse("canyon"), "draft-air");
@@ -213,10 +216,43 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
         .filter((_, lane) => hover.includes(lane))
         .flatMap((r) => r.flags.filter((f) => (f & FLAGS_ALT) !== 0 && (f & drafting) !== 0));
     };
+    const r4 = rulesetV3(1, FLIGHT_OFF_R5);
     expect(RULESET_V3.flight.draftGroundOnly).toBe(false);
-    expect(rows(RULESET_V3).length).toBeGreaterThan(0);
-    expect(rows(rulesetV3(1, { draftGroundOnly: true }))).toHaveLength(0);
+    expect(rows(r4).length).toBeGreaterThan(0);
+    expect(rows(rulesetV3(1, { ...FLIGHT_OFF_R5, draftGroundOnly: true }))).toHaveLength(0);
     expect(rows(rulesetV3(1, { ...FLIGHT_OFF_1_2, draftGroundOnly: true }))).toHaveLength(0);
+    // F6: in the air the tow reads only her band and the metres to the one ahead (step A2): every
+    // tick she is towed in the air, at the end of the previous tick another runner was ahead of
+    // her in her band within the wake, never a runner on the ground
+    const entries = defaultField();
+    const prevPos = new Float64Array(8);
+    const prevAlt = new Int32Array(8);
+    const F = RULESET_V3.flight;
+    let towed = 0;
+    let bad = "";
+    simulateRaceProbed(RULESET_V3, entries, content.getCourse("canyon"), "draft-air", (t, A) => {
+      const S = A.state;
+      for (let i = 0; i < entries.length; i++) {
+        const air = (S.alt[i] ?? 0) > 0;
+        if (air && ((S.tickFlags[i] ?? 0) & drafting) !== 0) {
+          towed++;
+          const band = prevAlt[i] ?? 0;
+          const reachMm = (band === 2 ? F.dirtyHighM : F.dirtyM) * 1000;
+          const ok = Array.from({ length: entries.length }, (_, j) => j).some((j) => {
+            if (j === i || (prevAlt[j] ?? 0) !== band) return false;
+            const gapMm = ((prevPos[j] ?? 0) - (prevPos[i] ?? 0)) / 225;
+            return gapMm > F.fightM * 1000 && gapMm <= reachMm;
+          });
+          if (!ok) bad ||= `lane ${i} towed at ${t} with nobody in band ${band} ahead`;
+        }
+      }
+      for (let i = 0; i < entries.length; i++) {
+        prevPos[i] = S.pos[i] ?? 0;
+        prevAlt[i] = S.alt[i] ?? 0;
+      }
+    });
+    expect(bad).toBe("");
+    expect(towed).toBeGreaterThan(0);
   });
 
   it("the catalogue tracks validate and keep their lengths (design7 §6)", () => {
@@ -275,7 +311,7 @@ describe("ruleset v3 draft: stage 2 preview (design7 R2 lead/pack, R9, R10)", ()
     expect(flights("pack").map((f) => f[2])).toEqual(flights("pack").map(() => 1));
   });
 
-  it("nobody holds above band 1 inside a canyon, and ground wings still never rise", () => {
+  it("nobody holds above band 1 inside a canyon, and ground wings never rise above band 1", () => {
     for (const cid of ["canyon"]) {
       const course = content.getCourse(cid);
       const G = buildCourseGeometry(E2, course);
@@ -287,7 +323,7 @@ describe("ruleset v3 draft: stage 2 preview (design7 R2 lead/pack, R9, R10)", ()
           const s = S.seg[i] ?? 0;
           if (G.segType[s] === 5 && (S.alt[i] ?? 0) > 1 && (S.flPhase[i] ?? 0) !== 3)
             bad ||= `lane ${i} alt ${S.alt[i]} in canyon at ${t}`;
-          if (entries[i]?.style === "ground" && (S.alt[i] ?? 0) > 0)
+          if (entries[i]?.style === "ground" && (S.alt[i] ?? 0) > 1)
             bad ||= `ground rose lane ${i}`;
         }
       });

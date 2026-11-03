@@ -228,6 +228,11 @@ export type RaceTables = {
   readonly diveV: Int32Array;
   /** Air cruise (L1b: `airPacePm` of her pace draw), same index as vC. */
   readonly vCAir: Int32Array;
+  /** F5 (round 5): the air cruise from `airTerrainFreeBand` up (no water or climb penalty). */
+  readonly vCAirHi: Int32Array;
+  /** F9: her nerve test's flinch chance, ‰, and the pre-drawn slot 29 (two 16-bit tests). */
+  readonly nerveP: Int32Array;
+  readonly u29: Float64Array;
   /** liftF folded with her wing's holdPm (S1), for the hold of every tick (`holdLift`). */
   readonly liftH: Int32Array;
   /** L1 (step 1.2): the air of flight k, ‰ of the air cruise, index i × FLIGHTS_MAX + k. */
@@ -430,6 +435,19 @@ export type RaceState = {
   readonly skHeldTicks: Int32Array;
   /** L7: skills she holds now (0 = the timers tick as in v2). */
   readonly heldN: Uint8Array;
+  // round 5 (measure/final.md)
+  /** Band at the end of tick t − 1 (step A), for the nerve window (F9). */
+  readonly alt0: Uint8Array;
+  /** F2: vu of the current dive's Δv already added in the air, and its mm flown in the air. */
+  readonly diveAdded: Int32Array;
+  readonly diveAirMm: Float64Array;
+  /** F3: 1 = she went over in this flight and was not knocked back (her dive gains a share). */
+  readonly overWon: Uint8Array;
+  /** F9: nerve tests taken, held and flinched (ledger; tests also index slot 29). */
+  readonly nerveTests: Int32Array;
+  readonly nerveHeld: Int32Array;
+  /** F6: ticks towed in another's wake in the air. */
+  readonly towTicks: Int32Array;
 };
 
 /**
@@ -516,6 +534,9 @@ function createTables(): RaceTables {
     climbMe: i32(N),
     diveV: i32(N * 4),
     vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
+    vCAirHi: i32(N * 2 * 3 * MAX_SEGMENTS),
+    nerveP: i32(N),
+    u29: f64(N),
     liftH: i32(N),
     airOff: i32(N * FLIGHTS_MAX),
     dirtyPm: i32(N),
@@ -675,6 +696,13 @@ function createState(): RaceState {
     skHeld: u8(N * MAX_SKILLS),
     skHeldTicks: i32(N * MAX_SKILLS),
     heldN: u8(N),
+    alt0: u8(N),
+    diveAdded: i32(N),
+    diveAirMm: f64(N),
+    overWon: u8(N),
+    nerveTests: i32(N),
+    nerveHeld: i32(N),
+    towTicks: i32(N),
   };
 }
 
@@ -885,14 +913,20 @@ export function buildTables(
           T.vMin[ibps(i, b, ph, s)] = exhaustSpeedVu(R, VBASE, pwc, f, pace);
           // v3 draft R5: the air cruise sits at the centre of her pace window (no draw)
           // L1b (feel round 1): `airPacePm` ‰ of her pace draw of the phase, like the ground
-          if (F !== null)
-            T.vCAir[ibps(i, b, ph, s)] = cruiseVu(
-              vA,
-              pwc,
-              f,
-              sp[ph] ?? 1000,
-              c + floorDiv((pace - c) * F.airPacePm, 1000),
-            );
+          if (F !== null) {
+            // F5 (round 5): over water and climbs the air pays airTerrainPm of the penalty, and
+            // from airTerrainFreeBand up none of it
+            const type = G.segType[s] ?? 0;
+            const terrain = type === SEG_WATER || type === SEG_CLIMB;
+            const fAir =
+              terrain && f < 1000 ? 1000 - floorDiv((1000 - f) * F.airTerrainPm, 1000) : f;
+            const paceAir = c + floorDiv((pace - c) * F.airPacePm, 1000);
+            T.vCAir[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, fAir, sp[ph] ?? 1000, paceAir);
+            T.vCAirHi[ibps(i, b, ph, s)] =
+              terrain && f < 1000
+                ? cruiseVu(vA, pwc, 1000, sp[ph] ?? 1000, paceAir)
+                : (T.vCAir[ibps(i, b, ph, s)] ?? 0);
+          }
         }
         const a = accelVu(R, technique, pwc, f, terms);
         T.acc[ibs(i, b, s)] = a;
@@ -986,6 +1020,14 @@ export function buildTables(
     }
 
     // v3 draft R2-R3: the flight plan, before the jump reserve (a covered jump needs no lift)
+    if (F !== null) {
+      // F9: the nerve test's chance and its pre-drawn slot
+      T.nerveP[i] = Math.max(
+        F.nerveMinPm,
+        F.nerveBasePm - floorDiv(F.nerveSlopePm * Math.min(courage, 1200), 1200),
+      );
+      T.u29[i] = A.U[i * block + 29] ?? 0;
+    }
     if (F !== null)
       planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms, {
         u28: A.U[i * block + 28] ?? 0,

@@ -45,8 +45,6 @@ export type FlightConstants = {
   /** η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200 ‰ (R7). */
   readonly diveEtaBasePm: number;
   readonly diveEtaCouragePm: number;
-  /** Ticks per band descended (R1); the ticks per band climbed are the wing's (S1). */
-  readonly diveTicks: number;
   /** Plan geometry, metres (§4). */
   readonly marginM: number;
   readonly lookM: number;
@@ -57,6 +55,7 @@ export type FlightConstants = {
   readonly closerPreFinalM: number;
   readonly jumpLipM: number;
   readonly leadJoinM: number;
+  /** The pack's Abanico: L / packFanDiv from the final's start (0 = no Abanico). */
   readonly packFanDiv: number;
   readonly packFanMinM: number;
   /** R9 (stage 2): nobody above band 1 inside a canyon segment. */
@@ -132,6 +131,66 @@ export type FlightConstants = {
   readonly cornisaTicksFloor: number;
   /** L7: a skill that fires in the air is held and released on touchdown, whole (false = off). */
   readonly heldSkill: boolean;
+  // --- round 5 (design7 measure/final.md: the design review F1-F11 of race-v3-proto 4f9b899)
+  /**
+   * F2: the dive is felt in the air: each band she drops adds its share of the dive's Δv to her
+   * surge (Δv × bands dropped / fromBand), the last share on touchdown; the descent ticks are the
+   * wing's `diveTicks` (false = the whole Δv on touchdown, round 4).
+   */
+  readonly diveAirShare: boolean;
+  /** F7: a takeoff from the ground climbs band 1 in `climbTicks` too (false = band 1 at once). */
+  readonly climbFromGround: boolean;
+  /** F5: entering a Terreno líquido in flight hits nothing (false = the water hits flyers too). */
+  readonly airWaterFree: boolean;
+  /** F5: ‰ of the water and climb penalty the air cruise pays below `airTerrainFreeBand` (1000 = the ground's). */
+  readonly airTerrainPm: number;
+  /** F5: from this band the air cruise pays no water or climb penalty (4 = never). */
+  readonly airTerrainFreeBand: number;
+  /**
+   * F6: in the air, one rule by band and metres for every wing: another runner in her band within
+   * the wake (fightM < gap ≤ dirtyM, or dirtyHighM in the high band) tows her (her wing's `draftPm`
+   * on the air cruise) and holding there pays the wake's `dirtyPm` (L3); within `fightM` it is
+   * dirty air too: no rest and the fight for the line (L4). Nobody is towed by a runner on the
+   * ground. false = round 4: the whole wake is dirty and the hover draft reads her place in the field.
+   */
+  readonly airDraftBand: boolean;
+  /**
+   * F3: a won line pays: after she goes over (L4) and is not knocked back, her dive gains
+   * `overDivePm` ‰ of one more band's share (Δv / fromBand); 0 = off.
+   */
+  readonly overDivePm: number;
+  /**
+   * F9 (N1 brought forward from stage 2): on a dive's touchdown, if the start-of-tick snapshot has
+   * another unfinished runner on the ground from `nerveBackM` behind to `nerveM` ahead, a nerve
+   * test (16 bits of the pre-drawn slot 29, at most `nerveMax` per race): she flinches with
+   * p = clamp(nerveBasePm − nerveSlopePm × min(C, 1200) / 1200, nerveMinPm, nerveBasePm) ‰ and
+   * opens the wings (no dive, the air share lost, her landing paid); held, the dive × (1000 +
+   * nerveBonusPm) ‰. nerveM 0 = off.
+   */
+  readonly nerveM: number;
+  readonly nerveBackM: number;
+  readonly nerveBasePm: number;
+  readonly nerveSlopePm: number;
+  readonly nerveMinPm: number;
+  readonly nerveBonusPm: number;
+  readonly nerveMax: number;
+  /**
+   * F8: ground wings take off too, with the Turbina (a skim driven by the frame's thrusters): only
+   * the flights of her plan whose band is ≤ her wing's `maxBand` (false = ground wings never fly).
+   */
+  readonly groundFlies: boolean;
+  /**
+   * Round 5 (F1): her own air (L1) and its hold term apply from this band up; below it a skim is a
+   * ground-effect line, steady at her air cruise (1 = every band, round 4; 2 = the low band skims).
+   */
+  readonly ownAirFromBand: number;
+  /**
+   * F3: the line she won is clean air: after an over she holds the new band at the price of the
+   * band she left (false = the new band's price, round 4).
+   */
+  readonly overCleanHold: boolean;
+  /** F3: ‰ added to her own air (L1) for the rest of a flight whose line she won (0 = off). */
+  readonly overAirPm: number;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -148,6 +207,17 @@ export type WingFlight = {
   readonly holdPm: number;
   /** ‰ of the dive's Δv. */
   readonly diveWingPm: number;
+  /** F2: ticks per band descended. */
+  readonly diveTicks: number;
+  /** F6: ‰ of the air cruise in another's wake in her band (`airDraftBand`). */
+  readonly draftPm: number;
+  /** F8: the highest band the wing flies to; planned flights above it are not flown. */
+  readonly maxBand: number;
+  /**
+   * Round 5: ‰ added to the centre of her own air on every flight (L1): how well the wing holds a
+   * line. It moves the centre, never the width (AIR-4).
+   */
+  readonly airPm: number;
 };
 
 /** The round-2 flight of every wing (6 ticks per band, no cost or dive term): tests and step 1.2. */
@@ -158,53 +228,113 @@ export const NEUTRAL_WING: WingFlight = {
   liftSpeedPm: 1000,
   holdPm: 1000,
   diveWingPm: 1000,
+  diveTicks: 3,
+  draftPm: 1005,
+  maxBand: 3,
+  airPm: 0,
 };
 /**
- * S1 (§3): Lanza (Picada) vertical, 3 ticks per band, climbs ×1.25, keeps 960 ‰ of her speed,
- * dives ×1.25; Columna (Suspensión) in steps of 6 ticks, climbs ×0.9, holds ×0.8 (×0.7 until feel
- * round 1: with her pace in the air, holding cheap and drafting made her too strong); Rampa (Planeo)
- * a long diagonal of 12 ticks per band, holds ×0.8, keeps all her speed; Turbina (Rasante) never
- * leaves the ground in stage 1 (ADR-0008), its row is never read.
+ * S1 (§3): Lanza (Picada) vertical, climbs ×1.25, keeps 960 ‰ of her speed, dives ×1.25; Columna
+ * (Suspensión) in steps, climbs ×0.9, holds ×0.8 (×0.7 until feel round 1: with her pace in the air,
+ * holding cheap and drafting made her too strong), her wake tows her ×1.02 (her rebufo); Rampa
+ * (Planeo) a long diagonal, holds ×0.8, keeps all her speed. Round 5: the climb starts at the
+ * ground (F7), so the ticks per band go 3 / 6 / 12 → 2 / 4 / 8 and the time to the ceiling stays
+ * 0.4 / 0.8 / 1.6 s; each wing falls at its own pace (F2: 2 / 3 / 4 ticks per band). Turbina
+ * (Rasante, F8): a skim driven by the frame's thrusters, only to the low band, cheap, quick to
+ * lift and keeping all her speed; no dive (band 1).
  */
 export const WINGS_V3: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
   {
     style: "lance",
-    climbTicks: 3,
+    climbTicks: 2,
     climbCostPm: 1250,
     liftSpeedPm: 960,
     holdPm: 1000,
     diveWingPm: 1250,
+    diveTicks: 2,
+    draftPm: 1005,
+    maxBand: 3,
+    airPm: 0,
   },
   {
     style: "column",
-    climbTicks: 6,
+    climbTicks: 4,
     climbCostPm: 900,
     liftSpeedPm: 980,
     holdPm: 800,
     diveWingPm: 1000,
+    diveTicks: 3,
+    draftPm: 1020,
+    maxBand: 3,
+    airPm: 6,
   },
   {
     style: "ramp",
-    climbTicks: 12,
+    climbTicks: 8,
     climbCostPm: 1000,
     liftSpeedPm: 1000,
     holdPm: 800,
     diveWingPm: 1000,
+    diveTicks: 4,
+    draftPm: 1005,
+    maxBand: 3,
+    airPm: 0,
   },
   {
     style: "turbine",
-    climbTicks: 6,
-    climbCostPm: 1000,
+    climbTicks: 3,
+    climbCostPm: 500,
     liftSpeedPm: 1000,
-    holdPm: 1000,
+    holdPm: 600,
     diveWingPm: 1000,
+    diveTicks: 3,
+    draftPm: 1005,
+    maxBand: 1,
+    airPm: 0,
   },
+];
+/** The wing table of round 4 (4f9b899): band 1 at once, 3 / 6 / 12 ticks per band, 3 to fall. */
+export const WINGS_R4: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
+  { ...WINGS_V3[0], climbTicks: 3, diveTicks: 3, airPm: 0 },
+  { ...WINGS_V3[1], climbTicks: 6, diveTicks: 3, airPm: 0 },
+  { ...WINGS_V3[2], climbTicks: 12, diveTicks: 3, airPm: 0 },
+  { ...NEUTRAL_WING, style: "turbine" },
 ];
 const NEUTRAL_WINGS: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
   { ...NEUTRAL_WING, style: "lance" },
   { ...NEUTRAL_WING, style: "column" },
   { ...NEUTRAL_WING, style: "ramp" },
   { ...NEUTRAL_WING, style: "turbine" },
+];
+/**
+ * The neutral reference of STY-2 and STY-3 from round 5: every flying wing climbs 4 ticks per band
+ * (the Columna's, the mean time to the ceiling) and falls 3, the Turbina row stays the Turbina. The
+ * wing's line and tow (`airPm`, `draftPm`) are its physics, not its takeoff style, and stay, as the
+ * hover draft stayed outside the style table in round 4.
+ */
+export const NEUTRAL_WINGS_R5: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
+  {
+    ...NEUTRAL_WING,
+    climbTicks: 4,
+    style: "lance",
+    draftPm: WINGS_V3[0].draftPm,
+    airPm: WINGS_V3[0].airPm,
+  },
+  {
+    ...NEUTRAL_WING,
+    climbTicks: 4,
+    style: "column",
+    draftPm: WINGS_V3[1].draftPm,
+    airPm: WINGS_V3[1].airPm,
+  },
+  {
+    ...NEUTRAL_WING,
+    climbTicks: 4,
+    style: "ramp",
+    draftPm: WINGS_V3[2].draftPm,
+    airPm: WINGS_V3[2].airPm,
+  },
+  WINGS_V3[3],
 ];
 
 /** The wing row of a STYLE code. */
@@ -276,15 +406,15 @@ export const BAND_CEILING = 3;
  */
 export const FLIGHT_V3_E1: FlightConstants = {
   stage: 1,
-  planned: [false, false, true, true],
+  // F1 (round 5): the pack skims the Pasillos at the low band (no Abanico until stage 2)
+  planned: [false, true, true, true],
   climbE: 8,
   holdE: 1,
   cornisaPm: 500,
   airDrainPm: 990,
-  diveVMms: [0, 0, 5_400, 6_000],
+  diveVMms: [0, 0, 5_110, 5_430],
   diveEtaBasePm: 700,
   diveEtaCouragePm: 600,
-  diveTicks: 3,
   marginM: 20,
   lookM: 40,
   cornisaLookM: 150,
@@ -294,7 +424,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   closerPreFinalM: 150,
   jumpLipM: 10,
   leadJoinM: 60,
-  packFanDiv: 10,
+  packFanDiv: 0,
   packFanMinM: 80,
   canyonCeiling: false,
   canyonExitMinM: 150,
@@ -334,17 +464,69 @@ export const FLIGHT_V3_E1: FlightConstants = {
   // step 1.3 (§3, L7)
   wings: WINGS_V3,
   cornisaTicksPm: 500,
-  cornisaTicksFloor: 3,
+  cornisaTicksFloor: 2,
   heldSkill: true,
+  // round 5 (measure/final.md, the design review F1-F11 of 4f9b899): F2 the dive is felt in the
+  // air (its Δv recalibrated with the metres: 5400 / 6000 → 5110 / 5430, so the ledger's great dive
+  // stays ≈ 6 m with the air share), F7 band 1 is climbed too, F5 flying keeps dry and the air pays
+  // 90 % of the water and climb (one rule, no free band: the Acecho over the canyon's Colina at 750
+  // won too much), F6 the tow by band and metres (×1.005; the Columna ×1.02 and her line +6 ‰, the
+  // free hover draft of round 4 was worth ≈ 13-16 points of the sprint at 750), F3 a won line holds
+  // at the price of the band she left and dives 650 ‰ of one more band (the struggle pays, bounded:
+  // CONT-2), F9 the nerve ×1.10 (×1.15 made the Picada closer win the sprint at 750), F8 and F1
+  // the Turbina and the pack's Pasillo (decide the owner)
+  diveAirShare: true,
+  climbFromGround: true,
+  airWaterFree: true,
+  airTerrainPm: 900,
+  airTerrainFreeBand: 4,
+  airDraftBand: true,
+  overDivePm: 650,
+  nerveM: 6,
+  nerveBackM: 3,
+  nerveBasePm: 400,
+  nerveSlopePm: 600,
+  nerveMinPm: 50,
+  nerveBonusPm: 100,
+  nerveMax: 2,
+  groundFlies: true,
+  ownAirFromBand: 2,
+  overCleanHold: true,
+  overAirPm: 0,
 };
 
 /**
  * The values that turn every rule of steps 1.2 and 1.3 off: v3 with them is the round-2 race
  * (commit 0a7162c), byte for byte (INV-5). Step 1.2 alone is `FLIGHT_OFF_1_3`.
  */
+/**
+ * Every round-5 rule off: v3 with these values is the round-4 race (commit 4f9b899), byte for byte
+ * (harness/inv6.ts). `FLIGHT_OFF_1_3` and `FLIGHT_OFF_1_2` build on it.
+ */
+export const FLIGHT_OFF_R5: Partial<FlightConstants> = {
+  planned: [false, false, true, true],
+  diveVMms: [0, 0, 5_400, 6_000],
+  wings: WINGS_R4,
+  cornisaTicksFloor: 3,
+  packFanDiv: 10,
+  diveAirShare: false,
+  climbFromGround: false,
+  airWaterFree: false,
+  airTerrainPm: 1000,
+  airTerrainFreeBand: 4,
+  airDraftBand: false,
+  overDivePm: 0,
+  nerveM: 0,
+  groundFlies: false,
+  ownAirFromBand: 1,
+  overCleanHold: false,
+  overAirPm: 0,
+};
 export const FLIGHT_OFF_1_3: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_R5,
   wings: NEUTRAL_WINGS,
   cornisaTicksPm: 1000,
+  cornisaTicksFloor: 3,
   heldSkill: false,
 };
 export const FLIGHT_OFF_1_2: Partial<FlightConstants> = {
@@ -370,6 +552,7 @@ export const FLIGHT_V3_E2: FlightConstants = {
   ...FLIGHT_V3_E1,
   stage: 2,
   planned: [true, true, true, true],
+  packFanDiv: 10,
   canyonCeiling: true,
   groundGripPm: 950,
 };
@@ -395,18 +578,28 @@ const RACE_V3_E2: Partial<RaceConstants> = {
 };
 
 /**
- * Rival field of the draft. Round 2 brings stage 3's rival technique (design §3 R11: 170 → 185 ‰,
- * D's rows) forward for the two rival classes that fly in stage 1, Picada (closers) and Suspensión
- * (stalks): same total power, less agility and courage. In the air the cruise reads agility (until
- * R11), so Peregrina's Picada rivals (agility 750-905 against her 662 at T46) outflew her.
- * Glide and ground rivals do not fly in stage 1 and keep v2's rows.
+ * Rival field of the draft. Round 2 brought stage 3's rival technique (design §3 R11: 170 → 185 ‰)
+ * forward for the two rival classes that fly in stage 1, Picada (closers) and Suspensión (stalks).
+ * Round 5 (F10): their agility stays v2's (the owner: agility is the pillar, never the lever to fix
+ * a Falconess); the +15 ‰ of technique comes from courage and intelligence (Picada) and from
+ * stamina and intelligence (Suspensión). Peregrina is fixed by her own kit (L7). Glide and ground
+ * rivals keep v2's rows.
  */
-const FIELD_V3: FieldConstants = {
+/** The rival rows of rounds 2-4 (agility 245 / 215): `preset off12` and the round-4 reference. */
+export const FIELD_V3_R4: FieldConstants = {
   ...RULESET_V2.field,
   rivalWeights: {
     ...RULESET_V2.field.rivalWeights,
     dive: [245, 180, 185, 215, 175],
     hover: [215, 195, 185, 170, 235],
+  },
+};
+const FIELD_V3: FieldConstants = {
+  ...RULESET_V2.field,
+  rivalWeights: {
+    ...RULESET_V2.field.rivalWeights,
+    dive: [250, 180, 185, 210, 175],
+    hover: [220, 190, 185, 170, 235],
   },
 };
 
@@ -556,7 +749,10 @@ function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
   return out;
 }
 
-/** Pack (stage 2): band 1 along every canyon, and the fan from the final's start (L/10, ≥ 80 m). */
+/**
+ * Pack: band 1 along every canyon (the Pasillo; stage 1 from round 5, F1), and from stage 2 the
+ * Abanico from the final's start (L/10, ≥ 80 m).
+ */
 function packPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
   const raw: Flight[] = [];
   for (let s = 0; s < G.S; s++)
@@ -568,13 +764,15 @@ function packPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
         corn: false,
       });
   const fa = G.finalStart;
-  const len = Math.max(F.packFanMinM * m, floorDiv(G.L, F.packFanDiv));
-  raw.push({
-    a: fa,
-    b: extendEnd(G, fa + len, F.lookM * m, F.marginM * m, G.reserveAt),
-    band: BAND_LOW,
-    corn: false,
-  });
+  if (F.packFanDiv > 0) {
+    const len = Math.max(F.packFanMinM * m, floorDiv(G.L, F.packFanDiv));
+    raw.push({
+      a: fa,
+      b: extendEnd(G, fa + len, F.lookM * m, F.marginM * m, G.reserveAt),
+      band: BAND_LOW,
+      corn: false,
+    });
+  }
   raw.sort((x, y) => x.a - y.a);
   const out: Flight[] = [];
   for (const f of raw) {
@@ -635,7 +833,8 @@ function ceilingCut(F: FlightConstants, G: CourseGeometry, m: number, fl: Flight
  * The runner's flight plan before tick 0 (R2): a pure function of the geometry, her own position,
  * her wings and her stats, the same the pre-race card can show. Writes `flN`, `flA`, `flB`,
  * `flBand`, `flCorn`, the planned costs (R3, R4) and the reserve `flRes0`, and marks the jumps a
- * planned flight covers (no lift, no jump reserve). Reads no other runner. Ground wings never fly.
+ * planned flight covers (no lift, no jump reserve). Reads no other runner. Ground wings fly only
+ * with `groundFlies` (F8), and only the flights within their wing's `maxBand`.
  */
 export function planFlights(
   F: FlightConstants,
@@ -658,7 +857,8 @@ export function planFlights(
   // L1: the air of flight k, one byte of slot 28 (k < 4) or 30 (k ≥ 4), drawn before tick 0
   for (let k = 0; k < FLIGHTS_MAX; k++) {
     const u = k < 4 ? air.u28 : air.u30;
-    T.airOff[i * FLIGHTS_MAX + k] = airOffsetPm(F, (u >>> (8 * (k % 4))) & 255, air.technique);
+    T.airOff[i * FLIGHTS_MAX + k] =
+      airOffsetPm(F, (u >>> (8 * (k % 4))) & 255, air.technique) + (F.airWPm > 0 ? wing.airPm : 0);
   }
   // L3: dirty air costs × (1000 + extra − extra × dirtyTechPm × min(T, 1200) / 1.2e6) / 1000
   const extra = Math.max(0, F.dirtyHoldPm - 1000);
@@ -670,7 +870,7 @@ export function planFlights(
   T.liftH[i] = liftH;
   T.flN[i] = 0;
   T.flRes0[i] = 0;
-  if (T.style[i] === STYLE_GROUND) return;
+  if (T.style[i] === STYLE_GROUND && !F.groundFlies) return;
   const pc = T.position[i] ?? 0;
   if (!F.planned[pc]) return;
   const m = posPerMm * 1000;
@@ -685,7 +885,8 @@ export function planFlights(
             ? packPlan(F, G, m)
             : [];
   if (F.canyonCeiling) fl = ceilingCut(F, G, m, fl);
-  fl = fl.filter((f) => f.b > f.a).slice(0, FLIGHTS_MAX);
+  // F8: a wing never plans above its `maxBand` (the Turbina skims only the low band's flights)
+  fl = fl.filter((f) => f.b > f.a && f.band <= wing.maxBand).slice(0, FLIGHTS_MAX);
   let res = 0;
   fl.forEach((f, k) => {
     const x = i * FLIGHTS_MAX + k;

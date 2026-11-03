@@ -303,7 +303,7 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
     case "dive":
       return `PICADA desde banda ${item.fromBand}: +${mps(item.gainMms)} m/s (pico ${mps(item.vBeforeMms + item.gainMms)} m/s)`;
     case "touchdown":
-      return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? ` (sin energía para sostener, −${mps(item.lossMms)} m/s)` : item.cause === "knock" ? " (le bajaron la línea)" : ""}`;
+      return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? ` (sin energía para sostener, −${mps(item.lossMms)} m/s)` : item.cause === "knock" ? " (le bajaron la línea)" : item.cause === "nerve" ? ` (se achicó, −${mps(item.lossMms)} m/s)` : ""}`;
     case "noLift":
       return `SIN ENERGÍA: no despega (${milliUnits(item.have)} < ${milliUnits(item.need)})`;
     case "bandReached":
@@ -318,6 +318,10 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
       return item.cause === "over"
         ? `¡POR ARRIBA! sube a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`
         : `LA BAJARON a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`;
+    case "nerve":
+      return item.held
+        ? `¡NO SE ACHICA! picada entre el tráfico +${mps(item.gainMms)} m/s (achicarse ${item.pPm / 10} %)`
+        : `SE ACHICÓ ante el tráfico: abre las alas (achicarse ${item.pPm / 10} %)`;
   }
 }
 

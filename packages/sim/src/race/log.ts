@@ -349,9 +349,22 @@ export class RaceRecorder {
       vBeforeMms: number;
       surgeTicks: number;
       surgeMm: number;
+      airMms?: number;
+      airMm?: number;
     },
   ): void {
     if (this.full) this.list.push({ kind: "dive", tick, lane, posMm, ...d });
+  }
+
+  nerve(
+    tick: number,
+    lane: number,
+    posMm: number,
+    held: boolean,
+    pPm: number,
+    gainMms: number,
+  ): void {
+    if (this.full) this.list.push({ kind: "nerve", tick, lane, posMm, held, pPm, gainMms });
   }
 
   touchdown(
@@ -627,6 +640,9 @@ export function buildResults(
         falls: S.falls[i] ?? 0,
         belowPlan: S.belowPlan[i] ?? 0,
         style: wingOf(F, A.tables.style[i] ?? 0).style,
+        nerveTests: S.nerveTests[i] ?? 0,
+        nerveHeld: S.nerveHeld[i] ?? 0,
+        towTicks: S.towTicks[i] ?? 0,
       };
   });
   out.sort((a, b) => a.place - b.place);

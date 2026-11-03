@@ -235,7 +235,9 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
         ? ui("ui.race.event.touchdown.energy")
         : item.cause === "knock"
           ? ui("ui.race.event.touchdown.knock")
-          : ui("ui.race.event.touchdown");
+          : item.cause === "nerve"
+            ? ui("ui.race.event.touchdown.nerve")
+            : ui("ui.race.event.touchdown");
     case "noLift":
       return ui("ui.race.event.noLift");
     case "bandReached":
@@ -254,6 +256,8 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
       return item.cause === "over"
         ? ui("ui.race.event.lineChange.over", { band: item.toBand })
         : ui("ui.race.event.lineChange.knock", { band: item.toBand });
+    case "nerve":
+      return item.held ? ui("ui.race.event.nerve.held") : ui("ui.race.event.nerve.flinch");
   }
 }
 
@@ -304,6 +308,7 @@ export function eventIcon(item: EventItem): IconName {
     case "noLift":
     case "airDirty":
     case "lineChange":
+    case "nerve":
       return "trouble";
   }
 }

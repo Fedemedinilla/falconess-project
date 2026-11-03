@@ -17,16 +17,20 @@ export {
 } from "./fixtures.js";
 export {
   airOffsetPm,
+  FIELD_V3_R4,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
+  FLIGHT_OFF_R5,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
   type FlightConstants,
   flightOf,
   NEUTRAL_WING,
+  NEUTRAL_WINGS_R5,
   RULESET_V3,
   type RulesetV3,
   rulesetV3,
+  WINGS_R4,
   WINGS_V3,
   type WingFlight,
 } from "./flight.js";

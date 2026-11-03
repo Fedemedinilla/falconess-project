@@ -296,7 +296,11 @@ export const RACE_FRAME_FLAGS = {
    */
   altLow: 32768,
   altHigh: 65536,
-  /** Dirty air (ruleset v3 stage 1.2, L3): another runner in her band 0-6 m ahead while she holds. */
+  /**
+   * Dirty air (ruleset v3 stage 1.2, L3): another runner in her band ahead while she holds. Round 4:
+   * anywhere in the wake (`dirtyM` 11 m, `dirtyHighM` 24 m in the high band); round 5 (F6): only
+   * within `fightM`, the rest of the wake tows her (`drafting`).
+   */
   dirtyAir: 131072,
 } as const;
 
@@ -468,6 +472,12 @@ export const RaceEvent = z.discriminatedUnion("kind", [
     vBeforeMms: Nat,
     surgeTicks: Nat,
     surgeMm: Nat,
+    /**
+     * Round 5 (F2): the part of `gainMms` she gained band by band in the air before touching down
+     * (her speed just before the touchdown is `vBeforeMms + airMms`), and the mm it carried her.
+     */
+    airMms: Nat.optional(),
+    airMm: Nat.optional(),
   }),
   /**
    * Every end of a flight; `cause` plan (planned point), energy (could not pay to hold: no dive,
@@ -483,6 +493,11 @@ export const RaceEvent = z.discriminatedUnion("kind", [
    * 8 ticks; the event carries the tick the pass happened.
    */
   raceEvent("pass", { otherLane: Lane, band: Int.min(0).max(3), otherBand: Int.min(0).max(3) }),
+  /**
+   * Round 5 (F9): a dive's touchdown into traffic is a nerve test: `held` (the dive × 1.15,
+   * `gainMms`) or she flinched (no dive, touchdown cause nerve); `pPm` her flinch chance.
+   */
+  raceEvent("nerve", { held: z.boolean(), pPm: Nat, gainMms: Nat }),
   /** Dirty air on (held ≥ 15 ticks, at the tick it began) or off (L3). */
   raceEvent("airDirty", { on: z.boolean() }),
   /** L4: she went over the runner ahead (`over`) or was knocked a band down (`knock`). */
@@ -531,6 +546,10 @@ export const FlightLedger = z.strictObject({
   belowPlan: Nat,
   /** S1: the takeoff style of her wings. */
   style: z.enum(["lance", "column", "ramp", "turbine", "neutral"]),
+  /** Round 5: nerve tests taken and held (F9), ticks towed in another's wake in the air (F6). */
+  nerveTests: Nat.optional(),
+  nerveHeld: Nat.optional(),
+  towTicks: Nat.optional(),
 });
 export type FlightLedger = z.infer<typeof FlightLedger>;
 

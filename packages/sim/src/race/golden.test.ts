@@ -173,6 +173,7 @@ describe("golden scenarios (docs/race-engine.md 24.3)", () => {
       "pass",
       "airDirty",
       "lineChange",
+      "nerve",
     ]);
     const kinds = RaceEvent.options.map((o) => o.shape.kind.value).filter((k) => !v3Only.has(k));
     expect(kinds.filter((k) => !seen.has(k)).sort()).toEqual(["dnf", "jumpFail"]);

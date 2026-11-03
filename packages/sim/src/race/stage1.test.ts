@@ -10,6 +10,7 @@ import {
   airOffsetPm,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
+  FLIGHT_OFF_R5,
   FLIGHT_V3_E1,
   RULESET_V3,
   rulesetV3,
@@ -194,7 +195,7 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     });
   });
 
-  it("L3-L4: the wake (dirtyM) costs; only within fightM does the fight for the line run", () => {
+  it("L3-L4: within fightM it is dirty air and the fight for the line (fightM 0: the whole wake)", () => {
     let wide = 0;
     let close = 0;
     let dirtyClose = 0;
@@ -212,16 +213,16 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     expect(close).toBeLessThan(wide);
   });
 
-  it("L3: the high band's wake reaches dirtyHighM; the ceiling keeps dirtyM", () => {
+  it("L3: the high band's wake reaches dirtyHighM (round 5: it tows); the ceiling keeps dirtyM", () => {
     const closers = field(600, () => ({ style: "dive", position: "closer" }));
     let short = 0;
     let long = 0;
     for (const course of courses().slice(0, 3)) {
       for (const r of simulateRace(rulesetV3(1, { dirtyHighM: 0 }), crowded(600), course, "wake")
         .results)
-        short += r.ledger.flight?.dirtyTicks ?? 0;
+        short += r.ledger.flight?.towTicks ?? 0;
       for (const r of simulateRace(RULESET_V3, crowded(600), course, "wake").results)
-        long += r.ledger.flight?.dirtyTicks ?? 0;
+        long += r.ledger.flight?.towTicks ?? 0;
       // closers that nobody knocks down never hold the high band: the longer wake does not reach them
       const noKnock = { knockTicks: 0 };
       const a = simulateRace(rulesetV3(1, { ...noKnock, dirtyHighM: 0 }), closers, course, "ceil");
@@ -294,16 +295,22 @@ describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () 
       const keep = WINGS_V3.find((w) => w.style === e.style)?.liftSpeedPm ?? 0;
       expect(Math.abs(e.vAfterMms - Math.floor((e.vMms * keep) / 1000))).toBeLessThanOrEqual(1);
     }
-    expect(new Set(t.map((e) => e.style))).toEqual(new Set(["lance", "column"]));
+    // round 5: the default field's pack (Rasante) skims the canyon's Pasillos with the Turbina (F1, F8)
+    expect(new Set(t.map((e) => e.style))).toEqual(new Set(["lance", "column", "turbine"]));
+    for (const e of t) if (e.style === "turbine") expect(e.band).toBe(1);
   });
 
-  it("S2: from a cornisa the climb takes half the ticks, never under 3", () => {
+  it("S2: from a cornisa the climb takes half the ticks, never under 2 (round 5; 3 before)", () => {
     // the ridge's closers take off at the cornisa of the final's descent
     const E = field(600, (lane) => ({ style: ORDER[lane % 4] ?? "glide", position: "closer" }));
     const log = simulateRace(RULESET_V3, E, content.getCourse("ridge"), "corn");
     const ticks: Record<string, number> = {};
     for (const e of log.events ?? []) if (e.kind === "takeoff") ticks[e.style] = e.climbTicks;
-    expect(ticks).toEqual({ lance: 3, column: 3, ramp: 6 });
+    expect(ticks).toEqual({ lance: 2, column: 2, ramp: 4 });
+    const r4: Record<string, number> = {};
+    const old = simulateRace(rulesetV3(1, FLIGHT_OFF_R5), E, content.getCourse("ridge"), "corn");
+    for (const e of old.events ?? []) if (e.kind === "takeoff") r4[e.style] = e.climbTicks;
+    expect(r4).toEqual({ lance: 3, column: 3, ramp: 6 });
   });
 
   it("L7: a skill that fires in the air is held and released whole on touchdown", () => {

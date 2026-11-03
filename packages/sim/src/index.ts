@@ -10,17 +10,16 @@ export {
 } from "./race/golden.js";
 // ruleset v3 draft (design7 «Despegar y caer»): a prototype outside rulesets/ until ADR-0009
 export {
+  airOffsetPm,
   buildCourseGeometry,
   type CourseGeometry,
   createRaceArena,
   disableSkill,
+  FIELD_V3_R4,
   type FixtureBuild,
-  airOffsetPm,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
-  NEUTRAL_WING,
-  WINGS_V3,
-  type WingFlight,
+  FLIGHT_OFF_R5,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
   type FlightConstants,
@@ -32,6 +31,8 @@ export {
   type GoalRaceSetup,
   generateField,
   goalRaceSetup,
+  NEUTRAL_WING,
+  NEUTRAL_WINGS_R5,
   neutralFixtureEntry,
   PLAYER_RUNNER_ID,
   type RaceArena,
@@ -42,6 +43,9 @@ export {
   rulesetV3,
   type SimulateOptions,
   simulateRace,
+  WINGS_R4,
+  WINGS_V3,
+  type WingFlight,
 } from "./race/index.js";
 export {
   CURRENT_RULESET,

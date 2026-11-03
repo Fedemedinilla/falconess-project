@@ -81,7 +81,7 @@ export function flightBeats(log: RaceLog, lane: number): FlightBeat[] {
         dive: null,
         touchdown: null,
         passes: [],
-        apex: Math.max(1, e.fromBand),
+        apex: e.fromBand,
         peakMms: null,
         climbToApexTicks: null,
         problems: [],
@@ -110,7 +110,11 @@ export function flightBeats(log: RaceLog, lane: number): FlightBeat[] {
       surgeUntil = e.tick + e.surgeTicks;
     } else if (e.kind === "touchdown") cur.touchdown = e;
   }
-  for (const f of out) f.problems = flightProblems(f);
+  for (const f of out) {
+    // a flight is at least the low band (round 4 left the ground at band 1 with no bandReached)
+    f.apex = Math.max(1, f.apex);
+    f.problems = flightProblems(f);
+  }
   return out;
 }
 
@@ -118,7 +122,9 @@ export function flightBeats(log: RaceLog, lane: number): FlightBeat[] {
 export function flightProblems(f: FlightBeat): string[] {
   const p: string[] = [];
   const t = f.takeoff;
-  const base = Math.max(1, t.fromBand);
+  // round 5 (F7): from the ground the climb reaches band 1 after `climbTicks` too (a bandReached
+  // for band 1); round 4 left the ground at band 1 at once
+  const base = t.fromBand === 0 && f.bands[0]?.band === 1 ? 0 : Math.max(1, t.fromBand);
   // the climb: one band per climbTicks from the takeoff, up to the takeoff's band (an `over`
   // line change climbs one more from its own tick)
   let band = base;
@@ -157,9 +163,11 @@ export function flightProblems(f: FlightBeat): string[] {
       if (f.dive.vBeforeMms !== d.vMms) p.push("dive speed is not the diveStart speed");
       if (f.touchdown.cause === "energy" && f.touchdown.lossMms > 0)
         p.push("a forced fall with a dive");
-    } else if (d.fromBand >= 2 && f.touchdown.cause !== "energy")
+    } else if (d.fromBand >= 2 && f.touchdown.cause !== "energy" && f.touchdown.cause !== "nerve")
       p.push(`no dive from band ${d.fromBand}`);
-    if ((d.cause === "knock") !== (f.touchdown.cause === "knock")) p.push("knock cause differs");
+    // a knocked flight that still dives from high can end in a nerve test (round 5, F9)
+    if ((d.cause === "knock") !== (f.touchdown.cause === "knock") && f.touchdown.cause !== "nerve")
+      p.push("knock cause differs");
     if (knocks.length > 0 && d.cause === "plan") p.push("knocked flight told as plan");
   }
   return p;
