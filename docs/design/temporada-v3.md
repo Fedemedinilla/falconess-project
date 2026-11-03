@@ -937,8 +937,12 @@ con menos Agilidad se arregla con su propio kit, no bajando la Agilidad.
 | Coraje       | Guts      | Situacional. Para después: como en Uma, un pequeño tanque de reserva cuando se acaba la Resistencia |
 | Inteligencia | Wit       | La más azarosa y escondida: que «sea y piense mejor» (ritmo, momento, habilidades)                  |
 
-Pendiente: cuánto de la Inteligencia se explica en el «por qué» de la carrera y cuánto queda en
-secreto.
+**Inteligencia (dueño, 2026-11-03), para pulir más adelante:** no será secreta como en Umamusume; el
+jugador tiene que entender qué hace para decidir bien. Su idea: **es la stat que hace a la Falconess
+más autónoma.** Quien apunta a mucha Inteligencia quiere una estratega, una analista de la carrera que
+sabe los momentos exactos para activar sus habilidades (y, por extensión, cuándo despegar, picar o
+guardar). Encaja con el arquetipo táctico de T19 y con la radio de T22: con poca Inteligencia, la
+radio del jugador pesa más; con mucha, ella ya decide bien sola.
 
 ## T22 · La radio: los gritos del jugador
 
