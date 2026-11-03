@@ -833,8 +833,10 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   for (let i = 0; i < n; i++) S.pos0[i] = S.pos[i] ?? 0;
   if (lim <= 0) return;
   for (let i = 0; i < n; i++) {
-    let gap = lim + 1;
     const ai = S.alt[i] ?? 0;
+    // L3: the high band's wake reaches dirtyHighM (feel round 2), the others dirtyM
+    const reach = ai === 2 && F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
+    let gap = reach + 1;
     if (ai >= 1 && S.flPhase[i] === 2 && (live & (1 << i)) !== 0) {
       const pi = S.pos[i] ?? 0;
       for (let j = 0; j < n; j++) {
@@ -843,7 +845,7 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
         if (d > 0 && d < gap) gap = d;
       }
     }
-    const dirty = gap > lim ? 0 : gap > fight ? 1 : 2;
+    const dirty = gap > reach ? 0 : gap > fight ? 1 : 2;
     S.dirty[i] = dirty;
     // `dirtyLog` acts only when the dirt starts or ends
     if (dirty > 0 !== (S.dirtySince[i] ?? 0) > 0) dirtyLog(c, i, dirty > 0);

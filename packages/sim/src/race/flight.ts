@@ -103,6 +103,12 @@ export type FlightConstants = {
    * within fightM metres, closer than the wake (dirtyM); 0 = the whole wake (round 0).
    */
   readonly fightM: number;
+  /**
+   * L3 (feel round 2): the wake's reach in the high band (2), the cruise lane of the long
+   * flights, metres (0 = dirtyM). A long line leaves a long wake; the ceiling, a short hold before
+   * the dive, and the low band keep dirtyM. The fight for the line still runs only within fightM.
+   */
+  readonly dirtyHighM: number;
   /** L4: ticks of dirty air in a row before she tries to go over, once per race (0 = off). */
   readonly escapeTicks: number;
   /** L4: knocked a band down after knockTicks + knockCourTicks × min(C, 1200) / 1200 (0 = off). */
@@ -292,7 +298,10 @@ export const FLIGHT_V3_E1: FlightConstants = {
   // less (RISK-1: 17-18 % of the sprint's flights below plan); she tries to go over after 20
   // ticks (was 30) and courage holds the line longer (knock at 30 + 50·C/1200 ticks: 55 at 600);
   // high and ceiling cost ×1.3 per band·metre (was ×1.25; AIR-2: the stalk's energy in the
-  // canyon was ×1.13 of round 2).
+  // canyon was ×1.13 of round 2). Feel round 2 (measure/feel-round-2.md): in the high band, the
+  // cruise lane, the wake reaches 24 m (`dirtyHighM`): the two stalks of a long track drifted
+  // 11-30 m apart and only 20 % of the canyon's long flights had a struggle moment (CONT-1);
+  // with 24 m, 26 %, while the ceiling keeps 11 m and the sprint's dirty air stays under 14 %.
   airWPm: 18,
   airHoldK: 10,
   airTechPm: 30,
@@ -303,6 +312,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   dirtyTechPm: 500,
   dirtyNoRest: true,
   fightM: 5,
+  dirtyHighM: 24,
   escapeTicks: 20,
   knockTicks: 30,
   knockCourTicks: 50,
@@ -330,6 +340,7 @@ export const FLIGHT_OFF_1_2: Partial<FlightConstants> = {
   airWPm: 0,
   airPacePm: 0,
   fightM: 0,
+  dirtyHighM: 0,
   bandHoldPm: [1000, 1000, 1000, 1000],
   dirtyM: 0,
   escapeTicks: 0,

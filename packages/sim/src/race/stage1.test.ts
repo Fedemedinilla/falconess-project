@@ -212,6 +212,25 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     expect(close).toBeLessThan(wide);
   });
 
+  it("L3: the high band's wake reaches dirtyHighM; the ceiling keeps dirtyM", () => {
+    const closers = field(600, () => ({ style: "dive", position: "closer" }));
+    let short = 0;
+    let long = 0;
+    for (const course of courses().slice(0, 3)) {
+      for (const r of simulateRace(rulesetV3(1, { dirtyHighM: 0 }), crowded(600), course, "wake").results)
+        short += r.ledger.flight?.dirtyTicks ?? 0;
+      for (const r of simulateRace(RULESET_V3, crowded(600), course, "wake").results)
+        long += r.ledger.flight?.dirtyTicks ?? 0;
+      // closers that nobody knocks down never hold the high band: the longer wake does not reach them
+      const noKnock = { knockTicks: 0 };
+      const a = simulateRace(rulesetV3(1, { ...noKnock, dirtyHighM: 0 }), closers, course, "ceil");
+      const b = simulateRace(rulesetV3(1, noKnock), closers, course, "ceil");
+      expect(results(b)).toBe(results(a));
+    }
+    expect(FLIGHT_V3_E1.dirtyHighM).toBeGreaterThan(FLIGHT_V3_E1.dirtyM);
+    expect(long).toBeGreaterThan(short);
+  });
+
   it("L6: a fall forced by the tank lands with a loss and no dive", () => {
     // a very bad air (W 400 ‰, ×10 per ‰) makes holding cost more than the plan reserved
     const R = rulesetV3(1, { airWPm: 400 });
