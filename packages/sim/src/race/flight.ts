@@ -68,6 +68,14 @@ export type FlightConstants = {
   readonly groundGripPm: number;
   /** R5: true = the hover draft (×1.02) only on the ground; false = also on the air cruise. */
   readonly draftGroundOnly: boolean;
+  /**
+   * R3c (feel round 3): when her plan only flies to the ceiling (the great dive of the final,
+   * the closer's plan in stage 1), the energy she keeps for later before she boosts (`keepOk`,
+   * 9.2) already pays that flight: the gate asks energy − cost − jumps ≥ max(keep, flight at
+   * her dirty-air hold) instead of keep + flight reserve. A mid-race flight stays on top of the
+   * keep (false = off).
+   */
+  readonly keepFlown: boolean;
   /** R5: the body speed approaches the air cruise in the air (false = held, like a jump). */
   readonly airCruise: boolean;
   /**
@@ -260,6 +268,11 @@ export const BAND_CEILING = 3;
  * - `airDrainPm` 975 → 990: with her pace in the air (L1b) the stalk's mean edge showed (28-30 %
  *   of the long tracks at 600; Suspensión + Acecho 33 % of the canyon at 600-750). Holding height
  *   rests the legs less: flying is not free.
+ * Feel round 3 (measure/feel-round-3.md) brings R3c (`keepFlown`): a closer kept for the final
+ * both the keep of her pre-final boosts (diveKeep) and her ceiling flight's reserve, so on the
+ * ridge she never spent her spare energy on the first descent (Peregrina at T46: 0.04 s ahead of
+ * the 3rd rival at 500 m against 0.57 s in v2, coin share 35 %). Now the keep pays the flight,
+ * priced at her dirty-air hold so the shared ceiling does not force more falls.
  */
 export const FLIGHT_V3_E1: FlightConstants = {
   stage: 1,
@@ -288,6 +301,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   canyonDiveBeforeM: 20,
   groundGripPm: 1_000,
   draftGroundOnly: false,
+  keepFlown: true,
   airCruise: true,
   diveSurge: true,
   // step 1.2 (§4): the F2 «FIN» package without the nerve (stage 2), with feel round 1
@@ -337,6 +351,7 @@ export const FLIGHT_OFF_1_2: Partial<FlightConstants> = {
   ...FLIGHT_OFF_1_3,
   // feel round 1 moved R6's rest with the struggle (975 → 990): off, it is round 2's again
   airDrainPm: 975,
+  keepFlown: false,
   airWPm: 0,
   airPacePm: 0,
   fightM: 0,
@@ -694,6 +709,15 @@ export function planFlights(
   });
   T.flN[i] = fl.length;
   T.flRes0[i] = res;
+  // R3c: a plan whose every flight goes to the ceiling is the final's great dive: the energy she
+  // keeps for later pays it, with its hold at her dirty-air price (the ceiling is shared)
+  let keepMe = 0;
+  if (F.keepFlown && fl.length > 0 && fl.every((f) => f.band === BAND_CEILING))
+    for (let k = 0; k < fl.length; k++) {
+      const x = i * FLIGHTS_MAX + k;
+      keepMe += (T.flClimb[x] ?? 0) + ceilDiv((T.flHold[x] ?? 0) * (T.dirtyPm[i] ?? 1000), 1000);
+    }
+  T.keepFlight[i] = keepMe;
 }
 
 /** me to hold `bandPu` (band × pu) at liftF (R4): holdE energy per band per 100 m at liftF 1000. */

@@ -135,8 +135,13 @@ export function keepOk(
   i: number,
   keepPm: number,
 ): boolean {
-  const jr = jrNow(T, S, i, S.seg[i] ?? 0);
-  return (S.energy[i] ?? 0) - costBoost(R, T, i) - jr >= floorDiv((T.Emax[i] ?? 0) * keepPm, 1000);
+  const keep = floorDiv((T.Emax[i] ?? 0) * keepPm, 1000);
+  const left = (S.energy[i] ?? 0) - costBoost(R, T, i);
+  // R3c (v3): what she keeps for later already pays a ceiling plan (the final's great dive)
+  const kf = T.keepFlight[i] ?? 0;
+  if (kf > 0 && (S.flRes[i] ?? 0) > 0)
+    return left - (T.jr[is(i, S.seg[i] ?? 0)] ?? 0) >= Math.max(keep, kf);
+  return left - jrNow(T, S, i, S.seg[i] ?? 0) >= keep;
 }
 
 /**

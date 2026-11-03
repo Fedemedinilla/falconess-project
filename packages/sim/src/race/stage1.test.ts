@@ -217,7 +217,8 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     let short = 0;
     let long = 0;
     for (const course of courses().slice(0, 3)) {
-      for (const r of simulateRace(rulesetV3(1, { dirtyHighM: 0 }), crowded(600), course, "wake").results)
+      for (const r of simulateRace(rulesetV3(1, { dirtyHighM: 0 }), crowded(600), course, "wake")
+        .results)
         short += r.ledger.flight?.dirtyTicks ?? 0;
       for (const r of simulateRace(RULESET_V3, crowded(600), course, "wake").results)
         long += r.ledger.flight?.dirtyTicks ?? 0;
@@ -229,6 +230,26 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     }
     expect(FLIGHT_V3_E1.dirtyHighM).toBeGreaterThan(FLIGHT_V3_E1.dirtyM);
     expect(long).toBeGreaterThan(short);
+  });
+
+  it("R3c: the closer's keep already pays her ceiling flight; a stalk's flight stays on top", () => {
+    // 8 Picada closers on the ridge (T46): with R3c they spend on the first descent what v3 kept
+    // twice (the keep for the final plus the flight reserve), so less energy reaches 1200 m
+    const closers = field(600, () => ({ style: "dive", position: "closer" }));
+    const ridge = content.getCourse("ridge");
+    const left = (R: ReturnType<typeof rulesetV3>) => {
+      const fr = simulateRace(R, closers, ridge, "keep").frames;
+      let e = 0;
+      for (const r of fr?.runners ?? [])
+        e += r.energy[r.posMm.findIndex((x) => x >= 1_200_000)] ?? 0;
+      return e;
+    };
+    expect(left(RULESET_V3)).toBeLessThan(left(rulesetV3(1, { keepFlown: false })));
+    // a stalk plans a mid-race flight in the high band: her keep still adds its reserve
+    for (const course of courses().slice(0, 3))
+      expect(results(simulateRace(RULESET_V3, crowded(600), course, "keep"))).toBe(
+        results(simulateRace(rulesetV3(1, { keepFlown: false }), crowded(600), course, "keep")),
+      );
   });
 
   it("L6: a fall forced by the tank lands with a loss and no dive", () => {

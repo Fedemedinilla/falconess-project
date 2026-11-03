@@ -215,6 +215,11 @@ export type RaceTables = {
   readonly flHold: Int32Array;
   /** me: the whole plan's reserve at the gun. */
   readonly flRes0: Int32Array;
+  /**
+   * R3c (feel round 3): me of her ceiling plan priced at her dirty air (climb + hold × dirtyPm),
+   * which the energy she keeps for later (`keepOk`) already covers; 0 = the rule is off for her.
+   */
+  readonly keepFlight: Int32Array;
   /** 1 = the jump segment is covered by a planned flight (no lift, no jump reserve), (lane, seg). */
   readonly jumpCovered: Uint8Array;
   /** me per band of climb at liftF. */
@@ -506,6 +511,7 @@ function createTables(): RaceTables {
     flClimb: i32(N * FLIGHTS_MAX),
     flHold: i32(N * FLIGHTS_MAX),
     flRes0: i32(N),
+    keepFlight: i32(N),
     jumpCovered: u8(NS),
     climbMe: i32(N),
     diveV: i32(N * 4),
