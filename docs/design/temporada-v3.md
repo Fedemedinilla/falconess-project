@@ -927,6 +927,19 @@ se busca aplanarla. Lo que sí: cada otra stat tiene que tener un papel y un umb
 Coraje en picadas entre el tráfico, Inteligencia en el momento justo y las habilidades). Una Falconess
 con menos Agilidad se arregla con su propio kit, no bajando la Agilidad.
 
+**Jerarquía de stats (dueño, 2026-11-03), tomando Umamusume como referencia:**
+
+| Falconess    | Umamusume | Papel                                                                                               |
+| ------------ | --------- | --------------------------------------------------------------------------------------------------- |
+| Agilidad     | Speed     | **La principal.** Toda build se arma alrededor de tenerla alta                                      |
+| Resistencia  | Stamina   | **La segunda.** Sin la suficiente, se arrastra por la pista sin energía                             |
+| Técnica      | Power     | Situacional: aceleración (hoy ya la maneja) y, en Falconess, despegue, sustentación y aterrizaje    |
+| Coraje       | Guts      | Situacional. Para después: como en Uma, un pequeño tanque de reserva cuando se acaba la Resistencia |
+| Inteligencia | Wit       | La más azarosa y escondida: que «sea y piense mejor» (ritmo, momento, habilidades)                  |
+
+Pendiente: cuánto de la Inteligencia se explica en el «por qué» de la carrera y cuánto queda en
+secreto.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
