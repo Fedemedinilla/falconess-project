@@ -143,6 +143,8 @@ type Ctx = {
   /** Ruleset v3 log only: index of the `pass` (i × MAX_LANES + j) and `airDirty` candidates. */
   passEvent: Int32Array;
   dirtyEvent: Int32Array;
+  /** `pass` candidates still waiting for their 8 ticks (0: step C2 skips the pending scan). */
+  passPending: number;
 };
 
 /**
@@ -260,6 +262,7 @@ function runRace(
     finishEvent: new Int32Array(MAX_LANES).fill(-1),
     passEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
     dirtyEvent: new Int32Array(MAX_LANES).fill(-1),
+    passPending: 0,
   };
   const S = c.S;
 
@@ -787,6 +790,7 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   const { S, n } = c;
   const lim = F.dirtyM * 1000 * c.posPerMm;
   for (let i = 0; i < n; i++) S.pos0[i] = S.pos[i] ?? 0;
+  if (lim <= 0) return;
   for (let i = 0; i < n; i++) {
     let dirty = 0;
     const ai = S.alt[i] ?? 0;
@@ -830,28 +834,32 @@ function dirtyLog(c: Ctx, i: number, on: boolean): void {
  */
 function passTick(c: Ctx, live: number): void {
   const { S, n, t } = c;
-  for (let i = 0; i < n; i++)
-    for (let j = 0; j < n; j++) {
-      if (i === j) continue;
-      const x = i * MAX_LANES + j;
-      const since = S.passSince[x] ?? 0;
-      const pi = S.pos[i] ?? 0;
-      const pj = S.pos[j] ?? 0;
-      if (since > 0) {
-        if (pi <= pj) {
+  if (c.passPending > 0)
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++) {
+        const x = i * MAX_LANES + j;
+        const since = S.passSince[x] ?? 0;
+        if (since === 0) continue;
+        if ((S.pos[i] ?? 0) <= (S.pos[j] ?? 0)) {
           c.rec.drop(c.passEvent[x] ?? -1);
           S.passSince[x] = 0;
           c.passEvent[x] = -1;
+          c.passPending -= 1;
         } else if (t + 1 - since >= PASS_HOLD_TICKS) confirmPass(c, i, x);
-        continue;
       }
-      if ((live & (1 << i)) === 0 || (live & (1 << j)) === 0) continue;
-      if (!((S.pos0[i] ?? 0) < (S.pos0[j] ?? 0) && pi > pj)) continue;
-      const alt = S.alt[i] ?? 0;
-      const kind = (alt >= 1 ? 1 : 0) | (alt === 0 && (S.surge[i] ?? 0) > 0 ? 2 : 0);
-      if (kind === 0) continue;
+  for (let i = 0; i < n; i++) {
+    const alt = S.alt[i] ?? 0;
+    if ((alt === 0 && (S.surge[i] ?? 0) <= 0) || (live & (1 << i)) === 0) continue;
+    const kind = alt >= 1 ? 1 : 2;
+    const p0 = S.pos0[i] ?? 0;
+    const pi = S.pos[i] ?? 0;
+    for (let j = 0; j < n; j++) {
+      if (j === i || (live & (1 << j)) === 0) continue;
+      const x = i * MAX_LANES + j;
+      if ((S.passSince[x] ?? 0) > 0 || !(p0 < (S.pos0[j] ?? 0) && pi > (S.pos[j] ?? 0))) continue;
       S.passSince[x] = t + 1;
       S.passKind[x] = kind;
+      c.passPending += 1;
       c.passEvent[x] = c.rec.full
         ? c.rec.candidate({
             kind: "pass",
@@ -864,6 +872,7 @@ function passTick(c: Ctx, live: number): void {
           })
         : -1;
     }
+  }
 }
 
 function confirmPass(c: Ctx, i: number, x: number): void {
@@ -873,6 +882,7 @@ function confirmPass(c: Ctx, i: number, x: number): void {
   if ((kind & 2) !== 0) S.passesDive[i] = (S.passesDive[i] ?? 0) + 1;
   S.passSince[x] = 0;
   c.passEvent[x] = -1;
+  c.passPending -= 1;
 }
 
 /** After the loop: close the open `airDirty` and `pass` candidates. */
@@ -881,11 +891,15 @@ function closeAirLog(c: Ctx, t: number): void {
   for (let i = 0; i < n; i++) {
     const since = S.dirtySince[i] ?? 0;
     if (since > 0 && t + 1 - since < AIR_DIRTY_MIN_TICKS) c.rec.drop(c.dirtyEvent[i] ?? -1);
-    for (let j = 0; j < n; j++) {
+    for (let j = 0; j < n && c.passPending > 0; j++) {
       const x = i * MAX_LANES + j;
       if (i === j || (S.passSince[x] ?? 0) === 0) continue;
       if ((S.pos[i] ?? 0) > (S.pos[j] ?? 0)) confirmPass(c, i, x);
-      else c.rec.drop(c.passEvent[x] ?? -1);
+      else {
+        c.rec.drop(c.passEvent[x] ?? -1);
+        S.passSince[x] = 0;
+        c.passPending -= 1;
+      }
     }
   }
 }
