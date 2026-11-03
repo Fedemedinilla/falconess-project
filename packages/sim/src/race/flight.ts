@@ -84,6 +84,11 @@ export type FlightConstants = {
   readonly airHoldK: number;
   /** L1: ‰ the centre of the air moves per 1200 technique above 600; the width never moves. */
   readonly airTechPm: number;
+  /**
+   * L1b (feel round 1): ‰ of her pace draw of the phase (its distance from her window's centre)
+   * the air cruise reads, like the ground cruise reads all of it (0 = R5's centre, round 0).
+   */
+  readonly airPacePm: number;
   /** L2: hold ‰ per band [ground, low, high, ceiling] (all 1000 = off). */
   readonly bandHoldPm: readonly [number, number, number, number];
   /** L3: dirty air: another runner in her band, 0 < gap ≤ dirtyM metres ahead (0 = off). */
@@ -93,6 +98,11 @@ export type FlightConstants = {
   readonly dirtyTechPm: number;
   /** L3: in dirty air the legs do not rest (hp drain ×1.0 instead of airDrainPm). */
   readonly dirtyNoRest: boolean;
+  /**
+   * L4 (feel round 1): the fight for the line runs only while the runner ahead in her band is
+   * within fightM metres, closer than the wake (dirtyM); 0 = the whole wake (round 0).
+   */
+  readonly fightM: number;
   /** L4: ticks of dirty air in a row before she tries to go over, once per race (0 = off). */
   readonly escapeTicks: number;
   /** L4: knocked a band down after knockTicks + knockCourTicks × min(C, 1200) / 1200 (0 = off). */
@@ -137,7 +147,8 @@ export const NEUTRAL_WING: WingFlight = {
 };
 /**
  * S1 (§3): Lanza (Picada) vertical, 3 ticks per band, climbs ×1.25, keeps 960 ‰ of her speed,
- * dives ×1.25; Columna (Suspensión) in steps of 6 ticks, climbs ×0.9, holds ×0.7; Rampa (Planeo)
+ * dives ×1.25; Columna (Suspensión) in steps of 6 ticks, climbs ×0.9, holds ×0.8 (×0.7 until feel
+ * round 1: with her pace in the air, holding cheap and drafting made her too strong); Rampa (Planeo)
  * a long diagonal of 12 ticks per band, holds ×0.8, keeps all her speed; Turbina (Rasante) never
  * leaves the ground in stage 1 (ADR-0008), its row is never read.
  */
@@ -155,7 +166,7 @@ export const WINGS_V3: readonly [WingFlight, WingFlight, WingFlight, WingFlight]
     climbTicks: 6,
     climbCostPm: 900,
     liftSpeedPm: 980,
-    holdPm: 700,
+    holdPm: 800,
     diveWingPm: 1000,
   },
   {
@@ -239,6 +250,10 @@ export const BAND_CEILING = 3;
  *   and the great dive stays the biggest (6 m). Stalk + hover in the sprint at 750 went 17.6 → 21 %;
  * - `closerPreFinalM` 100 → 150: more air for the closer (sprint 650-800, canyon 1850-2000) and
  *   Picada + closer in the sprint at 750 back to 34-37 % (was 38-41 %).
+ * Feel round 1 (measure/feel-round-1.md) moved R6 with the struggle:
+ * - `airDrainPm` 975 → 990: with her pace in the air (L1b) the stalk's mean edge showed (28-30 %
+ *   of the long tracks at 600; Suspensión + Acecho 33 % of the canyon at 600-750). Holding height
+ *   rests the legs less: flying is not free.
  */
 export const FLIGHT_V3_E1: FlightConstants = {
   stage: 1,
@@ -246,7 +261,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   climbE: 8,
   holdE: 1,
   cornisaPm: 500,
-  airDrainPm: 975,
+  airDrainPm: 990,
   diveVMms: [0, 0, 5_400, 6_000],
   diveEtaBasePm: 700,
   diveEtaCouragePm: 600,
@@ -269,18 +284,28 @@ export const FLIGHT_V3_E1: FlightConstants = {
   draftGroundOnly: false,
   airCruise: true,
   diveSurge: true,
-  // step 1.2 (§4): the F2 «FIN» package without the nerve (stage 2)
-  airWPm: 26,
+  // step 1.2 (§4): the F2 «FIN» package without the nerve (stage 2), with feel round 1
+  // (measure/feel-round-1.md): the air reads 800 ‰ of her pace draw (L1b) and her own air is
+  // ±18 ‰ (was ±26 ‰ around the centre: the stalk's σ was 0.66-0.70 of the ground's in the long
+  // tracks, AIR-3); the wake reaches 11 m (was 6) and costs ×2.5 at technique 0 (was ×2), but the
+  // fight for the line only runs within 5 m (L4, `fightM`), so the struggle shows more and knocks
+  // less (RISK-1: 17-18 % of the sprint's flights below plan); she tries to go over after 20
+  // ticks (was 30) and courage holds the line longer (knock at 30 + 50·C/1200 ticks: 55 at 600);
+  // high and ceiling cost ×1.3 per band·metre (was ×1.25; AIR-2: the stalk's energy in the
+  // canyon was ×1.13 of round 2).
+  airWPm: 18,
   airHoldK: 10,
   airTechPm: 30,
-  bandHoldPm: [1000, 1000, 1250, 1250],
-  dirtyM: 6,
-  dirtyHoldPm: 2000,
+  airPacePm: 800,
+  bandHoldPm: [1000, 1000, 1300, 1300],
+  dirtyM: 11,
+  dirtyHoldPm: 2500,
   dirtyTechPm: 500,
   dirtyNoRest: true,
-  escapeTicks: 30,
+  fightM: 5,
+  escapeTicks: 20,
   knockTicks: 30,
-  knockCourTicks: 30,
+  knockCourTicks: 50,
   forcedLand: true,
   // step 1.3 (§3, L7)
   wings: WINGS_V3,
@@ -300,7 +325,11 @@ export const FLIGHT_OFF_1_3: Partial<FlightConstants> = {
 };
 export const FLIGHT_OFF_1_2: Partial<FlightConstants> = {
   ...FLIGHT_OFF_1_3,
+  // feel round 1 moved R6's rest with the struggle (975 → 990): off, it is round 2's again
+  airDrainPm: 975,
   airWPm: 0,
+  airPacePm: 0,
+  fightM: 0,
   bandHoldPm: [1000, 1000, 1000, 1000],
   dirtyM: 0,
   escapeTicks: 0,
@@ -612,6 +641,7 @@ export function planFlights(
   // L4: courage holds the line
   T.knockAt[i] = F.knockTicks + floorDiv(F.knockCourTicks * Math.min(courage, 1200), 1200);
   const liftH = holdLift(F, T.style[i] ?? 0, liftF);
+  T.liftH[i] = liftH;
   T.flN[i] = 0;
   T.flRes0[i] = 0;
   if (T.style[i] === STYLE_GROUND) return;

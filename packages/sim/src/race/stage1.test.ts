@@ -3,7 +3,7 @@ import type { Course, Position, RaceEntry, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { RULESET_V2 } from "../rulesets/index.js";
-import { simulateRace, simulateRaceReversed } from "./engine.js";
+import { simulateRace, simulateRaceProbed, simulateRaceReversed } from "./engine.js";
 import { freezeSkill } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
 import {
@@ -15,6 +15,7 @@ import {
   rulesetV3,
   WINGS_V3,
 } from "./flight.js";
+import { ibps } from "./state.js";
 
 /**
  * Ruleset v3 stage 1 (diseno-v3-vuelo.md): the flight log (1.1), the struggle up there (1.2, L1-L6)
@@ -164,6 +165,51 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     expect(dirty).toBeGreaterThan(0);
     expect(overs).toBeGreaterThan(0);
     expect(knocks).toBeGreaterThan(0);
+  });
+
+  it("L1b: the air cruise reads airPacePm ‰ of her pace draw (0 = the centre, 1000 = the ground's)", () => {
+    const course = content.getCourse("sprint");
+    const tables = (airPacePm: number) => {
+      let vC: number[] = [];
+      let vCAir: number[] = [];
+      simulateRaceProbed(rulesetV3(1, { airPacePm }), field(600), course, "pace", (t, A) => {
+        if (t > 0) return;
+        const idx = Array.from({ length: 8 }, (_, i) => [0, 1, 2].map((ph) => ibps(i, 0, ph, 0)));
+        vC = idx.flat().map((x) => A.tables.vC[x] ?? 0);
+        vCAir = idx.flat().map((x) => A.tables.vCAir[x] ?? 0);
+      });
+      return { vC, vCAir };
+    };
+    const centre = tables(0).vCAir;
+    const full = tables(1000);
+    const part = tables(FLIGHT_V3_E1.airPacePm).vCAir;
+    expect(full.vCAir).toEqual(full.vC);
+    expect(full.vC.some((v, k) => v !== centre[k])).toBe(true);
+    full.vC.forEach((v, k) => {
+      const c = centre[k] ?? 0;
+      const p = part[k] ?? 0;
+      // between the centre and her draw, on her draw's side
+      expect(Math.abs(p - c)).toBeLessThanOrEqual(Math.abs(v - c));
+      expect(Math.sign(p - c) * Math.sign(v - c)).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  it("L3-L4: the wake (dirtyM) costs; only within fightM does the fight for the line run", () => {
+    let wide = 0;
+    let close = 0;
+    let dirtyClose = 0;
+    for (const course of courses().slice(0, 3)) {
+      const a = simulateRace(rulesetV3(1, { fightM: 0 }), crowded(600), course, "fight");
+      const b = simulateRace(rulesetV3(1, { fightM: 1 }), crowded(600), course, "fight");
+      for (const r of a.results)
+        wide += (r.ledger.flight?.overs ?? 0) + (r.ledger.flight?.knocks ?? 0);
+      for (const r of b.results) {
+        close += (r.ledger.flight?.overs ?? 0) + (r.ledger.flight?.knocks ?? 0);
+        dirtyClose += r.ledger.flight?.dirtyTicks ?? 0;
+      }
+    }
+    expect(dirtyClose).toBeGreaterThan(0);
+    expect(close).toBeLessThan(wide);
   });
 
   it("L6: a fall forced by the tank lands with a loss and no dive", () => {

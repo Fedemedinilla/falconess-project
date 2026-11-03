@@ -221,8 +221,10 @@ export type RaceTables = {
   readonly climbMe: Int32Array;
   /** vu added to the body speed by a dive from band b (index i × 4 + b). */
   readonly diveV: Int32Array;
-  /** Air cruise at the pace-window centre (no draw), same index as vC. */
+  /** Air cruise (L1b: `airPacePm` of her pace draw), same index as vC. */
   readonly vCAir: Int32Array;
+  /** liftF folded with her wing's holdPm (S1), for the hold of every tick (`holdLift`). */
+  readonly liftH: Int32Array;
   /** L1 (step 1.2): the air of flight k, ‰ of the air cruise, index i × FLIGHTS_MAX + k. */
   readonly airOff: Int32Array;
   /** L3: ‰ of the hold in dirty air for her technique; L4: dirty ticks before a knock (courage). */
@@ -389,7 +391,7 @@ export type RaceState = {
   // ruleset v3 stage 1 (diseno-v3-vuelo.md): the struggle up there, the log and the held skill
   /** Position at the end of tick t − 1 (step A), for the dirty air and the passes. */
   readonly pos0: Float64Array;
-  /** L3: 1 = in dirty air this tick (step A, from the t − 1 snapshot). */
+  /** L3: 1 = in dirty air this tick, 2 = also within `fightM` (L4) (step A, t − 1 snapshot). */
   readonly dirty: Uint8Array;
   /** L4: ticks of dirty air in a row, and 1 once she has tried to go over (once per race). */
   readonly dirtyRun: Int32Array;
@@ -421,6 +423,8 @@ export type RaceState = {
   /** L7: 1 = the skill fired in the air and is held; ticks held. Index ik(i, j). */
   readonly skHeld: Uint8Array;
   readonly skHeldTicks: Int32Array;
+  /** L7: skills she holds now (0 = the timers tick as in v2). */
+  readonly heldN: Uint8Array;
 };
 
 /**
@@ -506,6 +510,7 @@ function createTables(): RaceTables {
     climbMe: i32(N),
     diveV: i32(N * 4),
     vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
+    liftH: i32(N),
     airOff: i32(N * FLIGHTS_MAX),
     dirtyPm: i32(N),
     knockAt: i32(N),
@@ -663,6 +668,7 @@ function createState(): RaceState {
     passKind: u8(N * N),
     skHeld: u8(N * MAX_SKILLS),
     skHeldTicks: i32(N * MAX_SKILLS),
+    heldN: u8(N),
   };
 }
 
@@ -872,7 +878,15 @@ export function buildTables(
           T.vC[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, pace);
           T.vMin[ibps(i, b, ph, s)] = exhaustSpeedVu(R, VBASE, pwc, f, pace);
           // v3 draft R5: the air cruise sits at the centre of her pace window (no draw)
-          if (F !== null) T.vCAir[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, c);
+          // L1b (feel round 1): `airPacePm` ‰ of her pace draw of the phase, like the ground
+          if (F !== null)
+            T.vCAir[ibps(i, b, ph, s)] = cruiseVu(
+              vA,
+              pwc,
+              f,
+              sp[ph] ?? 1000,
+              c + floorDiv((pace - c) * F.airPacePm, 1000),
+            );
         }
         const a = accelVu(R, technique, pwc, f, terms);
         T.acc[ibs(i, b, s)] = a;
