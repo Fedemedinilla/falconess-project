@@ -15,6 +15,7 @@ export {
   adviceCauses,
   raceAdvice,
 } from "./advice.js";
+export { altitudeBand, altitudeColumn } from "./altitude.js";
 export type {
   EntryInput,
   GenerateFieldArgs,

@@ -1,0 +1,39 @@
+{
+  "id": "overlook",
+  "version": 1,
+  "traits": ["obstacles"],
+  "textKey": "course.overlook",
+  "segments": [
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "curves",
+      "length": 150,
+      "radius": 60
+    },
+    {
+      "type": "flat",
+      "length": 250
+    },
+    {
+      "type": "climb",
+      "length": 250,
+      "grade": 0.3
+    },
+    {
+      "type": "flat",
+      "length": 50
+    },
+    {
+      "type": "descent",
+      "length": 450,
+      "grade": 0.35
+    },
+    {
+      "type": "flat",
+      "length": 350
+    }
+  ]
+}

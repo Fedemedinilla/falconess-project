@@ -1,1 +1,1 @@
-export { CONTENT_ROOT, loadContent, loadRawContent } from "./node.js";
+export { CONTENT_ROOT, loadCatalogueCourses, loadContent, loadRawContent } from "./node.js";

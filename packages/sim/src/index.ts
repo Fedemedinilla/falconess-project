@@ -8,13 +8,18 @@ export {
   goldenEntries,
   runGoldenScenario,
 } from "./race/golden.js";
+// ruleset v3 draft (design7 «Despegar y caer»): a prototype outside rulesets/ until ADR-0009
 export {
   buildCourseGeometry,
   type CourseGeometry,
   createRaceArena,
   disableSkill,
   type FixtureBuild,
+  FLIGHT_V3_E1,
+  FLIGHT_V3_E2,
+  type FlightConstants,
   fixtureBuild,
+  flightOf,
   freezeEntry,
   freezeSkill,
   type GenerateFieldArgs,
@@ -24,8 +29,11 @@ export {
   neutralFixtureEntry,
   PLAYER_RUNNER_ID,
   type RaceArena,
+  RULESET_V3,
+  type RulesetV3,
   raceMaxTicks,
   rivalPool,
+  rulesetV3,
   type SimulateOptions,
   simulateRace,
 } from "./race/index.js";

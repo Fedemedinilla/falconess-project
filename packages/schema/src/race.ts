@@ -278,6 +278,12 @@ export const RACE_FRAME_FLAGS = {
   finished: 4096,
   dnf: 8192,
   drafting: 16384,
+  /**
+   * Altitude band, two bits (ruleset v3 draft, design7 R1): band = altLow + 2 × altHigh, 0 ground,
+   * 1 low, 2 high, 3 ceiling. v1 and v2 never set them.
+   */
+  altLow: 32768,
+  altHigh: 65536,
 } as const;
 
 const Column = z.array(Int);
@@ -407,9 +413,39 @@ export const RaceEvent = z.discriminatedUnion("kind", [
   raceEvent("heatToEnergy", { heat: Nat, energy: Nat }),
   raceEvent("finish", { finishMilli: Nat, place: Int.min(1) }),
   raceEvent("dnf", {}),
+  // ruleset v3 draft (design7 «Despegar y caer»): v1 and v2 never emit these
+  /** A planned flight left the ground (or a jump) for `band`, paying `cost` me. */
+  raceEvent("takeoff", { band: Int.min(1).max(3), cost: Nat }),
+  /** The flight ended in a dive from `fromBand` (≥ 2): `gainMms` added to the body speed. */
+  raceEvent("dive", { fromBand: Int.min(2).max(3), gainMms: Nat, vBeforeMms: Nat }),
+  /** Every end of a flight; `cause` plan (planned point) or energy (could not pay to hold). */
+  raceEvent("touchdown", {
+    fromBand: Int.min(1).max(3),
+    lossMms: Nat,
+    cause: z.enum(["plan", "energy"]),
+  }),
+  /** A planned takeoff the tank (or an exhausted body) could not afford: she stays on the ground. */
+  raceEvent("noLift", { need: Nat, have: Nat }),
 ]);
 export type RaceEvent = z.infer<typeof RaceEvent>;
 export type RaceEventKind = RaceEvent["kind"];
+
+/** Flight ledger of the ruleset v3 draft (design7 R1); absent in v1 and v2 logs. */
+export const FlightLedger = z.strictObject({
+  airTicks: Nat,
+  flights: Nat,
+  dives: Nat,
+  grandDives: Nat,
+  /** Nominal metres (mm) of the dives: Σ gain² / (2 kDecel). */
+  diveGainMm: Nat,
+  /** milli-hp the air saved against the ground drain. */
+  hpRested: Nat,
+  energyClimb: Nat,
+  energyHold: Nat,
+  noLift: Nat,
+  jumpsCovered: Nat,
+});
+export type FlightLedger = z.infer<typeof FlightLedger>;
 
 /** Where the time and the resources went (20.5). */
 export const RaceLedger = z.strictObject({
@@ -434,6 +470,8 @@ export const RaceLedger = z.strictObject({
   detours: Nat,
   skillsActivated: z.array(Slug),
   skillsMissed: z.array(Slug),
+  /** Ruleset v3 draft only (design7); never written by v1 or v2. */
+  flight: FlightLedger.optional(),
 });
 export type RaceLedger = z.infer<typeof RaceLedger>;
 

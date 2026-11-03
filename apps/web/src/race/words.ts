@@ -226,6 +226,16 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
       return ui("ui.race.event.finish", { place: item.place });
     case "dnf":
       return ui("ui.race.dnf");
+    case "takeoff":
+      return ui("ui.race.event.takeoff", { band: item.band, cost: units(item.cost) });
+    case "dive":
+      return ui("ui.race.event.dive", { band: item.fromBand, gain: mps(item.gainMms, 1) });
+    case "touchdown":
+      return item.cause === "energy"
+        ? ui("ui.race.event.touchdown.energy")
+        : ui("ui.race.event.touchdown");
+    case "noLift":
+      return ui("ui.race.event.noLift");
   }
 }
 
@@ -266,6 +276,12 @@ export function eventIcon(item: EventItem): IconName {
       return "finish";
     case "dnf":
       return "dnf";
+    case "takeoff":
+    case "dive":
+    case "touchdown":
+      return "landing";
+    case "noLift":
+      return "trouble";
   }
 }
 

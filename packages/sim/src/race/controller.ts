@@ -1,6 +1,7 @@
 import { ceilDiv, floorDiv } from "@falconess/rng";
 import { createPulseOutput, type PulseInput, type PulseOutput, pulseStep } from "../rules/index.js";
 import type { RaceConstants } from "../rulesets/index.js";
+import { jrNow } from "./flight.js";
 import type { CourseGeometry } from "./geometry.js";
 import {
   F_AIRBORNE,
@@ -134,7 +135,7 @@ export function keepOk(
   i: number,
   keepPm: number,
 ): boolean {
-  const jr = T.jr[is(i, S.seg[i] ?? 0)] ?? 0;
+  const jr = jrNow(T, S, i, S.seg[i] ?? 0);
   return (S.energy[i] ?? 0) - costBoost(R, T, i) - jr >= floorDiv((T.Emax[i] ?? 0) * keepPm, 1000);
 }
 
@@ -174,7 +175,7 @@ export function selectMode(
   const b = S.b[i] ?? 0;
   const energy = S.energy[i] ?? 0;
   const Emax = T.Emax[i] ?? 0;
-  const jr = T.jr[is(i, seg)] ?? 0;
+  const jr = jrNow(T, S, i, seg);
   if (ph !== PH_FINAL) {
     if ((T.heatToEnergyPm[i] ?? 0) > 0) {
       const room = Math.max(0, (T.capLim[i] ?? 0) - (S.heat[i] ?? 0));
@@ -333,7 +334,7 @@ export function decide(
   const bit = 1 << segType;
   const freeLeft = S.freeLeft[i] ?? 0;
   const freeAvail = freeLeft > 0 || ((P.freeMask[i] ?? 0) & bit) !== 0;
-  const energyOk = freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= (T.jr[is(i, seg)] ?? 0);
+  const energyOk = freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= jrNow(T, S, i, seg);
   let gatesOk = false;
   if (want && canThrust && energyOk) {
     const capLim = T.capLim[i] ?? 0;

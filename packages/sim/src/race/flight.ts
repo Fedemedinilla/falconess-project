@@ -1,0 +1,430 @@
+/**
+ * PROTOTYPE of the ruleset v3 draft (design7 «Despegar y caer», .work/design7/diseno-v3.md):
+ * altitude bands, flight plans by race position, climb and hold paid with energy, rest in the
+ * air and the dive that turns height into speed. Stage 1 (R1-R7) and, behind `stage`, the cheap
+ * part of stage 2 (R2 lead and pack, R8, R9, R10).
+ *
+ * It lives here and not in packages/sim/src/rulesets/ because that folder is protected (CLAUDE.md)
+ * until the owner approves ADR-0009: the engine switches on `flightOf(ruleset)`, so v1 and v2,
+ * which carry no `flight` constants, never reach a line of this file.
+ */
+import { ceilDiv, floorDiv } from "@falconess/rng";
+import type { RaceConstants, Ruleset } from "../rulesets/index.js";
+import { RULESET_V2 } from "../rulesets/index.js";
+import type { CourseGeometry } from "./geometry.js";
+import { FLIGHTS_MAX, is, type RaceState, type RaceTables } from "./state.js";
+import {
+  POS_CLOSER,
+  POS_LEAD,
+  POS_PACK,
+  POS_STALK,
+  SEG_CANYON,
+  SEG_CLIMB,
+  SEG_DESCENT,
+  SEG_JUMP,
+  SEG_WATER,
+  STYLE_GROUND,
+} from "./units.js";
+
+/** Flight constants of the v3 draft (design7 §3, §10). Units in the comments. */
+export type FlightConstants = {
+  /** Design stage the draft implements (1 or 2). */
+  readonly stage: number;
+  /** Positions that follow a flight plan, in POS_* order [lead, pack, stalk, closer]. */
+  readonly planned: readonly [boolean, boolean, boolean, boolean];
+  /** Energy units per band climbed at liftF 1000 (R3; climbE). */
+  readonly climbE: number;
+  /** Energy units per band per 100 m held at liftF 1000 (R4; holdE). */
+  readonly holdE: number;
+  /** ‰ of the climb cost when the takeoff is a cornisa (the edge of a descent, R3). */
+  readonly cornisaPm: number;
+  /** ‰ of the hp drain while alt ≥ 1 (R6). */
+  readonly airDrainPm: number;
+  /** mm/s added to the body speed by a dive from band 0..3 (R7; only 2 and 3 dive). */
+  readonly diveVMms: readonly [number, number, number, number];
+  /** η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200 ‰ (R7). */
+  readonly diveEtaBasePm: number;
+  readonly diveEtaCouragePm: number;
+  /** Ticks per band climbed and per band descended (R1). */
+  readonly climbTicks: number;
+  readonly diveTicks: number;
+  /** Plan geometry, metres (§4). */
+  readonly marginM: number;
+  readonly lookM: number;
+  readonly cornisaLookM: number;
+  readonly stalkFromDiv: number;
+  readonly closerMinM: number;
+  readonly closerLenDiv: number;
+  readonly closerPreFinalM: number;
+  readonly jumpLipM: number;
+  readonly leadJoinM: number;
+  readonly packFanDiv: number;
+  readonly packFanMinM: number;
+  /** R9 (stage 2): nobody above band 1 inside a canyon segment. */
+  readonly canyonCeiling: boolean;
+  /** R9: a high flight that keeps less than this after the canyon dives before it, metres. */
+  readonly canyonExitMinM: number;
+  readonly canyonDiveBeforeM: number;
+  /** R10 (stage 2): ‰ of the curves, water and climb penalty a ground wing pays (1000 = off). */
+  readonly groundGripPm: number;
+  /** R5: the hover draft (×1.02) only on the ground. */
+  readonly draftGroundOnly: boolean;
+  /** R5: the body speed approaches the air cruise in the air (false = held, like a jump). */
+  readonly airCruise: boolean;
+  /**
+   * Calibration knob, not in the design: false = R7 as written (`vCore += Δv`); true = the dive's
+   * Δv is a separate surge that decays by kDecel on top of the body speed, so its metres stay
+   * Δv² / (2 kDecel) whatever the ground target where she touches down.
+   */
+  readonly diveSurge: boolean;
+};
+
+/** A ruleset with flight: the v3 draft. */
+export type RulesetV3 = Ruleset & { readonly flight: FlightConstants };
+
+export const BAND_LOW = 1;
+export const BAND_HIGH = 2;
+export const BAND_CEILING = 3;
+
+/** Stage 1 of the design (§10 E1): only stalk and closer fly. */
+export const FLIGHT_V3_E1: FlightConstants = {
+  stage: 1,
+  planned: [false, false, true, true],
+  climbE: 8,
+  holdE: 1,
+  cornisaPm: 500,
+  airDrainPm: 850,
+  diveVMms: [0, 0, 4_900, 6_000],
+  diveEtaBasePm: 850,
+  diveEtaCouragePm: 300,
+  climbTicks: 6,
+  diveTicks: 3,
+  marginM: 20,
+  lookM: 40,
+  cornisaLookM: 150,
+  stalkFromDiv: 3,
+  closerMinM: 100,
+  closerLenDiv: 12,
+  closerPreFinalM: 100,
+  jumpLipM: 10,
+  leadJoinM: 60,
+  packFanDiv: 10,
+  packFanMinM: 80,
+  canyonCeiling: false,
+  canyonExitMinM: 150,
+  canyonDiveBeforeM: 20,
+  groundGripPm: 1_000,
+  draftGroundOnly: true,
+  airCruise: true,
+  diveSurge: false,
+};
+
+/** Stage 2 (§10 E2): every position flies, the canyon has a ceiling, ground wings grip. */
+export const FLIGHT_V3_E2: FlightConstants = {
+  ...FLIGHT_V3_E1,
+  stage: 2,
+  planned: [true, true, true, true],
+  canyonCeiling: true,
+  groundGripPm: 950,
+};
+
+/** Race constants the v3 draft changes over v2, by stage (maxReplans 4 → 6: flights replan). */
+const RACE_V3_E1: Partial<RaceConstants> = { maxReplans: 6 };
+const RACE_V3_E2: Partial<RaceConstants> = {
+  ...RACE_V3_E1,
+  landBasePm: 880,
+  landTechPm: 60,
+  groundDetourMult: 1_000,
+};
+
+/**
+ * The v3 draft at a design stage: v2's season, field and race constants with flight on top.
+ * `flight` and `race` override single constants (calibration sweeps).
+ */
+export function rulesetV3(
+  stage = 1,
+  flight: Partial<FlightConstants> = {},
+  race: Partial<RaceConstants> = {},
+): RulesetV3 {
+  const F = stage >= 2 ? FLIGHT_V3_E2 : FLIGHT_V3_E1;
+  const raceStage = stage >= 2 ? RACE_V3_E2 : RACE_V3_E1;
+  return {
+    ...RULESET_V2,
+    version: "v3",
+    race: { ...RULESET_V2.race, ...raceStage, ...race },
+    flight: { ...F, ...flight },
+  };
+}
+
+/** The draft's default stage (1). */
+export const RULESET_V3: RulesetV3 = rulesetV3(1);
+
+/** The flight constants of a ruleset, or null (v1, v2): the engine's only switch. */
+export function flightOf(ruleset: Ruleset): FlightConstants | null {
+  if (!("flight" in ruleset)) return null;
+  const f = ruleset.flight;
+  return isFlightConstants(f) ? f : null;
+}
+
+function isFlightConstants(f: unknown): f is FlightConstants {
+  return typeof f === "object" && f !== null && "climbE" in f && "planned" in f;
+}
+
+// --- the plan (R2, §4) -----------------------------------------------------------------------------
+
+const isObstacle = (t: number) => t === SEG_CLIMB || t === SEG_WATER || t === SEG_JUMP;
+
+/** A planned flight; `chain` = it flows into the next one without touching down (R9 split). */
+type Flight = { a: number; b: number; band: number; corn: boolean; chain?: boolean };
+
+/** Push an end point past any obstacle starting within `look` of it (+ margin), capped. */
+function extendEnd(G: CourseGeometry, end: number, look: number, margin: number, cap: number) {
+  let e = end;
+  for (let guard = 0; guard < 8; guard++) {
+    let moved = false;
+    for (let s = 0; s < G.S; s++) {
+      if (!isObstacle(G.segType[s] ?? 0)) continue;
+      const a = G.segStart[s] ?? 0;
+      const b = G.segEnd[s] ?? 0;
+      if (a < e + look && b > e - 1 && b + margin > e) {
+        e = b + margin;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  return Math.min(e, cap);
+}
+
+function touches(G: CourseGeometry, a: number, b: number, pred: (t: number) => boolean): boolean {
+  for (let s = 0; s < G.S; s++)
+    if (pred(G.segType[s] ?? 0) && (G.segStart[s] ?? 0) < b && (G.segEnd[s] ?? 0) > a) return true;
+  return false;
+}
+
+/** Stalk: band 2 from L/3 (or the cornisa of a descent starting ≤ 150 m before) to 0.7 L. */
+function stalkPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
+  let a = Math.max(G.startEnd, floorDiv(G.L, F.stalkFromDiv));
+  let corn = false;
+  for (let s = 0; s < G.S; s++) {
+    if (G.segType[s] !== SEG_DESCENT) continue;
+    const sa = G.segStart[s] ?? 0;
+    if (sa <= a && sa >= a - F.cornisaLookM * m) {
+      a = sa;
+      corn = true;
+    }
+  }
+  const b = extendEnd(G, G.hoverAttack, F.lookM * m, F.marginM * m, G.reserveAt);
+  return b > a ? [{ a, b, band: BAND_HIGH, corn }] : [];
+}
+
+/** Closer: the ceiling around the final's last feature, then the great dive (§4). */
+function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
+  const fs = G.finalStart;
+  const minLen = Math.max(F.closerMinM * m, floorDiv(G.L, F.closerLenDiv));
+  const cap = G.reserveAt;
+  const finish = (a: number, featureEnd: number, corn: boolean): Flight | null => {
+    let b = Math.max(a + minLen, featureEnd + F.marginM * m, fs);
+    b = extendEnd(G, b, F.lookM * m, F.marginM * m, Number.MAX_SAFE_INTEGER);
+    return b <= cap ? { a, b, band: BAND_CEILING, corn } : null;
+  };
+  // 1. the edge of the last descent that ends inside the final
+  let pick: Flight | null = null;
+  for (let s = G.S - 1; s >= 0 && pick === null; s--) {
+    if (G.segType[s] !== SEG_DESCENT) continue;
+    const sb = G.segEnd[s] ?? 0;
+    if (sb > fs) pick = finish(G.segStart[s] ?? 0, sb, true);
+    break;
+  }
+  // 2. the lip of the last jump of the final
+  if (pick === null)
+    for (let s = G.S - 1; s >= 0; s--) {
+      if (G.segType[s] !== SEG_JUMP) continue;
+      const sa = G.segStart[s] ?? 0;
+      if (sa >= fs) pick = finish(Math.max(0, sa - F.jumpLipM * m), G.segEnd[s] ?? 0, false);
+      break;
+    }
+  if (pick !== null) return [pick];
+  // 3. 100 m before the final; if that stretch touches a canyon or an obstacle, after the last
+  // one of the final; if that cannot touch down before L − 60 m, 100 m before the final anyway
+  const a3 = Math.max(0, fs - F.closerPreFinalM * m);
+  const plain: Flight = {
+    a: a3,
+    b: Math.max(a3 + minLen, fs),
+    band: BAND_CEILING,
+    corn: false,
+  };
+  const blocked = (t: number) => t === SEG_CANYON || isObstacle(t);
+  if (!touches(G, plain.a, plain.b, blocked)) return plain.b <= cap ? [plain] : [];
+  let last = -1;
+  for (let s = 0; s < G.S; s++)
+    if (blocked(G.segType[s] ?? 0) && (G.segEnd[s] ?? 0) > fs) last = G.segEnd[s] ?? 0;
+  if (last >= 0) {
+    const a = last + F.marginM * m;
+    const late = finish(a, a, false);
+    if (late !== null && late.b - late.a >= minLen) return [late];
+  }
+  return plain.b <= cap ? [{ ...plain, b: Math.min(plain.b, cap) }] : [];
+}
+
+/** Lead (stage 2): band 1 over every climb, water and jump, 20 m each side; joins gaps < 60 m. */
+function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
+  const out: Flight[] = [];
+  for (let s = 0; s < G.S; s++) {
+    if (!isObstacle(G.segType[s] ?? 0)) continue;
+    const a = Math.max(0, (G.segStart[s] ?? 0) - F.marginM * m);
+    const b = Math.min(G.reserveAt, (G.segEnd[s] ?? 0) + F.marginM * m);
+    if (b <= a) continue;
+    const last = out[out.length - 1];
+    if (last && a - last.b < F.leadJoinM * m) last.b = Math.max(last.b, b);
+    else out.push({ a, b, band: BAND_LOW, corn: false });
+  }
+  return out;
+}
+
+/** Pack (stage 2): band 1 along every canyon, and the fan from the final's start (L/10, ≥ 80 m). */
+function packPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
+  const raw: Flight[] = [];
+  for (let s = 0; s < G.S; s++)
+    if (G.segType[s] === SEG_CANYON)
+      raw.push({
+        a: G.segStart[s] ?? 0,
+        b: Math.min(G.reserveAt, G.segEnd[s] ?? 0),
+        band: BAND_LOW,
+        corn: false,
+      });
+  const fa = G.finalStart;
+  const len = Math.max(F.packFanMinM * m, floorDiv(G.L, F.packFanDiv));
+  raw.push({
+    a: fa,
+    b: extendEnd(G, fa + len, F.lookM * m, F.marginM * m, G.reserveAt),
+    band: BAND_LOW,
+    corn: false,
+  });
+  raw.sort((x, y) => x.a - y.a);
+  const out: Flight[] = [];
+  for (const f of raw) {
+    if (f.b <= f.a) continue;
+    const last = out[out.length - 1];
+    if (last && f.a <= last.b) last.b = Math.max(last.b, f.b);
+    else out.push({ ...f });
+  }
+  return out;
+}
+
+/**
+ * R9: nobody holds above band 1 inside a canyon. A high flight that reaches a canyon drops to band
+ * 1 at its edge (no dive, no loss) and climbs back at its exit, paying the climb, as three chained
+ * flights; if it would end inside the canyon, or keep less than `canyonExitMinM` after it, it dives
+ * `canyonDiveBeforeM` before the canyon instead. One that takes off inside flies low to the exit.
+ */
+function ceilingCut(F: FlightConstants, G: CourseGeometry, m: number, fl: Flight[]): Flight[] {
+  const out: Flight[] = [];
+  for (const f of fl) {
+    if (f.band <= BAND_LOW) {
+      out.push(f);
+      continue;
+    }
+    let cur: Flight | null = { ...f };
+    for (let s = 0; s < G.S && cur !== null; s++) {
+      if (G.segType[s] !== SEG_CANYON) continue;
+      const ca = G.segStart[s] ?? 0;
+      const cb = G.segEnd[s] ?? 0;
+      if (cb <= cur.a || ca >= cur.b) continue;
+      if (ca <= cur.a) {
+        // takes off inside: low until the exit, then up to her band (or low to the end)
+        if (cur.b - cb >= F.canyonExitMinM * m) {
+          out.push({ a: cur.a, b: cb, band: BAND_LOW, corn: cur.corn, chain: true });
+          cur = { ...cur, a: cb, corn: false };
+        } else cur = { ...cur, band: BAND_LOW, b: Math.min(cur.b, cb) };
+      } else if (cur.b <= cb || cur.b - cb < F.canyonExitMinM * m) {
+        const b = ca - F.canyonDiveBeforeM * m;
+        cur = b > cur.a ? { ...cur, b } : null;
+      } else {
+        const drop = Math.max(cur.a + 1, ca - F.canyonDiveBeforeM * m);
+        out.push({ ...cur, b: drop, chain: true });
+        out.push({ a: drop, b: cb, band: BAND_LOW, corn: false, chain: true });
+        cur = { ...cur, a: cb, corn: false };
+      }
+    }
+    if (cur !== null) out.push(cur);
+    else {
+      const last = out[out.length - 1];
+      if (last) last.chain = false;
+    }
+  }
+  return out;
+}
+
+/**
+ * The runner's flight plan before tick 0 (R2): a pure function of the geometry, her own position,
+ * her wings and her stats, the same the pre-race card can show. Writes `flN`, `flA`, `flB`,
+ * `flBand`, `flCorn`, the planned costs (R3, R4) and the reserve `flRes0`, and marks the jumps a
+ * planned flight covers (no lift, no jump reserve). Reads no other runner. Ground wings never fly.
+ */
+export function planFlights(
+  F: FlightConstants,
+  G: CourseGeometry,
+  T: RaceTables,
+  i: number,
+  posPerMm: number,
+  liftF: number,
+  courage: number,
+  velPerMms: number,
+): void {
+  T.climbMe[i] = ceilDiv(F.climbE * 1_000_000, Math.max(1, liftF));
+  const eta = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(courage, 1200), 1200);
+  for (let b = 0; b < 4; b++)
+    T.diveV[i * 4 + b] = floorDiv((F.diveVMms[b] ?? 0) * eta, 1000) * velPerMms;
+  T.flN[i] = 0;
+  T.flRes0[i] = 0;
+  if (T.style[i] === STYLE_GROUND) return;
+  const pc = T.position[i] ?? 0;
+  if (!F.planned[pc]) return;
+  const m = posPerMm * 1000;
+  let fl =
+    pc === POS_STALK
+      ? stalkPlan(F, G, m)
+      : pc === POS_CLOSER
+        ? closerPlan(F, G, m)
+        : pc === POS_LEAD
+          ? leadPlan(F, G, m)
+          : pc === POS_PACK
+            ? packPlan(F, G, m)
+            : [];
+  if (F.canyonCeiling) fl = ceilingCut(F, G, m, fl);
+  fl = fl.filter((f) => f.b > f.a).slice(0, FLIGHTS_MAX);
+  let res = 0;
+  fl.forEach((f, k) => {
+    const x = i * FLIGHTS_MAX + k;
+    T.flA[x] = f.a;
+    T.flB[x] = f.b;
+    T.flBand[x] = f.band;
+    T.flCorn[x] = f.corn ? 1 : 0;
+    T.flChain[x] = f.chain && k + 1 < Math.min(fl.length, FLIGHTS_MAX) ? 1 : 0;
+    const prev = k > 0 && fl[k - 1]?.chain ? (fl[k - 1]?.band ?? 0) : 0;
+    const climb = floorDiv(
+      Math.max(0, f.band - prev) * (T.climbMe[i] ?? 0) * (f.corn ? F.cornisaPm : 1000),
+      1000,
+    );
+    const hold = holdMe(F, f.band * (f.b - f.a), posPerMm, liftF);
+    T.flClimb[x] = climb;
+    T.flHold[x] = hold;
+    res += climb + hold;
+    for (let s = 0; s < G.S; s++)
+      if (G.segType[s] === SEG_JUMP && (G.segStart[s] ?? 0) >= f.a && (G.segEnd[s] ?? 0) <= f.b)
+        T.jumpCovered[is(i, s)] = 1;
+  });
+  T.flN[i] = fl.length;
+  T.flRes0[i] = res;
+}
+
+/** me to hold `bandPu` (band × pu) at liftF (R4): holdE energy per band per 100 m at liftF 1000. */
+export function holdMe(F: FlightConstants, bandPu: number, posPerMm: number, liftF: number) {
+  return floorDiv(bandPu * F.holdE * 10_000, posPerMm * 1000 * Math.max(1, liftF));
+}
+
+/** `jr` of the gates and the plan, plus the energy still reserved for planned flights (R3). */
+export function jrNow(T: RaceTables, S: RaceState, i: number, seg: number): number {
+  return (T.jr[is(i, seg)] ?? 0) + (S.flRes[i] ?? 0);
+}

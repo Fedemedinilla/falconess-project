@@ -15,5 +15,14 @@ export {
   fixtureBuild,
   neutralFixtureEntry,
 } from "./fixtures.js";
+export {
+  FLIGHT_V3_E1,
+  FLIGHT_V3_E2,
+  type FlightConstants,
+  flightOf,
+  RULESET_V3,
+  type RulesetV3,
+  rulesetV3,
+} from "./flight.js";
 export { buildCourseGeometry, type CourseGeometry, raceMaxTicks } from "./geometry.js";
 export { createRaceArena, type RaceArena } from "./state.js";

@@ -4,6 +4,7 @@ import { SprintPlanCause as PlanCauses, RACE_FRAME_FLAGS } from "@falconess/sche
 import { endBurst } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
 import { type Controller, createController, decide, inPack, rankSnapshot } from "./controller.js";
+import { type FlightConstants, flightOf, holdMe } from "./flight.js";
 import {
   buildCourseGeometry,
   type CourseGeometry,
@@ -46,6 +47,7 @@ import {
   F_PENDING_JUMP,
   F_PLAN_ACTIVE,
   F_REPLAN,
+  FLIGHTS_MAX,
   ib,
   ibps,
   ibs,
@@ -91,6 +93,8 @@ const FL = RACE_FRAME_FLAGS;
 /** Everything one race reads in its loop; built once per race, no per-tick allocation. */
 type Ctx = {
   readonly R: RaceConstants;
+  /** Flight constants of the v3 draft (design7); null for v1 and v2, which never fly. */
+  readonly F: FlightConstants | null;
   readonly G: CourseGeometry;
   readonly A: RaceArena;
   readonly T: RaceTables;
@@ -184,6 +188,7 @@ function runRace(
   const rec = new RaceRecorder(full, E, R.log.sampleEveryTicks);
   const c: Ctx = {
     R,
+    F: flightOf(ruleset),
     G,
     A,
     T: A.tables,
@@ -276,7 +281,7 @@ function runRace(
     geometry: logGeometry(ruleset, G),
     entries: E.map(cloneEntry),
     derived: buildDerived(ruleset, E, G, A),
-    results: buildResults(E, A, rec),
+    results: buildResults(E, A, rec, c.F !== null),
   };
   if (full) {
     log.frames = rec.frames();
@@ -341,6 +346,9 @@ function runnerTick(c: Ctx, i: number): boolean {
     return false;
   }
 
+  // B4b. v3 draft (design7 R1-R4, R7): planned takeoff, climb, end of flight, descent, dive
+  if (c.F !== null) flightTick(c, i, c.F);
+
   // B5. the tick's single overheat flag
   const heat0 = S.heat[i] ?? 0;
   const over = heat0 > (T.heatCap[i] ?? 0);
@@ -366,7 +374,12 @@ function runnerTick(c: Ctx, i: number): boolean {
   const style = T.style[i] ?? 0;
   const pack = inPack(R, S, i);
   let tgt = (exhausted ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
-  const drafting = style === STYLE_HOVER && ph === PH_MIDDLE && pack && !exhausted;
+  const drafting =
+    style === STYLE_HOVER &&
+    ph === PH_MIDDLE &&
+    pack &&
+    !exhausted &&
+    !(airborne && c.F !== null && c.F.draftGroundOnly);
   if (drafting) {
     tgt = floorDiv(tgt * R.style.hoverDraftPm, 1000);
     S.draftTicks[i] = (S.draftTicks[i] ?? 0) + 1;
@@ -382,6 +395,11 @@ function runnerTick(c: Ctx, i: number): boolean {
     const up = a + (S.skillAccel[i] ?? 0) + (dash ? R.kStartDash : 0);
     vCore = approachVu(vCore, tgt, up, R.kDecel);
     S.vCore[i] = vCore;
+  } else if (c.F !== null && c.F.airCruise && S.flPhase[i] === 2) {
+    // v3 draft R5: holding a band, the body approaches the air cruise (pace-window centre)
+    const ta = (exhausted ? T.vMin : T.vCAir)[ibps(i, b, ph, seg)] ?? 0;
+    vCore = approachVu(vCore, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
+    S.vCore[i] = vCore;
   }
   const boostOn = S.boostOn[i] === 1;
   const pulseTick = S.isPulseTick[i] === 1;
@@ -395,7 +413,13 @@ function runnerTick(c: Ctx, i: number): boolean {
       : (T.B[ib(i, b)] ?? 0);
     thrust = floorDiv(raw * (T.stoop[ips(i, ph, seg)] ?? 1000), 1000);
   }
-  const vTot = airborne ? vCore : Math.max(0, vCore + thrust + (S.skillSpeed[i] ?? 0));
+  let surge = 0;
+  if (!airborne && (S.surge[i] ?? 0) > 0) {
+    // v3 draft, `diveSurge` knob: the dive's surge decays by kDecel on top of the body speed
+    surge = S.surge[i] ?? 0;
+    S.surge[i] = Math.max(0, surge - R.kDecel);
+  }
+  const vTot = airborne ? vCore : Math.max(0, vCore + thrust + surge + (S.skillSpeed[i] ?? 0));
   const penalised =
     over &&
     T.heatPenalty[i] === 1 &&
@@ -423,11 +447,21 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.overheatTicks[i] = (S.overheatTicks[i] ?? 0) + 1;
     if ((S.guardLeft[i] ?? 0) === 0) damage(c, i, T.dmgTick[i] ?? 0);
   }
+  if (c.F !== null && S.flPhase[i] === 2) holdTick(c, i, c.F, vOut, seg);
 
   // B10. hp drain at the moved speed (6)
   const q =
     (ph === PH_FINAL ? DK_FINAL : 0) + (style === STYLE_GLIDE && S.ahead[i] === 0 ? DK_LEAD : 0);
-  const hp = sub0(S.hp[i] ?? 0, drainMicro(vOut, c.vBase, T.dK[i * 4 + q] ?? 0));
+  let dK = T.dK[i * 4 + q] ?? 0;
+  if (c.F !== null && (S.alt[i] ?? 0) > 0) {
+    // v3 draft R6: the legs rest in the air
+    const dKAir = floorDiv(dK * c.F.airDrainPm, 1000);
+    S.hpRested[i] =
+      (S.hpRested[i] ?? 0) + drainMicro(vOut, c.vBase, dK) - drainMicro(vOut, c.vBase, dKAir);
+    S.airTicks[i] = (S.airTicks[i] ?? 0) + 1;
+    dK = dKAir;
+  }
+  const hp = sub0(S.hp[i] ?? 0, drainMicro(vOut, c.vBase, dK));
   S.hp[i] = hp;
   if (hp === 0 && !exhausted) {
     setFlag(S, i, F_EXHAUSTED);
@@ -466,7 +500,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   }
   let s = seg;
   while (s < G.S - 1 && newPos >= (G.segEnd[s] ?? 0)) {
-    if (G.segType[s] === SEG_JUMP) {
+    if (G.segType[s] === SEG_JUMP && (S.flPhase[i] ?? 0) === 0) {
       if (flag(S, i, F_AIRBORNE)) {
         const v0 = S.vCore[i] ?? 0;
         const v1 = scale(v0, T.landPm[i] ?? 1000);
@@ -476,6 +510,7 @@ function runnerTick(c: Ctx, i: number): boolean {
         rec.landing(t, i, posMm(c, i), loss);
       }
       clearFlag(S, i, F_AIRBORNE);
+      S.alt[i] = 0;
       if (flag(S, i, F_PLAN_ACTIVE) && style !== STYLE_GROUND) requestReplan(S, i, CAUSE_JUMP);
     }
     s += 1;
@@ -526,7 +561,10 @@ function stateFlags(c: Ctx, i: number): number {
     ((f & F_AIRBORNE) !== 0 ? FL.airborne : 0) |
     ((f & F_BROKEN) !== 0 ? FL.broken : 0) |
     ((S.activeSkills[i] ?? 0) > 0 ? FL.skillActive : 0) |
-    ((f & F_FINISHED) !== 0 ? FL.finished : 0)
+    ((f & F_FINISHED) !== 0 ? FL.finished : 0) |
+    // v3 draft R1: the altitude band in two bits (always 0 in v1 and v2)
+    ((S.alt[i] ?? 0) & 1 ? FL.altLow : 0) |
+    ((S.alt[i] ?? 0) & 2 ? FL.altHigh : 0)
   );
 }
 
@@ -619,7 +657,9 @@ function enterSegment(c: Ctx, i: number, s: number, crossing: boolean): void {
     if (T.style[i] === STYLE_GROUND) {
       S.detours[i] = (S.detours[i] ?? 0) + 1;
       rec.detour(c.t, i, posMm(c, i), s);
-    } else setFlag(S, i, F_PENDING_JUMP);
+    } else if ((S.flPhase[i] ?? 0) !== 0)
+      S.jumpsCovered[i] = (S.jumpsCovered[i] ?? 0) + 1; // v3 draft R3: crossed in flight, no lift
+    else setFlag(S, i, F_PENDING_JUMP);
   }
 }
 
@@ -643,6 +683,7 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
     S.energy[i] = energy - spent;
     S.energyLift[i] = (S.energyLift[i] ?? 0) + spent;
     setFlag(S, i, F_AIRBORNE);
+    if (c.F !== null) S.alt[i] = 1; // v3 draft: a jump flies low
     S.vCore[i] = (flag(S, i, F_EXHAUSTED) ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
     endBurst(S.pulse, i);
     S.jumpsOk[i] = (S.jumpsOk[i] ?? 0) + 1;
@@ -664,6 +705,217 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
   S.jumpsFailed[i] = (S.jumpsFailed[i] ?? 0) + 1;
   rec.jumpFail(c.t, i, posMm(c, i), lift, req, energy, dmg, stall);
   return false;
+}
+
+// --- flight (ruleset v3 draft, design7 «Despegar y caer») -----------------------------------------
+
+/**
+ * Step B4b: the runner's planned flight. On the ground (or in a plain jump) it takes off at the
+ * planned point; climbing it gains one band every `climbTicks`; at the planned end (or when
+ * holding cannot be paid, `holdTick`) it descends one band every `diveTicks`, and touches down.
+ */
+function flightTick(c: Ctx, i: number, F: FlightConstants): void {
+  const { T, S } = c;
+  const pos = S.pos[i] ?? 0;
+  const phase = S.flPhase[i] ?? 0;
+  if (phase === 0) {
+    const k = S.flK[i] ?? 0;
+    if (k < (T.flN[i] ?? 0) && pos >= (T.flA[i * FLIGHTS_MAX + k] ?? 0)) takeoff(c, i, k, F);
+    return;
+  }
+  if (phase === 1) {
+    const left = (S.altTimer[i] ?? 0) - 1;
+    if (left > 0) S.altTimer[i] = left;
+    else {
+      S.alt[i] = (S.alt[i] ?? 0) + 1;
+      if ((S.alt[i] ?? 0) >= (S.altTarget[i] ?? 0)) S.flPhase[i] = 2;
+      else S.altTimer[i] = F.climbTicks;
+    }
+  }
+  if (phase === 3) {
+    const left = (S.altTimer[i] ?? 0) - 1;
+    if (left > 0) {
+      S.altTimer[i] = left;
+      return;
+    }
+    S.alt[i] = Math.max(0, (S.alt[i] ?? 0) - 1);
+    if ((S.alt[i] ?? 0) === 0) touchdown(c, i);
+    else if ((S.alt[i] ?? 0) <= (S.altTarget[i] ?? 0))
+      S.flPhase[i] = 2; // R9: down to band 1
+    else S.altTimer[i] = F.diveTicks;
+    return;
+  }
+  const cur = (S.flCur[i] ?? 1) - 1;
+  const x = i * FLIGHTS_MAX + cur;
+  if (pos < (T.flB[x] ?? 0)) return;
+  if (T.flChain[x] === 1 && cur + 1 < (T.flN[i] ?? 0)) chainNext(c, i, cur + 1, F);
+  else startDescent(c, i, F, 0);
+}
+
+/**
+ * R9: the flight flows into the next planned one without touching down: down to its band (no
+ * dive, no loss) or up to it, paying the climb if the tank allows (else she holds her band).
+ */
+function chainNext(c: Ctx, i: number, k: number, F: FlightConstants): void {
+  const { T, S } = c;
+  S.flK[i] = k + 1;
+  const x = i * FLIGHTS_MAX + k;
+  S.flRes[i] = Math.max(
+    0,
+    (S.flRes[i] ?? 0) - (S.flHoldLeft[i] ?? 0) - (T.flClimb[x] ?? 0) - (T.flHold[x] ?? 0),
+  );
+  S.flHoldLeft[i] = 0;
+  const alt = S.alt[i] ?? 0;
+  const pos = S.pos[i] ?? 0;
+  const dist = Math.max(0, (T.flB[x] ?? 0) - pos);
+  const liftF = T.liftF[i] ?? 1000;
+  const jr = (T.jr[is(i, S.seg[i] ?? 0)] ?? 0) + (S.flRes[i] ?? 0);
+  const energy = S.energy[i] ?? 0;
+  let band = T.flBand[x] ?? alt;
+  let cost = band > alt ? (band - alt) * (T.climbMe[i] ?? 0) : 0;
+  if (cost > 0 && energy - cost < jr + holdMe(F, band * dist, c.posPerMm, liftF)) {
+    band = alt;
+    cost = 0;
+  }
+  const hold = holdMe(F, band * dist, c.posPerMm, liftF);
+  S.energy[i] = energy - cost;
+  S.energyClimb[i] = (S.energyClimb[i] ?? 0) + cost;
+  S.flRes[i] = (S.flRes[i] ?? 0) + hold;
+  S.flHoldLeft[i] = hold;
+  S.flCur[i] = k + 1;
+  S.holdPu[i] = 0;
+  S.holdBilled[i] = 0;
+  S.altTarget[i] = band;
+  if (band < alt) {
+    S.flPhase[i] = 3;
+    S.altTimer[i] = F.diveTicks;
+  } else if (band > alt) {
+    S.flPhase[i] = 1;
+    S.altTimer[i] = F.climbTicks;
+    c.rec.takeoff(c.t, i, posMm(c, i), band, cost);
+  }
+}
+
+/**
+ * A planned takeoff (R3): the plan's reserve for this flight is released, then she climbs the
+ * highest band ≤ the planned one whose climb leaves `energy ≥ jr + reserve + hold of that band`
+ * (a cornisa climbs at `cornisaPm`, a jump in progress already holds band 1). None: `noLift`,
+ * she stays on the ground with no damage and no draw. Exhausted, or past the planned end: no lift.
+ */
+function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
+  const { T, S } = c;
+  S.flK[i] = k + 1;
+  const x = i * FLIGHTS_MAX + k;
+  S.flRes[i] = Math.max(0, (S.flRes[i] ?? 0) - (T.flClimb[x] ?? 0) - (T.flHold[x] ?? 0));
+  const pos = S.pos[i] ?? 0;
+  const end = T.flB[x] ?? 0;
+  const energy = S.energy[i] ?? 0;
+  const from = flag(S, i, F_AIRBORNE) ? 1 : 0;
+  const target = T.flBand[x] ?? 1;
+  const unit = floorDiv((T.climbMe[i] ?? 0) * (T.flCorn[x] === 1 ? F.cornisaPm : 1000), 1000);
+  const jr = (T.jr[is(i, S.seg[i] ?? 0)] ?? 0) + (S.flRes[i] ?? 0);
+  const liftF = T.liftF[i] ?? 1000;
+  const dist = Math.max(0, end - pos);
+  let band = 0;
+  let cost = 0;
+  let hold = 0;
+  if (!flag(S, i, F_EXHAUSTED) && pos < end)
+    for (let b = target; b > from; b--) {
+      const cb = (b - from) * unit;
+      const hb = holdMe(F, b * dist, c.posPerMm, liftF);
+      if (energy - cb >= jr + hb) {
+        band = b;
+        cost = cb;
+        hold = hb;
+        break;
+      }
+    }
+  if (band === 0) {
+    S.noLift[i] = (S.noLift[i] ?? 0) + 1;
+    const need = (target - from) * unit + holdMe(F, target * dist, c.posPerMm, liftF) + jr;
+    c.rec.noLift(c.t, i, posMm(c, i), Math.max(0, need), energy);
+    return;
+  }
+  S.energy[i] = energy - cost;
+  S.energyClimb[i] = (S.energyClimb[i] ?? 0) + cost;
+  S.flRes[i] = (S.flRes[i] ?? 0) + hold;
+  S.flHoldLeft[i] = hold;
+  setFlag(S, i, F_AIRBORNE);
+  clearFlag(S, i, F_PENDING_JUMP);
+  endBurst(S.pulse, i);
+  const alt = Math.max(1, from);
+  S.alt[i] = alt;
+  S.altTarget[i] = band;
+  S.flPhase[i] = alt < band ? 1 : 2;
+  S.altTimer[i] = F.climbTicks;
+  S.flCur[i] = k + 1;
+  S.holdPu[i] = 0;
+  S.holdBilled[i] = 0;
+  S.flights[i] = (S.flights[i] ?? 0) + 1;
+  c.rec.takeoff(c.t, i, posMm(c, i), band, cost);
+}
+
+/**
+ * Holding a band (R4, step B9): `holdE` per band per 100 m at liftF, billed on the metres moved.
+ * If paying breaks `jr` plus the reserve left, she does not pay and starts down this tick.
+ */
+function holdTick(c: Ctx, i: number, F: FlightConstants, vOut: number, seg: number): void {
+  const { T, S } = c;
+  S.holdPu[i] = (S.holdPu[i] ?? 0) + (S.alt[i] ?? 0) * vOut;
+  const due = holdMe(F, S.holdPu[i] ?? 0, c.posPerMm, T.liftF[i] ?? 1000) - (S.holdBilled[i] ?? 0);
+  if (due <= 0) return;
+  const covered = Math.min(due, S.flHoldLeft[i] ?? 0);
+  const resAfter = (S.flRes[i] ?? 0) - covered;
+  const energy = S.energy[i] ?? 0;
+  if (energy - due < (T.jr[is(i, seg)] ?? 0) + resAfter) {
+    startDescent(c, i, F, 1);
+    return;
+  }
+  S.energy[i] = energy - due;
+  S.holdBilled[i] = (S.holdBilled[i] ?? 0) + due;
+  S.energyHold[i] = (S.energyHold[i] ?? 0) + due;
+  S.flHoldLeft[i] = (S.flHoldLeft[i] ?? 0) - covered;
+  S.flRes[i] = resAfter;
+}
+
+/** The descent starts (R1): no thrust, the body speed held, one band every `diveTicks`. */
+function startDescent(c: Ctx, i: number, F: FlightConstants, cause: number): void {
+  const S = c.S;
+  S.flPhase[i] = 3;
+  S.fromBand[i] = S.alt[i] ?? 0;
+  S.altTarget[i] = 0;
+  S.fallCause[i] = cause;
+  S.altTimer[i] = F.diveTicks;
+}
+
+/**
+ * Touchdown (R7): no landing loss; from band 2 or 3 the dive adds `diveV[band]` to the body
+ * speed, which `kDecel` brings back down (≈ Δv² / (2 kDecel) metres). The flight's unspent hold
+ * reserve is released and a running sprint plan replans, like a jump exit.
+ */
+function touchdown(c: Ctx, i: number): void {
+  const { R, T, S } = c;
+  const from = S.fromBand[i] ?? 0;
+  S.flPhase[i] = 0;
+  S.alt[i] = 0;
+  S.flCur[i] = 0;
+  clearFlag(S, i, F_AIRBORNE);
+  S.flRes[i] = Math.max(0, (S.flRes[i] ?? 0) - (S.flHoldLeft[i] ?? 0));
+  S.flHoldLeft[i] = 0;
+  const p = posMm(c, i);
+  if (from >= 2) {
+    const dv = T.diveV[i * 4 + from] ?? 0;
+    const before = S.vCore[i] ?? 0;
+    if (c.F?.diveSurge) S.surge[i] = (S.surge[i] ?? 0) + dv;
+    else S.vCore[i] = before + dv;
+    const dvMms = floorDiv(dv, c.velPerMms);
+    S.dives[i] = (S.dives[i] ?? 0) + 1;
+    if (from === 3) S.grandDives[i] = (S.grandDives[i] ?? 0) + 1;
+    S.diveGainMm[i] = (S.diveGainMm[i] ?? 0) + floorDiv(dvMms * dvMms, 2 * R.kDecel);
+    c.rec.dive(c.t, i, p, from, dvMms, floorDiv(before, c.velPerMms));
+  }
+  c.rec.touchdown(c.t, i, p, Math.max(1, from), 0, S.fallCause[i] === 1 ? "energy" : "plan");
+  if (flag(S, i, F_PLAN_ACTIVE)) requestReplan(S, i, CAUSE_JUMP);
 }
 
 // --- finish and DNF (steps C and E, section 19) ----------------------------------------------------

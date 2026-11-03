@@ -1,13 +1,13 @@
 import { ceilDiv, floorDiv } from "@falconess/rng";
 import type { SprintPlanReason } from "@falconess/schema";
 import type { RaceConstants } from "../rulesets/index.js";
+import { jrNow } from "./flight.js";
 import type { CourseGeometry } from "./geometry.js";
 import {
   DK_FINAL,
   F_EXHAUSTED,
   ib,
   ibps,
-  is,
   type RaceState,
   type RaceTables,
   routeDist,
@@ -214,7 +214,7 @@ export function planSprint(
   const seg = S.seg[i] ?? 0;
   const err = T.planErr[i] ?? 0;
   const energy = S.energy[i] ?? 0;
-  const jr = T.jr[is(i, seg)] ?? 0;
+  const jr = jrNow(T, S, i, seg);
   const perceived = floorDiv(energy * (1000 + err), 1000);
   const Ep = Math.max(0, perceived - jr);
   const hpP = floorDiv((S.hp[i] ?? 0) * (1000 + err), 1000);

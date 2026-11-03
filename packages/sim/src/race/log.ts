@@ -289,6 +289,40 @@ export class RaceRecorder {
     if (this.full) this.list.push({ kind: "dnf", tick, lane, posMm });
   }
 
+  // ruleset v3 draft (design7): flight events, never emitted by v1 or v2
+
+  takeoff(tick: number, lane: number, posMm: number, band: number, cost: number): void {
+    if (this.full) this.list.push({ kind: "takeoff", tick, lane, posMm, band, cost });
+  }
+
+  dive(
+    tick: number,
+    lane: number,
+    posMm: number,
+    fromBand: number,
+    gainMms: number,
+    vBeforeMms: number,
+  ): void {
+    if (this.full)
+      this.list.push({ kind: "dive", tick, lane, posMm, fromBand, gainMms, vBeforeMms });
+  }
+
+  touchdown(
+    tick: number,
+    lane: number,
+    posMm: number,
+    fromBand: number,
+    lossMms: number,
+    cause: "plan" | "energy",
+  ): void {
+    if (this.full)
+      this.list.push({ kind: "touchdown", tick, lane, posMm, fromBand, lossMms, cause });
+  }
+
+  noLift(tick: number, lane: number, posMm: number, need: number, have: number): void {
+    if (this.full) this.list.push({ kind: "noLift", tick, lane, posMm, need, have });
+  }
+
   // --- frames (20.4) --------------------------------------------------------------------------------
 
   /** Row T: the state after tick T − 1 (T = 0 before tick 0), every runner, lane order. */
@@ -423,6 +457,7 @@ export function buildResults(
   E: readonly RaceEntry[],
   A: RaceArena,
   rec: RaceRecorder,
+  flight = false,
 ): RaceResult[] {
   const S = A.state;
   const out: RaceResult[] = [];
@@ -475,6 +510,21 @@ export function buildResults(
         skillsMissed: [...(rec.missed[i] ?? [])],
       },
     });
+    const last = out[out.length - 1];
+    // v3 draft (design7 R1): the flight ledger, a key v1 and v2 never write
+    if (flight && last !== undefined)
+      last.ledger.flight = {
+        airTicks: S.airTicks[i] ?? 0,
+        flights: S.flights[i] ?? 0,
+        dives: S.dives[i] ?? 0,
+        grandDives: S.grandDives[i] ?? 0,
+        diveGainMm: S.diveGainMm[i] ?? 0,
+        hpRested: floorDiv(S.hpRested[i] ?? 0, 1000),
+        energyClimb: S.energyClimb[i] ?? 0,
+        energyHold: S.energyHold[i] ?? 0,
+        noLift: S.noLift[i] ?? 0,
+        jumpsCovered: S.jumpsCovered[i] ?? 0,
+      };
   });
   out.sort((a, b) => a.place - b.place);
   return out;

@@ -1,0 +1,47 @@
+{
+  "id": "crossing",
+  "version": 1,
+  "traits": ["long"],
+  "textKey": "course.crossing",
+  "segments": [
+    {
+      "type": "flat",
+      "length": 400
+    },
+    {
+      "type": "canyon",
+      "length": 600
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 80
+    },
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "water",
+      "length": 150,
+      "drag": 0.2
+    },
+    {
+      "type": "flat",
+      "length": 350
+    },
+    {
+      "type": "canyon",
+      "length": 500
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 80
+    },
+    {
+      "type": "flat",
+      "length": 900
+    }
+  ]
+}

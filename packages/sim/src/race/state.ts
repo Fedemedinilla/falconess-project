@@ -3,6 +3,7 @@ import type { Course, RaceEntry, RacePhase, SegmentType } from "@falconess/schem
 import { POSITIONS, RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
 import { compileRule, createPulseState, initPulseLane, type PulseState } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
+import { flightOf, planFlights } from "./flight.js";
 import { type CourseGeometry, MAX_SEGMENTS } from "./geometry.js";
 import {
   accelVu,
@@ -40,8 +41,11 @@ import {
   POS_STALK,
   positionCode,
   ruleCode,
+  SEG_CLIMB,
+  SEG_CURVES,
   SEG_DESCENT,
   SEG_JUMP,
+  SEG_WATER,
   STYLE_DIVE,
   STYLE_GLIDE,
   STYLE_GROUND,
@@ -56,6 +60,8 @@ import {
  * Float64Array, where integers are exact below 2^53. Internal TS types, not data formats.
  */
 
+/** Planned flights per runner (ruleset v3 draft, design7 R2). */
+export const FLIGHTS_MAX = 8;
 /** Arena capacity: the schema's lane bound. */
 export const MAX_LANES = 8;
 /** Arena capacity: the schema's active-skill bound (`RaceEntry.skills`). */
@@ -193,6 +199,30 @@ export type RaceTables = {
   readonly jr: Int32Array;
   /** The jump reserve at the gun, me: `R` of the course's first jump (14.4); 0 for ground. */
   readonly jrStart: Int32Array;
+  // ruleset v3 draft (design7 «Despegar y caer»): the flight plan, all zero without `flight`
+  /** Planned flights per runner (≤ FLIGHTS_MAX). */
+  readonly flN: Int32Array;
+  /** pu: takeoff point and end point (descent starts) of flight k, index i × FLIGHTS_MAX + k. */
+  readonly flA: Float64Array;
+  readonly flB: Float64Array;
+  readonly flBand: Int32Array;
+  /** 1 = takes off at the edge of a descent (cornisa): climbing costs `cornisaPm`. */
+  readonly flCorn: Uint8Array;
+  /** 1 = flight k flows into k + 1 without touching down (R9: band 1 inside a canyon). */
+  readonly flChain: Uint8Array;
+  /** me planned for the climb and for holding the band over [flA, flB). */
+  readonly flClimb: Int32Array;
+  readonly flHold: Int32Array;
+  /** me: the whole plan's reserve at the gun. */
+  readonly flRes0: Int32Array;
+  /** 1 = the jump segment is covered by a planned flight (no lift, no jump reserve), (lane, seg). */
+  readonly jumpCovered: Uint8Array;
+  /** me per band of climb at liftF. */
+  readonly climbMe: Int32Array;
+  /** vu added to the body speed by a dive from band b (index i × 4 + b). */
+  readonly diveV: Int32Array;
+  /** Air cruise at the pace-window centre (no draw), same index as vC. */
+  readonly vCAir: Int32Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
   readonly stoop: Int32Array;
@@ -281,7 +311,7 @@ export type RaceState = {
   readonly freeTick: Uint8Array;
   readonly burstChain: Uint8Array;
   /** Frame flags of the runner's last tick (20.4). */
-  readonly tickFlags: Uint16Array;
+  readonly tickFlags: Int32Array;
   /** Boost on-ticks since the previous frame row. */
   readonly boostRow: Int32Array;
   // rank snapshot (9.1)
@@ -317,6 +347,40 @@ export type RaceState = {
   readonly jumpsOk: Int32Array;
   readonly jumpsFailed: Int32Array;
   readonly detours: Int32Array;
+  // ruleset v3 draft (design7): flight state and its ledger, all zero without `flight`
+  /** Altitude band 0-3 as drawn (R1). */
+  readonly alt: Int32Array;
+  /** 0 ground (or a plain jump), 1 climbing, 2 holding the band, 3 descending. */
+  readonly flPhase: Int32Array;
+  /** Next planned flight to take off. */
+  readonly flK: Int32Array;
+  /** Current flight + 1 (0 = none). */
+  readonly flCur: Int32Array;
+  readonly altTarget: Int32Array;
+  readonly altTimer: Int32Array;
+  /** Band the descent started from (the dive's band). */
+  readonly fromBand: Int32Array;
+  /** 0 plan, 1 energy. */
+  readonly fallCause: Int32Array;
+  /** me still reserved for planned flights (added to every `jr` read). */
+  readonly flRes: Int32Array;
+  /** me of the current flight's hold still inside `flRes`. */
+  readonly flHoldLeft: Int32Array;
+  /** band × pu flown while holding, and the me already billed for it. */
+  readonly holdPu: Float64Array;
+  readonly holdBilled: Int32Array;
+  readonly airTicks: Int32Array;
+  readonly flights: Int32Array;
+  readonly dives: Int32Array;
+  readonly grandDives: Int32Array;
+  readonly diveGainMm: Float64Array;
+  readonly hpRested: Float64Array;
+  readonly energyClimb: Float64Array;
+  readonly energyHold: Float64Array;
+  readonly noLift: Int32Array;
+  readonly jumpsCovered: Int32Array;
+  /** vu of dive surge still on top of the body speed (`diveSurge` knob only). */
+  readonly surge: Int32Array;
 };
 
 /**
@@ -389,6 +453,19 @@ function createTables(): RaceTables {
     need: i32(NS),
     jr: i32(NS),
     jrStart: i32(N),
+    flN: i32(N),
+    flA: f64(N * FLIGHTS_MAX),
+    flB: f64(N * FLIGHTS_MAX),
+    flBand: i32(N * FLIGHTS_MAX),
+    flCorn: u8(N * FLIGHTS_MAX),
+    flChain: u8(N * FLIGHTS_MAX),
+    flClimb: i32(N * FLIGHTS_MAX),
+    flHold: i32(N * FLIGHTS_MAX),
+    flRes0: i32(N),
+    jumpCovered: u8(NS),
+    climbMe: i32(N),
+    diveV: i32(N * 4),
+    vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
     pulseFrame: u8(N),
     airPm: i32(NS),
     stoop: i32(NPS),
@@ -468,7 +545,7 @@ function createState(): RaceState {
     isPulseTick: u8(N),
     freeTick: u8(N),
     burstChain: u8(N),
-    tickFlags: new Uint16Array(N),
+    tickFlags: i32(N),
     boostRow: i32(N),
     key: f64(N),
     ahead: i32(N),
@@ -497,6 +574,29 @@ function createState(): RaceState {
     jumpsOk: i32(N),
     jumpsFailed: i32(N),
     detours: i32(N),
+    alt: i32(N),
+    flPhase: i32(N),
+    flK: i32(N),
+    flCur: i32(N),
+    altTarget: i32(N),
+    altTimer: i32(N),
+    fromBand: i32(N),
+    fallCause: i32(N),
+    flRes: i32(N),
+    flHoldLeft: i32(N),
+    holdPu: f64(N),
+    holdBilled: i32(N),
+    airTicks: i32(N),
+    flights: i32(N),
+    dives: i32(N),
+    grandDives: i32(N),
+    diveGainMm: f64(N),
+    hpRested: f64(N),
+    energyClimb: f64(N),
+    energyHold: f64(N),
+    noLift: i32(N),
+    jumpsCovered: i32(N),
+    surge: i32(N),
   };
 }
 
@@ -649,6 +749,7 @@ export function buildTables(
   A: RaceArena,
 ): void {
   const R = ruleset.race;
+  const F = flightOf(ruleset);
   const T = A.tables;
   const { vBase: VBASE, kBoost: KBOOST, posPerMm, velPerMms } = engineUnits(R);
   const block = R.rngBlock;
@@ -683,6 +784,14 @@ export function buildTables(
     const vA = agilityCruiseVu(R, VBASE, agility);
     T.vA[i] = vA;
     for (let s = 0; s < G.S; s++) T.f[is(i, s)] = segmentFactor(R, G, s, agility, tr, terms);
+    if (F !== null && F.groundGripPm !== 1000 && st === STYLE_GROUND)
+      for (let s = 0; s < G.S; s++) {
+        // v3 draft R10: ground wings pay groundGripPm of the curves, water and climb penalty
+        const type = G.segType[s] ?? 0;
+        const f = T.f[is(i, s)] ?? 1000;
+        if (f < 1000 && (type === SEG_CURVES || type === SEG_WATER || type === SEG_CLIMB))
+          T.f[is(i, s)] = 1000 - floorDiv((1000 - f) * F.groundGripPm, 1000);
+      }
     const sp = R.stylePace[e.style];
     for (let b = 0; b < 2; b++) {
       const pw = powerVariant(R, e.powerToWeight, b);
@@ -696,6 +805,8 @@ export function buildTables(
           const pace = T.pace[i * 3 + ph] ?? 0;
           T.vC[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, pace);
           T.vMin[ibps(i, b, ph, s)] = exhaustSpeedVu(R, VBASE, pwc, f, pace);
+          // v3 draft R5: the air cruise sits at the centre of her pace window (no draw)
+          if (F !== null) T.vCAir[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, c);
         }
         const a = accelVu(R, technique, pwc, f, terms);
         T.acc[ibs(i, b, s)] = a;
@@ -788,6 +899,9 @@ export function buildTables(
       T.sMax[ib(i, b)] = pulseFrame ? floorDiv(unit, R.pulseTicks + R.pulseCooldownTicks) : Bon;
     }
 
+    // v3 draft R2-R3: the flight plan, before the jump reserve (a covered jump needs no lift)
+    if (F !== null) planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms);
+
     // reserves and budgets that read the tables above (14.4, 9.3)
     jumpReserve(G, T, i);
     for (let b = 0; b < 2; b++) budgetTables(R, G, T, i, b, VBASE, pulseCostMe);
@@ -863,7 +977,7 @@ function jumpReserve(G: CourseGeometry, T: RaceTables, i: number): void {
   let ahead = 0;
   for (let s = G.S - 1; s >= 0; s--) {
     T.jr[is(i, s)] = ahead;
-    if (G.segType[s] !== SEG_JUMP) continue;
+    if (G.segType[s] !== SEG_JUMP || T.jumpCovered[is(i, s)] === 1) continue;
     const need = T.need[is(i, s)] ?? 0;
     if (need <= Emax) ahead = Math.max(need, (G.liftReq[s] ?? 0) * 1000 + ahead);
   }
@@ -998,6 +1112,7 @@ export function initState(ruleset: Ruleset, E: readonly RaceEntry[], A: RaceAren
     S.mode[i] = MODE_OFF;
     S.marginMm[i] = -1;
     S.hpEmptyMm[i] = -1;
+    S.flRes[i] = T.flRes0[i] ?? 0;
     initPulseLane(R, S.pulse, i, e.traits);
     for (let j = 0; j < MAX_SKILLS; j++) S.armed[ik(i, j)] = 1;
   }

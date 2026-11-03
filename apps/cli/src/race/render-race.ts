@@ -293,6 +293,14 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
       return `meta ${item.place}º`;
     case "dnf":
       return "DNF";
+    case "takeoff":
+      return `despega a banda ${item.band} (−${milliUnits(item.cost)} energía)`;
+    case "dive":
+      return `PICADA desde banda ${item.fromBand}: +${mps(item.gainMms)} m/s`;
+    case "touchdown":
+      return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? " (sin energía para sostener)" : ""}`;
+    case "noLift":
+      return `SIN ENERGÍA: no despega (${milliUnits(item.have)} < ${milliUnits(item.need)})`;
   }
 }
 

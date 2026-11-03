@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildContentIndex, type ContentIndex, type RawContent } from "@falconess/schema";
+import { buildContentIndex, type ContentIndex, Course, type RawContent } from "@falconess/schema";
 
 /** Root of packages/content, resolved from this file so it works from any cwd. */
 export const CONTENT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -43,4 +43,13 @@ let cached: ContentIndex | undefined;
 export function loadContent(): ContentIndex {
   if (!cached) cached = buildContentIndex(loadRawContent());
   return cached;
+}
+
+/**
+ * The five new tracks of the ruleset v3 draft's catalogue (design7 §6), validated. They live in
+ * `courses-v3/`, outside the content index, so v1 and v2 (their season, field, policy and batch)
+ * never see them; they become real content with their goals in stage 5.
+ */
+export function loadCatalogueCourses(): Course[] {
+  return readDir("courses-v3").map((raw) => Course.parse(raw));
 }
