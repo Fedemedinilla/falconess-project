@@ -944,6 +944,17 @@ sabe los momentos exactos para activar sus habilidades (y, por extensión, cuán
 guardar). Encaja con el arquetipo táctico de T19 y con la radio de T22: con poca Inteligencia, la
 radio del jugador pesa más; con mucha, ella ya decide bien sola.
 
+**Carrera v3 «Despegar y caer» (2026-11-03), prototipo medido, pendiente de aprobación.** Informe:
+`docs/design/carrera-v3-vuelo.md`. Prototipo en `.work/design7/wt` (rama local `race-v3-proto`).
+Maquetas con carreras reales: https://claude.ai/artifact/H8vGB5nhyDCrVYAFWA8p1K y vista 1.V
+https://claude.ai/artifact/4uB5HwJKRF4Zx6Hn4UdH11 (fuentes en `docs/design/prototipo/`).
+
+- Cuatro despegues por ala: Lanza (Picada, vertical), Columna (Suspensión, escalones), Rampa
+  (Planeo, diagonal larga), Turbina (Rasante, a ras con el propulsor).
+- Arriba se lucha: aire propio con varianza pre-sorteada, sostener alto cuesta, aire sucio y remolque,
+  la línea se pelea («¡POR ARRIBA!», «LA BAJARON»), caída sin energía, nervio al picar sobre el tráfico.
+- Medido: 39 de 48 criterios pasan, 6 fallan, 3 esperan la mirada del dueño. v1 y v2 idénticos.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
