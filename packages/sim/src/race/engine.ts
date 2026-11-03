@@ -397,7 +397,9 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.vCore[i] = vCore;
   } else if (c.F !== null && c.F.airCruise && S.flPhase[i] === 2) {
     // v3 draft R5: holding a band, the body approaches the air cruise (pace-window centre)
-    const ta = (exhausted ? T.vMin : T.vCAir)[ibps(i, b, ph, seg)] ?? 0;
+    let ta = (exhausted ? T.vMin : T.vCAir)[ibps(i, b, ph, seg)] ?? 0;
+    // the hover draft reaches the air only with `draftGroundOnly` off (false in the air otherwise)
+    if (drafting) ta = floorDiv(ta * R.style.hoverDraftPm, 1000);
     vCore = approachVu(vCore, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
     S.vCore[i] = vCore;
   }

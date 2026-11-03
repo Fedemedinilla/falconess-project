@@ -67,14 +67,15 @@ export type FlightConstants = {
   readonly canyonDiveBeforeM: number;
   /** R10 (stage 2): ‰ of the curves, water and climb penalty a ground wing pays (1000 = off). */
   readonly groundGripPm: number;
-  /** R5: the hover draft (×1.02) only on the ground. */
+  /** R5: true = the hover draft (×1.02) only on the ground; false = also on the air cruise. */
   readonly draftGroundOnly: boolean;
   /** R5: the body speed approaches the air cruise in the air (false = held, like a jump). */
   readonly airCruise: boolean;
   /**
-   * Calibration knob, not in the design: false = R7 as written (`vCore += Δv`); true = the dive's
-   * Δv is a separate surge that decays by kDecel on top of the body speed, so its metres stay
-   * Δv² / (2 kDecel) whatever the ground target where she touches down.
+   * R7's form: false = `vCore += Δv` as first written, which adds a cross term Δv·(v − target) /
+   * kDecel where she touches down above her ground target (curves, exhausted); true (round 1) =
+   * the dive's Δv is a separate surge that decays by kDecel on top of the body speed, so its
+   * metres are Δv² / (2 kDecel), the design's number, wherever she touches down.
    */
   readonly diveSurge: boolean;
 };
@@ -86,14 +87,25 @@ export const BAND_LOW = 1;
 export const BAND_HIGH = 2;
 export const BAND_CEILING = 3;
 
-/** Stage 1 of the design (§10 E1): only stalk and closer fly. */
+/**
+ * Stage 1 of the design (§10 E1): only stalk and closer fly. Calibration round 1 (design7
+ * measure/round-1.md) moved five values off the design's first guess:
+ * - `airDrainPm` 850 → 975: the rest is a cliff amplifier (whoever empties her legs later wins the
+ *   long tracks), so ×0.85 gave the stalk 54-74 % of the canyon at 300 and 600;
+ * - `diveSurge` on: R7's metres (Δv² / 2 kDecel) whatever the ground target at touchdown;
+ *   `vCore += Δv` gave 11 m in the sprint and 15 m in the canyon instead of 6;
+ * - `draftGroundOnly` off: the hover draft also reaches a flight (hover stalks lost 5-7 m a sprint);
+ * - `stalkFromDiv` 3 → 4: the stalk flies from L/4 (more air, the field stays ≥ 10 % up);
+ * - `closerLenDiv` 12 → 30: the closer holds ≥ max(100 m, L/30), so in the canyon her ceiling fits
+ *   100 m before the final instead of after the water at 2620 m, where low-stat legs are gone.
+ */
 export const FLIGHT_V3_E1: FlightConstants = {
   stage: 1,
   planned: [false, false, true, true],
   climbE: 8,
   holdE: 1,
   cornisaPm: 500,
-  airDrainPm: 850,
+  airDrainPm: 975,
   diveVMms: [0, 0, 4_900, 6_000],
   diveEtaBasePm: 850,
   diveEtaCouragePm: 300,
@@ -102,9 +114,9 @@ export const FLIGHT_V3_E1: FlightConstants = {
   marginM: 20,
   lookM: 40,
   cornisaLookM: 150,
-  stalkFromDiv: 3,
+  stalkFromDiv: 4,
   closerMinM: 100,
-  closerLenDiv: 12,
+  closerLenDiv: 30,
   closerPreFinalM: 100,
   jumpLipM: 10,
   leadJoinM: 60,
@@ -114,9 +126,9 @@ export const FLIGHT_V3_E1: FlightConstants = {
   canyonExitMinM: 150,
   canyonDiveBeforeM: 20,
   groundGripPm: 1_000,
-  draftGroundOnly: true,
+  draftGroundOnly: false,
   airCruise: true,
-  diveSurge: false,
+  diveSurge: true,
 };
 
 /** Stage 2 (§10 E2): every position flies, the canyon has a ceiling, ground wings grip. */
@@ -128,12 +140,21 @@ export const FLIGHT_V3_E2: FlightConstants = {
   groundGripPm: 950,
 };
 
-/** Race constants the v3 draft changes over v2, by stage (maxReplans 4 → 6: flights replan). */
-const RACE_V3_E1: Partial<RaceConstants> = { maxReplans: 6 };
-const RACE_V3_E2: Partial<RaceConstants> = {
-  ...RACE_V3_E1,
+/**
+ * Race constants the v3 draft changes over v2, by stage. maxReplans 4 → 6: flights replan.
+ * Round 1 brings R8's landing (880 / 60) into stage 1: a flight crosses a jump with no landing,
+ * so with today's landing (800 / 120) covering one jump was worth 15-20 m and the lead and pack
+ * fell to 5-9 % of the ridge at 300-450. The ground route goes half way (1100 → 1050); stage 2
+ * takes it to 1000 together with the grip.
+ */
+const RACE_V3_E1: Partial<RaceConstants> = {
+  maxReplans: 6,
   landBasePm: 880,
   landTechPm: 60,
+  groundDetourMult: 1_050,
+};
+const RACE_V3_E2: Partial<RaceConstants> = {
+  ...RACE_V3_E1,
   groundDetourMult: 1_000,
 };
 
@@ -330,7 +351,8 @@ function ceilingCut(F: FlightConstants, G: CourseGeometry, m: number, fl: Flight
       if (G.segType[s] !== SEG_CANYON) continue;
       const ca = G.segStart[s] ?? 0;
       const cb = G.segEnd[s] ?? 0;
-      if (cb <= cur.a || ca >= cur.b) continue;
+      // a flight that ends less than `canyonDiveBeforeM` before the canyon would dive inside it
+      if (cb <= cur.a || ca >= cur.b + F.canyonDiveBeforeM * m) continue;
       if (ca <= cur.a) {
         // takes off inside: low until the exit, then up to her band (or low to the end)
         if (cur.b - cb >= F.canyonExitMinM * m) {

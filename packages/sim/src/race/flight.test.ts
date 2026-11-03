@@ -89,11 +89,12 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
         T.flCorn[x],
       ];
     };
-    expect(at("sprint", "stalk")).toEqual([1, 400, 840, 2, 0]);
+    // round 1: the stalk flies from L/4; the closer holds ≥ max(100 m, L/30)
+    expect(at("sprint", "stalk")).toEqual([1, 300, 840, 2, 0]);
     expect(at("sprint", "closer")).toEqual([1, 700, 800, 3, 0]);
-    expect(at("ridge", "stalk")).toEqual([1, 667, 1400, 2, 0]);
+    expect(at("ridge", "stalk")).toEqual([1, 500, 1400, 2, 0]);
     expect(at("ridge", "closer")).toEqual([1, 1200, 1600, 3, 1]); // cornisa, covers jump 2
-    expect(at("canyon", "closer")).toEqual([1, 2620, 2870, 3, 0]); // after the last water
+    expect(at("canyon", "closer")).toEqual([1, 1900, 2000, 3, 0]); // 100 m before the final
     // stage 1: lead and pack keep today's ground row
     expect(at("ridge", "lead")[0]).toBe(0);
     expect(at("ridge", "pack")[0]).toBe(0);
@@ -196,6 +197,20 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(run(1200)).toBe(6900);
   });
 
+  it("the hover draft reaches a flight only with draftGroundOnly off (round 1 default)", () => {
+    const drafting = RACE_FRAME_FLAGS.drafting;
+    const rows = (R: typeof RULESET_V3) => {
+      const log = simulateRace(R, defaultField(), content.getCourse("canyon"), "draft-air");
+      const hover = log.entries.filter((e) => e.style === "hover").map((e) => e.laneIndex);
+      return (log.frames?.runners ?? [])
+        .filter((_, lane) => hover.includes(lane))
+        .flatMap((r) => r.flags.filter((f) => (f & FLAGS_ALT) !== 0 && (f & drafting) !== 0));
+    };
+    expect(RULESET_V3.flight.draftGroundOnly).toBe(false);
+    expect(rows(RULESET_V3).length).toBeGreaterThan(0);
+    expect(rows(rulesetV3(1, { draftGroundOnly: true }))).toHaveLength(0);
+  });
+
   it("the catalogue tracks validate and keep their lengths (design7 §6)", () => {
     const len = (c: Course) => c.segments.reduce((q, s) => q + s.length, 0);
     const got = Object.fromEntries(loadCatalogueCourses().map((c) => [c.id, len(c)]));
@@ -236,9 +251,11 @@ describe("ruleset v3 draft: stage 2 preview (design7 R2 lead/pack, R9, R10)", ()
         ];
       });
     };
-    // design7 §5, canyon: low in the first canyon, high to 1980, dive before the second
+    // design7 §5, canyon (stalk from L/4 since round 1): high to 20 m before the first canyon,
+    // low along it, high again to 1980, dive before the second
     expect(flights("stalk")).toEqual([
-      [1000, 1500, 1, 1],
+      [750, 880, 2, 1],
+      [880, 1500, 1, 1],
       [1500, 1980, 2, 0],
     ]);
     // the lead flies low over the climb and the water, 20 m each side
