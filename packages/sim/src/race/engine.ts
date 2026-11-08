@@ -145,6 +145,8 @@ type Ctx = {
   dirtyEvent: Int32Array;
   /** Two lines per band: index of the `passSide` candidate of each `pass` candidate. */
   passSideEvent: Int32Array;
+  /** Two lines: someone switched line at t − 1 (step A2); else no door can open or close this tick. */
+  swLast: boolean;
   /** `pass` candidates still waiting for their 8 ticks (0: step C2 skips the pending scan). */
   passPending: number;
   /** Pending passes of each passer (row i of passSince), so step C2 visits only those rows. */
@@ -270,6 +272,7 @@ function runRace(
     passEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
     dirtyEvent: new Int32Array(MAX_LANES).fill(-1),
     passSideEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
+    swLast: false,
     passPending: 0,
     passRow: new Int32Array(MAX_LANES),
     live: 0,
@@ -877,11 +880,18 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   const lim = F.dirtyM * 1000 * c.posPerMm;
   const fight = F.fightM > 0 ? Math.min(lim, F.fightM * 1000 * c.posPerMm) : lim;
   const lines = F.lines;
+  const pos = S.pos;
+  const altA = S.alt;
+  const line = S.line;
+  c.swLast = false;
   for (let i = 0; i < n; i++) {
-    S.pos0[i] = S.pos[i] ?? 0;
-    S.alt0[i] = S.alt[i] ?? 0;
-    if (lines) {
-      S.line0[i] = S.line[i] ?? 0;
+    S.pos0[i] = pos[i] ?? 0;
+    const ai = altA[i] ?? 0;
+    S.alt0[i] = ai;
+    // two lines: only a runner in the air has a line (every read of these is gated on alt0 ≥ 1)
+    if (lines && ai >= 1) {
+      if ((S.swTick[i] ?? 0) === c.t) c.swLast = true;
+      S.line0[i] = line[i] ?? 0;
       S.swTick0[i] = S.swTick[i] ?? 0;
       S.swCause0[i] = S.swCause[i] ?? 0;
       S.disp0[i] = S.disp[i] ?? 0;
@@ -889,22 +899,23 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
     }
   }
   if (lim <= 0) return;
+  const highReach = F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
   for (let i = 0; i < n; i++) {
-    const ai = S.alt[i] ?? 0;
+    const ai = altA[i] ?? 0;
     // L3: the high band's wake reaches dirtyHighM (feel round 2), the others dirtyM
-    const reach = ai === 2 && F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
+    const reach = ai === 2 ? highReach : lim;
     let gap = reach + 1;
     let ahead = -1;
     let side = 0;
     if (ai >= 1 && S.flPhase[i] === 2 && (live & (1 << i)) !== 0) {
-      const pi = S.pos[i] ?? 0;
-      const li = S.line[i] ?? 0;
-      const slot = c.T.lnSlot[i] ?? 0;
+      const pi = pos[i] ?? 0;
+      const li = line[i] ?? 0;
+      const slot = lines ? (c.T.lnSlot[i] ?? 0) : 0;
       for (let j = 0; j < n; j++) {
-        if (j === i || (live & (1 << j)) === 0 || (S.alt[j] ?? 0) !== ai) continue;
-        const d = (S.pos[j] ?? 0) - pi;
+        if (j === i || (live & (1 << j)) === 0 || (altA[j] ?? 0) !== ai) continue;
+        const d = (pos[j] ?? 0) - pi;
         // two lines: the wake is only in her line; alongside in the other line takes her slot
-        if (lines && (S.line[j] ?? 0) !== li) {
+        if (lines && (line[j] ?? 0) !== li) {
           if (d < slot && d > -slot) side = 1;
           continue;
         }
@@ -1356,7 +1367,7 @@ function lineMoves(c: Ctx, i: number, F: FlightConstants, x: number, run: number
   const pi = S.pos0[i] ?? 0;
   const pu = c.posPerMm;
   // the door closed on her (by one ahead within twice doorMm that moved into her line at t − 1)
-  for (let k = 0; k < n; k++) {
+  for (let k = 0; k < n && c.swLast; k++) {
     if (k === i || (c.live & (1 << k)) === 0 || S.swCause0[k] !== SW_DOOR) continue;
     if ((S.swTick0[k] ?? 0) !== t || S.line0[k] !== me || (S.alt0[k] ?? 0) !== alt) continue;
     const d = (S.pos0[k] ?? 0) - pi;
@@ -1368,7 +1379,7 @@ function lineMoves(c: Ctx, i: number, F: FlightConstants, x: number, run: number
   }
   if ((S.latTicks[i] ?? 0) > 0) return false;
   // she closes the door on one that moved to her other line at t − 1, within doorMm behind her
-  if (S.doorFlight[i] === 0 && (S.doorTests[i] ?? 0) < DOOR_TESTS_MAX)
+  if (c.swLast && S.doorFlight[i] === 0 && (S.doorTests[i] ?? 0) < DOOR_TESTS_MAX)
     for (let j = 0; j < n; j++) {
       if (j === i || (c.live & (1 << j)) === 0 || S.swCause0[j] !== SW_PASS) continue;
       if ((S.swTick0[j] ?? 0) !== t || (S.alt0[j] ?? 0) !== alt || S.line0[j] === me) continue;
