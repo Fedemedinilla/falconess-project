@@ -980,6 +980,13 @@ flojo en la Pista de saltos, 8 celdas de alas fuera de su límite (Planeo y Pica
 Rasante y Picada en el Sprint a 750), más aire sucio en fila en el Sprint, la carrera 1,4× más lenta que
 v2. **Regla del dueño:** avisar siempre cualquier desbalance de posición, ala, Falconess o pista.
 
+**Decisión del dueño (2026-11-08): las alas pierden sus stats.** Pasan a ser estéticas y de estilo de
+vuelo (el gesto: Lanza, Columna, Rampa, Turbina), con el mismo presupuesto, para no multiplicar los
+desbalances y que los datos y el balance sean fáciles de mantener. La decisión principal de carrera es
+la posición; la build, las stats. El ala firma deja de ser «la mejor opción» (T8): vale por identidad y
+acabados (T11, T13). Pendiente: qué pasa con las reglas de fabricante, la durabilidad y las piezas
+pasivas.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
