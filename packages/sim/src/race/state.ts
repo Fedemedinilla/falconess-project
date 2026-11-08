@@ -465,7 +465,7 @@ export type RaceState = {
   /** Her line in the air (0 inside, 1 outside; 0 on the ground) and at the end of t − 1 (step A). */
   readonly line: Uint8Array;
   readonly line0: Uint8Array;
-  /** Tick + 1 of her last line switch (0 = none this flight), its cause (1 pass, 2 door, 3 escape). */
+  /** Tick + 1 of her last line switch (0 = none this flight), its cause (1 pass, 2 door, 3 escape, 4 diagonal). */
   readonly swTick: Int32Array;
   readonly swTick0: Int32Array;
   readonly swCause: Uint8Array;

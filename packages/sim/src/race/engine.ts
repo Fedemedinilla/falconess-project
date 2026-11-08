@@ -1160,7 +1160,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
   const { T, S } = c;
   const run = S.dirty[i] === 2 ? (S.dirtyRun[i] ?? 0) + 1 : 0;
   S.dirtyRun[i] = run;
-  if (F.lines && lineMoves(c, i, F, x, run)) return true;
+  if (F.lines && S.flPhase[i] === 2 && lineMoves(c, i, F, x, run)) return true;
   if (run === 0) return false;
   const alt = S.alt[i] ?? 0;
   // she goes over only if the climb ends before her planned line does; R9 (stage 2): nobody
@@ -1199,7 +1199,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
       // two lines: the diagonal, a band up and the other line when hers is taken up there
       const li = S.line[i] ?? 0;
       if (F.lines && lineTaken(c, i, alt + 1, li) && !lineTaken(c, i, alt + 1, 1 - li))
-        switchLine(c, i, F, 1 - li, SW_PASS, alt + 1, true);
+        switchLine(c, i, F, 1 - li, SW_DIAGONAL, alt + 1, true);
       return true;
     }
   }
@@ -1234,7 +1234,9 @@ function lineMeetsCanyon(c: Ctx, a: number, b: number): boolean {
 const SW_PASS = 1;
 const SW_DOOR = 2;
 const SW_ESCAPE = 3;
-const SW_NAMES = ["pass", "pass", "door", "escape"] as const;
+/** A diagonal (a band up and the other line): logged as a pass, never a door's trigger. */
+const SW_DIAGONAL = 4;
+const SW_NAMES = ["pass", "pass", "door", "escape", "pass"] as const;
 /** Door decisions per race: one byte of the pre-drawn slot 31 each. */
 const DOOR_TESTS_MAX = 4;
 
