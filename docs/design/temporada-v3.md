@@ -994,6 +994,13 @@ acabados (T11, T13). Además (dueño, 2026-11-08):
 - **Las pasivas del ala firma pasan a ser habilidades de esa Falconess**; las genéricas pierden la
   suya.
 
+**Alas neutras + pulido (2026-11-08), prototipo medido** (`.work/design7/measure/neutral-final.md`).
+Perfil único de bastidor (PW 1,0, energía 100, disipación 60), sin reglas de fabricante ni desgaste;
+el estilo es solo gesto (±0,64 m como máximo). 46 de 54 criterios pasan. Desbalances abiertos:
+Peregrina baja a 64 % (perdió su ala firma), Acecho fuerte con stats altas en el catálogo y flojo
+en el Sprint con stats bajas, Punta y Pelotón flojos con stats altas en varias pistas, Remate floja
+en el Circuito.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
