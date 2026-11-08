@@ -994,7 +994,15 @@ function passTick(c: Ctx, live: number): void {
           })
         : -1;
       // two lines: a pass in the same band from the other line is a pass by the side
-      if (c.F?.lines && alt >= 1 && (S.alt[j] ?? 0) === alt && S.line[i] !== S.line[j]) {
+      // (both holding the band: a runner climbing or falling through it is not passed by the side)
+      if (
+        c.F?.lines &&
+        alt >= 1 &&
+        (S.alt[j] ?? 0) === alt &&
+        S.line[i] !== S.line[j] &&
+        S.flPhase[i] === 2 &&
+        S.flPhase[j] === 2
+      ) {
         S.passSide[x] = 1;
         c.passSideEvent[x] = c.rec.full
           ? c.rec.candidate({
