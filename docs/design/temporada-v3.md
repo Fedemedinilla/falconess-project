@@ -972,6 +972,14 @@ aire: pasar por el costado, en diagonal, encerrada, cerrar la puerta. Medido en 
   preparar la posición perfecta para hacerlo. No hace falta que su varianza sea la más alta.
 - Se acepta el medio punto de más de Picada + Remate en el Sprint.
 
+**Todas vuelan (2026-11-08), prototipo medido** (`.work/design7/measure/allfly-final.md`). Punta a ras
+al frente y sobre Colina, líquido y Salto; Pelotón a ras en llanos de 200 m o más; a ras rinde algo más
+que el suelo. El campo vuela 26-33 % (antes 12-20 %) y hay 0,3-1 pasadas por el costado por carrera en
+campos normales (antes 0,06-0,27). Desbalances abiertos: Pelotón fuerte en el Circuito (40 % a 300) y
+flojo en la Pista de saltos, 8 celdas de alas fuera de su límite (Planeo y Picada en la Pista larga,
+Rasante y Picada en el Sprint a 750), más aire sucio en fila en el Sprint, la carrera 1,4× más lenta que
+v2. **Regla del dueño:** avisar siempre cualquier desbalance de posición, ala, Falconess o pista.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
