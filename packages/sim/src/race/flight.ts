@@ -561,7 +561,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   holdE: 1,
   cornisaPm: 500,
   airDrainPm: 990,
-  diveVMms: [0, 0, 5_110, 6_000],
+  diveVMms: [0, 0, 5_110, 6_600],
   diveEtaBasePm: 700,
   diveEtaCouragePm: 600,
   marginM: 20,
@@ -599,7 +599,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   airHoldK: 10,
   airTechPm: 30,
   airPacePm: 800,
-  bandHoldPm: [1000, 1000, 1000, 1300],
+  bandHoldPm: [1000, 1000, 850, 1300],
   dirtyM: 11,
   dirtyHoldPm: 2500,
   dirtyTechPm: 500,
@@ -630,7 +630,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   airTerrainPm: 900,
   airTerrainFreeBand: 4,
   airDraftBand: true,
-  overDivePm: 650,
+  overDivePm: 900,
   nerveM: 6,
   nerveBackM: 3,
   nerveBasePm: 400,
@@ -681,7 +681,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   skimTerrainPm: 950,
   skimDrainPm: 990,
   skimHoldPm: 1000,
-  skimCruisePm: 8,
+  skimCruisePm: 5,
   skimClimbPm: 700,
   skimLandBasePm: 0,
   skimJumpPm: 700,
@@ -696,19 +696,20 @@ export const FLIGHT_V3_E1: FlightConstants = {
   noWear: true,
   neutralStyles: true,
   // balance polish on neutral wings (measure/neutral-final.md, probes neutral/pos.ts): the high
-  // band's line is 5 ‰ quicker and holds at 1000 ‰ (the Acecho lost the Columna's and Rampa's
-  // cheap hold and fell to 7 % of the sprint at 300); the great dive from the ceiling 5430 → 6000
-  // mm/s (the Remate lost the Picada's stoop); a skim lifts with 100 mm/s and cruises +8 ‰ (a
-  // premium by the metre, not by the takeoff: the Pelotón of the circuit skims four flats); the
-  // Pelotón skims the Saltos too (the ridge has one long flat); the Planeo's ground terms go to
-  // the Punta (lead drain, 1030 ‰ of the start's acceleration); calmer bands: only the lead climbs
-  // over the low traffic (after 90 ticks), and the over and the knock wait 45 ticks (3.4-3.9
-  // band changes per sprint race → 1.7)
-  highCruisePm: 5,
+  // band's line is 3 ‰ quicker and holds at 850 ‰ (the Acecho lost the Columna's and Rampa's
+  // cheap hold and fell to 7 % of the sprint at 300); the great dive from the ceiling 5430 → 6600
+  // mm/s and a won line dives 900 ‰ of one more band (the Remate lost the Picada's stoop, and the
+  // surge now decays in the air too); a skim lifts with 100 mm/s and cruises +5 ‰ (a premium by
+  // the metre, not by the takeoff: the Pelotón of the circuit skims four flats); the Pelotón skims
+  // the Saltos too (the ridge has one long flat); calmer bands: only the lead climbs over the low
+  // traffic (after 90 ticks), and the over and the knock wait 45 ticks (3.4-3.9 band changes per
+  // sprint race → 1.6-1.8). The Planeo's ground terms on the Punta (leadGlidePos) were measured
+  // and left off: the lead drain gave the Punta 34-39 % of the long tracks.
+  highCruisePm: 3,
   skimEscapeTicks: 90,
   packJumps: true,
-  leadGlidePos: true,
-  leadStartAccelPm: 1030,
+  leadGlidePos: false,
+  leadStartAccelPm: 1000,
 };
 
 /** Neutral wings off: v3 is everyone flies (d3f5623) byte for byte (neutral/inv9.ts). */
@@ -724,6 +725,7 @@ export const FLIGHT_OFF_NEUTRAL: Partial<FlightConstants> = {
   leadStartAccelPm: 1000,
   bandHoldPm: [1000, 1000, 1300, 1300],
   diveVMms: [0, 0, 5_110, 5_430],
+  overDivePm: 650,
   skimLiftMms: 300,
   skimCruisePm: 3,
   escapeTicks: 20,
