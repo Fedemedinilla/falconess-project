@@ -240,6 +240,19 @@ export type RaceTables = {
   /** L3: ‰ of the hold in dirty air for her technique; L4: dirty ticks before a knock (courage). */
   readonly dirtyPm: Int32Array;
   readonly knockAt: Int32Array;
+  /**
+   * Two lines per band (2026-11-08): dirty ticks before she moves to the other line (intelligence),
+   * pu of the other line she checks ahead (intelligence), pu alongside she needs free (courage), pu
+   * a lateral move costs (technique), ‰ the outside line adds (agility), ‰ she closes the door
+   * (intelligence) and the pre-drawn slot 31 (four bytes, one per door decision).
+   */
+  readonly lnSideAt: Int32Array;
+  readonly lnLook: Float64Array;
+  readonly lnSlot: Float64Array;
+  readonly lnSwitch: Float64Array;
+  readonly lnOutPm: Int32Array;
+  readonly lnDoorP: Int32Array;
+  readonly u31: Float64Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
   readonly stoop: Int32Array;
@@ -448,6 +461,44 @@ export type RaceState = {
   readonly nerveHeld: Int32Array;
   /** F6: ticks towed in another's wake in the air. */
   readonly towTicks: Int32Array;
+  // two lines per band (2026-11-08)
+  /** Her line in the air (0 inside, 1 outside; 0 on the ground) and at the end of t − 1 (step A). */
+  readonly line: Uint8Array;
+  readonly line0: Uint8Array;
+  /** Tick + 1 of her last line switch (0 = none this flight), its cause (1 pass, 2 door, 3 escape). */
+  readonly swTick: Int32Array;
+  readonly swTick0: Int32Array;
+  readonly swCause: Uint8Array;
+  readonly swCause0: Uint8Array;
+  /** pu of path the lateral move still costs, and its ticks left. */
+  readonly latLeft: Float64Array;
+  readonly latTicks: Int32Array;
+  /** Displacement and speed at the end of t − 1 (step A). */
+  readonly disp0: Float64Array;
+  readonly v0: Int32Array;
+  /** Step A: the runner ahead in her band and line within the wake (−1 = none), and the gap (pu). */
+  readonly lnAhead: Int8Array;
+  readonly lnGap: Float64Array;
+  /** Step A: 1 = someone alongside in her other line (within her slot). */
+  readonly side: Uint8Array;
+  /** 1 = boxed in now (wants to move, the other line is taken alongside). */
+  readonly boxed: Uint8Array;
+  /** 1 = she passed by the side in this flight (her dive gains `sideDivePm`). */
+  readonly sideWon: Uint8Array;
+  /** Ticks in a row blocked behind the runner ahead in her line (step B8 of the ticks before). */
+  readonly blkRun: Int32Array;
+  /** Door decisions taken this race (index of slot 31's byte) and 1 = she closed one this flight. */
+  readonly doorTests: Uint8Array;
+  readonly doorFlight: Uint8Array;
+  /** Ledger. */
+  readonly lineSwitches: Int32Array;
+  readonly passesSide: Int32Array;
+  readonly doorsClosed: Int32Array;
+  readonly boxedTicks: Int32Array;
+  readonly blockedTicks: Int32Array;
+  readonly lineMm: Float64Array;
+  /** 1 = the `pass` candidate (i × MAX_LANES + j) is by the side (same band, other line). */
+  readonly passSide: Uint8Array;
 };
 
 /**
@@ -541,6 +592,13 @@ function createTables(): RaceTables {
     airOff: i32(N * FLIGHTS_MAX),
     dirtyPm: i32(N),
     knockAt: i32(N),
+    lnSideAt: i32(N),
+    lnLook: f64(N),
+    lnSlot: f64(N),
+    lnSwitch: f64(N),
+    lnOutPm: i32(N),
+    lnDoorP: i32(N),
+    u31: f64(N),
     pulseFrame: u8(N),
     airPm: i32(NS),
     stoop: i32(NPS),
@@ -703,6 +761,31 @@ function createState(): RaceState {
     nerveTests: i32(N),
     nerveHeld: i32(N),
     towTicks: i32(N),
+    line: u8(N),
+    line0: u8(N),
+    swTick: i32(N),
+    swTick0: i32(N),
+    swCause: u8(N),
+    swCause0: u8(N),
+    latLeft: f64(N),
+    latTicks: i32(N),
+    disp0: f64(N),
+    v0: i32(N),
+    lnAhead: new Int8Array(N),
+    lnGap: f64(N),
+    side: u8(N),
+    boxed: u8(N),
+    blkRun: i32(N),
+    sideWon: u8(N),
+    doorTests: u8(N),
+    doorFlight: u8(N),
+    lineSwitches: i32(N),
+    passesSide: i32(N),
+    doorsClosed: i32(N),
+    boxedTicks: i32(N),
+    blockedTicks: i32(N),
+    lineMm: f64(N),
+    passSide: u8(N * N),
   };
 }
 
@@ -1027,6 +1110,19 @@ export function buildTables(
         F.nerveBasePm - floorDiv(F.nerveSlopePm * Math.min(courage, 1200), 1200),
       );
       T.u29[i] = A.U[i * block + 29] ?? 0;
+      // two lines per band (2026-11-08): each stat owns one part of the side move
+      const pu = posPerMm;
+      const I = Math.min(intelligence, 1200);
+      T.lnSideAt[i] = F.sideTicksMax - floorDiv((F.sideTicksMax - F.sideTicksMin) * I, 1200);
+      T.lnLook[i] = floorDiv(F.sideLookMm * I, 1200) * pu;
+      T.lnSlot[i] = (F.slotBaseMm - floorDiv(F.slotCourMm * Math.min(courage, 1200), 1200)) * pu;
+      const techPm =
+        F.switchTechHiPm -
+        floorDiv((F.switchTechHiPm - F.switchTechLoPm) * Math.min(technique, 1200), 1200);
+      T.lnSwitch[i] = floorDiv(F.switchMm * techPm, 1000) * pu;
+      T.lnOutPm[i] = Math.max(0, F.outPm - floorDiv(F.outAgiPm * Math.min(agility, 1200), 1200));
+      T.lnDoorP[i] = F.doorBasePm + floorDiv(F.doorIntPm * I, 1200);
+      T.u31[i] = A.U[i * block + 31] ?? 0;
     }
     if (F !== null)
       planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms, {

@@ -45,7 +45,7 @@ export type FlightConstants = {
   /** η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200 ‰ (R7). */
   readonly diveEtaBasePm: number;
   readonly diveEtaCouragePm: number;
-  /** Plan geometry, metres (§4). */
+  /** Plan geometry, mm (§4). */
   readonly marginM: number;
   readonly lookM: number;
   readonly cornisaLookM: number;
@@ -112,7 +112,7 @@ export type FlightConstants = {
   readonly fightM: number;
   /**
    * L3 (feel round 2): the wake's reach in the high band (2), the cruise lane of the long
-   * flights, metres (0 = dirtyM). A long line leaves a long wake; the ceiling, a short hold before
+   * flights, mm (0 = dirtyM). A long line leaves a long wake; the ceiling, a short hold before
    * the dive, and the low band keep dirtyM. The fight for the line still runs only within fightM.
    */
   readonly dirtyHighM: number;
@@ -191,6 +191,52 @@ export type FlightConstants = {
   readonly overCleanHold: boolean;
   /** F3: ‰ added to her own air (L1) for the rest of a flight whose line she won (0 = off). */
   readonly overAirPm: number;
+  // --- two lines per band (owner, 2026-11-08: «pasar por los costados»)
+  /**
+   * Two lines per altitude band, inside (0) and outside (1). The wake (dirty air and tow) is only
+   * directly behind in the same band and the same line; side by side is clean air. In the same band
+   * and line nobody flies through the runner ahead: within `blockMm` her speed is the one ahead's.
+   * She leaves the wake by the side (a lateral move that costs metres, `switchMm`), over (a band up,
+   * energy, L4) or is knocked down. On the ground there are no lines (false = round 5).
+   */
+  readonly lines: boolean;
+  /** Same band and line, the runner ahead within blockMm mm: she cannot fly through her. */
+  readonly blockMm: number;
+  /** Ticks blocked behind the one ahead before she moves to the other line: sideTicksMax − span × min(I, 1200) / 1200. */
+  readonly sideTicksMin: number;
+  readonly sideTicksMax: number;
+  /** mm of the other line she checks ahead before she moves: sideLookMm × min(I, 1200) / 1200. */
+  readonly sideLookMm: number;
+  /** Gap she needs alongside in the other line: slotBaseMm − slotCourMm × min(C, 1200) / 1200 mm. */
+  readonly slotBaseMm: number;
+  readonly slotCourMm: number;
+  /** mm of path a lateral move costs at technique 600 (×1000 ‰ there); × (techHiPm − (hi − lo) × T / 1200). */
+  readonly switchMm: number;
+  readonly switchTechHiPm: number;
+  readonly switchTechLoPm: number;
+  /** Ticks the lateral move takes (its metres are paid over them). */
+  readonly moveTicks: number;
+  /** ‰ of the distance the outside line adds: outPm − outAgiPm × min(A, 1200) / 1200. */
+  readonly outPm: number;
+  readonly outAgiPm: number;
+  /** Ticks in the outside line before she cuts back inside, with the inside clear backMm behind. */
+  readonly backTicks: number;
+  readonly backMm: number;
+  /**
+   * Closing the door: the runner ahead sees one that just moved to her other line (≤ moveTicks
+   * ago) within doorMm behind, and moves into that line in front of her with p = doorBasePm +
+   * doorIntPm × min(I, 1200) / 1200 ‰ (one byte of the pre-drawn slot 31 per decision, at most 4
+   * per race, one door per flight). Both pay: she the lateral move, the passer doorLossMm mm.
+   */
+  readonly doorMm: number;
+  readonly doorBasePm: number;
+  readonly doorIntPm: number;
+  readonly doorLossMm: number;
+  /**
+   * A line won by the side pays like one won over (F3): after a pass by the side in this flight her
+   * dive gains `sideDivePm` ‰ of one band's share (0 = off). Not cumulative with F3's.
+   */
+  readonly sideDivePm: number;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -382,7 +428,7 @@ export const BAND_CEILING = 3;
  * measure/round-1.md) moved five values off the design's first guess:
  * - `airDrainPm` 850 → 975: the rest is a cliff amplifier (whoever empties her legs later wins the
  *   long tracks), so ×0.85 gave the stalk 54-74 % of the canyon at 300 and 600;
- * - `diveSurge` on: R7's metres (Δv² / 2 kDecel) whatever the ground target at touchdown;
+ * - `diveSurge` on: R7's mm (Δv² / 2 kDecel) whatever the ground target at touchdown;
  *   `vCore += Δv` gave 11 m in the sprint and 15 m in the canyon instead of 6;
  * - `draftGroundOnly` off: the hover draft also reaches a flight (hover stalks lost 5-7 m a sprint);
  * - `stalkFromDiv` 3 → 4: the stalk flies from L/4 (more air, the field stays ≥ 10 % up);
@@ -470,7 +516,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   // air (its Δv recalibrated with the metres: 5400 / 6000 → 5110 / 5430, so the ledger's great dive
   // stays ≈ 6 m with the air share), F7 band 1 is climbed too, F5 flying keeps dry and the air pays
   // 90 % of the water and climb (one rule, no free band: the Acecho over the canyon's Colina at 750
-  // won too much), F6 the tow by band and metres (×1.005; the Columna ×1.02 and her line +6 ‰, the
+  // won too much), F6 the tow by band and mm (×1.005; the Columna ×1.02 and her line +6 ‰, the
   // free hover draft of round 4 was worth ≈ 13-16 points of the sprint at 750), F3 a won line holds
   // at the price of the band she left and dives 650 ‰ of one more band (the struggle pays, bounded:
   // CONT-2), F9 the nerve ×1.10 (×1.15 made the Picada closer win the sprint at 750), F8 and F1
@@ -493,7 +539,31 @@ export const FLIGHT_V3_E1: FlightConstants = {
   ownAirFromBand: 2,
   overCleanHold: true,
   overAirPm: 0,
+  // two lines per band (owner, 2026-11-08; .work/design7/measure/lines-final.md)
+  lines: true,
+  blockMm: 3_500,
+  sideTicksMin: 1,
+  sideTicksMax: 12,
+  sideLookMm: 24_000,
+  slotBaseMm: 4_500,
+  slotCourMm: 3_000,
+  switchMm: 1_200,
+  switchTechHiPm: 1400,
+  switchTechLoPm: 600,
+  moveTicks: 4,
+  outPm: 5,
+  outAgiPm: 4,
+  backTicks: 15,
+  backMm: 3_000,
+  doorMm: 4_000,
+  doorBasePm: 200,
+  doorIntPm: 400,
+  doorLossMm: 1_000,
+  sideDivePm: 650,
 };
+
+/** The two lines off: v3 is round 5 (6bb4615) byte for byte (harness/inv7.ts). */
+export const FLIGHT_OFF_LINES: Partial<FlightConstants> = { lines: false };
 
 /**
  * The values that turn every rule of steps 1.2 and 1.3 off: v3 with them is the round-2 race
@@ -504,6 +574,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
  * (harness/inv6.ts). `FLIGHT_OFF_1_3` and `FLIGHT_OFF_1_2` build on it.
  */
 export const FLIGHT_OFF_R5: Partial<FlightConstants> = {
+  lines: false,
   planned: [false, false, true, true],
   diveVMms: [0, 0, 5_400, 6_000],
   wings: WINGS_R4,

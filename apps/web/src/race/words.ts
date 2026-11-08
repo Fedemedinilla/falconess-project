@@ -256,6 +256,22 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
       return item.cause === "over"
         ? ui("ui.race.event.lineChange.over", { band: item.toBand })
         : ui("ui.race.event.lineChange.knock", { band: item.toBand });
+    case "lineSwitch":
+      return item.cause === "door"
+        ? ui("ui.race.event.lineSwitch.door")
+        : item.cause === "escape"
+          ? ui("ui.race.event.lineSwitch.escape")
+          : item.to === 1
+            ? ui("ui.race.event.lineSwitch.out")
+            : ui("ui.race.event.lineSwitch.in");
+    case "boxedIn":
+      return ui("ui.race.event.boxedIn");
+    case "doorClosed":
+      return ui("ui.race.event.doorClosed");
+    case "passSide":
+      return item.by === "outside"
+        ? ui("ui.race.event.passSide.outside")
+        : ui("ui.race.event.passSide.inside");
     case "nerve":
       return item.held ? ui("ui.race.event.nerve.held") : ui("ui.race.event.nerve.flinch");
   }
@@ -309,7 +325,12 @@ export function eventIcon(item: EventItem): IconName {
     case "airDirty":
     case "lineChange":
     case "nerve":
+    case "lineSwitch":
+    case "boxedIn":
+    case "doorClosed":
       return "trouble";
+    case "passSide":
+      return "landing";
   }
 }
 

@@ -318,6 +318,14 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
       return item.cause === "over"
         ? `¡POR ARRIBA! sube a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`
         : `LA BAJARON a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`;
+    case "lineSwitch":
+      return `${item.cause === "door" ? "CIERRA LA PUERTA" : item.cause === "escape" ? "vuelve a la línea de adentro" : item.to === 1 ? "sale POR AFUERA" : "se mete POR ADENTRO"} en banda ${item.band}${item.diagonal ? " (en diagonal, sube y cambia de línea)" : ""}`;
+    case "boxedIn":
+      return `ENCERRADA en banda ${item.band}: la de carril ${item.otherLane + 1} al lado, la de carril ${item.aheadLane + 1} adelante`;
+    case "doorClosed":
+      return `CERRÓ LA PUERTA a la de carril ${item.otherLane + 1}`;
+    case "passSide":
+      return `pasa ${item.by === "outside" ? "POR AFUERA" : "POR ADENTRO"} a la de carril ${item.otherLane + 1}`;
     case "nerve":
       return item.held
         ? `¡NO SE ACHICA! picada entre el tráfico +${mps(item.gainMms)} m/s (achicarse ${item.pPm / 10} %)`

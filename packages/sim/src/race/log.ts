@@ -396,6 +396,55 @@ export class RaceRecorder {
       this.list.push({ kind: "lineChange", tick, lane, posMm, fromBand, toBand, cause, ticks });
   }
 
+  /** Two lines per band: she moved to the other line of her band (`diagonal`: with a band up). */
+  lineSwitch(
+    tick: number,
+    lane: number,
+    posMm: number,
+    d: {
+      from: number;
+      to: number;
+      cause: "pass" | "door" | "escape";
+      band: number;
+      diagonal?: true;
+    },
+  ): void {
+    if (this.full) this.list.push({ kind: "lineSwitch", tick, lane, posMm, ...d });
+  }
+
+  /** Two lines: she wants to move and `otherLane` is alongside in the other line (`aheadLane` ahead). */
+  boxedIn(
+    tick: number,
+    lane: number,
+    posMm: number,
+    band: number,
+    otherLane: number,
+    aheadLane: number,
+  ): void {
+    if (this.full)
+      this.list.push({
+        kind: "boxedIn",
+        tick,
+        lane,
+        posMm,
+        band,
+        otherLane: Math.max(0, otherLane),
+        aheadLane: Math.max(0, aheadLane),
+      });
+  }
+
+  /** Two lines: she moved into `line` in front of `otherLane`, who had just moved there to pass. */
+  doorClosed(
+    tick: number,
+    lane: number,
+    posMm: number,
+    otherLane: number,
+    band: number,
+    line: number,
+  ): void {
+    if (this.full) this.list.push({ kind: "doorClosed", tick, lane, posMm, otherLane, band, line });
+  }
+
   /**
    * A candidate event (`pass`, `airDirty` on) pushed in its natural place; `drop(k)` removes it
    * later if it did not hold (like the `boostMode` candidates of ADR-0003 D54). −1 in results.
@@ -563,6 +612,7 @@ export function buildResults(
   A: RaceArena,
   rec: RaceRecorder,
   F: FlightConstants | null = null,
+  posPerMm = 1,
 ): RaceResult[] {
   const S = A.state;
   const out: RaceResult[] = [];
@@ -643,6 +693,16 @@ export function buildResults(
         nerveTests: S.nerveTests[i] ?? 0,
         nerveHeld: S.nerveHeld[i] ?? 0,
         towTicks: S.towTicks[i] ?? 0,
+        ...(F.lines
+          ? {
+              lineSwitches: S.lineSwitches[i] ?? 0,
+              passesSide: S.passesSide[i] ?? 0,
+              doorsClosed: S.doorsClosed[i] ?? 0,
+              boxedTicks: S.boxedTicks[i] ?? 0,
+              blockedTicks: S.blockedTicks[i] ?? 0,
+              lineMm: floorDiv(S.lineMm[i] ?? 0, posPerMm),
+            }
+          : {}),
       };
   });
   out.sort((a, b) => a.place - b.place);

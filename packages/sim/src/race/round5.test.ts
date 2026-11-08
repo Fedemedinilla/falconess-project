@@ -175,7 +175,12 @@ describe("round 5: a won line pays (F3) and the nerve (F9)", () => {
     let won = 0;
     for (const id of ["sprint", "ridge", "canyon"]) {
       const a = simulateRace(RULESET_V3, crowd, content.getCourse(id), "over");
-      const b = simulateRace(rulesetV3(1, { overDivePm: 0 }), crowd, content.getCourse(id), "over");
+      const b = simulateRace(
+        rulesetV3(1, { overDivePm: 0, sideDivePm: 0 }),
+        crowd,
+        content.getCourse(id),
+        "over",
+      );
       for (const lc of events(a, "lineChange").filter((e) => e.cause === "over")) {
         const knocked = events(a, "lineChange").some(
           (e) => e.lane === lc.lane && e.cause === "knock" && e.tick > lc.tick,

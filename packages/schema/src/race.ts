@@ -302,6 +302,11 @@ export const RACE_FRAME_FLAGS = {
    * within `fightM`, the rest of the wake tows her (`drafting`).
    */
   dirtyAir: 131072,
+  /**
+   * Two lines per band (ruleset v3, owner 2026-11-08): she flies the outside line of her band (clear
+   * = inside). Only in the air; on the ground there are no lines.
+   */
+  lineOut: 262144,
 } as const;
 
 const Column = z.array(Int);
@@ -508,6 +513,32 @@ export const RaceEvent = z.discriminatedUnion("kind", [
     /** Ticks of dirty air in a row before the change. */
     ticks: Nat,
   }),
+  /**
+   * Two lines per band (2026-11-08): she moved from line `from` to `to` (0 inside, 1 outside) of
+   * `band`: to pass the one ahead (pass), to close the door on one passing her (door) or back to
+   * the shorter inside line once clear (escape); `diagonal` = in the same move as a band up (over).
+   */
+  raceEvent("lineSwitch", {
+    from: Int.min(0).max(1),
+    to: Int.min(0).max(1),
+    cause: z.enum(["pass", "door", "escape"]),
+    band: Int.min(1).max(3),
+    diagonal: z.literal(true).optional(),
+  }),
+  /** Two lines: she wants to move out of dirty air and `otherLane` is alongside (`aheadLane` ahead). */
+  raceEvent("boxedIn", { band: Int.min(1).max(3), otherLane: Lane, aheadLane: Lane }),
+  /** Two lines: she moved into `line` in front of `otherLane`, who had just moved there to pass. */
+  raceEvent("doorClosed", { otherLane: Lane, band: Int.min(1).max(3), line: Int.min(0).max(1) }),
+  /**
+   * Two lines: a `pass` in the same band from the other line, by the outside or the inside (`by`;
+   * `line` her line); it held 8 ticks like the `pass`, and carries the same tick.
+   */
+  raceEvent("passSide", {
+    otherLane: Lane,
+    by: z.enum(["outside", "inside"]),
+    band: Int.min(1).max(3),
+    line: Int.min(0).max(1),
+  }),
   /** A planned takeoff the tank (or an exhausted body) could not afford: she stays on the ground. */
   raceEvent("noLift", { need: Nat, have: Nat }),
 ]);
@@ -550,6 +581,16 @@ export const FlightLedger = z.strictObject({
   nerveTests: Nat.optional(),
   nerveHeld: Nat.optional(),
   towTicks: Nat.optional(),
+  /**
+   * Two lines per band (2026-11-08): line switches, passes by the side, doors closed, ticks boxed
+   * in and blocked behind in her line, and the mm the lateral moves and the outside line cost.
+   */
+  lineSwitches: Nat.optional(),
+  passesSide: Nat.optional(),
+  doorsClosed: Nat.optional(),
+  boxedTicks: Nat.optional(),
+  blockedTicks: Nat.optional(),
+  lineMm: Nat.optional(),
 });
 export type FlightLedger = z.infer<typeof FlightLedger>;
 

@@ -143,6 +143,8 @@ type Ctx = {
   /** Ruleset v3 log only: index of the `pass` (i × MAX_LANES + j) and `airDirty` candidates. */
   passEvent: Int32Array;
   dirtyEvent: Int32Array;
+  /** Two lines per band: index of the `passSide` candidate of each `pass` candidate. */
+  passSideEvent: Int32Array;
   /** `pass` candidates still waiting for their 8 ticks (0: step C2 skips the pending scan). */
   passPending: number;
   /** Pending passes of each passer (row i of passSince), so step C2 visits only those rows. */
@@ -267,6 +269,7 @@ function runRace(
     finishEvent: new Int32Array(MAX_LANES).fill(-1),
     passEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
     dirtyEvent: new Int32Array(MAX_LANES).fill(-1),
+    passSideEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
     passPending: 0,
     passRow: new Int32Array(MAX_LANES),
     live: 0,
@@ -339,7 +342,7 @@ function runRace(
     geometry: logGeometry(ruleset, G),
     entries: E.map(cloneEntry),
     derived: buildDerived(ruleset, E, G, A, full),
-    results: buildResults(E, A, rec, c.F),
+    results: buildResults(E, A, rec, c.F, c.posPerMm),
   };
   if (full) {
     log.frames = rec.frames();
@@ -505,7 +508,9 @@ function runnerTick(c: Ctx, i: number): boolean {
     T.heatPenalty[i] === 1 &&
     !airborne &&
     !(T.heatImmune[i] === 1 && pos < (T.immuneUntil[i] ?? 0));
-  const vOut = penalised ? penalisedVu(R, vTot) : vTot;
+  let vOut = penalised ? penalisedVu(R, vTot) : vTot;
+  // two lines per band: in her band and line nobody flies through the runner ahead
+  if (c.F?.lines && airborne && S.flPhase[i] === 2) vOut = blocked(c, c.F, i, vOut);
   S.vOut[i] = vOut;
 
   // B9. energy, regen, heat, telemetry clamp, overheat damage, broken wings (8.1)
@@ -547,7 +552,8 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B11. move (ground detour as progress scaling, 14.5)
   const detouring = style === STYLE_GROUND && segType === SEG_JUMP;
-  const disp = detouring ? detourDisp(vOut, T.detour[i] ?? 1000) : vOut;
+  let disp = detouring ? detourDisp(vOut, T.detour[i] ?? 1000) : vOut;
+  if (c.F?.lines && (S.alt[i] ?? 0) >= 1) disp = lineDisp(c, i, disp);
   const newPos = pos + disp;
   S.prevPos[i] = pos;
   S.pos[i] = newPos;
@@ -564,7 +570,8 @@ function runnerTick(c: Ctx, i: number): boolean {
     (mode === MODE_PLAN ? FL.planSpurt : 0) |
     (mode === MODE_KICK ? FL.kick : 0) |
     (drafting ? FL.drafting : 0) |
-    (inDirtyAir(c.F, S, i) ? FL.dirtyAir : 0);
+    (inDirtyAir(c.F, S, i) ? FL.dirtyAir : 0) |
+    (S.line[i] === 1 && (S.alt[i] ?? 0) >= 1 ? FL.lineOut : 0);
 
   // B12. finish, or segment changes (landing, repair, water hit, jump entry)
   if (newPos >= G.L) {
@@ -869,9 +876,17 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   const { S, n } = c;
   const lim = F.dirtyM * 1000 * c.posPerMm;
   const fight = F.fightM > 0 ? Math.min(lim, F.fightM * 1000 * c.posPerMm) : lim;
+  const lines = F.lines;
   for (let i = 0; i < n; i++) {
     S.pos0[i] = S.pos[i] ?? 0;
     S.alt0[i] = S.alt[i] ?? 0;
+    if (lines) {
+      S.line0[i] = S.line[i] ?? 0;
+      S.swTick0[i] = S.swTick[i] ?? 0;
+      S.swCause0[i] = S.swCause[i] ?? 0;
+      S.disp0[i] = S.disp[i] ?? 0;
+      S.v0[i] = S.vOut[i] ?? 0;
+    }
   }
   if (lim <= 0) return;
   for (let i = 0; i < n; i++) {
@@ -879,16 +894,33 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
     // L3: the high band's wake reaches dirtyHighM (feel round 2), the others dirtyM
     const reach = ai === 2 && F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
     let gap = reach + 1;
+    let ahead = -1;
+    let side = 0;
     if (ai >= 1 && S.flPhase[i] === 2 && (live & (1 << i)) !== 0) {
       const pi = S.pos[i] ?? 0;
+      const li = S.line[i] ?? 0;
+      const slot = c.T.lnSlot[i] ?? 0;
       for (let j = 0; j < n; j++) {
         if (j === i || (live & (1 << j)) === 0 || (S.alt[j] ?? 0) !== ai) continue;
         const d = (S.pos[j] ?? 0) - pi;
-        if (d > 0 && d < gap) gap = d;
+        // two lines: the wake is only in her line; alongside in the other line takes her slot
+        if (lines && (S.line[j] ?? 0) !== li) {
+          if (d < slot && d > -slot) side = 1;
+          continue;
+        }
+        if (d > 0 && d < gap) {
+          gap = d;
+          ahead = j;
+        }
       }
     }
     const dirty = gap > reach ? 0 : gap > fight ? 1 : 2;
     S.dirty[i] = dirty;
+    if (lines) {
+      S.lnAhead[i] = dirty > 0 ? ahead : -1;
+      S.lnGap[i] = dirty > 0 ? gap : 0;
+      S.side[i] = side;
+    }
     // `dirtyLog` acts only when the dirt starts or ends
     const on = inDirtyAir(F, S, i);
     if (on !== (S.dirtySince[i] ?? 0) > 0) dirtyLog(c, i, on);
@@ -928,6 +960,7 @@ function passTick(c: Ctx, live: number): void {
         if (since === 0) continue;
         if ((S.pos[i] ?? 0) <= (S.pos[j] ?? 0)) {
           c.rec.drop(c.passEvent[x] ?? -1);
+          dropSide(c, x);
           S.passSince[x] = 0;
           c.passEvent[x] = -1;
           c.passPending -= 1;
@@ -960,8 +993,32 @@ function passTick(c: Ctx, live: number): void {
             otherBand: S.alt[j] ?? 0,
           })
         : -1;
+      // two lines: a pass in the same band from the other line is a pass by the side
+      if (c.F?.lines && alt >= 1 && (S.alt[j] ?? 0) === alt && S.line[i] !== S.line[j]) {
+        S.passSide[x] = 1;
+        c.passSideEvent[x] = c.rec.full
+          ? c.rec.candidate({
+              kind: "passSide",
+              tick: t,
+              lane: i,
+              posMm: posMm(c, i),
+              otherLane: j,
+              by: S.line[i] === 1 ? "outside" : "inside",
+              band: alt,
+              line: S.line[i] ?? 0,
+            })
+          : -1;
+      }
     }
   }
+}
+
+/** Two lines: the `passSide` candidate of pass candidate x did not hold. */
+function dropSide(c: Ctx, x: number): void {
+  if (c.S.passSide[x] !== 1) return;
+  c.rec.drop(c.passSideEvent[x] ?? -1);
+  c.S.passSide[x] = 0;
+  c.passSideEvent[x] = -1;
 }
 
 function confirmPass(c: Ctx, i: number, x: number): void {
@@ -969,6 +1026,12 @@ function confirmPass(c: Ctx, i: number, x: number): void {
   const kind = S.passKind[x] ?? 0;
   if ((kind & 1) !== 0) S.passesAir[i] = (S.passesAir[i] ?? 0) + 1;
   if ((kind & 2) !== 0) S.passesDive[i] = (S.passesDive[i] ?? 0) + 1;
+  if (S.passSide[x] === 1) {
+    S.passesSide[i] = (S.passesSide[i] ?? 0) + 1;
+    if ((S.alt[i] ?? 0) >= 1) S.sideWon[i] = 1;
+  }
+  S.passSide[x] = 0;
+  c.passSideEvent[x] = -1;
   S.passSince[x] = 0;
   c.passEvent[x] = -1;
   c.passPending -= 1;
@@ -987,6 +1050,7 @@ function closeAirLog(c: Ctx, t: number): void {
       if ((S.pos[i] ?? 0) > (S.pos[j] ?? 0)) confirmPass(c, i, x);
       else {
         c.rec.drop(c.passEvent[x] ?? -1);
+        dropSide(c, x);
         S.passSince[x] = 0;
         c.passPending -= 1;
       }
@@ -1096,6 +1160,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
   const { T, S } = c;
   const run = S.dirty[i] === 2 ? (S.dirtyRun[i] ?? 0) + 1 : 0;
   S.dirtyRun[i] = run;
+  if (F.lines && lineMoves(c, i, F, x, run)) return true;
   if (run === 0) return false;
   const alt = S.alt[i] ?? 0;
   // she goes over only if the climb ends before her planned line does; R9 (stage 2): nobody
@@ -1131,6 +1196,10 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
       S.overs[i] = (S.overs[i] ?? 0) + 1;
       S.overWon[i] = 1;
       c.rec.lineChange(c.t, i, posMm(c, i), alt, alt + 1, "over", run);
+      // two lines: the diagonal, a band up and the other line when hers is taken up there
+      const li = S.line[i] ?? 0;
+      if (F.lines && lineTaken(c, i, alt + 1, li) && !lineTaken(c, i, alt + 1, 1 - li))
+        switchLine(c, i, F, 1 - li, SW_PASS, alt + 1, true);
       return true;
     }
   }
@@ -1139,6 +1208,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
     S.flPhase[i] = 3;
     S.altTimer[i] = wingOf(F, style).diveTicks;
     S.overWon[i] = 0;
+    S.sideWon[i] = 0;
     S.dirtyRun[i] = 0;
     S.knocks[i] = (S.knocks[i] ?? 0) + 1;
     S.knocked[i] = 1;
@@ -1156,6 +1226,219 @@ function lineMeetsCanyon(c: Ctx, a: number, b: number): boolean {
     if (G.segType[s] === SEG_CANYON && (G.segStart[s] ?? 0) <= b && (G.segEnd[s] ?? 0) > a)
       return true;
   return false;
+}
+
+// --- two lines per band (owner, 2026-11-08: «pasar por los costados») -------------------------
+
+/** Causes of a line switch, as `swCause` stores them. */
+const SW_PASS = 1;
+const SW_DOOR = 2;
+const SW_ESCAPE = 3;
+const SW_NAMES = ["pass", "pass", "door", "escape"] as const;
+/** Door decisions per race: one byte of the pre-drawn slot 31 each. */
+const DOOR_TESTS_MAX = 4;
+
+/**
+ * Step B8: in her band and line, within `blockMm` of the runner ahead (step-A snapshot), she
+ * cannot fly through her: she moves at most to half `blockMm` behind where the one ahead was plus
+ * what that one moved last tick; her body keeps its speed. Reads only the snapshot.
+ */
+function blocked(c: Ctx, F: FlightConstants, i: number, vOut: number): number {
+  const S = c.S;
+  const a = S.lnAhead[i] ?? -1;
+  const prev = S.blkRun[i] ?? 0;
+  S.blkRun[i] = 0;
+  if (a < 0 || (S.dirty[i] ?? 0) === 0 || S.line[i] !== S.line0[i]) return vOut;
+  const gap = S.lnGap[i] ?? 0;
+  const lim = F.blockMm * c.posPerMm;
+  if (gap > lim) return vOut;
+  const cap = Math.max(0, Math.floor(gap + (S.disp0[a] ?? 0) - floorDiv(lim, 2)));
+  if (cap >= vOut) return vOut;
+  S.blkRun[i] = prev + 1;
+  S.blockedTicks[i] = (S.blockedTicks[i] ?? 0) + 1;
+  // her body keeps its speed (the tow built it): she pulls out with it, the slingshot
+  return cap;
+}
+
+/** Step B11: the lateral move's metres (spread over its ticks) and the longer outside line. */
+function lineDisp(c: Ctx, i: number, disp: number): number {
+  const { S, T } = c;
+  let d = disp;
+  let lost = 0;
+  const left = S.latTicks[i] ?? 0;
+  if (left > 0) {
+    const pu = S.latLeft[i] ?? 0;
+    const loss = Math.floor(pu / left);
+    S.latLeft[i] = pu - loss;
+    S.latTicks[i] = left - 1;
+    const l = Math.min(d, loss);
+    d -= l;
+    lost += l;
+  }
+  if (S.line[i] === 1) {
+    const o = Math.floor((d * (T.lnOutPm[i] ?? 0)) / 1000);
+    d -= o;
+    lost += o;
+  }
+  if (lost > 0) S.lineMm[i] = (S.lineMm[i] ?? 0) + lost;
+  return d;
+}
+
+/**
+ * Someone (but `but`) at the end of t − 1 in `band` and `line`, from her slot behind to `ahead` pu
+ * in front of her: that line is taken for her.
+ */
+function lineTaken(c: Ctx, i: number, band: number, line: number, ahead = -1, but = -1): boolean {
+  const { S, T, n } = c;
+  const pi = S.pos0[i] ?? 0;
+  const slot = T.lnSlot[i] ?? 0;
+  const front = ahead >= 0 ? ahead : (T.lnLook[i] ?? 0) + slot;
+  for (let j = 0; j < n; j++) {
+    if (j === i || j === but || (c.live & (1 << j)) === 0) continue;
+    if ((S.alt0[j] ?? 0) !== band || (S.line0[j] ?? 0) !== line) continue;
+    const d = (S.pos0[j] ?? 0) - pi;
+    if (d > -slot && d <= front) return true;
+  }
+  return false;
+}
+
+/** She moves to `to`: the lateral move's metres start, the event is logged. */
+function switchLine(
+  c: Ctx,
+  i: number,
+  F: FlightConstants,
+  to: number,
+  cause: number,
+  band: number,
+  diagonal: boolean,
+): void {
+  const S = c.S;
+  const from = S.line[i] ?? 0;
+  S.line[i] = to;
+  S.swTick[i] = c.t + 1;
+  S.swCause[i] = cause;
+  S.latLeft[i] = (S.latLeft[i] ?? 0) + (c.T.lnSwitch[i] ?? 0);
+  S.latTicks[i] = F.moveTicks;
+  S.lineSwitches[i] = (S.lineSwitches[i] ?? 0) + 1;
+  S.boxed[i] = 0;
+  c.rec.lineSwitch(c.t, i, posMm(c, i), {
+    from,
+    to,
+    cause: SW_NAMES[cause] ?? "pass",
+    band,
+    ...(diagonal ? { diagonal: true } : {}),
+  });
+}
+
+/**
+ * Step B4b, holding her band (two lines): the door she takes (she checks, a door closed on her last
+ * tick), the door she closes (one that just moved to her other line behind her: slot 31), back to
+ * the inside when it pays and is clear (escape), and the side move out of dirty air after her
+ * intelligence's ticks, unless she is boxed in (someone alongside) or her intelligence sees the
+ * other line taken ahead. Every read of another runner is the step-A snapshot (INV-4) and reads
+ * metres, bands and lines only (INV-3). Returns true when she moved this tick.
+ */
+function lineMoves(c: Ctx, i: number, F: FlightConstants, x: number, run: number): boolean {
+  const { T, S, n } = c;
+  const t = c.t;
+  const alt = S.alt[i] ?? 0;
+  const me = S.line[i] ?? 0;
+  const pi = S.pos0[i] ?? 0;
+  const pu = c.posPerMm;
+  // the door closed on her (by one ahead within twice doorMm that moved into her line at t − 1)
+  for (let k = 0; k < n; k++) {
+    if (k === i || (c.live & (1 << k)) === 0 || S.swCause0[k] !== SW_DOOR) continue;
+    if ((S.swTick0[k] ?? 0) !== t || S.line0[k] !== me || (S.alt0[k] ?? 0) !== alt) continue;
+    const d = (S.pos0[k] ?? 0) - pi;
+    if (d <= 0 || d > 2 * F.doorMm * pu) continue;
+    S.latLeft[i] = (S.latLeft[i] ?? 0) + F.doorLossMm * pu;
+    S.latTicks[i] = Math.max(S.latTicks[i] ?? 0, F.moveTicks);
+    S.dirtyRun[i] = 0;
+    return true;
+  }
+  if ((S.latTicks[i] ?? 0) > 0) return false;
+  // she closes the door on one that moved to her other line at t − 1, within doorMm behind her
+  if (S.doorFlight[i] === 0 && (S.doorTests[i] ?? 0) < DOOR_TESTS_MAX)
+    for (let j = 0; j < n; j++) {
+      if (j === i || (c.live & (1 << j)) === 0 || S.swCause0[j] !== SW_PASS) continue;
+      if ((S.swTick0[j] ?? 0) !== t || (S.alt0[j] ?? 0) !== alt || S.line0[j] === me) continue;
+      const d = pi - (S.pos0[j] ?? 0);
+      if (d <= 0 || d > F.doorMm * pu) continue;
+      if (lineTaken(c, i, alt, 1 - me, T.lnSlot[i] ?? 0, j)) break;
+      const k = S.doorTests[i] ?? 0;
+      S.doorTests[i] = k + 1;
+      const byte = ((T.u31[i] ?? 0) >>> (8 * k)) & 255;
+      if (byte * 1000 >= (T.lnDoorP[i] ?? 0) * 256) break;
+      switchLine(c, i, F, 1 - me, SW_DOOR, alt, false);
+      S.doorFlight[i] = 1;
+      S.doorsClosed[i] = (S.doorsClosed[i] ?? 0) + 1;
+      c.rec.doorClosed(t, i, posMm(c, i), j, alt, 1 - me);
+      return true;
+    }
+  // back inside (escape): the outside line costs more than the move for what is left of her line
+  if (me === 1 && run === 0 && t + 1 - (S.swTick[i] ?? 0) >= F.backTicks) {
+    const left = Math.max(0, (T.flB[x] ?? 0) - pi);
+    const worth = Math.floor((left * (T.lnOutPm[i] ?? 0)) / 1000) > (T.lnSwitch[i] ?? 0);
+    if (worth && !lineTakenBehind(c, i, alt, 0, F.backMm * pu)) {
+      switchLine(c, i, F, 0, SW_ESCAPE, alt, false);
+      return true;
+    }
+  }
+  // she moves out to pass when the one ahead holds her up (blocked), not for the dirty air alone
+  const held = S.blkRun[i] ?? 0;
+  if (held === 0) {
+    S.boxed[i] = 0;
+    return false;
+  }
+  if (held < (T.lnSideAt[i] ?? 0)) return false;
+  // boxed in: someone alongside in her other line; she can only climb or wait
+  if (S.side[i] === 1) {
+    S.boxedTicks[i] = (S.boxedTicks[i] ?? 0) + 1;
+    if (S.boxed[i] === 0) {
+      S.boxed[i] = 1;
+      c.rec.boxedIn(t, i, posMm(c, i), alt, alongside(c, i, alt, 1 - me), S.lnAhead[i] ?? -1);
+    }
+    return false;
+  }
+  S.boxed[i] = 0;
+  // her intelligence reads the other line ahead (0 m at intelligence 0: she moves blind)
+  if (lineTaken(c, i, alt, 1 - me, T.lnLook[i] ?? 0)) return false;
+  switchLine(c, i, F, 1 - me, SW_PASS, alt, false);
+  S.dirtyRun[i] = 0;
+  S.blkRun[i] = 0;
+  return true;
+}
+
+/** The inside of `band` is clear from `back` pu behind her to her look ahead (escape). */
+function lineTakenBehind(c: Ctx, i: number, band: number, line: number, back: number): boolean {
+  const { S, T, n } = c;
+  const pi = S.pos0[i] ?? 0;
+  const front = (T.lnLook[i] ?? 0) + (T.lnSlot[i] ?? 0);
+  for (let j = 0; j < n; j++) {
+    if (j === i || (c.live & (1 << j)) === 0) continue;
+    if ((S.alt0[j] ?? 0) !== band || (S.line0[j] ?? 0) !== line) continue;
+    const d = (S.pos0[j] ?? 0) - pi;
+    if (d > -back && d <= front) return true;
+  }
+  return false;
+}
+
+/** The nearest runner alongside in `line` of `band` (the one who boxes her in), −1 = none. */
+function alongside(c: Ctx, i: number, band: number, line: number): number {
+  const { S, n } = c;
+  const pi = S.pos0[i] ?? 0;
+  let best = -1;
+  let bd = Number.MAX_SAFE_INTEGER;
+  for (let j = 0; j < n; j++) {
+    if (j === i || (c.live & (1 << j)) === 0) continue;
+    if ((S.alt0[j] ?? 0) !== band || (S.line0[j] ?? 0) !== line) continue;
+    const d = Math.abs((S.pos0[j] ?? 0) - pi);
+    if (d < bd) {
+      bd = d;
+      best = j;
+    }
+  }
+  return best;
 }
 
 /**
@@ -1283,6 +1566,7 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   S.flights[i] = (S.flights[i] ?? 0) + 1;
   S.knocked[i] = 0;
   S.overWon[i] = 0;
+  S.sideWon[i] = 0;
   S.belowCounted[i] = 0;
   S.dirtyRun[i] = 0;
   S.flApex[i] = alt;
@@ -1366,8 +1650,13 @@ function startDescent(c: Ctx, i: number, F: FlightConstants, cause: number): voi
 function diveTotal(c: Ctx, i: number, from: number): number {
   const F = c.F;
   const dv = c.T.diveV[i * 4 + from] ?? 0;
-  if (F === null || F.overDivePm <= 0 || c.S.overWon[i] !== 1 || from <= 0) return dv;
-  return dv + floorDiv(floorDiv(dv, from) * F.overDivePm, 1000);
+  if (F === null || from <= 0) return dv;
+  // F3: a line won over; two lines: a line won by the side (the larger, never both)
+  const over = F.overDivePm > 0 && c.S.overWon[i] === 1 ? F.overDivePm : 0;
+  const side = F.lines && c.S.sideWon[i] === 1 ? F.sideDivePm : 0;
+  const pm = Math.max(over, side);
+  if (pm <= 0) return dv;
+  return dv + floorDiv(floorDiv(dv, from) * pm, 1000);
 }
 
 /**
@@ -1403,6 +1692,17 @@ function touchdown(c: Ctx, i: number): void {
   S.alt[i] = 0;
   S.flCur[i] = 0;
   clearFlag(S, i, F_AIRBORNE);
+  if (F?.lines) {
+    // two lines: on the ground there are none; the next flight starts inside
+    S.line[i] = 0;
+    S.latLeft[i] = 0;
+    S.latTicks[i] = 0;
+    S.boxed[i] = 0;
+    S.blkRun[i] = 0;
+    S.swTick[i] = 0;
+    S.swCause[i] = 0;
+    S.doorFlight[i] = 0;
+  }
   S.flRes[i] = Math.max(0, (S.flRes[i] ?? 0) - (S.flHoldLeft[i] ?? 0));
   S.flHoldLeft[i] = 0;
   const p = posMm(c, i);
