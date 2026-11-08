@@ -960,6 +960,18 @@ estrategias de cada corredora. Le gusta que **Remate sea la de más riesgo y má
 al último sprint). **La pelea arriba hay que mejorarla:** más pasadas por los costados, no siempre en
 fila. Se resuelve antes de seguir.
 
+**Dos líneas por altura (2026-11-08), aprobadas por el dueño.** Adentro y afuera en cada altura del
+aire: pasar por el costado, en diagonal, encerrada, cerrar la puerta. Medido en el prototipo
+(`.work/design7/measure/lines-final.md`): 43 de 51 criterios pasan. Decisiones del dueño:
+
+- Las pasadas se ven divertidas y se nota la competencia por el espacio en el aire. El resto de la
+  sensación dependerá del arte y la animación; en números está bien.
+- **Más tráfico arriba:** una Falconess que no vuela está en desventaja; volar, aunque sea bajo o a
+  ras, tiene que ser mejor que el suelo.
+- **Remate:** alcanza con que se sienta de alto riesgo: gana o pierde en ese último remate y tiene que
+  preparar la posición perfecta para hacerlo. No hace falta que su varianza sea la más alta.
+- Se acepta el medio punto de más de Picada + Remate en el Sprint.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
