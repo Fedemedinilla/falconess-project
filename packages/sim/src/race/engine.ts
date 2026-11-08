@@ -1832,7 +1832,11 @@ function touchdown(c: Ctx, i: number): void {
         else S.vCore[i] = before + dv;
         const dvMms = mms(c, dv);
         const vBefore = mms(c, before);
-        const surgeMm = floorDiv(dvMms * dvMms, 2 * R.kDecel) + airMm;
+        // neutral wings: the surge decays in the air too, so what is left on touchdown is what
+        // kDecel still turns into metres (the full Δv² would count the air share twice)
+        const leftMms =
+          F !== null && F.neutralStyles && F.diveSurge ? mms(c, S.surge[i] ?? 0) : dvMms;
+        const surgeMm = floorDiv(leftMms * leftMms, 2 * R.kDecel) + airMm;
         S.dives[i] = (S.dives[i] ?? 0) + 1;
         if (from === 3) S.grandDives[i] = (S.grandDives[i] ?? 0) + 1;
         S.diveGainMm[i] = (S.diveGainMm[i] ?? 0) + surgeMm;

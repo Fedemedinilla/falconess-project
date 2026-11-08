@@ -630,7 +630,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   airTerrainPm: 900,
   airTerrainFreeBand: 4,
   airDraftBand: true,
-  overDivePm: 900,
+  overDivePm: 800,
   nerveM: 6,
   nerveBackM: 3,
   nerveBasePm: 400,
@@ -698,7 +698,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   // balance polish on neutral wings (measure/neutral-final.md, probes neutral/pos.ts): the high
   // band's line is 3 ‰ quicker and holds at 850 ‰ (the Acecho lost the Columna's and Rampa's
   // cheap hold and fell to 7 % of the sprint at 300); the great dive from the ceiling 5430 → 6600
-  // mm/s and a won line dives 900 ‰ of one more band (the Remate lost the Picada's stoop, and the
+  // mm/s and a won line dives 800 ‰ of one more band (the Remate lost the Picada's stoop, and the
   // surge now decays in the air too); a skim lifts with 100 mm/s and cruises +5 ‰ (a premium by
   // the metre, not by the takeoff: the Pelotón of the circuit skims four flats); the Pelotón skims
   // the Saltos too (the ridge has one long flat); calmer bands: only the lead climbs over the low
