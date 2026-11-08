@@ -230,6 +230,8 @@ export type RaceTables = {
   readonly vCAir: Int32Array;
   /** F5 (round 5): the air cruise from `airTerrainFreeBand` up (no water or climb penalty). */
   readonly vCAirHi: Int32Array;
+  /** Stage 3 (allFly): the air cruise of the low band (`skimTerrainPm` of the water and climb penalty). */
+  readonly vCAirLo: Int32Array;
   /** F9: her nerve test's flinch chance, ‰, and the pre-drawn slot 29 (two 16-bit tests). */
   readonly nerveP: Int32Array;
   readonly u29: Float64Array;
@@ -586,6 +588,7 @@ function createTables(): RaceTables {
     diveV: i32(N * 4),
     vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
     vCAirHi: i32(N * 2 * 3 * MAX_SEGMENTS),
+    vCAirLo: i32(N * 2 * 3 * MAX_SEGMENTS),
     nerveP: i32(N),
     u29: f64(N),
     liftH: i32(N),
@@ -1009,6 +1012,11 @@ export function buildTables(
               terrain && f < 1000
                 ? cruiseVu(vA, pwc, 1000, sp[ph] ?? 1000, paceAir)
                 : (T.vCAir[ibps(i, b, ph, s)] ?? 0);
+            if (F.allFly) {
+              const fLo =
+                terrain && f < 1000 ? 1000 - floorDiv((1000 - f) * F.skimTerrainPm, 1000) : f;
+              T.vCAirLo[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, fLo, sp[ph] ?? 1000, paceAir);
+            }
           }
         }
         const a = accelVu(R, technique, pwc, f, terms);

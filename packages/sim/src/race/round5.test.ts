@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { RULESET_V2 } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed, simulateRaceReversed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_R5, RULESET_V3, rulesetV3 } from "./flight.js";
+import { FLIGHT_OFF_ALLFLY, FLIGHT_OFF_R5, RULESET_V3, rulesetV3 } from "./flight.js";
 import { ibps } from "./state.js";
 
 /**
@@ -119,7 +119,8 @@ describe("round 5: takeoff from the ground (F7), the Turbina (F8) and the pack's
       style: "ground",
       position: (["lead", "pack", "stalk", "closer"] as const)[lane % 4] ?? "pack",
     }));
-    const log = simulateRace(RULESET_V3, E, course, "turbine");
+    // before «todas vuelan» (allFly off): only the pack skims, and only the Pasillos
+    const log = simulateRace(rulesetV3(1, FLIGHT_OFF_ALLFLY), E, course, "turbine");
     const t = events(log, "takeoff");
     expect(t.length).toBeGreaterThan(0);
     for (const e of t) {
@@ -134,13 +135,18 @@ describe("round 5: takeoff from the ground (F7), the Turbina (F8) and the pack's
         .every((d) => (d.flightPlan ?? []).length === 2),
     ).toBe(true);
     // with groundFlies off (round 4) no ground wing leaves the ground
-    const off = simulateRace(rulesetV3(1, { groundFlies: false }), E, course, "turbine");
+    const off = simulateRace(
+      rulesetV3(1, { ...FLIGHT_OFF_ALLFLY, groundFlies: false }),
+      E,
+      course,
+      "turbine",
+    );
     expect(events(off, "takeoff")).toHaveLength(0);
   });
 });
 
 describe("round 5: flying keeps dry (F5)", () => {
-  it("a flight over the Terreno líquido takes no water hit; the air pays less of its drag", () => {
+  it("a flight above the low band takes no water hit; the air pays less of its drag", () => {
     const course = loadCatalogueCourses().find((c) => c.id === "crossing");
     expect(course).toBeDefined();
     if (course === undefined) return;
@@ -149,7 +155,8 @@ describe("round 5: flying keeps dry (F5)", () => {
     const altAt: number[][] = entries.map(() => []);
     const log = simulateRaceProbed(RULESET_V3, entries, course, "dry", (t, A) => {
       altAt.forEach((row, i) => {
-        row[t] = A.state.flPhase[i] ?? 0;
+        // everyone flies (2026-11-08): a skim (band 1) splashes; the bands above stay dry
+        row[t] = (A.state.flPhase[i] ?? 0) !== 0 && (A.state.alt[i] ?? 0) >= 2 ? 1 : 0;
       });
     });
     for (const w of events(log, "waterHit"))

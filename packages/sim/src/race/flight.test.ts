@@ -6,7 +6,14 @@ import { describe, expect, it } from "vitest";
 import { RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
 import { simulateRace, simulateRaceProbed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_1_2, FLIGHT_OFF_R5, flightOf, RULESET_V3, rulesetV3 } from "./flight.js";
+import {
+  FLIGHT_OFF_1_2,
+  FLIGHT_OFF_ALLFLY,
+  FLIGHT_OFF_R5,
+  flightOf,
+  RULESET_V3,
+  rulesetV3,
+} from "./flight.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock, FLIGHTS_MAX } from "./state.js";
 
@@ -43,8 +50,7 @@ function defaultField(stats = S600): RaceEntry[] {
   ).sort((a, b) => a.laneIndex - b.laneIndex);
 }
 
-function plan(course: Course, entries: RaceEntry[]) {
-  const R = RULESET_V3;
+function plan(course: Course, entries: RaceEntry[], R = RULESET_V3) {
   const G = buildCourseGeometry(R, course);
   const A = createRaceArena().reset(entries.length, G);
   drawRaceBlock(R, entries, new Rng("plan"), A);
@@ -97,9 +103,18 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(at("ridge", "stalk")).toEqual([1, 500, 1400, 2, 0]);
     expect(at("ridge", "closer")).toEqual([1, 1200, 1600, 3, 1]); // cornisa, covers jump 2
     expect(at("canyon", "closer")).toEqual([1, 1850, 2000, 3, 0]); // 150 m before the final
-    // stage 1: lead and pack keep today's ground row
-    expect(at("ridge", "lead")[0]).toBe(0);
-    expect(at("ridge", "pack")[0]).toBe(0);
+    // everyone flies (2026-11-08): the lead skims early (L/6 to L/2) and the jump before the final;
+    // the pack skims the 400 m flat between the Saltos (800-1200 m)
+    expect(at("ridge", "lead")).toEqual([1, 333, 1000, 1, 0]);
+    expect(at("ridge", "pack")).toEqual([1, 800, 1200, 1, 0]);
+    // with allFly off (two lines, 84dc112) lead and pack keep the ground row of stage 1
+    const off = (position: Position) => {
+      const entries = defaultField();
+      const lane = entries.find((e) => e.position === position)?.laneIndex ?? 0;
+      return plan(content.getCourse("ridge"), entries, rulesetV3(1, FLIGHT_OFF_ALLFLY)).T.flN[lane];
+    };
+    expect(off("lead")).toBe(0);
+    expect(off("pack")).toBe(0);
   });
 
   it("the plan reads only her own position: other runners' positions never move it", () => {
@@ -271,7 +286,8 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
 });
 
 describe("ruleset v3 draft: stage 2 preview (design7 R2 lead/pack, R9, R10)", () => {
-  const E2 = rulesetV3(2);
+  // stage 2 preview as written before «todas vuelan» (its lead plan has no early skim)
+  const E2 = rulesetV3(2, FLIGHT_OFF_ALLFLY);
 
   it("everyone with flying wings has a plan; the stalk splits around the canyons", () => {
     const course = content.getCourse("canyon");

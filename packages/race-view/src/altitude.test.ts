@@ -27,6 +27,6 @@ describe("altitude band (ruleset v3 draft)", () => {
     expect(entries.every((e) => altitudeColumn(v2, e.laneIndex).every((b) => b === 0))).toBe(true);
     const v3 = simulateRace(RULESET_V3, entries, course, "alt");
     expect(Math.max(...altitudeColumn(v3, 3))).toBe(3); // dive wings: closer by default
-    expect(Math.max(...altitudeColumn(v3, 1))).toBe(0); // ground wings never rise
+    expect(Math.max(...altitudeColumn(v3, 1))).toBeLessThanOrEqual(1); // ground wings skim, never higher
   });
 });

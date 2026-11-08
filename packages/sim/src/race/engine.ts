@@ -7,6 +7,7 @@ import { type Controller, createController, decide, inPack, rankSnapshot } from 
 import {
   BAND_CEILING,
   BAND_LOW,
+  bandHoldOf,
   bandPu,
   climbTicksOf,
   type FlightConstants,
@@ -740,12 +741,24 @@ function enterSegment(c: Ctx, i: number, s: number, crossing: boolean): void {
     rec.repair(c.t, i, posMm(c, i), after - before);
   } else if (type === SEG_WATER) {
     // F5 (round 5): flying over the Terreno líquido she never touches it
-    if (c.F?.airWaterFree && (S.flPhase[i] ?? 0) !== 0) return;
+    // stage 3 (allFly): a skim (low band) splashes, skimWaterPm of the hit
+    const skim = c.F !== null && c.F.allFly && (S.flPhase[i] ?? 0) !== 0 && S.alt[i] === BAND_LOW;
+    if (c.F?.airWaterFree && (S.flPhase[i] ?? 0) !== 0 && !skim) return;
     const guarded = (S.guardLeft[i] ?? 0) > 0 || T.armor[i] === 1;
-    const hit = guarded ? 0 : waterHitMd(R, G.dragPm[s] ?? 0, T.styleDmg[i] ?? 1000);
+    const hit0 = guarded ? 0 : waterHitMd(R, G.dragPm[s] ?? 0, T.styleDmg[i] ?? 1000);
+    const hit = skim && c.F !== null ? floorDiv(hit0 * c.F.skimWaterPm, 1000) : hit0;
+    if (skim && hit === 0) return;
     damage(c, i, hit);
     rec.waterHit(c.t, i, posMm(c, i), hit);
   } else if (type === SEG_JUMP) {
+    // stage 3 (allFly): a skim crossing a Salto pays skimJumpPm of its lift (reserved in her plan)
+    if (c.F !== null && c.F.allFly && (S.flPhase[i] ?? 0) !== 0 && S.alt[i] === BAND_LOW) {
+      const want = floorDiv((G.liftReq[s] ?? 0) * 1000 * c.F.skimJumpPm, 1000);
+      const energy = S.energy[i] ?? 0;
+      const spent = Math.min(energy, want);
+      S.energy[i] = energy - spent;
+      S.energyLift[i] = (S.energyLift[i] ?? 0) + spent;
+    }
     if (T.style[i] === STYLE_GROUND) {
       S.detours[i] = (S.detours[i] ?? 0) + 1;
       rec.detour(c.t, i, posMm(c, i), s);
@@ -817,13 +830,18 @@ function airCruiseTick(
   const { R, T, S } = c;
   // F5: from airTerrainFreeBand up the water and climbs cost the air nothing
   const hi = c.F !== null && (S.alt[i] ?? 0) >= c.F.airTerrainFreeBand;
-  let ta = (exhausted ? T.vMin : hi ? T.vCAirHi : T.vCAir)[ibps(i, b, ph, seg)] ?? 0;
+  // stage 3 (allFly): the low band pays skimTerrainPm of the water and climb penalty
+  const lo = !hi && c.F !== null && c.F.allFly && S.alt[i] === BAND_LOW;
+  let ta =
+    (exhausted ? T.vMin : hi ? T.vCAirHi : lo ? T.vCAirLo : T.vCAir)[ibps(i, b, ph, seg)] ?? 0;
   const air =
     c.F !== null && (S.alt[i] ?? 0) < c.F.ownAirFromBand
       ? 0
       : (T.airOff[i * FLIGHTS_MAX + Math.max(0, (S.flCur[i] ?? 1) - 1)] ?? 0) +
         (c.F !== null && S.overWon[i] === 1 ? c.F.overAirPm : 0);
   if (air !== 0) ta = floorDiv(ta * (1000 + air), 1000);
+  if (lo && c.F !== null && c.F.skimCruisePm !== 0)
+    ta = floorDiv(ta * (1000 + c.F.skimCruisePm), 1000);
   if (draftPm !== 1000) ta = floorDiv(ta * draftPm, 1000);
   const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
   S.vCore[i] = v;
@@ -839,7 +857,9 @@ function airDrain(c: Ctx, i: number, F: FlightConstants, vOut: number, dK: numbe
   const S = c.S;
   const dirty = inDirtyAir(F, S, i);
   if (dirty) S.dirtyTicks[i] = (S.dirtyTicks[i] ?? 0) + 1;
-  const restPm = dirty && F.dirtyNoRest ? Math.max(1000, F.airDrainPm) : F.airDrainPm;
+  // stage 3 (allFly): the low band rests the legs at skimDrainPm (ground effect)
+  const rest = F.allFly && S.alt[i] === BAND_LOW ? F.skimDrainPm : F.airDrainPm;
+  const restPm = dirty && F.dirtyNoRest ? Math.max(1000, rest) : rest;
   const dKAir = Math.floor((dK * restPm) / 1000);
   const rPm = Math.floor((vOut * 1000) / c.vBase);
   const r2 = rPm * rPm;
@@ -1537,7 +1557,9 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   const from = flag(S, i, F_AIRBORNE) ? 1 : 0;
   const target = T.flBand[x] ?? 1;
   const corn = T.flCorn[x] === 1;
-  const unit = floorDiv((T.climbMe[i] ?? 0) * (corn ? F.cornisaPm : 1000), 1000);
+  const unit0 = floorDiv((T.climbMe[i] ?? 0) * (corn ? F.cornisaPm : 1000), 1000);
+  // stage 3 (allFly): a skim (low band) lifts at skimClimbPm of the climb
+  const unit = F.allFly && target === BAND_LOW ? floorDiv(unit0 * F.skimClimbPm, 1000) : unit0;
   const jr = jrNow(T, S, i, S.seg[i] ?? 0);
   const style = T.style[i] ?? 0;
   const liftF = holdLift(F, style, T.liftF[i] ?? 1000);
@@ -1574,6 +1596,9 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   const wing = wingOf(F, style);
   const v0 = S.vCore[i] ?? 0;
   if (from === 0) S.vCore[i] = floorDiv(v0 * wing.liftSpeedPm, 1000);
+  // stage 3 (allFly): a skim's lift pushes her (decays to her air cruise by kDecel)
+  if (from === 0 && band === BAND_LOW && F.allFly && F.skimLiftMms > 0)
+    S.vCore[i] = (S.vCore[i] ?? 0) + F.skimLiftMms * c.velPerMms;
   // F7 (round 5): from the ground she climbs band 1 too, at her wing's pace
   const alt = F.climbFromGround ? from : Math.max(1, from);
   S.alt[i] = alt;
@@ -1624,7 +1649,7 @@ function holdTick(c: Ctx, i: number, F: FlightConstants, vOut: number, seg: numb
   const num = F.holdE * 10_000;
   // F3: after a won over she holds at the price of the band she left (clean air)
   const alt = Math.max(0, (S.alt[i] ?? 0) - (F.overCleanHold && S.overWon[i] === 1 ? 1 : 0));
-  const clean = Math.floor((alt * vOut * (F.bandHoldPm[alt] ?? 1000)) / 1000);
+  const clean = Math.floor((alt * vOut * bandHoldOf(F, alt)) / 1000);
   const inc = m === 1000 ? clean : Math.floor((clean * m) / 1000);
   if (inc > clean) S.holdExtra[i] = (S.holdExtra[i] ?? 0) + Math.floor(((inc - clean) * num) / den);
   const pu = (S.holdPu[i] ?? 0) + inc;

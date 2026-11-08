@@ -21,6 +21,7 @@ import {
   SEG_CANYON,
   SEG_CLIMB,
   SEG_DESCENT,
+  SEG_FLAT,
   SEG_JUMP,
   SEG_WATER,
   STYLE_GROUND,
@@ -237,6 +238,40 @@ export type FlightConstants = {
    * dive gains `sideDivePm` ‰ of one band's share (0 = off). Not cumulative with F3's.
    */
   readonly sideDivePm: number;
+  // --- stage 3 «Todas vuelan» (owner, 2026-11-08: a Falconess that does not fly is behind)
+  /**
+   * Everyone flies: the lead skims (band 1) early and over every Colina, Terreno líquido and Salto;
+   * the pack skims the long flats and the Pasillos; the low band («a ras») pays `skimTerrainPm` of
+   * the water and climb penalty, rests the legs at `skimDrainPm` and holds at `skimHoldPm` of the
+   * band's price. false = the two lines of 2026-11-08 byte for byte (INV-8); every knob below is
+   * read only when it is on.
+   */
+  readonly allFly: boolean;
+  /** Lead: an early skim from the start's end for max(leadEarlyMinM, L / leadEarlyDiv) (0 = none). */
+  readonly leadEarlyDiv: number;
+  readonly leadEarlyMinM: number;
+  /** Lead: skims every Colina, Terreno líquido and Salto (false = only the early skim; probes). */
+  readonly leadObstacles: boolean;
+  /** Pack: skims every flat at least packFlatMinM metres long between the start's end and the final (0 = none). */
+  readonly packFlatMinM: number;
+  /** ‰ of the water and climb penalty the low band pays (the air above pays `airTerrainPm`). */
+  readonly skimTerrainPm: number;
+  /** ‰ of the hp drain at the low band (ground effect; the bands above rest at `airDrainPm`). */
+  readonly skimDrainPm: number;
+  /** ‰ of the low band's hold (replaces bandHoldPm[1] while allFly is on). */
+  readonly skimHoldPm: number;
+  /** ‰ added to the air cruise at the low band (ground effect: the skim is a little faster than the legs). */
+  readonly skimCruisePm: number;
+  /** ‰ of the climb a takeoff to the low band pays (a skim lifts cheap). */
+  readonly skimClimbPm: number;
+  /** Race constants while allFly is on: the jump's landing at technique 0 (R8, «saltar barato»; 0 = the stage's). */
+  readonly skimLandBasePm: number;
+  /** ‰ of a Salto's liftRequired a low-band flight pays when it crosses it (a skim still lifts over the lip). */
+  readonly skimJumpPm: number;
+  /** ‰ of the Terreno líquido hit a low-band flight takes (a skim splashes; the bands above stay dry). */
+  readonly skimWaterPm: number;
+  /** mm/s a takeoff from the ground to the low band adds to the body speed (the skim's lift push). */
+  readonly skimLiftMms: number;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -402,7 +437,12 @@ export function holdLift(F: FlightConstants, style: number, liftF: number): numb
 
 /** L2: band × pu with the band's hold multiplier. */
 export function bandPu(F: FlightConstants, band: number, pu: number): number {
-  return floorDiv(band * pu * (F.bandHoldPm[band] ?? 1000), 1000);
+  return floorDiv(band * pu * bandHoldOf(F, band), 1000);
+}
+
+/** L2's hold ‰ of a band; with `allFly` the low band holds at `skimHoldPm`. */
+export function bandHoldOf(F: FlightConstants, band: number): number {
+  return F.allFly && band === BAND_LOW ? F.skimHoldPm : (F.bandHoldPm[band] ?? 1000);
 }
 
 /**
@@ -560,10 +600,35 @@ export const FLIGHT_V3_E1: FlightConstants = {
   doorIntPm: 400,
   doorLossMm: 1_000,
   sideDivePm: 650,
+  // stage 3 «Todas vuelan» (owner, 2026-11-08; .work/design7/measure/allfly-final.md)
+  // The round (allfly/probe.ts, paired.ts, w0all.ts): a skim with no terrain toll was worth 30-60
+  // points to the lead on the canyon (its 500 m Colina and the water) and a Salto skimmed for free
+  // saved ~30 energy (liftRequired 20 + 15 on the ridge); skims inside the final cut the legs'
+  // kick (circuit lead −13 m). So the low band pays 950 ‰ of the climb and water toll (the air
+  // above 900 ‰), 700 ‰ of a Salto's lift, half the water hit, rests the legs like any flight, and
+  // ends before the final; what it gives is a short lift push (300 mm/s, decays by kDecel), a
+  // cruise 3 ‰ above her air cruise and a cheap lift (700 ‰ of the climb).
+  allFly: true,
+  leadEarlyDiv: 3,
+  leadEarlyMinM: 150,
+  leadObstacles: true,
+  packFlatMinM: 200,
+  skimTerrainPm: 950,
+  skimDrainPm: 990,
+  skimHoldPm: 1000,
+  skimCruisePm: 3,
+  skimClimbPm: 700,
+  skimLandBasePm: 0,
+  skimJumpPm: 700,
+  skimWaterPm: 500,
+  skimLiftMms: 300,
 };
 
+/** Everyone flies off: v3 is the two lines of 2026-11-08 (84dc112) byte for byte (harness/inv8.ts). */
+export const FLIGHT_OFF_ALLFLY: Partial<FlightConstants> = { allFly: false };
+
 /** The two lines off: v3 is round 5 (6bb4615) byte for byte (harness/inv7.ts). */
-export const FLIGHT_OFF_LINES: Partial<FlightConstants> = { lines: false };
+export const FLIGHT_OFF_LINES: Partial<FlightConstants> = { allFly: false, lines: false };
 
 /**
  * The values that turn every rule of steps 1.2 and 1.3 off: v3 with them is the round-2 race
@@ -574,6 +639,7 @@ export const FLIGHT_OFF_LINES: Partial<FlightConstants> = { lines: false };
  * (harness/inv6.ts). `FLIGHT_OFF_1_3` and `FLIGHT_OFF_1_2` build on it.
  */
 export const FLIGHT_OFF_R5: Partial<FlightConstants> = {
+  allFly: false,
   lines: false,
   planned: [false, false, true, true],
   diveVMms: [0, 0, 5_400, 6_000],
@@ -683,14 +749,17 @@ export function rulesetV3(
   flight: Partial<FlightConstants> = {},
   race: Partial<RaceConstants> = {},
 ): RulesetV3 {
-  const F = stage >= 2 ? FLIGHT_V3_E2 : FLIGHT_V3_E1;
+  const F = { ...(stage >= 2 ? FLIGHT_V3_E2 : FLIGHT_V3_E1), ...flight };
   const raceStage = stage >= 2 ? RACE_V3_E2 : RACE_V3_E1;
+  // stage 3 (allFly): a jump lands cheaper (R8, «saltar barato»)
+  const allFly: Partial<RaceConstants> =
+    F.allFly && F.skimLandBasePm > 0 ? { landBasePm: F.skimLandBasePm } : {};
   return {
     ...RULESET_V2,
     version: "v3",
     field: FIELD_V3,
-    race: { ...RULESET_V2.race, ...raceStage, ...race },
-    flight: { ...F, ...flight },
+    race: { ...RULESET_V2.race, ...raceStage, ...allFly, ...race },
+    flight: F,
   };
 }
 
@@ -807,11 +876,25 @@ function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] 
 
 /** Lead (stage 2): band 1 over every climb, water and jump, 20 m each side; joins gaps < 60 m. */
 function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
-  const out: Flight[] = [];
-  for (let s = 0; s < G.S; s++) {
+  const raw: { a: number; b: number }[] = [];
+  // stage 3 (allFly): clean air at the front, a skim from the start's end
+  if (F.allFly && F.leadEarlyDiv > 0) {
+    const a = G.startEnd;
+    const len = Math.max(F.leadEarlyMinM * m, floorDiv(G.L, F.leadEarlyDiv));
+    raw.push({ a, b: Math.min(G.finalStart, a + len) });
+  }
+  const obstacles = !F.allFly || F.leadObstacles || F.planned[POS_LEAD];
+  // stage 3 (allFly): the final belongs to the legs (and the closers' dive): skims end before it
+  const end = F.allFly ? G.finalStart : G.reserveAt;
+  for (let s = 0; s < G.S && obstacles; s++) {
     if (!isObstacle(G.segType[s] ?? 0)) continue;
     const a = Math.max(0, (G.segStart[s] ?? 0) - F.marginM * m);
-    const b = Math.min(G.reserveAt, (G.segEnd[s] ?? 0) + F.marginM * m);
+    if (F.allFly && a >= end) continue;
+    raw.push({ a, b: Math.min(end, (G.segEnd[s] ?? 0) + F.marginM * m) });
+  }
+  raw.sort((x, y) => x.a - y.a);
+  const out: Flight[] = [];
+  for (const { a, b } of raw) {
     if (b <= a) continue;
     const last = out[out.length - 1];
     if (last && a - last.b < F.leadJoinM * m) last.b = Math.max(last.b, b);
@@ -835,6 +918,14 @@ function packPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
         corn: false,
       });
   const fa = G.finalStart;
+  // stage 3 (allFly): the pack skims the long flats between the start's end and the final
+  if (F.allFly && F.packFlatMinM > 0)
+    for (let s = 0; s < G.S; s++) {
+      if (G.segType[s] !== SEG_FLAT) continue;
+      const a = Math.max(G.segStart[s] ?? 0, G.startEnd);
+      const b = Math.min(G.segEnd[s] ?? 0, fa, G.reserveAt);
+      if (b - a >= F.packFlatMinM * m) raw.push({ a, b, band: BAND_LOW, corn: false });
+    }
   if (F.packFanDiv > 0) {
     const len = Math.max(F.packFanMinM * m, floorDiv(G.L, F.packFanDiv));
     raw.push({
@@ -943,7 +1034,8 @@ export function planFlights(
   T.flRes0[i] = 0;
   if (T.style[i] === STYLE_GROUND && !F.groundFlies) return;
   const pc = T.position[i] ?? 0;
-  if (!F.planned[pc]) return;
+  // stage 3 (allFly): the lead and the pack fly too
+  if (!F.planned[pc] && !(F.allFly && (pc === POS_LEAD || pc === POS_PACK))) return;
   const m = posPerMm * 1000;
   let fl =
     pc === POS_STALK
@@ -968,16 +1060,24 @@ export function planFlights(
     T.flChain[x] = f.chain && k + 1 < Math.min(fl.length, FLIGHTS_MAX) ? 1 : 0;
     const prev = k > 0 && fl[k - 1]?.chain ? (fl[k - 1]?.band ?? 0) : 0;
     const climb = floorDiv(
-      Math.max(0, f.band - prev) * (T.climbMe[i] ?? 0) * (f.corn ? F.cornisaPm : 1000),
+      floorDiv(
+        Math.max(0, f.band - prev) * (T.climbMe[i] ?? 0) * (f.corn ? F.cornisaPm : 1000),
+        1000,
+      ) * (F.allFly && f.band === BAND_LOW ? F.skimClimbPm : 1000),
       1000,
     );
     const hold = holdMe(F, bandPu(F, f.band, f.b - f.a), posPerMm, liftH);
-    T.flClimb[x] = climb;
-    T.flHold[x] = hold;
-    res += climb + hold;
+    let jumps = 0;
     for (let s = 0; s < G.S; s++)
-      if (G.segType[s] === SEG_JUMP && (G.segStart[s] ?? 0) >= f.a && (G.segEnd[s] ?? 0) <= f.b)
+      if (G.segType[s] === SEG_JUMP && (G.segStart[s] ?? 0) >= f.a && (G.segEnd[s] ?? 0) <= f.b) {
         T.jumpCovered[is(i, s)] = 1;
+        // stage 3 (allFly): a skim pays skimJumpPm of the Salto's lift; reserved with its climb
+        if (F.allFly && f.band === BAND_LOW)
+          jumps += floorDiv((G.liftReq[s] ?? 0) * 1000 * F.skimJumpPm, 1000);
+      }
+    T.flClimb[x] = climb + jumps;
+    T.flHold[x] = hold;
+    res += climb + jumps + hold;
   });
   T.flN[i] = fl.length;
   T.flRes0[i] = res;
