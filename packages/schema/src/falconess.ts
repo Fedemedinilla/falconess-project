@@ -31,6 +31,11 @@ export const Falconess = z.strictObject({
   /** Her best position: the season starts on the first hangar wings whose default it is. */
   preferredPosition: Position,
   uniqueSkills: z.array(Slug).max(2),
+  /**
+   * v3 draft (owner 2026-11-08, wings lose their stats): her signature frame's passive as her own
+   * skill, racing with her on any wings. v1 and v2 never read it (there the frame carries it).
+   */
+  passive: Slug.optional(),
   sponsor: Slug,
   seasonGoals: z.array(SeasonGoal).min(1).max(8),
   textKey: TextKey,

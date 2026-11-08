@@ -136,6 +136,12 @@ export function buildContentIndex(raw: RawContent): ContentIndex {
     const w = `falconess/${f.id}`;
     need(manufacturers, f.sponsor, w, "manufacturer");
     for (const s of f.uniqueSkills) need(skills, s, w, "skill");
+    if (f.passive !== undefined) {
+      need(skills, f.passive, w, "skill");
+      const sk = skills.get(f.passive);
+      if (sk && sk.kind !== "passive")
+        problems.push(`${w}: passive "${f.passive}" is not a passive skill`);
+    }
     for (const g of f.seasonGoals) need(courses, g.courseId, w, "course");
     needText(f.textKey, w);
     const m = manufacturers.get(f.sponsor);

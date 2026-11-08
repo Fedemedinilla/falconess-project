@@ -9,6 +9,7 @@ import { neutralFixtureEntry } from "./fixtures.js";
 import {
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_ALLFLY,
+  FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
   flightOf,
   RULESET_V3,
@@ -106,7 +107,15 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     // everyone flies (2026-11-08): the lead skims early (L/6 to L/2) and the jump before the final;
     // the pack skims the 400 m flat between the Saltos (800-1200 m)
     expect(at("ridge", "lead")).toEqual([1, 333, 1000, 1, 0]);
-    expect(at("ridge", "pack")).toEqual([1, 800, 1200, 1, 0]);
+    // neutral wings (2026-11-08): the pack skims the first Salto too, from 20 m before it, in one skim
+    expect(at("ridge", "pack")).toEqual([1, 680, 1200, 1, 0]);
+    const packLane = defaultField().find((e) => e.position === "pack")?.laneIndex ?? 0;
+    const noJumps = plan(
+      content.getCourse("ridge"),
+      defaultField(),
+      rulesetV3(1, { packJumps: false }),
+    );
+    expect(noJumps.T.flA[packLane * FLIGHTS_MAX]).toBe(800 * M);
     // with allFly off (two lines, 84dc112) lead and pack keep the ground row of stage 1
     const off = (position: Position) => {
       const entries = defaultField();
@@ -130,7 +139,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(b.flRes0[3]).toBe(a.flRes0[3]);
   });
 
-  it("every tick: altitude 0-3, no boost in the air, ground wings skim at most band 1, energy never below 0", () => {
+  it("every tick: altitude 0-3, no boost in the air, no wing above its maxBand, energy never below 0", () => {
     const tracks = [
       ...["sprint", "ridge", "canyon"].map((c) => content.getCourse(c)),
       ...loadCatalogueCourses(),
@@ -146,9 +155,10 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
             const alt = S.alt[i] ?? 0;
             if (alt < 0 || alt > 3) bad ||= `alt ${alt} at ${t}`;
             if (alt > 0 && S.boostOn[i] === 1) bad ||= `boost in the air, lane ${i} tick ${t}`;
-            // round 5 (F8): the Turbina skims the low band, never higher
-            if (entries[i]?.style === "ground" && alt > 1)
-              bad ||= `ground wing rose to ${alt}, lane ${i} tick ${t}`;
+            // round 5 (F8): no wing flies above its row's maxBand (neutral wings: all fly to 3)
+            const row = RULESET_V3.flight.wings[A.tables.style[i] ?? 0];
+            if (alt > (row?.maxBand ?? 0))
+              bad ||= `${entries[i]?.style} wing rose to ${alt}, lane ${i} tick ${t}`;
             if ((S.energy[i] ?? 0) < 0) bad ||= `negative energy lane ${i}`;
           }
         });
@@ -214,12 +224,16 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
       );
       return d?.kind === "dive" ? d.gainMms : -1;
     };
-    const L5 = rulesetV3(1, { nerveM: 0, overDivePm: 0, diveVMms: [0, 0, 5_400, 6_000] });
+    const L5 = { nerveM: 0, overDivePm: 0, diveVMms: [0, 0, 5_400, 6_000] as const };
+    const L5old = rulesetV3(1, { ...FLIGHT_OFF_NEUTRAL, ...L5 });
     expect(run(R2, 1)).toBe(5100);
     expect(run(R2, 1200)).toBe(6900);
     // L5 and the Lanza's dive ×1.25 (S1): 6000 × 0.7 × 1.25 and 6000 × 1.3 × 1.25
-    expect(run(L5, 1)).toBe(5250);
-    expect(run(L5, 1200)).toBe(9750);
+    expect(run(L5old, 1)).toBe(5250);
+    expect(run(L5old, 1200)).toBe(9750);
+    // neutral wings (owner 2026-11-08): every wing dives the same Δv, 6000 × 0.7 and 6000 × 1.3
+    expect(run(rulesetV3(1, L5), 1)).toBe(4200);
+    expect(run(rulesetV3(1, L5), 1200)).toBe(7800);
   });
 
   it("round 4: the hover draft reaches a flight only with draftGroundOnly off; round 5 tows by band (F6)", () => {

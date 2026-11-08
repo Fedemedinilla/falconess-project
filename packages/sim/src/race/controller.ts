@@ -321,7 +321,7 @@ export function decide(
   const seg = S.seg[i] ?? 0;
   const segType = G.segType[seg] ?? 0;
   const b = S.b[i] ?? 0;
-  const style = T.style[i] ?? 0;
+  const style = T.phys[i] ?? 0;
   const flags = S.flags[i] ?? 0;
   const airborne = (flags & F_AIRBORNE) !== 0;
   const onJump = segType === SEG_JUMP && style !== STYLE_GROUND;

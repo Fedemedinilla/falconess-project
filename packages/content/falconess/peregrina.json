@@ -23,6 +23,7 @@
   },
   "preferredPosition": "closer",
   "uniqueSkills": ["stoop-strike"],
+  "passive": "talon-lock",
   "sponsor": "koryu",
   "seasonGoals": [
     {

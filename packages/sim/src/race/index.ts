@@ -22,6 +22,7 @@ export {
   FLIGHT_OFF_1_3,
   FLIGHT_OFF_ALLFLY,
   FLIGHT_OFF_LINES,
+  FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
@@ -29,11 +30,13 @@ export {
   flightOf,
   NEUTRAL_WING,
   NEUTRAL_WINGS_R5,
+  NEUTRAL_WINGS_V3N,
   RULESET_V3,
   type RulesetV3,
   rulesetV3,
   WINGS_R4,
   WINGS_V3,
+  WINGS_V3N,
   type WingFlight,
 } from "./flight.js";
 export { buildCourseGeometry, type CourseGeometry, raceMaxTicks } from "./geometry.js";

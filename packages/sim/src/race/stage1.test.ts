@@ -10,6 +10,7 @@ import {
   airOffsetPm,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
+  FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
   FLIGHT_V3_E1,
   RULESET_V3,
@@ -289,21 +290,29 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
 
 describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () => {
   it("S1: the Lanza leaves 960 ‰ of her speed on the ground, the Rampa all of it", () => {
-    const log = simulateRace(RULESET_V3, field(600), content.getCourse("canyon"), "lift");
-    const t = (log.events ?? []).flatMap((e) => (e.kind === "takeoff" ? [e] : []));
-    // everyone flies: a skim from the ground (band 1) keeps all her speed and adds the lift push
-    const push = RULESET_V3.flight.skimLiftMms;
-    for (const e of t) {
-      const skim = e.band === 1 && e.fromBand === 0;
-      const keep = skim ? 1000 : (WINGS_V3.find((w) => w.style === e.style)?.liftSpeedPm ?? 0);
-      const add = skim ? push : 0;
-      expect(Math.abs(e.vAfterMms - Math.floor((e.vMms * keep) / 1000) - add)).toBeLessThanOrEqual(
-        1,
+    // neutral wings (owner 2026-11-08): every wing keeps all her speed; FLIGHT_OFF_NEUTRAL is S1's
+    for (const R of [rulesetV3(1, FLIGHT_OFF_NEUTRAL), RULESET_V3]) {
+      const log = simulateRace(R, field(600), content.getCourse("canyon"), "lift");
+      const t = (log.events ?? []).flatMap((e) => (e.kind === "takeoff" ? [e] : []));
+      // everyone flies: a skim from the ground (band 1) keeps all her speed and adds the lift push
+      const push = R.flight.skimLiftMms;
+      const row = (style: string) => R.flight.wings.find((w) => w.style === style);
+      for (const e of t) {
+        const skim = e.band === 1 && e.fromBand === 0;
+        const keep = skim ? 1000 : (row(e.style)?.liftSpeedPm ?? 0);
+        const add = skim ? push : 0;
+        expect(
+          Math.abs(e.vAfterMms - Math.floor((e.vMms * keep) / 1000) - add),
+        ).toBeLessThanOrEqual(1);
+        expect(e.band).toBeLessThanOrEqual(row(e.style)?.maxBand ?? 0);
+      }
+      // round 5: the default field's pack (Rasante) skims with the Turbina (F1, F8); the lead (Planeo) skims too
+      expect(new Set(t.map((e) => e.style))).toEqual(
+        new Set(["lance", "column", "ramp", "turbine"]),
       );
     }
-    // round 5: the default field's pack (Rasante) skims with the Turbina (F1, F8); the lead (Planeo) skims too
-    expect(new Set(t.map((e) => e.style))).toEqual(new Set(["lance", "column", "ramp", "turbine"]));
-    for (const e of t) if (e.style === "turbine") expect(e.band).toBe(1);
+    expect(WINGS_V3.find((w) => w.style === "lance")?.liftSpeedPm).toBe(960);
+    expect(RULESET_V3.flight.wings.every((w) => w.liftSpeedPm === 1000)).toBe(true);
   });
 
   it("S2: from a cornisa the climb takes half the ticks, never under 2 (round 5; 3 before)", () => {
@@ -312,7 +321,8 @@ describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () 
     const log = simulateRace(RULESET_V3, E, content.getCourse("ridge"), "corn");
     const ticks: Record<string, number> = {};
     for (const e of log.events ?? []) if (e.kind === "takeoff") ticks[e.style] = e.climbTicks;
-    expect(ticks).toEqual({ lance: 2, column: 2, ramp: 4 });
+    // neutral wings: the Turbina climbs to the ceiling too (3 ticks per band, 2 from a cornisa)
+    expect(ticks).toEqual({ lance: 2, column: 2, ramp: 4, turbine: 2 });
     const r4: Record<string, number> = {};
     const old = simulateRace(rulesetV3(1, FLIGHT_OFF_R5), E, content.getCourse("ridge"), "corn");
     for (const e of old.events ?? []) if (e.kind === "takeoff") r4[e.style] = e.climbTicks;

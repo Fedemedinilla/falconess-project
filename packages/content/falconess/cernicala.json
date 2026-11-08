@@ -23,6 +23,7 @@
   },
   "preferredPosition": "stalk",
   "uniqueSkills": ["wind-hover"],
+  "passive": "still-air",
   "sponsor": "altair",
   "seasonGoals": [
     {

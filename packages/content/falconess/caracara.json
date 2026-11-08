@@ -23,6 +23,7 @@
   },
   "preferredPosition": "pack",
   "uniqueSkills": ["scavenger-stride"],
+  "passive": "scrap-armor",
   "sponsor": "boneyard",
   "seasonGoals": [
     {

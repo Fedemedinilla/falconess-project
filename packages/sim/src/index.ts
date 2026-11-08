@@ -21,6 +21,7 @@ export {
   FLIGHT_OFF_1_3,
   FLIGHT_OFF_ALLFLY,
   FLIGHT_OFF_LINES,
+  FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
@@ -35,6 +36,7 @@ export {
   goalRaceSetup,
   NEUTRAL_WING,
   NEUTRAL_WINGS_R5,
+  NEUTRAL_WINGS_V3N,
   neutralFixtureEntry,
   PLAYER_RUNNER_ID,
   type RaceArena,
@@ -47,6 +49,7 @@ export {
   simulateRace,
   WINGS_R4,
   WINGS_V3,
+  WINGS_V3N,
   type WingFlight,
 } from "./race/index.js";
 export {

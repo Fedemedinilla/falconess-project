@@ -522,7 +522,7 @@ export function buildDerived(
   const out: RunnerDerived[] = [];
   E.forEach((e, i) => {
     const pulseFrame = T.pulseFrame[i] === 1;
-    const style = T.style[i] ?? 0;
+    const style = T.phys[i] ?? 0;
     const hpMilli = floorDiv(T.hpMax[i] ?? 0, 1000);
     const stamDiv = T.stamDiv[i] ?? 0;
     const lucky = T.luckyIdx[i] ?? -1;

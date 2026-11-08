@@ -274,6 +274,47 @@ export type FlightConstants = {
   readonly skimLiftMms: number;
   /** A skim (ground to the low band) is a shallow lift: she keeps all her speed whatever her wing's liftSpeedPm. */
   readonly skimKeepSpeed: boolean;
+  // --- neutral wings (owner, 2026-11-08: wings lose their stats; .work/design7/measure/neutral-final.md)
+  /**
+   * Every frame races on one neutral profile (`neutralFrame`): no manufacturer rule, no frame
+   * passive, no part or quirk effect; the Falconess's own passive (her signature frame's, now
+   * her skill) is the only passive. Read by `freezeEntry` (content side). false = the frame's stats.
+   */
+  readonly neutralFrames: boolean;
+  /** The neutral frame profile: PW ‰, energy, dissipation and durability (content units). */
+  readonly neutralFrame: {
+    readonly powerToWeight: number;
+    readonly energy: number;
+    readonly dissipation: number;
+    readonly durability: number;
+  };
+  /** No wear: overheat, crashes and water never cost durability and wings never break. */
+  readonly noWear: boolean;
+  /**
+   * The wing's style is only its gesture (the wing table): on the ground every runner races the
+   * same physics (no dive stoop, no hover draft, no glide start or lead terms, the Rasante jumps
+   * like everyone instead of going round). false = the style's ground physics of v2.
+   */
+  readonly neutralStyles: boolean;
+  /** ‰ added to the air cruise from the high band up (the line up there is quicker; 0 = off). */
+  readonly highCruisePm: number;
+  /**
+   * 0 = a skim (low band) climbs over the runner ahead after `escapeTicks`, like every band.
+   * Otherwise a skim keeps to her lines and only the lead climbs over the low traffic, after this
+   * many ticks of dirty air in a row (calmer bands; without it the Punta of the steps fell from
+   * 24 to 13 % at 750).
+   */
+  readonly skimEscapeTicks: number;
+  /** Pack: also skims every Salto that ends before the final (±20 m, like the lead) (false = off). */
+  readonly packJumps: boolean;
+  /**
+   * The Planeo's two ground terms belong to the lead position instead of the glide wing: neutral
+   * wings move them from the wing to the position the Planeo used to run (ADR-0008: Punta = the
+   * old Planeo): glideLeadDrainPm while nobody is ahead, and `leadStartAccelPm` ‰ of the start's
+   * acceleration (the Planeo's 1100 made the Punta win 44 % of the steps at 300; false = off).
+   */
+  readonly leadGlidePos: boolean;
+  readonly leadStartAccelPm: number;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -375,6 +416,26 @@ export const WINGS_V3: readonly [WingFlight, WingFlight, WingFlight, WingFlight]
     maxBand: 1,
     airPm: 0,
   },
+];
+/**
+ * The neutral wings of 2026-11-08 (owner: wings lose their stats): each style keeps only its
+ * gesture, the time to climb a band and to fall one (Lanza 2 / 2, Columna 4 / 3, Rampa 8 / 4,
+ * Turbina 3 / 3); every wing pays the same climb and hold, keeps all her speed on the lift, dives
+ * the same Δv, is towed ×1.005 and holds the same line. The Turbina flies every band now: a wing
+ * limited to the low band cannot be budget-neutral for a closer's great dive.
+ */
+export const WINGS_V3N: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
+  { ...NEUTRAL_WING, style: "lance", climbTicks: 2, diveTicks: 2 },
+  { ...NEUTRAL_WING, style: "column", climbTicks: 4, diveTicks: 3 },
+  { ...NEUTRAL_WING, style: "ramp", climbTicks: 8, diveTicks: 4 },
+  { ...NEUTRAL_WING, style: "turbine", climbTicks: 3, diveTicks: 3 },
+];
+/** STY-2's reference with neutral wings: one shape for all (4 ticks per band up, 3 down). */
+export const NEUTRAL_WINGS_V3N: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
+  { ...NEUTRAL_WING, style: "lance", climbTicks: 4 },
+  { ...NEUTRAL_WING, style: "column", climbTicks: 4 },
+  { ...NEUTRAL_WING, style: "ramp", climbTicks: 4 },
+  { ...NEUTRAL_WING, style: "turbine", climbTicks: 4 },
 ];
 /** The wing table of round 4 (4f9b899): band 1 at once, 3 / 6 / 12 ticks per band, 3 to fall. */
 export const WINGS_R4: readonly [WingFlight, WingFlight, WingFlight, WingFlight] = [
@@ -500,7 +561,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   holdE: 1,
   cornisaPm: 500,
   airDrainPm: 990,
-  diveVMms: [0, 0, 5_110, 5_430],
+  diveVMms: [0, 0, 5_110, 6_000],
   diveEtaBasePm: 700,
   diveEtaCouragePm: 600,
   marginM: 20,
@@ -538,19 +599,19 @@ export const FLIGHT_V3_E1: FlightConstants = {
   airHoldK: 10,
   airTechPm: 30,
   airPacePm: 800,
-  bandHoldPm: [1000, 1000, 1300, 1300],
+  bandHoldPm: [1000, 1000, 1000, 1300],
   dirtyM: 11,
   dirtyHoldPm: 2500,
   dirtyTechPm: 500,
   dirtyNoRest: true,
   fightM: 5,
   dirtyHighM: 24,
-  escapeTicks: 20,
-  knockTicks: 30,
+  escapeTicks: 45,
+  knockTicks: 45,
   knockCourTicks: 50,
   forcedLand: true,
   // step 1.3 (§3, L7)
-  wings: WINGS_V3,
+  wings: WINGS_V3N,
   cornisaTicksPm: 500,
   cornisaTicksFloor: 2,
   heldSkill: true,
@@ -620,20 +681,64 @@ export const FLIGHT_V3_E1: FlightConstants = {
   skimTerrainPm: 950,
   skimDrainPm: 990,
   skimHoldPm: 1000,
-  skimCruisePm: 3,
+  skimCruisePm: 8,
   skimClimbPm: 700,
   skimLandBasePm: 0,
   skimJumpPm: 700,
   skimWaterPm: 500,
-  skimLiftMms: 300,
+  skimLiftMms: 100,
   skimKeepSpeed: true,
+  // neutral wings (owner, 2026-11-08; .work/design7/measure/neutral-final.md): one frame profile
+  // (the race fixtures' neutral frame, close to the mean of the 13 frames: PW 1.03, energy 111,
+  // dissipation 62), no manufacturer rule, no wear, the style only a gesture
+  neutralFrames: true,
+  neutralFrame: { powerToWeight: 1000, energy: 100, dissipation: 60, durability: 100 },
+  noWear: true,
+  neutralStyles: true,
+  // balance polish on neutral wings (measure/neutral-final.md, probes neutral/pos.ts): the high
+  // band's line is 5 ‰ quicker and holds at 1000 ‰ (the Acecho lost the Columna's and Rampa's
+  // cheap hold and fell to 7 % of the sprint at 300); the great dive from the ceiling 5430 → 6000
+  // mm/s (the Remate lost the Picada's stoop); a skim lifts with 100 mm/s and cruises +8 ‰ (a
+  // premium by the metre, not by the takeoff: the Pelotón of the circuit skims four flats); the
+  // Pelotón skims the Saltos too (the ridge has one long flat); the Planeo's ground terms go to
+  // the Punta (lead drain, 1030 ‰ of the start's acceleration); calmer bands: only the lead climbs
+  // over the low traffic (after 90 ticks), and the over and the knock wait 45 ticks (3.4-3.9
+  // band changes per sprint race → 1.7)
+  highCruisePm: 5,
+  skimEscapeTicks: 90,
+  packJumps: true,
+  leadGlidePos: true,
+  leadStartAccelPm: 1030,
+};
+
+/** Neutral wings off: v3 is everyone flies (d3f5623) byte for byte (neutral/inv9.ts). */
+export const FLIGHT_OFF_NEUTRAL: Partial<FlightConstants> = {
+  wings: WINGS_V3,
+  neutralFrames: false,
+  noWear: false,
+  neutralStyles: false,
+  highCruisePm: 0,
+  skimEscapeTicks: 0,
+  packJumps: false,
+  leadGlidePos: false,
+  leadStartAccelPm: 1000,
+  bandHoldPm: [1000, 1000, 1300, 1300],
+  diveVMms: [0, 0, 5_110, 5_430],
+  skimLiftMms: 300,
+  skimCruisePm: 3,
+  escapeTicks: 20,
+  knockTicks: 30,
 };
 
 /** Everyone flies off: v3 is the two lines of 2026-11-08 (84dc112) byte for byte (harness/inv8.ts). */
-export const FLIGHT_OFF_ALLFLY: Partial<FlightConstants> = { allFly: false };
+export const FLIGHT_OFF_ALLFLY: Partial<FlightConstants> = { ...FLIGHT_OFF_NEUTRAL, allFly: false };
 
 /** The two lines off: v3 is round 5 (6bb4615) byte for byte (harness/inv7.ts). */
-export const FLIGHT_OFF_LINES: Partial<FlightConstants> = { allFly: false, lines: false };
+export const FLIGHT_OFF_LINES: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_NEUTRAL,
+  allFly: false,
+  lines: false,
+};
 
 /**
  * The values that turn every rule of steps 1.2 and 1.3 off: v3 with them is the round-2 race
@@ -644,6 +749,7 @@ export const FLIGHT_OFF_LINES: Partial<FlightConstants> = { allFly: false, lines
  * (harness/inv6.ts). `FLIGHT_OFF_1_3` and `FLIGHT_OFF_1_2` build on it.
  */
 export const FLIGHT_OFF_R5: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_NEUTRAL,
   allFly: false,
   lines: false,
   planned: [false, false, true, true],
@@ -930,6 +1036,15 @@ function packPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
       const a = Math.max(G.segStart[s] ?? 0, G.startEnd);
       const b = Math.min(G.segEnd[s] ?? 0, fa, G.reserveAt);
       if (b - a >= F.packFlatMinM * m) raw.push({ a, b, band: BAND_LOW, corn: false });
+    }
+  if (F.allFly && F.packJumps)
+    for (let s = 0; s < G.S; s++) {
+      if (G.segType[s] !== SEG_JUMP) continue;
+      const a = Math.max(G.startEnd, (G.segStart[s] ?? 0) - 20 * m);
+      const b = Math.min((G.segEnd[s] ?? 0) + 20 * m, fa, G.reserveAt);
+      // only a Salto she reaches after the start (one she meets in the start is jumped)
+      if ((G.segEnd[s] ?? 0) <= fa && (G.segStart[s] ?? 0) - 20 * m >= G.startEnd)
+        raw.push({ a, b, band: BAND_LOW, corn: false });
     }
   if (F.packFanDiv > 0) {
     const len = Math.max(F.packFanMinM * m, floorDiv(G.L, F.packFanDiv));

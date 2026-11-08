@@ -154,7 +154,7 @@ function exhaustPos(
     if (acc + h > budget) {
       const k = floorDiv(budget - acc, Math.max(1, d));
       const adv =
-        T.style[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
+        T.phys[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
           ? floorDiv(k * v * 1000, T.detour[i] ?? 1000)
           : k * v;
       return Math.min(z, a + adv);
@@ -184,7 +184,7 @@ export function mapBack(
     if (z <= a) continue;
     const len = routeDist(G, T, i, s, z - a);
     if (rest <= len)
-      return T.style[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
+      return T.phys[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
         ? z - floorDiv(rest * 1000, T.detour[i] ?? 1000)
         : z - rest;
     rest -= len;

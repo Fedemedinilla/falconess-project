@@ -37,6 +37,7 @@ import {
   engineUnits,
   MODE_OFF,
   PH_FINAL,
+  POS_LEAD,
   POS_PACK,
   POS_STALK,
   positionCode,
@@ -49,6 +50,7 @@ import {
   STYLE_DIVE,
   STYLE_GLIDE,
   STYLE_GROUND,
+  STYLE_NEUTRAL,
   styleCode,
 } from "./units.js";
 
@@ -144,8 +146,13 @@ const NK = MAX_LANES * MAX_SKILLS;
 
 /** Per-race tables of docs/race-engine.md 3.3, built before tick 0 and read-only in the loop. */
 export type RaceTables = {
-  /** The wings' style: their physics (9.8). */
+  /** The wings' style: their gesture in the air (the wing table) and, in v1/v2, their physics (9.8). */
   readonly style: Int32Array;
+  /**
+   * The style's ground physics (9.8): `style`, or STYLE_NEUTRAL when the v3 draft's
+   * `neutralStyles` is on (no dive stoop, hover draft, glide terms or ground route for anyone).
+   */
+  readonly phys: Int32Array;
   /** The race position: the controller row, its keep, hold and plan point (9.4, ADR-0008). */
   readonly position: Int32Array;
   readonly rule: Int32Array;
@@ -531,6 +538,7 @@ function createTables(): RaceTables {
   const NPS = NS * 3;
   return {
     style: i32(N),
+    phys: i32(N),
     position: i32(N),
     rule: i32(N),
     pwBroken: i32(N),
@@ -953,11 +961,16 @@ export function buildTables(
     if (e === undefined) continue;
     const tr = e.traits;
     const terms = compileRule(R, e.rule);
-    const st = styleCode(e.style);
+    const wingCode = styleCode(e.style);
+    const neutralStyle = F !== null && F.neutralStyles;
+    // the ground physics of the style; with neutral styles a code no STYLE_* test matches
+    const st = neutralStyle ? STYLE_NEUTRAL : wingCode;
+    const physName = neutralStyle ? "hover" : e.style; // name-keyed terms: hover's are all neutral
     const pc = positionCode(e.position);
     const rc = ruleCode(e.rule);
     const { agility, stamina, technique, courage, intelligence } = e.stats;
-    T.style[i] = st;
+    T.style[i] = wingCode;
+    T.phys[i] = st;
     T.position[i] = pc;
     T.rule[i] = rc;
 
@@ -984,7 +997,7 @@ export function buildTables(
         if (f < 1000 && (type === SEG_CURVES || type === SEG_WATER || type === SEG_CLIMB))
           T.f[is(i, s)] = 1000 - floorDiv((1000 - f) * F.groundGripPm, 1000);
       }
-    const sp = R.stylePace[e.style];
+    const sp = R.stylePace[physName];
     for (let b = 0; b < 2; b++) {
       const pw = powerVariant(R, e.powerToWeight, b);
       const pwc = variantPower(R, R.pwCruiseWeight, pw, b);
@@ -1022,7 +1035,13 @@ export function buildTables(
         const a = accelVu(R, technique, pwc, f, terms);
         T.acc[ibs(i, b, s)] = a;
         T.accStart[ibs(i, b, s)] =
-          st === STYLE_GLIDE ? floorDiv(a * R.style.glideStartAccelPm, 1000) : a;
+          F !== null && F.leadGlidePos
+            ? pc === POS_LEAD
+              ? floorDiv(a * F.leadStartAccelPm, 1000)
+              : a
+            : st === STYLE_GLIDE
+              ? floorDiv(a * R.style.glideStartAccelPm, 1000)
+              : a;
       }
       const B = boostThrustVu(KBOOST, pwb);
       const Bp = pulseThrustVu(R, KBOOST, pwb);
@@ -1050,11 +1069,11 @@ export function buildTables(
     T.heatCap[i] = heatCap;
     T.capLim[i] = terms.capLimRaw ? D : heatCap;
     T.coolTick[i] = coolTick(R, e.dissipation, terms);
-    T.dmgTick[i] = overheatDamage(R, e.style, terms);
+    T.dmgTick[i] = F !== null && F.noWear ? 0 : overheatDamage(R, physName, terms);
     T.regenTick[i] = terms.regenMe + tr.regenMe;
     T.Emax[i] = e.energy * 1000;
     T.durMax[i] = e.durabilityMax * 1000;
-    T.styleDmg[i] = styleDamagePm(R, e.style);
+    T.styleDmg[i] = styleDamagePm(R, physName);
     T.heatPenalty[i] = terms.heatPenalty ? 1 : 0;
     T.clampHeat[i] = terms.clampHeatAtD ? 1 : 0;
     T.licensed[i] =
@@ -1188,7 +1207,7 @@ export function buildTables(
  * detours a jump segment at `detour` ‰ of its length; everything else is the distance itself.
  */
 export function routeDist(G: CourseGeometry, T: RaceTables, i: number, s: number, d: number) {
-  return T.style[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
+  return T.phys[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
     ? floorDiv(d * (T.detour[i] ?? 1000), 1000)
     : d;
 }
@@ -1198,7 +1217,7 @@ export function routeDist(G: CourseGeometry, T: RaceTables, i: number, s: number
  * it is a ground runner (airborne, or on foot after a crash).
  */
 export function thrustable(G: CourseGeometry, T: RaceTables, i: number, s: number): boolean {
-  return !(G.segType[s] === SEG_JUMP && T.style[i] !== STYLE_GROUND);
+  return !(G.segType[s] === SEG_JUMP && T.phys[i] !== STYLE_GROUND);
 }
 
 /**
@@ -1209,7 +1228,7 @@ export function thrustable(G: CourseGeometry, T: RaceTables, i: number, s: numbe
  * course's first jump: what the tank must keep for the jumps at the gun.
  */
 function jumpReserve(G: CourseGeometry, T: RaceTables, i: number): void {
-  if (T.style[i] === STYLE_GROUND) return; // zero-filled by reset
+  if (T.phys[i] === STYLE_GROUND) return; // zero-filled by reset
   const Emax = T.Emax[i] ?? 0;
   let ahead = 0;
   for (let s = G.S - 1; s >= 0; s--) {
@@ -1245,7 +1264,7 @@ function budgetTables(
   vBase: number,
   pulseCostMe: number,
 ): void {
-  const ground = T.style[i] === STYLE_GROUND;
+  const ground = T.phys[i] === STYLE_GROUND;
   const hpMax = T.hpMax[i] ?? 0;
   const dkN = T.dK[i * 4] ?? 0;
   const dkF = T.dK[i * 4 + DK_FINAL] ?? 0;

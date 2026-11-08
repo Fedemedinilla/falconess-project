@@ -12,6 +12,7 @@ import { DEFAULT_POSITION, STAT_NAMES } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
 import type { Ruleset } from "../rulesets/index.js";
 import { effectiveStats } from "../stats.js";
+import { flightOf } from "./flight.js";
 import { compileTraits, statDeltas } from "./modifiers.js";
 
 /**
@@ -81,7 +82,7 @@ export function freezeEntry(
     throw new Error(`laneIndex ${laneIndex} outside 0..${lanes - 1}`);
 
   // 1. frame build (telemetry PW cap, power-cap, clamps)
-  const fb = resolveFrameBuild(
+  const fb0 = resolveFrameBuild(
     content,
     input.frameId,
     input.parts,
@@ -89,6 +90,28 @@ export function freezeEntry(
     ruleset.race.telemetryPowerCap,
   );
   const frame = content.getFrame(input.frameId);
+  // v3 draft (owner 2026-11-08): wings lose their stats. Every frame races on the neutral profile,
+  // with no manufacturer rule, no frame passive and no part or quirk effect; the only passive is
+  // the Falconess's own (her signature frame's, now her skill). The style stays: it is the gesture.
+  const F = flightOf(ruleset);
+  const neutral = F !== null && F.neutralFrames;
+  const ownPassive =
+    neutral && input.falconessId !== null
+      ? (content.getFalconess(input.falconessId).passive ?? null)
+      : null;
+  const fb = neutral
+    ? {
+        ...fb0,
+        rule: "none" as const,
+        powerToWeight: F.neutralFrame.powerToWeight,
+        energy: F.neutralFrame.energy,
+        dissipation: F.neutralFrame.dissipation,
+        durabilityMax: F.neutralFrame.durability,
+        modifiers: ownPassive !== null ? content.getPassive(ownPassive).modifiers : [],
+        parts: [],
+        quirks: [],
+      }
+    : fb0;
 
   // 2. effective stats: mood on all five, the race position's letter on intelligence (ADR-0008)
   const position = input.position ?? DEFAULT_POSITION[fb.style];
@@ -118,7 +141,10 @@ export function freezeEntry(
 
   // 5. traits; 6. starting durability
   const traits = compileTraits(fb.modifiers);
-  const durabilityStart = Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
+  const durabilityStart =
+    F !== null && F.noWear
+      ? fb.durabilityMax
+      : Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
 
   return {
     runnerId: input.runnerId,
@@ -130,7 +156,7 @@ export function freezeEntry(
     rule: fb.rule,
     style: fb.style,
     position,
-    passive: frame.passive ?? null,
+    passive: neutral ? ownPassive : (frame.passive ?? null),
     parts: [...fb.parts],
     quirks: [...fb.quirks],
     mood: input.mood,
