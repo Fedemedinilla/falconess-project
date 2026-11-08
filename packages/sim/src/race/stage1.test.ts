@@ -291,11 +291,12 @@ describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () 
   it("S1: the Lanza leaves 960 ‰ of her speed on the ground, the Rampa all of it", () => {
     const log = simulateRace(RULESET_V3, field(600), content.getCourse("canyon"), "lift");
     const t = (log.events ?? []).flatMap((e) => (e.kind === "takeoff" ? [e] : []));
-    // everyone flies: a skim from the ground (band 1) adds the skim's lift push on top
+    // everyone flies: a skim from the ground (band 1) keeps all her speed and adds the lift push
     const push = RULESET_V3.flight.skimLiftMms;
     for (const e of t) {
-      const keep = WINGS_V3.find((w) => w.style === e.style)?.liftSpeedPm ?? 0;
-      const add = e.band === 1 && e.fromBand === 0 ? push : 0;
+      const skim = e.band === 1 && e.fromBand === 0;
+      const keep = skim ? 1000 : (WINGS_V3.find((w) => w.style === e.style)?.liftSpeedPm ?? 0);
+      const add = skim ? push : 0;
       expect(Math.abs(e.vAfterMms - Math.floor((e.vMms * keep) / 1000) - add)).toBeLessThanOrEqual(
         1,
       );

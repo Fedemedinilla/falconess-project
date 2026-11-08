@@ -1595,7 +1595,9 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   endBurst(S.pulse, i);
   const wing = wingOf(F, style);
   const v0 = S.vCore[i] ?? 0;
-  if (from === 0) S.vCore[i] = floorDiv(v0 * wing.liftSpeedPm, 1000);
+  // stage 3 (allFly, skimKeepSpeed): a skim is a shallow lift, no wing loses speed on it
+  const keep = from === 0 && band === BAND_LOW && F.allFly && F.skimKeepSpeed;
+  if (from === 0 && !keep) S.vCore[i] = floorDiv(v0 * wing.liftSpeedPm, 1000);
   // stage 3 (allFly): a skim's lift pushes her (decays to her air cruise by kDecel)
   if (from === 0 && band === BAND_LOW && F.allFly && F.skimLiftMms > 0)
     S.vCore[i] = (S.vCore[i] ?? 0) + F.skimLiftMms * c.velPerMms;

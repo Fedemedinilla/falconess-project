@@ -272,6 +272,8 @@ export type FlightConstants = {
   readonly skimWaterPm: number;
   /** mm/s a takeoff from the ground to the low band adds to the body speed (the skim's lift push). */
   readonly skimLiftMms: number;
+  /** A skim (ground to the low band) is a shallow lift: she keeps all her speed whatever her wing's liftSpeedPm. */
+  readonly skimKeepSpeed: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -607,7 +609,9 @@ export const FLIGHT_V3_E1: FlightConstants = {
   // kick (circuit lead −13 m). So the low band pays 950 ‰ of the climb and water toll (the air
   // above 900 ‰), 700 ‰ of a Salto's lift, half the water hit, rests the legs like any flight, and
   // ends before the final; what it gives is a short lift push (300 mm/s, decays by kDecel), a
-  // cruise 3 ‰ above her air cruise and a cheap lift (700 ‰ of the climb).
+  // cruise 3 ‰ above her air cruise and a cheap lift (700 ‰ of the climb). Round 2: a skim keeps all
+  // her speed whatever the wing (the Lanza's 960 ‰ on every skim gave the Planeo 1-2 points of the
+  // equal sprint and the ridge at 450, WING-0).
   allFly: true,
   leadEarlyDiv: 3,
   leadEarlyMinM: 150,
@@ -622,6 +626,7 @@ export const FLIGHT_V3_E1: FlightConstants = {
   skimJumpPm: 700,
   skimWaterPm: 500,
   skimLiftMms: 300,
+  skimKeepSpeed: true,
 };
 
 /** Everyone flies off: v3 is the two lines of 2026-11-08 (84dc112) byte for byte (harness/inv8.ts). */
