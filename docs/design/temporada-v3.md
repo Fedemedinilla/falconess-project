@@ -955,6 +955,11 @@ https://claude.ai/artifact/4uB5HwJKRF4Zx6Hn4UdH11 (fuentes en `docs/design/proto
   la línea se pelea («¡POR ARRIBA!», «LA BAJARON»), caída sin energía, nervio al picar sobre el tráfico.
 - Medido: 39 de 48 criterios pasan, 6 fallan, 3 esperan la mirada del dueño. v1 y v2 idénticos.
 
+**Dueño sobre las maquetas v3 (2026-11-08):** se notan las distintas subidas y bajadas y las
+estrategias de cada corredora. Le gusta que **Remate sea la de más riesgo y más premio** (apostar todo
+al último sprint). **La pelea arriba hay que mejorarla:** más pasadas por los costados, no siempre en
+fila. Se resuelve antes de seguir.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
