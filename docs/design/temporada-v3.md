@@ -984,8 +984,15 @@ v2. **Regla del dueño:** avisar siempre cualquier desbalance de posición, ala,
 vuelo (el gesto: Lanza, Columna, Rampa, Turbina), con el mismo presupuesto, para no multiplicar los
 desbalances y que los datos y el balance sean fáciles de mantener. La decisión principal de carrera es
 la posición; la build, las stats. El ala firma deja de ser «la mejor opción» (T8): vale por identidad y
-acabados (T11, T13). Pendiente: qué pasa con las reglas de fabricante, la durabilidad y las piezas
-pasivas.
+acabados (T11, T13). Además (dueño, 2026-11-08):
+
+- **Se sacan las reglas de fabricante** en carrera (pulso Kōryū, empuje masivo Steinhaus, regeneración
+  Lumière, telemetría Altair, reparable Boneyard): todas las alas usan la misma física. Las escuelas
+  conservan su identidad por colores, cuadrillas y habilidades.
+- **Se saca el desgaste:** las alas no se gastan ni se rompen. El taller (T4) queda para habilidades y
+  aspecto; la chatarra pierde su uso principal (hay que darle otro: T18 o acabados).
+- **Las pasivas del ala firma pasan a ser habilidades de esa Falconess**; las genéricas pierden la
+  suya.
 
 ## T22 · La radio: los gritos del jugador
 
