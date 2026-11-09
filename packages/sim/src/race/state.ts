@@ -1178,7 +1178,7 @@ export function buildTables(
       T.u31[i] = A.U[i * block + 31] ?? 0;
       // the mile is won on the line up high: off her distance she needs longer to pull out, the
       // move costs more metres and she closes fewer doors
-      if (dPm > 0 && dist === DIST_MILE) {
+      if (dPm !== 0 && dist === DIST_MILE) {
         T.lnSideAt[i] = ceilDiv((T.lnSideAt[i] ?? 0) * (1000 + dPm), 1000);
         T.lnSwitch[i] = ceilDiv((T.lnSwitch[i] ?? 0) * (1000 + dPm), 1000);
         T.lnDoorP[i] = floorDiv((T.lnDoorP[i] ?? 0) * (1000 - dPm), 1000);

@@ -896,7 +896,7 @@ function airCruiseTick(
   if (draftPm !== 1000) ta = floorDiv(ta * draftPm, 1000);
   // distance letters: off her distance her air cruise gives `distAirPm` ‰
   const dAir = T.distAirPm[i] ?? 0;
-  if (dAir > 0 && !exhausted) ta = floorDiv(ta * (1000 - dAir), 1000);
+  if (dAir !== 0 && !exhausted) ta = floorDiv(ta * (1000 - dAir), 1000);
   const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
   S.vCore[i] = v;
   return v;
@@ -919,7 +919,7 @@ function airDrain(c: Ctx, i: number, F: FlightConstants, vOut: number, dK: numbe
     c.dist === DIST_LONG && F.distanceLetters
       ? floorDiv((c.T.distPm[i] ?? 0) * F.distanceRestPm, 1000)
       : 0;
-  const restPm = dPm > 0 ? Math.floor((restPm0 * (1000 + dPm)) / 1000) : restPm0;
+  const restPm = dPm !== 0 ? Math.floor((restPm0 * (1000 + dPm)) / 1000) : restPm0;
   const dKAir = Math.floor((dK * restPm) / 1000);
   const rPm = Math.floor((vOut * 1000) / c.vBase);
   const r2 = rPm * rPm;
@@ -1869,7 +1869,7 @@ function diveTotal(c: Ctx, i: number, from: number): number {
   const pm0 = Math.max(over, side);
   // distance letters: the mile is won on the line up high; off her distance the won line pays less
   const dPm = c.dist === DIST_MILE ? (c.T.distPm[i] ?? 0) : 0;
-  const pm = dPm > 0 ? floorDiv(pm0 * (1000 - dPm), 1000) : pm0;
+  const pm = dPm !== 0 ? floorDiv(pm0 * (1000 - dPm), 1000) : pm0;
   if (pm <= 0) return dv;
   return dv + floorDiv(floorDiv(dv, from) * pm, 1000);
 }
@@ -1986,7 +1986,10 @@ function touchdown(c: Ctx, i: number): void {
       c.rec.touchdown(c.t, i, p, Math.max(1, from), 0, cause);
     }
     // stamina pays effort: pulling out of a dive is a strong hit, per band fallen
-    if (F !== null && from >= 2) hpHit(c, i, F.hpDiveBand * from, "dive");
+    // (the band won over the line is not charged: the bar budgets her planned dive, and a won
+    // line must still pay on the long tracks, where every hp is metres)
+    if (F !== null && from >= 2)
+      hpHit(c, i, F.hpDiveBand * (from - (S.overWon[i] === 1 ? 1 : 0)), "dive");
   }
   if (flag(S, i, F_PLAN_ACTIVE)) requestReplan(S, i, CAUSE_JUMP);
 }

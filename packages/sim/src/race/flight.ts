@@ -358,7 +358,9 @@ export type FlightConstants = {
   /**
    * Distance letters (owner 2026-11-09): the course's distance (sprint ≤ distanceMaxM[0] m, mile ≤
    * [1], medium ≤ [2], long above) picks the entry's letter, and `distancePm[rank]` ‰ (S, A, B, C,
-   * D, E, F, G) worsens the distance's dominant aspect of flight: sprint the takeoff and the dive
+   * D, E, F, G; B = 0, the rivals' letter, so a field of B races as before and a letter only
+   * matters against the field: A −30, C +30 ‰) worsens (or, below 0, helps) the distance's
+   * dominant aspect of flight: sprint the takeoff and the dive
    * (climb cost up, dive Δv down), mile winning the line up high (knock sooner, door and won-line
    * bonus down, longer side move), medium the cost of holding altitude, long the legs' rest in the
    * air and the long flight's hold (half). false = no letter is read.
@@ -781,12 +783,12 @@ export const FLIGHT_V3_E1: FlightConstants = {
   hpBoxedPm: 3000,
   hpPlanRefStamina: 600,
   hpDirtySkimPm: 333,
-  hpDistPm: [1000, 150, 60, 40],
+  hpDistPm: [1000, 150, 60, 0],
   hpReplanHp: 10,
   exhaustedStill: true,
   distanceLetters: true,
   distanceMaxM: [1400, 1800, 2400],
-  distancePm: [0, 0, 30, 60, 90, 120, 150, 180],
+  distancePm: [-60, -30, 0, 30, 60, 90, 120, 150],
   distanceAirPm: [250, 250, 200, 100],
   distanceRestPm: 250,
   distanceDivePm: 2000,
@@ -1267,14 +1269,14 @@ export function planFlights(
   // distance letters (2026-11-09): ‰ off her distance, on that distance's aspect of flight
   const dPm = air.dPm ?? 0;
   const dist = air.dist ?? 0;
-  const sprintPm = dPm > 0 && dist === DIST_SPRINT ? dPm : 0;
+  const sprintPm = dPm !== 0 && dist === DIST_SPRINT ? dPm : 0;
   const climb0 = ceilDiv(F.climbE * 1000 * wing.climbCostPm, Math.max(1, liftF));
   // the sprint is the takeoff's and the dive's power: the climb costs more, the dive gives less
-  T.climbMe[i] = sprintPm > 0 ? ceilDiv(climb0 * (1000 + sprintPm), 1000) : climb0;
+  T.climbMe[i] = sprintPm !== 0 ? ceilDiv(climb0 * (1000 + sprintPm), 1000) : climb0;
   // L5: η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200; S1: × the wing's diveWingPm
   const eta0 = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(courage, 1200), 1200);
   const diveCut = Math.min(900, floorDiv(sprintPm * F.distanceDivePm, 1000));
-  const eta = diveCut > 0 ? floorDiv(eta0 * (1000 - diveCut), 1000) : eta0;
+  const eta = diveCut !== 0 ? floorDiv(eta0 * (1000 - diveCut), 1000) : eta0;
   for (let b = 0; b < 4; b++)
     T.diveV[i * 4 + b] =
       floorDiv((F.diveVMms[b] ?? 0) * eta * wing.diveWingPm, 1_000_000) * velPerMms;
@@ -1290,13 +1292,17 @@ export function planFlights(
     1000 + extra - floorDiv(extra * F.dirtyTechPm * Math.min(air.technique, 1200), 1_200_000);
   // L4: courage holds the line (the mile off her distance: she loses it sooner)
   const knock0 = F.knockTicks + floorDiv(F.knockCourTicks * Math.min(courage, 1200), 1200);
-  T.knockAt[i] = dPm > 0 && dist === DIST_MILE ? floorDiv(knock0 * (1000 - dPm), 1000) : knock0;
+  T.knockAt[i] = dPm !== 0 && dist === DIST_MILE ? floorDiv(knock0 * (1000 - dPm), 1000) : knock0;
   // the medium is the cost of holding altitude, the long its long flights (half): her hold lift
   // shrinks by the letter's ‰, so holding (R4) costs that much more
   const holdPm =
-    dPm > 0 && dist === DIST_MEDIUM ? dPm : dPm > 0 && dist === DIST_LONG ? floorDiv(dPm, 2) : 0;
+    dPm !== 0 && dist === DIST_MEDIUM
+      ? dPm
+      : dPm !== 0 && dist === DIST_LONG
+        ? floorDiv(dPm, 2)
+        : 0;
   const liftH0 = holdLift(F, T.style[i] ?? 0, liftF);
-  const liftH = holdPm > 0 ? floorDiv(liftH0 * 1000, 1000 + holdPm) : liftH0;
+  const liftH = holdPm !== 0 ? floorDiv(liftH0 * 1000, 1000 + holdPm) : liftH0;
   T.liftH[i] = liftH;
   T.flN[i] = 0;
   T.flRes0[i] = 0;
