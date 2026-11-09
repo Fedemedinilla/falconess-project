@@ -1210,6 +1210,14 @@ export function buildTables(
               ),
             }
           : {}),
+        ...(F.diveCourRel
+          ? {
+              diveCour: Math.max(
+                0,
+                600 + courage - floorDiv(agility + stamina + technique + courage + intelligence, 5),
+              ),
+            }
+          : {}),
       });
     // stamina pays effort (2026-11-09): the bar budgets her plan's hits at hpPlanRefStamina
     if (F !== null && F.hpPlanRefStamina > 0) {
@@ -1217,7 +1225,10 @@ export function buildTables(
       if (planned > 0)
         T.hpMax[i] =
           (T.hpMax[i] ?? 0) +
-          floorDiv(planned * 1_000_000 * 1_200_000, staminaDivisor(R, F.hpPlanRefStamina));
+          floorDiv(
+            planned * 1_000_000 * 1_200_000,
+            F.hpPlanOwn ? (T.stamDiv[i] ?? 1) : staminaDivisor(R, F.hpPlanRefStamina),
+          );
     }
 
     // reserves and budgets that read the tables above (14.4, 9.3)

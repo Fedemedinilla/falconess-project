@@ -426,6 +426,52 @@ export type FlightConstants = {
    * better: +100 Technique moves the centre 2 ‰ (2.5 before).
    */
   readonly airTechRel: boolean;
+  // --- balance polish (2026-11-09; .work/design7/measure/polish-final.md)
+  /**
+   * The Remate's dive room: with no descent or Salto inside the final to dive from, her great dive
+   * is planned `closerRoomM` before the line (0 = off: `closerPreFinalM` before the final, i.e. a
+   * third of the track before the line: 400 m of the sprint but 900-1000 m of the long tracks).
+   * Every dive plan keeps at least `closerRoomMinM` to the line (0 = off: `reserveAt`, 60 m): a
+   * Salto 90 m before the line made the circuit's Remate climb over it and dive 60 m out, too late
+   * for the dive or her kick. A dive that cannot keep it is planned before that feature (she
+   * takes it on her legs, like everyone). Reads only the geometry.
+   */
+  readonly closerRoomM: number;
+  readonly closerRoomMinM: number;
+  /**
+   * The dive's power (L5, η) reads her Courage against her own build, `600 + C − (A + S + T + C +
+   * I) / 5`, like the air's centre (`airTechRel`; false = absolute). With the absolute η a 300
+   * field dived at 850 ‰ and a 750 field at 1075 ‰: the Remate and the Acecho rose with the level
+   * of the field.
+   */
+  readonly diveCourRel: boolean;
+  /**
+   * The Punta jumps on her legs a Salto (or any obstacle) she meets in the start, like the Pelotón
+   * (`packJumps`): her skims take off from the start's end, and the early skim starts past an
+   * obstacle it would start inside (false = she took off 20 m before the steps' first Salto, in
+   * the middle of the start, and lost the start's push in dirty air behind the other Punta).
+   */
+  readonly leadStartJumps: boolean;
+  /**
+   * The bar budgets her plan's hits at her own Resistencia instead of `hpPlanRefStamina` (false =
+   * at 600): the plan is free and only the traffic costs, at every level. With 600 a 300 field paid
+   * ≈ 14 % of every planned takeoff and dive over its budget (the flyers exhausted sooner in the
+   * Milla and the Larga: open-sky Remate −6 m flying vs not at 300) and a 750 field got 5 % back.
+   */
+  readonly hpPlanOwn: boolean;
+  /**
+   * The great dive is the air's descent: while she dives from band ≥ 2 (a planned dive or a won
+   * line's, not a forced fall), a skill whose trigger is a descent («Golpe en picada», «Amiga de la
+   * gravedad») sees a descent (false = only the ground's descents: the Remate who flies over the
+   * Bajada of the final lost her only Bajada skill to the air).
+   */
+  readonly diveDescent: boolean;
+  /**
+   * The Remate dives from the last feature of the final: a Salto after the last descent wins over
+   * the descent's edge (false = the descent's edge first: on the ridge she held the ceiling 400 m
+   * over the whole Bajada and the Salto, and ran none of the Bajada on her legs).
+   */
+  readonly closerLastFeature: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -851,10 +897,35 @@ export const FLIGHT_V3_E1: FlightConstants = {
   hpTrafficSq: true,
   hpHitFloor: false,
   airTechRel: true,
+  // balance polish (2026-11-09, polish-final.md; probes .work/design7/polish): every great dive
+  // keeps 300 m to the line (circuit and steps), the Punta jumps the Saltos of the start on her
+  // legs, the bar budgets her plan at her own Resistencia, the dive's η reads her Courage against
+  // her build, and a dive is a descent for the descent skills. Measured and left off: a dive room
+  // for the tracks with no feature in the final (closerRoomM: the Larga's Remate at 300 rose to
+  // 45 %) and the Remate diving from the last feature of the final (closerLastFeature: 0 effect)
+  closerRoomM: 0,
+  closerRoomMinM: 300,
+  diveCourRel: true,
+  leadStartJumps: true,
+  hpPlanOwn: true,
+  diveDescent: true,
+  closerLastFeature: false,
+};
+
+/** The balance polish off: v3 is the kick on low hp (95e469f) byte for byte (polish/inv12.ts). */
+export const FLIGHT_OFF_POLISH: Partial<FlightConstants> = {
+  closerRoomM: 0,
+  closerRoomMinM: 0,
+  diveCourRel: false,
+  leadStartJumps: false,
+  hpPlanOwn: false,
+  diveDescent: false,
+  closerLastFeature: false,
 };
 
 /** The kick on low hp off: v3 is stamina pays effort (31f801b) byte for byte (kick/inv11.ts). */
 export const FLIGHT_OFF_KICK: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_POLISH,
   kickHiPm: [0, 0, 0, 0],
   kickLoPm: [0, 0, 0, 0],
   kickPace: false,
@@ -1162,15 +1233,29 @@ function stalkPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
 function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
   const fs = G.finalStart;
   const minLen = Math.max(F.closerMinM * m, floorDiv(G.L, F.closerLenDiv));
-  const cap = G.reserveAt;
+  // polish: every dive keeps closerRoomMinM to the line
+  const cap =
+    F.closerRoomMinM > 0 ? Math.min(G.reserveAt, G.L - F.closerRoomMinM * m) : G.reserveAt;
   const finish = (a: number, featureEnd: number, corn: boolean): Flight | null => {
     let b = Math.max(a + minLen, featureEnd + F.marginM * m, fs);
     b = extendEnd(G, b, F.lookM * m, F.marginM * m, Number.MAX_SAFE_INTEGER);
-    return b <= cap ? { a, b, band: BAND_CEILING, corn } : null;
+    if (b <= cap) return { a, b, band: BAND_CEILING, corn };
+    // polish: too close to the line to dive past it: the great dive goes before that feature
+    if (F.closerRoomMinM > 0) {
+      const fl = roomPlan(F, G, m, minLen, cap, a - F.lookM * m);
+      return fl[0] ?? null;
+    }
+    return null;
   };
-  // 1. the edge of the last descent that ends inside the final
+  // 1. the edge of the last descent that ends inside the final (polish: unless a Salto of the
+  // final starts after it: the last feature is the one she dives from)
   let pick: Flight | null = null;
+  let lastJump = -1;
+  if (F.closerLastFeature)
+    for (let s = 0; s < G.S; s++)
+      if (G.segType[s] === SEG_JUMP && (G.segStart[s] ?? 0) >= fs) lastJump = G.segStart[s] ?? 0;
   for (let s = G.S - 1; s >= 0 && pick === null; s--) {
+    if (G.segType[s] === SEG_DESCENT && (G.segStart[s] ?? 0) < lastJump) break;
     if (G.segType[s] !== SEG_DESCENT) continue;
     const sb = G.segEnd[s] ?? 0;
     if (sb > fs) pick = finish(G.segStart[s] ?? 0, sb, true);
@@ -1185,6 +1270,7 @@ function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] 
       break;
     }
   if (pick !== null) return [pick];
+  if (F.closerRoomM > 0) return roomPlan(F, G, m, minLen, cap, G.L - F.closerRoomM * m);
   // 3. 100 m before the final; if that stretch touches a canyon or an obstacle, after the last
   // one of the final; if that cannot touch down before L − 60 m, 100 m before the final anyway
   const a3 = Math.max(0, fs - F.closerPreFinalM * m);
@@ -1207,12 +1293,50 @@ function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] 
   return plain.b <= cap ? [{ ...plain, b: Math.min(plain.b, cap) }] : [];
 }
 
+/**
+ * Polish (closerRoomM): the great dive `closerRoomM` before the line. An obstacle or canyon the
+ * flight overlaps, or that starts within `lookM` after the dive, is flown over (the dive moves past
+ * it) while the dive keeps `cap`; otherwise the whole flight moves before that feature.
+ */
+function roomPlan(
+  F: FlightConstants,
+  G: CourseGeometry,
+  m: number,
+  minLen: number,
+  cap: number,
+  b0: number,
+) {
+  const blocked = (t: number) => t === SEG_CANYON || isObstacle(t);
+  let b = Math.min(cap, b0);
+  for (let guard = 0, again = true; guard < 8 && again; guard++) {
+    again = false;
+    for (let s = 0; s < G.S; s++) {
+      const sa = G.segStart[s] ?? 0;
+      const sb = (G.segEnd[s] ?? 0) + F.marginM * m;
+      if (!blocked(G.segType[s] ?? 0) || sa >= b + F.lookM * m || sb <= b - minLen) continue;
+      if (sa >= b - minLen && sb <= cap) b = Math.max(b, sb);
+      else {
+        b = sa - F.lookM * m;
+        again = true;
+        break;
+      }
+    }
+  }
+  const a = Math.max(G.startEnd, b - minLen);
+  return b > a ? [{ a, b, band: BAND_CEILING, corn: false }] : [];
+}
+
 /** Lead (stage 2): band 1 over every climb, water and jump, 20 m each side; joins gaps < 60 m. */
 function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
   const raw: { a: number; b: number }[] = [];
   // stage 3 (allFly): clean air at the front, a skim from the start's end
   if (F.allFly && F.leadEarlyDiv > 0) {
-    const a = G.startEnd;
+    let a = G.startEnd;
+    // polish: past an obstacle the start's end falls in (she lands it on her legs first)
+    if (F.leadStartJumps)
+      for (let s = 0; s < G.S; s++)
+        if (isObstacle(G.segType[s] ?? 0) && (G.segStart[s] ?? 0) <= a && (G.segEnd[s] ?? 0) > a)
+          a = (G.segEnd[s] ?? 0) + F.marginM * m;
     const len = Math.max(F.leadEarlyMinM * m, floorDiv(G.L, F.leadEarlyDiv));
     raw.push({ a, b: Math.min(G.finalStart, a + len) });
   }
@@ -1223,6 +1347,8 @@ function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
     if (!isObstacle(G.segType[s] ?? 0)) continue;
     const a = Math.max(0, (G.segStart[s] ?? 0) - F.marginM * m);
     if (F.allFly && a >= end) continue;
+    // polish: a Salto she meets in the start is jumped on her legs (like the pack's)
+    if (F.leadStartJumps && a < G.startEnd) continue;
     raw.push({ a, b: Math.min(end, (G.segEnd[s] ?? 0) + F.marginM * m) });
   }
   raw.sort((x, y) => x.a - y.a);
@@ -1357,6 +1483,8 @@ export function planFlights(
     dPm?: number;
     /** The Technique the air's centre reads (airTechRel); absent = `technique`. */
     airTech?: number;
+    /** The Courage the dive's η reads (diveCourRel); absent = `courage`. */
+    diveCour?: number;
   },
 ): void {
   const wing = wingOf(F, T.style[i] ?? 0);
@@ -1368,7 +1496,8 @@ export function planFlights(
   // the sprint is the takeoff's and the dive's power: the climb costs more, the dive gives less
   T.climbMe[i] = sprintPm !== 0 ? ceilDiv(climb0 * (1000 + sprintPm), 1000) : climb0;
   // L5: η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200; S1: × the wing's diveWingPm
-  const eta0 = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(courage, 1200), 1200);
+  const cEta = air.diveCour ?? courage;
+  const eta0 = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(cEta, 1200), 1200);
   const diveCut = Math.min(900, floorDiv(sprintPm * F.distanceDivePm, 1000));
   const eta = diveCut !== 0 ? floorDiv(eta0 * (1000 - diveCut), 1000) : eta0;
   for (let b = 0; b < 4; b++)

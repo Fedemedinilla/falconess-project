@@ -232,8 +232,11 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(run(L5old, 1)).toBe(5250);
     expect(run(L5old, 1200)).toBe(9750);
     // neutral wings (owner 2026-11-08): every wing dives the same Δv, 6000 × 0.7 and 6000 × 1.3
-    expect(run(rulesetV3(1, L5), 1)).toBe(4200);
-    expect(run(rulesetV3(1, L5), 1200)).toBe(7800);
+    expect(run(rulesetV3(1, { ...L5, diveCourRel: false }), 1)).toBe(4200);
+    expect(run(rulesetV3(1, { ...L5, diveCourRel: false }), 1200)).toBe(7800);
+    // polish (diveCourRel): η reads 600 + C − mean of her five stats (others 600): 121 and 1080
+    expect(run(rulesetV3(1, L5), 1)).toBe(4560);
+    expect(run(rulesetV3(1, L5), 1200)).toBe(7440);
   });
 
   it("round 4: the hover draft reaches a flight only with draftGroundOnly off; round 5 tows by band (F6)", () => {

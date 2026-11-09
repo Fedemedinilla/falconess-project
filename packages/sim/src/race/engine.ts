@@ -96,6 +96,7 @@ import {
   PH_START,
   POS_LEAD,
   SEG_CANYON,
+  SEG_DESCENT,
   SEG_FLAT,
   SEG_JUMP,
   SEG_WATER,
@@ -432,7 +433,13 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B3. skills in id order
   const seg = S.seg[i] ?? 0;
-  const segType = G.segType[seg] ?? SEG_FLAT;
+  const segType =
+    c.F?.diveDescent === true &&
+    S.flPhase[i] === 3 &&
+    (S.fromBand[i] ?? 0) >= 2 &&
+    S.fallCause[i] !== 1
+      ? SEG_DESCENT
+      : (G.segType[seg] ?? SEG_FLAT);
   runSkills(R, T, S, i, ph, segType, c.sink);
 
   // B4. a jump entered last tick resolves now, after skills
