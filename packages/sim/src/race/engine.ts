@@ -622,8 +622,11 @@ function runnerTick(c: Ctx, i: number): boolean {
   // ledger phase ticks here, in B11: a stalled tick (B2, or a failed jump at B4) never reaches it
   S.phaseTicks[i * 3 + ph] = (S.phaseTicks[i * 3 + ph] ?? 0) + 1;
   const mode = S.mode[i] ?? 0;
-  const tickFlags =
-    (boostOn ? FL.boosting : 0) |
+  // frame flags feed the frames only: a results-only race skips them
+  const full = rec.full;
+  const tickFlags = !full
+    ? 0
+    : (boostOn ? FL.boosting : 0) |
     (pulseTick ? FL.pulseBurst : 0) |
     (over ? FL.overheated : 0) |
     (detouring ? FL.detour : 0) |
@@ -639,7 +642,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.finishMilli[i] = finishMilliOf(t, G.L, pos, disp);
     S.timeTicks[i] = t + 1;
     S.vFinishMms[i] = floorDiv(vOut, c.velPerMms);
-    S.tickFlags[i] = tickFlags | stateFlags(c, i);
+    if (full) S.tickFlags[i] = tickFlags | stateFlags(c, i);
     return true;
   }
   let s = seg;
@@ -670,7 +673,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   } else tickSkillTimers(T, S, i);
   S.guardLeft[i] = sub0(S.guardLeft[i] ?? 0, 1);
   S.holdLeft[i] = sub0(S.holdLeft[i] ?? 0, 1);
-  S.tickFlags[i] = tickFlags | stateFlags(c, i);
+  if (full) S.tickFlags[i] = tickFlags | stateFlags(c, i);
   return false;
 }
 
@@ -735,7 +738,7 @@ function stalledTick(c: Ctx, i: number): void {
   S.isPulseTick[i] = 0;
   S.freeTick[i] = 0;
   S.stallTicks[i] = (S.stallTicks[i] ?? 0) + 1;
-  S.tickFlags[i] = FL.stalled | stateFlags(c, i);
+  if (c.rec.full) S.tickFlags[i] = FL.stalled | stateFlags(c, i);
 }
 
 /** Regen of a non-boost tick (8.1): ×`packRegenMultPm` in the middle pack, capped at Emax. */
@@ -1085,6 +1088,7 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   }
   if (lim <= 0) return;
   const highReach = F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
+  const flPhase = S.flPhase;
   for (let i = 0; i < n; i++) {
     const ai = altA[i] ?? 0;
     // L3: the high band's wake reaches dirtyHighM (feel round 2), the others dirtyM
@@ -1092,12 +1096,12 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
     let gap = reach + 1;
     let ahead = -1;
     let side = 0;
-    if (ai >= 1 && S.flPhase[i] === 2 && (live & (1 << i)) !== 0) {
+    if (ai >= 1 && flPhase[i] === 2 && (live & (1 << i)) !== 0) {
       const pi = pos[i] ?? 0;
       const li = line[i] ?? 0;
       const slot = lines ? (c.T.lnSlot[i] ?? 0) : 0;
       for (let j = 0; j < n; j++) {
-        if (j === i || (live & (1 << j)) === 0 || (altA[j] ?? 0) !== ai) continue;
+        if ((altA[j] ?? 0) !== ai || j === i || (live & (1 << j)) === 0) continue;
         const d = (pos[j] ?? 0) - pi;
         // two lines: the wake is only in her line; alongside in the other line takes her slot
         if (lines && (line[j] ?? 0) !== li) {
@@ -1117,8 +1121,8 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
       S.lnGap[i] = dirty > 0 ? gap : 0;
       S.side[i] = side;
     }
-    // `dirtyLog` acts only when the dirt starts or ends
-    const on = inDirtyAir(F, S, i);
+    // `dirtyLog` acts only when the dirt starts or ends (inDirtyAir written out, PERF-1)
+    const on = F.airDraftBand ? dirty === 2 : dirty > 0;
     if (on !== (S.dirtySince[i] ?? 0) > 0) dirtyLog(c, i, on);
   }
 }
@@ -1170,10 +1174,14 @@ function passTick(c: Ctx, live: number): void {
     const kind = alt >= 1 ? 1 : 2;
     const p0 = S.pos0[i] ?? 0;
     const pi = S.pos[i] ?? 0;
+    const pos0 = S.pos0;
+    const posN = S.pos;
     for (let j = 0; j < n; j++) {
+      // PERF-1: the crossing test first (almost always false), the same conditions
+      if (!(p0 < (pos0[j] ?? 0) && pi > (posN[j] ?? 0))) continue;
       if (j === i || (live & (1 << j)) === 0) continue;
       const x = i * MAX_LANES + j;
-      if ((S.passSince[x] ?? 0) > 0 || !(p0 < (S.pos0[j] ?? 0) && pi > (S.pos[j] ?? 0))) continue;
+      if ((S.passSince[x] ?? 0) > 0) continue;
       S.passSince[x] = t + 1;
       S.passKind[x] = kind;
       c.passPending += 1;

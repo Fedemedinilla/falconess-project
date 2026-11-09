@@ -59,18 +59,37 @@ export const KEY_FINISHED = 1e15;
  * O(n²) compares into preallocated arrays, no sort.
  */
 export function rankSnapshot(S: RaceState, n: number): void {
+  const key = S.key;
   for (let i = 0; i < n; i++)
-    S.key[i] =
+    key[i] =
       ((S.flags[i] ?? 0) & F_FINISHED) !== 0
         ? KEY_FINISHED - (S.finishMilli[i] ?? 0)
         : (S.pos[i] ?? 0);
+  // ahead[i] = how many keys are strictly greater (PERF-1: each pair compared once)
+  const ahead = S.ahead;
+  for (let i = 0; i < n; i++) ahead[i] = 0;
   for (let i = 0; i < n; i++) {
-    const ki = S.key[i] ?? 0;
-    let ahead = 0;
-    for (let j = 0; j < n; j++) if ((S.key[j] ?? 0) > ki) ahead++;
-    S.ahead[i] = ahead;
-    S.posFrac[i] = n > 1 ? floorDiv(ahead * 1000, n - 1) : 0;
+    const ki = key[i] ?? 0;
+    for (let j = i + 1; j < n; j++) {
+      const kj = key[j] ?? 0;
+      if (kj > ki) ahead[i] = (ahead[i] ?? 0) + 1;
+      else if (ki > kj) ahead[j] = (ahead[j] ?? 0) + 1;
+    }
   }
+  const frac = posFracRow(n);
+  for (let i = 0; i < n; i++) S.posFrac[i] = frac[ahead[i] ?? 0] ?? 0;
+}
+
+/** `fl(ahead × 1000, n − 1)` for every `ahead` of a field of n (0 for n ≤ 1), built once per n. */
+const POS_FRAC: Int32Array[] = [];
+function posFracRow(n: number): Int32Array {
+  let row = POS_FRAC[n];
+  if (row === undefined) {
+    row = new Int32Array(Math.max(1, n));
+    for (let a = 0; a < n; a++) row[a] = n > 1 ? floorDiv(a * 1000, n - 1) : 0;
+    POS_FRAC[n] = row;
+  }
+  return row;
 }
 
 /** "Middle of the pack" (9.1): `R.style.packLo ≤ posFrac ≤ R.style.packHi`. */
@@ -142,6 +161,25 @@ export function keepOk(
   if (kf > 0 && (S.flRes[i] ?? 0) > 0)
     return left - (T.jr[is(i, S.seg[i] ?? 0)] ?? 0) >= Math.max(keep, kf);
   return left - jrNow(T, S, i, S.seg[i] ?? 0) >= keep;
+}
+
+/**
+ * The energy gate of 9.3: a free boost, or the energy after the boost covers the jump reserve
+ * (and, the kick on low hp, 2026-11-09, the energy her spurt and kick leave locked in the tank).
+ */
+function energyGate(
+  R: RaceConstants,
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  seg: number,
+  mode: number,
+  freeLeft: number,
+  freeBit: number,
+): boolean {
+  if (freeLeft > 0 || freeBit !== 0) return true;
+  const lock = mode === MODE_KICK || mode === MODE_PLAN ? (S.kickLock[i] ?? 0) : 0;
+  return (S.energy[i] ?? 0) - costBoost(R, T, i) >= jrNow(T, S, i, seg) + lock;
 }
 
 /**
@@ -338,13 +376,9 @@ export function decide(
   const canThrust = (flags & F_EXHAUSTED) === 0 && !airborne && !onJump;
   const bit = 1 << segType;
   const freeLeft = S.freeLeft[i] ?? 0;
-  const freeAvail = freeLeft > 0 || ((P.freeMask[i] ?? 0) & bit) !== 0;
-  // the kick on low hp (2026-11-09): the spurt and the kick leave her locked energy in the tank
-  const lock = mode === MODE_KICK || mode === MODE_PLAN ? (S.kickLock[i] ?? 0) : 0;
-  const energyOk =
-    freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= jrNow(T, S, i, seg) + lock;
+  // the gates are pure reads: evaluated only when she wants and can thrust (PERF-1)
   let gatesOk = false;
-  if (want && canThrust && energyOk) {
+  if (want && canThrust && energyGate(R, T, S, i, seg, mode, freeLeft, (P.freeMask[i] ?? 0) & bit)) {
     const capLim = T.capLim[i] ?? 0;
     const capMode =
       mode === MODE_SURPLUS
