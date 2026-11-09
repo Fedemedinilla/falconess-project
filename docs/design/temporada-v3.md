@@ -1011,6 +1011,14 @@ las velocistas no tienen). Requisito para que funcione: la Resistencia tiene que
 (hoy +100 vale 0 m ahí). Pendiente: elegir dónde actúa la letra (Agilidad del último tercio u
 opción «la distancia se juega en el aire»).
 
+**Físico, distancias y caja (2026-11-09), prototipo medido** (`.work/design7/measure/stamina-final.md`).
+Las maniobras gastan físico; cuatro distancias con letras en escalera que actúan en el vuelo (B es el
+cero: A +3 %, C −3 %); la caja sube una letra de C a B. 47 de 55 criterios pasan. **Hallazgo:** con
+golpes suaves la Resistencia sigue valiendo casi 0 en Sprint (0,2 m); con golpes fuertes vale 10 m en
+Sprints peleados pero un cuarto del campo se agota cerca de la meta y la carrera se vuelve lotería.
+Falta una regla: que el físico bajo acorte el remate de a poco. Saltitos con propulsor en el suelo:
+hechos (solo visual).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
