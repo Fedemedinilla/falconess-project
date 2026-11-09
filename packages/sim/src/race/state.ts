@@ -523,6 +523,10 @@ export type RaceState = {
   readonly hpCost: Float64Array;
   /** µhp of traffic drip since her last sprint plan (replans past `hpReplanHp`). */
   readonly dripSince: Float64Array;
+  /** The kick on low hp (2026-11-09): me of energy her spurt and kick may not spend (her last plan). */
+  readonly kickLock: Float64Array;
+  /** The kick on low hp: ‰ taken off her final cruise to reach the line on her hp (0 = none). */
+  readonly paceCut: Int32Array;
   /** 1 = the `pass` candidate (i × MAX_LANES + j) is by the side (same band, other line). */
   readonly passSide: Uint8Array;
 };
@@ -817,6 +821,8 @@ function createState(): RaceState {
     lineMm: f64(N),
     hpCost: f64(N),
     dripSince: f64(N),
+    kickLock: f64(N),
+    paceCut: i32(N),
     passSide: u8(N * N),
   };
 }

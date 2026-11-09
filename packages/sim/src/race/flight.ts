@@ -378,6 +378,38 @@ export type FlightConstants = {
   readonly distanceRestPm: number;
   /** ‰ of the letter's pm taken off the dive's Δv in the sprint (the takeoff's climb pays 1000 ‰). */
   readonly distanceDivePm: number;
+  // --- the kick on low hp (owner 2026-11-09, .work/design7/measure/kick-final.md)
+  /**
+   * The final sprint on low hp: at each plan or replan, with `h` = her hp in ‰ of her bar, the
+   * share of her energy the spurt and the kick may spend is `kick = clamp(1000 × (h − lo) / (hi −
+   * lo), 0, 1000)` ‰ (`kickHiPm`, `kickLoPm` per distance: sprint, mile, medium, long; hi 0 = off,
+   * kick 1000). The rest stays in the tank, locked for the spurt and the kick: full bar, full
+   * sprint; half, a shorter one; almost empty, she barely pushes.
+   */
+  readonly kickHiPm: readonly [number, number, number, number];
+  readonly kickLoPm: readonly [number, number, number, number];
+  /**
+   * With the kick on: when the plan sees she cannot reach the line at final cruise, she paces
+   * herself (`pace = 1000 × hp / cruise hp`, ≥ `kickPaceMinPm`, ‰ of the final cruise, never under
+   * the speed floor) instead of emptying and falling to the floor (false = off).
+   */
+  readonly kickPace: boolean;
+  readonly kickPaceMinPm: number;
+  /** With the kick on: a replan after a hit or the drip ignores `maxReplans` (false = off). */
+  readonly kickReplanFree: boolean;
+  /**
+   * The kick on low hp: the line fight's hit splits by side (hp at stamina 0, like `hpFight`):
+   * `hpKnock` the one knocked down, `hpDoor` the one a door was closed on (`hpFight` stays the
+   * winner's, who goes over). With the kick off both are `hpFight`.
+   */
+  readonly hpKnock: number;
+  readonly hpDoor: number;
+  /**
+   * The kick on low hp: the traffic's hits (switch, fight, knock, door) shrink by her Resistencia
+   * twice, `× (1.2e6 / stamDiv)²` (the plan's takeoffs and dives keep the single factor; false =
+   * once, as before): the body that resists pays much less for the same fight.
+   */
+  readonly hpTrafficSq: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -777,13 +809,13 @@ export const FLIGHT_V3_E1: FlightConstants = {
   hpTakeoff: 30,
   hpSkimTakeoff: 20,
   hpDiveBand: 15,
-  hpSwitch: 20,
-  hpFight: 30,
-  hpDirtyPm: 1500,
+  hpSwitch: 32,
+  hpFight: 0,
+  hpDirtyPm: 1000,
   hpBoxedPm: 3000,
   hpPlanRefStamina: 600,
   hpDirtySkimPm: 333,
-  hpDistPm: [1000, 150, 60, 0],
+  hpDistPm: [1000, 50, 20, 0],
   hpReplanHp: 10,
   exhaustedStill: true,
   distanceLetters: true,
@@ -792,15 +824,47 @@ export const FLIGHT_V3_E1: FlightConstants = {
   distanceAirPm: [250, 250, 200, 100],
   distanceRestPm: 250,
   distanceDivePm: 2000,
+  // the kick on low hp (owner 2026-11-09, kick-final.md)
+  kickHiPm: [150, 0, 0, 0],
+  kickLoPm: [0, 0, 0, 0],
+  kickPace: false,
+  kickPaceMinPm: 0,
+  kickReplanFree: true,
+  hpKnock: 144,
+  hpDoor: 144,
+  hpTrafficSq: true,
+};
+
+/** The kick on low hp off: v3 is stamina pays effort (31f801b) byte for byte (kick/inv11.ts). */
+export const FLIGHT_OFF_KICK: Partial<FlightConstants> = {
+  kickHiPm: [0, 0, 0, 0],
+  kickLoPm: [0, 0, 0, 0],
+  kickPace: false,
+  kickPaceMinPm: 0,
+  kickReplanFree: false,
+  hpKnock: 30,
+  hpDoor: 30,
+  hpTrafficSq: false,
+  hpTakeoff: 30,
+  hpSkimTakeoff: 20,
+  hpDiveBand: 15,
+  hpSwitch: 20,
+  hpFight: 30,
+  hpDirtyPm: 1500,
+  hpBoxedPm: 3000,
+  hpDistPm: [1000, 150, 60, 0],
 };
 
 /** Stamina pays effort and the distance letters off: v3 is the neutral wings (9bfaf58) byte for byte (stamina/inv10.ts). */
 export const FLIGHT_OFF_STAMINA: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_KICK,
   hpTakeoff: 0,
   hpSkimTakeoff: 0,
   hpDiveBand: 0,
   hpSwitch: 0,
   hpFight: 0,
+  hpKnock: 0,
+  hpDoor: 0,
   hpDirtyPm: 0,
   hpBoxedPm: 0,
   hpPlanRefStamina: 0,
@@ -985,6 +1049,8 @@ export function effortCosts(F: FlightConstants): boolean {
     F.hpDiveBand > 0 ||
     F.hpSwitch > 0 ||
     F.hpFight > 0 ||
+    F.hpKnock > 0 ||
+    F.hpDoor > 0 ||
     F.hpDirtyPm > 0 ||
     F.hpBoxedPm > 0
   );

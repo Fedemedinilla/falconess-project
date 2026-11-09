@@ -42,7 +42,25 @@ export type PlanReport = {
   /** Planned on-ticks of the chosen candidate. */
   onTicks: number;
   clean: boolean;
+  /** The kick on low hp: ‰ of her energy the spurt and kick may spend (1000 = full, rule off). */
+  kickPm: number;
+  /** The kick on low hp: ‰ of her final cruise she paces at to reach the line (1000 = none). */
+  pacePm: number;
 };
+
+/** The kick on low hp (owner 2026-11-09): this distance's knees (hi 0 = off) and the pace. */
+export type KickRule = { hiPm: number; loPm: number; pace: boolean; paceMinPm: number };
+export const KICK_OFF: KickRule = { hiPm: 0, loPm: 0, pace: false, paceMinPm: 0 };
+
+/**
+ * `kick(h)` ‰ for `h` = the hp she holds beyond the cruise to the line, in ‰ of her bar: 1000 from `hiPm` up, 0 at `loPm` and below, a straight
+ * line between (integer, monotone, continuous).
+ */
+export function kickPm(K: KickRule, h: number): number {
+  if (K.hiPm <= 0 || h >= K.hiPm) return 1000;
+  if (h <= K.loPm) return 0;
+  return floorDiv(1000 * (h - K.loPm), Math.max(1, K.hiPm - K.loPm));
+}
 
 export function createPlanReport(): PlanReport {
   return {
@@ -56,6 +74,8 @@ export function createPlanReport(): PlanReport {
     candidates: 0,
     onTicks: 0,
     clean: true,
+    kickPm: 1000,
+    pacePm: 1000,
   };
 }
 
@@ -208,6 +228,7 @@ export function planSprint(
   i: number,
   out: PlanReport,
   hpKeep = 0,
+  K: KickRule = KICK_OFF,
 ): void {
   S.planCount[i] = (S.planCount[i] ?? 0) + 1;
   const pos = S.pos[i] ?? 0;
@@ -226,6 +247,27 @@ export function planSprint(
   out.candidates = 0;
   out.onTicks = 0;
   out.clean = true;
+  out.kickPm = 1000;
+  out.pacePm = 1000;
+
+  // the kick on low hp (owner 2026-11-09): what her bar holds beyond the cruise to the line decides
+  // how much of the tank the final may spend; below the cruise she paces herself
+  let Ek = Ep;
+  if (K.hiPm > 0) {
+    const vB = R.vBase * R.ticksPerSecond;
+    const need = cruiseHp(G, T, i, S.b[i] ?? 0, vB, T.dK[i * 4 + DK_FINAL] ?? 0, pos, G.L);
+    const spare = floorDiv((hpP - need) * 1000, Math.max(1, T.hpMax[i] ?? 1));
+    let k = kickPm(K, spare);
+    let cut = 0;
+    if (K.pace && need > hpP)
+      cut = 1000 - Math.max(K.paceMinPm, floorDiv(hpP * 1000, Math.max(1, need)));
+    if (cut > 0) k = 0;
+    S.paceCut[i] = cut;
+    S.kickLock[i] = floorDiv(Math.max(0, energy - jr) * (1000 - k), 1000);
+    Ek = floorDiv(Ep * k, 1000);
+    out.kickPm = k;
+    out.pacePm = 1000 - cut;
+  }
 
   if (((S.flags[i] ?? 0) & F_EXHAUSTED) !== 0) {
     none(S, i, pos, out, "exhausted");
@@ -244,8 +286,8 @@ export function planSprint(
   }
   const pulseFrame = T.pulseFrame[i] === 1;
   const costOn = T.costOn[i] ?? 1;
-  if (Ep < (pulseFrame ? R.pulseTicks * costOn : costOn)) {
-    none(S, i, pos, out, "no-energy");
+  if (Ek < (pulseFrame ? R.pulseTicks * costOn : costOn)) {
+    none(S, i, pos, out, Ek < Ep ? "hp-limited" : "no-energy");
     return;
   }
 
@@ -255,7 +297,7 @@ export function planSprint(
   // 1. window end: cut where the projected hp runs out (thrust is disabled at hp 0)
   const cbar0 = Math.max(1, floorDiv(Dw0, Math.max(1, thrustTicks(G, T, i, b, pos, kickAt))));
   const extraHp =
-    floorDiv(Ep, costOn) * Math.max(0, drainF(cbar0 + Bon, vBase, dkF) - drainF(cbar0, vBase, dkF));
+    floorDiv(Ek, costOn) * Math.max(0, drainF(cbar0 + Bon, vBase, dkF) - drainF(cbar0, vBase, dkF));
   const hpCruise = cruiseHp(G, T, i, b, vBase, dkF, pos, G.L);
   let wEnd = kickAt;
   let hpLimited = false;
@@ -295,7 +337,7 @@ export function planSprint(
     const v = cbar + s;
     const TwS = ceilDiv(Dw, v); // ticks to cross the window at level s
     const eTB = s * costOn - (Bon - s) * regen; // energy per tick × Bon
-    const tbE = eTB > 0 ? floorDiv(Ep * Bon, eTB) : TwS;
+    const tbE = eTB > 0 ? floorDiv(Ek * Bon, eTB) : TwS;
     const capped = tbE >= TwS;
     const tb = capped ? TwS : tbE;
     if (tb === 0) continue;
@@ -305,7 +347,7 @@ export function planSprint(
       ? nOn * Bon // pulses are whole: quantised gain
       : capped
         ? floorDiv(s * Dw, v)
-        : floorDiv(s * Ep * Bon, eTB);
+        : floorDiv(s * Ek * Bon, eTB);
     const hold = floorDiv(Dw - X, cbar); // jump ticks also cool: ignoring them is conservative
     const h1 = sub0(heat, hold * cool); // heat when the spurt starts
     const hOn = capLim >= h1 ? floorDiv(capLim - h1 + tb * cool, R.kH + cool) : 0;

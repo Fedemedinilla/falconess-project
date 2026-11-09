@@ -339,7 +339,10 @@ export function decide(
   const bit = 1 << segType;
   const freeLeft = S.freeLeft[i] ?? 0;
   const freeAvail = freeLeft > 0 || ((P.freeMask[i] ?? 0) & bit) !== 0;
-  const energyOk = freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= jrNow(T, S, i, seg);
+  // the kick on low hp (2026-11-09): the spurt and the kick leave her locked energy in the tank
+  const lock = mode === MODE_KICK || mode === MODE_PLAN ? (S.kickLock[i] ?? 0) : 0;
+  const energyOk =
+    freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= jrNow(T, S, i, seg) + lock;
   let gatesOk = false;
   if (want && canThrust && energyOk) {
     const capLim = T.capLim[i] ?? 0;

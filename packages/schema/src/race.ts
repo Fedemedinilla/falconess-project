@@ -420,6 +420,10 @@ export const RaceEvent = z.discriminatedUnion("kind", [
     candidates: Nat,
     onTicks: Nat,
     clean: z.boolean(),
+    /** Ruleset v3, the kick on low hp (2026-11-09): ‰ of her energy the final may spend. */
+    kickPm: Nat.optional(),
+    /** Ruleset v3, the kick on low hp: ‰ of her final cruise she paces at (1000 = none). */
+    pacePm: Nat.optional(),
   }),
   raceEvent("skill", {
     skillId: Slug,

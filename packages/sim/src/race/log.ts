@@ -192,6 +192,8 @@ export class RaceRecorder {
       candidates: number;
       onTicks: number;
       clean: boolean;
+      kickPm?: number;
+      pacePm?: number;
     },
   ): void {
     if (this.full) this.list.push({ kind: "sprintPlan", tick, lane, posMm, ...plan });

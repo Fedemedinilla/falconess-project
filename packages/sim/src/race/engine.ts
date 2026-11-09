@@ -42,7 +42,7 @@ import {
   waterHitMd,
 } from "./physics.js";
 import { requestReplan, runSkills, type SkillSink, tickSkillTimers } from "./skills.js";
-import { createPlanReport, type PlanReport, planSprint } from "./sprint.js";
+import { createPlanReport, KICK_OFF, type KickRule, type PlanReport, planSprint } from "./sprint.js";
 import {
   buildTables,
   CAUSE_BROKEN,
@@ -128,6 +128,8 @@ type Ctx = {
   readonly sink: SkillSink;
   /** Stamina pays effort (2026-11-09): this course's distance (DIST_*; 0 in v1 and v2). */
   readonly dist: number;
+  /** The kick on low hp (2026-11-09): this course's knees and pace (KICK_OFF when off). */
+  readonly kick: KickRule;
   /** Controller scratch and its event sink (9, 12). */
   readonly ctl: Controller;
   /** Scratch of the sprint plan (11.3). */
@@ -252,6 +254,15 @@ function runRace(
     dist: (() => {
       const F0 = flightOf(ruleset);
       return F0 !== null ? distanceCode(F0, G.lengthMm) : 0;
+    })(),
+    kick: (() => {
+      const F0 = flightOf(ruleset);
+      if (F0 === null) return KICK_OFF;
+      const d = distanceCode(F0, G.lengthMm);
+      const hiPm = F0.kickHiPm[d] ?? 0;
+      return hiPm > 0
+        ? { hiPm, loPm: F0.kickLoPm[d] ?? 0, pace: F0.kickPace, paceMinPm: F0.kickPaceMinPm }
+        : KICK_OFF;
     })(),
     sink: {
       onSkill: (i, j, p, u, k) => {
@@ -446,7 +457,12 @@ function runnerTick(c: Ctx, i: number): boolean {
   // B6. sprint plan: the first at the plan point, then at most maxReplans replans (11.1)
   if (flag(S, i, F_REPLAN)) {
     clearFlag(S, i, F_REPLAN);
-    if ((S.planCount[i] ?? 0) <= R.maxReplans) sprintPlan(c, i);
+    // the kick on low hp: the body's replans (a hit, the drip) are never capped
+    if (
+      (S.planCount[i] ?? 0) <= R.maxReplans ||
+      (c.kick.hiPm > 0 && c.F?.kickReplanFree === true && S.replanCause[i] === CAUSE_EFFORT)
+    )
+      sprintPlan(c, i);
   }
 
   // B7. decision: mode, accumulator, gates, licence, free boost, pulse state machine (9, 12)
@@ -459,6 +475,10 @@ function runnerTick(c: Ctx, i: number): boolean {
   const style = T.phys[i] ?? 0;
   const pack = inPack(R, S, i);
   let tgt = (exhausted ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
+  // the kick on low hp: she paces her final cruise to reach the line on what she has
+  const cut = S.paceCut[i] ?? 0;
+  if (cut > 0 && ph === PH_FINAL && !exhausted)
+    tgt = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, floorDiv(tgt * (1000 - cut), 1000));
   // F6 (round 5): in the air the tow is one rule by band and metres (step A2), for every wing
   const airBand = airborne && c.F?.airDraftBand === true;
   const drafting = airBand
@@ -657,7 +677,7 @@ function runnerTick(c: Ctx, i: number): boolean {
 /** Step B6: plan (or replan) the final sprint and log the `sprintPlan` event (11, 20.4). */
 function sprintPlan(c: Ctx, i: number): void {
   const { R, G, T, S, plan: p } = c;
-  planSprint(R, G, T, S, i, p, c.F !== null ? pendingDiveHp(c, c.F, i) : 0);
+  planSprint(R, G, T, S, i, p, c.F !== null ? pendingDiveHp(c, c.F, i) : 0, c.kick);
   if (!c.rec.full) return;
   const cause: SprintPlanCause = PlanCauses.options[S.replanCause[i] ?? 0] ?? "phase";
   c.rec.sprintPlan(c.t, i, posMm(c, i), {
@@ -675,6 +695,7 @@ function sprintPlan(c: Ctx, i: number): void {
     candidates: p.candidates,
     onTicks: p.onTicks,
     clean: p.clean,
+    ...(c.kick.hiPm > 0 ? { kickPm: p.kickPm, pacePm: p.pacePm } : {}),
   });
 }
 
@@ -897,6 +918,10 @@ function airCruiseTick(
   // distance letters: off her distance her air cruise gives `distAirPm` ‰
   const dAir = T.distAirPm[i] ?? 0;
   if (dAir !== 0 && !exhausted) ta = floorDiv(ta * (1000 - dAir), 1000);
+  // the kick on low hp: the paced final cruise in the air too
+  const cut = S.paceCut[i] ?? 0;
+  if (cut > 0 && ph === PH_FINAL && !exhausted)
+    ta = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, floorDiv(ta * (1000 - cut), 1000));
   const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
   S.vCore[i] = v;
   return v;
@@ -953,10 +978,11 @@ function hpHit(
   const F = c.F;
   const dPm =
     F !== null && cause !== "takeoff" && cause !== "dive" ? (F.hpDistPm[c.dist] ?? 1000) : 1000;
-  const micro = floorDiv(
-    floorDiv(hp * 1_000_000 * 1_200_000, Math.max(1, c.T.stamDiv[i] ?? 1)) * dPm,
-    1000,
-  );
+  const div = Math.max(1, c.T.stamDiv[i] ?? 1);
+  let micro = floorDiv(floorDiv(hp * 1_000_000 * 1_200_000, div) * dPm, 1000);
+  // the kick on low hp: the traffic's hits shrink by her Resistencia twice
+  if (F !== null && F.hpTrafficSq && cause !== "takeoff" && cause !== "dive")
+    micro = floorDiv(micro * 1_200_000, div);
   if (micro <= 0) return;
   const before = S.hp[i] ?? 0;
   const after = sub0(before, micro);
@@ -1397,7 +1423,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
     S.knocked[i] = 1;
     below(c, i);
     c.rec.lineChange(c.t, i, posMm(c, i), alt, alt - 1, "knock", run);
-    hpHit(c, i, F.hpFight, "fight");
+    hpHit(c, i, F.hpKnock, "fight");
     return true;
   }
   return false;
@@ -1541,7 +1567,7 @@ function lineMoves(c: Ctx, i: number, F: FlightConstants, x: number, run: number
     S.latLeft[i] = (S.latLeft[i] ?? 0) + F.doorLossMm * pu;
     S.latTicks[i] = Math.max(S.latTicks[i] ?? 0, F.moveTicks);
     S.dirtyRun[i] = 0;
-    hpHit(c, i, F.hpFight, "door");
+    hpHit(c, i, F.hpDoor, "door");
     return true;
   }
   if ((S.latTicks[i] ?? 0) > 0) return false;
