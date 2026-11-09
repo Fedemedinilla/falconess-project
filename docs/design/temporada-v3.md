@@ -909,6 +909,16 @@ cosa por vez, juntos y medida cada una. T21 v1 y v2 quedan como banco de ideas, 
 - Las alas pesan más que la posición (Rasante 39 % en la Pista de saltos, 16 % en el Sprint).
 - Pelotón es la más floja: primera candidata a revisar.
 
+**Remate a físico bajo (2026-11-09), prototipo medido** (`.work/design7/measure/kick-final.md`). Al planear el remate mira
+cuánto físico le sobra más allá de llegar a crucero: con 15 % de la barra o más remata entero, con menos gasta esa parte de
+su energía y el resto queda en el tanque; sin sobra va a crucero (Sprint; en las otras distancias el plan ya estaba limitado
+por el físico). El tráfico cobra a la que pierde la línea y la Resistencia achica esos golpes dos veces. La Resistencia vale
+≈ 2-3 m en un Sprint peleado y ≈ 0 en uno limpio a 450-600; contra una Peregrina de su misma Agilidad y poca Resistencia la
+Caracara pasa de 34 a 43 %, pero por la Resistencia de la velocista, no por hacerla pelear. Causa raíz del sesgo por nivel:
+el centro de Técnica del aire era absoluto; ahora lee la Técnica contra la propia build (Acecho del Sprint a 300: 11,7 →
+15,4 %; Pelotón a 300 baja 1-4 puntos). 48 de 56 criterios pasan; la carrera ya baja de 5 ms (p95 4,3). Abiertos: Punta y
+Pelotón flojos en la Escalera, Remate floja en el Circuito, Pelotón del Sprint a 300 (34 %).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
