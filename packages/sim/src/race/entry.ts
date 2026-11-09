@@ -12,7 +12,7 @@ import { DEFAULT_POSITION, STAT_NAMES } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
 import type { Ruleset } from "../rulesets/index.js";
 import { effectiveStats } from "../stats.js";
-import { flightOf } from "./flight.js";
+import { distanceOfLength, flightOf } from "./flight.js";
 import { compileTraits, statDeltas } from "./modifiers.js";
 
 /**
@@ -74,7 +74,7 @@ export function freezeEntry(
   ruleset: Ruleset,
   content: ContentIndex,
   input: EntryInput,
-  _course: Course,
+  course: Course,
   laneIndex: number,
 ): RaceEntry {
   const lanes = ruleset.race.maxRunners;
@@ -146,6 +146,13 @@ export function freezeEntry(
       ? fb.durabilityMax
       : Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
 
+  // v3 draft (owner 2026-11-09): the letter of this course's distance, only with the letters on
+  const lengthMm = course.segments.reduce((a, sg) => a + sg.length, 0) * 1000;
+  const distanceLetter =
+    F !== null && F.distanceLetters && input.distanceAptitude !== undefined
+      ? input.distanceAptitude[distanceOfLength(F, lengthMm)]
+      : undefined;
+
   return {
     runnerId: input.runnerId,
     kind: input.kind,
@@ -161,6 +168,7 @@ export function freezeEntry(
     quirks: [...fb.quirks],
     mood: input.mood,
     positionAptitude: input.positionAptitude[position],
+    ...(distanceLetter !== undefined ? { distanceAptitude: distanceLetter } : {}),
     stats,
     powerToWeight: fb.powerToWeight,
     energy: fb.energy,

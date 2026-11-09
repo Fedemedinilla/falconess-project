@@ -306,6 +306,8 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
       return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? ` (sin energía para sostener, −${mps(item.lossMms)} m/s)` : item.cause === "knock" ? " (le bajaron la línea)" : item.cause === "nerve" ? ` (se achicó, −${mps(item.lossMms)} m/s)` : ""}`;
     case "noLift":
       return `SIN ENERGÍA: no despega (${milliUnits(item.have)} < ${milliUnits(item.need)})`;
+    case "hpHit":
+      return `físico −${milliUnits(item.hp)} (${{ takeoff: "despegue", dive: "picada", switch: "cambio de línea", fight: "lucha por la línea", door: "le cerraron la puerta" }[item.cause]}), quedan ${milliUnits(item.hpLeft)}`;
     case "bandReached":
       return `alcanza la banda ${item.band}`;
     case "diveStart":

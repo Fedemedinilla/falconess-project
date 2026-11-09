@@ -197,7 +197,7 @@ export function mapBack(
  * replans on refund, jump exit and broken wings). Counts the plan, writes `planLevel`,
  * `planStartPos`, `planEndPos` and fills `out` for the `sprintPlan` event. Perception: the plan
  * sees `Ep = fl(energy × (1000 + planErr), 1000) − jr` and `hpP = fl(hp × (1000 + planErr), 1000)`
- * (10); gates never do. Heat is priced at `capLim` for every rule: the overheat licence never
+ * (10), minus `hpKeep` µhp (ruleset v3: her planned dive's hit); gates never do. Heat is priced at `capLim` for every rule: the overheat licence never
  * enters the plan.
  */
 export function planSprint(
@@ -207,6 +207,7 @@ export function planSprint(
   S: RaceState,
   i: number,
   out: PlanReport,
+  hpKeep = 0,
 ): void {
   S.planCount[i] = (S.planCount[i] ?? 0) + 1;
   const pos = S.pos[i] ?? 0;
@@ -217,7 +218,8 @@ export function planSprint(
   const jr = jrNow(T, S, i, seg);
   const perceived = floorDiv(energy * (1000 + err), 1000);
   const Ep = Math.max(0, perceived - jr);
-  const hpP = floorDiv((S.hp[i] ?? 0) * (1000 + err), 1000);
+  // v3 (stamina pays effort): the hp her planned dive's pull-out will cost is kept out of the plan
+  const hpP = Math.max(0, floorDiv((S.hp[i] ?? 0) * (1000 + err), 1000) - hpKeep);
   out.energyPerceived = perceived;
   out.hpPerceived = hpP;
   out.jumpReserve = jr;

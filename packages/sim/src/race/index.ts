@@ -17,6 +17,8 @@ export {
 } from "./fixtures.js";
 export {
   airOffsetPm,
+  distanceLetterPm,
+  distanceOfLength,
   FIELD_V3_R4,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
@@ -24,6 +26,7 @@ export {
   FLIGHT_OFF_LINES,
   FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
+  FLIGHT_OFF_STAMINA,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
   type FlightConstants,

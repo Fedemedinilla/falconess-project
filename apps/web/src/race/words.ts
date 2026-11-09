@@ -240,6 +240,8 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
             : ui("ui.race.event.touchdown");
     case "noLift":
       return ui("ui.race.event.noLift");
+    case "hpHit":
+      return ui(`ui.race.event.hpHit.${item.cause}`, { hp: Math.floor(item.hp / 1000) });
     case "bandReached":
       return ui("ui.race.event.bandReached", { band: item.band });
     case "diveStart":
@@ -322,6 +324,7 @@ export function eventIcon(item: EventItem): IconName {
     case "pass":
       return "landing";
     case "noLift":
+    case "hpHit":
     case "airDirty":
     case "lineChange":
     case "nerve":

@@ -11,6 +11,9 @@ import {
   bandHoldOf,
   bandPu,
   climbTicksOf,
+  DIST_LONG,
+  DIST_MILE,
+  distanceCode,
   type FlightConstants,
   flightOf,
   holdLift,
@@ -122,6 +125,8 @@ type Ctx = {
   readonly velPerMms: number;
   readonly pulseCostMe: number;
   readonly sink: SkillSink;
+  /** Stamina pays effort (2026-11-09): this course's distance (DIST_*; 0 in v1 and v2). */
+  readonly dist: number;
   /** Controller scratch and its event sink (9, 12). */
   readonly ctl: Controller;
   /** Scratch of the sprint plan (11.3). */
@@ -243,6 +248,10 @@ function runRace(
     posPerMm: units.posPerMm,
     velPerMms: units.velPerMms,
     pulseCostMe: floorDiv(R.kE * R.pulseCostMult, 1000),
+    dist: (() => {
+      const F0 = flightOf(ruleset);
+      return F0 !== null ? distanceCode(F0, G.lengthMm) : 0;
+    })(),
     sink: {
       onSkill: (i, j, p, u, k) => {
         rec.skill(c.t, i, posMm(c, i), j, p, u, k);
@@ -550,13 +559,18 @@ function runnerTick(c: Ctx, i: number): boolean {
       ? DK_LEAD
       : 0);
   const dK = T.dK[i * 4 + q] ?? 0;
-  const drain =
+  const drain0 =
     c.F !== null && (S.alt[i] ?? 0) > 0
       ? airDrain(c, i, c.F, vOut, dK)
       : drainMicro(vOut, c.vBase, dK);
+  // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
+  const drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
+  const drain = drain0 + drip;
   const hp = sub0(S.hp[i] ?? 0, drain);
+  if (drip > 0) S.hpCost[i] = (S.hpCost[i] ?? 0) + Math.min(drip, S.hp[i] ?? 0);
   S.hp[i] = hp;
-  if (hp === 0 && !exhausted) {
+  // a maneuver's hit earlier this tick may have emptied her already (flag read fresh)
+  if (hp === 0 && !flag(S, i, F_EXHAUSTED)) {
     setFlag(S, i, F_EXHAUSTED);
     S.hpEmptyMm[i] = posMm(c, i);
     rec.hpEmpty(t, i, posMm(c, i));
@@ -629,7 +643,7 @@ function runnerTick(c: Ctx, i: number): boolean {
 /** Step B6: plan (or replan) the final sprint and log the `sprintPlan` event (11, 20.4). */
 function sprintPlan(c: Ctx, i: number): void {
   const { R, G, T, S, plan: p } = c;
-  planSprint(R, G, T, S, i, p);
+  planSprint(R, G, T, S, i, p, c.F !== null ? pendingDiveHp(c, c.F, i) : 0);
   if (!c.rec.full) return;
   const cause: SprintPlanCause = PlanCauses.options[S.replanCause[i] ?? 0] ?? "phase";
   c.rec.sprintPlan(c.t, i, posMm(c, i), {
@@ -866,6 +880,9 @@ function airCruiseTick(
   if (c.F !== null && c.F.highCruisePm !== 0 && alt >= BAND_HIGH)
     ta = floorDiv(ta * (1000 + c.F.highCruisePm), 1000);
   if (draftPm !== 1000) ta = floorDiv(ta * draftPm, 1000);
+  // distance letters: off her distance her air cruise gives `distAirPm` ‰
+  const dAir = T.distAirPm[i] ?? 0;
+  if (dAir > 0 && !exhausted) ta = floorDiv(ta * (1000 - dAir), 1000);
   const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
   S.vCore[i] = v;
   return v;
@@ -882,7 +899,13 @@ function airDrain(c: Ctx, i: number, F: FlightConstants, vOut: number, dK: numbe
   if (dirty) S.dirtyTicks[i] = (S.dirtyTicks[i] ?? 0) + 1;
   // stage 3 (allFly): the low band rests the legs at skimDrainPm (ground effect)
   const rest = F.allFly && S.alt[i] === BAND_LOW ? F.skimDrainPm : F.airDrainPm;
-  const restPm = dirty && F.dirtyNoRest ? Math.max(1000, rest) : rest;
+  const restPm0 = dirty && F.dirtyNoRest ? Math.max(1000, rest) : rest;
+  // distance letters: the long is the legs' rest in the air; off her distance she rests less
+  const dPm =
+    c.dist === DIST_LONG && F.distanceLetters
+      ? floorDiv((c.T.distPm[i] ?? 0) * F.distanceRestPm, 1000)
+      : 0;
+  const restPm = dPm > 0 ? Math.floor((restPm0 * (1000 + dPm)) / 1000) : restPm0;
   const dKAir = Math.floor((dK * restPm) / 1000);
   const rPm = Math.floor((vOut * 1000) / c.vBase);
   const r2 = rPm * rPm;
@@ -898,6 +921,83 @@ function airDrain(c: Ctx, i: number, F: FlightConstants, vOut: number, dK: numbe
 const AIR_DIRTY_MIN_TICKS = 15;
 /** A `pass` counts when the new order held this many ticks (§6.1). */
 const PASS_HOLD_TICKS = 8;
+
+/**
+ * Stamina pays effort (owner 2026-11-09): a maneuver's hit, `hp` hp at stamina 0, × 1.2e6 / her
+ * stamina divisor (the same Resistencia that shrinks the drain). Emptied, she is exhausted (the
+ * speed floor, no thrust, no new takeoff or maneuver). Reads only her own state.
+ */
+function hpHit(
+  c: Ctx,
+  i: number,
+  hp: number,
+  cause: "takeoff" | "dive" | "switch" | "fight" | "door",
+): void {
+  if (hp <= 0) return;
+  const S = c.S;
+  // the traffic's hits weigh by distance (the plan's takeoff and dive do not)
+  const F = c.F;
+  const dPm =
+    F !== null && cause !== "takeoff" && cause !== "dive" ? (F.hpDistPm[c.dist] ?? 1000) : 1000;
+  const micro = floorDiv(
+    floorDiv(hp * 1_000_000 * 1_200_000, Math.max(1, c.T.stamDiv[i] ?? 1)) * dPm,
+    1000,
+  );
+  if (micro <= 0) return;
+  const before = S.hp[i] ?? 0;
+  const after = sub0(before, micro);
+  S.hp[i] = after;
+  S.hpCost[i] = (S.hpCost[i] ?? 0) + (before - after);
+  c.rec.hpHit(c.t, i, posMm(c, i), cause, floorDiv(before - after, 1000), floorDiv(after, 1000));
+  if (after === 0 && !flag(S, i, F_EXHAUSTED)) {
+    setFlag(S, i, F_EXHAUSTED);
+    S.hpEmptyMm[i] = posMm(c, i);
+    c.rec.hpEmpty(c.t, i, posMm(c, i));
+  }
+}
+
+/**
+ * Stamina pays effort: the µhp her planned dives still to come will cost on the pull-out (the
+ * flight she is in, if it ends in a dive from band ≥ 2, and the later planned ones), so the sprint
+ * plan keeps them: she knows her own plan, not the traffic.
+ */
+function pendingDiveHp(c: Ctx, F: FlightConstants, i: number): number {
+  if (F.hpDiveBand <= 0) return 0;
+  const { T, S } = c;
+  let bands = 0;
+  const ph = S.flPhase[i] ?? 0;
+  const n = T.flN[i] ?? 0;
+  if (ph !== 0) {
+    const cur = (S.flCur[i] ?? 1) - 1;
+    const chained = T.flChain[i * FLIGHTS_MAX + cur] === 1 && cur + 1 < n;
+    const top = ph === 3 ? (S.fromBand[i] ?? 0) : Math.max(S.alt[i] ?? 0, S.altTarget[i] ?? 0);
+    if (!chained && S.fallCause[i] !== 1 && top >= 2) bands += top;
+  }
+  for (let k = S.flK[i] ?? 0; k < n; k++) {
+    const x = i * FLIGHTS_MAX + k;
+    const band = T.flBand[x] ?? 0;
+    if (band >= 2 && !(T.flChain[x] === 1 && k + 1 < n)) bands += band;
+  }
+  if (bands === 0) return 0;
+  return floorDiv(F.hpDiveBand * bands * 1_000_000 * 1_200_000, Math.max(1, T.stamDiv[i] ?? 1));
+}
+
+/** Stamina pays effort: the drip of a tick in the air, ‰ of her drain in dirty air and boxed in. */
+function effortDrip(c: Ctx, i: number, F: FlightConstants, drain: number): number {
+  const S = c.S;
+  let pm = 0;
+  if (F.hpDirtyPm > 0 && inDirtyAir(F, S, i)) pm += F.hpDirtyPm;
+  if (F.hpBoxedPm > 0 && (S.boxed[i] === 1 || (S.blkRun[i] ?? 0) > 0)) pm += F.hpBoxedPm;
+  if (pm === 0) return 0;
+  // a skim's traffic (the low band) is the calm line at ras: it drips hpDirtySkimPm of that
+  if (S.alt[i] === BAND_LOW) pm = floorDiv(pm * F.hpDirtySkimPm, 1000);
+  return floorDiv(floorDiv(drain * pm, 1000) * (F.hpDistPm[c.dist] ?? 1000), 1000);
+}
+
+/** Stamina pays effort: an exhausted runner starts no new maneuver (over, line switch, door). */
+function still(c: Ctx, F: FlightConstants, i: number): boolean {
+  return F.exhaustedStill && flag(c.S, i, F_EXHAUSTED);
+}
 
 function mms(c: Ctx, vu: number): number {
   return floorDiv(vu, c.velPerMms);
@@ -1238,6 +1338,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
     // a skim keeps to her lines; only the lead climbs over the low traffic (skimEscapeTicks)
     !(F.allFly && alt === BAND_LOW && F.skimEscapeTicks > 0 && T.position[i] !== POS_LEAD) &&
     S.escaped[i] === 0 &&
+    !still(c, F, i) &&
     alt < Math.min(BAND_CEILING, wingOf(F, style).maxBand) &&
     !roof &&
     dist > climbTicksOf(F, style, false) * (S.vOut[i] ?? 0)
@@ -1261,6 +1362,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
       S.overs[i] = (S.overs[i] ?? 0) + 1;
       S.overWon[i] = 1;
       c.rec.lineChange(c.t, i, posMm(c, i), alt, alt + 1, "over", run);
+      hpHit(c, i, F.hpFight, "fight");
       // two lines: the diagonal, a band up and the other line when hers is taken up there
       const li = S.line[i] ?? 0;
       if (F.lines && lineTaken(c, i, alt + 1, li) && !lineTaken(c, i, alt + 1, 1 - li))
@@ -1279,6 +1381,7 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
     S.knocked[i] = 1;
     below(c, i);
     c.rec.lineChange(c.t, i, posMm(c, i), alt, alt - 1, "knock", run);
+    hpHit(c, i, F.hpFight, "fight");
     return true;
   }
   return false;
@@ -1395,6 +1498,7 @@ function switchLine(
     band,
     ...(diagonal ? { diagonal: true } : {}),
   });
+  hpHit(c, i, F.hpSwitch, "switch");
 }
 
 /**
@@ -1421,9 +1525,12 @@ function lineMoves(c: Ctx, i: number, F: FlightConstants, x: number, run: number
     S.latLeft[i] = (S.latLeft[i] ?? 0) + F.doorLossMm * pu;
     S.latTicks[i] = Math.max(S.latTicks[i] ?? 0, F.moveTicks);
     S.dirtyRun[i] = 0;
+    hpHit(c, i, F.hpFight, "door");
     return true;
   }
   if ((S.latTicks[i] ?? 0) > 0) return false;
+  // stamina pays effort: an exhausted body closes no door, takes no escape and pulls out to pass no one
+  if (still(c, F, i)) return false;
   // she closes the door on one that moved to her other line at t − 1, within doorMm behind her
   if (c.swLast && S.doorFlight[i] === 0 && (S.doorTests[i] ?? 0) < DOOR_TESTS_MAX)
     for (let j = 0; j < n; j++) {
@@ -1562,6 +1669,8 @@ function chainNext(c: Ctx, i: number, k: number, F: FlightConstants): void {
       airPm: T.airOff[x] ?? 0,
       style: wing.style,
     });
+    // stamina pays effort: climbing again from a lower band is a small takeoff
+    hpHit(c, i, F.hpSkimTakeoff, "takeoff");
   }
 }
 
@@ -1656,6 +1765,8 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
     airPm: T.airOff[x] ?? 0,
     style: wing.style,
   });
+  // stamina pays effort: leaving the ground for the high bands is a hit, a skim a smaller one
+  hpHit(c, i, from === 0 && band > BAND_LOW ? F.hpTakeoff : F.hpSkimTakeoff, "takeoff");
 }
 
 /**
@@ -1739,7 +1850,10 @@ function diveTotal(c: Ctx, i: number, from: number): number {
   // F3: a line won over; two lines: a line won by the side (the larger, never both)
   const over = F.overDivePm > 0 && c.S.overWon[i] === 1 ? F.overDivePm : 0;
   const side = F.lines && c.S.sideWon[i] === 1 ? F.sideDivePm : 0;
-  const pm = Math.max(over, side);
+  const pm0 = Math.max(over, side);
+  // distance letters: the mile is won on the line up high; off her distance the won line pays less
+  const dPm = c.dist === DIST_MILE ? (c.T.distPm[i] ?? 0) : 0;
+  const pm = dPm > 0 ? floorDiv(pm0 * (1000 - dPm), 1000) : pm0;
   if (pm <= 0) return dv;
   return dv + floorDiv(floorDiv(dv, from) * pm, 1000);
 }
@@ -1855,6 +1969,8 @@ function touchdown(c: Ctx, i: number): void {
       const cause = forced ? "energy" : S.knocked[i] === 1 ? "knock" : "plan";
       c.rec.touchdown(c.t, i, p, Math.max(1, from), 0, cause);
     }
+    // stamina pays effort: pulling out of a dive is a strong hit, per band fallen
+    if (F !== null && from >= 2) hpHit(c, i, F.hpDiveBand * from, "dive");
   }
   if (flag(S, i, F_PLAN_ACTIVE)) requestReplan(S, i, CAUSE_JUMP);
 }

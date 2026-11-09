@@ -9,6 +9,7 @@
  * which carry no `flight` constants, never reach a line of this file.
  */
 import { ceilDiv, floorDiv } from "@falconess/rng";
+import { APTITUDES, type Aptitude, DISTANCES, type Distance } from "@falconess/schema";
 import type { FieldConstants, RaceConstants, Ruleset } from "../rulesets/index.js";
 import { RULESET_V2 } from "../rulesets/index.js";
 import type { CourseGeometry } from "./geometry.js";
@@ -315,6 +316,60 @@ export type FlightConstants = {
    */
   readonly leadGlidePos: boolean;
   readonly leadStartAccelPm: number;
+  // --- stamina pays effort (owner, 2026-11-09; .work/design7/measure/stamina-final.md)
+  /**
+   * Maneuvers cost the body (hp), not only energy: hits in hp at stamina 0, each × 1.2e6 / stamDiv
+   * (the stamina divisor of the drain), so Resistencia shrinks every hit like the drain. 0 = off.
+   * `hpTakeoff` a takeoff from the ground; `hpDiveBand` per band of a dive pulled out (from band
+   * ≥ 2, on touchdown); `hpSwitch` a line switch (pass, escape, the door she closes); `hpFight` a
+   * line fight (over or knock) and the door closed on her; `hpDirtyPm` ‰ of the drain added while
+   * in dirty air; `hpBoxedPm` ‰ of the drain added while boxed in or blocked in her line.
+   */
+  readonly hpTakeoff: number;
+  readonly hpSkimTakeoff: number;
+  readonly hpDiveBand: number;
+  readonly hpSwitch: number;
+  readonly hpFight: number;
+  readonly hpDirtyPm: number;
+  readonly hpBoxedPm: number;
+  /**
+   * The bar budgets her own plan: at the start her hpMax grows by the hits of her planned takeoffs
+   * and dives priced at this Resistencia (0 = no budget). Below it she pays her plan, above it she
+   * keeps some; what the plan cannot know (the traffic: switches, fights, doors, dirty air, boxed
+   * in) is never budgeted, so a clean race asks little Resistencia and a contested one more.
+   */
+  readonly hpPlanRefStamina: number;
+  /** ‰ of `hpDirtyPm` a skim (the low band) pays in dirty air: the line behind at ras is calmer. */
+  readonly hpDirtySkimPm: number;
+  /**
+   * ‰ of the traffic's hits and drips (switch, fight, door, dirty, boxed) per distance (sprint,
+   * mile, medium, long): the long races already ask for Resistencia on their own (+100 is worth
+   * 17-50 m there), the sprint did not (0 m); the plan's hits are not scaled.
+   */
+  readonly hpDistPm: readonly [number, number, number, number];
+  /** An exhausted runner starts no new maneuver: no over, no line switch, no door (false = off). */
+  readonly exhaustedStill: boolean;
+  /**
+   * Distance letters (owner 2026-11-09): the course's distance (sprint ≤ distanceMaxM[0] m, mile ≤
+   * [1], medium ≤ [2], long above) picks the entry's letter, and `distancePm[rank]` ‰ (S, A, B, C,
+   * D, E, F, G) worsens the distance's dominant aspect of flight: sprint the takeoff and the dive
+   * (climb cost up, dive Δv down), mile winning the line up high (knock sooner, door and won-line
+   * bonus down, longer side move), medium the cost of holding altitude, long the legs' rest in the
+   * air and the long flight's hold (half). false = no letter is read.
+   */
+  readonly distanceLetters: boolean;
+  readonly distanceMaxM: readonly [number, number, number];
+  readonly distancePm: readonly number[];
+  /**
+   * The core every position flies (all fly): ‰ of the letter's `distancePm` taken off her air
+   * cruise, per distance (sprint, mile, medium, long). Without it a letter only touched the
+   * Remate's dive in the sprint (0.3 m) or the low band's line in the mile.
+   */
+  readonly distanceAirPm: readonly [number, number, number, number];
+  /** ‰ of the letter's pm added to the air drain in the long (her legs rest less up there). */
+  readonly distanceRestPm: number;
+  /** ‰ of the letter's pm taken off the dive's Δv in the sprint (the takeoff's climb pays 1000 ‰). */
+  readonly distanceDivePm: number;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -710,10 +765,43 @@ export const FLIGHT_V3_E1: FlightConstants = {
   packJumps: true,
   leadGlidePos: false,
   leadStartAccelPm: 1000,
+  // stamina pays effort and the four distances (owner 2026-11-09, stamina-final.md)
+  hpTakeoff: 30,
+  hpSkimTakeoff: 20,
+  hpDiveBand: 15,
+  hpSwitch: 40,
+  hpFight: 50,
+  hpDirtyPm: 6000,
+  hpBoxedPm: 6000,
+  hpPlanRefStamina: 600,
+  hpDirtySkimPm: 333,
+  hpDistPm: [1000, 150, 60, 40],
+  exhaustedStill: true,
+  distanceLetters: true,
+  distanceMaxM: [1400, 1800, 2400],
+  distancePm: [0, 0, 30, 60, 90, 120, 150, 180],
+  distanceAirPm: [250, 250, 200, 100],
+  distanceRestPm: 250,
+  distanceDivePm: 2000,
+};
+
+/** Stamina pays effort and the distance letters off: v3 is the neutral wings (9bfaf58) byte for byte (stamina/inv10.ts). */
+export const FLIGHT_OFF_STAMINA: Partial<FlightConstants> = {
+  hpTakeoff: 0,
+  hpSkimTakeoff: 0,
+  hpDiveBand: 0,
+  hpSwitch: 0,
+  hpFight: 0,
+  hpDirtyPm: 0,
+  hpBoxedPm: 0,
+  hpPlanRefStamina: 0,
+  exhaustedStill: false,
+  distanceLetters: false,
 };
 
 /** Neutral wings off: v3 is everyone flies (d3f5623) byte for byte (neutral/inv9.ts). */
 export const FLIGHT_OFF_NEUTRAL: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_STAMINA,
   wings: WINGS_V3,
   neutralFrames: false,
   noWear: false,
@@ -878,6 +966,42 @@ export function rulesetV3(
 
 /** The draft's default stage (1). */
 export const RULESET_V3: RulesetV3 = rulesetV3(1);
+
+/** Stamina pays effort (owner 2026-11-09) is on: some maneuver costs hp. */
+export function effortCosts(F: FlightConstants): boolean {
+  return (
+    F.hpTakeoff > 0 ||
+    F.hpSkimTakeoff > 0 ||
+    F.hpDiveBand > 0 ||
+    F.hpSwitch > 0 ||
+    F.hpFight > 0 ||
+    F.hpDirtyPm > 0 ||
+    F.hpBoxedPm > 0
+  );
+}
+
+/** The four race distances in `DISTANCES` order (owner 2026-11-09). */
+export const DIST_SPRINT = 0;
+export const DIST_MILE = 1;
+export const DIST_MEDIUM = 2;
+export const DIST_LONG = 3;
+
+/** A course's distance from its length (mm): sprint ≤ distanceMaxM[0] m, mile ≤ [1], medium ≤ [2], long. */
+export function distanceCode(F: FlightConstants, lengthMm: number): number {
+  for (let d = 0; d < 3; d++) if (lengthMm <= (F.distanceMaxM[d] ?? 0) * 1000) return d;
+  return DIST_LONG;
+}
+
+/** The distance's name (`DISTANCES`), for the content side (letters, the pre-race card). */
+export function distanceOfLength(F: FlightConstants, lengthMm: number): Distance {
+  return DISTANCES[distanceCode(F, lengthMm)] ?? "long";
+}
+
+/** ‰ a distance letter worsens its distance's aspect of flight (0 = A, or no letter, or off). */
+export function distanceLetterPm(F: FlightConstants, letter: Aptitude | undefined): number {
+  if (!F.distanceLetters || letter === undefined) return 0;
+  return F.distancePm[APTITUDES.indexOf(letter)] ?? 0;
+}
 
 /** The flight constants of a ruleset, or null (v1, v2): the engine's only switch. */
 export function flightOf(ruleset: Ruleset): FlightConstants | null {
@@ -1129,12 +1253,20 @@ export function planFlights(
   liftF: number,
   courage: number,
   velPerMms: number,
-  air: { u28: number; u30: number; technique: number },
+  air: { u28: number; u30: number; technique: number; dist?: number; dPm?: number },
 ): void {
   const wing = wingOf(F, T.style[i] ?? 0);
-  T.climbMe[i] = ceilDiv(F.climbE * 1000 * wing.climbCostPm, Math.max(1, liftF));
+  // distance letters (2026-11-09): ‰ off her distance, on that distance's aspect of flight
+  const dPm = air.dPm ?? 0;
+  const dist = air.dist ?? 0;
+  const sprintPm = dPm > 0 && dist === DIST_SPRINT ? dPm : 0;
+  const climb0 = ceilDiv(F.climbE * 1000 * wing.climbCostPm, Math.max(1, liftF));
+  // the sprint is the takeoff's and the dive's power: the climb costs more, the dive gives less
+  T.climbMe[i] = sprintPm > 0 ? ceilDiv(climb0 * (1000 + sprintPm), 1000) : climb0;
   // L5: η = diveEtaBasePm + diveEtaCouragePm × min(C, 1200) / 1200; S1: × the wing's diveWingPm
-  const eta = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(courage, 1200), 1200);
+  const eta0 = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(courage, 1200), 1200);
+  const diveCut = Math.min(900, floorDiv(sprintPm * F.distanceDivePm, 1000));
+  const eta = diveCut > 0 ? floorDiv(eta0 * (1000 - diveCut), 1000) : eta0;
   for (let b = 0; b < 4; b++)
     T.diveV[i * 4 + b] =
       floorDiv((F.diveVMms[b] ?? 0) * eta * wing.diveWingPm, 1_000_000) * velPerMms;
@@ -1148,9 +1280,15 @@ export function planFlights(
   const extra = Math.max(0, F.dirtyHoldPm - 1000);
   T.dirtyPm[i] =
     1000 + extra - floorDiv(extra * F.dirtyTechPm * Math.min(air.technique, 1200), 1_200_000);
-  // L4: courage holds the line
-  T.knockAt[i] = F.knockTicks + floorDiv(F.knockCourTicks * Math.min(courage, 1200), 1200);
-  const liftH = holdLift(F, T.style[i] ?? 0, liftF);
+  // L4: courage holds the line (the mile off her distance: she loses it sooner)
+  const knock0 = F.knockTicks + floorDiv(F.knockCourTicks * Math.min(courage, 1200), 1200);
+  T.knockAt[i] = dPm > 0 && dist === DIST_MILE ? floorDiv(knock0 * (1000 - dPm), 1000) : knock0;
+  // the medium is the cost of holding altitude, the long its long flights (half): her hold lift
+  // shrinks by the letter's ‰, so holding (R4) costs that much more
+  const holdPm =
+    dPm > 0 && dist === DIST_MEDIUM ? dPm : dPm > 0 && dist === DIST_LONG ? floorDiv(dPm, 2) : 0;
+  const liftH0 = holdLift(F, T.style[i] ?? 0, liftF);
+  const liftH = holdPm > 0 ? floorDiv(liftH0 * 1000, 1000 + holdPm) : liftH0;
   T.liftH[i] = liftH;
   T.flN[i] = 0;
   T.flRes0[i] = 0;
@@ -1212,6 +1350,29 @@ export function planFlights(
       keepMe += (T.flClimb[x] ?? 0) + ceilDiv((T.flHold[x] ?? 0) * (T.dirtyPm[i] ?? 1000), 1000);
     }
   T.keepFlight[i] = keepMe;
+}
+
+/**
+ * Stamina pays effort: the hits (hp at stamina 0) of her planned takeoffs and dives, the way the
+ * engine charges them (a takeoff from the ground to a high band `hpTakeoff`, to the low band or a
+ * chained climb `hpSkimTakeoff`, a flight that ends in a dive from band ≥ 2 `hpDiveBand` × band).
+ */
+export function plannedHitsHp(F: FlightConstants, T: RaceTables, i: number): number {
+  const n = T.flN[i] ?? 0;
+  let hp = 0;
+  let prevBand = 0;
+  let prevChain = false;
+  for (let k = 0; k < n; k++) {
+    const x = i * FLIGHTS_MAX + k;
+    const band = T.flBand[x] ?? 0;
+    const chain = T.flChain[x] === 1 && k + 1 < n;
+    if (!prevChain) hp += band > BAND_LOW ? F.hpTakeoff : F.hpSkimTakeoff;
+    else if (band > prevBand) hp += F.hpSkimTakeoff;
+    if (!chain && band >= 2) hp += F.hpDiveBand * band;
+    prevBand = band;
+    prevChain = chain;
+  }
+  return hp;
 }
 
 /** me to hold `bandPu` (band × pu) at liftF (R4): holdE energy per band per 100 m at liftF 1000. */

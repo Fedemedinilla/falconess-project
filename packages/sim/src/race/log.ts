@@ -13,7 +13,7 @@ import type {
 } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, SEGMENT_TYPES } from "@falconess/schema";
 import type { Ruleset } from "../rulesets/index.js";
-import { type FlightConstants, flightOf, wingOf } from "./flight.js";
+import { effortCosts, type FlightConstants, flightOf, wingOf } from "./flight.js";
 import type { CourseGeometry } from "./geometry.js";
 import {
   ACTIVATION_SLOTS,
@@ -412,6 +412,18 @@ export class RaceRecorder {
     if (this.full) this.list.push({ kind: "lineSwitch", tick, lane, posMm, ...d });
   }
 
+  /** Stamina pays effort: a maneuver's hit on her body (milli-hp) and what is left. */
+  hpHit(
+    tick: number,
+    lane: number,
+    posMm: number,
+    cause: "takeoff" | "dive" | "switch" | "fight" | "door",
+    hp: number,
+    hpLeft: number,
+  ): void {
+    if (this.full) this.list.push({ kind: "hpHit", tick, lane, posMm, cause, hp, hpLeft });
+  }
+
   /** Two lines: she wants to move and `otherLane` is alongside in the other line (`aheadLane` ahead). */
   boxedIn(
     tick: number,
@@ -703,6 +715,7 @@ export function buildResults(
               lineMm: floorDiv(S.lineMm[i] ?? 0, posPerMm),
             }
           : {}),
+        ...(effortCosts(F) ? { hpCost: floorDiv(S.hpCost[i] ?? 0, 1000) } : {}),
       };
   });
   out.sort((a, b) => a.place - b.place);

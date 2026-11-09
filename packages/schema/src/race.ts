@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   Aptitude,
+  DistanceAptitudes,
   FalconessStats,
   Mood,
   Position,
@@ -50,6 +51,8 @@ export const EntryInput = z.strictObject({
   baseStats: FalconessStats,
   mood: Mood,
   positionAptitude: PositionAptitudes,
+  /** v3 draft (owner 2026-11-09): her letter per distance; absent = no letter (v1, v2, flags off). */
+  distanceAptitude: DistanceAptitudes.optional(),
   /** The race position (ADR-0008); absent = the default of her frame's style (`DEFAULT_POSITION`). */
   position: Position.optional(),
   frameId: Slug,
@@ -161,6 +164,8 @@ export const RaceEntry = z
     mood: Mood,
     /** The letter actually applied: the race position's (ADR-0008). */
     positionAptitude: Aptitude,
+    /** v3 draft (owner 2026-11-09): the letter of this course's distance; absent = none (±0). */
+    distanceAptitude: Aptitude.optional(),
     stats: RaceStats,
     /** Per-mille, after caps and clamps. */
     powerToWeight: Int.min(500).max(1600),
@@ -541,6 +546,16 @@ export const RaceEvent = z.discriminatedUnion("kind", [
   }),
   /** A planned takeoff the tank (or an exhausted body) could not afford: she stays on the ground. */
   raceEvent("noLift", { need: Nat, have: Nat }),
+  /**
+   * Stamina pays effort (owner 2026-11-09): a maneuver cost her body `hp` milli-hp (after her
+   * Resistencia), leaving `hpLeft`: a takeoff, a dive pulled out, a line switch, a line fight
+   * (over or knock) or the door closed on her. Drips (dirty air, boxed in) only go to the ledger.
+   */
+  raceEvent("hpHit", {
+    cause: z.enum(["takeoff", "dive", "switch", "fight", "door"]),
+    hp: Nat,
+    hpLeft: Nat,
+  }),
 ]);
 export type RaceEvent = z.infer<typeof RaceEvent>;
 export type RaceEventKind = RaceEvent["kind"];
@@ -591,6 +606,8 @@ export const FlightLedger = z.strictObject({
   boxedTicks: Nat.optional(),
   blockedTicks: Nat.optional(),
   lineMm: Nat.optional(),
+  /** Stamina pays effort (2026-11-09): milli-hp the maneuvers cost (hits and drips). */
+  hpCost: Nat.optional(),
 });
 export type FlightLedger = z.infer<typeof FlightLedger>;
 

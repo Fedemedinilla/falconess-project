@@ -15,6 +15,8 @@ export {
   type CourseGeometry,
   createRaceArena,
   disableSkill,
+  distanceLetterPm,
+  distanceOfLength,
   FIELD_V3_R4,
   type FixtureBuild,
   FLIGHT_OFF_1_2,
@@ -23,6 +25,7 @@ export {
   FLIGHT_OFF_LINES,
   FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
+  FLIGHT_OFF_STAMINA,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
   type FlightConstants,
@@ -80,7 +83,7 @@ export {
   trainingStreak,
   vigor,
 } from "./season/rules.js";
-export { startSeason } from "./season/start.js";
+export { boxDistanceFactor, seasonDistanceAptitudes, startSeason } from "./season/start.js";
 export { facilityLevel, type StatGain, trainingGain, trainingGains } from "./season/training.js";
 export {
   learnCap,

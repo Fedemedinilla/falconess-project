@@ -3,7 +3,14 @@ import type { Course, RaceEntry, RacePhase, SegmentType } from "@falconess/schem
 import { POSITIONS, RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
 import { compileRule, createPulseState, initPulseLane, type PulseState } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
-import { flightOf, planFlights } from "./flight.js";
+import {
+  DIST_MILE,
+  distanceCode,
+  distanceLetterPm,
+  flightOf,
+  planFlights,
+  plannedHitsHp,
+} from "./flight.js";
 import { type CourseGeometry, MAX_SEGMENTS } from "./geometry.js";
 import {
   accelVu,
@@ -261,6 +268,10 @@ export type RaceTables = {
   readonly lnSwitch: Float64Array;
   readonly lnOutPm: Int32Array;
   readonly lnDoorP: Int32Array;
+  /** Stamina pays effort (2026-11-09): ‰ her distance letter worsens this course's aspect of flight. */
+  readonly distPm: Int32Array;
+  /** ‰ taken off her air cruise by her distance letter (`distanceAirPm` of `distPm`). */
+  readonly distAirPm: Int32Array;
   readonly u31: Float64Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
@@ -506,6 +517,8 @@ export type RaceState = {
   readonly boxedTicks: Int32Array;
   readonly blockedTicks: Int32Array;
   readonly lineMm: Float64Array;
+  /** Stamina pays effort (2026-11-09): µhp the maneuvers cost (hits and drips), for the ledger. */
+  readonly hpCost: Float64Array;
   /** 1 = the `pass` candidate (i × MAX_LANES + j) is by the side (same band, other line). */
   readonly passSide: Uint8Array;
 };
@@ -609,6 +622,8 @@ function createTables(): RaceTables {
     lnSwitch: f64(N),
     lnOutPm: i32(N),
     lnDoorP: i32(N),
+    distPm: i32(N),
+    distAirPm: i32(N),
     u31: f64(N),
     pulseFrame: u8(N),
     airPm: i32(NS),
@@ -796,6 +811,7 @@ function createState(): RaceState {
     boxedTicks: i32(N),
     blockedTicks: i32(N),
     lineMm: f64(N),
+    hpCost: f64(N),
     passSide: u8(N * N),
   };
 }
@@ -997,6 +1013,11 @@ export function buildTables(
         if (f < 1000 && (type === SEG_CURVES || type === SEG_WATER || type === SEG_CLIMB))
           T.f[is(i, s)] = 1000 - floorDiv((1000 - f) * F.groundGripPm, 1000);
       }
+    // distance letters (2026-11-09): her letter for this course's distance (0 = A or none)
+    const dPm = F !== null ? distanceLetterPm(F, e.distanceAptitude) : 0;
+    const dist = F !== null ? distanceCode(F, G.lengthMm) : 0;
+    T.distPm[i] = dPm;
+    T.distAirPm[i] = F !== null ? floorDiv(dPm * (F.distanceAirPm[dist] ?? 0), 1000) : 0;
     const sp = R.stylePace[physName];
     for (let b = 0; b < 2; b++) {
       const pw = powerVariant(R, e.powerToWeight, b);
@@ -1150,13 +1171,30 @@ export function buildTables(
       T.lnOutPm[i] = Math.max(0, F.outPm - floorDiv(F.outAgiPm * Math.min(agility, 1200), 1200));
       T.lnDoorP[i] = F.doorBasePm + floorDiv(F.doorIntPm * I, 1200);
       T.u31[i] = A.U[i * block + 31] ?? 0;
+      // the mile is won on the line up high: off her distance she needs longer to pull out, the
+      // move costs more metres and she closes fewer doors
+      if (dPm > 0 && dist === DIST_MILE) {
+        T.lnSideAt[i] = ceilDiv((T.lnSideAt[i] ?? 0) * (1000 + dPm), 1000);
+        T.lnSwitch[i] = ceilDiv((T.lnSwitch[i] ?? 0) * (1000 + dPm), 1000);
+        T.lnDoorP[i] = floorDiv((T.lnDoorP[i] ?? 0) * (1000 - dPm), 1000);
+      }
     }
     if (F !== null)
       planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms, {
         u28: A.U[i * block + 28] ?? 0,
         u30: A.U[i * block + 30] ?? 0,
         technique,
+        dist,
+        dPm,
       });
+    // stamina pays effort (2026-11-09): the bar budgets her plan's hits at hpPlanRefStamina
+    if (F !== null && F.hpPlanRefStamina > 0) {
+      const planned = plannedHitsHp(F, T, i);
+      if (planned > 0)
+        T.hpMax[i] =
+          (T.hpMax[i] ?? 0) +
+          floorDiv(planned * 1_000_000 * 1_200_000, staminaDivisor(R, F.hpPlanRefStamina));
+    }
 
     // reserves and budgets that read the tables above (14.4, 9.3)
     jumpReserve(G, T, i);

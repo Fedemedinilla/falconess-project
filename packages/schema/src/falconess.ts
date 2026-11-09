@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  DistanceAptitudes,
   FalconessStats,
   Position,
   PositionAptitudes,
@@ -36,6 +37,11 @@ export const Falconess = z.strictObject({
    * skill, racing with her on any wings. v1 and v2 never read it (there the frame carries it).
    */
   passive: Slug.optional(),
+  /**
+   * v3 draft (owner 2026-11-09): one letter per race distance, a staircase. It acts on flight (the
+   * distance is played in the air); v1 and v2 never read it.
+   */
+  distanceAptitude: DistanceAptitudes.optional(),
   sponsor: Slug,
   seasonGoals: z.array(SeasonGoal).min(1).max(8),
   textKey: TextKey,

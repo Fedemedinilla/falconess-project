@@ -2,6 +2,7 @@ import { fnv1a32 } from "@falconess/rng";
 import type { Aptitude, BlackBox, Grade, Position, RunInput } from "@falconess/schema";
 import { aptitudeRank, highestStat, statTotal } from "../stats.js";
 import type { Draft, SimContext } from "./context.js";
+import { boxDistanceFactor } from "./start.js";
 
 export function seasonScore(ctx: SimContext, d: Draft): number {
   const S = ctx.ruleset.season;
@@ -80,6 +81,12 @@ export function createBlackBox(ctx: SimContext, d: Draft, inputs: readonly RunIn
         letter: "B",
         stars: 1,
       },
+      ...(d.distanceAptitude !== undefined
+        ? (() => {
+            const f = boxDistanceFactor(ctx.content.getFalconess(d.falconessId));
+            return f === undefined ? {} : { distance: f };
+          })()
+        : {}),
       skills: d.learnedSkills
         .filter((s) => ctx.content.getSkill(s).uniqueTo === undefined)
         .slice(0, 3),

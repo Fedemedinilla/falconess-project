@@ -24,6 +24,12 @@
   "preferredPosition": "pack",
   "uniqueSkills": ["scavenger-stride"],
   "passive": "scrap-armor",
+  "distanceAptitude": {
+    "sprint": "C",
+    "mile": "C",
+    "medium": "B",
+    "long": "A"
+  },
   "sponsor": "boneyard",
   "seasonGoals": [
     {
