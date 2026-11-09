@@ -1025,6 +1025,14 @@ bloqueado. La Resistencia en Sprint pasa de 0,2 a 0,8 m por +100 (2,3 en carrera
 que eso solo con lotería. Caracara Sprint B contra Peregrina con poca Resistencia: 34 → 43 %. El
 motor quedó dentro del límite de tiempo (p95 4,3 ms). 48 de 56 criterios pasan.
 
+**Pulido de balance (2026-11-09), prototipo medido** (`.work/design7/measure/polish-final.md`).
+Cinco arreglos por causa: la gran picada deja 300 m hasta la meta y esquiva obstáculos finales; la
+Punta salta con las piernas los Saltos de la largada; la barra de físico presupuesta los golpes con
+su propia Resistencia; la picada lee el Coraje contra su propia build. Celdas fuera de 20-30 %:
+26 → 17. 49 de 57 criterios pasan. Abiertos: Acecho fuerte en la Escalera (32-35 %), Remate ≈ 32 %
+en el Sprint, Punta floja con stats bajas, Peregrina en 65 % (necesita que «Garra fija» tenga efecto
+de vuelo: campo nuevo de habilidad con ADR).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
