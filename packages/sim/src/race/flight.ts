@@ -446,10 +446,11 @@ export type FlightConstants = {
    */
   readonly diveCourRel: boolean;
   /**
-   * The Punta jumps on her legs a Salto (or any obstacle) she meets in the start, like the Pelotón
-   * (`packJumps`): her skims take off from the start's end, and the early skim starts past an
-   * obstacle it would start inside (false = she took off 20 m before the steps' first Salto, in
-   * the middle of the start, and lost the start's push in dirty air behind the other Punta).
+   * The Punta jumps on her legs a Salto she meets in the start, like the Pelotón (`packJumps`):
+   * her skims take off from the start's end, and the early skim starts past a Salto it would start
+   * inside; a Colina still joins her early skim (without it the canyon lost a sixth of its
+   * fights, CONT-1). false = she took off 20 m before the steps' first Salto, in the middle of the
+   * start, and lost the start's push in dirty air behind the other Punta.
    */
   readonly leadStartJumps: boolean;
   /**
@@ -1335,7 +1336,7 @@ function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
     // polish: past an obstacle the start's end falls in (she lands it on her legs first)
     if (F.leadStartJumps)
       for (let s = 0; s < G.S; s++)
-        if (isObstacle(G.segType[s] ?? 0) && (G.segStart[s] ?? 0) <= a && (G.segEnd[s] ?? 0) > a)
+        if (G.segType[s] === SEG_JUMP && (G.segStart[s] ?? 0) <= a && (G.segEnd[s] ?? 0) > a)
           a = (G.segEnd[s] ?? 0) + F.marginM * m;
     const len = Math.max(F.leadEarlyMinM * m, floorDiv(G.L, F.leadEarlyDiv));
     raw.push({ a, b: Math.min(G.finalStart, a + len) });
@@ -1348,7 +1349,7 @@ function leadPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
     const a = Math.max(0, (G.segStart[s] ?? 0) - F.marginM * m);
     if (F.allFly && a >= end) continue;
     // polish: a Salto she meets in the start is jumped on her legs (like the pack's)
-    if (F.leadStartJumps && a < G.startEnd) continue;
+    if (F.leadStartJumps && a < G.startEnd && G.segType[s] === SEG_JUMP) continue;
     raw.push({ a, b: Math.min(end, (G.segEnd[s] ?? 0) + F.marginM * m) });
   }
   raw.sort((x, y) => x.a - y.a);
