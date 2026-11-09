@@ -378,7 +378,11 @@ export function decide(
   const freeLeft = S.freeLeft[i] ?? 0;
   // the gates are pure reads: evaluated only when she wants and can thrust (PERF-1)
   let gatesOk = false;
-  if (want && canThrust && energyGate(R, T, S, i, seg, mode, freeLeft, (P.freeMask[i] ?? 0) & bit)) {
+  if (
+    want &&
+    canThrust &&
+    energyGate(R, T, S, i, seg, mode, freeLeft, (P.freeMask[i] ?? 0) & bit)
+  ) {
     const capLim = T.capLim[i] ?? 0;
     const capMode =
       mode === MODE_SURPLUS
