@@ -1001,6 +1001,16 @@ Peregrina baja a 64 % (perdió su ala firma), Acecho fuerte con stats altas en e
 en el Sprint con stats bajas, Punta y Pelotón flojos con stats altas en varias pistas, Remate floja
 en el Circuito.
 
+**Distancias y herencia (dueño, 2026-11-09), en diseño.** Cuatro distancias como Umamusume (Sprint,
+Milla, Media, Larga) y letras en escalera por Falconess (ej. Peregrina A-A-B-C, Cernícala C-B-A-B,
+Caracara C-C-B-A). **La caja negra sube como máximo una letra de distancia** (C → B, nunca hasta la A
+de una especialista). Idea del dueño: una B ya alcanza para pelear; una Falconess fuera de su
+distancia, bien armada, puede ganarle a la especialista mal armada usando sus ventajas propias (ej.
+Caracara en Sprint B, con su Resistencia natural más Agilidad al máximo: una velocista con el aire que
+las velocistas no tienen). Requisito para que funcione: la Resistencia tiene que valer algo en Sprint
+(hoy +100 vale 0 m ahí). Pendiente: elegir dónde actúa la letra (Agilidad del último tercio u
+opción «la distancia se juega en el aire»).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
