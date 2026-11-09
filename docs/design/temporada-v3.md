@@ -919,6 +919,16 @@ el centro de Técnica del aire era absoluto; ahora lee la Técnica contra la pro
 15,4 %; Pelotón a 300 baja 1-4 puntos). 48 de 56 criterios pasan; la carrera ya baja de 5 ms (p95 4,3). Abiertos: Punta y
 Pelotón flojos en la Escalera, Remate floja en el Circuito, Pelotón del Sprint a 300 (34 %).
 
+**Pulido de balance (2026-11-09), prototipo medido** (`.work/design7/measure/polish-final.md`). Cinco reglas, ninguna
+lee la posición de otra: la gran picada deja siempre 300 m hasta la meta (si un Salto o un líquido queda más cerca, pica
+antes y lo pasa con las piernas, como todas: arregla el Remate del Circuito, 17-19 → 27-29 %, y su viaje gratis sobre el
+último Salto de la Escalera, 35 → 22-26 %); la Punta salta con las piernas el Salto de la largada, como el Pelotón; la
+barra presupuesta el plan propio a su propia Resistencia (con 600 de referencia, volar costaba físico de más a 300 y
+devolvía a 750); la potencia de la picada lee el Coraje contra su build; y una picada cuenta como bajada para las
+habilidades de bajada («Golpe en picada»). Celdas posición × pista × nivel fuera de 20-30 %: 26 → 17. 49 de 57 criterios
+pasan. Abiertos: Acecho fuerte en la Escalera (32-35 %) y en la Travesía a 600-750 (32-33 %), Remate del Sprint 31-32 %
+en todos los niveles, Pelotón del Sprint a 300 (31 %), Peregrina 64,9 % (sin mejora).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
