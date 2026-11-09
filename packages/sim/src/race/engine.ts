@@ -46,6 +46,7 @@ import { createPlanReport, type PlanReport, planSprint } from "./sprint.js";
 import {
   buildTables,
   CAUSE_BROKEN,
+  CAUSE_EFFORT,
   CAUSE_JUMP,
   CAUSE_PHASE,
   createRaceArena,
@@ -567,7 +568,20 @@ function runnerTick(c: Ctx, i: number): boolean {
   const drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
   const drain = drain0 + drip;
   const hp = sub0(S.hp[i] ?? 0, drain);
-  if (drip > 0) S.hpCost[i] = (S.hpCost[i] ?? 0) + Math.min(drip, S.hp[i] ?? 0);
+  if (drip > 0) {
+    S.hpCost[i] = (S.hpCost[i] ?? 0) + Math.min(drip, S.hp[i] ?? 0);
+    const since = (S.dripSince[i] ?? 0) + drip;
+    S.dripSince[i] = since;
+    if (
+      c.F !== null &&
+      c.F.hpReplanHp > 0 &&
+      since >= c.F.hpReplanHp * 1_000_000 &&
+      flag(S, i, F_PLAN_ACTIVE)
+    ) {
+      S.dripSince[i] = 0;
+      requestReplan(S, i, CAUSE_EFFORT);
+    }
+  }
   S.hp[i] = hp;
   // a maneuver's hit earlier this tick may have emptied her already (flag read fresh)
   if (hp === 0 && !flag(S, i, F_EXHAUSTED)) {
@@ -948,6 +962,8 @@ function hpHit(
   const after = sub0(before, micro);
   S.hp[i] = after;
   S.hpCost[i] = (S.hpCost[i] ?? 0) + (before - after);
+  if (F !== null && F.hpReplanHp > 0 && flag(S, i, F_PLAN_ACTIVE))
+    requestReplan(S, i, CAUSE_EFFORT);
   c.rec.hpHit(c.t, i, posMm(c, i), cause, floorDiv(before - after, 1000), floorDiv(after, 1000));
   if (after === 0 && !flag(S, i, F_EXHAUSTED)) {
     setFlag(S, i, F_EXHAUSTED);

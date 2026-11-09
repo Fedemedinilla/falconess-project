@@ -379,7 +379,8 @@ export const BoostMode = z.enum([
 export type BoostMode = z.infer<typeof BoostMode>;
 export const BOOST_MODES = BoostMode.options;
 
-export const SprintPlanCause = z.enum(["phase", "refund", "jump", "broken"]);
+/** "effort" (ruleset v3, 2026-11-09): a maneuver's hit or the traffic's drip changed her hp. */
+export const SprintPlanCause = z.enum(["phase", "refund", "jump", "broken", "effort"]);
 export type SprintPlanCause = z.infer<typeof SprintPlanCause>;
 
 export const SprintPlanReason = z.enum([

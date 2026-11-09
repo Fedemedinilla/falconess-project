@@ -101,6 +101,8 @@ export const CAUSE_PHASE = 0;
 export const CAUSE_REFUND = 1;
 export const CAUSE_JUMP = 2;
 export const CAUSE_BROKEN = 3;
+/** Ruleset v3 (stamina pays effort): a hit or the drip since the last plan. */
+export const CAUSE_EFFORT = 4;
 
 // --- frozen skill column bits (15) -----------------------------------------------------------------
 export const SK_ONCE = 1;
@@ -519,6 +521,8 @@ export type RaceState = {
   readonly lineMm: Float64Array;
   /** Stamina pays effort (2026-11-09): µhp the maneuvers cost (hits and drips), for the ledger. */
   readonly hpCost: Float64Array;
+  /** µhp of traffic drip since her last sprint plan (replans past `hpReplanHp`). */
+  readonly dripSince: Float64Array;
   /** 1 = the `pass` candidate (i × MAX_LANES + j) is by the side (same band, other line). */
   readonly passSide: Uint8Array;
 };
@@ -812,6 +816,7 @@ function createState(): RaceState {
     blockedTicks: i32(N),
     lineMm: f64(N),
     hpCost: f64(N),
+    dripSince: f64(N),
     passSide: u8(N * N),
   };
 }

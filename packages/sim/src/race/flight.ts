@@ -347,6 +347,12 @@ export type FlightConstants = {
    * 17-50 m there), the sprint did not (0 m); the plan's hits are not scaled.
    */
   readonly hpDistPm: readonly [number, number, number, number];
+  /**
+   * A running sprint plan replans after a hit, or once the drip since the last plan passes this
+   * many hp (0 = never): the plan spends her hp to the line, so an unplanned cost would empty her
+   * on the way and leave her at the speed floor (σ of the sprint 15 → 31 m without it).
+   */
+  readonly hpReplanHp: number;
   /** An exhausted runner starts no new maneuver: no over, no line switch, no door (false = off). */
   readonly exhaustedStill: boolean;
   /**
@@ -769,13 +775,14 @@ export const FLIGHT_V3_E1: FlightConstants = {
   hpTakeoff: 30,
   hpSkimTakeoff: 20,
   hpDiveBand: 15,
-  hpSwitch: 40,
-  hpFight: 50,
-  hpDirtyPm: 6000,
-  hpBoxedPm: 6000,
+  hpSwitch: 20,
+  hpFight: 30,
+  hpDirtyPm: 1500,
+  hpBoxedPm: 3000,
   hpPlanRefStamina: 600,
   hpDirtySkimPm: 333,
   hpDistPm: [1000, 150, 60, 40],
+  hpReplanHp: 10,
   exhaustedStill: true,
   distanceLetters: true,
   distanceMaxM: [1400, 1800, 2400],
@@ -795,6 +802,7 @@ export const FLIGHT_OFF_STAMINA: Partial<FlightConstants> = {
   hpDirtyPm: 0,
   hpBoxedPm: 0,
   hpPlanRefStamina: 0,
+  hpReplanHp: 0,
   exhaustedStill: false,
   distanceLetters: false,
 };

@@ -811,6 +811,7 @@
   "ui.race.phase.start": "Salida",
   "ui.race.place": "{place}.º",
   "ui.race.plan.cause.broken": "alas rotas",
+  "ui.race.plan.cause.effort": "le costó físico",
   "ui.race.plan.cause.jump": "salto",
   "ui.race.plan.cause.phase": "fase final",
   "ui.race.plan.cause.refund": "reembolso",
