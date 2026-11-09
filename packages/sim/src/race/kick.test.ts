@@ -113,4 +113,37 @@ describe("the kick on low hp", () => {
       expect(p.pacePm).toBeUndefined();
     }
   });
+
+  it("the air's Technique centre reads her build: an equal field flies the same air at 300 and 750", () => {
+    const first = (R: typeof RULESET_V3, st: number) => {
+      const l = simulateRace(
+        R,
+        field(st).map((e) => ({ ...e, stats: S(st) })),
+        courseOf("sprint"),
+        "kick/air",
+        { detail: "full" },
+      );
+      const m = new Map<number, number>();
+      for (const e of l.events ?? [])
+        if (e.kind === "takeoff" && !m.has(e.lane)) m.set(e.lane, e.airPm);
+      return [...m.entries()].sort((a, b) => a[0] - b[0]);
+    };
+    expect(FLIGHT_V3_E1.airTechRel).toBe(true);
+    expect(first(RULESET_V3, 300)).toEqual(first(RULESET_V3, 750));
+    const abs = rulesetV3(1, { airTechRel: false });
+    expect(first(abs, 300)).not.toEqual(first(abs, 750));
+  });
+
+  it("with the floor on, the traffic never empties her (hpHitFloor)", () => {
+    const R = rulesetV3(1, { hpHitFloor: true, hpKnock: 2000, hpDoor: 2000, hpSwitch: 2000 });
+    for (let k = 0; k < 4; k++) {
+      const l = simulateRace(R, field(300), courseOf("sprint"), `kick/floor/${k}`, {
+        detail: "full",
+      });
+      const traffic = (l.events ?? []).filter(
+        (e) => e.kind === "hpHit" && e.cause !== "takeoff" && e.cause !== "dive",
+      );
+      for (const e of traffic) expect(e.kind === "hpHit" && e.hpLeft > 0).toBe(true);
+    }
+  });
 });

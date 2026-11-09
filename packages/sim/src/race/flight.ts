@@ -410,6 +410,22 @@ export type FlightConstants = {
    * once, as before): the body that resists pays much less for the same fight.
    */
   readonly hpTrafficSq: boolean;
+  /**
+   * The kick on low hp: the traffic's hits and drips never take her under the hp she needs to
+   * reach the line at cruise (`lineHp`, refreshed at every hit, takeoff and plan): the traffic eats
+   * her kick, never her cruise, so the worst a fight can do is leave her without a kick (false = a
+   * hit can empty her: the speed floor).
+   */
+  readonly hpHitFloor: boolean;
+  /**
+   * The air's Technique centre (L1, `airTechPm`) reads her Technique against her own build, `600 +
+   * T − (A + S + T + C + I) / 5`, instead of against 600 (false = against 600). Root cause of the
+   * stat-level bias (kick-final.md): with the absolute centre every high flyer of a 300 field lost
+   * 7.5 ‰ of her air and the skim nothing (Acecho 10.6 % of the sprint at 300, Pelotón 32-36 % at
+   * 300 on five tracks), and at 750 the high flyers gained 3.75 ‰. A technical build still flies
+   * better: +100 Technique moves the centre 2 ‰ (2.5 before).
+   */
+  readonly airTechRel: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -833,6 +849,8 @@ export const FLIGHT_V3_E1: FlightConstants = {
   hpKnock: 144,
   hpDoor: 144,
   hpTrafficSq: true,
+  hpHitFloor: false,
+  airTechRel: true,
 };
 
 /** The kick on low hp off: v3 is stamina pays effort (31f801b) byte for byte (kick/inv11.ts). */
@@ -845,6 +863,8 @@ export const FLIGHT_OFF_KICK: Partial<FlightConstants> = {
   hpKnock: 30,
   hpDoor: 30,
   hpTrafficSq: false,
+  hpHitFloor: false,
+  airTechRel: false,
   hpTakeoff: 30,
   hpSkimTakeoff: 20,
   hpDiveBand: 15,
@@ -1329,7 +1349,15 @@ export function planFlights(
   liftF: number,
   courage: number,
   velPerMms: number,
-  air: { u28: number; u30: number; technique: number; dist?: number; dPm?: number },
+  air: {
+    u28: number;
+    u30: number;
+    technique: number;
+    dist?: number;
+    dPm?: number;
+    /** The Technique the air's centre reads (airTechRel); absent = `technique`. */
+    airTech?: number;
+  },
 ): void {
   const wing = wingOf(F, T.style[i] ?? 0);
   // distance letters (2026-11-09): ‰ off her distance, on that distance's aspect of flight
@@ -1350,7 +1378,8 @@ export function planFlights(
   for (let k = 0; k < FLIGHTS_MAX; k++) {
     const u = k < 4 ? air.u28 : air.u30;
     T.airOff[i * FLIGHTS_MAX + k] =
-      airOffsetPm(F, (u >>> (8 * (k % 4))) & 255, air.technique) + (F.airWPm > 0 ? wing.airPm : 0);
+      airOffsetPm(F, (u >>> (8 * (k % 4))) & 255, air.airTech ?? air.technique) +
+      (F.airWPm > 0 ? wing.airPm : 0);
   }
   // L3: dirty air costs × (1000 + extra − extra × dirtyTechPm × min(T, 1200) / 1.2e6) / 1000
   const extra = Math.max(0, F.dirtyHoldPm - 1000);

@@ -527,6 +527,8 @@ export type RaceState = {
   readonly kickLock: Float64Array;
   /** The kick on low hp: ‰ taken off her final cruise to reach the line on her hp (0 = none). */
   readonly paceCut: Int32Array;
+  /** The kick on low hp: µhp the traffic may not take her under (`lineHp` at her last hit, takeoff or plan). */
+  readonly hpFloor: Float64Array;
   /** 1 = the `pass` candidate (i × MAX_LANES + j) is by the side (same band, other line). */
   readonly passSide: Uint8Array;
 };
@@ -823,6 +825,7 @@ function createState(): RaceState {
     dripSince: f64(N),
     kickLock: f64(N),
     paceCut: i32(N),
+    hpFloor: f64(N),
     passSide: u8(N * N),
   };
 }
@@ -1197,6 +1200,16 @@ export function buildTables(
         technique,
         dist,
         dPm,
+        ...(F.airTechRel
+          ? {
+              airTech: Math.max(
+                0,
+                600 +
+                  technique -
+                  floorDiv(agility + stamina + technique + courage + intelligence, 5),
+              ),
+            }
+          : {}),
       });
     // stamina pays effort (2026-11-09): the bar budgets her plan's hits at hpPlanRefStamina
     if (F !== null && F.hpPlanRefStamina > 0) {

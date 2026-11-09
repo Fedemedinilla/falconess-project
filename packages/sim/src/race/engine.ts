@@ -42,7 +42,14 @@ import {
   waterHitMd,
 } from "./physics.js";
 import { requestReplan, runSkills, type SkillSink, tickSkillTimers } from "./skills.js";
-import { createPlanReport, KICK_OFF, type KickRule, type PlanReport, planSprint } from "./sprint.js";
+import {
+  createPlanReport,
+  KICK_OFF,
+  type KickRule,
+  lineHp,
+  type PlanReport,
+  planSprint,
+} from "./sprint.js";
 import {
   buildTables,
   CAUSE_BROKEN,
@@ -585,7 +592,10 @@ function runnerTick(c: Ctx, i: number): boolean {
       ? airDrain(c, i, c.F, vOut, dK)
       : drainMicro(vOut, c.vBase, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
-  const drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
+  let drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
+  // the kick on low hp: the drip stops at her floor (the drain itself never does)
+  if (drip > 0 && c.F?.hpHitFloor === true)
+    drip = Math.min(drip, Math.max(0, (S.hp[i] ?? 0) - drain0 - (S.hpFloor[i] ?? 0)));
   const drain = drain0 + drip;
   const hp = sub0(S.hp[i] ?? 0, drain);
   if (drip > 0) {
@@ -627,14 +637,14 @@ function runnerTick(c: Ctx, i: number): boolean {
   const tickFlags = !full
     ? 0
     : (boostOn ? FL.boosting : 0) |
-    (pulseTick ? FL.pulseBurst : 0) |
-    (over ? FL.overheated : 0) |
-    (detouring ? FL.detour : 0) |
-    (mode === MODE_PLAN ? FL.planSpurt : 0) |
-    (mode === MODE_KICK ? FL.kick : 0) |
-    (drafting ? FL.drafting : 0) |
-    (inDirtyAir(c.F, S, i) ? FL.dirtyAir : 0) |
-    (S.line[i] === 1 && (S.alt[i] ?? 0) >= 1 ? FL.lineOut : 0);
+      (pulseTick ? FL.pulseBurst : 0) |
+      (over ? FL.overheated : 0) |
+      (detouring ? FL.detour : 0) |
+      (mode === MODE_PLAN ? FL.planSpurt : 0) |
+      (mode === MODE_KICK ? FL.kick : 0) |
+      (drafting ? FL.drafting : 0) |
+      (inDirtyAir(c.F, S, i) ? FL.dirtyAir : 0) |
+      (S.line[i] === 1 && (S.alt[i] ?? 0) >= 1 ? FL.lineOut : 0);
 
   // B12. finish, or segment changes (landing, repair, water hit, jump entry)
   if (newPos >= G.L) {
@@ -680,6 +690,7 @@ function runnerTick(c: Ctx, i: number): boolean {
 /** Step B6: plan (or replan) the final sprint and log the `sprintPlan` event (11, 20.4). */
 function sprintPlan(c: Ctx, i: number): void {
   const { R, G, T, S, plan: p } = c;
+  if (c.F?.hpHitFloor === true) S.hpFloor[i] = lineHp(R, G, T, i, S.b[i] ?? 0, S.pos[i] ?? 0);
   planSprint(R, G, T, S, i, p, c.F !== null ? pendingDiveHp(c, c.F, i) : 0, c.kick);
   if (!c.rec.full) return;
   const cause: SprintPlanCause = PlanCauses.options[S.replanCause[i] ?? 0] ?? "phase";
@@ -986,8 +997,14 @@ function hpHit(
   // the kick on low hp: the traffic's hits shrink by her Resistencia twice
   if (F !== null && F.hpTrafficSq && cause !== "takeoff" && cause !== "dive")
     micro = floorDiv(micro * 1_200_000, div);
-  if (micro <= 0) return;
   const before = S.hp[i] ?? 0;
+  // the kick on low hp: the traffic eats her kick, never the cruise to the line
+  if (F !== null && F.hpHitFloor && cause !== "takeoff" && cause !== "dive") {
+    const floor = lineHp(c.R, c.G, c.T, i, S.b[i] ?? 0, S.pos[i] ?? 0);
+    S.hpFloor[i] = floor;
+    micro = Math.min(micro, Math.max(0, before - floor));
+  }
+  if (micro <= 0) return;
   const after = sub0(before, micro);
   S.hp[i] = after;
   S.hpCost[i] = (S.hpCost[i] ?? 0) + (before - after);
@@ -1817,6 +1834,7 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   });
   // stamina pays effort: leaving the ground for the high bands is a hit, a skim a smaller one
   hpHit(c, i, from === 0 && band > BAND_LOW ? F.hpTakeoff : F.hpSkimTakeoff, "takeoff");
+  if (F.hpHitFloor) S.hpFloor[i] = lineHp(c.R, c.G, T, i, S.b[i] ?? 0, S.pos[i] ?? 0);
 }
 
 /**

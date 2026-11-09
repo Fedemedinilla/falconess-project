@@ -13,7 +13,7 @@ import {
   routeDist,
   thrustable,
 } from "./state.js";
-import { PH_FINAL, SEG_JUMP, STYLE_GROUND, sub0 } from "./units.js";
+import { PH_FINAL, PH_MIDDLE, SEG_JUMP, STYLE_GROUND, sub0 } from "./units.js";
 
 /**
  * Final sprint plan of docs/race-engine.md 11: the sustained boost level (an average thrust, vu)
@@ -145,6 +145,41 @@ function cruiseHp(
     if (z <= a) continue;
     const v = vF(T, i, b, s);
     h += ceilDiv(routeDist(G, T, i, s, z - a), v) * drainF(v, vBase, dkF);
+  }
+  return h;
+}
+
+/**
+ * The kick on low hp: µhp her body needs to reach the line from x0 at cruise (the middle cruise and
+ * drain before the final, the final's after; every segment, jumps included), the floor the
+ * traffic's hits never take her under.
+ */
+export function lineHp(
+  R: RaceConstants,
+  G: CourseGeometry,
+  T: RaceTables,
+  i: number,
+  b: number,
+  x0: number,
+): number {
+  const vBase = R.vBase * R.ticksPerSecond;
+  const dkM = T.dK[i * 4] ?? 0;
+  const dkF = T.dK[i * 4 + DK_FINAL] ?? 0;
+  const fs = G.finalStart;
+  let h = 0;
+  for (let s = 0; s < G.S; s++) {
+    const a = Math.max(x0, G.segStart[s] ?? 0);
+    const z = Math.min(G.L, G.segEnd[s] ?? 0);
+    if (z <= a) continue;
+    if (a < fs) {
+      const zm = Math.min(z, fs);
+      const v = Math.max(1, T.vC[ibps(i, b, PH_MIDDLE, s)] ?? 1);
+      h += ceilDiv(routeDist(G, T, i, s, zm - a), v) * drainF(v, vBase, dkM);
+    }
+    if (z > fs) {
+      const v = vF(T, i, b, s);
+      h += ceilDiv(routeDist(G, T, i, s, z - Math.max(a, fs)), v) * drainF(v, vBase, dkF);
+    }
   }
   return h;
 }
