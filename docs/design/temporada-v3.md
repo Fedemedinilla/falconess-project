@@ -1019,6 +1019,12 @@ Sprints peleados pero un cuarto del campo se agota cerca de la meta y la carrera
 Falta una regla: que el físico bajo acorte el remate de a poco. Saltitos con propulsor en el suelo:
 hechos (solo visual).
 
+**Remate a físico bajo (2026-11-09), prototipo medido** (`.work/design7/measure/kick-final.md`). En
+Sprint, el remate se acorta de a poco según el físico que sobra al planearlo; el resto queda
+bloqueado. La Resistencia en Sprint pasa de 0,2 a 0,8 m por +100 (2,3 en carreras peleadas); más
+que eso solo con lotería. Caracara Sprint B contra Peregrina con poca Resistencia: 34 → 43 %. El
+motor quedó dentro del límite de tiempo (p95 4,3 ms). 48 de 56 criterios pasan.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
