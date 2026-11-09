@@ -1033,6 +1033,13 @@ su propia Resistencia; la picada lee el Coraje contra su propia build. Celdas fu
 en el Sprint, Punta floja con stats bajas, Peregrina en 65 % (necesita que «Garra fija» tenga efecto
 de vuelo: campo nuevo de habilidad con ADR).
 
+**Casas por pista y Garra fija (2026-11-09), prototipo medido** (`.work/design7/measure/homes-final.md`).
+Opción 1 (rotación, técnica Champions Meeting): cada posición tiene casa (Punta: Pista larga; Pelotón:
+Cielo abierto; Acecho: Escalera y Travesía; Remate: Sprint, Pista de saltos y Circuito) y el calendario
+con «pista del mes» deja a cada posición en 23-28 %. Opción 3: «Garra fija» pica +50 % desde alto
+(borrador ADR-0009); Peregrina 65 → 72 %. Desbalance: inflación de Peregrina en Sprint y Milla; el caso
+Caracara Sprint B se da vuelta (14-20 % contra Peregrina) y Caracara queda la más floja (70,7 %).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
