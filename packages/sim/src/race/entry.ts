@@ -140,7 +140,17 @@ export function freezeEntry(
   });
 
   // 5. traits; 6. starting durability
-  const traits = compileTraits(fb.modifiers);
+  const traits0 = compileTraits(fb.modifiers);
+  // ADR-0009 (draft, v3 with skillFlight): the passive's flight effect becomes the dive trait
+  const passiveId = neutral ? ownPassive : (frame.passive ?? null);
+  const flight =
+    F !== null && F.skillFlight && passiveId !== null
+      ? content.getPassive(passiveId).flight
+      : undefined;
+  const traits =
+    flight !== undefined && flight.diveVPm > 0
+      ? { ...traits0, diveSkill: { fromBand: flight.diveFromBand, pm: flight.diveVPm } }
+      : traits0;
   const durabilityStart =
     F !== null && F.noWear
       ? fb.durabilityMax
@@ -163,7 +173,7 @@ export function freezeEntry(
     rule: fb.rule,
     style: fb.style,
     position,
-    passive: neutral ? ownPassive : (frame.passive ?? null),
+    passive: passiveId,
     parts: [...fb.parts],
     quirks: [...fb.quirks],
     mood: input.mood,

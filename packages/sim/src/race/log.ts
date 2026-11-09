@@ -353,6 +353,8 @@ export class RaceRecorder {
       surgeMm: number;
       airMms?: number;
       airMm?: number;
+      skillMms?: number;
+      skillId?: string;
     },
   ): void {
     if (this.full) this.list.push({ kind: "dive", tick, lane, posMm, ...d });

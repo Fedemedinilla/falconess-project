@@ -172,6 +172,8 @@ type Ctx = {
   passRow: Int32Array;
   /** Runners unfinished at the start of the tick (bit per lane): the snapshot's live set (F9). */
   live: number;
+  /** Each lane's passive id (the log names the passive behind a dive, ADR-0009). */
+  readonly passiveIds: readonly (string | null)[];
 };
 
 /**
@@ -248,6 +250,7 @@ function runRace(
   const rec = new RaceRecorder(full, E, R.log.sampleEveryTicks);
   const c: Ctx = {
     R,
+    passiveIds: E.map((e) => e.passive),
     F: flightOf(ruleset),
     G,
     A,
@@ -2030,6 +2033,13 @@ function touchdown(c: Ctx, i: number): void {
         if (from === 3) S.grandDives[i] = (S.grandDives[i] ?? 0) + 1;
         S.diveGainMm[i] = (S.diveGainMm[i] ?? 0) + surgeMm;
         S.peakMms[i] = Math.max(S.peakMms[i] ?? 0, vBefore + dvMms);
+        // ADR-0009: the part of the dive her passive added (Garra fija), for the log
+        const sPm = T.diveSkillPm[i] ?? 0;
+        const skillMms =
+          sPm > 0 && from >= (T.diveSkillFrom[i] ?? 4)
+            ? dvMms - floorDiv(dvMms * 1000, 1000 + sPm)
+            : 0;
+        const skillId = c.passiveIds[i];
         c.rec.dive(c.t, i, p, {
           fromBand: from,
           gainMms: dvMms,
@@ -2037,6 +2047,9 @@ function touchdown(c: Ctx, i: number): void {
           surgeTicks: ceilDiv(dv, Math.max(1, R.kDecel)),
           surgeMm,
           ...(F?.diveAirShare ? { airMms: mms(c, added), airMm } : {}),
+          ...(skillMms > 0 && skillId !== undefined && skillId !== null
+            ? { skillMms, skillId }
+            : {}),
         });
       }
     }

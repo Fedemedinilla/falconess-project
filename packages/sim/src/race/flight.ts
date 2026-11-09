@@ -473,6 +473,12 @@ export type FlightConstants = {
    * over the whole Bajada and the Salto, and ran none of the Bajada on her legs).
    */
   readonly closerLastFeature: boolean;
+  // --- homes per track and the weak's own kit (owner 2026-11-09; .work/design7/measure/homes-final.md)
+  /**
+   * ADR-0009 (draft): a passive's flight effect (`PassiveSkill.flight`) enters the race as the
+   * trait `diveSkill` (false = never: v3 is the balance polish, 6e98e90, byte for byte).
+   */
+  readonly skillFlight: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -911,10 +917,16 @@ export const FLIGHT_V3_E1: FlightConstants = {
   hpPlanOwn: true,
   diveDescent: true,
   closerLastFeature: false,
+  // homes per track (owner 2026-11-09, homes-final.md): Garra fija dives harder from the ceiling
+  skillFlight: true,
 };
+
+/** A passive's flight effect off (ADR-0009): v3 is the balance polish (6e98e90) byte for byte (homes/inv13.ts). */
+export const FLIGHT_OFF_HOMES: Partial<FlightConstants> = { skillFlight: false };
 
 /** The balance polish off: v3 is the kick on low hp (95e469f) byte for byte (polish/inv12.ts). */
 export const FLIGHT_OFF_POLISH: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_HOMES,
   closerRoomM: 0,
   closerRoomMinM: 0,
   diveCourRel: false,
@@ -1486,6 +1498,8 @@ export function planFlights(
     airTech?: number;
     /** The Courage the dive's η reads (diveCourRel); absent = `courage`. */
     diveCour?: number;
+    /** ADR-0009: her passive's dive (trait `diveSkill`); absent = none. */
+    diveSkill?: { fromBand: number; pm: number };
   },
 ): void {
   const wing = wingOf(F, T.style[i] ?? 0);
@@ -1501,9 +1515,18 @@ export function planFlights(
   const eta0 = F.diveEtaBasePm + floorDiv(F.diveEtaCouragePm * Math.min(cEta, 1200), 1200);
   const diveCut = Math.min(900, floorDiv(sprintPm * F.distanceDivePm, 1000));
   const eta = diveCut !== 0 ? floorDiv(eta0 * (1000 - diveCut), 1000) : eta0;
-  for (let b = 0; b < 4; b++)
-    T.diveV[i * 4 + b] =
-      floorDiv((F.diveVMms[b] ?? 0) * eta * wing.diveWingPm, 1_000_000) * velPerMms;
+  const ds = F.skillFlight ? air.diveSkill : undefined;
+  T.diveSkillFrom[i] = ds !== undefined && ds.pm > 0 ? ds.fromBand : 0;
+  T.diveSkillPm[i] = ds !== undefined && ds.pm > 0 ? ds.pm : 0;
+  for (let b = 0; b < 4; b++) {
+    const mms0 = floorDiv((F.diveVMms[b] ?? 0) * eta * wing.diveWingPm, 1_000_000);
+    // ADR-0009: her passive's dive (Garra fija) from its band up, ‰ more Δv
+    const mms =
+      ds !== undefined && ds.pm > 0 && b >= ds.fromBand
+        ? floorDiv(mms0 * (1000 + ds.pm), 1000)
+        : mms0;
+    T.diveV[i * 4 + b] = mms * velPerMms;
+  }
   // L1: the air of flight k, one byte of slot 28 (k < 4) or 30 (k ≥ 4), drawn before tick 0
   for (let k = 0; k < FLIGHTS_MAX; k++) {
     const u = k < 4 ? air.u28 : air.u30;

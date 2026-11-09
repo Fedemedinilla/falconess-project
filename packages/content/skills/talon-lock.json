@@ -32,5 +32,9 @@
       "mode": "multiply",
       "value": 1.006
     }
-  ]
+  ],
+  "flight": {
+    "diveFromBand": 2,
+    "diveVPm": 500
+  }
 }

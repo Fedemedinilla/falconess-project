@@ -242,6 +242,9 @@ export type RaceTables = {
   readonly climbMe: Int32Array;
   /** vu added to the body speed by a dive from band b (index i × 4 + b). */
   readonly diveV: Int32Array;
+  /** ADR-0009: the lowest band her passive's dive acts from (0 = none) and its ‰. */
+  readonly diveSkillFrom: Int32Array;
+  readonly diveSkillPm: Int32Array;
   /** Air cruise (L1b: `airPacePm` of her pace draw), same index as vC. */
   readonly vCAir: Int32Array;
   /** F5 (round 5): the air cruise from `airTerrainFreeBand` up (no water or climb penalty). */
@@ -617,6 +620,8 @@ function createTables(): RaceTables {
     jumpCovered: u8(NS),
     climbMe: i32(N),
     diveV: i32(N * 4),
+    diveSkillFrom: i32(N),
+    diveSkillPm: i32(N),
     vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
     vCAirHi: i32(N * 2 * 3 * MAX_SEGMENTS),
     vCAirLo: i32(N * 2 * 3 * MAX_SEGMENTS),
@@ -1218,6 +1223,7 @@ export function buildTables(
               ),
             }
           : {}),
+        ...(tr.diveSkill !== undefined ? { diveSkill: tr.diveSkill } : {}),
       });
     // stamina pays effort (2026-11-09): the bar budgets her plan's hits at hpPlanRefStamina
     if (F !== null && F.hpPlanRefStamina > 0) {

@@ -140,6 +140,11 @@ export const RaceTraits = z.strictObject({
   liftBonusPm: Nat,
   noPulse: z.boolean(),
   randomSkillGuaranteed: z.boolean(),
+  /**
+   * ADR-0009 (draft, ruleset v3 with `skillFlight`): her passive's dive, ‰ more Δv for a dive from
+   * band `fromBand` or higher. Absent in v1, v2 and v3 with the flag off.
+   */
+  diveSkill: z.strictObject({ fromBand: Int.min(2).max(3), pm: Nat }).optional(),
 });
 export type RaceTraits = z.infer<typeof RaceTraits>;
 
@@ -493,6 +498,12 @@ export const RaceEvent = z.discriminatedUnion("kind", [
      */
     airMms: Nat.optional(),
     airMm: Nat.optional(),
+    /**
+     * ADR-0009 (draft): the part of `gainMms` her passive's flight effect added (Garra fija) and
+     * the passive's id; absent when no passive changed this dive.
+     */
+    skillMms: Nat.optional(),
+    skillId: Slug.optional(),
   }),
   /**
    * Every end of a flight; `cause` plan (planned point), energy (could not pay to hold: no dive,
