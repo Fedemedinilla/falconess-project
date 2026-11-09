@@ -929,6 +929,19 @@ habilidades de bajada («Golpe en picada»). Celdas posición × pista × nivel 
 pasan. Abiertos: Acecho fuerte en la Escalera (32-35 %) y en la Travesía a 600-750 (32-33 %), Remate del Sprint 31-32 %
 en todos los niveles, Pelotón del Sprint a 300 (31 %), Peregrina 64,9 % (sin mejora).
 
+**Casas por pista y lo débil con su kit (2026-11-09), prototipo medido** (`.work/design7/measure/homes-final.md`). El dueño
+cambió la meta (opción 1, como el Champions Meeting que fija una pista por mes): una posición ya no tiene que quedar en
+20-30 % en cada pista; tiene casas (la mejor o a ≤ 2 puntos) y pistas flojas, ninguna celda bajo 15 % (duro 10) ni sobre
+40 %, y con los pesos del calendario v3 (metas + opcionales, con una «pista del mes» que rota: canyon, open-sky, overlook y
+circuit dos meses, las otras uno) cada posición gana 22-28 %. Casas: Punta el canyon; Pelotón open-sky y canyon; Acecho
+la Escalera, la Travesía y el ridge; Remate el Sprint, el ridge y el circuit. Todo pasa sin tocar el motor (Punta 22,7-23,7
+y Acecho hasta 27,7 % en el calendario); falta casa de la Punta y el Pelotón en la Milla y la Media. Opción 3: «Garra fija»
+de Peregrina vuela en v3 (ADR-0009 borrador: campo nuevo `flight` de las pasivas): su picada desde la banda alta o el techo
+gana +50 % de Δv. Peregrina 64,9 → 71,5 % (4000 temporadas: 66,0 → 71,8 [70,3-73,1]); T46 fallas 17,8 → 14,7 %. Precio
+(inflación, como avisa el informe sobre Cygames): en un espejo de Remates en el Sprint gana 11,8 → 25,6 %, y en el caso del
+dueño la Caracara B pasa de 35,6 a 14,5 % contra la Peregrina de su Agilidad con poca Resistencia. Abierto para el dueño:
+achicar el bono en Sprint y Milla, y si la Punta necesita casa en la Milla o la Media.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
