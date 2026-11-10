@@ -137,16 +137,13 @@ describe("flight moments and overlays (text-free, one per event)", () => {
       expect(list.filter((x) => x.cat === "tk")).toHaveLength(tk);
       expect(list.filter((x) => x.id === "finish")).toHaveLength(1);
     }
-    for (const id of [
-      "takeoff",
-      "takeoffLow",
-      "grandDive",
-      "impact",
-      "knock",
-      "doorClosed",
-      "kickShort",
-    ])
+    for (const id of ["takeoff", "takeoffLow", "grandDive", "impact", "doorClosed", "kickShort"])
       expect(ids.has(id), id).toBe(true);
+    // a knock shows exactly when some golden race has one (the T46 field of 2026-11-10 has none)
+    const knocked = goldens.some(([, log]) =>
+      (log.events ?? []).some((e) => e.kind === "lineChange" && e.cause === "knock"),
+    );
+    expect(ids.has("knock")).toBe(knocked);
   });
 
   it("gives the followed runner her banners, a takeoff countdown and her dives in slow motion", () => {

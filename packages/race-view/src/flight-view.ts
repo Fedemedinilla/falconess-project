@@ -529,8 +529,15 @@ export function orderAt(model: FlightModel, row: number): number[] {
   return model.tracks
     .map((t) => {
       const done = t.finishRow <= row;
-      return { lane: t.lane, done, k: done ? -t.finishRow : positionAt(t, row) };
+      // two who finish in the same tick keep the results' order (their finish in mm)
+      return { lane: t.lane, done, k: done ? -t.finishRow : positionAt(t, row), place: t.place };
     })
-    .sort((a, b) => (a.done !== b.done ? (a.done ? -1 : 1) : b.k - a.k || a.lane - b.lane))
+    .sort((a, b) =>
+      a.done !== b.done
+        ? a.done
+          ? -1
+          : 1
+        : b.k - a.k || (a.done ? a.place - b.place : 0) || a.lane - b.lane,
+    )
     .map((x) => x.lane);
 }
