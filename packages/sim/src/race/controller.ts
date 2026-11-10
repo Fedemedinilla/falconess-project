@@ -355,6 +355,10 @@ export function decide(
     S.modeLevel[i] = level;
     ctl.sink.boostMode(i, mode, level);
   }
+  // PERF-2: no want, no level mode and no pulse state machine: nothing below writes (gates unread)
+  const levelMode = mode === MODE_PLAN || mode === MODE_GROUND_CONSTANT;
+  const pulseFrame = T.pulseFrame[i] === 1;
+  if (!want && !levelMode && !pulseFrame) return;
 
   const seg = S.seg[i] ?? 0;
   const segType = G.segType[seg] ?? 0;
@@ -364,7 +368,6 @@ export function decide(
   const airborne = (flags & F_AIRBORNE) !== 0;
   const onJump = segType === SEG_JUMP && style !== STYLE_GROUND;
   const unit = T.unit[ib(i, b)] ?? 1;
-  const levelMode = mode === MODE_PLAN || mode === MODE_GROUND_CONSTANT;
   if (levelMode) {
     // 9.5: no accrual on jump-blocked ticks; the cap is unit + level, so no overflow is lost
     if (!airborne && !onJump) P.acc[i] = Math.min(unit + level, (P.acc[i] ?? 0) + level);
@@ -372,7 +375,6 @@ export function decide(
   }
 
   // gates (9.3)
-  const pulseFrame = T.pulseFrame[i] === 1;
   const canThrust = (flags & F_EXHAUSTED) === 0 && !airborne && !onJump;
   const bit = 1 << segType;
   const freeLeft = S.freeLeft[i] ?? 0;

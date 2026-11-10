@@ -171,6 +171,13 @@ type Ctx = {
   passRow: Int32Array;
   /** Runners unfinished at the start of the tick (bit per lane): the snapshot's live set (F9). */
   live: number;
+  /**
+   * PERF-2: the ground drain's last inputs and result per lane (a pure function of vOut and dK in
+   * a race; the cruise keeps them for many ticks). NaN = none yet.
+   */
+  drainV: Float64Array;
+  drainK: Float64Array;
+  drainOut: Float64Array;
   /** Each lane's passive id (the log names the passive behind a dive, ADR-0009). */
   readonly passiveIds: readonly (string | null)[];
 };
@@ -312,6 +319,9 @@ function runRace(
     passPending: 0,
     passRow: new Int32Array(MAX_LANES),
     live: 0,
+    drainV: new Float64Array(MAX_LANES).fill(Number.NaN),
+    drainK: new Float64Array(MAX_LANES).fill(Number.NaN),
+    drainOut: new Float64Array(MAX_LANES),
   };
   const S = c.S;
 
@@ -604,7 +614,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   const drain0 =
     c.F !== null && (S.alt[i] ?? 0) > 0
       ? airDrain(c, i, c.F, vOut, dK)
-      : drainGround(vOut, c.vBase, dK);
+      : drainGround(c, i, vOut, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
   let drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
   // the kick on low hp: the drip stops at her floor (the drain itself never does)
@@ -727,10 +737,18 @@ function sprintPlan(c: Ctx, i: number): void {
   });
 }
 
-/** `drainMicro` written out (PERF-2: the same integers; `vBase` is checked once per race). */
-function drainGround(vOut: number, vBase: number, dK: number): number {
-  const rPm = Math.floor((vOut * 1000) / vBase);
-  return Math.floor((rPm * rPm * dK) / 1_000_000);
+/**
+ * `drainMicro` written out (PERF-2: the same integers; `vBase` is checked once per race), kept per
+ * lane while vOut and dK hold.
+ */
+function drainGround(c: Ctx, i: number, vOut: number, dK: number): number {
+  if (c.drainV[i] === vOut && c.drainK[i] === dK) return c.drainOut[i] ?? 0;
+  const rPm = Math.floor((vOut * 1000) / c.vBase);
+  const d = Math.floor((rPm * rPm * dK) / 1_000_000);
+  c.drainV[i] = vOut;
+  c.drainK[i] = dK;
+  c.drainOut[i] = d;
+  return d;
 }
 
 /** Frame flags that read the runner's state after its tick (20.4). */
