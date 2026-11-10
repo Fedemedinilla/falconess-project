@@ -4,8 +4,10 @@
  * position of the wings she races with (`DEFAULT_POSITION`), the race of ruleset v1 as it was.
  */
 import {
+  type Aptitude,
   type ContentIndex,
   DEFAULT_POSITION,
+  type Distance,
   POSITIONS,
   type Position,
   type PositionAptitudes,
@@ -13,7 +15,14 @@ import {
   type SeasonState,
   type WorkshopOp,
 } from "@falconess/schema";
-import { actionBlock, goalForTurn, type Ruleset, type SimContext } from "@falconess/sim";
+import {
+  actionBlock,
+  distanceOfLength,
+  flightOf,
+  goalForTurn,
+  type Ruleset,
+  type SimContext,
+} from "@falconess/sim";
 
 /** A week's action input: the only inputs that carry a race position. */
 export type WeekActionInput = Exclude<RunInput, { kind: "start" | "event:choose" }>;
@@ -94,4 +103,41 @@ export function chosenFor(
   state: SeasonState,
 ): Position | undefined {
   return choice !== undefined && choice.turn === state.turn ? choice.position : undefined;
+}
+
+/** What the pre-race card says of the race on a ruleset with distance letters (v3). */
+export type RaceDistance = {
+  readonly distance: Distance;
+  readonly lengthMm: number;
+  /** Her letter there this season (with the black box's step). */
+  readonly letter: Aptitude;
+  /** Her birth letter when a black box lifted this distance this season (C → B), else null. */
+  readonly bornAs: Aptitude | null;
+  /** Her signature passive (skill id), racing with her on any wings. */
+  readonly passive: string | null;
+};
+
+/**
+ * The goal race's distance, her letter in it (and the letter she was born with when her black box
+ * lifted it) and her passive: undefined on a ruleset without distance letters (v1, v2).
+ */
+export function raceDistance(
+  ctx: SimContext,
+  state: Pick<SeasonState, "falconessId" | "distanceAptitude" | "distanceBoost">,
+  courseId: string,
+): RaceDistance | undefined {
+  const F = flightOf(ctx.ruleset);
+  if (F === null || !F.distanceLetters || state.distanceAptitude === undefined) return undefined;
+  const course = ctx.content.getCourse(courseId);
+  const lengthMm = course.segments.reduce((sum, s) => sum + s.length * 1000, 0);
+  const distance = distanceOfLength(F, lengthMm);
+  const falconess = ctx.content.getFalconess(state.falconessId);
+  const born = falconess.distanceAptitude?.[distance];
+  return {
+    distance,
+    lengthMm,
+    letter: state.distanceAptitude[distance],
+    bornAs: state.distanceBoost === distance && born !== undefined ? born : null,
+    passive: falconess.passive ?? null,
+  };
 }

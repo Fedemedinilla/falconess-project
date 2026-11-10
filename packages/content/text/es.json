@@ -1378,5 +1378,12 @@
   "ui.flight.distance.sprint": "Sprint",
   "ui.flight.distance.mile": "Milla",
   "ui.flight.distance.medium": "Media",
-  "ui.flight.distance.long": "Larga"
+  "ui.flight.distance.long": "Larga",
+  "ui.position.race": "{course}: {distance}, {m} m · su letra de distancia",
+  "ui.position.race.born": "nació {born}: la caja negra la sube",
+  "ui.position.passive": "Pasiva: {passive}, con cualquier ala",
+  "ui.action.workshop.note.v3": "Habilidades y cambio de alas (el ala es estética y gesto: no se gasta): todo junto ocupa la semana.",
+  "ui.action.workshop.note.v3.brief": "Habilidades y alas: ocupa la semana.",
+  "ui.workshop.neutral": "Alas neutras: todas corren con el mismo bastidor y no se gastan, así que no hay piezas ni reparación. El ala es estética y gesto (cómo despega y cómo cae) y fija la posición por defecto.",
+  "ui.workshop.gesture": "{style} · despega en {gesture}"
 }

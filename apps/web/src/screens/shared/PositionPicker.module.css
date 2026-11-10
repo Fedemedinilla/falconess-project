@@ -131,3 +131,19 @@
   font-size: var(--fs-sm);
   color: var(--ink-3);
 }
+
+.race {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+
+.race p {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-2);
+}

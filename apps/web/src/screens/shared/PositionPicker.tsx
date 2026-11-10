@@ -23,6 +23,8 @@ export type PositionPickerProps = {
   hint: ReactNode;
   disabled?: boolean | undefined;
   className?: string | undefined;
+  /** v3: the race's distance, her letter in it and her passive, over the options. */
+  race?: ReactNode;
 };
 
 /**
@@ -40,6 +42,7 @@ export function PositionPicker({
   hint,
   disabled = false,
   className,
+  race,
 }: PositionPickerProps) {
   const hintId = `${id}-ayuda`;
   return (
@@ -50,6 +53,7 @@ export function PositionPicker({
       disabled={disabled}
     >
       <legend className={s.legend}>{ui("ui.position.title")}</legend>
+      {race && <div className={s.race}>{race}</div>}
       <div className={s.room}>
         <div className={s.options}>
           {positionOptions(letters, wings).map((o) => {

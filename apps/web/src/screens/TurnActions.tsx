@@ -1,9 +1,9 @@
 import type { Position, SeasonState } from "@falconess/schema";
-import { bondLevel, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
+import { bondLevel, flightOf, type SimContext, STAT_ORDER, trainingRisk } from "@falconess/sim";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
-import { formatSeconds, formatSigned } from "../text/format";
+import { formatInt, formatSeconds, formatSigned } from "../text/format";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
@@ -27,10 +27,11 @@ import {
   workshopVigor,
 } from "./model/actions";
 import { formatChance } from "./model/describe";
-import type { WeekActionInput } from "./model/position";
+import { raceDistance, type WeekActionInput } from "./model/position";
 import { type NextGoal, type WeekLog, weekOutcome } from "./model/season";
 import { vigorScale } from "./model/vigor";
 import { durabilityOf } from "./model/workshop";
+import { Letter } from "./shared/Letter";
 import { PositionPicker } from "./shared/PositionPicker";
 import s from "./TurnActions.module.css";
 import { describeInput, InputMark } from "./TurnSide";
@@ -261,6 +262,40 @@ function LastWeek({
   );
 }
 
+/** v3: the goal's distance, her letter there (and her birth letter a black box lifted), her passive. */
+function RaceDistanceNote({
+  ctx,
+  state,
+  courseId,
+}: {
+  ctx: SimContext;
+  state: SeasonState;
+  courseId: string;
+}) {
+  const d = raceDistance(ctx, state, courseId);
+  if (!d) return null;
+  return (
+    <>
+      <p id="turno-distancia" data-distance={d.distance}>
+        <span>
+          {ui("ui.position.race", {
+            course: gameText(ctx.content.getCourse(courseId).textKey),
+            distance: ui(`ui.flight.distance.${d.distance}`),
+            m: Math.round(d.lengthMm / 1000),
+          })}
+        </span>
+        <Letter letter={d.letter} />
+        {d.bornAs && <span>{ui("ui.position.race.born", { born: d.bornAs })}</span>}
+      </p>
+      {d.passive && (
+        <p id="turno-pasiva">
+          {ui("ui.position.passive", { passive: gameText(`skill.${d.passive}`) })}
+        </p>
+      )}
+    </>
+  );
+}
+
 /** The eight actions of the week, each saying what it does before the click (keys 1–8). */
 export function TurnActions({
   ctx,
@@ -313,6 +348,8 @@ export function TurnActions({
   const crewChoice =
     crew !== undefined && outing.crews.includes(crew) ? crew : (outing.crews[0] ?? "");
   const equipped = durabilityOf(ctx, state, state.equippedFrame);
+  // v3 (ADR-0011): wings never wear; the workshop is skills and the wings' look
+  const noWear = flightOf(ctx.ruleset)?.noWear === true;
   // one line in a card and the legend: they follow the page's default, with no switch of their own
   const [explain] = useGlobalDetail();
 
@@ -551,14 +588,27 @@ export function TurnActions({
         disabled={pending || injured}
         meta={<span className={cx(s.level, s.meta)}>{ui("ui.action.workshop.open")}</span>}
         effects={
-          <Effect
-            value={ui("ui.frame.durability", { current: equipped.current, max: equipped.max })}
-            label={ui("ui.action.durabilityShort")}
-            icon="framestat.durability"
-            strong
-          />
+          noWear ? (
+            <Effect
+              value={formatInt(state.skillPoints)}
+              label={ui("ui.action.skillPoints")}
+              icon="skillPoints"
+              strong
+            />
+          ) : (
+            <Effect
+              value={ui("ui.frame.durability", { current: equipped.current, max: equipped.max })}
+              label={ui("ui.action.durabilityShort")}
+              icon="framestat.durability"
+              strong
+            />
+          )
         }
-        detail={<p className={s.note}>{uiAt(explain, "ui.action.workshop.note")}</p>}
+        detail={
+          <p className={s.note}>
+            {uiAt(explain, noWear ? "ui.action.workshop.note.v3" : "ui.action.workshop.note")}
+          </p>
+        }
         footer={
           <>
             <span>{ui("ui.action.noFail")}</span>
@@ -614,6 +664,7 @@ export function TurnActions({
           value={position.chosen ?? position.wings}
           onChange={position.onChange}
           hint={ui("ui.position.hint.season")}
+          race={next && <RaceDistanceNote ctx={ctx} state={state} courseId={next.goal.courseId} />}
         />
       )}
       <ul className={s.grid}>{cards}</ul>

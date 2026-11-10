@@ -1,9 +1,13 @@
 import { DEFAULT_POSITION, POSITIONS, type RunInput, type SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
+  buildCourseGeometry,
+  distanceOfLength,
+  flightOf,
   goalForTurn,
   RULESET_V1,
   RULESET_V2,
+  RULESET_V3,
   type Ruleset,
   startSeason,
 } from "@falconess/sim";
@@ -13,6 +17,7 @@ import {
   chosenFor,
   isRaceWeek,
   positionOptions,
+  raceDistance,
   raceFrame,
   wingsPosition,
   withPosition,
@@ -111,4 +116,53 @@ describe("the pre-race position (ADR-0008)", () => {
       expect(isRaceWeek(ctx, next)).toBe(false);
       expect(() => advanceSeason(ctx, next, withPosition({ kind: "rest" }, other))).toThrow();
     });
+});
+
+describe("the race's distance on the pre-race card (v3)", () => {
+  const v3 = { ruleset: RULESET_V3, content };
+
+  it("names the goal's distance, her letter and her passive; nothing on v2", () => {
+    const state = raceWeek(RULESET_V3, "peregrina");
+    const goal = goalForTurn(v3, state);
+    if (!goal) throw new Error("no goal race");
+    const d = raceDistance(v3, state, goal.courseId);
+    const F = flightOf(RULESET_V3);
+    if (!d || !F) throw new Error("v3 has distance letters");
+    const geometry = buildCourseGeometry(RULESET_V3, content.getCourse(goal.courseId));
+    expect(d.lengthMm).toBe(geometry.lengthMm);
+    expect(d.distance).toBe(distanceOfLength(F, geometry.lengthMm));
+    expect(d.letter).toBe(state.distanceAptitude?.[d.distance]);
+    expect(d.bornAs).toBeNull();
+    expect(d.passive).toBe("talon-lock");
+    expect(
+      raceDistance(
+        { ruleset: RULESET_V2, content },
+        raceWeek(RULESET_V2, "peregrina"),
+        goal.courseId,
+      ),
+    ).toBeUndefined();
+  });
+
+  it("gives the birth letter when her black box lifted that distance", () => {
+    const state = raceWeek(RULESET_V3, "caracara");
+    const goal = goalForTurn(v3, state);
+    if (!goal) throw new Error("no goal race");
+    const d0 = raceDistance(v3, state, goal.courseId);
+    if (!d0) throw new Error("v3");
+    const born = content.getFalconess("caracara").distanceAptitude?.[d0.distance];
+    const lifted = raceDistance(
+      v3,
+      {
+        ...state,
+        distanceBoost: d0.distance,
+        distanceAptitude: {
+          ...state.distanceAptitude,
+          [d0.distance]: "B",
+        } as SeasonState["distanceAptitude"],
+      },
+      goal.courseId,
+    );
+    expect(lifted?.letter).toBe("B");
+    expect(lifted?.bornAs).toBe(born);
+  });
 });

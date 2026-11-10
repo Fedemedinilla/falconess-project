@@ -13,6 +13,7 @@ export type Detail = "brief" | "full";
 /** The interface texts that have a `.brief` variant. */
 export const BRIEF_UI_KEYS = [
   "ui.action.workshop.note",
+  "ui.action.workshop.note.v3",
   "ui.advice.why.cruise",
   "ui.advice.why.cruise.curves",
   "ui.advice.why.heatCapped",
