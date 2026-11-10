@@ -58,7 +58,8 @@ export default defineConfig({
   projects: [
     {
       name: "app",
-      testMatch: /(season|run|free-race|explain|advice|week|vigor|ruleset|position|mobile)\.spec\.ts$/,
+      testMatch:
+        /(season|run|free-race|explain|advice|week|vigor|ruleset|position|mobile)\.spec\.ts$/,
     },
     { name: "artifact", testMatch: /artifact\.spec\.ts$/ },
     ...(shots ? [{ name: "shots", testMatch: /shots\.spec\.ts$/ }] : []),

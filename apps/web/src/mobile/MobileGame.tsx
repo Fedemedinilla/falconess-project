@@ -249,10 +249,10 @@ export function MobileGame() {
       {onMenuScreen && (
         <>
           <WeekDialog
-          className={s.weekDialog}
-          advice={false}
-          onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
-        />
+            className={s.weekDialog}
+            advice={false}
+            onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
+          />
           {pending && <EventDialog />}
         </>
       )}

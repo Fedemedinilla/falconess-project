@@ -40,9 +40,7 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
     );
   const course = gameText(content.getCourse(goal.courseId).textKey);
   const when =
-    goal.weeksLeft === 0
-      ? ui("ui.m.goal.today")
-      : ui("ui.m.goal.in", { n: goal.weeksLeft });
+    goal.weeksLeft === 0 ? ui("ui.m.goal.today") : ui("ui.m.goal.in", { n: goal.weeksLeft });
   const d = goal.distance;
   return (
     <div
