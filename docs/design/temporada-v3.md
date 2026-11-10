@@ -942,6 +942,19 @@ gana +50 % de Δv. Peregrina 64,9 → 71,5 % (4000 temporadas: 66,0 → 71,8 [70
 dueño la Caracara B pasa de 35,6 a 14,5 % contra la Peregrina de su Agilidad con poca Resistencia. Abierto para el dueño:
 achicar el bono en Sprint y Milla, y si la Punta necesita casa en la Milla o la Media.
 
+**Recorte de Garra fija y casa de la Punta (2026-11-10), prototipo medido** (`.work/design7/measure/trim-final.md`). El
+dueño aprobó recortar la pasiva donde sobraba (sin gacha se puede bajar con nota de cambio, lección 1 del informe sobre
+Cygames): Garra fija suma +10 % en el Sprint, +25 % en la Milla y sigue en +50 % en la Media y la Larga (ADR-0009, campo
+`diveVPmDistance`). Nota de cambio: «bajamos el bono de la picada en el Sprint y la Milla porque en las pistas cortas la
+picada ya valía más y la pasiva le ganaba carreras a la que había puesto Resistencia». El caso del dueño vuelve casi entero
+(Caracara B 14,5 → 30,7 % contra la Peregrina de su Agilidad; 20,0 → 32,5 contra la bien armada) y el espejo del Sprint baja
+de 25,6 a 13,9 %; Peregrina 71,8 → 70,7 % en 4000 temporadas (las dos bases ≥ 70, frágil; en el arnés v3a queda en 69,0 y
+F7-4 falla). Pista nueva del catálogo v3, la **Escapada** (Media, 2400 m: Salto en la largada, dos Colinas tempranas, curvas
+y un Pasillo hasta la meta), casa de la Punta: la mejor a 300-600 (27-29 %) y pareja a 750; gana porque sube las dos
+Colinas a ras en un solo vuelo temprano. Entra al calendario como pista del mes de marzo; CAL-1 sigue pasando (Acecho
+27,7 a 750, frágil). Hallazgo: un vuelo a ras planeado para arrancar dentro de un Salto que la Punta salta con las piernas
+se pierde (la pista deja 80 m de llano entre los dos).
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
