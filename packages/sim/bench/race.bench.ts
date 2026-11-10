@@ -1,12 +1,12 @@
 import { appendFileSync } from "node:fs";
-import { loadContent } from "@falconess/content";
-import type { EntryInput, RaceEntry } from "@falconess/schema";
+import { loadCatalogueCourses, loadContent } from "@falconess/content";
+import type { Course, EntryInput, RaceEntry } from "@falconess/schema";
 import { expect, test } from "vitest";
 import { freezeEntry } from "../src/race/entry.js";
 import { buildCourseGeometry } from "../src/race/geometry.js";
 import { simulateRace } from "../src/race/index.js";
 import { createRaceArena } from "../src/race/state.js";
-import { RULESET_V1 } from "../src/rulesets/index.js";
+import { RULESET_V1, RULESET_V3, type Ruleset } from "../src/rulesets/index.js";
 
 /**
  * Race benchmark of docs/race-engine.md 22 and ROADMAP D13: eight mixed generic frames (every
@@ -18,6 +18,10 @@ import { RULESET_V1 } from "../src/rulesets/index.js";
  * (`GITHUB_STEP_SUMMARY` set) the ms per race also go to the job summary as a table, written
  * before the gate is checked so a failing run still shows its numbers; a summary that cannot be
  * written only warns: the p95 gate is the one way this file fails.
+ *
+ * Ruleset v3 (ADR-0011, ADR-0010 B7): the same field with letters B on the longest catalogue track
+ * (the Travesía, 3600 m) is gated too, p95 under 5 ms with detail "results"; the v3 sprint is
+ * report only.
  */
 
 const content = loadContent();
@@ -33,8 +37,12 @@ const FIELD: [string, string[]][] = [
   ["horizon", ["clean-start", "gravity-friend", "last-gasp", "second-wind"]],
 ];
 
-function field(courseId: string): RaceEntry[] {
-  const course = content.getCourse(courseId);
+const catalogue = new Map(loadCatalogueCourses().map((c) => [c.id, c]));
+const courseOf = (id: string): Course => catalogue.get(id) ?? content.getCourse(id);
+const LETTERS_B = { sprint: "B", mile: "B", medium: "B", long: "B" } as const;
+
+function field(ruleset: Ruleset, courseId: string): RaceEntry[] {
+  const course = courseOf(courseId);
   return FIELD.map(([frameId, learnedSkills], lane) => {
     const input: EntryInput = {
       runnerId: `bench-${lane}`,
@@ -48,8 +56,9 @@ function field(courseId: string): RaceEntry[] {
       quirks: [],
       learnedSkills,
       durability: null,
+      ...(ruleset.flight ? { distanceAptitude: { ...LETTERS_B } } : {}),
     };
-    return freezeEntry(RULESET_V1, content, input, course, lane);
+    return freezeEntry(ruleset, content, input, course, lane);
   });
 }
 
@@ -101,21 +110,28 @@ function summaryRow(courseId: string, detail: string, l: Latency, gate: string):
   return `| ${courseId} | ${detail} | ${ms(l.mean)} | ${ms(l.p50)} | ${ms(p95(l))} | ${ms(l.p99)} | ${n} | ${gate} |`;
 }
 
-for (const courseId of ["canyon", "sprint"]) {
+const CASES: { ruleset: Ruleset; courseId: string; gated: boolean }[] = [
+  { ruleset: RULESET_V1, courseId: "canyon", gated: true },
+  { ruleset: RULESET_V1, courseId: "sprint", gated: false },
+  { ruleset: RULESET_V3, courseId: "crossing", gated: true },
+  { ruleset: RULESET_V3, courseId: "sprint", gated: false },
+];
+
+for (const { ruleset, courseId: id, gated } of CASES) {
+  const courseId = ruleset === RULESET_V1 ? id : `${id} (v3)`;
   test(`8 runners, 4 actives each, ${courseId}`, async ({ bench }) => {
-    const course = content.getCourse(courseId);
-    const entries = field(courseId);
-    const geometry = buildCourseGeometry(RULESET_V1, course);
+    const course = courseOf(id);
+    const entries = field(ruleset, id);
+    const geometry = buildCourseGeometry(ruleset, course);
     const arena = createRaceArena();
     let k = 0;
     const run = (detail: "full" | "results") => () => {
       k += 1;
-      simulateRace(RULESET_V1, entries, course, `bench-${k}`, { detail, arena, geometry });
+      simulateRace(ruleset, entries, course, `bench-${k}`, { detail, arena, geometry });
     };
     const opts = { time: 2000, warmupTime: 500 };
     const results = await bench("detail results", run("results")).run(opts);
     const full = await bench("detail full", run("full")).run(opts);
-    const gated = courseId === "canyon";
     const rows: string[] = [];
     for (const [name, r] of [
       ["results", results],
