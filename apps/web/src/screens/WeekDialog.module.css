@@ -66,7 +66,8 @@
 
 .box {
   display: flex;
-  flex: 1;
+  /* basis auto, not 0 %: WebKit (iPhone) resolves a 0 % basis to 0 px in a dialog of auto height */
+  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
 }
