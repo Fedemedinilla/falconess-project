@@ -35,7 +35,7 @@
       {
         "turn": 12,
         "courseId": "sprint",
-        "minPlace": 7
+        "minPlace": 6
       },
       {
         "turn": 24,
@@ -45,7 +45,7 @@
       {
         "turn": 36,
         "courseId": "sprint",
-        "minPlace": 5
+        "minPlace": 4
       },
       {
         "turn": 46,
@@ -57,29 +57,29 @@
       {
         "turn": 12,
         "courseId": "overlook",
-        "minPlace": 7
+        "minPlace": 6
       },
       {
         "turn": 24,
         "courseId": "breakaway",
-        "minPlace": 6
+        "minPlace": 7
       },
       {
         "turn": 36,
         "courseId": "circuit",
-        "minPlace": 5
+        "minPlace": 6
       },
       {
         "turn": 46,
         "courseId": "ridge",
-        "minPlace": 3
+        "minPlace": 4
       }
     ],
     "caracara": [
       {
         "turn": 12,
         "courseId": "breakaway",
-        "minPlace": 7
+        "minPlace": 6
       },
       {
         "turn": 24,
@@ -94,7 +94,7 @@
       {
         "turn": 46,
         "courseId": "open-sky",
-        "minPlace": 3
+        "minPlace": 4
       }
     ]
   }
