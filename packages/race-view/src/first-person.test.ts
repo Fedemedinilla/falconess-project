@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   curvatureAt,
   FPV_EYE_M,
+  FPV_FINISHED_ROWS,
   FPV_LINE_M,
   fpvCamera,
   fpvKeyRows,
@@ -85,7 +86,7 @@ describe("first-person view (from the v3 log only)", () => {
           const mine = positionAt(me, r) / 1000;
           const expected = model.tracks.filter((o) => {
             const d = positionAt(o, r) / 1000 - mine;
-            return o.lane !== me.lane && d > 0.4 && d <= 160;
+            return o.lane !== me.lane && d > 0.4 && d <= 160 && r < o.finishRow + FPV_FINISHED_ROWS;
           });
           expect(riv.map((x) => x.lane).sort()).toEqual(expected.map((o) => o.lane).sort());
           for (let k = 1; k < riv.length; k++)

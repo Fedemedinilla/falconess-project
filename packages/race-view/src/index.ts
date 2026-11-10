@@ -46,6 +46,7 @@ export {
   curvatureAt,
   FPV_BAND_M,
   FPV_EYE_M,
+  FPV_FINISHED_ROWS,
   FPV_IMPACT_ROWS,
   FPV_LINE_M,
   FPV_TRACK_HALF_M,

@@ -25,7 +25,7 @@ import {
  */
 
 /** Metres of one altitude band, her eyes over the ground, and the half width of the track. */
-export const FPV_BAND_M = 4;
+export const FPV_BAND_M = 5;
 export const FPV_EYE_M = 1.4;
 export const FPV_TRACK_HALF_M = 4.2;
 /** Lateral metres of the inside and the outside line up in the air. */
@@ -148,7 +148,12 @@ export type FpvRival = {
   /** 0 inside, 1 outside (eased). */
   line: number;
   phase: FlightPhase;
+  /** 1 while she races, fading to 0 over FPV_FINISHED_ROWS once she crossed the line. */
+  presence: number;
 };
+
+/** Rows a rival who finished stays in view (her position stops at the line in the log). */
+export const FPV_FINISHED_ROWS = 15;
 
 /** The rivals ahead of `lane` within `rangeM`, the farthest first (the drawing order). */
 export function fpvRivals(model: FlightModel, lane: number, row: number, rangeM = 160): FpvRival[] {
@@ -161,6 +166,8 @@ export function fpvRivals(model: FlightModel, lane: number, row: number, rangeM 
     if (t.lane === lane) continue;
     const aheadM = positionAt(t, r) / 1000 - mine;
     if (aheadM <= 0.4 || aheadM > rangeM) continue;
+    const presence = clamp(1 - (r - t.finishRow) / FPV_FINISHED_ROWS, 0, 1);
+    if (presence <= 0) continue;
     out.push({
       lane: t.lane,
       aheadM,
@@ -169,6 +176,7 @@ export function fpvRivals(model: FlightModel, lane: number, row: number, rangeM 
       band: rowOf(t.band, r),
       line: lineAt(t, r),
       phase: phaseAt(t, r),
+      presence,
     });
   }
   return out.sort((a, b) => b.aheadM - a.aheadM || a.lane - b.lane);
@@ -247,6 +255,8 @@ export type FpvVisor = {
   /** The band she holds, and whether she is in a jump's arc. */
   band: number;
   jump: boolean;
+  /** What her body is doing (the side view's phases). */
+  phase: FlightPhase;
   place: number;
   field: number;
   /** Metres to the finish (0 once there). */
@@ -267,6 +277,7 @@ export function fpvVisor(model: FlightModel, lane: number, row: number): FpvViso
     kmh: Math.round((speedAt(t, r) * 3.6) / 1000),
     band: rowOf(t.band, r),
     jump: phaseAt(t, r) === FLIGHT_PHASE.jump,
+    phase: phaseAt(t, r),
     place: orderAt(model, r).indexOf(t.lane) + 1,
     field: model.tracks.length,
     leftM: Math.max(0, Math.round((model.lengthMm - positionAt(t, r)) / 1000)),

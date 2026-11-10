@@ -252,3 +252,52 @@ test("the workshop's skills list scrolls by touch to its last skill, which takes
   await page.tap(`#${await last.getAttribute("id")}`, { force: true });
   if (await last.isEnabled()) await expect(last).toHaveAttribute("aria-pressed", "true");
 });
+
+test("the race in first person: the camera toggle, a race played from her eyes, back to the side", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await startMobile(page, "peregrina");
+  while ((await page.locator("#m-carrera").count()) === 0) {
+    await page.click("#m-descansar");
+    await settle(page);
+  }
+  await page.click("#m-carrera");
+  await page.click("#m-volver");
+  await page.click("#m-descansar");
+  await page.click("#m-correr");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  // the side view is the default
+  await expect(page.locator("#m-carrera-vista-side")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#m-carrera-vista-fpv")).toHaveText(t("ui.flight.cam.fpv"));
+  await page.click("#m-carrera-vista-fpv");
+  await expect(page.locator("#m-carrera-vista-fpv")).toHaveAttribute("aria-pressed", "true");
+  await page.click("#m-carrera-vuelo-salida");
+  await page.click("#m-carrera-vuelo-x4");
+  // her visor: speed, band, body and kick, moving with the race
+  const visor = page.locator("#m-carrera-visor");
+  await expect(visor).toBeVisible();
+  await expect(visor).toContainText(t("ui.flight.hud.kmh"));
+  const flight = page.locator("#m-carrera-vuelo");
+  await expect
+    .poll(async () => Number(await flight.getAttribute("data-row")), { timeout: 20_000 })
+    .toBeGreaterThan(150);
+  // the canvas draws her view: sky at the top, track below, not one flat color
+  const colors = await page.locator("#m-carrera-vuelo-lienzo").evaluate((cv) => {
+    const c = (cv as HTMLCanvasElement).getContext("2d");
+    if (!c) return [];
+    const w = (cv as HTMLCanvasElement).width;
+    const h = (cv as HTMLCanvasElement).height;
+    return [0.2, 0.5, 0.7, 0.9].map((y) => [...c.getImageData(w / 2, h * y, 1, 1).data].join());
+  });
+  expect(new Set(colors).size).toBeGreaterThan(2);
+  // a dive at any moment: the slider seeks while the visor follows
+  await page.locator("#m-carrera-tiempo").fill("400");
+  await expect(flight).toHaveAttribute("data-row", "400");
+  await expect(visor).toHaveAttribute("data-band", /[0-3]/);
+  // back to the side view: the visor goes, the race goes on
+  await page.click("#m-carrera-vista-side");
+  await expect(visor).toHaveCount(0);
+  await page.click("#m-saltar");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+});

@@ -10,6 +10,7 @@ import {
   flightModel,
   flightMoments,
   flightOverlays,
+  fpvVisor,
   hpAt,
   type MomentCat,
   orderAt,
@@ -33,6 +34,7 @@ import s from "../RaceViewer.module.css";
 import { Results } from "../Results";
 import { raceView } from "../view";
 import f from "./FlightReplay.module.css";
+import { FirstPersonStage } from "./first-person";
 import { FlightStage, POS_COLOR, type StageState } from "./stage";
 import {
   bandLow,
@@ -59,6 +61,9 @@ export function rich(text: string): ReactNode {
 }
 
 const SPEEDS = [0.5, 1, 2, 4] as const;
+/** The cameras: the side view (the default) and her own eyes. */
+const CAMS = ["side", "fpv"] as const;
+type Cam = (typeof CAMS)[number];
 const CATS: MomentCat[] = ["all", "tk", "fi", "dv", "pa"];
 const MOMENT_COLOR: Record<MomentCat, string> = {
   all: "#ffc83d",
@@ -248,6 +253,46 @@ function Hud({
   );
 }
 
+/** Her visor in first person: speed, band, and her body and kick, small (log numbers only). */
+function Visor({
+  model,
+  lane,
+  row,
+  idPrefix,
+}: {
+  model: FlightModel;
+  lane: number;
+  row: number;
+  idPrefix: string;
+}) {
+  const v = fpvVisor(model, lane, row);
+  return (
+    <div
+      className={f.visor}
+      id={`${idPrefix}-visor`}
+      aria-hidden="true"
+      data-band={v.band}
+      data-phase={v.phase}
+    >
+      <div className={f.vSpeed}>
+        <b>{v.kmh}</b>
+        <small className={f.vUnit}>{ui("ui.flight.hud.kmh")}</small>
+        <span>{v.jump ? ui("ui.flight.hud.alt.jump") : bandName(v.band)}</span>
+      </div>
+      <div className={f.vBars}>
+        <span>{ui("ui.flight.hud.hp")}</span>
+        <div className={f.bar}>
+          <i className={cx(v.hpPct < 15 && f.low)} style={{ width: `${v.hpPct}%` }} />
+        </div>
+        <span>{ui("ui.flight.hud.kick")}</span>
+        <div className={f.bar}>
+          <i style={{ width: `${v.kickPct ?? 0}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** The track's profile with the field's flight plans (hers bold), for the pre-race card. */
 function Profile({ log, model, focus }: { log: RaceLog; model: FlightModel; focus: number }) {
   const len = model.lengthMm;
@@ -328,8 +373,10 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
   const [cat, setCat] = useState<MomentCat>("all");
   const [row, setRow] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [cam, setCam] = useState<Cam>("side");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<FlightStage | null>(null);
+  const fpvRef = useRef<FirstPersonStage | null>(null);
   const live = useRef({
     row: 0,
     playing: false,
@@ -340,6 +387,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
     shake: 0,
     shakeAmp: 0,
     now: 0,
+    cam: "side" as Cam,
   });
 
   const overlays = useMemo<FlightOverlay[]>(
@@ -370,6 +418,10 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
     if (!cv || !model) return;
     const stage = new FlightStage(cv, log, model, words);
     stageRef.current = stage;
+    const fpv = new FirstPersonStage(cv, log, model, words);
+    fpvRef.current = fpv;
+    // the side view sizes the canvas; the first person draws into the same box
+    stage.layout();
     const L = live.current;
     let last = performance.now();
     let raf = 0;
@@ -420,7 +472,8 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
         shake: L.shake,
         shakeAmp: L.shakeAmp,
       };
-      stage.draw(state, dt);
+      if (L.cam === "fpv") fpv.draw({ focus: st.focus, row: L.row, now: L.now, reduced }, dt);
+      else stage.draw(state, dt);
       // the HUD and the slider follow at most ten times a second
       if (L.row !== shown && (!L.playing || now - shownAt >= 100)) {
         shown = L.row;
@@ -443,12 +496,16 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
       -1,
     );
     raf = requestAnimationFrame(frame);
-    const onResize = () => stage.layout();
+    const onResize = () => {
+      fpv.layout();
+      stage.layout();
+    };
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
       stageRef.current = null;
+      fpvRef.current = null;
     };
   }, [log, model, words, reduced]);
 
@@ -528,7 +585,11 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
           })}
           onClick={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
-            const lane = stageRef.current?.laneAt(e.clientX - r.left, e.clientY - r.top) ?? -1;
+            const px = e.clientX - r.left;
+            const py = e.clientY - r.top;
+            const lane =
+              (cam === "fpv" ? fpvRef.current?.laneAt(px, py) : stageRef.current?.laneAt(px, py)) ??
+              -1;
             if (lane >= 0) follow(lane);
           }}
         />
@@ -548,6 +609,9 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
             <span className={f.pill}>{ui("ui.flight.clock", { s: formatSeconds(row) })}</span>
           </div>
         </div>
+        {cam === "fpv" && !preOpen && (
+          <Visor model={model} lane={her.lane} row={row} idPrefix={idPrefix} />
+        )}
         {preOpen && (
           <section
             className={f.pre}
@@ -643,6 +707,24 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
           </section>
         )}
       </div>
+
+      <fieldset className={cx(f.seg, f.cams)} id={`${idPrefix}-vista`}>
+        <legend className="visually-hidden">{ui("ui.flight.cam")}</legend>
+        {CAMS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-pressed={cam === c}
+            id={`${idPrefix}-vista-${c}`}
+            onClick={() => {
+              setCam(c);
+              live.current.cam = c;
+            }}
+          >
+            {ui(`ui.flight.cam.${c}`)}
+          </button>
+        ))}
+      </fieldset>
 
       <div className={f.ctrl}>
         <button
