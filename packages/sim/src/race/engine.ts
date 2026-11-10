@@ -178,6 +178,13 @@ type Ctx = {
   drainV: Float64Array;
   drainK: Float64Array;
   drainOut: Float64Array;
+  /** PERF-2: the air cruise target's last inputs and value per lane (NaN = none yet). */
+  cruiseCell: Float64Array;
+  cruiseAlt: Float64Array;
+  cruiseAir: Float64Array;
+  cruiseDraft: Float64Array;
+  cruiseCut: Float64Array;
+  cruiseTa: Float64Array;
   /** PERF-2: the hold's last (band, vOut, m) per lane and what they gave (pu, extra energy). */
   holdA: Float64Array;
   holdV: Float64Array;
@@ -328,6 +335,12 @@ function runRace(
     drainV: new Float64Array(MAX_LANES).fill(Number.NaN),
     drainK: new Float64Array(MAX_LANES).fill(Number.NaN),
     drainOut: new Float64Array(MAX_LANES),
+    cruiseCell: new Float64Array(MAX_LANES).fill(Number.NaN),
+    cruiseAlt: new Float64Array(MAX_LANES),
+    cruiseAir: new Float64Array(MAX_LANES),
+    cruiseDraft: new Float64Array(MAX_LANES),
+    cruiseCut: new Float64Array(MAX_LANES),
+    cruiseTa: new Float64Array(MAX_LANES),
     holdA: new Float64Array(MAX_LANES).fill(Number.NaN),
     holdV: new Float64Array(MAX_LANES).fill(Number.NaN),
     holdM: new Float64Array(MAX_LANES).fill(Number.NaN),
@@ -974,31 +987,52 @@ function airCruiseTick(
   draftPm: number,
 ): number {
   const { R, T, S } = c;
-  const alt = c.F !== null && climbAsHeld(c.F, S, i) ? (S.altTarget[i] ?? 0) : (S.alt[i] ?? 0);
+  const F = c.F;
+  const alt = F !== null && climbAsHeld(F, S, i) ? (S.altTarget[i] ?? 0) : (S.alt[i] ?? 0);
   // F5: from airTerrainFreeBand up the water and climbs cost the air nothing
-  const hi = c.F !== null && alt >= c.F.airTerrainFreeBand;
+  const hi = F !== null && alt >= F.airTerrainFreeBand;
   // stage 3 (allFly): the low band pays skimTerrainPm of the water and climb penalty
-  const lo = !hi && c.F !== null && c.F.allFly && alt === BAND_LOW;
-  let ta =
-    (exhausted ? T.vMin : hi ? T.vCAirHi : lo ? T.vCAirLo : T.vCAir)[ibps(i, b, ph, seg)] ?? 0;
+  const lo = !hi && F !== null && F.allFly && alt === BAND_LOW;
+  const x = ibps(i, b, ph, seg);
   const air =
-    c.F !== null && alt < c.F.ownAirFromBand
+    F !== null && alt < F.ownAirFromBand
       ? 0
       : (T.airOff[i * FLIGHTS_MAX + Math.max(0, (S.flCur[i] ?? 1) - 1)] ?? 0) +
-        (c.F !== null && S.overWon[i] === 1 ? c.F.overAirPm : 0);
-  if (air !== 0) ta = Math.floor((ta * (1000 + air)) / 1000);
-  if (lo && c.F !== null && c.F.skimCruisePm !== 0)
-    ta = Math.floor((ta * (1000 + c.F.skimCruisePm)) / 1000);
-  if (c.F !== null && c.F.highCruisePm !== 0 && alt >= BAND_HIGH)
-    ta = Math.floor((ta * (1000 + c.F.highCruisePm)) / 1000);
-  if (draftPm !== 1000) ta = Math.floor((ta * draftPm) / 1000);
-  // distance letters: off her distance her air cruise gives `distAirPm` ‰
-  const dAir = T.distAirPm[i] ?? 0;
-  if (dAir !== 0 && !exhausted) ta = Math.floor((ta * (1000 - dAir)) / 1000);
+        (F !== null && S.overWon[i] === 1 ? F.overAirPm : 0);
   // the kick on low hp: the paced final cruise in the air too
-  const cut = S.paceCut[i] ?? 0;
-  if (cut > 0 && ph === PH_FINAL && !exhausted)
-    ta = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, Math.floor((ta * (1000 - cut)) / 1000));
+  const cut0 = S.paceCut[i] ?? 0;
+  const cut = cut0 > 0 && ph === PH_FINAL && !exhausted ? cut0 : 0;
+  // PERF-2: the target is a pure function of (table cell, band, air, draft, cut) for her in a
+  // race (her distance letter is fixed): kept while they hold
+  const cell = x * 2 + (exhausted ? 1 : 0);
+  let ta: number;
+  if (
+    c.cruiseCell[i] === cell &&
+    c.cruiseAlt[i] === alt &&
+    c.cruiseAir[i] === air &&
+    c.cruiseDraft[i] === draftPm &&
+    c.cruiseCut[i] === cut
+  )
+    ta = c.cruiseTa[i] ?? 0;
+  else {
+    ta = (exhausted ? T.vMin : hi ? T.vCAirHi : lo ? T.vCAirLo : T.vCAir)[x] ?? 0;
+    if (air !== 0) ta = Math.floor((ta * (1000 + air)) / 1000);
+    if (lo && F !== null && F.skimCruisePm !== 0)
+      ta = Math.floor((ta * (1000 + F.skimCruisePm)) / 1000);
+    if (F !== null && F.highCruisePm !== 0 && alt >= BAND_HIGH)
+      ta = Math.floor((ta * (1000 + F.highCruisePm)) / 1000);
+    if (draftPm !== 1000) ta = Math.floor((ta * draftPm) / 1000);
+    // distance letters: off her distance her air cruise gives `distAirPm` ‰
+    const dAir = T.distAirPm[i] ?? 0;
+    if (dAir !== 0 && !exhausted) ta = Math.floor((ta * (1000 - dAir)) / 1000);
+    if (cut > 0) ta = Math.max(T.vMin[x] ?? 0, Math.floor((ta * (1000 - cut)) / 1000));
+    c.cruiseCell[i] = cell;
+    c.cruiseAlt[i] = alt;
+    c.cruiseAir[i] = air;
+    c.cruiseDraft[i] = draftPm;
+    c.cruiseCut[i] = cut;
+    c.cruiseTa[i] = ta;
+  }
   const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
   S.vCore[i] = v;
   return v;
