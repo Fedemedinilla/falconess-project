@@ -3,6 +3,16 @@
  * the controls and the HUD in the app's panels. Mobile first: 360-430 px, 44 px targets.
  */
 .flight {
+  /* the takeoff gestures and the positions as text on the app's panels (the stage keeps its own) */
+  --st-lance: #c8243a;
+  --st-column: #0b7fa3;
+  --st-ramp: #6b7a00;
+  --st-turbine: #a45c00;
+  --st-neutral: #5c6874;
+  --pos-lead: #1d5fc4;
+  --pos-pack: #14805a;
+  --pos-stalk: #a65a0c;
+  --pos-closer: #6a35c4;
   --stage: #07090f;
   --glass: rgb(8 11 18 / 0.88);
   --glass-ink: #f4f7fb;
@@ -310,6 +320,12 @@
   flex: none;
 }
 
+.cats button {
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  padding: 0 0.125rem;
+}
+
 .cap {
   min-height: 3.9em;
   margin: 0;
@@ -579,4 +595,30 @@
   .kick .bar i {
     transition: none;
   }
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .flight {
+    --st-lance: #ff5a6e;
+    --st-column: #35e0ff;
+    --st-ramp: #e8f56a;
+    --st-turbine: #ffb13b;
+    --st-neutral: #c9d2de;
+    --pos-lead: #6fb8ff;
+    --pos-pack: #4be3a0;
+    --pos-stalk: #ffb340;
+    --pos-closer: #b48cff;
+  }
+}
+
+:global(:root[data-theme="dark"]) .flight {
+  --st-lance: #ff5a6e;
+  --st-column: #35e0ff;
+  --st-ramp: #e8f56a;
+  --st-turbine: #ffb13b;
+  --st-neutral: #c9d2de;
+  --pos-lead: #6fb8ff;
+  --pos-pack: #4be3a0;
+  --pos-stalk: #ffb340;
+  --pos-closer: #b48cff;
 }

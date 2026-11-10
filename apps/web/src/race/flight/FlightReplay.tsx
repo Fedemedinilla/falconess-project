@@ -33,7 +33,7 @@ import s from "../RaceViewer.module.css";
 import { Results } from "../Results";
 import { raceView } from "../view";
 import f from "./FlightReplay.module.css";
-import { FlightStage, POS_COLOR, STYLE_COLOR, type StageState } from "./stage";
+import { FlightStage, POS_COLOR, type StageState } from "./stage";
 import {
   bandLow,
   bandName,
@@ -767,12 +767,20 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
               onClick={() => follow(t.lane)}
             >
               <span>
-                <span style={{ color: t.lane === focus ? "inherit" : P.c }} aria-hidden="true">
+                <span
+                  style={{
+                    color:
+                      t.lane === focus
+                        ? "inherit"
+                        : `var(--pos-${log.entries[t.lane]?.position ?? "pack"})`,
+                  }}
+                  aria-hidden="true"
+                >
                   {P.glyph}
                 </span>{" "}
                 C{t.lane + 1}
               </span>
-              <small style={{ color: t.lane === focus ? "inherit" : STYLE_COLOR[t.style] }}>
+              <small style={{ color: t.lane === focus ? "inherit" : `var(--st-${t.style})` }}>
                 {styleName(t.style)}
               </small>
             </button>
@@ -830,7 +838,10 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
                   )}
                 </span>
                 <span className={f.w}>
-                  <span style={{ color: P.c }} aria-hidden="true">
+                  <span
+                    style={{ color: `var(--pos-${log.entries[m.lane]?.position ?? "pack"})` }}
+                    aria-hidden="true"
+                  >
                     {P.glyph}
                   </span>{" "}
                   {ui("ui.flight.mom.who", { lane: m.lane + 1, position: posName(m.lane) })} —{" "}
