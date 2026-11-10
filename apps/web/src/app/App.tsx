@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameController } from "../game/controller";
 import { GameContext, useGame } from "../game/useGame";
+import { MobileGame } from "../mobile/MobileGame";
 import { FreeRace } from "../race/FreeRace";
 import { RaceViewer } from "../race/RaceViewer";
 import { EventDialog } from "../screens/EventDialog";
@@ -31,6 +32,8 @@ function Screen({ route, onOpenRun }: { route: Route; onOpenRun: () => void }) {
   const { snap } = useGame();
   const run = snap.run;
   switch (route) {
+    case "juego":
+      return null;
     case "inicio":
       return <Home onOpenRun={onOpenRun} />;
     case "temporada":
@@ -61,6 +64,12 @@ function Screen({ route, onOpenRun }: { route: Route; onOpenRun: () => void }) {
 
 function Shell() {
   const route = useRoute();
+  if (route === "juego") return <MobileGame />;
+  return <TestShell route={route} />;
+}
+
+/** The test view («Vista de pruebas»): the top bar and the hash-routed screens. */
+function TestShell({ route }: { route: Route }) {
   const { snap } = useGame();
   const [runOpen, setRunOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);

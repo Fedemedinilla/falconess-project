@@ -1,10 +1,12 @@
 /**
  * Hash routes of the tester page. Plain names only (`#temporada`), never `#/path`: the published
  * Artifact passes nothing else between its link and `location.hash`.
+ *
+ * `#juego` is the phone game (the default); the others are the test view («Vista de pruebas»).
  */
-export const ROUTES = ["inicio", "temporada", "carrera", "carrera-libre", "fin"] as const;
+export const ROUTES = ["juego", "inicio", "temporada", "carrera", "carrera-libre", "fin"] as const;
 export type Route = (typeof ROUTES)[number];
-export const START_ROUTE: Route = "inicio";
+export const START_ROUTE: Route = "juego";
 
 export function isRoute(name: string): name is Route {
   return (ROUTES as readonly string[]).includes(name);

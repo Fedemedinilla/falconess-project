@@ -11,10 +11,10 @@ describe("hash routes", () => {
   });
 
   it("fall back to the start view", () => {
-    expect(parseHash("")).toBe("inicio");
-    expect(parseHash("#")).toBe("inicio");
-    expect(parseHash("#/temporada")).toBe("inicio");
-    expect(parseHash("#ajustes")).toBe("inicio");
+    expect(parseHash("")).toBe("juego");
+    expect(parseHash("#")).toBe("juego");
+    expect(parseHash("#/temporada")).toBe("juego");
+    expect(parseHash("#ajustes")).toBe("juego");
     expect(isRoute("carrera-libre")).toBe(true);
     expect(isRoute("settings")).toBe(false);
   });

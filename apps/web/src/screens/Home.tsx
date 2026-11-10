@@ -1,6 +1,7 @@
 import { STAT_ORDER } from "@falconess/sim";
 import { useMemo, useState } from "react";
 import { LoadDialog } from "../app/LoadDialog";
+import { routeHref } from "../app/route";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { formatInt } from "../text/format";
@@ -204,6 +205,11 @@ export function Home({ onOpenRun }: HomeProps) {
           {ui("ui.home.title")}
         </h1>
         <p className={s.lead}>{ui("ui.home.lead", { turns })}</p>
+        <p className={s.lead}>
+          <a href={routeHref("juego")} id="inicio-juego">
+            {ui("ui.home.mobile")}
+          </a>
+        </p>
       </section>
 
       <div className={s.grid}>

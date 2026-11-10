@@ -50,6 +50,10 @@ const INTERACTIVE = "button, a, input, select, textarea, summary";
 export type WeekDialogProps = {
   /** "Ver carrera": open the replay of that week's goal race (`#carrera`). */
   onViewRace: (turn: number) => void;
+  /** Extra class of the dialog (the phone game rounds it). */
+  className?: string | undefined;
+  /** Show the race tip (the phone game already showed it under the race's result). */
+  advice?: boolean | undefined;
 };
 
 /**
@@ -61,7 +65,7 @@ export type WeekDialogProps = {
  * once, it does not open again for that week (`GameController.acknowledgeStep`); the recap line
  * above the actions brings it back.
  */
-export function WeekDialog({ onViewRace }: WeekDialogProps) {
+export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogProps) {
   const { game, snap } = useGame();
   const step = snap.lastStep;
   const open = weekDialogWaiting(snap);
@@ -72,7 +76,7 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
   const race = summary?.race;
   // a goal race finished 3rd or worse: the tip says what to train (Umamusume)
   const adviceLog = useGoalRaceLog(
-    open && race && race.place >= ADVICE_FROM_PLACE ? race.turn : undefined,
+    advice && open && race && race.place >= ADVICE_FROM_PLACE ? race.turn : undefined,
   );
 
   const ref = useRef<HTMLDialogElement>(null);
@@ -127,7 +131,7 @@ export function WeekDialog({ onViewRace }: WeekDialogProps) {
     <dialog
       ref={ref}
       id={WEEK_DIALOG_ID}
-      className={cx(s.dialog, s[headline.tone])}
+      className={cx(s.dialog, s[headline.tone], className)}
       data-tone={headline.tone}
       aria-labelledby={TITLE_ID}
       aria-describedby={BODY_ID}
