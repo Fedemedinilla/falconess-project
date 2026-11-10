@@ -156,6 +156,12 @@ registros v1/v2 y temporadas v2 iguales a `playtest-ui`). El motor v1/v2 no lee 
 
 ## Consecuencias
 
+- **Barandas en el juego** (`pnpm balance:barandas`, completo, 2026-11-10, commit `c2537c1`):
+  **PASA**, frágiles B2, B3 y B7. B1 17,7-36,5 %; B2 una casa mínima, 4 dudosas; B3 Acecho 750
+  27,7 %; B4 cota mínima 66,4 % (Peregrina), brecha 7,7 / 6,0 puntos; B5 Agilidad +100 = 28,5-60,6
+  m; B6 razón máxima 1,00; B7 p95 4,56 ms (Travesía, mediana de 5); B8 0 bytes en 17 chequeos.
+  B1, B2, B3, B5 y B6 dan los mismos números que el arnés del prototipo (`barandas-perf.md`).
+
 - El balance de v3 sigue ADR-0010: ocho barandas, una palanca de contenido por cambio, nota de
   cambio. `pnpm balance:barandas` es la medida completa (requisito de un cambio de balance) y
   `pnpm balance:barandas -- --quick` corre en CI como puerta de B8 y humo del arnés.
@@ -167,7 +173,8 @@ registros v1/v2 y temporadas v2 iguales a `playtest-ui`). El motor v1/v2 no lee 
 - Corrección de un error al pasar al juego: la temporada v3 copiaba la durabilidad del perfil
   neutro (100) a las alas después de cada carrera, así que un ala de 180-220 parecía gastada y la
   política de referencia perdía semanas reparando. Ahora la temporada no toca la durabilidad en
-  v3; las carreras no cambian y B4 se volvió a medir.
+  v3; las carreras no cambian. Solo se mueve Caracara (la que reparaba su ala Boneyard): métrica 7
+  70,8 → 77,0 % (v3a) y 71,3 → 77,8 % (v3b); Peregrina y Cernícala no cambian.
 - Pendiente para la web (otra tarea): la vista animada del vuelo, el taller sin reparación, las
   letras de distancia en la pantalla previa, el catálogo en la carrera libre.
 - Abierto: el nuevo uso de la chatarra (T18), las carreras opcionales con el calendario (T3),
