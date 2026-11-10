@@ -84,7 +84,7 @@ describe("GameController", () => {
     const run = game.getSnapshot().run;
     expect(run?.seed).toBe("web-42");
     expect(run?.rulesetVersion).toBe(CURRENT_RULESET.version);
-    expect(run?.state.rulesetVersion).toBe("v2");
+    expect(run?.state.rulesetVersion).toBe("v3");
     expect(game.context().ruleset).toBe(CURRENT_RULESET);
     expect(run?.inputs).toEqual([
       { kind: "start", falconessId: "peregrina", hangar: [...HANGAR], parents: [] },

@@ -225,9 +225,10 @@ describe("race-loss mood and action blocks", () => {
 });
 
 describe("seasonContext", () => {
-  it("starts new runs on the current ruleset (v2) and keeps any version on request", () => {
+  it("starts new runs on the current ruleset (v3, ADR-0011) and keeps any version on request", () => {
     const content = loadContent();
-    expect(CURRENT_RULESET.version).toBe("v2");
+    expect(CURRENT_RULESET.version).toBe("v3");
+    expect(seasonContext(content, "v2").ruleset).toBe(RULESET_V2);
     expect(seasonContext(content).ruleset).toBe(CURRENT_RULESET);
     expect(seasonContext(content, "v1").ruleset).toBe(RULESET_V1);
     expect(() => seasonContext(content, "v9")).toThrow(/unknown ruleset/);

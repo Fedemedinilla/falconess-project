@@ -40,7 +40,7 @@ export class UsageError extends Error {
 export type BatchOptions = {
   config: BatchConfig;
   /**
-   * `--ruleset`: `CURRENT_RULESET` (v2) by default, so CI measures the rules new runs play
+   * `--ruleset`: `CURRENT_RULESET` (v3) by default, so CI measures the rules new runs play
    * (ADR-0006 «Métrica 7»); `--ruleset v1` measures the old rules.
    */
   rulesetVersion: string;

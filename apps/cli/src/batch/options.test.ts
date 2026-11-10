@@ -18,7 +18,7 @@ describe("sim:batch command line", () => {
     expect(o.failOnVerdict).toBe(false);
     // the rules new runs play (ADR-0006 «Métrica 7»: S7 passes or is inconclusive under v2)
     expect(o.rulesetVersion).toBe(CURRENT_RULESET.version);
-    expect(o.rulesetVersion).toBe("v2");
+    expect(o.rulesetVersion).toBe("v3");
   });
 
   it("takes --ruleset for S7's seasons and rejects an unknown one (ADR-0006)", () => {

@@ -71,7 +71,7 @@ export const RULESET_V3: RulesetV3 = {
 };
 
 /** The ruleset new runs start on. Saved runs keep the version they started with. */
-export const CURRENT_RULESET: Ruleset = RULESET_V2;
+export const CURRENT_RULESET: Ruleset = RULESET_V3;
 
 const RULESETS: Readonly<Record<string, Ruleset>> = {
   v1: RULESET_V1,

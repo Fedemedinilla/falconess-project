@@ -1,6 +1,7 @@
 import type { Rng } from "@falconess/rng";
 import type { WorkshopOp } from "@falconess/schema";
 import { installPart, resolveFrameBuild } from "../frame-build.js";
+import { flightOf } from "../race/flight.js";
 import { changeFatigue, type Draft, note, type SimContext } from "./context.js";
 
 export function rerollCost(ctx: SimContext, d: Draft): number {
@@ -85,6 +86,9 @@ export function applyWorkshop(
         break;
       }
       case "repair": {
+        // ADR-0011: wings never wear in v3, so there is nothing to repair
+        if (flightOf(ctx.ruleset)?.noWear === true)
+          throw new WorkshopError("repair: wings never wear on this ruleset");
         d.frameDurability[d.equippedFrame] = maxDurability(ctx, d, d.equippedFrame);
         break;
       }
