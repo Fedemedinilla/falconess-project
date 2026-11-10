@@ -139,7 +139,7 @@ export function fpvCamera(model: FlightModel, lane: number, row: number): FpvCam
 /** A rival she can see ahead. */
 export type FpvRival = {
   lane: number;
-  /** Metres ahead of her (> 0). */
+  /** Metres ahead of her (> 0; ≤ 0 beside or behind her when asked for). */
   aheadM: number;
   lateralM: number;
   /** Altitude in bands (fractional) and her band. */
@@ -155,8 +155,17 @@ export type FpvRival = {
 /** Rows a rival who finished stays in view (her position stops at the line in the log). */
 export const FPV_FINISHED_ROWS = 15;
 
-/** The rivals ahead of `lane` within `rangeM`, the farthest first (the drawing order). */
-export function fpvRivals(model: FlightModel, lane: number, row: number, rangeM = 160): FpvRival[] {
+/**
+ * The rivals ahead of `lane` within `rangeM`, the farthest first (the drawing order). With
+ * `backM` > 0 (she looks around) also those beside her and up to `backM` behind (`aheadM` ≤ 0).
+ */
+export function fpvRivals(
+  model: FlightModel,
+  lane: number,
+  row: number,
+  rangeM = 160,
+  backM = 0,
+): FpvRival[] {
   const me = model.tracks[lane];
   if (me === undefined) return [];
   const r = clamp(row, 0, model.rows);
@@ -165,7 +174,7 @@ export function fpvRivals(model: FlightModel, lane: number, row: number, rangeM 
   for (const t of model.tracks) {
     if (t.lane === lane) continue;
     const aheadM = positionAt(t, r) / 1000 - mine;
-    if (aheadM <= 0.4 || aheadM > rangeM) continue;
+    if (aheadM > rangeM || (backM > 0 ? aheadM < -backM : aheadM <= 0.4)) continue;
     const presence = clamp(1 - (r - t.finishRow) / FPV_FINISHED_ROWS, 0, 1);
     if (presence <= 0) continue;
     out.push({
@@ -317,4 +326,181 @@ export function fpvKeyRows(
     dive,
     finish: t.finishRow,
   };
+}
+
+// --- looking around (2026-11-10) --------------------------------------------------------------------
+// The player turns her head by dragging on the view: to the sides and a little backwards (her
+// neck stops at ±FPV_LOOK_YAW_MAX_DEG), a little up and down. After FPV_LOOK_IDLE_MS without a
+// touch her eyes ease back to the track over FPV_LOOK_RETURN_MS. Only the camera turns: the race
+// and its numbers do not depend on it.
+
+/** Her neck's reach: yaw (+ right) and pitch (+ up), degrees. */
+export const FPV_LOOK_YAW_MAX_DEG = 110;
+export const FPV_LOOK_PITCH_MAX_DEG = 15;
+/** A drag across the whole view turns her head this many degrees. */
+export const FPV_LOOK_DRAG_DEG = 180;
+/** Untouched this long, her eyes ease back to the track over FPV_LOOK_RETURN_MS. */
+export const FPV_LOOK_IDLE_MS = 5000;
+export const FPV_LOOK_RETURN_MS = 1500;
+/** The spin a flick leaves fades by this factor per second, and stops below FPV_LOOK_STOP_DEG_S. */
+export const FPV_LOOK_FRICTION = 5;
+export const FPV_LOOK_STOP_DEG_S = 4;
+
+/** Where she looks, degrees: yaw + right of the track, pitch + up. */
+export type FpvLook = { yaw: number; pitch: number };
+
+/** The look within her neck's reach. */
+export function clampLook(l: FpvLook): FpvLook {
+  return {
+    yaw: clamp(l.yaw, -FPV_LOOK_YAW_MAX_DEG, FPV_LOOK_YAW_MAX_DEG),
+    pitch: clamp(l.pitch, -FPV_LOOK_PITCH_MAX_DEG, FPV_LOOK_PITCH_MAX_DEG),
+  };
+}
+
+/**
+ * The look after dragging (dx, dy) px from `from` on a view `widthPx` wide. The finger drags the
+ * world: a drag to the left turns her head to the right, a drag down lifts her eyes.
+ */
+export function lookDrag(from: FpvLook, dxPx: number, dyPx: number, widthPx: number): FpvLook {
+  const k = FPV_LOOK_DRAG_DEG / Math.max(1, widthPx);
+  return clampLook({ yaw: from.yaw - dxPx * k, pitch: from.pitch + dyPx * k });
+}
+
+/** A smooth ease in and out of [0, 1] (smootherstep). */
+export function lookEase(t: number): number {
+  const x = clamp(t, 0, 1);
+  return x * x * x * (x * (x * 6 - 15) + 10);
+}
+
+/** The look `ms` into the return to the track from `from` (instant when `returnMs` ≤ 0). */
+export function lookReturn(from: FpvLook, ms: number, returnMs = FPV_LOOK_RETURN_MS): FpvLook {
+  const k = returnMs <= 0 ? 1 : lookEase(ms / returnMs);
+  return { yaw: from.yaw * (1 - k), pitch: from.pitch * (1 - k) };
+}
+
+/** Her head's state between frames: the look, a flick's spin (deg/s), a drag and the clocks (ms). */
+export type FpvLookState = FpvLook & {
+  spin: number;
+  drag: { x: number; y: number; from: FpvLook; at: number } | null;
+  /** When the last touch ended (null: never touched, or back on the track). */
+  releasedAt: number | null;
+  /** The return to the track under way: where it started and when. */
+  back: { from: FpvLook; at: number } | null;
+};
+
+export const FPV_LOOK_REST: FpvLookState = {
+  yaw: 0,
+  pitch: 0,
+  spin: 0,
+  drag: null,
+  releasedAt: null,
+  back: null,
+};
+
+/** A finger or the mouse goes down at (x, y) at `now` ms: no more spin, no return home. */
+export function lookPress(s: FpvLookState, x: number, y: number, now: number): FpvLookState {
+  return {
+    ...s,
+    spin: 0,
+    drag: { x, y, from: { yaw: s.yaw, pitch: s.pitch }, at: now },
+    back: null,
+  };
+}
+
+/** It moves to (x, y): the look follows the drag; the spin is the latest yaw speed (deg/s). */
+export function lookMove(
+  s: FpvLookState,
+  x: number,
+  y: number,
+  now: number,
+  widthPx: number,
+): FpvLookState {
+  if (s.drag === null) return s;
+  const l = lookDrag(s.drag.from, x - s.drag.x, y - s.drag.y, widthPx);
+  const dt = (now - (s.drag.at ?? now)) / 1000;
+  const v = dt > 0 ? (l.yaw - s.yaw) / dt : s.spin;
+  const spin = dt > 0 ? s.spin * 0.4 + v * 0.6 : s.spin;
+  return {
+    ...s,
+    ...l,
+    spin,
+    drag: { ...s.drag, at: now },
+  };
+}
+
+/** It lifts at `now`: the idle clock starts; a flick keeps spinning unless motion is reduced. */
+export function lookRelease(s: FpvLookState, now: number, reduced: boolean): FpvLookState {
+  if (s.drag === null) return s;
+  // a finger that stopped before lifting leaves no spin
+  const still = now - s.drag.at > 80;
+  return {
+    ...s,
+    drag: null,
+    spin: reduced || still ? 0 : clamp(s.spin, -720, 720),
+    releasedAt: now,
+  };
+}
+
+/** One frame at `now` ms, `dt` s after the last: the spin fades, and the idle look goes home. */
+export function lookTick(
+  s: FpvLookState,
+  now: number,
+  dt: number,
+  reduced: boolean,
+  idleMs = FPV_LOOK_IDLE_MS,
+  returnMs = FPV_LOOK_RETURN_MS,
+): FpvLookState {
+  if (s.drag !== null) return s;
+  let out = s;
+  if (s.spin !== 0 && s.back === null) {
+    const yaw = clamp(s.yaw + s.spin * dt, -FPV_LOOK_YAW_MAX_DEG, FPV_LOOK_YAW_MAX_DEG);
+    let spin = s.spin * Math.exp(-FPV_LOOK_FRICTION * dt);
+    if (Math.abs(spin) < FPV_LOOK_STOP_DEG_S || Math.abs(yaw) >= FPV_LOOK_YAW_MAX_DEG) spin = 0;
+    out = { ...out, yaw, spin };
+  }
+  if (out.releasedAt === null) return out;
+  if (out.back === null) {
+    if (now - out.releasedAt < idleMs) return out;
+    if (out.yaw === 0 && out.pitch === 0) return { ...out, releasedAt: null, spin: 0 };
+    out = { ...out, spin: 0, back: { from: { yaw: out.yaw, pitch: out.pitch }, at: now } };
+  }
+  const back = out.back;
+  if (back === null) return out;
+  const ms = now - back.at;
+  const rm = reduced ? 0 : returnMs;
+  if (ms >= rm) return { ...FPV_LOOK_REST };
+  return { ...out, ...lookReturn(back.from, ms, rm) };
+}
+
+/**
+ * A point of the camera's frame (x right, z ahead along her heading) seen by eyes turned `yawDeg`
+ * (+ right): [x across the view, z into the view].
+ */
+export function lookRotate(x: number, z: number, yawDeg: number): [number, number] {
+  const a = (yawDeg * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return [x * c - z * s, x * s + z * c];
+}
+
+/**
+ * A polygon of points [x, y, z] (z into the view) cut to what lies at or beyond the near plane
+ * `near` (Sutherland–Hodgman against one plane); empty when all of it is behind her eyes.
+ */
+export function clipNear(points: readonly (readonly [number, number, number])[], near: number) {
+  const out: [number, number, number][] = [];
+  const n = points.length;
+  for (let i = 0; i < n; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % n];
+    if (a === undefined || b === undefined) continue;
+    const ina = a[2] >= near;
+    const inb = b[2] >= near;
+    if (ina) out.push([a[0], a[1], a[2]]);
+    if (ina !== inb) {
+      const t = (near - a[2]) / (b[2] - a[2]);
+      out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, near]);
+    }
+  }
+  return out;
 }
