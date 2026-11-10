@@ -1,6 +1,7 @@
 export * from "./balance.js";
 export * from "./blackbox.js";
 export * from "./build.js";
+export * from "./calendar.js";
 export * from "./content-index.js";
 export * from "./core.js";
 export * from "./course.js";

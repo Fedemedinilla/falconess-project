@@ -1,0 +1,33 @@
+{
+  "id": "v3",
+  "rulesetVersion": "v3",
+  "catalogue": [
+    "sprint",
+    "steps",
+    "overlook",
+    "ridge",
+    "breakaway",
+    "circuit",
+    "open-sky",
+    "canyon",
+    "crossing"
+  ],
+  "offerWeeks": 22,
+  "offersPerWeek": 3,
+  "monthTrackWeeks": 2,
+  "monthTrack": [
+    "canyon",
+    "open-sky",
+    "breakaway",
+    "circuit",
+    "sprint",
+    "canyon",
+    "open-sky",
+    "steps",
+    "overlook",
+    "circuit",
+    "ridge",
+    "crossing"
+  ],
+  "optionalRunsPerSeason": 8
+}

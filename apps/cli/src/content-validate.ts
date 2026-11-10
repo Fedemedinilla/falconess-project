@@ -1,4 +1,4 @@
-import { loadRawContent } from "@falconess/content";
+import { loadCalendar, loadCatalogueCourses, loadRawContent } from "@falconess/content";
 import { buildContentIndex, ContentError } from "@falconess/schema";
 
 try {
@@ -14,7 +14,26 @@ try {
     courses: idx.courses.size,
     textKeys: idx.text.size,
   };
-  console.log("content: OK", JSON.stringify(counts));
+  // ADR-0011 §6: the v3 catalogue tracks (outside the index) and the v3 calendar
+  const catalogue = loadCatalogueCourses();
+  const known = new Set([...idx.courses.keys(), ...catalogue.map((c) => c.id)]);
+  const problems: string[] = [];
+  for (const c of catalogue) {
+    if (idx.courses.has(c.id)) problems.push(`courses-v3/${c.id}: id also in courses/`);
+    if (!idx.text.has(c.textKey)) problems.push(`courses-v3/${c.id}: missing text ${c.textKey}`);
+  }
+  const calendar = loadCalendar("v3");
+  for (const t of calendar.catalogue)
+    if (!known.has(t)) problems.push(`calendars/v3: unknown track ${t}`);
+  if (problems.length > 0) throw new ContentError(problems);
+  console.log(
+    "content: OK",
+    JSON.stringify({
+      ...counts,
+      catalogueV3: catalogue.length,
+      calendarV3: calendar.catalogue.length,
+    }),
+  );
 } catch (e) {
   if (e instanceof ContentError) {
     console.error(e.message);

@@ -1,7 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildContentIndex, type ContentIndex, Course, type RawContent } from "@falconess/schema";
+import {
+  buildContentIndex,
+  Calendar,
+  type ContentIndex,
+  Course,
+  type RawContent,
+} from "@falconess/schema";
 
 /** Root of packages/content, resolved from this file so it works from any cwd. */
 export const CONTENT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -45,8 +51,13 @@ export function loadContent(): ContentIndex {
   return cached;
 }
 
+/** A ruleset's season calendar (ADR-0011 §6), validated: `calendars/<id>.json`. */
+export function loadCalendar(id: string): Calendar {
+  return Calendar.parse(readJson(join(CONTENT_ROOT, "calendars", `${id}.json`)));
+}
+
 /**
- * The five new tracks of the ruleset v3's catalogue (design7 §6), validated. They live in
+ * The six new tracks of the ruleset v3's catalogue (ADR-0011 §6, design7), validated. They live in
  * `courses-v3/`, outside the content index, so v1 and v2 (their season, field, policy and batch)
  * never see them; they become real content with their goals in stage 5.
  */
