@@ -292,7 +292,7 @@ function lastWeekKind(state: SeasonState): string | undefined {
 }
 
 export type AttentiveOptions = {
-  /** Rest once the next training's failure chance reaches this, ‰ (vigor ≈ 35). */
+  /** Rest once vigor adds this to the next training's failure chance, ‰ (vigor ≈ 35). */
   readonly restAtFailPm: number;
   /**
    * Use the simulator from this fatigue (vigor 55 or less), never two weeks running: a lighter week
@@ -337,7 +337,8 @@ export function attentivePolicy(
       ? { ...input, position: bestLetterPosition(ctx, state) }
       : input;
   const target = buildTraining(state.stats, build);
-  const risk = trainingRisk(R, state.fatigue, target).failPm;
+  // what vigor adds to the chance: a risk flight's fixed chance never sends her to rest
+  const risk = trainingRisk(R, state.fatigue, target).failPm - trainingRisk(R, 0, target).failPm;
   if (risk >= opts.restAtFailPm || actionBlock(R, state, target) === "forced-rest")
     return withPosition({ kind: "rest" });
   if (state.mood < opts.moodFloor) return withPosition({ kind: "outing" });
