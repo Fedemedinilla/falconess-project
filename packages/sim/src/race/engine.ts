@@ -1475,7 +1475,13 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
   const { T, S } = c;
   const run = S.dirty[i] === 2 ? (S.dirtyRun[i] ?? 0) + 1 : 0;
   S.dirtyRun[i] = run;
-  if (F.lines && S.flPhase[i] === 2 && lineMoves(c, i, F, x, run)) return true;
+  if (F.lines && S.flPhase[i] === 2) {
+    // PERF-2: nobody switched at t − 1, the inside line and no block: `lineMoves` only clears
+    // `boxed` (when she is not mid-move and not exhausted) and moves nothing
+    if (!c.swLast && S.line[i] !== 1 && (S.blkRun[i] ?? 0) === 0) {
+      if ((S.latTicks[i] ?? 0) <= 0 && !still(c, F, i)) S.boxed[i] = 0;
+    } else if (lineMoves(c, i, F, x, run)) return true;
+  }
   if (run === 0) return false;
   const alt = S.alt[i] ?? 0;
   // she goes over only if the climb ends before her planned line does; R9 (stage 2): nobody
