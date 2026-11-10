@@ -3,6 +3,7 @@ import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { Course, EntryInput, RaceEntry } from "@falconess/schema";
 import { expect, test } from "vitest";
 import { freezeEntry } from "../src/race/entry.js";
+import { neutralFixtureEntry } from "../src/race/fixtures.js";
 import { buildCourseGeometry } from "../src/race/geometry.js";
 import { simulateRace } from "../src/race/index.js";
 import { createRaceArena } from "../src/race/state.js";
@@ -19,9 +20,11 @@ import { RULESET_V1, RULESET_V3, type Ruleset } from "../src/rulesets/index.js";
  * before the gate is checked so a failing run still shows its numbers; a summary that cannot be
  * written only warns: the p95 gate is the one way this file fails.
  *
- * Ruleset v3 (ADR-0011, ADR-0010 B7): the same field with letters B on the longest catalogue track
- * (the Travesía, 3600 m) is gated too, p95 under 5 ms with detail "results"; the v3 sprint is
- * report only.
+ * Ruleset v3 (ADR-0011, ADR-0010 B7): the guardrails' bench field (`pnpm balance:barandas` B7:
+ * `equalRoles(7)`, eight neutral fixtures at 600, letters B, 2 per position) on the longest
+ * catalogue track (the Travesía, 3600 m) and the v3 sprint are report only: one run's p95 of the
+ * Travesía swings around the 5 ms line on a shared machine (B7 is fragile), so its gate is B7 of
+ * `pnpm balance:barandas`, the median of five runs.
  */
 
 const content = loadContent();
@@ -39,10 +42,32 @@ const FIELD: [string, string[]][] = [
 
 const catalogue = new Map(loadCatalogueCourses().map((c) => [c.id, c]));
 const courseOf = (id: string): Course => catalogue.get(id) ?? content.getCourse(id);
-const LETTERS_B = { sprint: "B", mile: "B", medium: "B", long: "B" } as const;
+
+/** B7's field: `equalRoles(7)` of apps/cli/src/balance/field.ts (position, wings) per lane. */
+const B7_ROLES = [
+  ["lead", "dive"],
+  ["lead", "hover"],
+  ["pack", "hover"],
+  ["pack", "ground"],
+  ["stalk", "dive"],
+  ["stalk", "glide"],
+  ["closer", "glide"],
+  ["closer", "ground"],
+] as const;
 
 function field(ruleset: Ruleset, courseId: string): RaceEntry[] {
   const course = courseOf(courseId);
+  if (ruleset.flight)
+    return B7_ROLES.map(([position, style], lane) => ({
+      ...neutralFixtureEntry({
+        runnerId: `r${lane}`,
+        laneIndex: lane,
+        style,
+        position,
+        stats: S600,
+      }),
+      distanceAptitude: "B" as const,
+    }));
   return FIELD.map(([frameId, learnedSkills], lane) => {
     const input: EntryInput = {
       runnerId: `bench-${lane}`,
@@ -56,7 +81,6 @@ function field(ruleset: Ruleset, courseId: string): RaceEntry[] {
       quirks: [],
       learnedSkills,
       durability: null,
-      ...(ruleset.flight ? { distanceAptitude: { ...LETTERS_B } } : {}),
     };
     return freezeEntry(ruleset, content, input, course, lane);
   });
@@ -113,7 +137,7 @@ function summaryRow(courseId: string, detail: string, l: Latency, gate: string):
 const CASES: { ruleset: Ruleset; courseId: string; gated: boolean }[] = [
   { ruleset: RULESET_V1, courseId: "canyon", gated: true },
   { ruleset: RULESET_V1, courseId: "sprint", gated: false },
-  { ruleset: RULESET_V3, courseId: "crossing", gated: true },
+  { ruleset: RULESET_V3, courseId: "crossing", gated: false },
   { ruleset: RULESET_V3, courseId: "sprint", gated: false },
 ];
 

@@ -3366,4 +3366,4 @@ loss, no repair, no break). The style keeps only its gesture (`WINGS`) and, with
 - Goldens: `tests/golden/v3/` (`golden-v3.ts`, `pnpm golden:update -- --set v3 --yes`).
 - Guardrails: `pnpm balance:barandas` (ADR-0010, B1-B8; `--quick` in CI). B8 compares v1, v2,
   v2 seasons and every `FLIGHT_OFF_*` switch with `apps/cli/src/balance/invariance.json`.
-- Performance: `pnpm bench` gates v3 on the Travesía (3600 m) at p95 < 5 ms (B7).
+- Performance: B7 of `pnpm balance:barandas` gates v3 on the Travesía (3600 m) at a median p95 < 5 ms over five runs; `pnpm bench` reports it.

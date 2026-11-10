@@ -11,8 +11,9 @@ this list and the scripts in sync). Arguments after `--` go to the script.
   tests/golden/v1, `race/golden-v3.test.ts` for tests/golden/v3, ADR-0011).
 - `pnpm golden:update -- --yes [--set v1|v3] [--only g01-sprint-generic]`: rewrite tests/golden/v1,
   or tests/golden/v3 with `--set v3` (lead + ADR).
-- `pnpm bench`: race benchmark; fails if the v1 canyon p95 or the v3 Travesía p95 (ADR-0010 B7)
-  exceeds 5 ms per race.
+- `pnpm bench`: race benchmark; fails if the v1 canyon p95 exceeds 5 ms per race. It also
+  reports v3 on the Travesía (3600 m) and the sprint; the v3 gate is B7 of `pnpm balance:barandas`
+  (median of five runs), since one run's p95 swings around 5 ms.
 - `pnpm lint`: Biome format and lint check, read only (CI runs it).
 - `pnpm lint:fix`: Biome with `--write`; review `git diff docs/` afterwards (it formats Markdown).
 - `pnpm content:validate`: parse every content JSON and check the cross references.

@@ -168,8 +168,9 @@ registros v1/v2 y temporadas v2 iguales a `playtest-ui`). El motor v1/v2 no lee 
 - `pnpm sim:batch` y `pnpm sim:season-batch` miden v3 por defecto (`--ruleset v2` mide lo viejo);
   el lote de `balance.yml` compara contra la línea base de `main`, que es v2 hasta que esta rama
   entre: el primer reporte se lee con la etiqueta `balance-adr`.
-- `pnpm bench` también corre v3 en la Travesía (3600 m) con la puerta de 5 ms de B7, que hoy pasa
-  frágil (p95 ≈ 4,3 ms en la máquina de pruebas).
+- `pnpm bench` también informa v3 en la Travesía (3600 m) con el campo de B7, sin puerta: una
+  corrida sola da p95 entre 3,8 y 6,9 ms en la máquina de pruebas. La puerta de 5 ms es B7 de
+  `pnpm balance:barandas` (mediana de cinco), que pasa frágil (4,56 ms).
 - Corrección de un error al pasar al juego: la temporada v3 copiaba la durabilidad del perfil
   neutro (100) a las alas después de cada carrera, así que un ala de 180-220 parecía gastada y la
   política de referencia perdía semanas reparando. Ahora la temporada no toca la durabilidad en
