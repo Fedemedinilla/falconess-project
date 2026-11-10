@@ -7,8 +7,9 @@
  * the same arguments print the same bytes.
  */
 import { readFileSync } from "node:fs";
-import { loadContent } from "@falconess/content";
-import { RULESET_V1, type SimContext } from "@falconess/sim";
+import { loadCatalogueCourses, loadContent } from "@falconess/content";
+import type { Course } from "@falconess/schema";
+import { CURRENT_RULESET, flightOf, getRuleset, type SimContext } from "@falconess/sim";
 import { createRaceEngine } from "./race/engine-adapter.js";
 import type { RaceEnginePort } from "./race/engine-port.js";
 import { buildField, type FieldSpec, parseEntryInputs } from "./race/field.js";
@@ -18,8 +19,11 @@ import { renderRace } from "./race/render-race.js";
 
 export type SimRaceDeps = {
   engine: RaceEnginePort;
+  /** The content; `ctx.ruleset` is the default ruleset when `--ruleset` is absent. */
   ctx: SimContext;
   readText(path: string): string;
+  /** The v3 catalogue tracks outside the content index (ADR-0011 §6). */
+  catalogue?: readonly Course[];
 };
 
 function fieldSpec(request: FieldRequest, readText: (path: string) => string): FieldSpec {
@@ -37,15 +41,26 @@ function fieldSpec(request: FieldRequest, readText: (path: string) => string): F
 export function runSimRace(argv: readonly string[], deps: SimRaceDeps): string {
   const opts = parseRaceArgs(argv);
   if (opts.help) return RACE_USAGE;
-  const { content, ruleset } = deps.ctx;
-  const course = content.courses.get(opts.courseId);
+  const { content } = deps.ctx;
+  let ruleset = deps.ctx.ruleset;
+  if (opts.ruleset !== null)
+    try {
+      ruleset = getRuleset(opts.ruleset);
+    } catch (e) {
+      throw new RaceArgsError(e instanceof Error ? e.message : String(e));
+    }
+  const ctx: SimContext = { ruleset, content };
+  // the catalogue tracks fly: only a ruleset with flight races them
+  const courses = new Map(content.courses);
+  if (flightOf(ruleset) !== null) for (const c of deps.catalogue ?? []) courses.set(c.id, c);
+  const course = courses.get(opts.courseId);
   if (!course)
     throw new RaceArgsError(
-      `unknown course "${opts.courseId}" (known: ${[...content.courses.keys()].join(", ")})`,
+      `unknown course "${opts.courseId}" on ${ruleset.version} (known: ${[...courses.keys()].join(", ")})`,
     );
   const entries = buildField(
     deps.engine,
-    deps.ctx,
+    ctx,
     course,
     opts.seed,
     fieldSpec(opts.field, deps.readText),
@@ -61,8 +76,9 @@ if (isMain) {
   try {
     const output = runSimRace(process.argv.slice(2), {
       engine: createRaceEngine(),
-      ctx: { ruleset: RULESET_V1, content: loadContent() },
+      ctx: { ruleset: CURRENT_RULESET, content: loadContent() },
       readText: (path) => readFileSync(path, "utf8"),
+      catalogue: loadCatalogueCourses(),
     });
     console.log(output);
   } catch (e) {

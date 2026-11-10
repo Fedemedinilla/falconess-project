@@ -11,6 +11,7 @@ describe("parseRaceArgs", () => {
       courseId: "sprint",
       detail: "full",
       json: false,
+      ruleset: null,
       field: {
         kind: "player",
         falconessId: "peregrina",
@@ -34,6 +35,7 @@ describe("parseRaceArgs", () => {
       courseId: "ridge",
       detail: "results",
       json: true,
+      ruleset: null,
       field: {
         kind: "player",
         falconessId: "caracara",

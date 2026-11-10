@@ -2,7 +2,11 @@ import { FIELD_LIMITS } from "@falconess/race-view";
 import { POSITIONS, type Position } from "@falconess/schema";
 import { parseArgs } from "../args.js";
 
-export const RACE_USAGE = `pnpm sim:race -- --seed <s> --course <courseId> [field] [--detail full|results] [--json]
+export const RACE_USAGE = `pnpm sim:race -- --seed <s> --course <courseId> [field] [--ruleset v1|v2|v3] [--detail full|results] [--json]
+
+--ruleset   the race rules (default: the current ruleset, v3 with flight, ADR-0011); on v3
+            --course also takes the catalogue tracks (steps, overlook, breakaway, circuit,
+            open-sky, crossing) and the text view adds the VUELO block
 
 field (one of):
   --falconess <id> [--frame <frameId>] [--parts a,b] [--skills x,y] [--stats <n>] [--turn <t>]
@@ -50,6 +54,8 @@ export type RaceCliOptions = {
   detail: "full" | "results";
   json: boolean;
   field: FieldRequest;
+  /** `--ruleset`; null = the current ruleset. */
+  ruleset: string | null;
 };
 
 const VALUE_KEYS = [
@@ -64,6 +70,7 @@ const VALUE_KEYS = [
   "position",
   "entries",
   "detail",
+  "ruleset",
 ] as const;
 const FLAG_KEYS = ["json", "neutral", "help"] as const;
 const PLAYER_KEYS = ["falconess", "frame", "parts", "skills", "turn", "position"] as const;
@@ -160,5 +167,6 @@ export function parseRaceArgs(argv: readonly string[]): RaceCliOptions {
     detail,
     json: flag("json"),
     field,
+    ruleset: value("ruleset") ?? null,
   };
 }

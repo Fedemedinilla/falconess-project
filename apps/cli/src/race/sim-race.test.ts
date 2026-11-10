@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadContent } from "@falconess/content";
+import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import { RaceLog } from "@falconess/schema";
-import { generateField, RULESET_V1, type SimContext } from "@falconess/sim";
+import { generateField, RULESET_V1, RULESET_V3, type SimContext } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { runSimRace } from "../sim-race.js";
 import { fakeEngine } from "./__fixtures__/fake-engine.js";
@@ -81,7 +81,7 @@ describe("pnpm sim:race through the port", () => {
     expect(runSimRace(["--help"], { engine, ctx, readText: noFiles })).toBe(RACE_USAGE);
     expect(() =>
       runSimRace(["--course", "moon-sprint"], { engine, ctx, readText: noFiles }),
-    ).toThrow('unknown course "moon-sprint" (known: canyon, ridge, sprint)');
+    ).toThrow('unknown course "moon-sprint" on v1 (known: canyon, ridge, sprint)');
     expect(calls).toEqual([]);
   });
 });
@@ -140,5 +140,29 @@ describe("pnpm sim:race on the real engine", () => {
     expect(log.entries).toEqual(
       generateField(RULESET_V1, ctx.content, { course, turn: 30, raceSeed: "7", player }),
     );
+  });
+});
+
+describe("pnpm sim:race on ruleset v3 (ADR-0011)", () => {
+  const v3: SimContext = { ruleset: RULESET_V3, content: loadContent() };
+  const catalogue = loadCatalogueCourses();
+  const deps = { engine: createRaceEngine(), ctx: v3, readText: noFiles, catalogue };
+
+  it("races the catalogue tracks and prints the flight of every runner", () => {
+    const out = runSimRace(["--course", "breakaway", "--seed", "1"], deps);
+    expect(out).toContain("ruleset v3");
+    expect(out).toContain("VUELO");
+    expect(out).toMatch(/despegue/);
+    expect(out).toMatch(/picada/);
+    expect(out).toMatch(/peleas? de línea/);
+  });
+
+  it("keeps older rulesets on request, without the catalogue or the flight block", () => {
+    expect(() => runSimRace(["--course", "breakaway", "--ruleset", "v2"], deps)).toThrow(
+      /unknown course "breakaway" on v2/,
+    );
+    const out = runSimRace(["--course", "sprint", "--ruleset", "v2", "--neutral"], deps);
+    expect(out).toContain("ruleset v2");
+    expect(out).not.toContain("VUELO");
   });
 });

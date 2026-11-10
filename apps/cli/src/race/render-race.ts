@@ -251,7 +251,11 @@ function brokenSpeedText(speedPm: number | null): string {
 
 /** The takeoff style of v3 (diseno-v3-vuelo.md §3), as the CLI names it. */
 function styleName(style: string): string {
-  return { lance: "Lanza", column: "Columna", ramp: "Rampa", turbine: "Turbina" }[style] ?? style;
+  return (
+    { lance: "Lanza", column: "Columna", ramp: "Rampa", turbine: "Turbina", neutral: "neutra" }[
+      style
+    ] ?? style
+  );
 }
 
 function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: RaceLog): string {
@@ -615,12 +619,54 @@ export function renderRaceSummary(log: RaceLog, labels: RaceLabels): string[] {
   const winner = runners[0];
   const player = runners.find((r) => r.entry.kind === "player");
   const lines = classification(runners, labels);
+  const flight = player ? flightSummary(log, player) : null;
+  if (flight !== null) lines.push(`  vuelo: ${flight}`);
   if (winner && player) lines.push(...whyBlock(log, player, winner, labels, SUMMARY_ROWS));
   if (player && player.result.place >= ADVICE_FROM_PLACE) {
     const advice = renderAdvice(log, player.entry.laneIndex, labels);
     lines.push(...(advice.length > 0 ? advice : [NO_ADVICE]));
   }
   return lines;
+}
+
+// --- flight (ruleset v3, ADR-0011) ----------------------------------------------------------------
+
+/** ‰ of the energy her final may spend (the kick on low hp), from her last sprint plan; 1000 = all. */
+function kickPmOf(log: RaceLog, lane: number): number | null {
+  let pm: number | null = null;
+  for (const e of log.events ?? [])
+    if (e.kind === "sprintPlan" && e.lane === lane && e.kickPm !== undefined) pm = e.kickPm;
+  return pm;
+}
+
+/** One line of her flight from the ledger and the log: takeoffs, dives, line fights, kick. */
+export function flightSummary(log: RaceLog, runner: Runner): string | null {
+  const f = runner.result.ledger.flight;
+  if (f === undefined) return null;
+  const lane = runner.entry.laneIndex;
+  const fights =
+    (f.lineSwitches ?? 0) + (f.passesSide ?? 0) + (f.doorsClosed ?? 0) + f.overs + f.knocks;
+  const kick = kickPmOf(log, lane);
+  const parts = [
+    `${styleName(f.style)}`,
+    `${f.flights} despegue${f.flights === 1 ? "" : "s"}`,
+    `${f.dives} picada${f.dives === 1 ? "" : "s"}${f.grandDives > 0 ? ` (${f.grandDives} gran${f.grandDives === 1 ? "" : "des"})` : ""}`,
+    `${fights} pelea${fights === 1 ? "" : "s"} de línea${fights > 0 ? ` (${f.lineSwitches ?? 0} cambios, ${f.passesSide ?? 0} por el costado, ${f.doorsClosed ?? 0} puertas, ${f.overs} por arriba, ${f.knocks} bajada${f.knocks === 1 ? "" : "s"})` : ""}`,
+  ];
+  if (f.noLift > 0) parts.push(`${f.noLift} sin despegar`);
+  if ((f.hpCost ?? 0) > 0) parts.push(`físico −${milliUnits(f.hpCost ?? 0)}`);
+  if (kick !== null && kick < 1000) parts.push(`remate acortado al ${Math.round(kick / 10)} %`);
+  return parts.join(" · ");
+}
+
+function flightSection(log: RaceLog, runners: readonly Runner[], labels: RaceLabels): string[] {
+  const rows = runners
+    .map((r) => {
+      const line = flightSummary(log, r);
+      return line === null ? null : `  ${r.result.place}º ${labels.runnerName(r.entry)}: ${line}`;
+    })
+    .filter((x): x is string => x !== null);
+  return rows.length === 0 ? [] : ["", "VUELO", ...rows];
 }
 
 /** The whole text view, one string per line. */
@@ -630,6 +676,7 @@ export function renderRace(log: RaceLog, labels: RaceLabels): string[] {
     ...header(log, labels),
     "",
     ...classification(runners, labels),
+    ...flightSection(log, runners, labels),
     "",
     ...timeline(log, runners, labels),
     "",
