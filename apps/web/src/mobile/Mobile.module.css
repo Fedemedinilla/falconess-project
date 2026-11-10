@@ -1774,6 +1774,247 @@
   font-size: 28px;
 }
 
+/* ---- the track card: profile strip, distance class, what it asks (letters only) ---- */
+.app {
+  --hill: #a8703a;
+  --jump: #d99a00;
+  --water: #2b8fd6;
+  --curve: #7d5bd0;
+  --canyon: #4f5d6b;
+}
+.tcard {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 12px 7px;
+  border: 0;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow: var(--shadow);
+  color: var(--tx);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.tcard:disabled {
+  cursor: default;
+}
+.tcRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.tcDist {
+  flex: none;
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--soft);
+}
+.tstrip {
+  position: relative;
+  height: 26px;
+  padding-right: 16px;
+}
+.tstripL {
+  height: 44px;
+  padding-right: 20px;
+  margin: 2px 0 0;
+}
+.tstrip svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.tsFlat {
+  stroke: var(--ui);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.tsFinal {
+  stroke: var(--yel);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.tsHill {
+  fill: color-mix(in srgb, var(--hill) 45%, transparent);
+  stroke: var(--hill);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.tsJump polygon {
+  fill: var(--jump);
+  stroke: var(--jump);
+  stroke-width: 2;
+}
+.tsArc {
+  fill: none;
+  stroke: var(--jump);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+}
+.tsWater rect {
+  fill: color-mix(in srgb, var(--water) 25%, transparent);
+}
+.tsWater path {
+  fill: none;
+  stroke: var(--water);
+  stroke-width: 2.5;
+}
+.tsCurves {
+  fill: none;
+  stroke: var(--curve);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.tsCanyon rect {
+  fill: color-mix(in srgb, var(--canyon) 22%, transparent);
+}
+.tsCanyon line {
+  stroke: var(--canyon);
+  stroke-width: 3;
+}
+.tsFlag {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: var(--ui);
+  line-height: 0;
+}
+.tsFlagOn {
+  color: var(--tx);
+}
+.dm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-left: auto;
+}
+.dmK {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx2);
+}
+.dmC {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.dmS {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx2);
+}
+.dmL {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--tx);
+  color: var(--white);
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+}
+.dmLong {
+  flex-wrap: wrap;
+  margin-left: 0;
+  gap: 8px 14px;
+}
+.dmLong .dmK {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+.dmLong .dmS {
+  font-size: 15px;
+  color: var(--tx);
+}
+.dmLong .dmL {
+  min-width: 26px;
+  height: 26px;
+  font-size: 19px;
+  margin-left: 2px;
+}
+.tsCap {
+  margin: 0 0 -8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tx2);
+}
+.tsFlavor {
+  margin: -4px 0 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-style: italic;
+  color: var(--tx2);
+}
+.tsLegend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tsLegend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 12px;
+  background: var(--soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.tsLegend li[data-kind="climb"],
+.tsLegend li[data-kind="descent"] {
+  color: var(--hill);
+}
+.tsLegend li[data-kind="jump"] {
+  color: #9a6c00;
+}
+.tsLegend li[data-kind="water"] {
+  color: var(--water);
+}
+.tsLegend li[data-kind="curves"] {
+  color: var(--curve);
+}
+.tsLegend li[data-kind="canyon"] {
+  color: var(--canyon);
+}
+.tsCount {
+  color: var(--tx2);
+}
+.tsDistance {
+  margin: 0;
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 18px;
+}
+.raceCard .tcard {
+  margin: 4px 0 0;
+  padding: 6px 0 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border-top: 1px solid var(--line);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .app .vcost,
   .app .vfill,

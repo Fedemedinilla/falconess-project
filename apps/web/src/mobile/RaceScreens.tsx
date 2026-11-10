@@ -1,6 +1,6 @@
 import type { Position, SeasonState } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { PlayerAdviceNote } from "../race/AdviceNote";
 import { pageLabels, Replay } from "../race/RaceReplay";
 import { raceDistance, type WeekActionInput } from "../screens/model/position";
@@ -14,6 +14,8 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
+import { TrackCardButton, TrackSheet } from "./TrackCard";
+import { trackCard } from "./track";
 
 /**
  * The pre-race card of a goal race week: her four positions with her letter in each (her wings'
@@ -47,6 +49,8 @@ export function PreRaceScreen({
 }) {
   const d = raceDistance(ctx, state, courseId);
   const course = gameText(ctx.content.getCourse(courseId).textKey);
+  const track = trackCard(ctx, courseId);
+  const [trackOpen, setTrackOpen] = useState(false);
   return (
     <div className={s.screen}>
       <div className={s.body}>
@@ -74,6 +78,7 @@ export function PreRaceScreen({
               {ui("ui.position.passive", { passive: gameText(`skill.${d.passive}`) })}
             </p>
           )}
+          <TrackCardButton view={track} id="m-precarrera-pista" onOpen={() => setTrackOpen(true)} />
         </div>
         <PositionPicker
           id="m-posicion"
@@ -107,6 +112,7 @@ export function PreRaceScreen({
           {input ? ui("ui.m.race.run") : ui("ui.m.race.ready")}
         </button>
       </div>
+      <TrackSheet view={track} open={trackOpen} onClose={() => setTrackOpen(false)} />
     </div>
   );
 }

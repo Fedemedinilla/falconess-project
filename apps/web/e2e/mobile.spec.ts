@@ -1,5 +1,15 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import { t, test } from "./fixtures";
+
+/** What each v3 track asks for, as the calendar stores it (`pnpm content:track-demands`). */
+const DEMANDS: Readonly<Record<string, readonly { stat: string; letter: string }[]>> = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL("../../../packages/content/calendars/v3.json", import.meta.url)),
+    "utf8",
+  ),
+).trackDemands;
 
 /**
  * The phone game (#juego, the default view): the approved prototype wired to the real season.
@@ -108,6 +118,50 @@ test("pick a Falconess, train with a double tap, the failure badge in its risk c
   expect(await week(page)).toBe(2);
 });
 
+test("the goal card: the track's profile, its distance class and letters; tap for the sheet", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  // Peregrina's first goal is the Sprint: two Curvas, a home straight, Agility and Technique
+  const card = page.locator("#m-pista");
+  await expect(card).toBeVisible();
+  await expect(card).toHaveAttribute("data-course", "sprint");
+  await expect(page.locator("#m-pista-perfil")).toHaveAttribute(
+    "data-pieces",
+    "flat curves flat curves flat",
+  );
+  await expect(page.locator("#m-pista-perfil svg polyline")).toHaveCount(2);
+  await expect(card.locator("[data-distance]")).toHaveText(t("ui.flight.distance.sprint"));
+  const asks = DEMANDS.sprint ?? [];
+  const chips = page.locator("#m-pista-pide [data-stat]");
+  await expect(chips).toHaveCount(asks.length);
+  for (const [i, d] of asks.entries()) {
+    await expect(chips.nth(i)).toHaveAttribute("data-stat", d.stat);
+    await expect(chips.nth(i)).toHaveAttribute("data-letter", d.letter);
+  }
+  // letters only: none of her numbers, no check marks
+  expect(await card.textContent()).not.toMatch(/[0-9✓✔]/);
+
+  await card.click();
+  const sheet = page.locator("#m-pista-dialogo[open]");
+  await expect(sheet).toBeVisible();
+  await expect(page.locator("#m-pista-titulo")).toHaveText(t("course.sprint"));
+  await expect(page.locator("#m-pista-sabor")).toHaveText(t("course.sprint.flavor"));
+  await expect(page.locator("#m-pista-rasgos li")).toHaveText([
+    `${t("segment.curves")}×2`,
+    t("ui.m.track.final"),
+  ]);
+  await expect(page.locator("#m-pista-distancia")).toHaveText(
+    t("ui.m.track.distance", { distance: t("ui.flight.distance.sprint"), m: 1200 }),
+  );
+  await expect(page.locator("#m-pista-hoja-perfil svg polyline")).toHaveCount(2);
+  await expect(page.locator("#m-pista-hoja-pide [data-stat]")).toHaveCount(asks.length);
+  expect(await page.locator("#m-pista-hoja-pide").textContent()).not.toMatch(/[0-9✓✔]/);
+  await page.click("#m-pista-cerrar");
+  await expect(sheet).toHaveCount(0);
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
+});
+
 test("a race week: pre-race card, the flight view, Saltar and the result", async ({ page }) => {
   test.setTimeout(120_000);
   await startMobile(page, "peregrina");
@@ -124,6 +178,11 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   await page.click("#m-carrera");
   await expect(page.locator("#m-precarrera-distancia")).toBeVisible();
   await expect(page.locator("#m-precarrera-pasiva")).toBeVisible();
+  // the track's profile and letters, as on the goal card
+  await expect(page.locator("#m-precarrera-pista-perfil")).toBeVisible();
+  await expect(page.locator("#m-precarrera-pista-pide [data-letter]")).toHaveCount(
+    DEMANDS.sprint?.length ?? 0,
+  );
   await page.click('label[for="m-posicion-lead"]');
   await page.click("#m-correr");
   // the week's action, then the card again with «Correr»

@@ -25,6 +25,16 @@ const PATHS = {
   x: "M6 6l12 12M18 6 6 18",
   play: "M7 4l13 8-13 8z",
   skip: "M5 5l9 7-9 7zM17 5v14",
+  // the stats of the track card
+  flame: "M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 3-6 1 2 2 3 3 3 0-3-1-5 0-8z",
+  eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9.5a2.5 2.5 0 1 0 .01 0",
+  // the segment types of the track card
+  climb: "M3 19h18M3 19 19 7",
+  descent: "M3 19h18M5 7l16 12",
+  jump: "M3 19h7l3-4M15 19h6M12 12c2-4 5-5 8-4",
+  water: "M3 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0",
+  curves: "M5 20c10 0 10-8 7-8s-3-8 7-8",
+  canyon: "M3 5h18M3 19h18M7 12h10",
 } as const;
 
 export type GlyphName = keyof typeof PATHS;

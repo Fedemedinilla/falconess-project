@@ -54,6 +54,22 @@ export function getContent(): ContentIndex {
   return cached;
 }
 
+const calendarCache = new Map<string, Calendar | null>();
+
+/**
+ * The season calendar of a ruleset (`calendars/<version>.json`, validated), or undefined when the
+ * ruleset has none (v1, v2). The track card reads its `trackDemands`.
+ */
+export function seasonCalendar(rulesetVersion: string): Calendar | undefined {
+  let hit = calendarCache.get(rulesetVersion);
+  if (hit === undefined) {
+    const key = Object.keys(CALENDARS).find((k) => k.endsWith(`/calendars/${rulesetVersion}.json`));
+    hit = key === undefined ? null : Calendar.parse(CALENDARS[key]);
+    calendarCache.set(rulesetVersion, hit);
+  }
+  return hit ?? undefined;
+}
+
 /**
  * The content a season of `rulesetVersion` plays on, like `loadSeasonContent` in the CLI: with a
  * calendar (v3) the catalogue tracks join the courses and each Falconess races the calendar's
@@ -62,11 +78,11 @@ export function getContent(): ContentIndex {
 export function seasonContent(rulesetVersion: string): ContentIndex {
   const hit = seasonCache.get(rulesetVersion);
   if (hit) return hit;
-  const key = Object.keys(CALENDARS).find((k) => k.endsWith(`/calendars/${rulesetVersion}.json`));
+  const calendar = seasonCalendar(rulesetVersion);
   const idx =
-    key === undefined
+    calendar === undefined
       ? getContent()
-      : withCalendar(getContent(), Calendar.parse(CALENDARS[key]), catalogueCourses());
+      : withCalendar(getContent(), calendar, catalogueCourses());
   seasonCache.set(rulesetVersion, idx);
   return idx;
 }

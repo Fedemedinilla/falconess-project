@@ -17,6 +17,9 @@ this list and the scripts in sync). Arguments after `--` go to the script.
 - `pnpm lint`: Biome format and lint check, read only (CI runs it).
 - `pnpm lint:fix`: Biome with `--write`; review `git diff docs/` afterwards (it formats Markdown).
 - `pnpm content:validate`: parse every content JSON and check the cross references.
+- `pnpm content:track-demands [-- --races 1600] [--bases v3a,v3b] [--check]`: measure what each v3
+  catalogue track asks for (the B5 probe and the rival curve, docs/formulas.md «Lo que pide una
+  pista») and write the letters into `calendars/v3.json` (`trackDemands`); `--check` only compares.
 - `pnpm sim -- --seed 42 --falconess peregrina`: one season with the ruleset's reference policy
   (v2: the careful one; v1: the lowest stat), turn by turn: vigor as a draining bar, mood with its
   training multiplier, each week's causes of a mood or vigor change and its luck event (🎲, with

@@ -1,6 +1,6 @@
 import type { SeasonState } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useState } from "react";
 import { learnableSkills } from "../screens/model/workshop";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
@@ -10,6 +10,8 @@ import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { WeekMenu } from "./model";
 import { StatStrip } from "./Parts";
+import { TrackCardButton, TrackSheet } from "./TrackCard";
+import { trackCard } from "./track";
 
 export type MenuAction =
   | "train"
@@ -87,6 +89,8 @@ export function MenuScreen({
   const chips = menu.boosted.map((kind) => ({ key: kind, label: ui(`ui.m.train.abbr.${kind}`) }));
   const off = pendingEvent;
   const goal = menu.goal;
+  const [trackOpen, setTrackOpen] = useState(false);
+  const track = goal && trackCard(ctx, goal.courseId);
 
   return (
     <div className={cx(s.screen, s.menu)}>
@@ -136,6 +140,7 @@ export function MenuScreen({
             <span className={s.raceBarGo}>{ui("ui.m.race.open")}</span>
           </button>
         )}
+        {track && <TrackCardButton view={track} id="m-pista" onOpen={() => setTrackOpen(true)} />}
         <StatStrip stats={menu.stats} skillPoints={menu.skillPoints} />
         <div className={s.arc}>
           <DeltaButton
@@ -212,6 +217,7 @@ export function MenuScreen({
           />
         </div>
       </div>
+      {track && <TrackSheet view={track} open={trackOpen} onClose={() => setTrackOpen(false)} />}
     </div>
   );
 }
