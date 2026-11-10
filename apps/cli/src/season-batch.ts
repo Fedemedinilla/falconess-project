@@ -63,6 +63,8 @@ export type SeasonBatchSummary = {
   /** Skills learned at season end (the unique one included) and simulator weeks, summed. */
   skillsLearned: number;
   simulatorWeeks: number;
+  /** Skill points left unspent at season end, summed. */
+  ptsLeft: number;
 };
 
 /**
@@ -99,6 +101,7 @@ export function runSeasonBatch(
     })),
     skillsLearned: 0,
     simulatorWeeks: 0,
+    ptsLeft: 0,
   };
   const places: number[] = [];
   for (let i = 0; i < runs; i++) {
@@ -117,6 +120,7 @@ export function runSeasonBatch(
       s = advanceSeason(ctx, s, input);
     }
     out.skillsLearned += s.learnedSkills.length;
+    out.ptsLeft += s.skillPoints;
     const grade = s.grade ?? "G";
     out.grades[grade] = (out.grades[grade] ?? 0) + 1;
     for (const k of STAT_ORDER) out.statSums[k] = (out.statSums[k] ?? 0) + s.stats[k];
@@ -175,7 +179,7 @@ export function renderSeasonBatch(m: SeasonBatchSummary): string[] {
     );
   }
   lines.push(
-    `  skills learned ${(m.skillsLearned / Math.max(1, m.runs)).toFixed(2)} per season (unique included)  simulator weeks ${(m.simulatorWeeks / Math.max(1, m.runs)).toFixed(1)}`,
+    `  skills learned ${(m.skillsLearned / Math.max(1, m.runs)).toFixed(2)} per season (unique included)  skill points left ${mean(m.ptsLeft, m.runs)}  simulator weeks ${(m.simulatorWeeks / Math.max(1, m.runs)).toFixed(1)}`,
   );
   for (const c of m.curve)
     if (c.reached > 0)

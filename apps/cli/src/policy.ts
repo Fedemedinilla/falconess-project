@@ -301,6 +301,11 @@ export type AttentiveOptions = {
   readonly simulatorFromFatigue: number;
   /** Go out when mood is below this. */
   readonly moodFloor: number;
+  /**
+   * Learn at the workshop on a light week (instead of the simulator) once she can pay this many
+   * useful skills: the visit costs the week.
+   */
+  readonly learnAtOnce: number;
 };
 
 /** The attentive player's habits (owner's playtest 2026-11-10: rests at vigor ≈ 20-40, ~12 simulator weeks). */
@@ -308,6 +313,7 @@ export const ATTENTIVE: AttentiveOptions = {
   restAtFailPm: 100,
   simulatorFromFatigue: 45,
   moodFloor: 0,
+  learnAtOnce: 2,
 };
 
 /**
@@ -326,8 +332,10 @@ export function attentivePolicy(
   opts: AttentiveOptions = ATTENTIVE,
 ): RunInput {
   if (state.pendingEvent) return { kind: "event:choose", option: 0 };
-  const visit = workshopVisit(ctx, state);
-  if (visit) return visit;
+  if (needsRepair(ctx, state)) {
+    const visit = workshopVisit(ctx, state);
+    if (visit) return visit;
+  }
   const R = ctx.ruleset;
   const raceWeek = ctx.content
     .getFalconess(state.falconessId)
@@ -342,8 +350,12 @@ export function attentivePolicy(
   if (risk >= opts.restAtFailPm || actionBlock(R, state, target) === "forced-rest")
     return withPosition({ kind: "rest" });
   if (state.mood < opts.moodFloor) return withPosition({ kind: "outing" });
-  if (state.fatigue >= opts.simulatorFromFatigue && lastWeekKind(state) !== "train:simulator")
-    return withPosition({ kind: "train:simulator" });
+  if (state.fatigue >= opts.simulatorFromFatigue && lastWeekKind(state) !== "train:simulator") {
+    // a visit costs the week: she learns on a light week, once she can pay `learnAtOnce` skills
+    const visit =
+      skillsToLearn(ctx, state).length >= opts.learnAtOnce ? workshopVisit(ctx, state) : undefined;
+    return withPosition(visit ?? { kind: "train:simulator" });
+  }
   return withPosition({ kind: target });
 }
 
