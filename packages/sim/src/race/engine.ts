@@ -178,6 +178,12 @@ type Ctx = {
   drainV: Float64Array;
   drainK: Float64Array;
   drainOut: Float64Array;
+  /** PERF-2: the hold's last (band, vOut, m) per lane and what they gave (pu, extra energy). */
+  holdA: Float64Array;
+  holdV: Float64Array;
+  holdM: Float64Array;
+  holdInc: Float64Array;
+  holdX: Float64Array;
   /** Each lane's passive id (the log names the passive behind a dive, ADR-0009). */
   readonly passiveIds: readonly (string | null)[];
 };
@@ -322,6 +328,11 @@ function runRace(
     drainV: new Float64Array(MAX_LANES).fill(Number.NaN),
     drainK: new Float64Array(MAX_LANES).fill(Number.NaN),
     drainOut: new Float64Array(MAX_LANES),
+    holdA: new Float64Array(MAX_LANES).fill(Number.NaN),
+    holdV: new Float64Array(MAX_LANES).fill(Number.NaN),
+    holdM: new Float64Array(MAX_LANES).fill(Number.NaN),
+    holdInc: new Float64Array(MAX_LANES),
+    holdX: new Float64Array(MAX_LANES),
   };
   const S = c.S;
 
@@ -1972,9 +1983,24 @@ function holdTick(c: Ctx, i: number, F: FlightConstants, vOut: number, seg: numb
   const num = F.holdE * 10_000;
   // F3: after a won over she holds at the price of the band she left (clean air)
   const alt = Math.max(0, band - (F.overCleanHold && S.overWon[i] === 1 ? 1 : 0));
-  const clean = Math.floor((alt * vOut * bandHoldOf(F, alt)) / 1000);
-  const inc = m === 1000 ? clean : Math.floor((clean * m) / 1000);
-  if (inc > clean) S.holdExtra[i] = (S.holdExtra[i] ?? 0) + Math.floor(((inc - clean) * num) / den);
+  // PERF-2: the pu and extra energy of a tick are a pure function of (alt, vOut, m) for her in a
+  // race (den and num are hers and the ruleset's): kept while they hold
+  let inc: number;
+  let extra: number;
+  if (c.holdA[i] === alt && c.holdV[i] === vOut && c.holdM[i] === m) {
+    inc = c.holdInc[i] ?? 0;
+    extra = c.holdX[i] ?? 0;
+  } else {
+    const clean = Math.floor((alt * vOut * bandHoldOf(F, alt)) / 1000);
+    inc = m === 1000 ? clean : Math.floor((clean * m) / 1000);
+    extra = inc > clean ? Math.floor(((inc - clean) * num) / den) : 0;
+    c.holdA[i] = alt;
+    c.holdV[i] = vOut;
+    c.holdM[i] = m;
+    c.holdInc[i] = inc;
+    c.holdX[i] = extra;
+  }
+  if (extra !== 0) S.holdExtra[i] = (S.holdExtra[i] ?? 0) + extra;
   const pu = (S.holdPu[i] ?? 0) + inc;
   S.holdPu[i] = pu;
   const due = Math.floor((pu * num) / den) - (S.holdBilled[i] ?? 0);
