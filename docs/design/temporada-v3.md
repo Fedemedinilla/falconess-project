@@ -1046,6 +1046,11 @@ Garra fija: +10 % en Sprint, +25 % en Milla, +50 % en Media y Larga. Pista nueva
 Punta. Por Falconess: Peregrina 70,7, Cernícala 74,9, Caracara 70,7 (spread 4,2). Caso Caracara
 Sprint B recupera 31-33 %. Abierto: Peregrina justo en el borde de 70.
 
+**Dueño (2026-11-10): las pistas se tienen que distinguir, pero sin números exactos.** Ser tan
+transparente con números y estadísticas quita el misterio y nos saca el as bajo la manga del azar.
+Lo que una pista pide se muestra con **letras**, para que la diferencia quede ambigua; nada de
+«Resistencia 650 · pide 600 ✓». Se descarta el sello «sirve para tu meta» en el entrenamiento.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
