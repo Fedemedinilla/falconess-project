@@ -13,6 +13,7 @@ import {
   ibps,
   ips,
   is,
+  MAX_LANES,
   type RaceState,
   type RaceTables,
 } from "./state.js";
@@ -56,7 +57,7 @@ export const KEY_FINISHED = 1e15;
  * Step A of every tick, from positions at the end of the previous tick (9.1): competition
  * ranking (equal keys share a rank, so lane order never changes physics), `ahead` = runners
  * strictly in front, `posFrac = fl(ahead × 1000, n − 1)` (0 leader, 1000 last; 0 when solo).
- * O(n²) compares into preallocated arrays, no sort.
+ * Into preallocated arrays, no allocation.
  */
 export function rankSnapshot(S: RaceState, n: number): void {
   const key = S.key;
@@ -65,19 +66,36 @@ export function rankSnapshot(S: RaceState, n: number): void {
       ((S.flags[i] ?? 0) & F_FINISHED) !== 0
         ? KEY_FINISHED - (S.finishMilli[i] ?? 0)
         : (S.pos[i] ?? 0);
-  // ahead[i] = how many keys are strictly greater (PERF-1: each pair compared once)
-  const ahead = S.ahead;
-  for (let i = 0; i < n; i++) ahead[i] = 0;
-  for (let i = 0; i < n; i++) {
-    const ki = key[i] ?? 0;
-    for (let j = i + 1; j < n; j++) {
-      const kj = key[j] ?? 0;
-      if (kj > ki) ahead[i] = (ahead[i] ?? 0) + 1;
-      else if (ki > kj) ahead[j] = (ahead[j] ?? 0) + 1;
-    }
+  // PERF-2: the lanes sorted by key, best first (an insertion sort of last tick's order: almost
+  // always one pass); `ahead` = how many keys are strictly greater = the index of the first lane
+  // with her key, so equal keys share a rank and the order among them never matters
+  const ord = S.rankOrder;
+  if (ord[MAX_LANES] !== n) {
+    for (let k = 0; k < n; k++) ord[k] = k + 1;
+    ord[MAX_LANES] = n;
   }
+  for (let k = 1; k < n; k++) {
+    const x = ord[k] ?? 1;
+    const kx = key[x - 1] ?? 0;
+    let m = k - 1;
+    while (m >= 0 && (key[(ord[m] ?? 1) - 1] ?? 0) < kx) {
+      ord[m + 1] = ord[m] ?? 1;
+      m--;
+    }
+    ord[m + 1] = x;
+  }
+  const ahead = S.ahead;
   const frac = posFracRow(n);
-  for (let i = 0; i < n; i++) S.posFrac[i] = frac[ahead[i] ?? 0] ?? 0;
+  let rank = 0;
+  let prev = 0;
+  for (let k = 0; k < n; k++) {
+    const l = (ord[k] ?? 1) - 1;
+    const kl = key[l] ?? 0;
+    if (k === 0 || kl !== prev) rank = k;
+    prev = kl;
+    ahead[l] = rank;
+    S.posFrac[l] = frac[rank] ?? 0;
+  }
 }
 
 /** `fl(ahead × 1000, n − 1)` for every `ahead` of a field of n (0 for n ≤ 1), built once per n. */
