@@ -1211,3 +1211,82 @@ después; es ajuste fino. Por ahora se trabaja con buffer y táctica.
 
 **Implementación:** va con un ADR de motor (esquema del efecto `tactic`, evento y ledger nuevos, `kA`
 y `paceCentreSpan` por ruleset) en el ruleset v3. v1 y v2 no cambian.
+
+## Dificultad A de la v3 (2026-11-10)
+
+**Qué vio el dueño (playtest en el teléfono, semilla 418317):** «Muy fácil. Peregrina, una vez que
+entrenó Resistencia, era imposible de perder» (ganó las cuatro metas; terminó con Agilidad 1200,
+Técnica 1113, Inteligencia 960, Resistencia 720, Coraje 497, contra rivales de ≈ 560 por stat a la
+semana 46) y «las habilidades tardan mucho» (el Simulador daba 5 puntos; una habilidad cuesta
+60-150). Eligió la **dificultad A**: quien juega bien pasa sus metas con B o mejor en ≈ 60-65 % de
+las temporadas, y cada Falconess empuja una build propia (Umamusume).
+
+**Causa:** las rivales se calibraron contra la política cuidadosa, que descansa mucho. Una persona
+con criterio concentra el entrenamiento: a la semana 46 la cuidadosa tiene ≈ 670 en cada stat y la
+jugadora atenta ≈ 1000 de Agilidad.
+
+**Medida nueva: la jugadora atenta** (`attentivePolicy`, `--policy atenta`): Agilidad como pilar
+más la Resistencia de la meta más larga que le queda (Sprint 450, Milla 550, Media 700, Larga 850 ‰
+de la Agilidad), descansa cuando el vigor sube el fallo 10 % o más, Simulador en una semana cansada,
+aprende habilidades de a dos en una semana liviana y corre con su mejor letra. Desde este cambio es
+la política de referencia de la v3 (B4); la cuidadosa queda para informes y para la v2.
+
+Curvas (Agilidad-Resistencia a las semanas 12 / 24 / 36 / 46, metas de la v2): atenta 279-236 /
+476-407 / 694-592 / 996-700; cuidadosa 215-212 / 354-345 / 511-504 / 678-662; el dueño 384-290 /
+748-563 / 1003-638 / 1200-720.
+
+**Cambios (una palanca cada uno):**
+
+| Palanca            | Cambio                                                                                             |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| Calendario y metas | Metas propias por Falconess en el calendario v3 (`calendars/v3.json`, `goals`)                     |
+| Campo (constantes) | Rivales 60 + 11 t → 60 + 14 t (228 / 396 / 564 / 704 por stat a T12 / T24 / T36 / T46)             |
+| Crecimiento        | Simulador 5 → 15 puntos; las metas pagan puntos por puesto: 100 / 75 / 60 / 45 / 35 / 25 / 20 / 10 |
+| Calendario y metas | Puestos de cada meta para emparejar a las tres                                                     |
+
+Metas (semana, pista, puesto pedido):
+
+- **Peregrina** (A-A-B-C, Remate): T12 Sprint ≤ 6, T24 Mirador ≤ 6, T36 Sprint ≤ 4, T46 Mirador ≤ 3.
+- **Cernícala** (C-B-A-B, Acecho): T12 Mirador ≤ 6, T24 Escapada ≤ 7, T36 Circuito ≤ 6, T46 Pista de
+  saltos ≤ 4.
+- **Caracara** (C-C-B-A, Pelotón): T12 Escapada ≤ 6, T24 Cielo abierto ≤ 6, T36 Pista larga ≤ 5, T46
+  Cielo abierto ≤ 4.
+
+Sin metas en la Travesía ni en la Escalera: son casas del Acecho y B3 (Acecho a 750) pasaba de 28 %.
+v1 y v2 siguen con las metas de cada Falconess (`seasonGoals`), byte a byte.
+
+**Resultado** (1000 temporadas por Falconess y base, m7v3a / m7v3b, nota B o mejor):
+
+| Falconess | Atenta (su build) | Cuidadosa   | Solo Agilidad (sin Resistencia) |
+| --------- | ----------------- | ----------- | ------------------------------- |
+| Peregrina | 64,9 / 65,7 %     | 0,0 / 0,3 % | 0,2 / 0,0 %                     |
+| Cernícala | 65,9 / 64,1 %     | 5,0 / 4,8 % | 0,0 / 0,0 %                     |
+| Caracara  | 67,4 / 64,2 %     | 4,0 / 4,8 % | 0,0 / 0,0 %                     |
+
+La Resistencia muerde en la final de cada una: sin ella la final se pasa 0 % de las veces (Peregrina
+en el Mirador, Cernícala en la Pista de saltos, Caracara en Pista larga y Cielo abierto). Habilidades
+aprendidas por temporada (con la única): atenta 4,2 / 3,8 / 3,8; cuidadosa ≈ 2,3; antes ≈ 1.
+
+**Barandas** (`pnpm balance:barandas`, completo, commit `547eaee`): B1 pasa (17,7-36,5 %), B2 frágil
+(como antes), B3 frágil (Acecho 750 v3a 27,8 %; antes 27,7), B4 pasa (cota mínima 61,1 %, brecha
+2,5 / 1,6 puntos), B5 pasa, B6 pasa, B7 pasa (p95 3,90 ms), B8 pasa (0 bytes). Los nueve golden v3
+con campo de la semana 46 se regrabaron (ADR-0011) porque cambió la curva de las rivales.
+
+**Límite honesto:** ir al taller cuesta la semana, así que una habilidad casi no paga la semana que
+reemplaza (aprender en cuanto alcanza bajaba la nota B 10-15 puntos); la atenta aprende en semanas
+livianas. Si el taller deja de costar semana (T4), las rivales se vuelven a medir. La cuidadosa queda
+muy abajo (≈ 0-5 %): descansar de más ya no alcanza.
+
+**Notas de cambio para el jugador:**
+
+- «Cada Falconess tiene su temporada: Peregrina corre Sprint y Milla, Cernícala la Media y Caracara la
+  Larga; las metas piden la Resistencia de su distancia.»
+- «Las rivales de la temporada crecen más rápido: quien entrena bien ya no gana siempre, y quien
+  descansa de más pierde sus metas.»
+- «El Simulador da 15 puntos de habilidad (antes 5) y cada carrera objetivo da puntos según el puesto
+  (100 al ganar): una temporada bien jugada aprende cuatro o cinco habilidades.»
+- «Las metas de cada Falconess piden puestos distintos: Peregrina tiene que ganar en serio en el Sprint
+  de la semana 36; Cernícala y Caracara tienen un poco más de margen en la final.»
+
+La partida guardada del dueño (semilla 418317) se jugó con las metas viejas: con este contenido ya no
+se reproduce igual.
