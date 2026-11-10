@@ -56,6 +56,18 @@ export function MobileGame() {
   const run = snap.run;
   const inputs = run?.inputs.length ?? 0;
 
+  // the phone game is light and airy by design: its dialogs (shared with the test view) must not
+  // take the system's dark tokens under the game's light colors; the test view gets its theme back
+  useEffect(() => {
+    const root = document.documentElement;
+    const before = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", "light");
+    return () => {
+      if (before === null) root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", before);
+    };
+  }, []);
+
   // a new run (or a load, or an undo in the test view) starts on the menu
   const firstInput = run?.inputs[0];
   const seed = run?.seed;

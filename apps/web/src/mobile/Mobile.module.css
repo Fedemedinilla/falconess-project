@@ -5,6 +5,9 @@
  */
 .app {
   color-scheme: light;
+  /* the school's colors come from the runner (accentStyle); before a runner is picked, Kōryū's */
+  --acc: #c0392b;
+  --sec: #f1c40f;
   --sky1: #c4e3f8;
   --sky2: #e3f1fb;
   --sky3: #f4f7fa;
