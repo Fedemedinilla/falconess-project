@@ -199,7 +199,10 @@
 .lbl {
   font-size: 13px;
   font-weight: 600;
-  color: var(--tx2);
+  color: var(--tx);
+  background: rgb(255 255 255 / 0.92);
+  border-radius: 10px;
+  padding: 2px 7px;
 }
 .vbar {
   flex: 1;
@@ -994,7 +997,7 @@
   transform: translateY(3px);
   filter: drop-shadow(0 1px 0 rgb(20 32 43 / 0.3)) brightness(0.88);
 }
-.delta:disabled .deltaArt {
+.app .delta:disabled .deltaArt {
   filter: grayscale(0.7) opacity(0.6);
 }
 .deltaLabel {
@@ -1546,7 +1549,7 @@
   font-weight: 600;
   color: var(--tx2);
 }
-.tchip b {
+.app .tchip b {
   font-family: var(--cn);
   font-weight: 700;
   font-size: 19px;
@@ -1600,7 +1603,7 @@
   line-height: 14px;
   padding: 2px 4px;
 }
-.learn b {
+.app .learn b {
   font-family: var(--cn);
   font-size: 18px;
   line-height: 20px;
@@ -1643,7 +1646,7 @@
   width: 6px;
   background: linear-gradient(180deg, var(--c) 0 60%, var(--c2) 60% 100%);
 }
-.hcard b {
+.app .hcard b {
   font-family: var(--cn);
   font-weight: 700;
   font-size: 20px;
@@ -1718,7 +1721,7 @@
   color: var(--tx);
   white-space: nowrap;
 }
-.glist b {
+.app .glist b {
   font-family: var(--cn);
   font-size: 20px;
 }
@@ -1758,11 +1761,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app *,
-  .app *::before,
-  .app *::after {
-    animation: none !important;
-    transition: none !important;
+  .app .vcost,
+  .app .vfill,
+  .app .gn,
+  .app .boostChip,
+  .app .hero img,
+  .app .sel::before,
+  .app .deltaArt {
+    animation: none;
+    transition: none;
+  }
+  .app .deltaGlow {
+    animation: none;
+    opacity: 0.35;
   }
 }
 
@@ -1773,4 +1784,10 @@
   border-width: 0;
   border-top-width: 6px;
   overflow: auto;
+}
+
+@media (max-width: 380px) {
+  .goalDk {
+    display: none;
+  }
 }

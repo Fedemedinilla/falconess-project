@@ -31,6 +31,11 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
   (name and tools, then the sections and the run) and the phone's sticky row below 37.5rem; the
   run's name gives way with an ellipsis before anything goes over the sections (an e2e test in
   `run.spec.ts` checks 390 to 1440 px).
+- `src/mobile/` the phone game at `#juego`, the default view: the approved prototype
+  (docs/design/prototipo, T14) wired to the season: character select, week menu (layout D, delta
+  3B), training (double tap, «Fallo N %» in its risk color), pre-race card, the v3 flight race with
+  «Saltar» and its result, workshop (skills, wings), season end. `model.ts` holds its view models;
+  the art is in `src/mobile/art/`. Every other route is the «Vista de pruebas».
 - `src/screens/` season screens; `src/race/` race screens. The route map is in `src/app/App.tsx`.
 
 ## Rules
@@ -239,7 +244,7 @@ page breaks the contract: one HTML fragment starting with
 `<title>Prueba jugable Falconess</title>` and the `claude:viewport-fit-sides` meta, then the Google
 Fonts stylesheet, the inlined `<style>`, the root div and the inlined module script; no doctype,
 html, head or body tags; no other external load; under 16 MB. Hash routes are plain names
-(`#inicio`, `#temporada`, `#carrera`, `#carrera-libre`, `#fin`); no alert, confirm, prompt or print;
+(`#juego`, `#inicio`, `#temporada`, `#carrera`, `#carrera-libre`, `#fin`); no alert, confirm, prompt or print;
 storage is optional.
 
 ## Browser tests (`e2e/`)
