@@ -484,6 +484,12 @@ export type FlightConstants = {
    * (`PassiveSkill.flight.diveVPmDistance`; false = `diveVPm` everywhere: homes, 5f470a2).
    */
   readonly skillFlightDistance: boolean;
+  /**
+   * Fix (2026-11-10, ADR-0010 §2): a skim (band 1) planned to start inside a Salto she is jumping
+   * on her legs keeps the jump's band 1 as her skim (no climb, `takeoff` holds the band she is in).
+   * false = the takeoff found no band above the jump's and the planned skim was lost (`noLift`).
+   */
+  readonly jumpHoldsSkim: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -926,10 +932,18 @@ export const FLIGHT_V3_E1: FlightConstants = {
   skillFlight: true,
   // trim (owner 2026-11-09, trim-final.md): Garra fija by distance, less in the Sprint and the Milla
   skillFlightDistance: true,
+  // fix (2026-11-10): a skim planned inside a Salto she jumps on her legs is not lost
+  jumpHoldsSkim: true,
 };
 
+/** The skim-in-a-Salto fix off: v3 is the trim (f08bde5) byte for byte (fix/inv15.ts). */
+export const FLIGHT_OFF_JUMPSKIM: Partial<FlightConstants> = { jumpHoldsSkim: false };
+
 /** The trim off: Garra fija's ‰ is the same at every distance (homes, 5f470a2) byte for byte (trim/inv14.ts). */
-export const FLIGHT_OFF_TRIM: Partial<FlightConstants> = { skillFlightDistance: false };
+export const FLIGHT_OFF_TRIM: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_JUMPSKIM,
+  skillFlightDistance: false,
+};
 
 /** A passive's flight effect off (ADR-0009): v3 is the balance polish (6e98e90) byte for byte (homes/inv13.ts). */
 export const FLIGHT_OFF_HOMES: Partial<FlightConstants> = {

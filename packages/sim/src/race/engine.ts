@@ -1779,8 +1779,10 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   let band = 0;
   let cost = 0;
   let hold = 0;
+  // fix (jumpHoldsSkim): a skim planned inside a Salto she jumps holds the jump's band 1, no climb
+  const held = F.jumpHoldsSkim && from === BAND_LOW && target === BAND_LOW;
   if (!flag(S, i, F_EXHAUSTED) && pos < end)
-    for (let b = target; b > from; b--) {
+    for (let b = target; b > from || (held && b === from); b--) {
       const cb = (b - from) * unit;
       const hb = holdMe(F, bandPu(F, b, dist), c.posPerMm, liftF);
       if (energy - cb >= jr + hb) {
