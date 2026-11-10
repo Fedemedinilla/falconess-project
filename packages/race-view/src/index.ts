@@ -43,6 +43,28 @@ export {
   uniformStats,
 } from "./field.js";
 export {
+  curvatureAt,
+  FPV_BAND_M,
+  FPV_EYE_M,
+  FPV_IMPACT_ROWS,
+  FPV_LINE_M,
+  FPV_TRACK_HALF_M,
+  type FpvCamera,
+  type FpvRival,
+  type FpvStretch,
+  type FpvVisor,
+  fpvCamera,
+  fpvKeyRows,
+  fpvRivals,
+  fpvTrackAhead,
+  fpvVisor,
+  groundAt,
+  groundProfile,
+  impactAt,
+  lateralAt,
+  segmentAt,
+} from "./first-person.js";
+export {
   type FlightBeat,
   type FlightPlanEntry,
   flightBeats,
