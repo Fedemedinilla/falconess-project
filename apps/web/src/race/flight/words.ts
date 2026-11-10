@@ -28,11 +28,13 @@ const me = (v: number) => Math.round(v / 1000);
 /** ‰ as a percent with one decimal. */
 const pct1 = (pm: number) => formatFixed(Math.abs(pm), 10, 1);
 
+export { bandLow };
+
 export function bandName(b: number): string {
   return ui(`ui.flight.band.${Math.max(0, Math.min(3, b))}`);
 }
 /** The band in a sentence ("la banda ALTA" reads "la banda alta"). */
-const bandLow = (b: number) => bandName(b).toLocaleLowerCase("es");
+const bandLow = (b: number) => ui(`ui.flight.bandWord.${Math.max(0, Math.min(3, b))}`);
 
 export function styleName(s: TakeoffStyle): string {
   return ui(`ui.flight.style.${s}`);

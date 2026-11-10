@@ -35,6 +35,7 @@ import { raceView } from "../view";
 import f from "./FlightReplay.module.css";
 import { FlightStage, POS_COLOR, STYLE_COLOR, type StageState } from "./stage";
 import {
+  bandLow,
   bandName,
   countdownCaption,
   kmh,
@@ -599,7 +600,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
                         ui(p.cornisa ? "ui.flight.pre.plan.cornisa" : "ui.flight.pre.plan.item", {
                           a: Math.round(p.aMm / 1000),
                           b: Math.round(p.bMm / 1000),
-                          band: bandName(p.band).toLocaleLowerCase("es"),
+                          band: bandLow(p.band),
                         }),
                       )
                       .join("; ")}
@@ -800,7 +801,12 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
           const { name, detail } = momentText(m);
           const P = POS_COLOR[log.entries[m.lane]?.position ?? "pack"];
           return (
-            <li key={`${m.tick}-${m.lane}-${m.id}`} data-moment={m.id}>
+            <li
+              key={`${m.tick}-${m.lane}-${m.id}`}
+              data-moment={m.id}
+              data-tick={m.tick}
+              data-lane={m.lane}
+            >
               <button
                 type="button"
                 className={cx(m.lane === focus && f.mine)}

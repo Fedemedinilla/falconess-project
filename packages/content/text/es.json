@@ -1218,7 +1218,7 @@
   "ui.flight.cap.airClean": "Arriba, en la banda {band}. Su aire en este vuelo: <b>+{pct} %</b> de velocidad: línea limpia.",
   "ui.flight.cap.airRough": "Arriba, en la banda {band}. Su aire en este vuelo: <b>−{pct} %</b> de velocidad: aire picado, sostener cuesta más.",
   "ui.flight.cap.dirty": "<b>Aire sucio</b>: otra en su banda y su línea, delante y cerca. Sostener cuesta más, las piernas no descansan y gotea físico.",
-  "ui.flight.cap.over": "<b>¡Por arriba!</b> {s} s en aire sucio y le alcanzó la energía para subir: banda {from} → {to}.",
+  "ui.flight.cap.over": "<b>¡Por arriba!</b> {s} s en aire sucio y le alcanzó la energía para subir: {from} → {to}.",
   "ui.flight.cap.knock": "<b>La bajaron</b> a la banda {to}: {s} s en aire sucio sin poder subir. El Coraje alarga cuánto aguanta la línea.",
   "ui.flight.cap.noEnergy": "<b>Sin energía para sostener la banda {band}</b>: pliega y cae sin picada. La altura no se cobra.",
   "ui.flight.cap.grandDive": "<b>Gran picada</b> desde el techo a {kmh} km/h. Cada banda que baja suma velocidad.",
@@ -1379,11 +1379,16 @@
   "ui.flight.distance.mile": "Milla",
   "ui.flight.distance.medium": "Media",
   "ui.flight.distance.long": "Larga",
-  "ui.position.race": "{course}: {distance}, {m} m · su letra de distancia",
+  "ui.position.race": "{distance} · {m} m · su letra de distancia",
   "ui.position.race.born": "nació {born}: la caja negra la sube",
   "ui.position.passive": "Pasiva: {passive}, con cualquier ala",
   "ui.action.workshop.note.v3": "Habilidades y cambio de alas (el ala es estética y gesto: no se gasta): todo junto ocupa la semana.",
   "ui.action.workshop.note.v3.brief": "Habilidades y alas: ocupa la semana.",
   "ui.workshop.neutral": "Alas neutras: todas corren con el mismo bastidor y no se gastan, así que no hay piezas ni reparación. El ala es estética y gesto (cómo despega y cómo cae) y fija la posición por defecto.",
-  "ui.workshop.gesture": "{style} · despega en {gesture}"
+  "ui.workshop.gesture": "{style} · despega en {gesture}",
+  "ui.flight.bandWord.0": "suelo",
+  "ui.flight.bandWord.1": "baja",
+  "ui.flight.bandWord.2": "alta",
+  "ui.flight.bandWord.3": "del techo",
+  "ui.turn.raceThisWeek.v3": "Esta semana se corre {course} después de tu acción. Objetivo: {place}.º o mejor; si terminás más atrás, la temporada se acaba. En el taller podés aprender habilidades o cambiar de alas antes."
 }

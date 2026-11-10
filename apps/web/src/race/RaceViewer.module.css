@@ -85,6 +85,13 @@
   align-items: start;
 }
 
+/* a v3 race: her position line over the side view, one column */
+.flightFrame {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .trackPanel {
   grid-column: 1 / span 8;
 }

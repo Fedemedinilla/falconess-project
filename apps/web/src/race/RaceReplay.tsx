@@ -255,7 +255,7 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
 function FlightFrame({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
   const view = useMemo(() => raceView(log, labels), [log, labels]);
   return (
-    <div className={s.viewer}>
+    <div className={s.flightFrame}>
       {view.player && <PlayerPosition player={view.player} labels={labels} idPrefix={idPrefix} />}
       <FlightReplay log={log} labels={labels} idPrefix={idPrefix} onReveal={onReveal} />
     </div>

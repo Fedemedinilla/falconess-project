@@ -279,7 +279,6 @@ function RaceDistanceNote({
       <p id="turno-distancia" data-distance={d.distance}>
         <span>
           {ui("ui.position.race", {
-            course: gameText(ctx.content.getCourse(courseId).textKey),
             distance: ui(`ui.flight.distance.${d.distance}`),
             m: Math.round(d.lengthMm / 1000),
           })}
@@ -637,7 +636,7 @@ export function TurnActions({
       {next?.weeksLeft === 0 && !pending && (
         <p className={s.raceWeek} role="status">
           <Icon name="goalRace" />
-          {ui("ui.turn.raceThisWeek", {
+          {ui(noWear ? "ui.turn.raceThisWeek.v3" : "ui.turn.raceThisWeek", {
             course: gameText(ctx.content.getCourse(next.goal.courseId).textKey),
             place: next.goal.minPlace,
           })}
