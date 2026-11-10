@@ -173,7 +173,7 @@ describe("auto events (ADR-0006 D8)", () => {
 
 describe("content events and rulesets", () => {
   it("every ruleset an event names exists", () => {
-    // the v3 draft (design7) lives outside the registry until ADR-0009; it keeps v2's season
+    // v3 (design7) lives outside the registry until ADR-0009; it keeps v2's season
     const draft = (v: string) => (v === RULESET_V3.version ? RULESET_V3 : getRuleset(v));
     for (const e of loadContent().events.values())
       for (const v of e.rulesets ?? []) expect(() => draft(v), `${e.id}: ${v}`).not.toThrow();

@@ -74,7 +74,7 @@ function rivalAptitudes(
 ): { positionAptitude: PositionAptitudes; distanceAptitude?: DistanceAptitudes } {
   const positionAptitude: PositionAptitudes = { lead: "B", pack: "B", stalk: "B", closer: "B" };
   positionAptitude[DEFAULT_POSITION[style]] = "A";
-  // v3 draft (owner 2026-11-09): a rival is B at every distance (no specialists in the field)
+  // v3 (owner 2026-11-09): a rival is B at every distance (no specialists in the field)
   const F = flightOf(ruleset);
   if (F === null || !F.distanceLetters) return { positionAptitude };
   return {

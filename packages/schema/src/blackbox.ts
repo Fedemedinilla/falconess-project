@@ -21,7 +21,7 @@ export const BlackBox = z.strictObject({
       }),
     ]),
     /**
-     * v3 draft (owner 2026-11-09): her best birth distance letter. A child's season lifts that
+     * v3 (owner 2026-11-09): her best birth distance letter. A child's season lifts that
      * distance one step, capped at B (never up to a specialist's A); absent in v1 and v2 boxes.
      */
     distance: z.strictObject({ key: Distance, letter: Aptitude }).optional(),

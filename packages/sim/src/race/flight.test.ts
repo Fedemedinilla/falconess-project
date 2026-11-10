@@ -18,7 +18,7 @@ import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock, FLIGHTS_MAX } from "./state.js";
 
 /**
- * The ruleset v3 draft (design7 «Despegar y caer», stage 1): flight plans by position, energy
+ * The ruleset v3 (design7 «Despegar y caer», stage 1): flight plans by position, energy
  * paid to climb and hold, rest in the air and the dive. v1 and v2 never fly. The tests of the
  * round-2 rules run with `FLIGHT_OFF_1_2` (steps 1.2 and 1.3 off); stage1.test.ts covers those.
  */
@@ -60,7 +60,7 @@ function plan(course: Course, entries: RaceEntry[], R = RULESET_V3) {
 
 const FLAGS_ALT = RACE_FRAME_FLAGS.altLow | RACE_FRAME_FLAGS.altHigh;
 
-describe("ruleset v3 draft: flight (design7 stage 1)", () => {
+describe("ruleset v3: flight (design7 stage 1)", () => {
   it("v1 and v2 carry no flight constants and write no flight key, event or altitude bit", () => {
     expect(flightOf(RULESET_V1)).toBeNull();
     expect(flightOf(RULESET_V2)).toBeNull();

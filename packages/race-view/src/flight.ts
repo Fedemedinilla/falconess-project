@@ -43,7 +43,7 @@ export type FlightBeat = {
   problems: string[];
 };
 
-/** Descent ticks per band of the v3 draft (R1); read from the log, never from constants. */
+/** Descent ticks per band of v3 (R1); read from the log, never from constants. */
 function descentTicks(f: FlightBeat): number | null {
   if (f.diveStart === null || f.touchdown === null) return null;
   return f.touchdown.tick - f.diveStart.tick;

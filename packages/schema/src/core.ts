@@ -106,14 +106,14 @@ export const PositionAptitudes = z.record(Position, Aptitude);
 export type PositionAptitudes = z.infer<typeof PositionAptitudes>;
 
 /**
- * v3 draft (owner 2026-11-09): the four race distances, like Umamusume's. A course's distance comes
+ * v3 (owner 2026-11-09): the four race distances, like Umamusume's. A course's distance comes
  * from its length: sprint ≤ 1400 m, mile ≤ 1800 m, medium ≤ 2400 m, long above.
  */
 export const Distance = z.enum(["sprint", "mile", "medium", "long"]);
 export type Distance = z.infer<typeof Distance>;
 export const DISTANCES = Distance.options;
 
-/** Exhaustive letter per race distance (v3 draft; v1 and v2 never read it). */
+/** Exhaustive letter per race distance (v3; v1 and v2 never read it). */
 export const DistanceAptitudes = z.record(Distance, Aptitude);
 export type DistanceAptitudes = z.infer<typeof DistanceAptitudes>;
 

@@ -87,7 +87,7 @@ export const STYLE_DIVE = 0;
 export const STYLE_HOVER = 1;
 export const STYLE_GLIDE = 2;
 export const STYLE_GROUND = 3;
-/** v3 draft (neutral wings): the ground physics of every style, matched by no STYLE_* test. */
+/** v3 (neutral wings): the ground physics of every style, matched by no STYLE_* test. */
 export const STYLE_NEUTRAL = 4;
 
 export function styleCode(style: Style): number {

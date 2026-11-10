@@ -9,7 +9,7 @@ import { neutralFixtureEntry } from "./fixtures.js";
 
 /**
  * Homes per track and the weak's own kit (owner 2026-11-09, .work/design7/measure/homes-final.md):
- * ADR-0009 (draft) gives a passive a flight effect in ruleset v3. Garra fija (talon-lock) dives
+ * ADR-0009 gives a passive a flight effect in ruleset v3. Garra fija (talon-lock) dives
  * 500 ‰ harder from the high band up. v1 and v2 never read it; FLIGHT_OFF_HOMES is the balance
  * polish (6e98e90) byte for byte (homes/inv13.ts).
  */
@@ -55,7 +55,7 @@ function mirror(R: typeof RULESET_V3, course: string): RaceEntry[] {
 const myDives = (log: RaceLog) =>
   (log.events ?? []).flatMap((e) => (e.kind === "dive" && e.lane === 0 ? [e] : []));
 
-describe("homes: Garra fija dives harder (ADR-0009 draft)", () => {
+describe("homes: Garra fija dives harder (ADR-0009)", () => {
   it("talon-lock carries a v3 flight effect: from band 2, +500 ‰ Δv (trim: less in the Sprint and the Milla)", () => {
     const s = content.getPassive("talon-lock");
     expect(PassiveSkill.parse(s)).toEqual(s);

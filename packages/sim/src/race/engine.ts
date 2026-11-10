@@ -121,7 +121,7 @@ const FL = RACE_FRAME_FLAGS;
 /** Everything one race reads in its loop; built once per race, no per-tick allocation. */
 type Ctx = {
   readonly R: RaceConstants;
-  /** Flight constants of the v3 draft (design7); null for v1 and v2, which never fly. */
+  /** Flight constants of v3 (design7); null for v1 and v2, which never fly. */
   readonly F: FlightConstants | null;
   readonly G: CourseGeometry;
   readonly A: RaceArena;
@@ -496,7 +496,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     return false;
   }
 
-  // B4b. v3 draft (design7 R1-R4, R7): planned takeoff, climb, end of flight, descent, dive
+  // B4b. v3 (design7 R1-R4, R7): planned takeoff, climb, end of flight, descent, dive
   // (on the ground, only when her next planned takeoff point is reached: flightTick's phase 0)
   if (F !== null) {
     const k = S.flK[i] ?? 0;
@@ -588,7 +588,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   }
   let surge = 0;
   if (!airborne && (S.surge[i] ?? 0) > 0) {
-    // v3 draft, `diveSurge` knob: the dive's surge decays by kDecel on top of the body speed
+    // v3, `diveSurge` knob: the dive's surge decays by kDecel on top of the body speed
     surge = S.surge[i] ?? 0;
     S.surge[i] = Math.max(0, surge - R.kDecel);
   } else if (airborne && S.flPhase[i] === 3 && (S.surge[i] ?? 0) > 0 && F?.diveAirShare) {
@@ -809,7 +809,7 @@ function stateFlags(c: Ctx, i: number): number {
     ((f & F_BROKEN) !== 0 ? FL.broken : 0) |
     ((S.activeSkills[i] ?? 0) > 0 ? FL.skillActive : 0) |
     ((f & F_FINISHED) !== 0 ? FL.finished : 0) |
-    // v3 draft R1: the altitude band in two bits (always 0 in v1 and v2)
+    // v3 R1: the altitude band in two bits (always 0 in v1 and v2)
     ((S.alt[i] ?? 0) & 1 ? FL.altLow : 0) |
     ((S.alt[i] ?? 0) & 2 ? FL.altHigh : 0)
   );
@@ -851,7 +851,7 @@ function regen(c: Ctx, i: number, pack: boolean): void {
 
 /** Every durability loss (overheat, crash, water): sub0, ledger, then the break check of 8.4. */
 function damage(c: Ctx, i: number, md: number): void {
-  // v3 draft (neutral wings, owner 2026-11-08): no wear, wings never lose durability or break
+  // v3 (neutral wings, owner 2026-11-08): no wear, wings never lose durability or break
   if (c.F !== null && c.F.noWear) return;
   const { T, S } = c;
   const before = S.dur[i] ?? 0;
@@ -931,7 +931,7 @@ function enterSegment(c: Ctx, i: number, s: number, crossing: boolean): void {
       S.detours[i] = (S.detours[i] ?? 0) + 1;
       rec.detour(c.t, i, posMm(c, i), s);
     } else if ((S.flPhase[i] ?? 0) !== 0)
-      S.jumpsCovered[i] = (S.jumpsCovered[i] ?? 0) + 1; // v3 draft R3: crossed in flight, no lift
+      S.jumpsCovered[i] = (S.jumpsCovered[i] ?? 0) + 1; // v3 R3: crossed in flight, no lift
     else setFlag(S, i, F_PENDING_JUMP);
   }
 }
@@ -956,7 +956,7 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
     S.energy[i] = energy - spent;
     S.energyLift[i] = (S.energyLift[i] ?? 0) + spent;
     setFlag(S, i, F_AIRBORNE);
-    if (c.F !== null) S.alt[i] = 1; // v3 draft: a jump flies low
+    if (c.F !== null) S.alt[i] = 1; // v3: a jump flies low
     S.vCore[i] = (flag(S, i, F_EXHAUSTED) ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
     endBurst(S.pulse, i);
     S.jumpsOk[i] = (S.jumpsOk[i] ?? 0) + 1;
@@ -981,7 +981,7 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
 }
 
 /**
- * Step B8 in the air (v3 draft R5): holding a band, the body approaches her air cruise (L1b: her
+ * Step B8 in the air (v3 R5): holding a band, the body approaches her air cruise (L1b: her
  * pace draw, `airPacePm`) × her own air on this flight (L1, drawn before tick 0) × the tow
  * `draftPm` (round 4: the hover draft by her place in the field; round 5, F6: her wing's draft in
  * another's wake in her band). Kept out of `runnerTick` so the ground path stays as small as v2's.
@@ -1048,7 +1048,7 @@ function airCruiseTick(
 }
 
 /**
- * Step B10 in the air (v3 draft R6): the legs rest (`airDrainPm`), but not in dirty air (L3).
+ * Step B10 in the air (v3 R6): the legs rest (`airDrainPm`), but not in dirty air (L3).
  * `drainMicro` written out once for the two drains (the same integers, one ratio); returns the
  * drain of the tick and books the rest in the ledger.
  */

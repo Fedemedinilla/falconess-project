@@ -51,7 +51,7 @@ export const EntryInput = z.strictObject({
   baseStats: FalconessStats,
   mood: Mood,
   positionAptitude: PositionAptitudes,
-  /** v3 draft (owner 2026-11-09): her letter per distance; absent = no letter (v1, v2, flags off). */
+  /** v3 (owner 2026-11-09): her letter per distance; absent = no letter (v1, v2, flags off). */
   distanceAptitude: DistanceAptitudes.optional(),
   /** The race position (ADR-0008); absent = the default of her frame's style (`DEFAULT_POSITION`). */
   position: Position.optional(),
@@ -141,7 +141,7 @@ export const RaceTraits = z.strictObject({
   noPulse: z.boolean(),
   randomSkillGuaranteed: z.boolean(),
   /**
-   * ADR-0009 (draft, ruleset v3 with `skillFlight`): her passive's dive, ‰ more Δv for a dive from
+   * ADR-0009 (ruleset v3 with `skillFlight`): her passive's dive, ‰ more Δv for a dive from
    * band `fromBand` or higher. Absent in v1, v2 and v3 with the flag off.
    */
   diveSkill: z.strictObject({ fromBand: Int.min(2).max(3), pm: Nat }).optional(),
@@ -169,7 +169,7 @@ export const RaceEntry = z
     mood: Mood,
     /** The letter actually applied: the race position's (ADR-0008). */
     positionAptitude: Aptitude,
-    /** v3 draft (owner 2026-11-09): the letter of this course's distance; absent = none (±0). */
+    /** v3 (owner 2026-11-09): the letter of this course's distance; absent = none (±0). */
     distanceAptitude: Aptitude.optional(),
     stats: RaceStats,
     /** Per-mille, after caps and clamps. */
@@ -301,7 +301,7 @@ export const RACE_FRAME_FLAGS = {
   dnf: 8192,
   drafting: 16384,
   /**
-   * Altitude band, two bits (ruleset v3 draft, design7 R1): band = altLow + 2 × altHigh, 0 ground,
+   * Altitude band, two bits (ruleset v3, design7 R1): band = altLow + 2 × altHigh, 0 ground,
    * 1 low, 2 high, 3 ceiling. v1 and v2 never set them.
    */
   altLow: 32768,
@@ -458,7 +458,7 @@ export const RaceEvent = z.discriminatedUnion("kind", [
   raceEvent("heatToEnergy", { heat: Nat, energy: Nat }),
   raceEvent("finish", { finishMilli: Nat, place: Int.min(1) }),
   raceEvent("dnf", {}),
-  // ruleset v3 draft (design7 «Despegar y caer»): v1 and v2 never emit these
+  // ruleset v3 (design7 «Despegar y caer»): v1 and v2 never emit these
   /**
    * A planned flight left the ground (or a jump, or a lower band of a chained flight) for `band`,
    * paying `cost` me: from `fromBand`, one band every `climbTicks`, body speed `vMms` before and
@@ -499,7 +499,7 @@ export const RaceEvent = z.discriminatedUnion("kind", [
     airMms: Nat.optional(),
     airMm: Nat.optional(),
     /**
-     * ADR-0009 (draft): the part of `gainMms` her passive's flight effect added (Garra fija) and
+     * ADR-0009: the part of `gainMms` her passive's flight effect added (Garra fija) and
      * the passive's id; absent when no passive changed this dive.
      */
     skillMms: Nat.optional(),
@@ -576,7 +576,7 @@ export const RaceEvent = z.discriminatedUnion("kind", [
 export type RaceEvent = z.infer<typeof RaceEvent>;
 export type RaceEventKind = RaceEvent["kind"];
 
-/** Flight ledger of the ruleset v3 draft (design7 R1); absent in v1 and v2 logs. */
+/** Flight ledger of the ruleset v3 (design7 R1); absent in v1 and v2 logs. */
 export const FlightLedger = z.strictObject({
   airTicks: Nat,
   flights: Nat,
@@ -650,7 +650,7 @@ export const RaceLedger = z.strictObject({
   detours: Nat,
   skillsActivated: z.array(Slug),
   skillsMissed: z.array(Slug),
-  /** Ruleset v3 draft only (design7); never written by v1 or v2. */
+  /** Ruleset v3 only (design7); never written by v1 or v2. */
   flight: FlightLedger.optional(),
 });
 export type RaceLedger = z.infer<typeof RaceLedger>;

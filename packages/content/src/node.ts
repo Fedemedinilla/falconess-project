@@ -46,7 +46,7 @@ export function loadContent(): ContentIndex {
 }
 
 /**
- * The five new tracks of the ruleset v3 draft's catalogue (design7 §6), validated. They live in
+ * The five new tracks of the ruleset v3's catalogue (design7 §6), validated. They live in
  * `courses-v3/`, outside the content index, so v1 and v2 (their season, field, policy and batch)
  * never see them; they become real content with their goals in stage 5.
  */

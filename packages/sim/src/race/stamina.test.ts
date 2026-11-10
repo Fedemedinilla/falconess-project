@@ -74,7 +74,7 @@ function input(falconessId: string, extra: Partial<EntryInput> = {}): EntryInput
 
 const hits = (log: RaceLog) => (log.events ?? []).filter((e) => e.kind === "hpHit");
 
-describe("ruleset v3 draft: stamina pays effort (owner 2026-11-09)", () => {
+describe("ruleset v3: stamina pays effort (owner 2026-11-09)", () => {
   it("maneuvers cost hp, logged as hpHit and in the ledger; Resistencia shrinks every hit", () => {
     const sprint = courseOf("sprint");
     const lo = simulateRace(RULESET_V3, field(300), sprint, "hits/1", { detail: "full" });
@@ -139,7 +139,7 @@ describe("ruleset v3 draft: stamina pays effort (owner 2026-11-09)", () => {
   });
 });
 
-describe("ruleset v3 draft: the four distances (owner 2026-11-09)", () => {
+describe("ruleset v3: the four distances (owner 2026-11-09)", () => {
   it("a course's distance comes from its length (sprint ≤ 1400, mile ≤ 1800, medium ≤ 2400)", () => {
     const F = RULESET_V3.flight;
     const got = Object.fromEntries(
@@ -206,7 +206,7 @@ describe("ruleset v3 draft: the four distances (owner 2026-11-09)", () => {
   });
 });
 
-describe("season v3 draft: distance letters and the black box (owner 2026-11-09)", () => {
+describe("season v3: distance letters and the black box (owner 2026-11-09)", () => {
   const box = (key: "sprint" | "mile" | "medium" | "long"): BlackBox => ({
     id: `box-${key}`,
     rulesetVersion: "v3",

@@ -33,12 +33,12 @@ export const Falconess = z.strictObject({
   preferredPosition: Position,
   uniqueSkills: z.array(Slug).max(2),
   /**
-   * v3 draft (owner 2026-11-08, wings lose their stats): her signature frame's passive as her own
+   * v3 (owner 2026-11-08, wings lose their stats): her signature frame's passive as her own
    * skill, racing with her on any wings. v1 and v2 never read it (there the frame carries it).
    */
   passive: Slug.optional(),
   /**
-   * v3 draft (owner 2026-11-09): one letter per race distance, a staircase. It acts on flight (the
+   * v3 (owner 2026-11-09): one letter per race distance, a staircase. It acts on flight (the
    * distance is played in the air); v1 and v2 never read it.
    */
   distanceAptitude: DistanceAptitudes.optional(),

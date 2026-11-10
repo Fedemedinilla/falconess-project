@@ -249,7 +249,7 @@ function brokenSpeedText(speedPm: number | null): string {
   return speedPm === null || speedPm === 1000 ? "" : `velocidad ×${fixed(speedPm, 1000, 2)}`;
 }
 
-/** The takeoff style of the v3 draft (diseno-v3-vuelo.md §3), as the CLI names it. */
+/** The takeoff style of v3 (diseno-v3-vuelo.md §3), as the CLI names it. */
 function styleName(style: string): string {
   return { lance: "Lanza", column: "Columna", ramp: "Rampa", turbine: "Turbina" }[style] ?? style;
 }

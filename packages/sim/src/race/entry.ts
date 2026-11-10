@@ -90,7 +90,7 @@ export function freezeEntry(
     ruleset.race.telemetryPowerCap,
   );
   const frame = content.getFrame(input.frameId);
-  // v3 draft (owner 2026-11-08): wings lose their stats. Every frame races on the neutral profile,
+  // v3 (owner 2026-11-08): wings lose their stats. Every frame races on the neutral profile,
   // with no manufacturer rule, no frame passive and no part or quirk effect; the only passive is
   // the Falconess's own (her signature frame's, now her skill). The style stays: it is the gesture.
   const F = flightOf(ruleset);
@@ -141,7 +141,7 @@ export function freezeEntry(
 
   // 5. traits; 6. starting durability
   const traits0 = compileTraits(fb.modifiers);
-  // ADR-0009 (draft, v3 with skillFlight): the passive's flight effect becomes the dive trait
+  // ADR-0009 (v3 with skillFlight): the passive's flight effect becomes the dive trait
   const passiveId = neutral ? ownPassive : (frame.passive ?? null);
   const flight =
     F !== null && F.skillFlight && passiveId !== null
@@ -164,7 +164,7 @@ export function freezeEntry(
       ? fb.durabilityMax
       : Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
 
-  // v3 draft (owner 2026-11-09): the letter of this course's distance, only with the letters on
+  // v3 (owner 2026-11-09): the letter of this course's distance, only with the letters on
   const distanceLetter =
     F !== null && F.distanceLetters && input.distanceAptitude !== undefined
       ? input.distanceAptitude[distanceOfLength(F, lengthMm)]

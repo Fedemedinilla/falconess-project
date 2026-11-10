@@ -134,7 +134,7 @@ export const SeasonState = z.strictObject({
   stats: FalconessStats,
   positionAptitude: PositionAptitudes,
   /**
-   * v3 draft (owner 2026-11-09): her letters per distance for this season, birth letters plus at
+   * v3 (owner 2026-11-09): her letters per distance for this season, birth letters plus at
    * most one step from a black box (`distanceBoost`). Absent in v1 and v2 (and with the flag off).
    */
   distanceAptitude: DistanceAptitudes.optional(),

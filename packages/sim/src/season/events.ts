@@ -104,7 +104,7 @@ export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void 
   d.skillPoints = Math.max(0, d.skillPoints + fx.skillPoints);
   d.wallet.scrap = Math.max(0, d.wallet.scrap + fx.scrap);
   d.wallet.feathers = Math.max(0, d.wallet.feathers + fx.feathers);
-  // v3 draft (owner 2026-11-08): no wear, an event never moves durability
+  // v3 (owner 2026-11-08): no wear, an event never moves durability
   if (fx.durability !== 0 && !(flightOf(ctx.ruleset)?.noWear ?? false)) {
     const max = maxDurability(ctx, d, d.equippedFrame);
     const cur = Math.min(max, d.frameDurability[d.equippedFrame] ?? max);

@@ -140,7 +140,7 @@ describe("MVP content", () => {
       return "other";
     };
 
-    it("are 12-16, only in v2 (and the v3 draft, which keeps v2's season), one option, and good or bad within the owner's ranges", () => {
+    it("are 12-16, only in v2 (and v3, which keeps v2's season), one option, and good or bad within the owner's ranges", () => {
       expect(luck.length).toBeGreaterThanOrEqual(12);
       expect(luck.length).toBeLessThanOrEqual(16);
       let good = 0;

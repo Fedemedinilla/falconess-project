@@ -39,7 +39,7 @@ function input(frameId: string, falconessId: string | null, extra: Partial<Entry
   return { ...base, ...extra };
 }
 
-describe("ruleset v3 draft: neutral wings (owner 2026-11-08)", () => {
+describe("ruleset v3: neutral wings (owner 2026-11-08)", () => {
   it("every frame races on the neutral profile, no rule, no part or quirk, her own passive", () => {
     const N = RULESET_V3.flight.neutralFrame;
     for (const frame of content.frames.values()) {

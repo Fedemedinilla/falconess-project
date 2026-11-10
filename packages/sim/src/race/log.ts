@@ -683,7 +683,7 @@ export function buildResults(
       },
     });
     const last = out[out.length - 1];
-    // v3 draft (design7 R1): the flight ledger, a key v1 and v2 never write
+    // v3 (design7 R1): the flight ledger, a key v1 and v2 never write
     if (F !== null && last !== undefined)
       last.ledger.flight = {
         airTicks: S.airTicks[i] ?? 0,

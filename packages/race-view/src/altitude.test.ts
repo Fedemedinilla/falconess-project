@@ -10,7 +10,7 @@ const entries = (["glide", "ground", "hover", "dive"] as const).map((style, lane
   neutralFixtureEntry({ runnerId: `r${lane}`, laneIndex: lane, style, stats: S600 }),
 );
 
-describe("altitude band (ruleset v3 draft)", () => {
+describe("altitude band (ruleset v3)", () => {
   it("reads the band only from the two flag bits", () => {
     expect(altitudeBand(0)).toBe(0);
     expect(altitudeBand(RACE_FRAME_FLAGS.altLow)).toBe(1);

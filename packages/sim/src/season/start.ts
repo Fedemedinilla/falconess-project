@@ -46,7 +46,7 @@ function applyInheritance(ctx: SimContext, d: Draft, parents: readonly BlackBox[
 const BOX_DISTANCE_CAP: Aptitude = "B";
 
 /**
- * v3 draft (owner 2026-11-09): her letters per distance for a season, before it starts and with
+ * v3 (owner 2026-11-09): her letters per distance for a season, before it starts and with
  * no draw, so the pre-season screen can show them. Birth letters, then the first parent (input
  * order) whose box names a distance she has below B lifts that one letter one step (C → B, D → C):
  * at most one letter per season, never above B, so a box never turns a C into a specialist's A
@@ -147,7 +147,7 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
     log: [],
   };
   applyInheritance(ctx, d, input.parents, rng);
-  // v3 draft: the distance letters (no draw: the training stream above is untouched)
+  // v3: the distance letters (no draw: the training stream above is untouched)
   const dist = seasonDistanceAptitudes(ctx.ruleset, falconess, input.parents);
   if (dist !== undefined) {
     d.distanceAptitude = dist.letters;

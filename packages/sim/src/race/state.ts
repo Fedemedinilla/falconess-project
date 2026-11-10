@@ -67,7 +67,7 @@ import {
  * Float64Array, where integers are exact below 2^53. Internal TS types, not data formats.
  */
 
-/** Planned flights per runner (ruleset v3 draft, design7 R2). */
+/** Planned flights per runner (ruleset v3, design7 R2). */
 export const FLIGHTS_MAX = 8;
 /** Arena capacity: the schema's lane bound. */
 export const MAX_LANES = 8;
@@ -156,7 +156,7 @@ export type RaceTables = {
   /** The wings' style: their gesture in the air (the wing table) and, in v1/v2, their physics (9.8). */
   readonly style: Int32Array;
   /**
-   * The style's ground physics (9.8): `style`, or STYLE_NEUTRAL when the v3 draft's
+   * The style's ground physics (9.8): `style`, or STYLE_NEUTRAL when v3's
    * `neutralStyles` is on (no dive stoop, hover draft, glide terms or ground route for anyone).
    */
   readonly phys: Int32Array;
@@ -213,7 +213,7 @@ export type RaceTables = {
   readonly jr: Int32Array;
   /** The jump reserve at the gun, me: `R` of the course's first jump (14.4); 0 for ground. */
   readonly jrStart: Int32Array;
-  // ruleset v3 draft (design7 «Despegar y caer»): the flight plan, all zero without `flight`
+  // ruleset v3 (design7 «Despegar y caer»): the flight plan, all zero without `flight`
   /** Planned flights per runner (≤ FLIGHTS_MAX). */
   readonly flN: Int32Array;
   /** pu: takeoff point and end point (descent starts) of flight k, index i × FLIGHTS_MAX + k. */
@@ -406,7 +406,7 @@ export type RaceState = {
   readonly jumpsOk: Int32Array;
   readonly jumpsFailed: Int32Array;
   readonly detours: Int32Array;
-  // ruleset v3 draft (design7): flight state and its ledger, all zero without `flight`
+  // ruleset v3 (design7): flight state and its ledger, all zero without `flight`
   /** Altitude band 0-3 as drawn (R1). */
   readonly alt: Int32Array;
   /** 0 ground (or a plain jump), 1 climbing, 2 holding the band, 3 descending. */
@@ -1047,7 +1047,7 @@ export function buildTables(
           const pace = T.pace[i * 3 + ph] ?? 0;
           T.vC[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, pace);
           T.vMin[ibps(i, b, ph, s)] = exhaustSpeedVu(R, VBASE, pwc, f, pace);
-          // v3 draft R5: the air cruise sits at the centre of her pace window (no draw)
+          // v3 R5: the air cruise sits at the centre of her pace window (no draw)
           // L1b (feel round 1): `airPacePm` ‰ of her pace draw of the phase, like the ground
           if (F !== null) {
             // F5 (round 5): over water and climbs the air pays airTerrainPm of the penalty, and
@@ -1160,7 +1160,7 @@ export function buildTables(
       T.sMax[ib(i, b)] = pulseFrame ? floorDiv(unit, R.pulseTicks + R.pulseCooldownTicks) : Bon;
     }
 
-    // v3 draft R2-R3: the flight plan, before the jump reserve (a covered jump needs no lift)
+    // v3 R2-R3: the flight plan, before the jump reserve (a covered jump needs no lift)
     if (F !== null) {
       // F9: the nerve test's chance and its pre-drawn slot
       T.nerveP[i] = Math.max(

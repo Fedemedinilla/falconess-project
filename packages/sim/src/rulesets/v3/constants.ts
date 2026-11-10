@@ -423,7 +423,7 @@ export type FlightConstants = {
   readonly diveDescent: boolean;
   // --- homes per track and the weak's own kit (owner 2026-11-09; .work/design7/measure/homes-final.md)
   /**
-   * ADR-0009 (draft): a passive's flight effect (`PassiveSkill.flight`) enters the race as the
+   * ADR-0009: a passive's flight effect (`PassiveSkill.flight`) enters the race as the
    * trait `diveSkill` (false = never: v3 is the balance polish, 6e98e90, byte for byte).
    */
   readonly skillFlight: boolean;

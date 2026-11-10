@@ -56,7 +56,7 @@ function mirror(R: typeof RULESET_V3, course: Course): RaceEntry[] {
 const myDives = (log: RaceLog) =>
   (log.events ?? []).flatMap((e) => (e.kind === "dive" && e.lane === 0 ? [e] : []));
 
-describe("trim: Garra fija by distance (ADR-0009 draft)", () => {
+describe("trim: Garra fija by distance (ADR-0009)", () => {
   it("talon-lock reads 100 / 250 / 500 / 500 ‰ per distance", () => {
     expect(content.getPassive("talon-lock").flight?.diveVPmDistance).toEqual({
       sprint: 100,
