@@ -1,0 +1,282 @@
+{
+  "schema": "falconess-barandas/1",
+  "date": "2026-11-10",
+  "adr": "docs/decisions/ADR-0010-barandas-de-balance.md",
+  "design": "docs/design/barandas-balance.md",
+  "note": "Las ocho barandas de ADR-0010 como puertas que se pueden chequear a máquina. Los umbrales son los del ADR (no se cambian sin un ADR nuevo); apps/cli/src/balance/barandas.test.ts los compara con la tabla del ADR. Comando: pnpm balance:barandas (completo) o pnpm balance:barandas -- --quick (CI).",
+  "measurement": {
+    "ruleset": "v3",
+    "engine": "determinista, cero sorteos dentro del tick; cada carrera depende solo de su semilla y su entrada",
+    "seedBases": ["v3a", "v3b"],
+    "fields": {
+      "equal": "8 corredoras con las mismas stats, letras en B, alas rotadas por las 90 matrices parejas, 2 por posición (apps/cli/src/balance/field.ts equalRoles)",
+      "default": "8 corredoras, 2 por ala, cada una en la posición por defecto de sus alas (field.ts defaultRoles)"
+    },
+    "levels": [300, 450, 600, 750],
+    "tracks": [
+      "sprint",
+      "steps",
+      "overlook",
+      "ridge",
+      "circuit",
+      "open-sky",
+      "canyon",
+      "crossing",
+      "breakaway"
+    ],
+    "minRacesPerCell": 1600,
+    "minSeasonsPerFalconessPerBase": 1000,
+    "ci": "wilson95",
+    "passRule": "una baranda pasa solo si pasa en las dos bases de semillas",
+    "fragile": "frágil = pasa (valor puntual dentro del umbral en las dos bases) pero el intervalo al 95 % cruza el umbral en alguna base; lo frágil no bloquea, se anota",
+    "missing": "una baranda sin datos (no se pudo medir) cuenta como FALLA: no se puede decir que pasa"
+  },
+  "guardrails": [
+    {
+      "id": "B1",
+      "name": "Piso y techo por pista",
+      "protects": "que ninguna posición sea inútil ni obligatoria en ninguna pista",
+      "metric": "% de victorias de cada posición (las 2 corredoras), campo equal, por pista × nivel × base (4 × 9 × 4 = 144 celdas por base)",
+      "gate": {
+        "field": "equal",
+        "levels": [300, 450, 600, 750],
+        "tracks": "all",
+        "minPct": 15,
+        "maxPct": 40
+      },
+      "fragileRule": "una celda que pasa pero su intervalo de Wilson baja de 15 o sube de 40"
+    },
+    {
+      "id": "B2",
+      "name": "Cada posición tiene casa",
+      "protects": "que elegir posición según la pista sea una decisión real",
+      "metric": "casa = pista donde la posición es la mejor o queda a ≤ 2 puntos de la mejor (campo equal); cuenta de casas por posición, nivel y base",
+      "gate": {
+        "field": "equal",
+        "levels": [300, 450, 600, 750],
+        "tracks": "all",
+        "homeGapPts": 2,
+        "minHomesPerLevel": 1
+      },
+      "target": "una casa en cada grupo de distancia (Sprint, Milla, Media, Larga): se informa, no es puerta",
+      "fragileRule": "una posición cuyas casas en un nivel y base son todas dudosas: la cota superior (95 %, normal) de la distancia a la mejor pasa de 2 puntos"
+    },
+    {
+      "id": "B3",
+      "name": "Reparto a lo largo del calendario",
+      "protects": "que a lo largo de una temporada todas las posiciones rindan parecido",
+      "metric": "% de victorias de cada posición promediado con el peso de cada pista en el calendario v3 (carreras objetivo + pista del mes de las 8 opcionales)",
+      "gate": {
+        "field": "equal",
+        "levels": [450, 600, 750],
+        "weights": "packages/content/calendars/v3.json (metas de las Falconess + 8 opcionales con la pista del mes)",
+        "minPct": 22,
+        "maxPct": 28
+      },
+      "fragileRule": "el intervalo al 95 % del promedio pesado (varianza Σ w² p(1−p)/n / (Σw)²) cruza 22 o 28"
+    },
+    {
+      "id": "B4",
+      "name": "Las Falconess, parejas",
+      "protects": "que ninguna Falconess sea la mala del juego",
+      "metric": "métrica 7: % de temporadas con nota B o mejor, política de referencia, por Falconess y base",
+      "gate": {
+        "falconess": ["peregrina", "cernicala", "caracara"],
+        "seasonsPerBase": 1000,
+        "wilsonLowMinPct": 60,
+        "maxSpreadPts": 12
+      },
+      "fragileRule": "la cota de Wilson es la puerta (no hay frágil ahí); la distancia mejor − peor es frágil si su intervalo al 95 % pasa de 12"
+    },
+    {
+      "id": "B5",
+      "name": "La Agilidad es el pilar",
+      "protects": "la jerarquía de stats del dueño: la Agilidad es la principal en toda build",
+      "metric": "metros que vale +100 de cada stat a una corredora (rota por las 8), campo default, nivel 450, pareado con la misma semilla, por pista y base",
+      "gate": {
+        "field": "default",
+        "level": 450,
+        "bumpPts": 100,
+        "stat": "agility",
+        "rule": "la Agilidad vale más que cada otra stat en todas las pistas"
+      },
+      "target": "la Resistencia es la segunda en Media y Larga: se informa, no es puerta",
+      "fragileRule": "el intervalo al 95 % de la diferencia pareada Agilidad − segunda stat incluye 0"
+    },
+    {
+      "id": "B6",
+      "name": "El azar da variedad, no decide",
+      "protects": "T18: el azar nunca arruina una temporada",
+      "metric": "σ del tiempo de llegada (en metros) de una misma build con semillas distintas, campo default, nivel 600, media de las 8 corredoras; v3 contra v2 en la misma pista y semillas",
+      "gate": {
+        "field": "default",
+        "level": 600,
+        "maxSigmaRatioV2": 1.05
+      },
+      "fragileRule": "el intervalo al 95 % de la razón (error relativo √(1/(2(n−1)) + 1/(2(n−1))), n = carreras por corredora) cruza 1,05"
+    },
+    {
+      "id": "B7",
+      "name": "El motor rinde en un teléfono",
+      "protects": "que una carrera se simule rápido en el dispositivo del jugador",
+      "metric": "p95 de una carrera v3 de 8 corredoras en la pista más larga del catálogo (detalle results, como la puerta de pnpm bench), mediana de varias corridas porque la máquina es ruidosa",
+      "gate": {
+        "track": "longest",
+        "detail": "results",
+        "runs": 5,
+        "statistic": "median",
+        "maxP95Ms": 5
+      },
+      "report": "razón contra v2 y el detalle full (no bloquean)",
+      "fragileRule": "la mediana pasa pero alguna corrida da ≥ 5 ms"
+    },
+    {
+      "id": "B8",
+      "name": "Lo viejo no se mueve",
+      "protects": "las partidas guardadas y las repeticiones",
+      "metric": "golden de v1, test de invariancia de v1, digest de sim:batch y de 900 registros v1/v2 (prototipo contra el checkout principal), y cada interruptor apagado da la versión anterior byte a byte",
+      "gate": {
+        "maxDiffBytes": 0,
+        "checks": [
+          {
+            "id": "golden",
+            "what": "pnpm test:golden (v1, v2 y v3)"
+          },
+          {
+            "id": "v1-invariance",
+            "what": "vitest packages/sim/src/season/v1-invariance.test.ts"
+          },
+          {
+            "id": "v1",
+            "what": "registros v1 (sprint, ridge, canyon) contra invariance.json"
+          },
+          {
+            "id": "v2",
+            "what": "registros v2 contra invariance.json"
+          },
+          {
+            "id": "v2-seasons",
+            "what": "temporadas v2 con la política de referencia contra invariance.json"
+          },
+          {
+            "id": "off-*",
+            "what": "v3 con cada interruptor de ADR-0011 §7 apagado (FLIGHT_OFF_JUMPSKIM … FLIGHT_OFF_1_2, INV-5 a INV-15 del prototipo) contra invariance.json"
+          }
+        ]
+      },
+      "fragileRule": "no hay frágil: cero bytes o falla"
+    }
+  ],
+  "reportOnly": {
+    "rule": "Todos los criterios de criterios.json son informe desde ADR-0010: se siguen calculando (harness/run.ts) y publicando, pero no deciden si un cambio entra. replacedBy dice qué baranda cubre lo que el criterio protegía.",
+    "criteria": [
+      "INV-1",
+      "INV-2",
+      "INV-3",
+      "PERF-1",
+      "NOISE-1",
+      "FLY-1a",
+      "FLY-1b",
+      "FLY-1c",
+      "FLY-2",
+      "FLY-3",
+      "FLY-4",
+      "FLY-5",
+      "FLY-6",
+      "POS-0",
+      "POS-1",
+      "POS-2",
+      "POS-3",
+      "POS-4",
+      "POS-5",
+      "WING-0",
+      "WING-1",
+      "WING-2",
+      "WING-3",
+      "STAT-1",
+      "STAT-2",
+      "STAT-3",
+      "F7-1",
+      "F7-2",
+      "F7-3",
+      "CP-1",
+      "BAT-1",
+      "NRV-1",
+      "VIEW-1",
+      "VIEW-2",
+      "INV-4",
+      "INV-5",
+      "INV-6",
+      "INV-7",
+      "LOG-1",
+      "LOG-2",
+      "STY-1",
+      "STY-2",
+      "STY-3",
+      "STY-4",
+      "STY-5",
+      "AIR-1",
+      "AIR-2",
+      "AIR-3",
+      "AIR-4",
+      "SIDE-1",
+      "SIDE-2",
+      "REM-1",
+      "CONT-1",
+      "CONT-2",
+      "CONT-3",
+      "RISK-1",
+      "BEST-1",
+      "FLY-9",
+      "DIVE-1",
+      "AIR-5",
+      "FEEL-1",
+      "FEEL-2",
+      "FEEL-3",
+      "AGI-1",
+      "VIEW-3",
+      "VIEW-4",
+      "INV-8",
+      "INV-9",
+      "INV-10",
+      "INV-11",
+      "INV-12",
+      "AIR-6",
+      "TRAF-1",
+      "HOME-1",
+      "HOME-2",
+      "FLOOR-1",
+      "CEIL-1",
+      "CAL-1",
+      "INV-13",
+      "INV-14",
+      "F7-4"
+    ],
+    "replacedBy": {
+      "FLOOR-1": "B1",
+      "CEIL-1": "B1",
+      "POS-0": "B1",
+      "HOME-1": "B2",
+      "HOME-2": "B2",
+      "CAL-1": "B3",
+      "F7-1": "B4",
+      "F7-2": "B4",
+      "AGI-1": "B5",
+      "STAT-1": "B5",
+      "NOISE-1": "B6",
+      "PERF-1": "B7",
+      "INV-1": "B8",
+      "INV-5": "B8",
+      "INV-6": "B8",
+      "INV-7": "B8",
+      "INV-8": "B8",
+      "INV-9": "B8",
+      "INV-10": "B8",
+      "INV-11": "B8",
+      "INV-12": "B8",
+      "INV-13": "B8",
+      "INV-14": "B8",
+      "INV-15": "B8"
+    }
+  }
+}

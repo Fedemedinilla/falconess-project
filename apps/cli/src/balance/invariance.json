@@ -1,0 +1,37 @@
+{
+  "note": "B8 (ADR-0010) references of pnpm balance:barandas: digests of v1 and v2 logs, v2 reference seasons and v3 with each ADR-0011 \u00a77 switch off. Recorded on the prototype race-v3-proto (c3c801a) and identical on race-v3; playtest-ui (0f0460c) gives the same v1, v2 and v2-seasons. Rewrite only with --record-invariance and an ADR.",
+  "full": {
+    "v1": "3f359e98eb18471d9f5f20e9",
+    "v2": "af3b15e98247554e6635ed36",
+    "v2-seasons": "77c57af5cfcfed02feb21e32",
+    "off-jumpskim": "0111a8efc58bb3224d1a9d17",
+    "off-trim": "08ce529accdf416f2a1fe968",
+    "off-homes": "9f081a14a52ca9a7297298ae",
+    "off-polish": "20b74853bb6757765d9f0a38",
+    "off-kick": "adb4c7055c075a4a03c780d0",
+    "off-stamina": "889f7f6da0f040f233d8c664",
+    "off-neutral": "9ca819f892f98ed530abbd75",
+    "off-allfly": "5401ac8e518ceea613772e81",
+    "off-lines": "30d1d40567f0414711e2448c",
+    "off-r5": "fd5f5478b0c46232b9736835",
+    "off-1-3": "b0e1fe990bff62361532c9a8",
+    "off-1-2": "ddcd8e0cfe86fc0b172a8716"
+  },
+  "quick": {
+    "v1": "36d9797ed6c5f17c3be5ff25",
+    "v2": "1dcc7e7d63c368236977cdb4",
+    "v2-seasons": "a93f84a58387b258a14ee096",
+    "off-jumpskim": "50033c564e593b613bd3b890",
+    "off-trim": "85a502bc9f42a3d45cac3f11",
+    "off-homes": "aaa692d18482d8bb6b01cbb0",
+    "off-polish": "28ace1ba0401271f3afc23f1",
+    "off-kick": "778c5118ff5765daa5167e80",
+    "off-stamina": "92b2e45aa495a335d061b91f",
+    "off-neutral": "9f7dfef5cc507ce23aa327d1",
+    "off-allfly": "53909d12dcd29f4949bffeba",
+    "off-lines": "1a358fbc83616a19d1d0476e",
+    "off-r5": "c73935d4ceaf23a728677e83",
+    "off-1-3": "fb1337ef3b56ac2fd04f7ee1",
+    "off-1-2": "1f93164daa70e056d30c7e9e"
+  }
+}

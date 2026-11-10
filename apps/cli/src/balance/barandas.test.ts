@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   adrThresholdNumbers,
@@ -12,18 +12,13 @@ import {
 } from "./barandas.js";
 
 /**
- * ADR-0010: the machine-checkable gates (`.work/design7/barandas.json`, next to this worktree)
- * keep the ADR's thresholds. The ADR is read from this checkout or, in the prototype's worktree
- * (`.work/design7/wt`), from the main checkout three levels up; without both files the threshold
- * check is skipped (the verdict rules are always tested).
+ * ADR-0010: the machine-checkable gates (`barandas.json`, next to this file) keep the ADR's
+ * thresholds and the design document's measurement.
  */
 const root = new URL("../../../../", import.meta.url);
-const ADR = "docs/decisions/ADR-0010-barandas-de-balance.md";
-const DESIGN = "docs/design/barandas-balance.md";
-const firstOf = (paths: URL[]) => paths.find((p) => existsSync(p));
-const adrFile = firstOf([new URL(ADR, root), new URL(`../../../${ADR}`, root)]);
-const designFile = firstOf([new URL(DESIGN, root), new URL(`../../../${DESIGN}`, root)]);
-const specFile = firstOf([new URL("../barandas.json", root)]);
+const adrFile = new URL("docs/decisions/ADR-0010-barandas-de-balance.md", root);
+const designFile = new URL("docs/design/barandas-balance.md", root);
+const specFile = new URL("./barandas.json", import.meta.url);
 
 describe("barandas: the verdict rules", () => {
   it("a pass whose interval crosses the threshold is FRÁGIL, and FRÁGIL does not block", () => {
@@ -78,39 +73,35 @@ describe("barandas: the verdict rules", () => {
   });
 });
 
-describe.skipIf(adrFile === undefined || specFile === undefined)(
-  "barandas.json keeps ADR-0010's thresholds",
-  () => {
-    const adr = adrFile ? readFileSync(adrFile, "utf8") : "";
-    type Spec = GuardrailSpec & { measurement: Record<string, unknown> };
-    const spec = specFile ? (JSON.parse(readFileSync(specFile, "utf8")) as Spec) : null;
+describe("barandas.json keeps ADR-0010's thresholds", () => {
+  const adr = readFileSync(adrFile, "utf8");
+  type Spec = GuardrailSpec & { measurement: Record<string, unknown> };
+  const spec = JSON.parse(readFileSync(specFile, "utf8")) as Spec | null;
 
-    it("lists exactly B1-B8", () => {
-      expect(spec?.guardrails.map((g) => g.id)).toEqual([...GUARDRAIL_IDS]);
-    });
+  it("lists exactly B1-B8", () => {
+    expect(spec?.guardrails.map((g) => g.id)).toEqual([...GUARDRAIL_IDS]);
+  });
 
-    it("every guardrail's numbers are the ADR table's", () => {
-      expect(spec).not.toBeNull();
-      if (spec === null) return;
-      const fromAdr = adrThresholdNumbers(adr);
-      expect(Object.keys(fromAdr).sort()).toEqual([...GUARDRAIL_IDS]);
-      expect(specThresholdNumbers(spec)).toEqual(fromAdr);
-    });
+  it("every guardrail's numbers are the ADR table's", () => {
+    expect(spec).not.toBeNull();
+    if (spec === null) return;
+    const fromAdr = adrThresholdNumbers(adr);
+    expect(Object.keys(fromAdr).sort()).toEqual([...GUARDRAIL_IDS]);
+    expect(specThresholdNumbers(spec)).toEqual(fromAdr);
+  });
 
-    it("measures as the design document says (bases, levels, tracks, sizes)", () => {
-      const m = spec?.measurement;
-      expect(m?.seedBases).toEqual(["v3a", "v3b"]);
-      expect(m?.levels).toEqual([300, 450, 600, 750]);
-      expect(m?.tracks).toHaveLength(9);
-      expect(m?.tracks).toContain("breakaway");
-      expect(m?.minRacesPerCell).toBe(1600);
-      expect(m?.minSeasonsPerFalconessPerBase).toBe(1000);
-      if (designFile === undefined) return;
-      const doc = readFileSync(designFile, "utf8").replace(/\s+/g, " ");
-      expect(doc).toContain("300, 450, 600 y 750");
-      expect(doc).toContain("al menos 1600 carreras por celda");
-      expect(doc).toContain("1000 temporadas por Falconess y base");
-      expect(doc).toContain("las 9 del catálogo v3");
-    });
-  },
-);
+  it("measures as the design document says (bases, levels, tracks, sizes)", () => {
+    const m = spec?.measurement;
+    expect(m?.seedBases).toEqual(["v3a", "v3b"]);
+    expect(m?.levels).toEqual([300, 450, 600, 750]);
+    expect(m?.tracks).toHaveLength(9);
+    expect(m?.tracks).toContain("breakaway");
+    expect(m?.minRacesPerCell).toBe(1600);
+    expect(m?.minSeasonsPerFalconessPerBase).toBe(1000);
+    const doc = readFileSync(designFile, "utf8").replace(/\s+/g, " ");
+    expect(doc).toContain("300, 450, 600 y 750");
+    expect(doc).toContain("al menos 1600 carreras por celda");
+    expect(doc).toContain("1000 temporadas por Falconess y base");
+    expect(doc).toContain("las 9 del catálogo v3");
+  });
+});
