@@ -158,6 +158,12 @@ de la semana 46 (`v3-01` … `v3-09`) se regrabaron dos veces con `pnpm golden:u
 --yes` (la segunda escribió 0 de 12) y quedaron byte a byte iguales a los de antes de `547eaee`; el
 motor no cambió. Los tres campos parejos y los golden v1 no se movieron.
 
+**2026-11-10 (tarjeta de pista):** campo nuevo y opcional `Calendar.trackDemands` (por pista del
+catálogo, 2-3 `{ stat, letter }`, la Agilidad primero), generado por `pnpm content:track-demands`
+desde la sonda de B5 y la curva de las rivales (docs/formulas.md «Lo que pide una pista»). Solo lo
+tiene `calendars/v3.json`; ningún campo se renombró, el motor y la temporada no lo leen (solo la
+tarjeta de pista del juego).
+
 ### 9. Lo que no cambia
 
 v1 y v2: mismos registros, mismas temporadas (B8: golden v1, `v1-invariance`, digests de

@@ -19,6 +19,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "content:validate": "tsx apps/cli/src/content-validate.ts",
+    "content:track-demands": "tsx apps/cli/src/track-demands.ts",
     "sim": "tsx apps/cli/src/sim.ts",
     "play": "tsx apps/cli/src/play.ts",
     "sim:batch": "tsx apps/cli/src/sim-batch.ts",

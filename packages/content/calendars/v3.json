@@ -97,5 +97,109 @@
         "minPlace": 3
       }
     ]
+  },
+  "trackDemands": {
+    "sprint": [
+      {
+        "stat": "agility",
+        "letter": "C"
+      },
+      {
+        "stat": "technique",
+        "letter": "F"
+      }
+    ],
+    "steps": [
+      {
+        "stat": "agility",
+        "letter": "C"
+      },
+      {
+        "stat": "technique",
+        "letter": "F"
+      }
+    ],
+    "overlook": [
+      {
+        "stat": "agility",
+        "letter": "B"
+      },
+      {
+        "stat": "technique",
+        "letter": "E"
+      }
+    ],
+    "ridge": [
+      {
+        "stat": "agility",
+        "letter": "B"
+      },
+      {
+        "stat": "stamina",
+        "letter": "C"
+      },
+      {
+        "stat": "courage",
+        "letter": "E"
+      }
+    ],
+    "breakaway": [
+      {
+        "stat": "agility",
+        "letter": "D"
+      },
+      {
+        "stat": "stamina",
+        "letter": "D"
+      }
+    ],
+    "circuit": [
+      {
+        "stat": "agility",
+        "letter": "C"
+      },
+      {
+        "stat": "technique",
+        "letter": "F"
+      }
+    ],
+    "open-sky": [
+      {
+        "stat": "agility",
+        "letter": "B"
+      },
+      {
+        "stat": "stamina",
+        "letter": "C"
+      }
+    ],
+    "canyon": [
+      {
+        "stat": "agility",
+        "letter": "C"
+      },
+      {
+        "stat": "stamina",
+        "letter": "C"
+      },
+      {
+        "stat": "intelligence",
+        "letter": "F"
+      }
+    ],
+    "crossing": [
+      {
+        "stat": "agility",
+        "letter": "B"
+      },
+      {
+        "stat": "stamina",
+        "letter": "C"
+      },
+      {
+        "stat": "intelligence",
+        "letter": "F"
+      }
+    ]
   }
 }

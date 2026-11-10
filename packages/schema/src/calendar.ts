@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { ContentError, type ContentIndex } from "./content-index.js";
-import { RulesetVersion, Slug } from "./core.js";
+import { Aptitude, RulesetVersion, Slug, StatName } from "./core.js";
 import type { Course } from "./course.js";
 import { type Falconess, SeasonGoal } from "./falconess.js";
+
+/**
+ * One stat a track asks for, as a letter (owner 2026-11-10: what a track asks is shown with
+ * letters, never with numbers). Derived from engine measurements by `pnpm content:track-demands`
+ * (docs/formulas.md «Lo que pide una pista»).
+ */
+export const TrackDemand = z.strictObject({ stat: StatName, letter: Aptitude });
+export type TrackDemand = z.infer<typeof TrackDemand>;
 
 /**
  * ADR-0011 §6: a ruleset's season calendar. The goal races come from each Falconess's
@@ -28,6 +36,13 @@ export const Calendar = z
      * catalogue track. A Falconess absent here keeps her `seasonGoals`.
      */
     goals: z.record(Slug, z.array(SeasonGoal).min(1).max(8)).optional(),
+    /**
+     * What each catalogue track asks for (ADR-0011 §8, 2026-11-10): its 2-3 stats that matter
+     * most, the most important first, each with a letter. Generated, never written by hand
+     * (`pnpm content:track-demands`); shown by the game's track card. When present, every
+     * catalogue track has one.
+     */
+    trackDemands: z.record(Slug, z.array(TrackDemand).min(2).max(3)).optional(),
   })
   .superRefine((c, ctx) => {
     for (const t of c.monthTrack)
@@ -50,6 +65,17 @@ export const Calendar = z
       const turns = goals.map((g) => g.turn);
       if (turns.some((t, i) => i > 0 && t <= (turns[i - 1] ?? 0)))
         ctx.addIssue({ code: "custom", message: `goals of ${f}: turns must go up` });
+    }
+    if (c.trackDemands) {
+      for (const t of c.catalogue)
+        if (!c.trackDemands[t])
+          ctx.addIssue({ code: "custom", message: `trackDemands: no demands for track ${t}` });
+      for (const [t, ds] of Object.entries(c.trackDemands)) {
+        if (!c.catalogue.includes(t))
+          ctx.addIssue({ code: "custom", message: `trackDemands: ${t} is not in the catalogue` });
+        if (new Set(ds.map((d) => d.stat)).size !== ds.length)
+          ctx.addIssue({ code: "custom", message: `trackDemands: ${t} repeats a stat` });
+      }
     }
   });
 export type Calendar = z.infer<typeof Calendar>;

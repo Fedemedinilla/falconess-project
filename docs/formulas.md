@@ -512,6 +512,30 @@ decida (ADR-0010). Constantes en `packages/sim/src/rulesets/v3/constants.ts`; to
   El remate gasta `kick` ‰ de su energía; el resto queda. Rango: la Resistencia en el Sprint pasa
   de 0,2 a ≈ 0,8 m por +100 (2,3 m en carreras peleadas).
 
+### Lo que pide una pista (tarjeta de pista, v3)
+
+Intención: que las pistas se distingan sin números exactos (dueño, 2026-11-10): la tarjeta dice
+qué stats pide cada pista con letras, nunca su valor ni una comparación con las de ella. Medido,
+no inventado: `pnpm content:track-demands` lo escribe en `calendars/v3.json` (`trackDemands`);
+el código está en `apps/cli/src/track-demands/derive.ts`.
+
+- **Peso de una stat en la pista:** `w = metros(+100 de la stat) / metros(+100 de Agilidad)`,
+  acotado a 0 … 1, con la sonda de B5 (campo default, nivel 450, semillas pareadas, 1600 carreras
+  por pista en v3a y v3b). La Agilidad pesa 1 (B5: siempre la que más vale).
+- **Qué stats pide:** Agilidad y luego las otras con `w ≥ 0,12`, la más pesada primero; dos o tres
+  en total (si ninguna llega, la más pesada).
+- **Semana de referencia:** la meta más tardía en esa pista (calendario v3); si no es meta, la
+  mitad de su último mes como pista del mes (mes i de 12 = semanas 4i+1 … 4i+4).
+- **Nivel pedido:** `nivel = rival(stat, semana) × √w`, con `rival = 5 × (rivalBase + rivalPerTurn
+  × semana) × fila media de las rivales (‰)`. La raíz deja a una stat que vale la mitad en ≈ 70 %
+  del nivel.
+- **Letra:** el nivel en la escala de stats G < 100 ≤ F < 200 ≤ E < 300 ≤ D < 400 ≤ C < 600 ≤ B <
+  800 ≤ A < 1000 ≤ S (los escalones de Umamusume).
+
+Rango (2026-11-10): Agilidad D (Escapada, T24), C (T30-T36) o B (T46); Resistencia C-D en Media y
+Larga; Técnica, Coraje o Inteligencia E-F como tercera. Las pistas cortas piden Agilidad y Técnica,
+las largas Agilidad y Resistencia; el perfil dibujado (Saltos, Colinas, Curvas…) las separa.
+
 ## Constantes v1 (valores iniciales, BRIEF §6)
 
 | Constante       | Valor     | Intención                                        |
