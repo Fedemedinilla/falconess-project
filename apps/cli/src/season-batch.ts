@@ -11,7 +11,7 @@
  * ruleset defaults to `CURRENT_RULESET` (ADR-0006); `--ruleset v1` measures the old rules.
  */
 import { loadContent } from "@falconess/content";
-import type { Grade, RunInput, SeasonGoal } from "@falconess/schema";
+import type { Grade, RunInput, SeasonGoal, SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
   type SimContext,
@@ -22,7 +22,13 @@ import {
 } from "@falconess/sim";
 import { argRuleset, argString, parseArgs } from "./args.js";
 import { goalFlagged, placeCounts } from "./goal-rate.js";
-import { REFERENCE_HANGAR, referencePolicy } from "./policy.js";
+import { POLICIES, type PolicyName, REFERENCE_HANGAR, referencePolicy } from "./policy.js";
+
+/** A season policy: the week's input from the state. */
+export type SeasonPolicy = (ctx: SimContext, state: SeasonState) => RunInput;
+
+/** The weeks whose opening stats the report averages (the stat curve; the four goal turns of v2). */
+export const CURVE_TURNS: readonly number[] = [12, 24, 36, 46];
 
 export const GRADE_ORDER: readonly Grade[] = ["SS", "S", "A", "B", "C", "D", "E", "F", "G"];
 const B_OR_BETTER: ReadonlySet<Grade> = new Set(["SS", "S", "A", "B"]);
@@ -53,14 +59,24 @@ export type SeasonBatchSummary = {
   score: { stats: number; skills: number; races: number };
   goals: GoalRow[];
   failTurns: Record<number, number>;
+  /** Sum of the stats at the start of each `CURVE_TURNS` week, and how many seasons got there. */
+  curve: { turn: number; reached: number; sums: Record<string, number> }[];
+  /** Skills learned at season end (the unique one included) and simulator weeks, summed. */
+  skillsLearned: number;
+  simulatorWeeks: number;
 };
 
-/** Plays `runs` seasons of one Falconess with the ruleset's reference policy (seeds `batch-<i>`). */
+/**
+ * Plays `runs` seasons of one Falconess with `policy` (the ruleset's reference policy by default)
+ * on seeds `<seedPrefix>-<i>`.
+ */
 export function runSeasonBatch(
   ctx: SimContext,
   falconessId: string,
   runs: number,
   hangar: readonly string[] = REFERENCE_HANGAR,
+  policy: SeasonPolicy = referencePolicy,
+  seedPrefix = "batch",
 ): SeasonBatchSummary {
   const goals = ctx.content.getFalconess(falconessId).seasonGoals;
   const out: SeasonBatchSummary = {
@@ -77,12 +93,31 @@ export function runSeasonBatch(
     score: { stats: 0, skills: 0, races: 0 },
     goals: goals.map((goal) => ({ goal, reached: 0, passed: 0, won: 0 })),
     failTurns: {},
+    curve: CURVE_TURNS.map((turn) => ({
+      turn,
+      reached: 0,
+      sums: Object.fromEntries(STAT_ORDER.map((k) => [k, 0])),
+    })),
+    skillsLearned: 0,
+    simulatorWeeks: 0,
   };
   const places: number[] = [];
   for (let i = 0; i < runs; i++) {
     const start: RunInput = { kind: "start", falconessId, hangar: [...hangar], parents: [] };
-    let s = startSeason(ctx, `batch-${i}`, start);
-    while (s.status === "active") s = advanceSeason(ctx, s, referencePolicy(ctx, s));
+    let s = startSeason(ctx, `${seedPrefix}-${i}`, start);
+    let seen = 0;
+    while (s.status === "active") {
+      const row = out.curve.find((c) => c.turn === s.turn);
+      if (row && seen !== s.turn) {
+        seen = s.turn;
+        row.reached++;
+        for (const k of STAT_ORDER) row.sums[k] = (row.sums[k] ?? 0) + s.stats[k];
+      }
+      const input = policy(ctx, s);
+      if (input.kind === "train:simulator") out.simulatorWeeks++;
+      s = advanceSeason(ctx, s, input);
+    }
+    out.skillsLearned += s.learnedSkills.length;
     const grade = s.grade ?? "G";
     out.grades[grade] = (out.grades[grade] ?? 0) + 1;
     for (const k of STAT_ORDER) out.statSums[k] = (out.statSums[k] ?? 0) + s.stats[k];
@@ -140,6 +175,14 @@ export function renderSeasonBatch(m: SeasonBatchSummary): string[] {
       `    T${goal.turn} ${goal.courseId} ≤ ${goal.minPlace}: passed ${pct(passed, m.runs)}  reached ${pct(reached, m.runs)}  passed/reached ${rate}  won/reached ${wonRate}${flag}`,
     );
   }
+  lines.push(
+    `  skills learned ${(m.skillsLearned / Math.max(1, m.runs)).toFixed(2)} per season (unique included)  simulator weeks ${(m.simulatorWeeks / Math.max(1, m.runs)).toFixed(1)}`,
+  );
+  for (const c of m.curve)
+    if (c.reached > 0)
+      lines.push(
+        `  stats at T${c.turn} (${pct(c.reached, m.runs)} reached): ${STAT_ORDER.map((k) => `${k} ${mean(c.sums[k] ?? 0, c.reached)}`).join("  ")}`,
+      );
   const fails = Object.entries(m.failTurns).sort((a, b) => Number(a[0]) - Number(b[0]));
   if (fails.length)
     lines.push(`  goal failures by turn: ${fails.map(([t, n]) => `T${t}:${n}`).join("  ")}`);
@@ -155,7 +198,17 @@ if (isMain) {
   console.log(`ruleset ${ctx.ruleset.version}`);
   const who = argString(args, "falconess", "all");
   const hangar = argString(args, "hangar", REFERENCE_HANGAR.join(",")).split(",");
+  const policyName = argString(args, "policy", "referencia");
+  if (!(policyName in POLICIES))
+    throw new Error(`unknown policy "${policyName}" (${Object.keys(POLICIES).join(", ")})`);
+  const policy = POLICIES[policyName as PolicyName];
+  const seedPrefix = argString(args, "seeds", "batch");
+  console.log(`policy ${policyName}  seeds ${seedPrefix}-<i>`);
   const ids = who === "all" ? [...ctx.content.falconess.keys()] : [who];
   for (const falconessId of ids)
-    console.log(renderSeasonBatch(runSeasonBatch(ctx, falconessId, runs, hangar)).join("\n"));
+    console.log(
+      renderSeasonBatch(runSeasonBatch(ctx, falconessId, runs, hangar, policy, seedPrefix)).join(
+        "\n",
+      ),
+    );
 }
