@@ -29,5 +29,73 @@
     "ridge",
     "crossing"
   ],
-  "optionalRunsPerSeason": 8
+  "optionalRunsPerSeason": 8,
+  "goals": {
+    "peregrina": [
+      {
+        "turn": 12,
+        "courseId": "sprint",
+        "minPlace": 6
+      },
+      {
+        "turn": 24,
+        "courseId": "overlook",
+        "minPlace": 6
+      },
+      {
+        "turn": 36,
+        "courseId": "sprint",
+        "minPlace": 4
+      },
+      {
+        "turn": 46,
+        "courseId": "overlook",
+        "minPlace": 3
+      }
+    ],
+    "cernicala": [
+      {
+        "turn": 12,
+        "courseId": "overlook",
+        "minPlace": 6
+      },
+      {
+        "turn": 24,
+        "courseId": "breakaway",
+        "minPlace": 7
+      },
+      {
+        "turn": 36,
+        "courseId": "circuit",
+        "minPlace": 6
+      },
+      {
+        "turn": 46,
+        "courseId": "ridge",
+        "minPlace": 4
+      }
+    ],
+    "caracara": [
+      {
+        "turn": 12,
+        "courseId": "breakaway",
+        "minPlace": 6
+      },
+      {
+        "turn": 24,
+        "courseId": "open-sky",
+        "minPlace": 6
+      },
+      {
+        "turn": 36,
+        "courseId": "canyon",
+        "minPlace": 5
+      },
+      {
+        "turn": 46,
+        "courseId": "open-sky",
+        "minPlace": 4
+      }
+    ]
+  }
 }

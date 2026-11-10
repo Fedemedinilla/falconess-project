@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -7,6 +7,7 @@ import {
   type ContentIndex,
   Course,
   type RawContent,
+  withCalendar,
 } from "@falconess/schema";
 
 /** Root of packages/content, resolved from this file so it works from any cwd. */
@@ -63,4 +64,22 @@ export function loadCalendar(id: string): Calendar {
  */
 export function loadCatalogueCourses(): Course[] {
   return readDir("courses-v3").map((raw) => Course.parse(raw));
+}
+
+const seasonCache = new Map<string, ContentIndex>();
+
+/**
+ * The content a season of `rulesetVersion` plays on: with a calendar (`calendars/<version>.json`,
+ * ruleset v3) the catalogue tracks join the courses and each Falconess races the calendar's goals
+ * (`withCalendar`); v1 and v2, which have no calendar, get `loadContent()` unchanged.
+ */
+export function loadSeasonContent(rulesetVersion: string): ContentIndex {
+  const hit = seasonCache.get(rulesetVersion);
+  if (hit) return hit;
+  const file = join(CONTENT_ROOT, "calendars", `${rulesetVersion}.json`);
+  const idx = existsSync(file)
+    ? withCalendar(loadContent(), loadCalendar(rulesetVersion), loadCatalogueCourses())
+    : loadContent();
+  seasonCache.set(rulesetVersion, idx);
+  return idx;
 }

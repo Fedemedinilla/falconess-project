@@ -2,7 +2,13 @@
  * Content for the browser: Vite inlines every JSON file of packages/content at build time (the
  * single-file page fetches nothing), and the index is built and validated once, on first use.
  */
-import { buildContentIndex, type ContentIndex, Course } from "@falconess/schema";
+import {
+  buildContentIndex,
+  Calendar,
+  type ContentIndex,
+  Course,
+  withCalendar,
+} from "@falconess/schema";
 import { getRuleset, RULESET_V1, type SimContext } from "@falconess/sim";
 import { rawContentFromModules } from "./raw";
 
@@ -21,7 +27,14 @@ const CATALOGUE: Record<string, unknown> = import.meta.glob<unknown>(
   { eager: true, import: "default" },
 );
 
+/** The season calendars by ruleset (`calendars/<version>.json`, ADR-0011 §6). */
+const CALENDARS: Record<string, unknown> = import.meta.glob<unknown>(
+  "../../../../packages/content/calendars/*.json",
+  { eager: true, import: "default" },
+);
+
 let cached: ContentIndex | undefined;
+const seasonCache = new Map<string, ContentIndex>();
 let catalogue: readonly Course[] | undefined;
 
 /**
@@ -42,12 +55,29 @@ export function getContent(): ContentIndex {
 }
 
 /**
+ * The content a season of `rulesetVersion` plays on, like `loadSeasonContent` in the CLI: with a
+ * calendar (v3) the catalogue tracks join the courses and each Falconess races the calendar's
+ * goals; v1 and v2 get `getContent()` unchanged.
+ */
+export function seasonContent(rulesetVersion: string): ContentIndex {
+  const hit = seasonCache.get(rulesetVersion);
+  if (hit) return hit;
+  const key = Object.keys(CALENDARS).find((k) => k.endsWith(`/calendars/${rulesetVersion}.json`));
+  const idx =
+    key === undefined
+      ? getContent()
+      : withCalendar(getContent(), Calendar.parse(CALENDARS[key]), catalogueCourses());
+  seasonCache.set(rulesetVersion, idx);
+  return idx;
+}
+
+/**
  * The simulation context of a ruleset; v1 by default, the ruleset of `pnpm sim:race`, which the
  * free race mirrors (v2 changes the season, not the race engine). Season screens take theirs from
  * the run (`GameController.context`). Throws on an unknown version.
  */
 export function simContext(rulesetVersion: string = RULESET_V1.version): SimContext {
-  return { ruleset: getRuleset(rulesetVersion), content: getContent() };
+  return { ruleset: getRuleset(rulesetVersion), content: seasonContent(rulesetVersion) };
 }
 
 /**

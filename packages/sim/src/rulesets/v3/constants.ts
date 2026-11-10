@@ -6,8 +6,13 @@
  * no `flight`, never reach a line of the flight code. The race is frozen (ADR-0010): balance moves
  * content (tracks and calendar, letters, growth, kit), never these rules.
  */
-import { type FieldConstants, RACE as RACE_V1, type RaceConstants } from "../v1/constants.js";
-import { FIELD as FIELD_V2 } from "../v2/constants.js";
+import {
+  type FieldConstants,
+  RACE as RACE_V1,
+  type RaceConstants,
+  type SeasonConstants,
+} from "../v1/constants.js";
+import { FIELD as FIELD_V2, SEASON as SEASON_V2 } from "../v2/constants.js";
 
 export const RULESET_VERSION = "v3" as const;
 
@@ -752,12 +757,30 @@ export const RACE: RaceConstants = {
  * a Falconess); the +15 ‰ of technique comes from courage and intelligence (Picada) and from
  * stamina and intelligence (Suspensión). Peregrina is fixed by her own kit (L7). Glide and ground
  * rivals keep v2's rows.
+ *
+ * Rival curve (owner 2026-11-10, «muy fácil»: difficulty A): v2's 60 + 11 t was calibrated
+ * against the careful policy, which rests a lot; a sensible player (the attentive policy) won
+ * every goal. 60 + 14 t puts the rivals at 228 / 396 / 564 / 704 per stat on T12 / T24 / T36 /
+ * T46 (v2: 192 / 324 / 456 / 566), near the attentive player's mean stat.
  */
 export const FIELD: FieldConstants = {
   ...FIELD_V2,
+  rivalPerTurn: 14,
   rivalWeights: {
     ...FIELD_V2.rivalWeights,
     dive: [250, 180, 185, 210, 175],
     hover: [220, 190, 185, 170, 235],
   },
+};
+
+/**
+ * Season of v3: v2's, with more skill points (owner 2026-11-10: «las habilidades tardan mucho»,
+ * 12 simulator weeks paid one skill). The simulator pays 15 instead of 5, and a goal race pays by
+ * place like Umamusume (1st 60 … 8th 5), so a well-played season learns 4-6 skills. Skill costs
+ * stay 60-150.
+ */
+export const SEASON: SeasonConstants = {
+  ...SEASON_V2,
+  simulatorSkillPoints: 15,
+  skillPointsByPlace: [100, 75, 60, 45, 35, 25, 20, 10],
 };

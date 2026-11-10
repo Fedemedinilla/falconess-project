@@ -5,13 +5,13 @@ import { createRoot } from "react-dom/client";
 import { App } from "./app/App";
 import { CrashBoundary } from "./app/CrashBoundary";
 import { restoreTheme } from "./app/theme";
-import { getContent } from "./content/load";
+import { seasonContent } from "./content/load";
 import { GameController } from "./game/controller";
 import { browserStore } from "./game/storage";
 
 /** Content and controller are built inside the boundary: broken content shows the crash screen. */
 function Boot() {
-  const [controller] = useState(() => new GameController(getContent(), browserStore()));
+  const [controller] = useState(() => new GameController(seasonContent, browserStore()));
   return <App controller={controller} />;
 }
 

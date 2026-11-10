@@ -146,7 +146,11 @@ Campos nuevos, todos opcionales o de eventos que v1 y v2 nunca emiten (sus regis
 
 Golden: `tests/golden/v3/` (12 carreras: una por pista del catálogo alrededor de una Falconess a
 la semana 46, y tres campos parejos), escritos dos veces con `pnpm golden:update -- --set v3 --yes`
-y byte a byte iguales. Los golden v1 no cambian.
+y byte a byte iguales. Los golden v1 no cambian. **2026-11-10 (dificultad A):** las rivales v3 crecen
+14 por semana en vez de 11 (`V3.FIELD.rivalPerTurn`), así que el campo de `generateField` a la
+semana 46 de `v3-01` … `v3-09` tiene otras stats (704 por stat en vez de 566); el motor no cambió.
+Se regrabaron esos nueve dos veces, iguales byte a byte; los tres campos parejos (`v3-10` …
+`v3-12`) y los golden v1 no se movieron.
 
 ### 9. Lo que no cambia
 

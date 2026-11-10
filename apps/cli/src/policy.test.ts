@@ -5,6 +5,7 @@ import {
   learnCap,
   RULESET_V1,
   RULESET_V2,
+  RULESET_V3,
   type SimContext,
   STAT_ORDER,
   startSeason,
@@ -12,12 +13,20 @@ import {
 } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import {
+  agilityOnlyBuild,
+  attentivePolicy,
+  bestLetterPosition,
+  buildTraining,
   carefulPolicy,
+  intendedBuild,
+  longestGoalDistance,
   lowestStatPolicy,
   needsRepair,
   REFERENCE_HANGAR,
   REST_AT_FATIGUE,
   referencePolicy,
+  referencePolicyKind,
+  STAMINA_FOR_DISTANCE,
   skillsToLearn,
   usefulGenericActives,
 } from "./policy.js";
@@ -201,5 +210,73 @@ describe("careful policy: the reference of ruleset v2 (ADR-0006 «Métrica 7»)"
     expect(referencePolicy(ctx, start("caracara"))).toEqual(
       lowestStatPolicy(ctx, start("caracara")),
     );
+  });
+});
+
+describe("attentive policy: the human-like player (owner's feedback 2026-11-10)", () => {
+  const v3: SimContext = { ruleset: RULESET_V3, content: ctx.content };
+  const fresh = (falconessId: string) =>
+    startSeason(v3, "attentive", {
+      kind: "start",
+      falconessId,
+      hangar: [...REFERENCE_HANGAR],
+      parents: [],
+    });
+  const at = (s: SeasonState, fatigue: number, mood: SeasonState["mood"]): SeasonState => ({
+    ...s,
+    fatigue,
+    mood,
+  });
+
+  it("trains the stat furthest below its share of Agility, Agility when none is", () => {
+    const build = { stamina: 800, technique: 500, courage: 400 };
+    const stats = { agility: 500, stamina: 300, technique: 300, courage: 250, intelligence: 100 };
+    expect(buildTraining(stats, build)).toBe("train:stamina");
+    expect(buildTraining({ ...stats, stamina: 450 }, build)).toBe("train:agility");
+    expect(buildTraining({ ...stats, stamina: 450, technique: 200 }, build)).toBe(
+      "train:technique",
+    );
+    // the off-build never trains Stamina
+    expect(buildTraining({ ...stats, stamina: 1 }, agilityOnlyBuild())).not.toBe("train:stamina");
+  });
+
+  it("builds Stamina for the longest goal still ahead", () => {
+    const s = fresh("caracara");
+    expect(longestGoalDistance(v3, s)).toBe("long");
+    expect(intendedBuild(v3, s).stamina).toBe(STAMINA_FOR_DISTANCE.long);
+    // after her last goal she keeps the last build; v1 has no distances
+    expect(intendedBuild(v3, { ...s, turn: 48 }).stamina).toBeGreaterThan(0);
+    expect(longestGoalDistance(ctx, start("caracara"))).toBeUndefined();
+  });
+
+  it("rests when tired, goes out when moody, uses the simulator on a tired week, else trains", () => {
+    const s = fresh("peregrina");
+    expect(trainingRisk(RULESET_V3, 70, "train:agility").failPm).toBeGreaterThanOrEqual(100);
+    expect(attentivePolicy(v3, at(s, 70, 1)).kind).toBe("rest");
+    expect(attentivePolicy(v3, at(s, 0, -1)).kind).toBe("outing");
+    expect(attentivePolicy(v3, at(s, 50, 1)).kind).toBe("train:simulator");
+    expect(attentivePolicy(v3, at(s, 0, 1)).kind).toMatch(/^train:(agility|stamina)$/);
+  });
+
+  it("runs a goal race in her best letter", () => {
+    const s = fresh("cernicala");
+    expect(bestLetterPosition(v3, s)).toBe("stalk");
+    const goal = v3.content.getFalconess("cernicala").seasonGoals[0];
+    const week = { ...at(s, 0, 1), turn: goal?.turn ?? 1 };
+    expect(attentivePolicy(v3, week)).toMatchObject({ position: "stalk" });
+  });
+
+  it("is the reference of v3 (B4 of ADR-0010); v2 keeps the careful one", () => {
+    const s = at(fresh("caracara"), 50, 1);
+    expect(referencePolicy(v3, s)).toEqual(attentivePolicy(v3, s));
+    expect(referencePolicyKind(RULESET_V3)).toBe("attentive");
+    expect(referencePolicyKind(RULESET_V2)).toBe("careful");
+    expect(referencePolicyKind(RULESET_V1)).toBe("lowest-stat");
+  });
+
+  it("plays a whole season", () => {
+    let s = fresh("caracara");
+    while (s.status === "active") s = advanceSeason(v3, s, attentivePolicy(v3, s));
+    expect(s.status).toBe("ended");
   });
 });

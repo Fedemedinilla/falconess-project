@@ -95,13 +95,20 @@ function message(e: unknown): string {
 }
 
 export class GameController {
-  readonly #content: ContentIndex;
+  readonly #content: (rulesetVersion: string) => ContentIndex;
   readonly #store: KeyValueStore | undefined;
   readonly #listeners = new Set<() => void>();
   #snap: GameSnapshot = EMPTY;
 
-  constructor(content: ContentIndex, store: KeyValueStore | undefined) {
-    this.#content = content;
+  /**
+   * `content` is the index every ruleset plays on, or a function that gives each ruleset its own
+   * (`seasonContent`: v3 races its calendar's goals on the catalogue tracks).
+   */
+  constructor(
+    content: ContentIndex | ((rulesetVersion: string) => ContentIndex),
+    store: KeyValueStore | undefined,
+  ) {
+    this.#content = typeof content === "function" ? content : () => content;
     this.#store = store;
   }
 
@@ -272,7 +279,7 @@ export class GameController {
   // --- internals --------------------------------------------------------------------------------
 
   #ctx(rulesetVersion: string): SimContext {
-    return { ruleset: getRuleset(rulesetVersion), content: this.#content };
+    return { ruleset: getRuleset(rulesetVersion), content: this.#content(rulesetVersion) };
   }
 
   #toSave(run: ActiveRun): SavedRun {

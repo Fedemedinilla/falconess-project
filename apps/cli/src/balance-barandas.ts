@@ -23,7 +23,7 @@ import { availableParallelism } from "node:os";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
-import { loadCalendar } from "@falconess/content";
+import { loadCalendar, loadSeasonContent } from "@falconess/content";
 import { argString, parseArgs } from "./args.js";
 import { GUARDRAIL_IDS, guardrailVerdict } from "./balance/barandas.js";
 import {
@@ -33,7 +33,7 @@ import {
   evaluateGuardrails,
   type Merged,
 } from "./balance/evaluate.js";
-import { content, courseLengthM, courseOf } from "./balance/field.js";
+import { courseLengthM, courseOf } from "./balance/field.js";
 import { GATED_GROUPS, invarianceDigests } from "./balance/invariance.js";
 import { localInvarianceApi } from "./balance/invariance-api.js";
 import type { BalanceJob, JobResult } from "./balance/jobs.js";
@@ -302,7 +302,7 @@ if (!SKIP_B8) {
 const FAL = gate("B4").falconess as string[];
 const goalsPerSeason: Record<string, number> = {};
 for (const f of FAL)
-  for (const g of content.getFalconess(f).seasonGoals)
+  for (const g of loadSeasonContent(V3).getFalconess(f).seasonGoals)
     goalsPerSeason[g.courseId] = (goalsPerSeason[g.courseId] ?? 0) + 1 / FAL.length;
 const results = evaluateGuardrails({
   spec: SPEC,

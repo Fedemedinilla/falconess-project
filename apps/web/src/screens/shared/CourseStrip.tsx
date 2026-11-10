@@ -1,5 +1,5 @@
 import { courseLength, SEGMENT_TYPES } from "@falconess/schema";
-import { getContent } from "../../content/load";
+import { catalogueCourses, getContent } from "../../content/load";
 import type { Detail } from "../../text/brief";
 import { formatInt } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
@@ -16,7 +16,9 @@ export type CourseStripProps = {
 
 /** A course as one strip: every segment at its length, colored by its type. */
 export function CourseStrip({ courseId, legend }: CourseStripProps) {
-  const course = getContent().getCourse(courseId);
+  // a v3 goal can run on a catalogue track, outside the content index (ADR-0011 §6)
+  const course =
+    catalogueCourses().find((c) => c.id === courseId) ?? getContent().getCourse(courseId);
   const total = courseLength(course);
   const types = SEGMENT_TYPES.filter((t) => course.segments.some((seg) => seg.type === t));
   const label = ui("ui.course.strip", {

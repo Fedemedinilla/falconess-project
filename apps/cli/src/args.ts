@@ -1,4 +1,5 @@
-import { CURRENT_RULESET, getRuleset, type Ruleset } from "@falconess/sim";
+import { loadSeasonContent } from "@falconess/content";
+import { CURRENT_RULESET, getRuleset, type Ruleset, type SimContext } from "@falconess/sim";
 
 /** Tiny `--key value` / `--flag` parser; no dependency needed. */
 export function parseArgs(argv: readonly string[]): Record<string, string | true> {
@@ -34,4 +35,9 @@ export function argRuleset(
   fallback: string = CURRENT_RULESET.version,
 ): Ruleset {
   return getRuleset(argString(args, "ruleset", fallback));
+}
+
+/** The context a season of `ruleset` plays on: its content with its calendar's goals (`loadSeasonContent`). */
+export function seasonContext(ruleset: Ruleset): SimContext {
+  return { ruleset, content: loadSeasonContent(ruleset.version) };
 }

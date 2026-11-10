@@ -3,6 +3,7 @@
  * harness (`.work/design7/harness/job.ts`) with the same seeds: a job is a pure function of its
  * JSON, so its result can be cached by the hash of the job and the engine.
  */
+import { loadSeasonContent } from "@falconess/content";
 import {
   advanceSeason,
   flightOf,
@@ -13,7 +14,6 @@ import {
 } from "@falconess/sim";
 import { REFERENCE_HANGAR, referencePolicy } from "../policy.js";
 import {
-  content,
   courseLengthM,
   courseOf,
   defaultRoles,
@@ -164,7 +164,7 @@ export function runBalanceJob(job: BalanceJob): JobResult {
     }
     case "season": {
       // B4: metric 7, seasons with the reference policy
-      const ctx: SimContext = { ruleset: R, content };
+      const ctx: SimContext = { ruleset: R, content: loadSeasonContent(R.version) };
       for (let i = job.k0; i < job.k1; i++) {
         let s = startSeason(ctx, `${job.base}-${i}`, {
           kind: "start",

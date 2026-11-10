@@ -142,6 +142,11 @@ export type SeasonConstants = Omit<
   readonly failModel: FailModel;
   readonly gradeThresholds: ReadonlyArray<readonly [Grade, number]>;
   readonly gradeCapOnGoalFailure: Grade;
+  /**
+   * Skill points a goal race pays by place (index 0 = 1st), like Umamusume; absent = none (v1,
+   * v2). Ruleset v3 sets it (owner 2026-11-10).
+   */
+  readonly skillPointsByPlace?: readonly number[];
 };
 export const SEASON: SeasonConstants = SEASON_V1;
 

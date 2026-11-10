@@ -109,7 +109,12 @@ del prototipo, commit `f08bde5`).
 - **Protege:** que ninguna Falconess sea la mala del juego y que elegir con quién jugar sea gusto, no
   obligación.
 - **Cálculo:** porcentaje de temporadas con nota B o mejor (métrica 7), con la política de referencia,
-  1000 temporadas por Falconess y base.
+  1000 temporadas por Falconess y base. Desde el 2026-11-10 la política de referencia de la v3 es la
+  **jugadora atenta** (`attentivePolicy`, `apps/cli/src/policy.ts`): entrena como una persona con
+  criterio (la Agilidad como pilar más la Resistencia que piden sus metas, descansa cuando el vigor
+  sube el fallo, usa el Simulador en una semana cansada, aprende habilidades y corre con su mejor
+  letra). La cuidadosa, que descansa mucho, sigue disponible para informes (`--policy cuidadosa`) y
+  sigue siendo la referencia de la v2. El umbral no cambia.
 - **Umbral:** cada Falconess en **60 % o más** (cota inferior de Wilson) y **12 puntos o menos** entre
   la mejor y la peor.
 - **Si falla:** el kit de esa Falconess: su habilidad única o pasiva, sus letras o cómo crece al
