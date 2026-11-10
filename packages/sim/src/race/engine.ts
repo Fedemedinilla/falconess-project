@@ -1275,6 +1275,23 @@ function passTick(c: Ctx, live: number): void {
         } else if (t + 1 - since >= PASS_HOLD_TICKS) confirmPass(c, i, x);
       }
     }
+  // PERF-2: a pass is a crossing (behind at t − 1, ahead now). Step A sorted the lanes by their
+  // t − 1 position (rank order, best first): if the live lanes' positions still descend in that
+  // order, nobody crossed anybody and the scan below would find nothing
+  const ord = S.rankOrder;
+  let crossed = false;
+  let prev = Number.POSITIVE_INFINITY;
+  for (let k = 0; k < n; k++) {
+    const l = (ord[k] ?? 1) - 1;
+    if ((live & (1 << l)) === 0) continue;
+    const p = S.pos[l] ?? 0;
+    if (p > prev) {
+      crossed = true;
+      break;
+    }
+    prev = p;
+  }
+  if (!crossed) return;
   for (let i = 0; i < n; i++) {
     const alt = S.alt[i] ?? 0;
     if ((alt === 0 && (S.surge[i] ?? 0) <= 0) || (live & (1 << i)) === 0) continue;
