@@ -462,11 +462,11 @@ function runnerTick(c: Ctx, i: number): boolean {
   // B1. phase; final entry (heat-to-energy); plan point
   const pos = S.pos[i] ?? 0;
   const ph = phaseOf(G, pos);
-  if (ph === PH_FINAL && !flag(S, i, F_FINAL_ENTERED)) {
+  if (ph === PH_FINAL && ((S.flags[i] ?? 0) & F_FINAL_ENTERED) === 0) {
     setFlag(S, i, F_FINAL_ENTERED);
     heatToEnergy(c, i);
   }
-  if (!flag(S, i, F_PLAN_ACTIVE) && pos >= (T.planPoint[i] ?? 0)) {
+  if (((S.flags[i] ?? 0) & F_PLAN_ACTIVE) === 0 && pos >= (T.planPoint[i] ?? 0)) {
     setFlag(S, i, F_PLAN_ACTIVE);
     requestReplan(S, i, CAUSE_PHASE);
   }
@@ -490,7 +490,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   if ((T.nSkills[i] ?? 0) > 0) runSkills(R, T, S, i, ph, segType, c.sink);
 
   // B4. a jump entered last tick resolves now, after skills
-  if (flag(S, i, F_PENDING_JUMP) && !resolveJump(c, i, ph)) {
+  if (((S.flags[i] ?? 0) & F_PENDING_JUMP) !== 0 && !resolveJump(c, i, ph)) {
     stalledTick(c, i);
     return false;
   }
@@ -509,14 +509,14 @@ function runnerTick(c: Ctx, i: number): boolean {
   // B5. the tick's single overheat flag
   const heat0 = S.heat[i] ?? 0;
   const over = heat0 > (T.heatCap[i] ?? 0);
-  if (over !== flag(S, i, F_OVER)) {
+  if (over !== (((S.flags[i] ?? 0) & F_OVER) !== 0)) {
     if (over) setFlag(S, i, F_OVER);
     else clearFlag(S, i, F_OVER);
     rec.overheat(t, i, posMm(c, i), over, heat0);
   }
 
   // B6. sprint plan: the first at the plan point, then at most maxReplans replans (11.1)
-  if (flag(S, i, F_REPLAN)) {
+  if (((S.flags[i] ?? 0) & F_REPLAN) !== 0) {
     clearFlag(S, i, F_REPLAN);
     // the kick on low hp: the body's replans (a hit, the drip) are never capped
     if (
@@ -531,8 +531,8 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B8. speed (5)
   const b = S.b[i] ?? 0;
-  const exhausted = flag(S, i, F_EXHAUSTED);
-  const airborne = flag(S, i, F_AIRBORNE);
+  const exhausted = ((S.flags[i] ?? 0) & F_EXHAUSTED) !== 0;
+  const airborne = ((S.flags[i] ?? 0) & F_AIRBORNE) !== 0;
   const style = T.phys[i] ?? 0;
   const pack = inPack(R, S, i);
   let tgt = (exhausted ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
@@ -556,7 +556,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   }
   let vCore = S.vCore[i] ?? 0;
   if (!airborne) {
-    let dash = flag(S, i, F_DASH);
+    let dash = ((S.flags[i] ?? 0) & F_DASH) !== 0;
     if (dash && dashEnds(R, c.vBase, vCore, tgt)) {
       clearFlag(S, i, F_DASH);
       dash = false;
@@ -672,7 +672,7 @@ function runnerTick(c: Ctx, i: number): boolean {
       F !== null &&
       F.hpReplanHp > 0 &&
       since >= F.hpReplanHp * 1_000_000 &&
-      flag(S, i, F_PLAN_ACTIVE)
+      ((S.flags[i] ?? 0) & F_PLAN_ACTIVE) !== 0
     ) {
       S.dripSince[i] = 0;
       requestReplan(S, i, CAUSE_EFFORT);
@@ -680,7 +680,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   }
   S.hp[i] = hp;
   // a maneuver's hit earlier this tick may have emptied her already (flag read fresh)
-  if (hp === 0 && !flag(S, i, F_EXHAUSTED)) {
+  if (hp === 0 && ((S.flags[i] ?? 0) & F_EXHAUSTED) === 0) {
     setFlag(S, i, F_EXHAUSTED);
     S.hpEmptyMm[i] = posMm(c, i);
     rec.hpEmpty(t, i, posMm(c, i));
@@ -726,7 +726,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   let s = seg;
   while (s < G.S - 1 && newPos >= (G.segEnd[s] ?? 0)) {
     if (G.segType[s] === SEG_JUMP && (S.flPhase[i] ?? 0) === 0) {
-      if (flag(S, i, F_AIRBORNE)) {
+      if (((S.flags[i] ?? 0) & F_AIRBORNE) !== 0) {
         const v0 = S.vCore[i] ?? 0;
         const v1 = scale(v0, T.landPm[i] ?? 1000);
         S.vCore[i] = v1;
@@ -736,7 +736,8 @@ function runnerTick(c: Ctx, i: number): boolean {
       }
       clearFlag(S, i, F_AIRBORNE);
       S.alt[i] = 0;
-      if (flag(S, i, F_PLAN_ACTIVE) && style !== STYLE_GROUND) requestReplan(S, i, CAUSE_JUMP);
+      if (((S.flags[i] ?? 0) & F_PLAN_ACTIVE) !== 0 && style !== STYLE_GROUND)
+        requestReplan(S, i, CAUSE_JUMP);
     }
     s += 1;
     S.seg[i] = s;
@@ -749,8 +750,11 @@ function runnerTick(c: Ctx, i: number): boolean {
     heldSkills(c, i);
     tickSkillTimers(T, S, i, S.skHeld);
   } else if ((S.activeSkills[i] ?? 0) !== 0) tickSkillTimers(T, S, i);
-  S.guardLeft[i] = sub0(S.guardLeft[i] ?? 0, 1);
-  S.holdLeft[i] = sub0(S.holdLeft[i] ?? 0, 1);
+  // the two countdowns, written only while they run (sub0 of 0 is 0)
+  const guard = S.guardLeft[i] ?? 0;
+  if (guard !== 0) S.guardLeft[i] = sub0(guard, 1);
+  const hold = S.holdLeft[i] ?? 0;
+  if (hold !== 0) S.holdLeft[i] = sub0(hold, 1);
   if (full) S.tickFlags[i] = tickFlags | stateFlags(c, i);
   return false;
 }
