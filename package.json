@@ -13,7 +13,7 @@
     "typecheck": "tsc -b tsconfig.json tsconfig.tests.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:golden": "vitest run --project sim src/race/golden.test.ts",
+    "test:golden": "vitest run --project sim src/race/golden.test.ts src/race/golden-v3.test.ts",
     "golden:update": "tsx apps/cli/src/golden-update.ts",
     "bench": "vitest bench --run",
     "lint": "biome check .",

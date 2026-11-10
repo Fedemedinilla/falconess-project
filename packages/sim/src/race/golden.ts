@@ -133,7 +133,7 @@ function parStats(turn: number, style: Style): Stats5 {
   return [at(0), at(1), at(2), at(3), at(4)];
 }
 
-type FalconessSetup = {
+export type FalconessSetup = {
   readonly id: Slug;
   readonly frameId: Slug;
   readonly skills: { readonly 24: readonly Slug[]; readonly 46: readonly Slug[] };
@@ -143,7 +143,7 @@ type FalconessSetup = {
   readonly mood: { readonly 24: Mood; readonly 46: Mood };
 };
 
-const CARACARA: FalconessSetup = {
+export const CARACARA: FalconessSetup = {
   id: "caracara",
   frameId: "caracara-signature",
   skills: {
@@ -155,7 +155,7 @@ const CARACARA: FalconessSetup = {
   mood: { 24: 1, 46: 0 },
 };
 
-const PEREGRINA: FalconessSetup = {
+export const PEREGRINA: FalconessSetup = {
   id: "peregrina",
   frameId: "peregrina-signature",
   skills: {
@@ -167,7 +167,7 @@ const PEREGRINA: FalconessSetup = {
   mood: { 24: 0, 46: 2 },
 };
 
-const CERNICALA: FalconessSetup = {
+export const CERNICALA: FalconessSetup = {
   id: "cernicala",
   frameId: "cernicala-signature",
   skills: {
@@ -180,7 +180,7 @@ const CERNICALA: FalconessSetup = {
 };
 
 /** The Falconess of (b), (c): at par on her signature frame, with her setup at that turn. */
-function goalPlayer(content: ContentIndex, f: FalconessSetup, turn: 24 | 46): EntryInput {
+export function goalPlayer(content: ContentIndex, f: FalconessSetup, turn: 24 | 46): EntryInput {
   const falconess = content.getFalconess(f.id);
   return {
     runnerId: PLAYER_RUNNER_ID,

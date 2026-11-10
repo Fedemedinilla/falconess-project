@@ -1,5 +1,8 @@
 /**
- * `pnpm golden:update -- --yes [--only <name,...>] [--dir <path>]`
+ * `pnpm golden:update -- --yes [--set v1|v3] [--only <name,...>] [--dir <path>]`
+ *
+ * `--set v3` (ADR-0011 §8) writes the v3 goldens instead (`GOLDEN_V3_SCENARIOS` under ruleset v3,
+ * to `tests/golden/v3/<name>.json`).
  *
  * Writes the golden logs of docs/race-engine.md 24.3 (ROADMAP D13): every scenario of
  * `GOLDEN_SCENARIOS` (`packages/sim/src/race/golden.ts`) run under ruleset v1 with detail "full",
@@ -11,13 +14,22 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadContent } from "@falconess/content";
+import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { ContentIndex } from "@falconess/schema";
-import { canonicalJson, GOLDEN_SCENARIOS, goldenDiffHint, runGoldenScenario } from "@falconess/sim";
+import {
+  canonicalJson,
+  GOLDEN_SCENARIOS,
+  GOLDEN_V3_SCENARIOS,
+  goldenDiffHint,
+  runGoldenScenario,
+  runGoldenV3Scenario,
+} from "@falconess/sim";
 import { parseArgs } from "./args.js";
 
 /** `tests/golden/v1` of this checkout. */
 export const GOLDEN_DIR = fileURLToPath(new URL("../../../tests/golden/v1/", import.meta.url));
+/** `tests/golden/v3` of this checkout (ADR-0011 §8). */
+export const GOLDEN_V3_DIR = fileURLToPath(new URL("../../../tests/golden/v3/", import.meta.url));
 
 export const ADR_REMINDER = [
   "ADR reminder: the golden logs freeze the engine's output byte for byte (docs/race-engine.md 24.3).",
@@ -27,14 +39,16 @@ export const ADR_REMINDER = [
 ].join("\n");
 
 export const GOLDEN_USAGE = [
-  "pnpm golden:update -- --yes [--only <name,...>] [--dir <path>]",
+  "pnpm golden:update -- --yes [--set v1|v3] [--only <name,...>] [--dir <path>]",
   "  --yes          required: without it nothing is written",
+  "  --set v3       the v3 goldens (tests/golden/v3); default v1",
   "  --only a,b     only these scenarios (file names without .json)",
   "  --dir PATH     target directory (default tests/golden/v1)",
   `scenarios: ${GOLDEN_SCENARIOS.map((s) => s.name).join(", ")}`,
+  `v3 scenarios: ${GOLDEN_V3_SCENARIOS.map((s) => s.name).join(", ")}`,
 ].join("\n");
 
-const FLAGS = new Set(["yes", "only", "dir", "help"]);
+const FLAGS = new Set(["yes", "set", "only", "dir", "help"]);
 
 export type GoldenUpdateResult = { readonly code: number; readonly lines: readonly string[] };
 
@@ -56,20 +70,32 @@ export function runGoldenUpdate(
       lines: ["golden:update writes nothing without --yes.", "", GOLDEN_USAGE, "", ADR_REMINDER],
     };
 
+  const set = typeof args.set === "string" ? args.set : "v1";
+  if (set !== "v1" && set !== "v3")
+    return { code: 64, lines: [`unknown set ${set}`, "", GOLDEN_USAGE] };
+  const catalogue = new Map(set === "v3" ? loadCatalogueCourses().map((c) => [c.id, c]) : []);
+  const runs: { name: string; run: () => unknown }[] =
+    set === "v3"
+      ? GOLDEN_V3_SCENARIOS.map((s) => ({
+          name: s.name,
+          run: () =>
+            runGoldenV3Scenario(content, (id) => catalogue.get(id) ?? content.getCourse(id), s),
+        }))
+      : GOLDEN_SCENARIOS.map((s) => ({ name: s.name, run: () => runGoldenScenario(content, s) }));
   const only = typeof args.only === "string" ? args.only.split(",").filter((s) => s !== "") : null;
-  const known = new Set(GOLDEN_SCENARIOS.map((s) => s.name));
+  const known = new Set(runs.map((s) => s.name));
   const missing = (only ?? []).filter((name) => !known.has(name));
   if (missing.length > 0)
     return { code: 64, lines: [`unknown scenario ${missing.join(", ")}`, "", GOLDEN_USAGE] };
-  const dir = typeof args.dir === "string" ? args.dir : defaultDir;
-  const selected = GOLDEN_SCENARIOS.filter((s) => only === null || only.includes(s.name));
+  const dir = typeof args.dir === "string" ? args.dir : set === "v3" ? GOLDEN_V3_DIR : defaultDir;
+  const selected = runs.filter((s) => only === null || only.includes(s.name));
 
   mkdirSync(dir, { recursive: true });
   const lines: string[] = [];
   let written = 0;
   for (const s of selected) {
     const file = join(dir, `${s.name}.json`);
-    const text = canonicalJson(runGoldenScenario(content, s));
+    const text = canonicalJson(s.run());
     const before = existsSync(file) ? readFileSync(file, "utf8") : null;
     const size = `${Buffer.byteLength(text, "utf8")} bytes`;
     if (before === text) {

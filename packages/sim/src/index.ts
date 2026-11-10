@@ -9,6 +9,11 @@ export {
   runGoldenScenario,
 } from "./race/golden.js";
 export {
+  GOLDEN_V3_SCENARIOS,
+  type GoldenV3Scenario,
+  runGoldenV3Scenario,
+} from "./race/golden-v3.js";
+export {
   airOffsetPm,
   buildCourseGeometry,
   type CourseGeometry,
