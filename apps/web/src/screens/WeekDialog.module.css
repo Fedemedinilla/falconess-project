@@ -9,7 +9,6 @@
   --tone-soft: var(--surface-2);
   width: min(32rem, calc(100vw - 2rem));
   /* some phone webviews resolve dvh to 0 inside the artifact frame: never shrink below 18rem */
-  max-height: calc(100vh - 2rem);
   max-height: max(18rem, calc(100dvh - 2rem));
   padding: 0;
   border: 1px solid var(--line-strong);
@@ -400,7 +399,6 @@
  */
 @media (max-height: 760px) {
   .dialog {
-    max-height: calc(100vh - 1rem);
     max-height: max(18rem, calc(100dvh - 1rem));
   }
 
