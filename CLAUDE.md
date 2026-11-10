@@ -23,6 +23,11 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 3. Cambios de balance: modificar constantes en packages/sim/src/rulesets/v1/constants.ts, correr
    `pnpm sim:batch`, pegar el diff de métricas en el PR. Nunca ajustar números sin el reporte.
 4. Preguntar antes de decidir cuando la especificación no cubra el caso; no inventar reglas.
+5. Balance de la carrera v3 (ADR-0010, docs/design/barandas-balance.md): el motor está congelado,
+   solo se corrigen errores. Un cambio de balance usa una sola palanca de contenido (pistas y
+   calendario, letras, crecimiento, kit), pasa las ocho barandas B1-B8 en las dos bases de semillas
+   y lleva nota de cambio. Nunca agregar una regla de motor para mover un número. Los umbrales no se
+   tocan sin un ADR nuevo.
 
 ## Prohibido sin aprobación explícita
 
