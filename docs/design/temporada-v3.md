@@ -1040,6 +1040,12 @@ con «pista del mes» deja a cada posición en 23-28 %. Opción 3: «Garra fija�
 (borrador ADR-0009); Peregrina 65 → 72 %. Desbalance: inflación de Peregrina en Sprint y Milla; el caso
 Caracara Sprint B se da vuelta (14-20 % contra Peregrina) y Caracara queda la más floja (70,7 %).
 
+**Recorte de Garra fija y casa de la Punta (2026-11-10)** (`.work/design7/measure/trim-final.md`).
+Garra fija: +10 % en Sprint, +25 % en Milla, +50 % en Media y Larga. Pista nueva «Escapada» (Media,
+2400 m: Salto temprano, dos Colinas que la Punta sube en un vuelo a ras, Pasillo final): casa de la
+Punta. Por Falconess: Peregrina 70,7, Cernícala 74,9, Caracara 70,7 (spread 4,2). Caso Caracara
+Sprint B recupera 31-33 %. Abierto: Peregrina justo en el borde de 70.
+
 ## T22 · La radio: los gritos del jugador
 
 **Estado:** idea aprobada en principio (2026-10-30), sin diseño.
