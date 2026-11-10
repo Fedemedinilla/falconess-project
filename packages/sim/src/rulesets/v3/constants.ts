@@ -752,9 +752,15 @@ export const RACE: RaceConstants = {
  * a Falconess); the +15 ‰ of technique comes from courage and intelligence (Picada) and from
  * stamina and intelligence (Suspensión). Peregrina is fixed by her own kit (L7). Glide and ground
  * rivals keep v2's rows.
+ *
+ * Rival curve (owner 2026-11-10, «muy fácil»: difficulty A): v2's 60 + 11 t was calibrated
+ * against the careful policy, which rests a lot; a sensible player (the attentive policy) won
+ * every goal. 60 + 14 t puts the rivals at 228 / 396 / 564 / 704 per stat on T12 / T24 / T36 /
+ * T46 (v2: 192 / 324 / 456 / 566), near the attentive player's mean stat.
  */
 export const FIELD: FieldConstants = {
   ...FIELD_V2,
+  rivalPerTurn: 14,
   rivalWeights: {
     ...FIELD_V2.rivalWeights,
     dive: [250, 180, 185, 210, 175],
