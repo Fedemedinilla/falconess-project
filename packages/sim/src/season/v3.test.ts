@@ -7,6 +7,7 @@ import { advanceSeason } from "./advance.js";
 import { type SimContext, seasonContext } from "./context.js";
 import { blackBoxFor, replaySeason } from "./replay.js";
 import { startSeason } from "./start.js";
+import { softenedGain, trainingGains } from "./training.js";
 
 /**
  * Ruleset v3 as the season new runs start on (ADR-0011): v2's season with the flight race, the
@@ -108,5 +109,34 @@ describe("season on ruleset v3 (ADR-0011)", () => {
       expect(place).toBeGreaterThan(0);
       expect(after.skillPoints - before).toBe(pays ? (S.skillPointsByPlace?.[place - 1] ?? -1) : 0);
     }
+  });
+
+  it("softens a gain band by band (v3: 750 ‰ from 600, 500 ‰ from 900); v2 keeps every point", () => {
+    expect(RULESET_V2.season.growthBands).toBeUndefined();
+    expect(softenedGain(V2, 1000, 80)).toBe(80);
+    expect(softenedGain(V3, 100, 80)).toBe(80); // below 600: full
+    expect(softenedGain(V3, 600, 80)).toBe(60); // 80 × 0.75
+    expect(softenedGain(V3, 580, 80)).toBe(65); // 20 full, then 60 × 0.75 = 45
+    expect(softenedGain(V3, 900, 80)).toBe(40); // 80 × 0.5
+    expect(softenedGain(V3, 880, 80)).toBe(46); // 26.67 raw reach 900 at 0.75, 53.33 × 0.5 = 26.67
+    expect(softenedGain(V3, 1199, 1)).toBe(1); // at least 1
+  });
+
+  it("shows the softened gains: a secondary at 200 ‰ and the main stat's diminishing returns", () => {
+    const s = startSeason(V3, "gains", START("peregrina"));
+    const [main, second] = trainingGains(V3, s, "train:agility");
+    expect(main?.stat).toBe("agility");
+    expect(second).toEqual({
+      stat: "technique",
+      gain: Math.floor(((main?.gain ?? 0) * 200) / 1000),
+    });
+    const high = { ...s, stats: { ...s.stats, agility: 950 } };
+    const [soft] = trainingGains(V3, high, "train:agility");
+    expect(soft?.gain).toBe(Math.max(1, Math.floor((main?.gain ?? 0) / 2)));
+    // the week adds what the preview said
+    const after = advanceSeason(V3, high, { kind: "train:agility" });
+    // fresh vigor: no failure chance
+    expect(after.log.at(-1)?.notes).toContain("log.train.ok");
+    expect(after.stats.agility - 950).toBe(soft?.gain);
   });
 });

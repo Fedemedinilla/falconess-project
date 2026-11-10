@@ -45,12 +45,12 @@
       {
         "turn": 36,
         "courseId": "sprint",
-        "minPlace": 4
+        "minPlace": 5
       },
       {
         "turn": 46,
         "courseId": "overlook",
-        "minPlace": 3
+        "minPlace": 4
       }
     ],
     "cernicala": [
@@ -62,7 +62,7 @@
       {
         "turn": 24,
         "courseId": "breakaway",
-        "minPlace": 7
+        "minPlace": 6
       },
       {
         "turn": 36,
@@ -79,7 +79,7 @@
       {
         "turn": 12,
         "courseId": "breakaway",
-        "minPlace": 6
+        "minPlace": 5
       },
       {
         "turn": 24,
@@ -94,7 +94,7 @@
       {
         "turn": 46,
         "courseId": "open-sky",
-        "minPlace": 4
+        "minPlace": 3
       }
     ]
   }
