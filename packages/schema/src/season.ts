@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { BlackBox } from "./blackbox.js";
 import {
+  Distance,
+  DistanceAptitudes,
   FalconessStats,
   Grade,
   Mood,
@@ -131,6 +133,13 @@ export const SeasonState = z.strictObject({
   falconessId: Slug,
   stats: FalconessStats,
   positionAptitude: PositionAptitudes,
+  /**
+   * v3 draft (owner 2026-11-09): her letters per distance for this season, birth letters plus at
+   * most one step from a black box (`distanceBoost`). Absent in v1 and v2 (and with the flag off).
+   */
+  distanceAptitude: DistanceAptitudes.optional(),
+  /** The distance a parent's black box lifted one step this season (C → B at most); deterministic. */
+  distanceBoost: Distance.optional(),
   mood: Mood,
   fatigue: z.number().int().min(0).max(100),
   injuryTurns: z.number().int().min(0),

@@ -1,0 +1,48 @@
+{
+  "id": "steps",
+  "version": 1,
+  "traits": ["obstacles"],
+  "textKey": "course.steps",
+  "segments": [
+    {
+      "type": "flat",
+      "length": 250
+    },
+    {
+      "type": "jump",
+      "length": 60,
+      "liftRequired": 10
+    },
+    {
+      "type": "flat",
+      "length": 80
+    },
+    {
+      "type": "jump",
+      "length": 60,
+      "liftRequired": 10
+    },
+    {
+      "type": "flat",
+      "length": 400
+    },
+    {
+      "type": "curves",
+      "length": 150,
+      "radius": 50
+    },
+    {
+      "type": "flat",
+      "length": 250
+    },
+    {
+      "type": "jump",
+      "length": 80,
+      "liftRequired": 15
+    },
+    {
+      "type": "flat",
+      "length": 270
+    }
+  ]
+}

@@ -23,6 +23,13 @@
   },
   "preferredPosition": "stalk",
   "uniqueSkills": ["wind-hover"],
+  "passive": "still-air",
+  "distanceAptitude": {
+    "sprint": "C",
+    "mile": "B",
+    "medium": "A",
+    "long": "B"
+  },
   "sponsor": "altair",
   "seasonGoals": [
     {

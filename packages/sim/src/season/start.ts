@@ -1,8 +1,19 @@
 import type { Rng } from "@falconess/rng";
-import type { Aptitude, BlackBox, RunInput, SeasonState, TrainingKind } from "@falconess/schema";
-import { DEFAULT_POSITION } from "@falconess/schema";
+import type {
+  Aptitude,
+  BlackBox,
+  Distance,
+  DistanceAptitudes,
+  Falconess,
+  RunInput,
+  SeasonState,
+  TrainingKind,
+} from "@falconess/schema";
+import { DEFAULT_POSITION, DISTANCES } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
-import { upgradeAptitude } from "../stats.js";
+import { flightOf } from "../race/flight.js";
+import type { Ruleset } from "../rulesets/index.js";
+import { aptitudeRank, upgradeAptitude } from "../stats.js";
 import { type Draft, note, rngForInput, type SimContext } from "./context.js";
 import { rollCrewPresence } from "./hangar.js";
 import { rollQuirks } from "./workshop.js";
@@ -29,6 +40,49 @@ function applyInheritance(ctx: SimContext, d: Draft, parents: readonly BlackBox[
       d.positionAptitude[apt.key] = upgradeAptitude(d.positionAptitude[apt.key] as Aptitude);
     }
   }
+}
+
+/** A distance a black box can lift: up to B, never to a specialist's A (owner 2026-11-09). */
+const BOX_DISTANCE_CAP: Aptitude = "B";
+
+/**
+ * v3 draft (owner 2026-11-09): her letters per distance for a season, before it starts and with
+ * no draw, so the pre-season screen can show them. Birth letters, then the first parent (input
+ * order) whose box names a distance she has below B lifts that one letter one step (C → B, D → C):
+ * at most one letter per season, never above B, so a box never turns a C into a specialist's A
+ * and a B stays B. Undefined with the distance letters off (v1, v2, the flag off) or when the
+ * Falconess has no letters.
+ */
+export function seasonDistanceAptitudes(
+  ruleset: Ruleset,
+  falconess: Falconess,
+  parents: readonly BlackBox[],
+): { letters: DistanceAptitudes; boost?: Distance } | undefined {
+  const F = flightOf(ruleset);
+  if (F === null || !F.distanceLetters || falconess.distanceAptitude === undefined)
+    return undefined;
+  const letters: DistanceAptitudes = { ...falconess.distanceAptitude };
+  for (const p of parents) {
+    const key = p.factors.distance?.key;
+    if (key === undefined) continue;
+    const cur = letters[key];
+    if (aptitudeRank(cur) >= aptitudeRank(BOX_DISTANCE_CAP)) continue;
+    letters[key] = upgradeAptitude(cur);
+    return { letters, boost: key };
+  }
+  return { letters };
+}
+
+/** Her best birth distance letter (ties in `DISTANCES` order): the factor her black box passes on. */
+export function boxDistanceFactor(
+  falconess: Falconess,
+): { key: Distance; letter: Aptitude } | undefined {
+  const d = falconess.distanceAptitude;
+  if (d === undefined) return undefined;
+  let best: Distance | undefined;
+  for (const k of DISTANCES)
+    if (best === undefined || aptitudeRank(d[k]) > aptitudeRank(d[best])) best = k;
+  return best === undefined ? undefined : { key: best, letter: d[best] };
 }
 
 /**
@@ -93,6 +147,12 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
     log: [],
   };
   applyInheritance(ctx, d, input.parents, rng);
+  // v3 draft: the distance letters (no draw: the training stream above is untouched)
+  const dist = seasonDistanceAptitudes(ctx.ruleset, falconess, input.parents);
+  if (dist !== undefined) {
+    d.distanceAptitude = dist.letters;
+    if (dist.boost !== undefined) d.distanceBoost = dist.boost;
+  }
   rollCrewPresence(ctx, d, rng);
   note(d, "log.season.start");
   return d;

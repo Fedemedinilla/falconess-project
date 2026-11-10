@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Aptitude, Grade, Position, RulesetVersion, Slug, StatName } from "./core.js";
+import { Aptitude, Distance, Grade, Position, RulesetVersion, Slug, StatName } from "./core.js";
 
 const Stars = z.number().int().min(1).max(3);
 
@@ -20,6 +20,11 @@ export const BlackBox = z.strictObject({
         stars: Stars,
       }),
     ]),
+    /**
+     * v3 draft (owner 2026-11-09): her best birth distance letter. A child's season lifts that
+     * distance one step, capped at B (never up to a specialist's A); absent in v1 and v2 boxes.
+     */
+    distance: z.strictObject({ key: Distance, letter: Aptitude }).optional(),
     skills: z.array(Slug).max(3),
     frameAffinity: Slug,
   }),

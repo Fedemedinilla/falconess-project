@@ -1,0 +1,66 @@
+{
+  "id": "circuit",
+  "version": 1,
+  "traits": ["pure-speed"],
+  "textKey": "course.circuit",
+  "segments": [
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 40
+    },
+    {
+      "type": "flat",
+      "length": 200
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 50
+    },
+    {
+      "type": "flat",
+      "length": 300
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 40
+    },
+    {
+      "type": "flat",
+      "length": 250
+    },
+    {
+      "type": "curves",
+      "length": 150,
+      "radius": 60
+    },
+    {
+      "type": "flat",
+      "length": 100
+    },
+    {
+      "type": "water",
+      "length": 100,
+      "drag": 0.2
+    },
+    {
+      "type": "flat",
+      "length": 50
+    },
+    {
+      "type": "jump",
+      "length": 60,
+      "liftRequired": 10
+    },
+    {
+      "type": "flat",
+      "length": 90
+    }
+  ]
+}

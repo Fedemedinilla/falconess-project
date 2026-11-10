@@ -32,5 +32,15 @@
       "mode": "multiply",
       "value": 1.006
     }
-  ]
+  ],
+  "flight": {
+    "diveFromBand": 2,
+    "diveVPm": 500,
+    "diveVPmDistance": {
+      "sprint": 100,
+      "mile": 250,
+      "medium": 500,
+      "long": 500
+    }
+  }
 }

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { loadContent, loadRawContent } from "@falconess/content";
 import { buildContentIndex, type RunInput, type SeasonState } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import { RULESET_V3 } from "../race/flight.js";
 import { canonicalJson } from "../race/golden.js";
 import { getRuleset, RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
 import { advanceSeason } from "./advance.js";
@@ -173,7 +174,9 @@ describe("auto events (ADR-0006 D8)", () => {
 
 describe("content events and rulesets", () => {
   it("every ruleset an event names exists", () => {
+    // the v3 draft (design7) lives outside the registry until ADR-0009; it keeps v2's season
+    const draft = (v: string) => (v === RULESET_V3.version ? RULESET_V3 : getRuleset(v));
     for (const e of loadContent().events.values())
-      for (const v of e.rulesets ?? []) expect(() => getRuleset(v), `${e.id}: ${v}`).not.toThrow();
+      for (const v of e.rulesets ?? []) expect(() => draft(v), `${e.id}: ${v}`).not.toThrow();
   });
 });

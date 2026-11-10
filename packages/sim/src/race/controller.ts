@@ -1,6 +1,7 @@
 import { ceilDiv, floorDiv } from "@falconess/rng";
 import { createPulseOutput, type PulseInput, type PulseOutput, pulseStep } from "../rules/index.js";
 import type { RaceConstants } from "../rulesets/index.js";
+import { jrNow } from "./flight.js";
 import type { CourseGeometry } from "./geometry.js";
 import {
   F_AIRBORNE,
@@ -12,6 +13,7 @@ import {
   ibps,
   ips,
   is,
+  MAX_LANES,
   type RaceState,
   type RaceTables,
 } from "./state.js";
@@ -55,21 +57,73 @@ export const KEY_FINISHED = 1e15;
  * Step A of every tick, from positions at the end of the previous tick (9.1): competition
  * ranking (equal keys share a rank, so lane order never changes physics), `ahead` = runners
  * strictly in front, `posFrac = fl(ahead × 1000, n − 1)` (0 leader, 1000 last; 0 when solo).
- * O(n²) compares into preallocated arrays, no sort.
+ * Into preallocated arrays, no allocation.
  */
 export function rankSnapshot(S: RaceState, n: number): void {
+  const key = S.key;
   for (let i = 0; i < n; i++)
-    S.key[i] =
+    key[i] =
       ((S.flags[i] ?? 0) & F_FINISHED) !== 0
         ? KEY_FINISHED - (S.finishMilli[i] ?? 0)
         : (S.pos[i] ?? 0);
-  for (let i = 0; i < n; i++) {
-    const ki = S.key[i] ?? 0;
-    let ahead = 0;
-    for (let j = 0; j < n; j++) if ((S.key[j] ?? 0) > ki) ahead++;
-    S.ahead[i] = ahead;
-    S.posFrac[i] = n > 1 ? floorDiv(ahead * 1000, n - 1) : 0;
+  // PERF-2: the lanes sorted by key, best first (an insertion sort of last tick's order: almost
+  // always one pass); `ahead` = how many keys are strictly greater = the index of the first lane
+  // with her key, so equal keys share a rank and the order among them never matters
+  const ord = S.rankOrder;
+  let fresh = false;
+  if (ord[MAX_LANES] !== n) {
+    for (let k = 0; k < n; k++) ord[k] = k + 1;
+    ord[MAX_LANES] = n;
+    fresh = true;
   }
+  let moved = false;
+  let ties = false;
+  for (let k = 1; k < n; k++) {
+    const x = ord[k] ?? 1;
+    const kx = key[x - 1] ?? 0;
+    let m = k - 1;
+    const km = key[(ord[m] ?? 1) - 1] ?? 0;
+    if (km >= kx) {
+      // in place: with no move the compares are the adjacent pairs, so they see every tie
+      if (km === kx) ties = true;
+      continue;
+    }
+    moved = true;
+    while (m >= 0 && (key[(ord[m] ?? 1) - 1] ?? 0) < kx) {
+      ord[m + 1] = ord[m] ?? 1;
+      m--;
+    }
+    ord[m + 1] = x;
+  }
+  // the same strict order as the last snapshot (slot n + 1: it had no ties): the same ranks
+  if (!fresh && !moved && !ties && ord[MAX_LANES + 1] === 1) return;
+  const ahead = S.ahead;
+  const frac = posFracRow(n);
+  let rank = 0;
+  let prev = 0;
+  let strict = 1;
+  for (let k = 0; k < n; k++) {
+    const l = (ord[k] ?? 1) - 1;
+    const kl = key[l] ?? 0;
+    if (k === 0 || kl !== prev) rank = k;
+    else strict = 0;
+    prev = kl;
+    ahead[l] = rank;
+    S.posFrac[l] = frac[rank] ?? 0;
+  }
+  ord[MAX_LANES + 1] = strict;
+}
+
+/** `fl(ahead × 1000, n − 1)` for every `ahead` of a field of n (0 for n ≤ 1), built once per n. */
+const POS_FRAC: Int32Array[] = [];
+function posFracRow(n: number): Int32Array {
+  let row = POS_FRAC[n];
+  if (row === undefined) {
+    row = new Int32Array(Math.max(1, n));
+    for (let a = 0; a < n; a++) row[a] = n > 1 ? floorDiv(a * 1000, n - 1) : 0;
+    POS_FRAC[n] = row;
+  }
+  return row;
 }
 
 /** "Middle of the pack" (9.1): `R.style.packLo ≤ posFrac ≤ R.style.packHi`. */
@@ -134,8 +188,32 @@ export function keepOk(
   i: number,
   keepPm: number,
 ): boolean {
-  const jr = T.jr[is(i, S.seg[i] ?? 0)] ?? 0;
-  return (S.energy[i] ?? 0) - costBoost(R, T, i) - jr >= floorDiv((T.Emax[i] ?? 0) * keepPm, 1000);
+  const keep = Math.floor(((T.Emax[i] ?? 0) * keepPm) / 1000);
+  const left = (S.energy[i] ?? 0) - costBoost(R, T, i);
+  // R3c (v3): what she keeps for later already pays a ceiling plan (the final's great dive)
+  const kf = T.keepFlight[i] ?? 0;
+  if (kf > 0 && (S.flRes[i] ?? 0) > 0)
+    return left - (T.jr[is(i, S.seg[i] ?? 0)] ?? 0) >= Math.max(keep, kf);
+  return left - jrNow(T, S, i, S.seg[i] ?? 0) >= keep;
+}
+
+/**
+ * The energy gate of 9.3: a free boost, or the energy after the boost covers the jump reserve
+ * (and, the kick on low hp, 2026-11-09, the energy her spurt and kick leave locked in the tank).
+ */
+function energyGate(
+  R: RaceConstants,
+  T: RaceTables,
+  S: RaceState,
+  i: number,
+  seg: number,
+  mode: number,
+  freeLeft: number,
+  freeBit: number,
+): boolean {
+  if (freeLeft > 0 || freeBit !== 0) return true;
+  const lock = mode === MODE_KICK || mode === MODE_PLAN ? (S.kickLock[i] ?? 0) : 0;
+  return (S.energy[i] ?? 0) - costBoost(R, T, i) >= jrNow(T, S, i, seg) + lock;
 }
 
 /**
@@ -174,7 +252,7 @@ export function selectMode(
   const b = S.b[i] ?? 0;
   const energy = S.energy[i] ?? 0;
   const Emax = T.Emax[i] ?? 0;
-  const jr = T.jr[is(i, seg)] ?? 0;
+  const jr = jrNow(T, S, i, seg);
   if (ph !== PH_FINAL) {
     if ((T.heatToEnergyPm[i] ?? 0) > 0) {
       const room = Math.max(0, (T.capLim[i] ?? 0) - (S.heat[i] ?? 0));
@@ -228,7 +306,7 @@ export function selectMode(
     case POS_PACK:
       if (
         ph !== PH_FINAL &&
-        energy - jr >= floorDiv(Emax * (1000 - R.style.groundPreShare), 1000)
+        energy - jr >= Math.floor((Emax * (1000 - R.style.groundPreShare)) / 1000)
       ) {
         mode = MODE_GROUND_CONSTANT;
         ctl.level = T.groundLevel[ib(i, b)] ?? 0;
@@ -269,7 +347,7 @@ export function licenceOk(
       : ceilDiv(Math.max(0, heat + R.kH - heatCap), cool);
   const dmg = T.dmgTick[i] ?? 0;
   const durAfter = (S.dur[i] ?? 0) - (over ? dmg : 0) - dmg * projTicks;
-  if (!(durAfter > floorDiv((T.durMax[i] ?? 0) * R.overheatFloorPm, 1000))) return false;
+  if (!(durAfter > Math.floor(((T.durMax[i] ?? 0) * R.overheatFloorPm) / 1000))) return false;
   if (T.rule[i] === RULE_MASS_THRUST) return true;
   const until = T.immuneUntil[i] ?? IMMUNE_WHOLE_RACE;
   if (until === IMMUNE_WHOLE_RACE) return true;
@@ -311,16 +389,19 @@ export function decide(
     S.modeLevel[i] = level;
     ctl.sink.boostMode(i, mode, level);
   }
+  // PERF-2: no want, no level mode and no pulse state machine: nothing below writes (gates unread)
+  const levelMode = mode === MODE_PLAN || mode === MODE_GROUND_CONSTANT;
+  const pulseFrame = T.pulseFrame[i] === 1;
+  if (!want && !levelMode && !pulseFrame) return;
 
   const seg = S.seg[i] ?? 0;
   const segType = G.segType[seg] ?? 0;
   const b = S.b[i] ?? 0;
-  const style = T.style[i] ?? 0;
+  const style = T.phys[i] ?? 0;
   const flags = S.flags[i] ?? 0;
   const airborne = (flags & F_AIRBORNE) !== 0;
   const onJump = segType === SEG_JUMP && style !== STYLE_GROUND;
   const unit = T.unit[ib(i, b)] ?? 1;
-  const levelMode = mode === MODE_PLAN || mode === MODE_GROUND_CONSTANT;
   if (levelMode) {
     // 9.5: no accrual on jump-blocked ticks; the cap is unit + level, so no overflow is lost
     if (!airborne && !onJump) P.acc[i] = Math.min(unit + level, (P.acc[i] ?? 0) + level);
@@ -328,20 +409,22 @@ export function decide(
   }
 
   // gates (9.3)
-  const pulseFrame = T.pulseFrame[i] === 1;
   const canThrust = (flags & F_EXHAUSTED) === 0 && !airborne && !onJump;
   const bit = 1 << segType;
   const freeLeft = S.freeLeft[i] ?? 0;
-  const freeAvail = freeLeft > 0 || ((P.freeMask[i] ?? 0) & bit) !== 0;
-  const energyOk = freeAvail || (S.energy[i] ?? 0) - costBoost(R, T, i) >= (T.jr[is(i, seg)] ?? 0);
+  // the gates are pure reads: evaluated only when she wants and can thrust (PERF-1)
   let gatesOk = false;
-  if (want && canThrust && energyOk) {
+  if (
+    want &&
+    canThrust &&
+    energyGate(R, T, S, i, seg, mode, freeLeft, (P.freeMask[i] ?? 0) & bit)
+  ) {
     const capLim = T.capLim[i] ?? 0;
     const capMode =
       mode === MODE_SURPLUS
-        ? floorDiv(capLim * R.surplusHeatPm, 1000)
+        ? Math.floor((capLim * R.surplusHeatPm) / 1000)
         : mode === MODE_REGEN
-          ? floorDiv(capLim * R.regenOverflowHeatPm, 1000)
+          ? Math.floor((capLim * R.regenOverflowHeatPm) / 1000)
           : capLim;
     const heatAdd = pulseFrame ? R.pulseTicks * R.kH : R.kH;
     const licMode =
@@ -371,8 +454,8 @@ export function decide(
     if (out.fired) {
       S.pulses[i] = (S.pulses[i] ?? 0) + 1;
       if (out.freeTick) ctl.sink.freeBoost(i, segType);
-      const air = floorDiv(out.thrust * (T.airPm[is(i, seg)] ?? 1000), 1000);
-      const moved = floorDiv(air * (T.stoop[ips(i, ph, seg)] ?? 1000), 1000);
+      const air = Math.floor((out.thrust * (T.airPm[is(i, seg)] ?? 1000)) / 1000);
+      const moved = Math.floor((air * (T.stoop[ips(i, ph, seg)] ?? 1000)) / 1000);
       ctl.sink.pulse(i, P.chain[i] ?? 1, moved, out.freeTick, P.cdFire[i] ?? 0);
     }
     return;

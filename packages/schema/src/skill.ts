@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RacePhase, Rarity, SegmentType, Slug, TextKey, Version } from "./core.js";
+import { Distance, RacePhase, Rarity, SegmentType, Slug, TextKey, Version } from "./core.js";
 import { RaceModifier } from "./modifiers.js";
 
 export const SkillTrigger = z.strictObject({
@@ -46,10 +46,28 @@ export const ActiveSkill = z.strictObject({
 });
 export type ActiveSkill = z.infer<typeof ActiveSkill>;
 
+/**
+ * ADR-0009 (draft, ruleset v3 only): what a passive does in the air. v1 and v2 never read it, and
+ * v3 reads it only with the flight constant `skillFlight` on. A dive from band `diveFromBand` or
+ * higher gains `diveVPm` ‰ more Δv (Garra fija: the great dive from the ceiling).
+ */
+export const SkillFlight = z.strictObject({
+  diveFromBand: z.number().int().min(2).max(3),
+  diveVPm: z.number().int().min(0).max(500),
+  /**
+   * ADR-0009 (draft, trim 2026-11-09): ‰ per race distance, read instead of `diveVPm` with the
+   * flight constant `skillFlightDistance` on (Garra fija: less in the Sprint and the Milla).
+   */
+  diveVPmDistance: z.record(Distance, z.number().int().min(0).max(500)).optional(),
+});
+export type SkillFlight = z.infer<typeof SkillFlight>;
+
 export const PassiveSkill = z.strictObject({
   ...SkillBase,
   kind: z.literal("passive"),
   modifiers: z.array(RaceModifier).min(1),
+  /** ADR-0009 (draft): the passive's flight effect in ruleset v3; absent = none. */
+  flight: SkillFlight.optional(),
 });
 export type PassiveSkill = z.infer<typeof PassiveSkill>;
 

@@ -226,6 +226,56 @@ export function eventText(item: EventItem, tick: number, log: RaceLog, labels: R
       return ui("ui.race.event.finish", { place: item.place });
     case "dnf":
       return ui("ui.race.dnf");
+    case "takeoff":
+      return ui("ui.race.event.takeoff", { band: item.band, cost: units(item.cost) });
+    case "dive":
+      return ui("ui.race.event.dive", { band: item.fromBand, gain: mps(item.gainMms, 1) });
+    case "touchdown":
+      return item.cause === "energy"
+        ? ui("ui.race.event.touchdown.energy")
+        : item.cause === "knock"
+          ? ui("ui.race.event.touchdown.knock")
+          : item.cause === "nerve"
+            ? ui("ui.race.event.touchdown.nerve")
+            : ui("ui.race.event.touchdown");
+    case "noLift":
+      return ui("ui.race.event.noLift");
+    case "hpHit":
+      return ui(`ui.race.event.hpHit.${item.cause}`, { hp: Math.floor(item.hp / 1000) });
+    case "bandReached":
+      return ui("ui.race.event.bandReached", { band: item.band });
+    case "diveStart":
+      return item.cause === "energy"
+        ? ui("ui.race.event.diveStart.energy", { band: item.fromBand })
+        : item.cause === "knock"
+          ? ui("ui.race.event.diveStart.knock", { band: item.fromBand })
+          : ui("ui.race.event.diveStart", { band: item.fromBand });
+    case "pass":
+      return item.band >= 1 ? ui("ui.race.event.pass") : ui("ui.race.event.pass.dive");
+    case "airDirty":
+      return item.on ? ui("ui.race.event.airDirty") : ui("ui.race.event.airDirty.off");
+    case "lineChange":
+      return item.cause === "over"
+        ? ui("ui.race.event.lineChange.over", { band: item.toBand })
+        : ui("ui.race.event.lineChange.knock", { band: item.toBand });
+    case "lineSwitch":
+      return item.cause === "door"
+        ? ui("ui.race.event.lineSwitch.door")
+        : item.cause === "escape"
+          ? ui("ui.race.event.lineSwitch.escape")
+          : item.to === 1
+            ? ui("ui.race.event.lineSwitch.out")
+            : ui("ui.race.event.lineSwitch.in");
+    case "boxedIn":
+      return ui("ui.race.event.boxedIn");
+    case "doorClosed":
+      return ui("ui.race.event.doorClosed");
+    case "passSide":
+      return item.by === "outside"
+        ? ui("ui.race.event.passSide.outside")
+        : ui("ui.race.event.passSide.inside");
+    case "nerve":
+      return item.held ? ui("ui.race.event.nerve.held") : ui("ui.race.event.nerve.flinch");
   }
 }
 
@@ -266,6 +316,24 @@ export function eventIcon(item: EventItem): IconName {
       return "finish";
     case "dnf":
       return "dnf";
+    case "takeoff":
+    case "bandReached":
+    case "diveStart":
+    case "dive":
+    case "touchdown":
+    case "pass":
+      return "landing";
+    case "noLift":
+    case "hpHit":
+    case "airDirty":
+    case "lineChange":
+    case "nerve":
+    case "lineSwitch":
+    case "boxedIn":
+    case "doorClosed":
+      return "trouble";
+    case "passSide":
+      return "landing";
   }
 }
 

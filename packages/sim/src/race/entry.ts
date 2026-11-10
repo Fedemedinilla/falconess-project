@@ -12,6 +12,7 @@ import { DEFAULT_POSITION, STAT_NAMES } from "@falconess/schema";
 import { resolveFrameBuild } from "../frame-build.js";
 import type { Ruleset } from "../rulesets/index.js";
 import { effectiveStats } from "../stats.js";
+import { distanceOfLength, flightOf } from "./flight.js";
 import { compileTraits, statDeltas } from "./modifiers.js";
 
 /**
@@ -73,7 +74,7 @@ export function freezeEntry(
   ruleset: Ruleset,
   content: ContentIndex,
   input: EntryInput,
-  _course: Course,
+  course: Course,
   laneIndex: number,
 ): RaceEntry {
   const lanes = ruleset.race.maxRunners;
@@ -81,7 +82,7 @@ export function freezeEntry(
     throw new Error(`laneIndex ${laneIndex} outside 0..${lanes - 1}`);
 
   // 1. frame build (telemetry PW cap, power-cap, clamps)
-  const fb = resolveFrameBuild(
+  const fb0 = resolveFrameBuild(
     content,
     input.frameId,
     input.parts,
@@ -89,6 +90,28 @@ export function freezeEntry(
     ruleset.race.telemetryPowerCap,
   );
   const frame = content.getFrame(input.frameId);
+  // v3 draft (owner 2026-11-08): wings lose their stats. Every frame races on the neutral profile,
+  // with no manufacturer rule, no frame passive and no part or quirk effect; the only passive is
+  // the Falconess's own (her signature frame's, now her skill). The style stays: it is the gesture.
+  const F = flightOf(ruleset);
+  const neutral = F !== null && F.neutralFrames;
+  const ownPassive =
+    neutral && input.falconessId !== null
+      ? (content.getFalconess(input.falconessId).passive ?? null)
+      : null;
+  const fb = neutral
+    ? {
+        ...fb0,
+        rule: "none" as const,
+        powerToWeight: F.neutralFrame.powerToWeight,
+        energy: F.neutralFrame.energy,
+        dissipation: F.neutralFrame.dissipation,
+        durabilityMax: F.neutralFrame.durability,
+        modifiers: ownPassive !== null ? content.getPassive(ownPassive).modifiers : [],
+        parts: [],
+        quirks: [],
+      }
+    : fb0;
 
   // 2. effective stats: mood on all five, the race position's letter on intelligence (ADR-0008)
   const position = input.position ?? DEFAULT_POSITION[fb.style];
@@ -117,8 +140,35 @@ export function freezeEntry(
   });
 
   // 5. traits; 6. starting durability
-  const traits = compileTraits(fb.modifiers);
-  const durabilityStart = Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
+  const traits0 = compileTraits(fb.modifiers);
+  // ADR-0009 (draft, v3 with skillFlight): the passive's flight effect becomes the dive trait
+  const passiveId = neutral ? ownPassive : (frame.passive ?? null);
+  const flight =
+    F !== null && F.skillFlight && passiveId !== null
+      ? content.getPassive(passiveId).flight
+      : undefined;
+  const lengthMm = course.segments.reduce((a, sg) => a + sg.length, 0) * 1000;
+  // trim (owner 2026-11-09): with skillFlightDistance the passive's ‰ is the course distance's
+  const skillPm =
+    flight === undefined
+      ? 0
+      : F !== null && F.skillFlightDistance && flight.diveVPmDistance !== undefined
+        ? flight.diveVPmDistance[distanceOfLength(F, lengthMm)]
+        : flight.diveVPm;
+  const traits =
+    flight !== undefined && skillPm > 0
+      ? { ...traits0, diveSkill: { fromBand: flight.diveFromBand, pm: skillPm } }
+      : traits0;
+  const durabilityStart =
+    F !== null && F.noWear
+      ? fb.durabilityMax
+      : Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
+
+  // v3 draft (owner 2026-11-09): the letter of this course's distance, only with the letters on
+  const distanceLetter =
+    F !== null && F.distanceLetters && input.distanceAptitude !== undefined
+      ? input.distanceAptitude[distanceOfLength(F, lengthMm)]
+      : undefined;
 
   return {
     runnerId: input.runnerId,
@@ -130,11 +180,12 @@ export function freezeEntry(
     rule: fb.rule,
     style: fb.style,
     position,
-    passive: frame.passive ?? null,
+    passive: passiveId,
     parts: [...fb.parts],
     quirks: [...fb.quirks],
     mood: input.mood,
     positionAptitude: input.positionAptitude[position],
+    ...(distanceLetter !== undefined ? { distanceAptitude: distanceLetter } : {}),
     stats,
     powerToWeight: fb.powerToWeight,
     energy: fb.energy,

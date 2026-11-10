@@ -2,6 +2,7 @@ import { clamp, Rng } from "@falconess/rng";
 import type {
   ContentIndex,
   Course,
+  DistanceAptitudes,
   EntryInput,
   FalconessStats,
   Frame,
@@ -18,6 +19,7 @@ import type { Ruleset } from "../rulesets/index.js";
 import type { SimContext } from "../season/context.js";
 import { STAT_ORDER } from "../stats.js";
 import { compareIds, freezeEntry } from "./entry.js";
+import { flightOf } from "./flight.js";
 
 /** `generateField` arguments (docs/race-engine.md 21.1, 23). */
 export type GenerateFieldArgs = {
@@ -66,10 +68,19 @@ export function rivalPool(ruleset: Ruleset, content: ContentIndex, playerFrameId
  * "A" for the position of the frame's style and "B" for the others (21.1). A rival runs in that
  * position (no `position` in its input: ADR-0008 leaves the choice to the player for now).
  */
-function rivalAptitudes(style: Style): { positionAptitude: PositionAptitudes } {
+function rivalAptitudes(
+  ruleset: Ruleset,
+  style: Style,
+): { positionAptitude: PositionAptitudes; distanceAptitude?: DistanceAptitudes } {
   const positionAptitude: PositionAptitudes = { lead: "B", pack: "B", stalk: "B", closer: "B" };
   positionAptitude[DEFAULT_POSITION[style]] = "A";
-  return { positionAptitude };
+  // v3 draft (owner 2026-11-09): a rival is B at every distance (no specialists in the field)
+  const F = flightOf(ruleset);
+  if (F === null || !F.distanceLetters) return { positionAptitude };
+  return {
+    positionAptitude,
+    distanceAptitude: { sprint: "B", mile: "B", medium: "B", long: "B" },
+  };
 }
 
 /**
@@ -136,7 +147,7 @@ export function generateField(
       falconessId: null,
       baseStats,
       mood: 0,
-      ...rivalAptitudes(frame.style),
+      ...rivalAptitudes(ruleset, frame.style),
       frameId: frame.id,
       parts: [],
       quirks: [],
@@ -163,6 +174,9 @@ export function playerEntryInput(state: SeasonState, position?: Position): Entry
     baseStats: { ...state.stats },
     mood: state.mood,
     positionAptitude: { ...state.positionAptitude },
+    ...(state.distanceAptitude === undefined
+      ? {}
+      : { distanceAptitude: { ...state.distanceAptitude } }),
     ...(position === undefined ? {} : { position }),
     frameId,
     parts: [...state.installedParts],

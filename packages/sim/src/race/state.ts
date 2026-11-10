@@ -3,6 +3,14 @@ import type { Course, RaceEntry, RacePhase, SegmentType } from "@falconess/schem
 import { POSITIONS, RACE_RULES, SEGMENT_TYPES, STYLES } from "@falconess/schema";
 import { compileRule, createPulseState, initPulseLane, type PulseState } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
+import {
+  DIST_MILE,
+  distanceCode,
+  distanceLetterPm,
+  flightOf,
+  planFlights,
+  plannedHitsHp,
+} from "./flight.js";
 import { type CourseGeometry, MAX_SEGMENTS } from "./geometry.js";
 import {
   accelVu,
@@ -36,15 +44,20 @@ import {
   engineUnits,
   MODE_OFF,
   PH_FINAL,
+  POS_LEAD,
   POS_PACK,
   POS_STALK,
   positionCode,
   ruleCode,
+  SEG_CLIMB,
+  SEG_CURVES,
   SEG_DESCENT,
   SEG_JUMP,
+  SEG_WATER,
   STYLE_DIVE,
   STYLE_GLIDE,
   STYLE_GROUND,
+  STYLE_NEUTRAL,
   styleCode,
 } from "./units.js";
 
@@ -56,6 +69,8 @@ import {
  * Float64Array, where integers are exact below 2^53. Internal TS types, not data formats.
  */
 
+/** Planned flights per runner (ruleset v3 draft, design7 R2). */
+export const FLIGHTS_MAX = 8;
 /** Arena capacity: the schema's lane bound. */
 export const MAX_LANES = 8;
 /** Arena capacity: the schema's active-skill bound (`RaceEntry.skills`). */
@@ -86,6 +101,8 @@ export const CAUSE_PHASE = 0;
 export const CAUSE_REFUND = 1;
 export const CAUSE_JUMP = 2;
 export const CAUSE_BROKEN = 3;
+/** Ruleset v3 (stamina pays effort): a hit or the drip since the last plan. */
+export const CAUSE_EFFORT = 4;
 
 // --- frozen skill column bits (15) -----------------------------------------------------------------
 export const SK_ONCE = 1;
@@ -138,8 +155,13 @@ const NK = MAX_LANES * MAX_SKILLS;
 
 /** Per-race tables of docs/race-engine.md 3.3, built before tick 0 and read-only in the loop. */
 export type RaceTables = {
-  /** The wings' style: their physics (9.8). */
+  /** The wings' style: their gesture in the air (the wing table) and, in v1/v2, their physics (9.8). */
   readonly style: Int32Array;
+  /**
+   * The style's ground physics (9.8): `style`, or STYLE_NEUTRAL when the v3 draft's
+   * `neutralStyles` is on (no dive stoop, hover draft, glide terms or ground route for anyone).
+   */
+  readonly phys: Int32Array;
   /** The race position: the controller row, its keep, hold and plan point (9.4, ADR-0008). */
   readonly position: Int32Array;
   readonly rule: Int32Array;
@@ -193,6 +215,69 @@ export type RaceTables = {
   readonly jr: Int32Array;
   /** The jump reserve at the gun, me: `R` of the course's first jump (14.4); 0 for ground. */
   readonly jrStart: Int32Array;
+  // ruleset v3 draft (design7 «Despegar y caer»): the flight plan, all zero without `flight`
+  /** Planned flights per runner (≤ FLIGHTS_MAX). */
+  readonly flN: Int32Array;
+  /** pu: takeoff point and end point (descent starts) of flight k, index i × FLIGHTS_MAX + k. */
+  readonly flA: Float64Array;
+  readonly flB: Float64Array;
+  readonly flBand: Int32Array;
+  /** 1 = takes off at the edge of a descent (cornisa): climbing costs `cornisaPm`. */
+  readonly flCorn: Uint8Array;
+  /** 1 = flight k flows into k + 1 without touching down (R9: band 1 inside a canyon). */
+  readonly flChain: Uint8Array;
+  /** me planned for the climb and for holding the band over [flA, flB). */
+  readonly flClimb: Int32Array;
+  readonly flHold: Int32Array;
+  /** me: the whole plan's reserve at the gun. */
+  readonly flRes0: Int32Array;
+  /**
+   * R3c (feel round 3): me of her ceiling plan priced at her dirty air (climb + hold × dirtyPm),
+   * which the energy she keeps for later (`keepOk`) already covers; 0 = the rule is off for her.
+   */
+  readonly keepFlight: Int32Array;
+  /** 1 = the jump segment is covered by a planned flight (no lift, no jump reserve), (lane, seg). */
+  readonly jumpCovered: Uint8Array;
+  /** me per band of climb at liftF. */
+  readonly climbMe: Int32Array;
+  /** vu added to the body speed by a dive from band b (index i × 4 + b). */
+  readonly diveV: Int32Array;
+  /** ADR-0009: the lowest band her passive's dive acts from (0 = none) and its ‰. */
+  readonly diveSkillFrom: Int32Array;
+  readonly diveSkillPm: Int32Array;
+  /** Air cruise (L1b: `airPacePm` of her pace draw), same index as vC. */
+  readonly vCAir: Int32Array;
+  /** F5 (round 5): the air cruise from `airTerrainFreeBand` up (no water or climb penalty). */
+  readonly vCAirHi: Int32Array;
+  /** Stage 3 (allFly): the air cruise of the low band (`skimTerrainPm` of the water and climb penalty). */
+  readonly vCAirLo: Int32Array;
+  /** F9: her nerve test's flinch chance, ‰, and the pre-drawn slot 29 (two 16-bit tests). */
+  readonly nerveP: Int32Array;
+  readonly u29: Float64Array;
+  /** liftF folded with her wing's holdPm (S1), for the hold of every tick (`holdLift`). */
+  readonly liftH: Int32Array;
+  /** L1 (step 1.2): the air of flight k, ‰ of the air cruise, index i × FLIGHTS_MAX + k. */
+  readonly airOff: Int32Array;
+  /** L3: ‰ of the hold in dirty air for her technique; L4: dirty ticks before a knock (courage). */
+  readonly dirtyPm: Int32Array;
+  readonly knockAt: Int32Array;
+  /**
+   * Two lines per band (2026-11-08): dirty ticks before she moves to the other line (intelligence),
+   * pu of the other line she checks ahead (intelligence), pu alongside she needs free (courage), pu
+   * a lateral move costs (technique), ‰ the outside line adds (agility), ‰ she closes the door
+   * (intelligence) and the pre-drawn slot 31 (four bytes, one per door decision).
+   */
+  readonly lnSideAt: Int32Array;
+  readonly lnLook: Float64Array;
+  readonly lnSlot: Float64Array;
+  readonly lnSwitch: Float64Array;
+  readonly lnOutPm: Int32Array;
+  readonly lnDoorP: Int32Array;
+  /** Stamina pays effort (2026-11-09): ‰ her distance letter worsens this course's aspect of flight. */
+  readonly distPm: Int32Array;
+  /** ‰ taken off her air cruise by her distance letter (`distanceAirPm` of `distPm`). */
+  readonly distAirPm: Int32Array;
+  readonly u31: Float64Array;
   readonly pulseFrame: Uint8Array;
   readonly airPm: Int32Array;
   readonly stoop: Int32Array;
@@ -281,13 +366,19 @@ export type RaceState = {
   readonly freeTick: Uint8Array;
   readonly burstChain: Uint8Array;
   /** Frame flags of the runner's last tick (20.4). */
-  readonly tickFlags: Uint16Array;
+  readonly tickFlags: Int32Array;
   /** Boost on-ticks since the previous frame row. */
   readonly boostRow: Int32Array;
   // rank snapshot (9.1)
   readonly key: Float64Array;
   readonly ahead: Int32Array;
   readonly posFrac: Int32Array;
+  /**
+   * Step A scratch (PERF-2): lanes + 1 by rank key, best first, kept from the tick before so the
+   * sort is almost always one pass. Slot 8 holds the n it was built for (0 = a fresh arena), slot 9
+   * is 1 when `ahead` and `posFrac` were last written from a strict order (no tie).
+   */
+  readonly rankOrder: Int32Array;
   // results (19)
   readonly place: Int32Array;
   readonly deadHeat: Uint8Array;
@@ -317,6 +408,138 @@ export type RaceState = {
   readonly jumpsOk: Int32Array;
   readonly jumpsFailed: Int32Array;
   readonly detours: Int32Array;
+  // ruleset v3 draft (design7): flight state and its ledger, all zero without `flight`
+  /** Altitude band 0-3 as drawn (R1). */
+  readonly alt: Int32Array;
+  /** 0 ground (or a plain jump), 1 climbing, 2 holding the band, 3 descending. */
+  readonly flPhase: Int32Array;
+  /** Next planned flight to take off. */
+  readonly flK: Int32Array;
+  /** Current flight + 1 (0 = none). */
+  readonly flCur: Int32Array;
+  readonly altTarget: Int32Array;
+  readonly altTimer: Int32Array;
+  /** Band the descent started from (the dive's band). */
+  readonly fromBand: Int32Array;
+  /** 0 plan, 1 energy. */
+  readonly fallCause: Int32Array;
+  /** me still reserved for planned flights (added to every `jr` read). */
+  readonly flRes: Int32Array;
+  /** me of the current flight's hold still inside `flRes`. */
+  readonly flHoldLeft: Int32Array;
+  /** band × pu flown while holding, and the me already billed for it. */
+  readonly holdPu: Float64Array;
+  readonly holdBilled: Int32Array;
+  readonly airTicks: Int32Array;
+  readonly flights: Int32Array;
+  readonly dives: Int32Array;
+  readonly grandDives: Int32Array;
+  readonly diveGainMm: Float64Array;
+  readonly hpRested: Float64Array;
+  readonly energyClimb: Float64Array;
+  readonly energyHold: Float64Array;
+  readonly noLift: Int32Array;
+  readonly jumpsCovered: Int32Array;
+  /** vu of dive surge still on top of the body speed (`diveSurge` knob only). */
+  readonly surge: Int32Array;
+  // ruleset v3 stage 1 (diseno-v3-vuelo.md): the struggle up there, the log and the held skill
+  /** Position at the end of tick t − 1 (step A), for the dirty air and the passes. */
+  readonly pos0: Float64Array;
+  /** L3: 1 = in dirty air this tick, 2 = also within `fightM` (L4) (step A, t − 1 snapshot). */
+  readonly dirty: Uint8Array;
+  /** L4: ticks of dirty air in a row, and 1 once she has tried to go over (once per race). */
+  readonly dirtyRun: Int32Array;
+  readonly escaped: Uint8Array;
+  /** 1 = the current flight was knocked down (its dive is lost: touchdown cause knock). */
+  readonly knocked: Uint8Array;
+  /** 1 = the current flight already counted as below its plan (RISK-1). */
+  readonly belowCounted: Uint8Array;
+  /** Tick (+ 1) the current dirty run began, for the `airDirty` event (0 = none). */
+  readonly dirtySince: Int32Array;
+  /** Highest band reached in the current flight, and its ticks per band climbed (S1, S2). */
+  readonly flApex: Int32Array;
+  readonly climbTk: Int32Array;
+  /** Ledger of stage 1. */
+  readonly passesAir: Int32Array;
+  readonly passesDive: Int32Array;
+  readonly peakMms: Int32Array;
+  readonly apexMax: Int32Array;
+  readonly dirtyTicks: Int32Array;
+  readonly holdExtra: Float64Array;
+  readonly overs: Int32Array;
+  readonly knocks: Int32Array;
+  readonly falls: Int32Array;
+  readonly belowPlan: Int32Array;
+  /** `pass` candidates (lane i over lane j), index i × MAX_LANES + j: start tick + 1 (0 = none). */
+  readonly passSince: Int32Array;
+  /** Bit 1: passer in the air at the start; bit 2: passer in her dive surge. */
+  readonly passKind: Uint8Array;
+  /** L7: 1 = the skill fired in the air and is held; ticks held. Index ik(i, j). */
+  readonly skHeld: Uint8Array;
+  readonly skHeldTicks: Int32Array;
+  /** L7: skills she holds now (0 = the timers tick as in v2). */
+  readonly heldN: Uint8Array;
+  // round 5 (measure/final.md)
+  /** Band at the end of tick t − 1 (step A), for the nerve window (F9). */
+  readonly alt0: Uint8Array;
+  /** F2: vu of the current dive's Δv already added in the air, and its mm flown in the air. */
+  readonly diveAdded: Int32Array;
+  readonly diveAirMm: Float64Array;
+  /** F3: 1 = she went over in this flight and was not knocked back (her dive gains a share). */
+  readonly overWon: Uint8Array;
+  /** F9: nerve tests taken, held and flinched (ledger; tests also index slot 29). */
+  readonly nerveTests: Int32Array;
+  readonly nerveHeld: Int32Array;
+  /** F6: ticks towed in another's wake in the air. */
+  readonly towTicks: Int32Array;
+  // two lines per band (2026-11-08)
+  /** Her line in the air (0 inside, 1 outside; 0 on the ground) and at the end of t − 1 (step A). */
+  readonly line: Uint8Array;
+  readonly line0: Uint8Array;
+  /** Tick + 1 of her last line switch (0 = none this flight), its cause (1 pass, 2 door, 3 escape, 4 diagonal). */
+  readonly swTick: Int32Array;
+  readonly swTick0: Int32Array;
+  readonly swCause: Uint8Array;
+  readonly swCause0: Uint8Array;
+  /** pu of path the lateral move still costs, and its ticks left. */
+  readonly latLeft: Float64Array;
+  readonly latTicks: Int32Array;
+  /** Displacement and speed at the end of t − 1 (step A). */
+  readonly disp0: Float64Array;
+  readonly v0: Int32Array;
+  /** Step A: the runner ahead in her band and line within the wake (−1 = none), and the gap (pu). */
+  readonly lnAhead: Int8Array;
+  readonly lnGap: Float64Array;
+  /** Step A: 1 = someone alongside in her other line (within her slot). */
+  readonly side: Uint8Array;
+  /** 1 = boxed in now (wants to move, the other line is taken alongside). */
+  readonly boxed: Uint8Array;
+  /** 1 = she passed by the side in this flight (her dive gains `sideDivePm`). */
+  readonly sideWon: Uint8Array;
+  /** Ticks in a row blocked behind the runner ahead in her line (step B8 of the ticks before). */
+  readonly blkRun: Int32Array;
+  /** Door decisions taken this race (index of slot 31's byte) and 1 = she closed one this flight. */
+  readonly doorTests: Uint8Array;
+  readonly doorFlight: Uint8Array;
+  /** Ledger. */
+  readonly lineSwitches: Int32Array;
+  readonly passesSide: Int32Array;
+  readonly doorsClosed: Int32Array;
+  readonly boxedTicks: Int32Array;
+  readonly blockedTicks: Int32Array;
+  readonly lineMm: Float64Array;
+  /** Stamina pays effort (2026-11-09): µhp the maneuvers cost (hits and drips), for the ledger. */
+  readonly hpCost: Float64Array;
+  /** µhp of traffic drip since her last sprint plan (replans past `hpReplanHp`). */
+  readonly dripSince: Float64Array;
+  /** The kick on low hp (2026-11-09): me of energy her spurt and kick may not spend (her last plan). */
+  readonly kickLock: Float64Array;
+  /** The kick on low hp: ‰ taken off her final cruise to reach the line on her hp (0 = none). */
+  readonly paceCut: Int32Array;
+  /** The kick on low hp: µhp the traffic may not take her under (`lineHp` at her last hit, takeoff or plan). */
+  readonly hpFloor: Float64Array;
+  /** 1 = the `pass` candidate (i × MAX_LANES + j) is by the side (same band, other line). */
+  readonly passSide: Uint8Array;
 };
 
 /**
@@ -347,6 +570,7 @@ function createTables(): RaceTables {
   const NPS = NS * 3;
   return {
     style: i32(N),
+    phys: i32(N),
     position: i32(N),
     rule: i32(N),
     pwBroken: i32(N),
@@ -389,6 +613,39 @@ function createTables(): RaceTables {
     need: i32(NS),
     jr: i32(NS),
     jrStart: i32(N),
+    flN: i32(N),
+    flA: f64(N * FLIGHTS_MAX),
+    flB: f64(N * FLIGHTS_MAX),
+    flBand: i32(N * FLIGHTS_MAX),
+    flCorn: u8(N * FLIGHTS_MAX),
+    flChain: u8(N * FLIGHTS_MAX),
+    flClimb: i32(N * FLIGHTS_MAX),
+    flHold: i32(N * FLIGHTS_MAX),
+    flRes0: i32(N),
+    keepFlight: i32(N),
+    jumpCovered: u8(NS),
+    climbMe: i32(N),
+    diveV: i32(N * 4),
+    diveSkillFrom: i32(N),
+    diveSkillPm: i32(N),
+    vCAir: i32(N * 2 * 3 * MAX_SEGMENTS),
+    vCAirHi: i32(N * 2 * 3 * MAX_SEGMENTS),
+    vCAirLo: i32(N * 2 * 3 * MAX_SEGMENTS),
+    nerveP: i32(N),
+    u29: f64(N),
+    liftH: i32(N),
+    airOff: i32(N * FLIGHTS_MAX),
+    dirtyPm: i32(N),
+    knockAt: i32(N),
+    lnSideAt: i32(N),
+    lnLook: f64(N),
+    lnSlot: f64(N),
+    lnSwitch: f64(N),
+    lnOutPm: i32(N),
+    lnDoorP: i32(N),
+    distPm: i32(N),
+    distAirPm: i32(N),
+    u31: f64(N),
     pulseFrame: u8(N),
     airPm: i32(NS),
     stoop: i32(NPS),
@@ -468,11 +725,12 @@ function createState(): RaceState {
     isPulseTick: u8(N),
     freeTick: u8(N),
     burstChain: u8(N),
-    tickFlags: new Uint16Array(N),
+    tickFlags: i32(N),
     boostRow: i32(N),
     key: f64(N),
     ahead: i32(N),
     posFrac: i32(N),
+    rankOrder: i32(N + 2),
     place: i32(N),
     deadHeat: u8(N),
     timeTicks: i32(N),
@@ -497,6 +755,90 @@ function createState(): RaceState {
     jumpsOk: i32(N),
     jumpsFailed: i32(N),
     detours: i32(N),
+    alt: i32(N),
+    flPhase: i32(N),
+    flK: i32(N),
+    flCur: i32(N),
+    altTarget: i32(N),
+    altTimer: i32(N),
+    fromBand: i32(N),
+    fallCause: i32(N),
+    flRes: i32(N),
+    flHoldLeft: i32(N),
+    holdPu: f64(N),
+    holdBilled: i32(N),
+    airTicks: i32(N),
+    flights: i32(N),
+    dives: i32(N),
+    grandDives: i32(N),
+    diveGainMm: f64(N),
+    hpRested: f64(N),
+    energyClimb: f64(N),
+    energyHold: f64(N),
+    noLift: i32(N),
+    jumpsCovered: i32(N),
+    surge: i32(N),
+    pos0: f64(N),
+    dirty: u8(N),
+    dirtyRun: i32(N),
+    escaped: u8(N),
+    knocked: u8(N),
+    belowCounted: u8(N),
+    dirtySince: i32(N),
+    flApex: i32(N),
+    climbTk: i32(N),
+    passesAir: i32(N),
+    passesDive: i32(N),
+    peakMms: i32(N),
+    apexMax: i32(N),
+    dirtyTicks: i32(N),
+    holdExtra: f64(N),
+    overs: i32(N),
+    knocks: i32(N),
+    falls: i32(N),
+    belowPlan: i32(N),
+    passSince: i32(N * N),
+    passKind: u8(N * N),
+    skHeld: u8(N * MAX_SKILLS),
+    skHeldTicks: i32(N * MAX_SKILLS),
+    heldN: u8(N),
+    alt0: u8(N),
+    diveAdded: i32(N),
+    diveAirMm: f64(N),
+    overWon: u8(N),
+    nerveTests: i32(N),
+    nerveHeld: i32(N),
+    towTicks: i32(N),
+    line: u8(N),
+    line0: u8(N),
+    swTick: i32(N),
+    swTick0: i32(N),
+    swCause: u8(N),
+    swCause0: u8(N),
+    latLeft: f64(N),
+    latTicks: i32(N),
+    disp0: f64(N),
+    v0: i32(N),
+    lnAhead: new Int8Array(N),
+    lnGap: f64(N),
+    side: u8(N),
+    boxed: u8(N),
+    blkRun: i32(N),
+    sideWon: u8(N),
+    doorTests: u8(N),
+    doorFlight: u8(N),
+    lineSwitches: i32(N),
+    passesSide: i32(N),
+    doorsClosed: i32(N),
+    boxedTicks: i32(N),
+    blockedTicks: i32(N),
+    lineMm: f64(N),
+    hpCost: f64(N),
+    dripSince: f64(N),
+    kickLock: f64(N),
+    paceCut: i32(N),
+    hpFloor: f64(N),
+    passSide: u8(N * N),
   };
 }
 
@@ -649,6 +991,7 @@ export function buildTables(
   A: RaceArena,
 ): void {
   const R = ruleset.race;
+  const F = flightOf(ruleset);
   const T = A.tables;
   const { vBase: VBASE, kBoost: KBOOST, posPerMm, velPerMms } = engineUnits(R);
   const block = R.rngBlock;
@@ -660,11 +1003,16 @@ export function buildTables(
     if (e === undefined) continue;
     const tr = e.traits;
     const terms = compileRule(R, e.rule);
-    const st = styleCode(e.style);
+    const wingCode = styleCode(e.style);
+    const neutralStyle = F !== null && F.neutralStyles;
+    // the ground physics of the style; with neutral styles a code no STYLE_* test matches
+    const st = neutralStyle ? STYLE_NEUTRAL : wingCode;
+    const physName = neutralStyle ? "hover" : e.style; // name-keyed terms: hover's are all neutral
     const pc = positionCode(e.position);
     const rc = ruleCode(e.rule);
     const { agility, stamina, technique, courage, intelligence } = e.stats;
-    T.style[i] = st;
+    T.style[i] = wingCode;
+    T.phys[i] = st;
     T.position[i] = pc;
     T.rule[i] = rc;
 
@@ -683,7 +1031,20 @@ export function buildTables(
     const vA = agilityCruiseVu(R, VBASE, agility);
     T.vA[i] = vA;
     for (let s = 0; s < G.S; s++) T.f[is(i, s)] = segmentFactor(R, G, s, agility, tr, terms);
-    const sp = R.stylePace[e.style];
+    if (F !== null && F.groundGripPm !== 1000 && st === STYLE_GROUND)
+      for (let s = 0; s < G.S; s++) {
+        // v3 draft R10: ground wings pay groundGripPm of the curves, water and climb penalty
+        const type = G.segType[s] ?? 0;
+        const f = T.f[is(i, s)] ?? 1000;
+        if (f < 1000 && (type === SEG_CURVES || type === SEG_WATER || type === SEG_CLIMB))
+          T.f[is(i, s)] = 1000 - floorDiv((1000 - f) * F.groundGripPm, 1000);
+      }
+    // distance letters (2026-11-09): her letter for this course's distance (0 = A or none)
+    const dPm = F !== null ? distanceLetterPm(F, e.distanceAptitude) : 0;
+    const dist = F !== null ? distanceCode(F, G.lengthMm) : 0;
+    T.distPm[i] = dPm;
+    T.distAirPm[i] = F !== null ? floorDiv(dPm * (F.distanceAirPm[dist] ?? 0), 1000) : 0;
+    const sp = R.stylePace[physName];
     for (let b = 0; b < 2; b++) {
       const pw = powerVariant(R, e.powerToWeight, b);
       const pwc = variantPower(R, R.pwCruiseWeight, pw, b);
@@ -696,11 +1057,38 @@ export function buildTables(
           const pace = T.pace[i * 3 + ph] ?? 0;
           T.vC[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, f, sp[ph] ?? 1000, pace);
           T.vMin[ibps(i, b, ph, s)] = exhaustSpeedVu(R, VBASE, pwc, f, pace);
+          // v3 draft R5: the air cruise sits at the centre of her pace window (no draw)
+          // L1b (feel round 1): `airPacePm` ‰ of her pace draw of the phase, like the ground
+          if (F !== null) {
+            // F5 (round 5): over water and climbs the air pays airTerrainPm of the penalty, and
+            // from airTerrainFreeBand up none of it
+            const type = G.segType[s] ?? 0;
+            const terrain = type === SEG_WATER || type === SEG_CLIMB;
+            const fAir =
+              terrain && f < 1000 ? 1000 - floorDiv((1000 - f) * F.airTerrainPm, 1000) : f;
+            const paceAir = c + floorDiv((pace - c) * F.airPacePm, 1000);
+            T.vCAir[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, fAir, sp[ph] ?? 1000, paceAir);
+            T.vCAirHi[ibps(i, b, ph, s)] =
+              terrain && f < 1000
+                ? cruiseVu(vA, pwc, 1000, sp[ph] ?? 1000, paceAir)
+                : (T.vCAir[ibps(i, b, ph, s)] ?? 0);
+            if (F.allFly) {
+              const fLo =
+                terrain && f < 1000 ? 1000 - floorDiv((1000 - f) * F.skimTerrainPm, 1000) : f;
+              T.vCAirLo[ibps(i, b, ph, s)] = cruiseVu(vA, pwc, fLo, sp[ph] ?? 1000, paceAir);
+            }
+          }
         }
         const a = accelVu(R, technique, pwc, f, terms);
         T.acc[ibs(i, b, s)] = a;
         T.accStart[ibs(i, b, s)] =
-          st === STYLE_GLIDE ? floorDiv(a * R.style.glideStartAccelPm, 1000) : a;
+          F !== null && F.leadGlidePos
+            ? pc === POS_LEAD
+              ? floorDiv(a * F.leadStartAccelPm, 1000)
+              : a
+            : st === STYLE_GLIDE
+              ? floorDiv(a * R.style.glideStartAccelPm, 1000)
+              : a;
       }
       const B = boostThrustVu(KBOOST, pwb);
       const Bp = pulseThrustVu(R, KBOOST, pwb);
@@ -728,11 +1116,11 @@ export function buildTables(
     T.heatCap[i] = heatCap;
     T.capLim[i] = terms.capLimRaw ? D : heatCap;
     T.coolTick[i] = coolTick(R, e.dissipation, terms);
-    T.dmgTick[i] = overheatDamage(R, e.style, terms);
+    T.dmgTick[i] = F !== null && F.noWear ? 0 : overheatDamage(R, physName, terms);
     T.regenTick[i] = terms.regenMe + tr.regenMe;
     T.Emax[i] = e.energy * 1000;
     T.durMax[i] = e.durabilityMax * 1000;
-    T.styleDmg[i] = styleDamagePm(R, e.style);
+    T.styleDmg[i] = styleDamagePm(R, physName);
     T.heatPenalty[i] = terms.heatPenalty ? 1 : 0;
     T.clampHeat[i] = terms.clampHeatAtD ? 1 : 0;
     T.licensed[i] =
@@ -788,6 +1176,74 @@ export function buildTables(
       T.sMax[ib(i, b)] = pulseFrame ? floorDiv(unit, R.pulseTicks + R.pulseCooldownTicks) : Bon;
     }
 
+    // v3 draft R2-R3: the flight plan, before the jump reserve (a covered jump needs no lift)
+    if (F !== null) {
+      // F9: the nerve test's chance and its pre-drawn slot
+      T.nerveP[i] = Math.max(
+        F.nerveMinPm,
+        F.nerveBasePm - floorDiv(F.nerveSlopePm * Math.min(courage, 1200), 1200),
+      );
+      T.u29[i] = A.U[i * block + 29] ?? 0;
+      // two lines per band (2026-11-08): each stat owns one part of the side move
+      const pu = posPerMm;
+      const I = Math.min(intelligence, 1200);
+      T.lnSideAt[i] = F.sideTicksMax - floorDiv((F.sideTicksMax - F.sideTicksMin) * I, 1200);
+      T.lnLook[i] = floorDiv(F.sideLookMm * I, 1200) * pu;
+      T.lnSlot[i] = (F.slotBaseMm - floorDiv(F.slotCourMm * Math.min(courage, 1200), 1200)) * pu;
+      const techPm =
+        F.switchTechHiPm -
+        floorDiv((F.switchTechHiPm - F.switchTechLoPm) * Math.min(technique, 1200), 1200);
+      T.lnSwitch[i] = floorDiv(F.switchMm * techPm, 1000) * pu;
+      T.lnOutPm[i] = Math.max(0, F.outPm - floorDiv(F.outAgiPm * Math.min(agility, 1200), 1200));
+      T.lnDoorP[i] = F.doorBasePm + floorDiv(F.doorIntPm * I, 1200);
+      T.u31[i] = A.U[i * block + 31] ?? 0;
+      // the mile is won on the line up high: off her distance she needs longer to pull out, the
+      // move costs more metres and she closes fewer doors
+      if (dPm !== 0 && dist === DIST_MILE) {
+        T.lnSideAt[i] = ceilDiv((T.lnSideAt[i] ?? 0) * (1000 + dPm), 1000);
+        T.lnSwitch[i] = ceilDiv((T.lnSwitch[i] ?? 0) * (1000 + dPm), 1000);
+        T.lnDoorP[i] = floorDiv((T.lnDoorP[i] ?? 0) * (1000 - dPm), 1000);
+      }
+    }
+    if (F !== null)
+      planFlights(F, G, T, i, posPerMm, liftF, courage, velPerMms, {
+        u28: A.U[i * block + 28] ?? 0,
+        u30: A.U[i * block + 30] ?? 0,
+        technique,
+        dist,
+        dPm,
+        ...(F.airTechRel
+          ? {
+              airTech: Math.max(
+                0,
+                600 +
+                  technique -
+                  floorDiv(agility + stamina + technique + courage + intelligence, 5),
+              ),
+            }
+          : {}),
+        ...(F.diveCourRel
+          ? {
+              diveCour: Math.max(
+                0,
+                600 + courage - floorDiv(agility + stamina + technique + courage + intelligence, 5),
+              ),
+            }
+          : {}),
+        ...(tr.diveSkill !== undefined ? { diveSkill: tr.diveSkill } : {}),
+      });
+    // stamina pays effort (2026-11-09): the bar budgets her plan's hits at hpPlanRefStamina
+    if (F !== null && F.hpPlanRefStamina > 0) {
+      const planned = plannedHitsHp(F, T, i);
+      if (planned > 0)
+        T.hpMax[i] =
+          (T.hpMax[i] ?? 0) +
+          floorDiv(
+            planned * 1_000_000 * 1_200_000,
+            F.hpPlanOwn ? (T.stamDiv[i] ?? 1) : staminaDivisor(R, F.hpPlanRefStamina),
+          );
+    }
+
     // reserves and budgets that read the tables above (14.4, 9.3)
     jumpReserve(G, T, i);
     for (let b = 0; b < 2; b++) budgetTables(R, G, T, i, b, VBASE, pulseCostMe);
@@ -837,7 +1293,7 @@ export function buildTables(
  * detours a jump segment at `detour` ‰ of its length; everything else is the distance itself.
  */
 export function routeDist(G: CourseGeometry, T: RaceTables, i: number, s: number, d: number) {
-  return T.style[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
+  return T.phys[i] === STYLE_GROUND && G.segType[s] === SEG_JUMP
     ? floorDiv(d * (T.detour[i] ?? 1000), 1000)
     : d;
 }
@@ -847,7 +1303,7 @@ export function routeDist(G: CourseGeometry, T: RaceTables, i: number, s: number
  * it is a ground runner (airborne, or on foot after a crash).
  */
 export function thrustable(G: CourseGeometry, T: RaceTables, i: number, s: number): boolean {
-  return !(G.segType[s] === SEG_JUMP && T.style[i] !== STYLE_GROUND);
+  return !(G.segType[s] === SEG_JUMP && T.phys[i] !== STYLE_GROUND);
 }
 
 /**
@@ -858,12 +1314,12 @@ export function thrustable(G: CourseGeometry, T: RaceTables, i: number, s: numbe
  * course's first jump: what the tank must keep for the jumps at the gun.
  */
 function jumpReserve(G: CourseGeometry, T: RaceTables, i: number): void {
-  if (T.style[i] === STYLE_GROUND) return; // zero-filled by reset
+  if (T.phys[i] === STYLE_GROUND) return; // zero-filled by reset
   const Emax = T.Emax[i] ?? 0;
   let ahead = 0;
   for (let s = G.S - 1; s >= 0; s--) {
     T.jr[is(i, s)] = ahead;
-    if (G.segType[s] !== SEG_JUMP) continue;
+    if (G.segType[s] !== SEG_JUMP || T.jumpCovered[is(i, s)] === 1) continue;
     const need = T.need[is(i, s)] ?? 0;
     if (need <= Emax) ahead = Math.max(need, (G.liftReq[s] ?? 0) * 1000 + ahead);
   }
@@ -894,7 +1350,7 @@ function budgetTables(
   vBase: number,
   pulseCostMe: number,
 ): void {
-  const ground = T.style[i] === STYLE_GROUND;
+  const ground = T.phys[i] === STYLE_GROUND;
   const hpMax = T.hpMax[i] ?? 0;
   const dkN = T.dK[i * 4] ?? 0;
   const dkF = T.dK[i * 4 + DK_FINAL] ?? 0;
@@ -998,6 +1454,7 @@ export function initState(ruleset: Ruleset, E: readonly RaceEntry[], A: RaceAren
     S.mode[i] = MODE_OFF;
     S.marginMm[i] = -1;
     S.hpEmptyMm[i] = -1;
+    S.flRes[i] = T.flRes0[i] ?? 0;
     initPulseLane(R, S.pulse, i, e.traits);
     for (let j = 0; j < MAX_SKILLS; j++) S.armed[ik(i, j)] = 1;
   }

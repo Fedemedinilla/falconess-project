@@ -249,6 +249,11 @@ function brokenSpeedText(speedPm: number | null): string {
   return speedPm === null || speedPm === 1000 ? "" : `velocidad ×${fixed(speedPm, 1000, 2)}`;
 }
 
+/** The takeoff style of the v3 draft (diseno-v3-vuelo.md §3), as the CLI names it. */
+function styleName(style: string): string {
+  return { lance: "Lanza", column: "Columna", ramp: "Rampa", turbine: "Turbina" }[style] ?? style;
+}
+
 function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: RaceLog): string {
   switch (item.kind) {
     case "pulses": {
@@ -293,6 +298,40 @@ function describeEvent(item: EventItem, tick: number, labels: RaceLabels, log: R
       return `meta ${item.place}º`;
     case "dnf":
       return "DNF";
+    case "takeoff":
+      return `despega (${styleName(item.style)}) a banda ${item.band} (−${milliUnits(item.cost)} energía, ${mps(item.vMms)} → ${mps(item.vAfterMms)} m/s, aire ${item.airPm >= 0 ? "+" : ""}${item.airPm} ‰)`;
+    case "dive":
+      return `PICADA desde banda ${item.fromBand}: +${mps(item.gainMms)} m/s (pico ${mps(item.vBeforeMms + item.gainMms)} m/s)`;
+    case "touchdown":
+      return `toca suelo desde banda ${item.fromBand}${item.cause === "energy" ? ` (sin energía para sostener, −${mps(item.lossMms)} m/s)` : item.cause === "knock" ? " (le bajaron la línea)" : item.cause === "nerve" ? ` (se achicó, −${mps(item.lossMms)} m/s)` : ""}`;
+    case "noLift":
+      return `SIN ENERGÍA: no despega (${milliUnits(item.have)} < ${milliUnits(item.need)})`;
+    case "hpHit":
+      return `físico −${milliUnits(item.hp)} (${{ takeoff: "despegue", dive: "picada", switch: "cambio de línea", fight: "lucha por la línea", door: "le cerraron la puerta" }[item.cause]}), quedan ${milliUnits(item.hpLeft)}`;
+    case "bandReached":
+      return `alcanza la banda ${item.band}`;
+    case "diveStart":
+      return `pliega las alas desde banda ${item.fromBand} a ${mps(item.vMms)} m/s${item.cause === "plan" ? "" : item.cause === "energy" ? " (sin energía)" : " (perdió la línea)"}`;
+    case "pass":
+      return `${item.band >= 1 ? "pasa en el aire" : "pasa con el impulso de la picada"} a la de carril ${item.otherLane + 1}`;
+    case "airDirty":
+      return item.on ? "aire sucio: otra adelante en su banda" : "sale del aire sucio";
+    case "lineChange":
+      return item.cause === "over"
+        ? `¡POR ARRIBA! sube a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`
+        : `LA BAJARON a banda ${item.toBand} tras ${ticksText(item.ticks)} de aire sucio`;
+    case "lineSwitch":
+      return `${item.cause === "door" ? "CIERRA LA PUERTA" : item.cause === "escape" ? "vuelve a la línea de adentro" : item.to === 1 ? "sale POR AFUERA" : "se mete POR ADENTRO"} en banda ${item.band}${item.diagonal ? " (en diagonal, sube y cambia de línea)" : ""}`;
+    case "boxedIn":
+      return `ENCERRADA en banda ${item.band}: la de carril ${item.otherLane + 1} al lado, la de carril ${item.aheadLane + 1} adelante`;
+    case "doorClosed":
+      return `CERRÓ LA PUERTA a la de carril ${item.otherLane + 1}`;
+    case "passSide":
+      return `pasa ${item.by === "outside" ? "POR AFUERA" : "POR ADENTRO"} a la de carril ${item.otherLane + 1}`;
+    case "nerve":
+      return item.held
+        ? `¡NO SE ACHICA! picada entre el tráfico +${mps(item.gainMms)} m/s (achicarse ${item.pPm / 10} %)`
+        : `SE ACHICÓ ante el tráfico: abre las alas (achicarse ${item.pPm / 10} %)`;
   }
 }
 

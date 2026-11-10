@@ -23,6 +23,13 @@
   },
   "preferredPosition": "closer",
   "uniqueSkills": ["stoop-strike"],
+  "passive": "talon-lock",
+  "distanceAptitude": {
+    "sprint": "A",
+    "mile": "A",
+    "medium": "B",
+    "long": "C"
+  },
   "sponsor": "koryu",
   "seasonGoals": [
     {

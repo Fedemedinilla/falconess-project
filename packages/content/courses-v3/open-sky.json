@@ -1,0 +1,39 @@
+{
+  "id": "open-sky",
+  "version": 1,
+  "traits": ["long"],
+  "textKey": "course.open-sky",
+  "segments": [
+    {
+      "type": "flat",
+      "length": 500
+    },
+    {
+      "type": "curves",
+      "length": 250,
+      "radius": 80
+    },
+    {
+      "type": "flat",
+      "length": 150
+    },
+    {
+      "type": "descent",
+      "length": 300,
+      "grade": 0.2
+    },
+    {
+      "type": "flat",
+      "length": 1000
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 80
+    },
+    {
+      "type": "flat",
+      "length": 400
+    }
+  ]
+}

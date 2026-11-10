@@ -4,7 +4,7 @@
   "source": {
     "kind": "random"
   },
-  "rulesets": ["v2"],
+  "rulesets": ["v2", "v3"],
   "auto": true,
   "weight": 12,
   "textKey": "ev.luck-veteran-visit",

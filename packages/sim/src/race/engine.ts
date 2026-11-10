@@ -1,9 +1,26 @@
-import { floorDiv, Rng, scale } from "@falconess/rng";
+import { ceilDiv, floorDiv, Rng, scale } from "@falconess/rng";
 import type { Course, RaceEntry, RaceLog, SprintPlanCause } from "@falconess/schema";
 import { SprintPlanCause as PlanCauses, RACE_FRAME_FLAGS } from "@falconess/schema";
 import { endBurst } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
 import { type Controller, createController, decide, inPack, rankSnapshot } from "./controller.js";
+import {
+  BAND_CEILING,
+  BAND_HIGH,
+  BAND_LOW,
+  bandHoldOf,
+  bandPu,
+  climbTicksOf,
+  DIST_LONG,
+  DIST_MILE,
+  distanceCode,
+  type FlightConstants,
+  flightOf,
+  holdLift,
+  holdMe,
+  jrNow,
+  wingOf,
+} from "./flight.js";
 import {
   buildCourseGeometry,
   type CourseGeometry,
@@ -17,7 +34,6 @@ import {
   crashDamageMd,
   dashEnds,
   detourDisp,
-  drainMicro,
   finishMilliOf,
   liftMe,
   marginGapMm,
@@ -25,10 +41,18 @@ import {
   waterHitMd,
 } from "./physics.js";
 import { requestReplan, runSkills, type SkillSink, tickSkillTimers } from "./skills.js";
-import { createPlanReport, type PlanReport, planSprint } from "./sprint.js";
+import {
+  createPlanReport,
+  KICK_OFF,
+  type KickRule,
+  lineHp,
+  type PlanReport,
+  planSprint,
+} from "./sprint.js";
 import {
   buildTables,
   CAUSE_BROKEN,
+  CAUSE_EFFORT,
   CAUSE_JUMP,
   CAUSE_PHASE,
   createRaceArena,
@@ -46,9 +70,11 @@ import {
   F_PENDING_JUMP,
   F_PLAN_ACTIVE,
   F_REPLAN,
+  FLIGHTS_MAX,
   ib,
   ibps,
   ibs,
+  ik,
   initState,
   ips,
   is,
@@ -67,6 +93,9 @@ import {
   PH_FINAL,
   PH_MIDDLE,
   PH_START,
+  POS_LEAD,
+  SEG_CANYON,
+  SEG_DESCENT,
   SEG_FLAT,
   SEG_JUMP,
   SEG_WATER,
@@ -91,6 +120,8 @@ const FL = RACE_FRAME_FLAGS;
 /** Everything one race reads in its loop; built once per race, no per-tick allocation. */
 type Ctx = {
   readonly R: RaceConstants;
+  /** Flight constants of the v3 draft (design7); null for v1 and v2, which never fly. */
+  readonly F: FlightConstants | null;
   readonly G: CourseGeometry;
   readonly A: RaceArena;
   readonly T: RaceTables;
@@ -102,6 +133,10 @@ type Ctx = {
   readonly velPerMms: number;
   readonly pulseCostMe: number;
   readonly sink: SkillSink;
+  /** Stamina pays effort (2026-11-09): this course's distance (DIST_*; 0 in v1 and v2). */
+  readonly dist: number;
+  /** The kick on low hp (2026-11-09): this course's knees and pace (KICK_OFF when off). */
+  readonly kick: KickRule;
   /** Controller scratch and its event sink (9, 12). */
   readonly ctl: Controller;
   /** Scratch of the sprint plan (11.3). */
@@ -123,6 +158,46 @@ type Ctx = {
   beforeGroup: number;
   /** Index of each runner's finish event in the event list (−1 = none or detail "results"). */
   finishEvent: Int32Array;
+  /** Ruleset v3 log only: index of the `pass` (i × MAX_LANES + j) and `airDirty` candidates. */
+  passEvent: Int32Array;
+  dirtyEvent: Int32Array;
+  /** Two lines per band: index of the `passSide` candidate of each `pass` candidate. */
+  passSideEvent: Int32Array;
+  /** Two lines: someone switched line at t − 1 (step A2); else no door can open or close this tick. */
+  swLast: boolean;
+  /** `pass` candidates still waiting for their 8 ticks (0: step C2 skips the pending scan). */
+  passPending: number;
+  /** Pending passes of each passer (row i of passSince), so step C2 visits only those rows. */
+  passRow: Int32Array;
+  /** Runners unfinished at the start of the tick (bit per lane): the snapshot's live set (F9). */
+  live: number;
+  /**
+   * PERF-2: the ground drain's last inputs and result per lane (a pure function of vOut and dK in
+   * a race; the cruise keeps them for many ticks). NaN = none yet.
+   */
+  drainV: Float64Array;
+  drainK: Float64Array;
+  drainOut: Float64Array;
+  /**
+   * PERF-2: the last air snapshot found nobody holding a band, so every lane's dirt, line
+   * neighbour and `airDirty` run are idle (only the snapshot writes them).
+   */
+  airQuiet: boolean;
+  /** PERF-2: the air cruise target's last inputs and value per lane (NaN = none yet). */
+  cruiseCell: Float64Array;
+  cruiseAlt: Float64Array;
+  cruiseAir: Float64Array;
+  cruiseDraft: Float64Array;
+  cruiseCut: Float64Array;
+  cruiseTa: Float64Array;
+  /** PERF-2: the hold's last (band, vOut, m) per lane and what they gave (pu, extra energy). */
+  holdA: Float64Array;
+  holdV: Float64Array;
+  holdM: Float64Array;
+  holdInc: Float64Array;
+  holdX: Float64Array;
+  /** Each lane's passive id (the log names the passive behind a dive, ADR-0009). */
+  readonly passiveIds: readonly (string | null)[];
 };
 
 /**
@@ -139,6 +214,20 @@ export function simulateRace(
   opts: SimulateOptions = {},
 ): RaceLog {
   return runRace(ruleset, entries, course, seed, opts, null);
+}
+
+/**
+ * `simulateRace` with step B run in reverse lane order (INV-4 property tests only, not exported by
+ * the index): the results must not change, only the order of the events within a tick.
+ */
+export function simulateRaceReversed(
+  ruleset: Ruleset,
+  entries: readonly RaceEntry[],
+  course: Course,
+  seed: string,
+  opts: SimulateOptions = {},
+): RaceLog {
+  return runRace(ruleset, entries, course, seed, opts, null, true);
 }
 
 /** `simulateRace` with a probe called after every tick (property tests only). */
@@ -160,6 +249,7 @@ function runRace(
   seed: string,
   opts: SimulateOptions,
   probe: RaceProbe | null,
+  reverse = false,
 ): RaceLog {
   validateRace(ruleset, entries, course, seed);
   const R = ruleset.race;
@@ -181,9 +271,13 @@ function runRace(
   initState(ruleset, E, A);
 
   const units = engineUnits(R);
+  // PERF-2: the drain divides by vBase written out; floorDiv's own check, once per race
+  if (units.vBase === 0) throw new Error("floorDiv by zero");
   const rec = new RaceRecorder(full, E, R.log.sampleEveryTicks);
   const c: Ctx = {
     R,
+    passiveIds: E.map((e) => e.passive),
+    F: flightOf(ruleset),
     G,
     A,
     T: A.tables,
@@ -193,9 +287,31 @@ function runRace(
     vBase: units.vBase,
     posPerMm: units.posPerMm,
     velPerMms: units.velPerMms,
-    pulseCostMe: floorDiv(R.kE * R.pulseCostMult, 1000),
+    pulseCostMe: Math.floor((R.kE * R.pulseCostMult) / 1000),
+    dist: (() => {
+      const F0 = flightOf(ruleset);
+      return F0 !== null ? distanceCode(F0, G.lengthMm) : 0;
+    })(),
+    kick: (() => {
+      const F0 = flightOf(ruleset);
+      if (F0 === null) return KICK_OFF;
+      const d = distanceCode(F0, G.lengthMm);
+      const hiPm = F0.kickHiPm[d] ?? 0;
+      return hiPm > 0
+        ? { hiPm, loPm: F0.kickLoPm[d] ?? 0, pace: F0.kickPace, paceMinPm: F0.kickPaceMinPm }
+        : KICK_OFF;
+    })(),
     sink: {
-      onSkill: (i, j, p, u, k) => rec.skill(c.t, i, posMm(c, i), j, p, u, k),
+      onSkill: (i, j, p, u, k) => {
+        rec.skill(c.t, i, posMm(c, i), j, p, u, k);
+        // ruleset v3 (L7): a skill with an effect that fires in the air is held until touchdown
+        const x = ik(i, j);
+        if (c.F?.heldSkill && flag(c.S, i, F_AIRBORNE) && (c.T.skDur[x] ?? 0) > 0) {
+          if (c.S.skHeld[x] !== 1) c.S.heldN[i] = (c.S.heldN[i] ?? 0) + 1;
+          c.S.skHeld[x] = 1;
+          c.S.skHeldTicks[x] = 0;
+        }
+      },
       onMiss: (i, j, p, u) => rec.skillMiss(c.t, i, posMm(c, i), j, p, u),
     },
     ctl: createController({
@@ -214,6 +330,28 @@ function runRace(
     groupFinish: -1,
     beforeGroup: -1,
     finishEvent: new Int32Array(MAX_LANES).fill(-1),
+    passEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
+    dirtyEvent: new Int32Array(MAX_LANES).fill(-1),
+    passSideEvent: new Int32Array(MAX_LANES * MAX_LANES).fill(-1),
+    swLast: false,
+    passPending: 0,
+    passRow: new Int32Array(MAX_LANES),
+    live: 0,
+    drainV: new Float64Array(MAX_LANES).fill(Number.NaN),
+    drainK: new Float64Array(MAX_LANES).fill(Number.NaN),
+    drainOut: new Float64Array(MAX_LANES),
+    airQuiet: false,
+    cruiseCell: new Float64Array(MAX_LANES).fill(Number.NaN),
+    cruiseAlt: new Float64Array(MAX_LANES),
+    cruiseAir: new Float64Array(MAX_LANES),
+    cruiseDraft: new Float64Array(MAX_LANES),
+    cruiseCut: new Float64Array(MAX_LANES),
+    cruiseTa: new Float64Array(MAX_LANES),
+    holdA: new Float64Array(MAX_LANES).fill(Number.NaN),
+    holdV: new Float64Array(MAX_LANES).fill(Number.NaN),
+    holdM: new Float64Array(MAX_LANES).fill(Number.NaN),
+    holdInc: new Float64Array(MAX_LANES),
+    holdX: new Float64Array(MAX_LANES),
   };
   const S = c.S;
 
@@ -234,15 +372,21 @@ function runRace(
     let startUnfinished = 0;
     for (let i = 0; i < n; i++)
       if (((S.flags[i] ?? 0) & F_FINISHED) === 0) startUnfinished |= 1 << i;
+    // A2. ruleset v3 (L3): the air snapshot of end-of-(t − 1), the same for every lane
+    c.live = startUnfinished;
+    if (c.F !== null) airSnapshot(c, c.F, startUnfinished);
     // B. every unfinished runner in lane order
     let nCross = 0;
-    for (let i = 0; i < n; i++) {
+    for (let q = 0; q < n; q++) {
+      const i = reverse ? n - 1 - q : q;
       if ((startUnfinished & (1 << i)) === 0) continue;
       if (runnerTick(c, i)) crossers[nCross++] = i;
     }
     unfinished -= nCross;
     // C. finishers of tick t: places, dead heats, margins
     if (nCross > 0) placeFinishers(c, crossers, nCross, startUnfinished);
+    // C2. ruleset v3 log: passes in the air or in a dive surge (no physics reads them)
+    if (c.F !== null) passTick(c, startUnfinished);
     // D. frame row T = t + 1 when due
     if (full) {
       const row = t + 1;
@@ -261,6 +405,7 @@ function runRace(
 
   // E. runners unfinished at maxTicks: DNF, placed after every finisher by position, then lane
   if (unfinished > 0) markDnfs(c, t);
+  if (c.F !== null) closeAirLog(c, t);
 
   // F. materialise the log
   const log: RaceLog = {
@@ -275,8 +420,8 @@ function runRace(
     maxTicks,
     geometry: logGeometry(ruleset, G),
     entries: E.map(cloneEntry),
-    derived: buildDerived(ruleset, E, G, A),
-    results: buildResults(E, A, rec),
+    derived: buildDerived(ruleset, E, G, A, full),
+    results: buildResults(E, A, rec, c.F, c.posPerMm),
   };
   if (full) {
     log.frames = rec.frames();
@@ -311,15 +456,17 @@ function posMm(c: Ctx, i: number): number {
 function runnerTick(c: Ctx, i: number): boolean {
   const { R, G, T, S, rec } = c;
   const t = c.t;
+  // the ruleset's flight constants never change in a race (one load, not one per read)
+  const F = c.F;
 
   // B1. phase; final entry (heat-to-energy); plan point
   const pos = S.pos[i] ?? 0;
   const ph = phaseOf(G, pos);
-  if (ph === PH_FINAL && !flag(S, i, F_FINAL_ENTERED)) {
+  if (ph === PH_FINAL && ((S.flags[i] ?? 0) & F_FINAL_ENTERED) === 0) {
     setFlag(S, i, F_FINAL_ENTERED);
     heatToEnergy(c, i);
   }
-  if (!flag(S, i, F_PLAN_ACTIVE) && pos >= (T.planPoint[i] ?? 0)) {
+  if (((S.flags[i] ?? 0) & F_PLAN_ACTIVE) === 0 && pos >= (T.planPoint[i] ?? 0)) {
     setFlag(S, i, F_PLAN_ACTIVE);
     requestReplan(S, i, CAUSE_PHASE);
   }
@@ -332,28 +479,51 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B3. skills in id order
   const seg = S.seg[i] ?? 0;
-  const segType = G.segType[seg] ?? SEG_FLAT;
-  runSkills(R, T, S, i, ph, segType, c.sink);
+  const segType =
+    F?.diveDescent === true &&
+    S.flPhase[i] === 3 &&
+    (S.fromBand[i] ?? 0) >= 2 &&
+    S.fallCause[i] !== 1
+      ? SEG_DESCENT
+      : (G.segType[seg] ?? SEG_FLAT);
+  // PERF-2: a runner with no skill loops over nothing (the call is skipped, the same reads)
+  if ((T.nSkills[i] ?? 0) > 0) runSkills(R, T, S, i, ph, segType, c.sink);
 
   // B4. a jump entered last tick resolves now, after skills
-  if (flag(S, i, F_PENDING_JUMP) && !resolveJump(c, i, ph)) {
+  if (((S.flags[i] ?? 0) & F_PENDING_JUMP) !== 0 && !resolveJump(c, i, ph)) {
     stalledTick(c, i);
     return false;
+  }
+
+  // B4b. v3 draft (design7 R1-R4, R7): planned takeoff, climb, end of flight, descent, dive
+  // (on the ground, only when her next planned takeoff point is reached: flightTick's phase 0)
+  if (F !== null) {
+    const k = S.flK[i] ?? 0;
+    if (
+      (S.flPhase[i] ?? 0) !== 0 ||
+      (k < (T.flN[i] ?? 0) && pos >= (T.flA[i * FLIGHTS_MAX + k] ?? 0))
+    )
+      flightTick(c, i, F);
   }
 
   // B5. the tick's single overheat flag
   const heat0 = S.heat[i] ?? 0;
   const over = heat0 > (T.heatCap[i] ?? 0);
-  if (over !== flag(S, i, F_OVER)) {
+  if (over !== (((S.flags[i] ?? 0) & F_OVER) !== 0)) {
     if (over) setFlag(S, i, F_OVER);
     else clearFlag(S, i, F_OVER);
     rec.overheat(t, i, posMm(c, i), over, heat0);
   }
 
   // B6. sprint plan: the first at the plan point, then at most maxReplans replans (11.1)
-  if (flag(S, i, F_REPLAN)) {
+  if (((S.flags[i] ?? 0) & F_REPLAN) !== 0) {
     clearFlag(S, i, F_REPLAN);
-    if ((S.planCount[i] ?? 0) <= R.maxReplans) sprintPlan(c, i);
+    // the kick on low hp: the body's replans (a hit, the drip) are never capped
+    if (
+      (S.planCount[i] ?? 0) <= R.maxReplans ||
+      (c.kick.hiPm > 0 && F?.kickReplanFree === true && S.replanCause[i] === CAUSE_EFFORT)
+    )
+      sprintPlan(c, i);
   }
 
   // B7. decision: mode, accumulator, gates, licence, free boost, pulse state machine (9, 12)
@@ -361,28 +531,52 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B8. speed (5)
   const b = S.b[i] ?? 0;
-  const exhausted = flag(S, i, F_EXHAUSTED);
-  const airborne = flag(S, i, F_AIRBORNE);
-  const style = T.style[i] ?? 0;
+  const exhausted = ((S.flags[i] ?? 0) & F_EXHAUSTED) !== 0;
+  const airborne = ((S.flags[i] ?? 0) & F_AIRBORNE) !== 0;
+  const style = T.phys[i] ?? 0;
   const pack = inPack(R, S, i);
   let tgt = (exhausted ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
-  const drafting = style === STYLE_HOVER && ph === PH_MIDDLE && pack && !exhausted;
+  // the kick on low hp: she paces her final cruise to reach the line on what she has
+  const cut = S.paceCut[i] ?? 0;
+  if (cut > 0 && ph === PH_FINAL && !exhausted)
+    tgt = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, Math.floor((tgt * (1000 - cut)) / 1000));
+  // F6 (round 5): in the air the tow is one rule by band and metres (step A2), for every wing
+  const airBand = airborne && F?.airDraftBand === true;
+  const drafting = airBand
+    ? S.dirty[i] === 1 && S.flPhase[i] === 2 && !exhausted
+    : style === STYLE_HOVER &&
+      ph === PH_MIDDLE &&
+      pack &&
+      !exhausted &&
+      !(airborne && F?.draftGroundOnly);
   if (drafting) {
-    tgt = floorDiv(tgt * R.style.hoverDraftPm, 1000);
+    if (!airBand) tgt = Math.floor((tgt * R.style.hoverDraftPm) / 1000);
+    else S.towTicks[i] = (S.towTicks[i] ?? 0) + 1;
     S.draftTicks[i] = (S.draftTicks[i] ?? 0) + 1;
   }
   let vCore = S.vCore[i] ?? 0;
   if (!airborne) {
-    let dash = flag(S, i, F_DASH);
+    let dash = ((S.flags[i] ?? 0) & F_DASH) !== 0;
     if (dash && dashEnds(R, c.vBase, vCore, tgt)) {
       clearFlag(S, i, F_DASH);
       dash = false;
     }
     const a = (ph === PH_START ? T.accStart : T.acc)[ibs(i, b, seg)] ?? 0;
     const up = a + (S.skillAccel[i] ?? 0) + (dash ? R.kStartDash : 0);
-    vCore = approachVu(vCore, tgt, up, R.kDecel);
+    // `approachVu` written out (PERF-2: the same integers)
+    if (vCore < tgt) vCore = Math.min(tgt, vCore + Math.max(0, up));
+    else if (vCore > tgt) vCore = Math.max(tgt, vCore - R.kDecel);
     S.vCore[i] = vCore;
-  }
+  } else if (F?.airCruise && (S.flPhase[i] === 2 || (F.neutralStyles && S.flPhase[i] === 1)))
+    vCore = airCruiseTick(
+      c,
+      i,
+      b,
+      ph,
+      seg,
+      exhausted,
+      drafting ? (airBand ? wingOf(F, T.style[i] ?? 0).draftPm : R.style.hoverDraftPm) : 1000,
+    );
   const boostOn = S.boostOn[i] === 1;
   const pulseTick = S.isPulseTick[i] === 1;
   let thrust = 0;
@@ -393,15 +587,38 @@ function runnerTick(c: Ctx, i: number): boolean {
           1000,
         )
       : (T.B[ib(i, b)] ?? 0);
-    thrust = floorDiv(raw * (T.stoop[ips(i, ph, seg)] ?? 1000), 1000);
+    thrust = Math.floor((raw * (T.stoop[ips(i, ph, seg)] ?? 1000)) / 1000);
   }
-  const vTot = airborne ? vCore : Math.max(0, vCore + thrust + (S.skillSpeed[i] ?? 0));
+  let surge = 0;
+  if (!airborne && (S.surge[i] ?? 0) > 0) {
+    // v3 draft, `diveSurge` knob: the dive's surge decays by kDecel on top of the body speed
+    surge = S.surge[i] ?? 0;
+    S.surge[i] = Math.max(0, surge - R.kDecel);
+  } else if (airborne && S.flPhase[i] === 3 && (S.surge[i] ?? 0) > 0 && F?.diveAirShare) {
+    // F2 (round 5): the share of the dive gained so far carries her down, undecayed; with neutral
+    // styles it decays by kDecel as on the ground, so a slow fall gains no metres over a quick one
+    surge = S.surge[i] ?? 0;
+    S.diveAirMm[i] = (S.diveAirMm[i] ?? 0) + surge;
+    if (F.neutralStyles) S.surge[i] = Math.max(0, surge - R.kDecel);
+  }
+  const vTot = airborne
+    ? vCore + surge
+    : Math.max(0, vCore + thrust + surge + (S.skillSpeed[i] ?? 0));
   const penalised =
     over &&
     T.heatPenalty[i] === 1 &&
     !airborne &&
     !(T.heatImmune[i] === 1 && pos < (T.immuneUntil[i] ?? 0));
-  const vOut = penalised ? penalisedVu(R, vTot) : vTot;
+  let vOut = penalised ? penalisedVu(R, vTot) : vTot;
+  // two lines per band: in her band and line nobody flies through the runner ahead
+  // PERF-2: nobody ahead in her line and no block running: `blocked` would only keep vOut
+  if (
+    F?.lines &&
+    airborne &&
+    S.flPhase[i] === 2 &&
+    ((S.lnAhead[i] ?? -1) >= 0 || (S.blkRun[i] ?? 0) !== 0)
+  )
+    vOut = blocked(c, F, i, vOut);
   S.vOut[i] = vOut;
 
   // B9. energy, regen, heat, telemetry clamp, overheat damage, broken wings (8.1)
@@ -415,7 +632,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.boostTicks[i * 3 + ph] = (S.boostTicks[i * 3 + ph] ?? 0) + 1;
     S.boostRow[i] = (S.boostRow[i] ?? 0) + 1;
   } else {
-    regen(c, i, pack);
+    if ((T.regenTick[i] ?? 0) !== 0) regen(c, i, pack);
     S.heat[i] = sub0(S.heat[i] ?? 0, T.coolTick[i] ?? 0);
   }
   if (T.clampHeat[i] === 1) S.heat[i] = Math.min(S.heat[i] ?? 0, T.D[i] ?? 0);
@@ -423,13 +640,53 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.overheatTicks[i] = (S.overheatTicks[i] ?? 0) + 1;
     if ((S.guardLeft[i] ?? 0) === 0) damage(c, i, T.dmgTick[i] ?? 0);
   }
+  // `climbAsHeld` written out
+  if (F !== null && (S.flPhase[i] === 2 || (F.neutralStyles && S.flPhase[i] === 1)))
+    holdTick(c, i, F, vOut, seg);
 
   // B10. hp drain at the moved speed (6)
   const q =
-    (ph === PH_FINAL ? DK_FINAL : 0) + (style === STYLE_GLIDE && S.ahead[i] === 0 ? DK_LEAD : 0);
-  const hp = sub0(S.hp[i] ?? 0, drainMicro(vOut, c.vBase, T.dK[i * 4 + q] ?? 0));
+    (ph === PH_FINAL ? DK_FINAL : 0) +
+    ((F?.leadGlidePos ? T.position[i] === POS_LEAD : style === STYLE_GLIDE) && S.ahead[i] === 0
+      ? DK_LEAD
+      : 0);
+  const dK = T.dK[i * 4 + q] ?? 0;
+  const drain0 =
+    F !== null && (S.alt[i] ?? 0) > 0
+      ? airDrain(c, i, F, vOut, dK)
+      : c.drainV[i] === vOut && c.drainK[i] === dK
+        ? (c.drainOut[i] ?? 0)
+        : drainGround(c, i, vOut, dK);
+  // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
+  // PERF-2: no dirt, not boxed, no block: `effortDrip` would add nothing
+  let drip =
+    F !== null &&
+    (S.alt[i] ?? 0) > 0 &&
+    ((S.dirty[i] ?? 0) > 0 || S.boxed[i] === 1 || (S.blkRun[i] ?? 0) > 0)
+      ? effortDrip(c, i, F, drain0)
+      : 0;
+  // the kick on low hp: the drip stops at her floor (the drain itself never does)
+  if (drip > 0 && F?.hpHitFloor === true)
+    drip = Math.min(drip, Math.max(0, (S.hp[i] ?? 0) - drain0 - (S.hpFloor[i] ?? 0)));
+  const drain = drain0 + drip;
+  const hp = sub0(S.hp[i] ?? 0, drain);
+  if (drip > 0) {
+    S.hpCost[i] = (S.hpCost[i] ?? 0) + Math.min(drip, S.hp[i] ?? 0);
+    const since = (S.dripSince[i] ?? 0) + drip;
+    S.dripSince[i] = since;
+    if (
+      F !== null &&
+      F.hpReplanHp > 0 &&
+      since >= F.hpReplanHp * 1_000_000 &&
+      ((S.flags[i] ?? 0) & F_PLAN_ACTIVE) !== 0
+    ) {
+      S.dripSince[i] = 0;
+      requestReplan(S, i, CAUSE_EFFORT);
+    }
+  }
   S.hp[i] = hp;
-  if (hp === 0 && !exhausted) {
+  // a maneuver's hit earlier this tick may have emptied her already (flag read fresh)
+  if (hp === 0 && ((S.flags[i] ?? 0) & F_EXHAUSTED) === 0) {
     setFlag(S, i, F_EXHAUSTED);
     S.hpEmptyMm[i] = posMm(c, i);
     rec.hpEmpty(t, i, posMm(c, i));
@@ -437,7 +694,10 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B11. move (ground detour as progress scaling, 14.5)
   const detouring = style === STYLE_GROUND && segType === SEG_JUMP;
-  const disp = detouring ? detourDisp(vOut, T.detour[i] ?? 1000) : vOut;
+  let disp = detouring ? detourDisp(vOut, T.detour[i] ?? 1000) : vOut;
+  // PERF-2: no lateral move and the inside line: `lineDisp` would keep disp
+  if (F?.lines && (S.alt[i] ?? 0) >= 1 && ((S.latTicks[i] ?? 0) > 0 || S.line[i] === 1))
+    disp = lineDisp(c, i, disp);
   const newPos = pos + disp;
   S.prevPos[i] = pos;
   S.pos[i] = newPos;
@@ -446,14 +706,19 @@ function runnerTick(c: Ctx, i: number): boolean {
   // ledger phase ticks here, in B11: a stalled tick (B2, or a failed jump at B4) never reaches it
   S.phaseTicks[i * 3 + ph] = (S.phaseTicks[i * 3 + ph] ?? 0) + 1;
   const mode = S.mode[i] ?? 0;
-  const tickFlags =
-    (boostOn ? FL.boosting : 0) |
-    (pulseTick ? FL.pulseBurst : 0) |
-    (over ? FL.overheated : 0) |
-    (detouring ? FL.detour : 0) |
-    (mode === MODE_PLAN ? FL.planSpurt : 0) |
-    (mode === MODE_KICK ? FL.kick : 0) |
-    (drafting ? FL.drafting : 0);
+  // frame flags feed the frames only: a results-only race skips them
+  const full = rec.full;
+  const tickFlags = !full
+    ? 0
+    : (boostOn ? FL.boosting : 0) |
+      (pulseTick ? FL.pulseBurst : 0) |
+      (over ? FL.overheated : 0) |
+      (detouring ? FL.detour : 0) |
+      (mode === MODE_PLAN ? FL.planSpurt : 0) |
+      (mode === MODE_KICK ? FL.kick : 0) |
+      (drafting ? FL.drafting : 0) |
+      (inDirtyAir(F, S, i) ? FL.dirtyAir : 0) |
+      (S.line[i] === 1 && (S.alt[i] ?? 0) >= 1 ? FL.lineOut : 0);
 
   // B12. finish, or segment changes (landing, repair, water hit, jump entry)
   if (newPos >= G.L) {
@@ -461,13 +726,13 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.finishMilli[i] = finishMilliOf(t, G.L, pos, disp);
     S.timeTicks[i] = t + 1;
     S.vFinishMms[i] = floorDiv(vOut, c.velPerMms);
-    S.tickFlags[i] = tickFlags | stateFlags(c, i);
+    if (full) S.tickFlags[i] = tickFlags | stateFlags(c, i);
     return true;
   }
   let s = seg;
   while (s < G.S - 1 && newPos >= (G.segEnd[s] ?? 0)) {
-    if (G.segType[s] === SEG_JUMP) {
-      if (flag(S, i, F_AIRBORNE)) {
+    if (G.segType[s] === SEG_JUMP && (S.flPhase[i] ?? 0) === 0) {
+      if (((S.flags[i] ?? 0) & F_AIRBORNE) !== 0) {
         const v0 = S.vCore[i] ?? 0;
         const v1 = scale(v0, T.landPm[i] ?? 1000);
         S.vCore[i] = v1;
@@ -476,7 +741,9 @@ function runnerTick(c: Ctx, i: number): boolean {
         rec.landing(t, i, posMm(c, i), loss);
       }
       clearFlag(S, i, F_AIRBORNE);
-      if (flag(S, i, F_PLAN_ACTIVE) && style !== STYLE_GROUND) requestReplan(S, i, CAUSE_JUMP);
+      S.alt[i] = 0;
+      if (((S.flags[i] ?? 0) & F_PLAN_ACTIVE) !== 0 && style !== STYLE_GROUND)
+        requestReplan(S, i, CAUSE_JUMP);
     }
     s += 1;
     S.seg[i] = s;
@@ -484,18 +751,25 @@ function runnerTick(c: Ctx, i: number): boolean {
     enterSegment(c, i, s, true);
   }
 
-  // B13. timers
-  tickSkillTimers(T, S, i);
-  S.guardLeft[i] = sub0(S.guardLeft[i] ?? 0, 1);
-  S.holdLeft[i] = sub0(S.holdLeft[i] ?? 0, 1);
-  S.tickFlags[i] = tickFlags | stateFlags(c, i);
+  // B13. timers (ruleset v3, L7: the skills held in the air wait for the touchdown)
+  if ((S.heldN[i] ?? 0) > 0) {
+    heldSkills(c, i);
+    tickSkillTimers(T, S, i, S.skHeld);
+  } else if ((S.activeSkills[i] ?? 0) !== 0) tickSkillTimers(T, S, i);
+  // the two countdowns, written only while they run (sub0 of 0 is 0)
+  const guard = S.guardLeft[i] ?? 0;
+  if (guard !== 0) S.guardLeft[i] = sub0(guard, 1);
+  const hold = S.holdLeft[i] ?? 0;
+  if (hold !== 0) S.holdLeft[i] = sub0(hold, 1);
+  if (full) S.tickFlags[i] = tickFlags | stateFlags(c, i);
   return false;
 }
 
 /** Step B6: plan (or replan) the final sprint and log the `sprintPlan` event (11, 20.4). */
 function sprintPlan(c: Ctx, i: number): void {
   const { R, G, T, S, plan: p } = c;
-  planSprint(R, G, T, S, i, p);
+  if (c.F?.hpHitFloor === true) S.hpFloor[i] = lineHp(R, G, T, i, S.b[i] ?? 0, S.pos[i] ?? 0);
+  planSprint(R, G, T, S, i, p, c.F !== null ? pendingDiveHp(c, c.F, i) : 0, c.kick);
   if (!c.rec.full) return;
   const cause: SprintPlanCause = PlanCauses.options[S.replanCause[i] ?? 0] ?? "phase";
   c.rec.sprintPlan(c.t, i, posMm(c, i), {
@@ -504,8 +778,8 @@ function sprintPlan(c: Ctx, i: number): void {
     reason: p.reason,
     energy: S.energy[i] ?? 0,
     energyPerceived: p.energyPerceived,
-    hp: floorDiv(S.hp[i] ?? 0, 1000),
-    hpPerceived: floorDiv(p.hpPerceived, 1000),
+    hp: Math.floor((S.hp[i] ?? 0) / 1000),
+    hpPerceived: Math.floor(p.hpPerceived / 1000),
     jumpReserve: p.jumpReserve,
     startMm: floorDiv(p.startPos, c.posPerMm),
     endMm: floorDiv(p.endPos, c.posPerMm),
@@ -513,7 +787,21 @@ function sprintPlan(c: Ctx, i: number): void {
     candidates: p.candidates,
     onTicks: p.onTicks,
     clean: p.clean,
+    ...(c.kick.hiPm > 0 ? { kickPm: p.kickPm, pacePm: p.pacePm } : {}),
   });
+}
+
+/**
+ * `drainMicro` written out (PERF-2: the same integers; `vBase` is checked once per race), kept per
+ * lane: the caller reuses `drainOut` while vOut and dK hold.
+ */
+function drainGround(c: Ctx, i: number, vOut: number, dK: number): number {
+  const rPm = Math.floor((vOut * 1000) / c.vBase);
+  const d = Math.floor((rPm * rPm * dK) / 1_000_000);
+  c.drainV[i] = vOut;
+  c.drainK[i] = dK;
+  c.drainOut[i] = d;
+  return d;
 }
 
 /** Frame flags that read the runner's state after its tick (20.4). */
@@ -526,7 +814,10 @@ function stateFlags(c: Ctx, i: number): number {
     ((f & F_AIRBORNE) !== 0 ? FL.airborne : 0) |
     ((f & F_BROKEN) !== 0 ? FL.broken : 0) |
     ((S.activeSkills[i] ?? 0) > 0 ? FL.skillActive : 0) |
-    ((f & F_FINISHED) !== 0 ? FL.finished : 0)
+    ((f & F_FINISHED) !== 0 ? FL.finished : 0) |
+    // v3 draft R1: the altitude band in two bits (always 0 in v1 and v2)
+    ((S.alt[i] ?? 0) & 1 ? FL.altLow : 0) |
+    ((S.alt[i] ?? 0) & 2 ? FL.altHigh : 0)
   );
 }
 
@@ -549,7 +840,7 @@ function stalledTick(c: Ctx, i: number): void {
   S.isPulseTick[i] = 0;
   S.freeTick[i] = 0;
   S.stallTicks[i] = (S.stallTicks[i] ?? 0) + 1;
-  S.tickFlags[i] = FL.stalled | stateFlags(c, i);
+  if (c.rec.full) S.tickFlags[i] = FL.stalled | stateFlags(c, i);
 }
 
 /** Regen of a non-boost tick (8.1): ×`packRegenMultPm` in the middle pack, capped at Emax. */
@@ -557,7 +848,7 @@ function regen(c: Ctx, i: number, pack: boolean): void {
   const { T, S } = c;
   const base = T.regenTick[i] ?? 0;
   if (base === 0) return;
-  const eff = pack ? floorDiv(base * (T.packRegen[i] ?? 1000), 1000) : base;
+  const eff = pack ? Math.floor((base * (T.packRegen[i] ?? 1000)) / 1000) : base;
   const before = S.energy[i] ?? 0;
   const after = addCap(before, eff, T.Emax[i] ?? 0);
   S.energy[i] = after;
@@ -566,6 +857,8 @@ function regen(c: Ctx, i: number, pack: boolean): void {
 
 /** Every durability loss (overheat, crash, water): sub0, ledger, then the break check of 8.4. */
 function damage(c: Ctx, i: number, md: number): void {
+  // v3 draft (neutral wings, owner 2026-11-08): no wear, wings never lose durability or break
+  if (c.F !== null && c.F.noWear) return;
   const { T, S } = c;
   const before = S.dur[i] ?? 0;
   const after = sub0(before, md);
@@ -586,7 +879,7 @@ function heatToEnergy(c: Ctx, i: number): void {
   if (ratio <= 0) return;
   const heat = S.heat[i] ?? 0;
   const energy = S.energy[i] ?? 0;
-  const gained = Math.min((T.Emax[i] ?? 0) - energy, floorDiv(heat * ratio, 1000));
+  const gained = Math.min((T.Emax[i] ?? 0) - energy, Math.floor((heat * ratio) / 1000));
   S.energy[i] = energy + gained;
   S.heat[i] = 0;
   S.energyFromHeat[i] = (S.energyFromHeat[i] ?? 0) + gained;
@@ -611,15 +904,41 @@ function enterSegment(c: Ctx, i: number, s: number, crossing: boolean): void {
     S.durabilityRepaired[i] = (S.durabilityRepaired[i] ?? 0) + (after - before);
     rec.repair(c.t, i, posMm(c, i), after - before);
   } else if (type === SEG_WATER) {
+    // F5 (round 5): flying over the Terreno líquido she never touches it
+    // stage 3 (allFly): a skim (low band) splashes, skimWaterPm of the hit
+    const skim = c.F !== null && c.F.allFly && (S.flPhase[i] ?? 0) !== 0 && S.alt[i] === BAND_LOW;
+    if (c.F?.airWaterFree && (S.flPhase[i] ?? 0) !== 0 && !skim) return;
+    if (c.F?.noWear) return; // no wear: the water costs no durability (its drag stays in f)
     const guarded = (S.guardLeft[i] ?? 0) > 0 || T.armor[i] === 1;
-    const hit = guarded ? 0 : waterHitMd(R, G.dragPm[s] ?? 0, T.styleDmg[i] ?? 1000);
+    const hit0 = guarded ? 0 : waterHitMd(R, G.dragPm[s] ?? 0, T.styleDmg[i] ?? 1000);
+    const hit = skim && c.F !== null ? Math.floor((hit0 * c.F.skimWaterPm) / 1000) : hit0;
+    if (skim && hit === 0) return;
     damage(c, i, hit);
     rec.waterHit(c.t, i, posMm(c, i), hit);
   } else if (type === SEG_JUMP) {
-    if (T.style[i] === STYLE_GROUND) {
+    // stage 3 (allFly): a skim crossing a Salto pays skimJumpPm of its lift (reserved in her plan)
+    // neutral wings: only a skim pays it, not a climb or a dive passing through the low band (a
+    // slow climb over a Salto paid it and fell, −7 m for the closer of the circuit)
+    const through = c.F !== null && c.F.neutralStyles && S.altTarget[i] !== BAND_LOW;
+    if (
+      c.F !== null &&
+      c.F.allFly &&
+      (S.flPhase[i] ?? 0) !== 0 &&
+      S.alt[i] === BAND_LOW &&
+      !through
+    ) {
+      const want = Math.floor(((G.liftReq[s] ?? 0) * 1000 * c.F.skimJumpPm) / 1000);
+      const energy = S.energy[i] ?? 0;
+      const spent = Math.min(energy, want);
+      S.energy[i] = energy - spent;
+      S.energyLift[i] = (S.energyLift[i] ?? 0) + spent;
+    }
+    if (T.phys[i] === STYLE_GROUND) {
       S.detours[i] = (S.detours[i] ?? 0) + 1;
       rec.detour(c.t, i, posMm(c, i), s);
-    } else setFlag(S, i, F_PENDING_JUMP);
+    } else if ((S.flPhase[i] ?? 0) !== 0)
+      S.jumpsCovered[i] = (S.jumpsCovered[i] ?? 0) + 1; // v3 draft R3: crossed in flight, no lift
+    else setFlag(S, i, F_PENDING_JUMP);
   }
 }
 
@@ -643,6 +962,7 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
     S.energy[i] = energy - spent;
     S.energyLift[i] = (S.energyLift[i] ?? 0) + spent;
     setFlag(S, i, F_AIRBORNE);
+    if (c.F !== null) S.alt[i] = 1; // v3 draft: a jump flies low
     S.vCore[i] = (flag(S, i, F_EXHAUSTED) ? T.vMin : T.vC)[ibps(i, b, ph, seg)] ?? 0;
     endBurst(S.pulse, i);
     S.jumpsOk[i] = (S.jumpsOk[i] ?? 0) + 1;
@@ -664,6 +984,1269 @@ function resolveJump(c: Ctx, i: number, ph: number): boolean {
   S.jumpsFailed[i] = (S.jumpsFailed[i] ?? 0) + 1;
   rec.jumpFail(c.t, i, posMm(c, i), lift, req, energy, dmg, stall);
   return false;
+}
+
+/**
+ * Step B8 in the air (v3 draft R5): holding a band, the body approaches her air cruise (L1b: her
+ * pace draw, `airPacePm`) × her own air on this flight (L1, drawn before tick 0) × the tow
+ * `draftPm` (round 4: the hover draft by her place in the field; round 5, F6: her wing's draft in
+ * another's wake in her band). Kept out of `runnerTick` so the ground path stays as small as v2's.
+ */
+function airCruiseTick(
+  c: Ctx,
+  i: number,
+  b: number,
+  ph: number,
+  seg: number,
+  exhausted: boolean,
+  draftPm: number,
+): number {
+  const { R, T, S } = c;
+  const F = c.F;
+  const alt = F !== null && climbAsHeld(F, S, i) ? (S.altTarget[i] ?? 0) : (S.alt[i] ?? 0);
+  // F5: from airTerrainFreeBand up the water and climbs cost the air nothing
+  const hi = F !== null && alt >= F.airTerrainFreeBand;
+  // stage 3 (allFly): the low band pays skimTerrainPm of the water and climb penalty
+  const lo = !hi && F !== null && F.allFly && alt === BAND_LOW;
+  const x = ibps(i, b, ph, seg);
+  const air =
+    F !== null && alt < F.ownAirFromBand
+      ? 0
+      : (T.airOff[i * FLIGHTS_MAX + Math.max(0, (S.flCur[i] ?? 1) - 1)] ?? 0) +
+        (F !== null && S.overWon[i] === 1 ? F.overAirPm : 0);
+  // the kick on low hp: the paced final cruise in the air too
+  const cut0 = S.paceCut[i] ?? 0;
+  const cut = cut0 > 0 && ph === PH_FINAL && !exhausted ? cut0 : 0;
+  // PERF-2: the target is a pure function of (table cell, band, air, draft, cut) for her in a
+  // race (her distance letter is fixed): kept while they hold
+  const cell = x * 2 + (exhausted ? 1 : 0);
+  let ta: number;
+  if (
+    c.cruiseCell[i] === cell &&
+    c.cruiseAlt[i] === alt &&
+    c.cruiseAir[i] === air &&
+    c.cruiseDraft[i] === draftPm &&
+    c.cruiseCut[i] === cut
+  )
+    ta = c.cruiseTa[i] ?? 0;
+  else {
+    ta = (exhausted ? T.vMin : hi ? T.vCAirHi : lo ? T.vCAirLo : T.vCAir)[x] ?? 0;
+    if (air !== 0) ta = Math.floor((ta * (1000 + air)) / 1000);
+    if (lo && F !== null && F.skimCruisePm !== 0)
+      ta = Math.floor((ta * (1000 + F.skimCruisePm)) / 1000);
+    if (F !== null && F.highCruisePm !== 0 && alt >= BAND_HIGH)
+      ta = Math.floor((ta * (1000 + F.highCruisePm)) / 1000);
+    if (draftPm !== 1000) ta = Math.floor((ta * draftPm) / 1000);
+    // distance letters: off her distance her air cruise gives `distAirPm` ‰
+    const dAir = T.distAirPm[i] ?? 0;
+    if (dAir !== 0 && !exhausted) ta = Math.floor((ta * (1000 - dAir)) / 1000);
+    if (cut > 0) ta = Math.max(T.vMin[x] ?? 0, Math.floor((ta * (1000 - cut)) / 1000));
+    c.cruiseCell[i] = cell;
+    c.cruiseAlt[i] = alt;
+    c.cruiseAir[i] = air;
+    c.cruiseDraft[i] = draftPm;
+    c.cruiseCut[i] = cut;
+    c.cruiseTa[i] = ta;
+  }
+  const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
+  S.vCore[i] = v;
+  return v;
+}
+
+/**
+ * Step B10 in the air (v3 draft R6): the legs rest (`airDrainPm`), but not in dirty air (L3).
+ * `drainMicro` written out once for the two drains (the same integers, one ratio); returns the
+ * drain of the tick and books the rest in the ledger.
+ */
+function airDrain(c: Ctx, i: number, F: FlightConstants, vOut: number, dK: number): number {
+  const S = c.S;
+  const dirty = inDirtyAir(F, S, i);
+  if (dirty) S.dirtyTicks[i] = (S.dirtyTicks[i] ?? 0) + 1;
+  // stage 3 (allFly): the low band rests the legs at skimDrainPm (ground effect)
+  const rest = F.allFly && S.alt[i] === BAND_LOW ? F.skimDrainPm : F.airDrainPm;
+  const restPm0 = dirty && F.dirtyNoRest ? Math.max(1000, rest) : rest;
+  // distance letters: the long is the legs' rest in the air; off her distance she rests less
+  const dPm =
+    c.dist === DIST_LONG && F.distanceLetters
+      ? Math.floor(((c.T.distPm[i] ?? 0) * F.distanceRestPm) / 1000)
+      : 0;
+  const restPm = dPm !== 0 ? Math.floor((restPm0 * (1000 + dPm)) / 1000) : restPm0;
+  const dKAir = Math.floor((dK * restPm) / 1000);
+  const rPm = Math.floor((vOut * 1000) / c.vBase);
+  const r2 = rPm * rPm;
+  const drain = Math.floor((r2 * dKAir) / 1_000_000);
+  S.hpRested[i] = (S.hpRested[i] ?? 0) + Math.floor((r2 * dK) / 1_000_000) - drain;
+  S.airTicks[i] = (S.airTicks[i] ?? 0) + 1;
+  return drain;
+}
+
+// --- flight (ruleset v3, design7 stage 1 «Despegar, luchar y caer», diseno-v3-vuelo.md) ----------
+
+/** `airDirty` is logged when the dirty air held at least this many ticks (like `boostMode`). */
+const AIR_DIRTY_MIN_TICKS = 15;
+/** A `pass` counts when the new order held this many ticks (§6.1). */
+const PASS_HOLD_TICKS = 8;
+
+/**
+ * Stamina pays effort (owner 2026-11-09): a maneuver's hit, `hp` hp at stamina 0, × 1.2e6 / her
+ * stamina divisor (the same Resistencia that shrinks the drain). Emptied, she is exhausted (the
+ * speed floor, no thrust, no new takeoff or maneuver). Reads only her own state.
+ */
+function hpHit(
+  c: Ctx,
+  i: number,
+  hp: number,
+  cause: "takeoff" | "dive" | "switch" | "fight" | "door",
+): void {
+  if (hp <= 0) return;
+  const S = c.S;
+  // the traffic's hits weigh by distance (the plan's takeoff and dive do not)
+  const F = c.F;
+  const dPm =
+    F !== null && cause !== "takeoff" && cause !== "dive" ? (F.hpDistPm[c.dist] ?? 1000) : 1000;
+  const div = Math.max(1, c.T.stamDiv[i] ?? 1);
+  let micro = Math.floor((floorDiv(hp * 1_000_000 * 1_200_000, div) * dPm) / 1000);
+  // the kick on low hp: the traffic's hits shrink by her Resistencia twice
+  if (F !== null && F.hpTrafficSq && cause !== "takeoff" && cause !== "dive")
+    micro = floorDiv(micro * 1_200_000, div);
+  const before = S.hp[i] ?? 0;
+  // the kick on low hp: the traffic eats her kick, never the cruise to the line
+  if (F !== null && F.hpHitFloor && cause !== "takeoff" && cause !== "dive") {
+    const floor = lineHp(c.R, c.G, c.T, i, S.b[i] ?? 0, S.pos[i] ?? 0);
+    S.hpFloor[i] = floor;
+    micro = Math.min(micro, Math.max(0, before - floor));
+  }
+  if (micro <= 0) return;
+  const after = sub0(before, micro);
+  S.hp[i] = after;
+  S.hpCost[i] = (S.hpCost[i] ?? 0) + (before - after);
+  if (F !== null && F.hpReplanHp > 0 && flag(S, i, F_PLAN_ACTIVE))
+    requestReplan(S, i, CAUSE_EFFORT);
+  c.rec.hpHit(
+    c.t,
+    i,
+    posMm(c, i),
+    cause,
+    Math.floor((before - after) / 1000),
+    Math.floor(after / 1000),
+  );
+  if (after === 0 && !flag(S, i, F_EXHAUSTED)) {
+    setFlag(S, i, F_EXHAUSTED);
+    S.hpEmptyMm[i] = posMm(c, i);
+    c.rec.hpEmpty(c.t, i, posMm(c, i));
+  }
+}
+
+/**
+ * Stamina pays effort: the µhp her planned dives still to come will cost on the pull-out (the
+ * flight she is in, if it ends in a dive from band ≥ 2, and the later planned ones), so the sprint
+ * plan keeps them: she knows her own plan, not the traffic.
+ */
+function pendingDiveHp(c: Ctx, F: FlightConstants, i: number): number {
+  if (F.hpDiveBand <= 0) return 0;
+  const { T, S } = c;
+  let bands = 0;
+  const ph = S.flPhase[i] ?? 0;
+  const n = T.flN[i] ?? 0;
+  if (ph !== 0) {
+    const cur = (S.flCur[i] ?? 1) - 1;
+    const chained = T.flChain[i * FLIGHTS_MAX + cur] === 1 && cur + 1 < n;
+    const top = ph === 3 ? (S.fromBand[i] ?? 0) : Math.max(S.alt[i] ?? 0, S.altTarget[i] ?? 0);
+    if (!chained && S.fallCause[i] !== 1 && top >= 2) bands += top;
+  }
+  for (let k = S.flK[i] ?? 0; k < n; k++) {
+    const x = i * FLIGHTS_MAX + k;
+    const band = T.flBand[x] ?? 0;
+    if (band >= 2 && !(T.flChain[x] === 1 && k + 1 < n)) bands += band;
+  }
+  if (bands === 0) return 0;
+  return floorDiv(F.hpDiveBand * bands * 1_000_000 * 1_200_000, Math.max(1, T.stamDiv[i] ?? 1));
+}
+
+/** Stamina pays effort: the drip of a tick in the air, ‰ of her drain in dirty air and boxed in. */
+function effortDrip(c: Ctx, i: number, F: FlightConstants, drain: number): number {
+  const S = c.S;
+  let pm = 0;
+  if (F.hpDirtyPm > 0 && inDirtyAir(F, S, i)) pm += F.hpDirtyPm;
+  if (F.hpBoxedPm > 0 && (S.boxed[i] === 1 || (S.blkRun[i] ?? 0) > 0)) pm += F.hpBoxedPm;
+  if (pm === 0) return 0;
+  // a skim's traffic (the low band) is the calm line at ras: it drips hpDirtySkimPm of that
+  if (S.alt[i] === BAND_LOW) pm = Math.floor((pm * F.hpDirtySkimPm) / 1000);
+  return Math.floor((floorDiv(drain * pm, 1000) * (F.hpDistPm[c.dist] ?? 1000)) / 1000);
+}
+
+/** Stamina pays effort: an exhausted runner starts no new maneuver (over, line switch, door). */
+function still(c: Ctx, F: FlightConstants, i: number): boolean {
+  return F.exhaustedStill && flag(c.S, i, F_EXHAUSTED);
+}
+
+function mms(c: Ctx, vu: number): number {
+  return floorDiv(vu, c.velPerMms);
+}
+
+/**
+ * Dirty air this tick (L3): round 4, anywhere in the wake (`dirty` ≥ 1); round 5 (F6,
+ * `airDraftBand`), only within `fightM` (`dirty` 2): the rest of the wake tows her.
+ */
+function inDirtyAir(F: FlightConstants | null, S: RaceState, i: number): boolean {
+  const d = S.dirty[i] ?? 0;
+  return F?.airDraftBand ? d === 2 : d > 0;
+}
+
+/**
+ * Step A2 (L3): from the end-of-(t − 1) snapshot, a runner holding her band (phase 2) is in dirty
+ * air when another unfinished runner is in the same band, 0 < gap ≤ `dirtyM` metres ahead. It is
+ * read before any lane moves, so lane order never changes it (INV-4). Also keeps the positions for
+ * the passes (step C2) and the `airDirty` log.
+ */
+function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
+  const { S, n } = c;
+  const lim = F.dirtyM * 1000 * c.posPerMm;
+  const fight = F.fightM > 0 ? Math.min(lim, F.fightM * 1000 * c.posPerMm) : lim;
+  const lines = F.lines;
+  const pos = S.pos;
+  const altA = S.alt;
+  const line = S.line;
+  const flPhase = S.flPhase;
+  c.swLast = false;
+  // PERF-2: the live runners of each band (bit per lane), and those holding a band (phase 2):
+  // only a holder scans, and only her band, in increasing lane order like a scan of every j
+  let band1 = 0;
+  let band2 = 0;
+  let band3 = 0;
+  let bandX = 0;
+  let holders = 0;
+  for (let i = 0; i < n; i++) {
+    S.pos0[i] = pos[i] ?? 0;
+    const ai = altA[i] ?? 0;
+    S.alt0[i] = ai;
+    if (ai === 0) continue;
+    if ((live & (1 << i)) !== 0) {
+      if (ai === 1) band1 |= 1 << i;
+      else if (ai === 2) band2 |= 1 << i;
+      else if (ai === 3) band3 |= 1 << i;
+      else bandX |= 1 << i;
+      if (ai >= 1 && flPhase[i] === 2) holders |= 1 << i;
+    }
+    // two lines: only a runner in the air has a line (every read of these is gated on alt0 ≥ 1)
+    if (lines && ai >= 1) {
+      if ((S.swTick[i] ?? 0) === c.t) c.swLast = true;
+      S.line0[i] = line[i] ?? 0;
+      S.swTick0[i] = S.swTick[i] ?? 0;
+      S.swCause0[i] = S.swCause[i] ?? 0;
+      S.disp0[i] = S.disp[i] ?? 0;
+      S.v0[i] = S.vOut[i] ?? 0;
+    }
+  }
+  if (lim <= 0) return;
+  // nobody holds a band now nor did at the last snapshot: the loop below would rewrite idle values
+  if (holders === 0 && c.airQuiet) return;
+  c.airQuiet = holders === 0;
+  const highReach = F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
+  const draftBand = F.airDraftBand;
+  const dirtyA = S.dirty;
+  const since = S.dirtySince;
+  for (let i = 0; i < n; i++) {
+    if ((holders & (1 << i)) === 0) {
+      // not holding a band: no wake, nobody alongside (the values a scan of nobody leaves)
+      dirtyA[i] = 0;
+      if (lines) {
+        S.lnAhead[i] = -1;
+        S.lnGap[i] = 0;
+        S.side[i] = 0;
+      }
+      if ((since[i] ?? 0) > 0) dirtyLog(c, i, false);
+      continue;
+    }
+    const ai = altA[i] ?? 0;
+    // L3: the high band's wake reaches dirtyHighM (feel round 2), the others dirtyM
+    const reach = ai === 2 ? highReach : lim;
+    let gap = reach + 1;
+    let ahead = -1;
+    let side = 0;
+    const pi = pos[i] ?? 0;
+    const li = line[i] ?? 0;
+    const slot = lines ? (c.T.lnSlot[i] ?? 0) : 0;
+    let m = (ai === 1 ? band1 : ai === 2 ? band2 : ai === 3 ? band3 : bandX) & ~(1 << i);
+    while (m !== 0) {
+      const bit = m & -m;
+      m ^= bit;
+      const j = 31 - Math.clz32(bit);
+      if (bandX !== 0 && (altA[j] ?? 0) !== ai) continue;
+      const d = (pos[j] ?? 0) - pi;
+      // two lines: the wake is only in her line; alongside in the other line takes her slot
+      if (lines && (line[j] ?? 0) !== li) {
+        if (d < slot && d > -slot) side = 1;
+        continue;
+      }
+      if (d > 0 && d < gap) {
+        gap = d;
+        ahead = j;
+      }
+    }
+    const dirty = gap > reach ? 0 : gap > fight ? 1 : 2;
+    dirtyA[i] = dirty;
+    if (lines) {
+      S.lnAhead[i] = dirty > 0 ? ahead : -1;
+      S.lnGap[i] = dirty > 0 ? gap : 0;
+      S.side[i] = side;
+    }
+    // `dirtyLog` acts only when the dirt starts or ends (inDirtyAir written out, PERF-1)
+    const on = draftBand ? dirty === 2 : dirty > 0;
+    if (on !== (since[i] ?? 0) > 0) dirtyLog(c, i, on);
+  }
+}
+
+/** The `airDirty` log: a candidate at the tick it began, kept if it held ≥ 15 ticks. */
+function dirtyLog(c: Ctx, i: number, on: boolean): void {
+  const S = c.S;
+  const since = S.dirtySince[i] ?? 0;
+  if (on && since === 0) {
+    S.dirtySince[i] = c.t + 1;
+    c.dirtyEvent[i] = c.rec.full
+      ? c.rec.candidate({ kind: "airDirty", tick: c.t, lane: i, posMm: posMm(c, i), on: true })
+      : -1;
+  } else if (!on && since > 0) {
+    if (c.t + 1 - since >= AIR_DIRTY_MIN_TICKS) c.rec.airDirtyOff(c.t, i, posMm(c, i));
+    else c.rec.drop(c.dirtyEvent[i] ?? -1);
+    S.dirtySince[i] = 0;
+    c.dirtyEvent[i] = -1;
+  }
+}
+
+/**
+ * Step C2 (log and ledger only, no physics reads it): lane i passed lane j this tick (behind at
+ * the end of t − 1, ahead now) while in the air or in her dive surge; it counts if the new order
+ * holds `PASS_HOLD_TICKS` ticks, and the `pass` event keeps the tick it happened.
+ */
+function passTick(c: Ctx, live: number): void {
+  const { S, n, t } = c;
+  if (c.passPending > 0)
+    for (let i = 0; i < n; i++) {
+      if ((c.passRow[i] ?? 0) === 0) continue;
+      for (let j = 0; j < n; j++) {
+        const x = i * MAX_LANES + j;
+        const since = S.passSince[x] ?? 0;
+        if (since === 0) continue;
+        if ((S.pos[i] ?? 0) <= (S.pos[j] ?? 0)) {
+          c.rec.drop(c.passEvent[x] ?? -1);
+          dropSide(c, x);
+          S.passSince[x] = 0;
+          c.passEvent[x] = -1;
+          c.passPending -= 1;
+          c.passRow[i] = (c.passRow[i] ?? 1) - 1;
+        } else if (t + 1 - since >= PASS_HOLD_TICKS) confirmPass(c, i, x);
+      }
+    }
+  // PERF-2: a pass is a crossing (behind at t − 1, ahead now). Step A sorted the lanes by their
+  // t − 1 position (rank order, best first): if the live lanes' positions still descend in that
+  // order, nobody crossed anybody and the scan below would find nothing
+  const ord = S.rankOrder;
+  let crossed = false;
+  let prev = Number.POSITIVE_INFINITY;
+  for (let k = 0; k < n; k++) {
+    const l = (ord[k] ?? 1) - 1;
+    if ((live & (1 << l)) === 0) continue;
+    const p = S.pos[l] ?? 0;
+    if (p > prev) {
+      crossed = true;
+      break;
+    }
+    prev = p;
+  }
+  if (!crossed) return;
+  for (let i = 0; i < n; i++) {
+    const alt = S.alt[i] ?? 0;
+    if ((alt === 0 && (S.surge[i] ?? 0) <= 0) || (live & (1 << i)) === 0) continue;
+    const kind = alt >= 1 ? 1 : 2;
+    const p0 = S.pos0[i] ?? 0;
+    const pi = S.pos[i] ?? 0;
+    const pos0 = S.pos0;
+    const posN = S.pos;
+    for (let j = 0; j < n; j++) {
+      // PERF-1: the crossing test first (almost always false), the same conditions
+      if (!(p0 < (pos0[j] ?? 0) && pi > (posN[j] ?? 0))) continue;
+      if (j === i || (live & (1 << j)) === 0) continue;
+      const x = i * MAX_LANES + j;
+      if ((S.passSince[x] ?? 0) > 0) continue;
+      S.passSince[x] = t + 1;
+      S.passKind[x] = kind;
+      c.passPending += 1;
+      c.passRow[i] = (c.passRow[i] ?? 0) + 1;
+      c.passEvent[x] = c.rec.full
+        ? c.rec.candidate({
+            kind: "pass",
+            tick: t,
+            lane: i,
+            posMm: posMm(c, i),
+            otherLane: j,
+            band: alt,
+            otherBand: S.alt[j] ?? 0,
+          })
+        : -1;
+      // two lines: a pass in the same band from the other line is a pass by the side
+      // (both holding the band: a runner climbing or falling through it is not passed by the side)
+      if (
+        c.F?.lines &&
+        alt >= 1 &&
+        (S.alt[j] ?? 0) === alt &&
+        S.line[i] !== S.line[j] &&
+        S.flPhase[i] === 2 &&
+        S.flPhase[j] === 2
+      ) {
+        S.passSide[x] = 1;
+        c.passSideEvent[x] = c.rec.full
+          ? c.rec.candidate({
+              kind: "passSide",
+              tick: t,
+              lane: i,
+              posMm: posMm(c, i),
+              otherLane: j,
+              by: S.line[i] === 1 ? "outside" : "inside",
+              band: alt,
+              line: S.line[i] ?? 0,
+            })
+          : -1;
+      }
+    }
+  }
+}
+
+/** Two lines: the `passSide` candidate of pass candidate x did not hold. */
+function dropSide(c: Ctx, x: number): void {
+  if (c.S.passSide[x] !== 1) return;
+  c.rec.drop(c.passSideEvent[x] ?? -1);
+  c.S.passSide[x] = 0;
+  c.passSideEvent[x] = -1;
+}
+
+function confirmPass(c: Ctx, i: number, x: number): void {
+  const S = c.S;
+  const kind = S.passKind[x] ?? 0;
+  if ((kind & 1) !== 0) S.passesAir[i] = (S.passesAir[i] ?? 0) + 1;
+  if ((kind & 2) !== 0) S.passesDive[i] = (S.passesDive[i] ?? 0) + 1;
+  if (S.passSide[x] === 1) {
+    S.passesSide[i] = (S.passesSide[i] ?? 0) + 1;
+    if ((S.alt[i] ?? 0) >= 1) S.sideWon[i] = 1;
+  }
+  S.passSide[x] = 0;
+  c.passSideEvent[x] = -1;
+  S.passSince[x] = 0;
+  c.passEvent[x] = -1;
+  c.passPending -= 1;
+  c.passRow[i] = (c.passRow[i] ?? 1) - 1;
+}
+
+/** After the loop: close the open `airDirty` and `pass` candidates. */
+function closeAirLog(c: Ctx, t: number): void {
+  const { S, n } = c;
+  for (let i = 0; i < n; i++) {
+    const since = S.dirtySince[i] ?? 0;
+    if (since > 0 && t + 1 - since < AIR_DIRTY_MIN_TICKS) c.rec.drop(c.dirtyEvent[i] ?? -1);
+    for (let j = 0; j < n && c.passPending > 0; j++) {
+      const x = i * MAX_LANES + j;
+      if (i === j || (S.passSince[x] ?? 0) === 0) continue;
+      if ((S.pos[i] ?? 0) > (S.pos[j] ?? 0)) confirmPass(c, i, x);
+      else {
+        c.rec.drop(c.passEvent[x] ?? -1);
+        dropSide(c, x);
+        S.passSince[x] = 0;
+        c.passPending -= 1;
+      }
+    }
+  }
+}
+
+/** L7, step B13: held skills count their ticks in the air and are released on the ground. */
+function heldSkills(c: Ctx, i: number): void {
+  const { T, S } = c;
+  const air = flag(S, i, F_AIRBORNE);
+  const nSkills = T.nSkills[i] ?? 0;
+  for (let j = 0; j < nSkills; j++) {
+    const k = ik(i, j);
+    if (S.skHeld[k] !== 1) continue;
+    if (air) S.skHeldTicks[k] = (S.skHeldTicks[k] ?? 0) + 1;
+    else {
+      S.skHeld[k] = 0;
+      S.heldN[i] = (S.heldN[i] ?? 1) - 1;
+      c.rec.skillHeld(i, j, S.skHeldTicks[k] ?? 0);
+    }
+  }
+}
+
+/** RISK-1: the current planned flight is flown below its plan (counted once per flight). */
+function below(c: Ctx, i: number): void {
+  const S = c.S;
+  if (S.belowCounted[i] === 1) return;
+  S.belowCounted[i] = 1;
+  S.belowPlan[i] = (S.belowPlan[i] ?? 0) + 1;
+}
+
+/** The climb reached `band`: the `bandReached` beat and the apex of the ledger. */
+function reachBand(c: Ctx, i: number, band: number): void {
+  const S = c.S;
+  S.flApex[i] = Math.max(S.flApex[i] ?? 0, band);
+  S.apexMax[i] = Math.max(S.apexMax[i] ?? 0, band);
+  c.rec.bandReached(c.t, i, posMm(c, i), band);
+}
+
+/**
+ * Step B4b: the runner's planned flight. On the ground (or in a plain jump) it takes off at the
+ * planned point; climbing it gains one band every `climbTk` ticks (S1, S2); holding, it fights for
+ * the line (L4); at the planned end (or when holding cannot be paid, `holdTick`) it descends one
+ * band every `diveTicks`, and touches down.
+ */
+function flightTick(c: Ctx, i: number, F: FlightConstants): void {
+  const { T, S } = c;
+  const pos = S.pos[i] ?? 0;
+  const phase = S.flPhase[i] ?? 0;
+  if (phase === 0) {
+    const k = S.flK[i] ?? 0;
+    if (k < (T.flN[i] ?? 0) && pos >= (T.flA[i * FLIGHTS_MAX + k] ?? 0)) takeoff(c, i, k, F);
+    return;
+  }
+  if (phase === 1) {
+    const left = (S.altTimer[i] ?? 0) - 1;
+    if (left > 0) S.altTimer[i] = left;
+    else {
+      const alt = (S.alt[i] ?? 0) + 1;
+      S.alt[i] = alt;
+      reachBand(c, i, alt);
+      if (alt >= (S.altTarget[i] ?? 0)) S.flPhase[i] = 2;
+      else S.altTimer[i] = S.climbTk[i] ?? 1;
+    }
+  }
+  if (phase === 3) {
+    const left = (S.altTimer[i] ?? 0) - 1;
+    if (left > 0) {
+      S.altTimer[i] = left;
+      return;
+    }
+    const alt = Math.max(0, (S.alt[i] ?? 0) - 1);
+    S.alt[i] = alt;
+    if (alt === 0) touchdown(c, i);
+    else if (alt <= (S.altTarget[i] ?? 0))
+      S.flPhase[i] = 2; // R9 or a knock: down to the lower band
+    else {
+      S.altTimer[i] = wingOf(F, T.style[i] ?? 0).diveTicks;
+      // F2: a planned dive gains its band's share of the Δv as she drops each band
+      const from = S.fromBand[i] ?? 0;
+      if (F.diveAirShare && from >= 2 && S.fallCause[i] === 0 && (S.altTarget[i] ?? 0) === 0) {
+        const want = floorDiv(diveTotal(c, i, from) * (from - alt), from);
+        S.surge[i] = (S.surge[i] ?? 0) + want - (S.diveAdded[i] ?? 0);
+        S.diveAdded[i] = want;
+      }
+    }
+    return;
+  }
+  const cur = (S.flCur[i] ?? 1) - 1;
+  const x = i * FLIGHTS_MAX + cur;
+  if (pos < (T.flB[x] ?? 0)) {
+    if ((F.escapeTicks > 0 || F.knockTicks > 0) && lineFight(c, i, F, x)) return;
+    return;
+  }
+  if (T.flChain[x] === 1 && cur + 1 < (T.flN[i] ?? 0)) chainNext(c, i, cur + 1, F);
+  else startDescent(c, i, F, 0);
+}
+
+/**
+ * L4, the fight for the line: after `escapeTicks` in dirty air in a row she tries once per race to
+ * go over (a band up, below the ceiling, if the climb plus the extra hold to the planned end leave
+ * `jr` and the reserve whole); otherwise after `knockAt` ticks she is knocked a band down (never
+ * below the low band), with no loss of speed. Reads only her own state and the step-A dirt.
+ */
+function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
+  const { T, S } = c;
+  const run = S.dirty[i] === 2 ? (S.dirtyRun[i] ?? 0) + 1 : 0;
+  S.dirtyRun[i] = run;
+  if (F.lines && S.flPhase[i] === 2) {
+    // PERF-2: nobody switched at t − 1, the inside line and no block: `lineMoves` only clears
+    // `boxed` (when she is not mid-move and not exhausted) and moves nothing
+    if (!c.swLast && S.line[i] !== 1 && (S.blkRun[i] ?? 0) === 0) {
+      if ((S.latTicks[i] ?? 0) <= 0 && !still(c, F, i)) S.boxed[i] = 0;
+    } else if (lineMoves(c, i, F, x, run)) return true;
+  }
+  if (run === 0) return false;
+  const alt = S.alt[i] ?? 0;
+  // she goes over only if the climb ends before her planned line does; R9 (stage 2): nobody
+  // climbs over inside a canyon with a ceiling, nor on a line that still reaches one
+  const style = T.style[i] ?? 0;
+  const pos = S.pos[i] ?? 0;
+  const dist = Math.max(0, (T.flB[x] ?? 0) - pos);
+  const roof = F.canyonCeiling && lineMeetsCanyon(c, pos, T.flB[x] ?? 0);
+  if (
+    F.escapeTicks > 0 &&
+    run >=
+      (F.allFly && alt === BAND_LOW && F.skimEscapeTicks > 0 ? F.skimEscapeTicks : F.escapeTicks) &&
+    // a skim keeps to her lines; only the lead climbs over the low traffic (skimEscapeTicks)
+    !(F.allFly && alt === BAND_LOW && F.skimEscapeTicks > 0 && T.position[i] !== POS_LEAD) &&
+    S.escaped[i] === 0 &&
+    !still(c, F, i) &&
+    alt < Math.min(BAND_CEILING, wingOf(F, style).maxBand) &&
+    !roof &&
+    dist > climbTicksOf(F, style, false) * (S.vOut[i] ?? 0)
+  ) {
+    S.escaped[i] = 1;
+    const liftF = holdLift(F, style, T.liftF[i] ?? 1000);
+    const cost = T.climbMe[i] ?? 0;
+    // F3: a won line is held at the price of the band she leaves (clean air), so it costs no extra
+    const extra = F.overCleanHold
+      ? 0
+      : holdMe(F, bandPu(F, alt + 1, dist) - bandPu(F, alt, dist), c.posPerMm, liftF);
+    const energy = S.energy[i] ?? 0;
+    if (energy - cost >= jrNow(T, S, i, S.seg[i] ?? 0) + extra) {
+      S.energy[i] = energy - cost;
+      S.energyClimb[i] = (S.energyClimb[i] ?? 0) + cost;
+      S.altTarget[i] = alt + 1;
+      S.flPhase[i] = 1;
+      S.climbTk[i] = climbTicksOf(F, style, false);
+      S.altTimer[i] = S.climbTk[i] ?? 1;
+      S.dirtyRun[i] = 0;
+      S.overs[i] = (S.overs[i] ?? 0) + 1;
+      S.overWon[i] = 1;
+      c.rec.lineChange(c.t, i, posMm(c, i), alt, alt + 1, "over", run);
+      hpHit(c, i, F.hpFight, "fight");
+      // two lines: the diagonal, a band up and the other line when hers is taken up there
+      const li = S.line[i] ?? 0;
+      if (F.lines && lineTaken(c, i, alt + 1, li) && !lineTaken(c, i, alt + 1, 1 - li))
+        switchLine(c, i, F, 1 - li, SW_DIAGONAL, alt + 1, true);
+      return true;
+    }
+  }
+  if (F.knockTicks > 0 && run >= (T.knockAt[i] ?? 0) && alt > BAND_LOW) {
+    S.altTarget[i] = alt - 1;
+    S.flPhase[i] = 3;
+    S.altTimer[i] = wingOf(F, style).diveTicks;
+    S.overWon[i] = 0;
+    S.sideWon[i] = 0;
+    S.dirtyRun[i] = 0;
+    S.knocks[i] = (S.knocks[i] ?? 0) + 1;
+    S.knocked[i] = 1;
+    below(c, i);
+    c.rec.lineChange(c.t, i, posMm(c, i), alt, alt - 1, "knock", run);
+    hpHit(c, i, F.hpKnock, "fight");
+    return true;
+  }
+  return false;
+}
+
+/** R9: a canyon segment overlaps [a, b] (pu). */
+function lineMeetsCanyon(c: Ctx, a: number, b: number): boolean {
+  const G = c.G;
+  for (let s = 0; s < G.S; s++)
+    if (G.segType[s] === SEG_CANYON && (G.segStart[s] ?? 0) <= b && (G.segEnd[s] ?? 0) > a)
+      return true;
+  return false;
+}
+
+// --- two lines per band (owner, 2026-11-08: «pasar por los costados») -------------------------
+
+/** Causes of a line switch, as `swCause` stores them. */
+const SW_PASS = 1;
+const SW_DOOR = 2;
+const SW_ESCAPE = 3;
+/** A diagonal (a band up and the other line): logged as a pass, never a door's trigger. */
+const SW_DIAGONAL = 4;
+const SW_NAMES = ["pass", "pass", "door", "escape", "pass"] as const;
+/** Door decisions per race: one byte of the pre-drawn slot 31 each. */
+const DOOR_TESTS_MAX = 4;
+
+/**
+ * Step B8: in her band and line, within `blockMm` of the runner ahead (step-A snapshot), she
+ * cannot fly through her: she moves at most to half `blockMm` behind where the one ahead was plus
+ * what that one moved last tick; her body keeps its speed. Reads only the snapshot.
+ */
+function blocked(c: Ctx, F: FlightConstants, i: number, vOut: number): number {
+  const S = c.S;
+  const a = S.lnAhead[i] ?? -1;
+  const prev = S.blkRun[i] ?? 0;
+  S.blkRun[i] = 0;
+  if (a < 0 || (S.dirty[i] ?? 0) === 0 || S.line[i] !== S.line0[i]) return vOut;
+  const gap = S.lnGap[i] ?? 0;
+  const lim = F.blockMm * c.posPerMm;
+  if (gap > lim) return vOut;
+  const cap = Math.max(0, Math.floor(gap + (S.disp0[a] ?? 0) - Math.floor(lim / 2)));
+  if (cap >= vOut) return vOut;
+  S.blkRun[i] = prev + 1;
+  S.blockedTicks[i] = (S.blockedTicks[i] ?? 0) + 1;
+  // her body keeps its speed (the tow built it): she pulls out with it, the slingshot
+  return cap;
+}
+
+/** Step B11: the lateral move's metres (spread over its ticks) and the longer outside line. */
+function lineDisp(c: Ctx, i: number, disp: number): number {
+  const { S, T } = c;
+  let d = disp;
+  let lost = 0;
+  const left = S.latTicks[i] ?? 0;
+  if (left > 0) {
+    const pu = S.latLeft[i] ?? 0;
+    const loss = Math.floor(pu / left);
+    S.latLeft[i] = pu - loss;
+    S.latTicks[i] = left - 1;
+    const l = Math.min(d, loss);
+    d -= l;
+    lost += l;
+  }
+  if (S.line[i] === 1) {
+    const o = Math.floor((d * (T.lnOutPm[i] ?? 0)) / 1000);
+    d -= o;
+    lost += o;
+  }
+  if (lost > 0) S.lineMm[i] = (S.lineMm[i] ?? 0) + lost;
+  return d;
+}
+
+/**
+ * Someone (but `but`) at the end of t − 1 in `band` and `line`, from her slot behind to `ahead` pu
+ * in front of her: that line is taken for her.
+ */
+function lineTaken(c: Ctx, i: number, band: number, line: number, ahead = -1, but = -1): boolean {
+  const { S, T, n } = c;
+  const pi = S.pos0[i] ?? 0;
+  const slot = T.lnSlot[i] ?? 0;
+  const front = ahead >= 0 ? ahead : (T.lnLook[i] ?? 0) + slot;
+  for (let j = 0; j < n; j++) {
+    if (j === i || j === but || (c.live & (1 << j)) === 0) continue;
+    if ((S.alt0[j] ?? 0) !== band || (S.line0[j] ?? 0) !== line) continue;
+    const d = (S.pos0[j] ?? 0) - pi;
+    if (d > -slot && d <= front) return true;
+  }
+  return false;
+}
+
+/** She moves to `to`: the lateral move's metres start, the event is logged. */
+function switchLine(
+  c: Ctx,
+  i: number,
+  F: FlightConstants,
+  to: number,
+  cause: number,
+  band: number,
+  diagonal: boolean,
+): void {
+  const S = c.S;
+  const from = S.line[i] ?? 0;
+  S.line[i] = to;
+  S.swTick[i] = c.t + 1;
+  S.swCause[i] = cause;
+  S.latLeft[i] = (S.latLeft[i] ?? 0) + (c.T.lnSwitch[i] ?? 0);
+  S.latTicks[i] = F.moveTicks;
+  S.lineSwitches[i] = (S.lineSwitches[i] ?? 0) + 1;
+  S.boxed[i] = 0;
+  c.rec.lineSwitch(c.t, i, posMm(c, i), {
+    from,
+    to,
+    cause: SW_NAMES[cause] ?? "pass",
+    band,
+    ...(diagonal ? { diagonal: true } : {}),
+  });
+  hpHit(c, i, F.hpSwitch, "switch");
+}
+
+/**
+ * Step B4b, holding her band (two lines): the door she takes (she checks, a door closed on her last
+ * tick), the door she closes (one that just moved to her other line behind her: slot 31), back to
+ * the inside when it pays and is clear (escape), and the side move out of dirty air after her
+ * intelligence's ticks, unless she is boxed in (someone alongside) or her intelligence sees the
+ * other line taken ahead. Every read of another runner is the step-A snapshot (INV-4) and reads
+ * metres, bands and lines only (INV-3). Returns true when she moved this tick.
+ */
+function lineMoves(c: Ctx, i: number, F: FlightConstants, x: number, run: number): boolean {
+  const { T, S, n } = c;
+  const t = c.t;
+  const alt = S.alt[i] ?? 0;
+  const me = S.line[i] ?? 0;
+  const pi = S.pos0[i] ?? 0;
+  const pu = c.posPerMm;
+  // the door closed on her (by one ahead within twice doorMm that moved into her line at t − 1)
+  for (let k = 0; k < n && c.swLast; k++) {
+    if (k === i || (c.live & (1 << k)) === 0 || S.swCause0[k] !== SW_DOOR) continue;
+    if ((S.swTick0[k] ?? 0) !== t || S.line0[k] !== me || (S.alt0[k] ?? 0) !== alt) continue;
+    const d = (S.pos0[k] ?? 0) - pi;
+    if (d <= 0 || d > 2 * F.doorMm * pu) continue;
+    S.latLeft[i] = (S.latLeft[i] ?? 0) + F.doorLossMm * pu;
+    S.latTicks[i] = Math.max(S.latTicks[i] ?? 0, F.moveTicks);
+    S.dirtyRun[i] = 0;
+    hpHit(c, i, F.hpDoor, "door");
+    return true;
+  }
+  if ((S.latTicks[i] ?? 0) > 0) return false;
+  // stamina pays effort: an exhausted body closes no door, takes no escape and pulls out to pass no one
+  if (still(c, F, i)) return false;
+  // she closes the door on one that moved to her other line at t − 1, within doorMm behind her
+  if (c.swLast && S.doorFlight[i] === 0 && (S.doorTests[i] ?? 0) < DOOR_TESTS_MAX)
+    for (let j = 0; j < n; j++) {
+      if (j === i || (c.live & (1 << j)) === 0 || S.swCause0[j] !== SW_PASS) continue;
+      if ((S.swTick0[j] ?? 0) !== t || (S.alt0[j] ?? 0) !== alt || S.line0[j] === me) continue;
+      const d = pi - (S.pos0[j] ?? 0);
+      if (d <= 0 || d > F.doorMm * pu) continue;
+      if (lineTaken(c, i, alt, 1 - me, T.lnSlot[i] ?? 0, j)) break;
+      const k = S.doorTests[i] ?? 0;
+      S.doorTests[i] = k + 1;
+      const byte = ((T.u31[i] ?? 0) >>> (8 * k)) & 255;
+      if (byte * 1000 >= (T.lnDoorP[i] ?? 0) * 256) break;
+      switchLine(c, i, F, 1 - me, SW_DOOR, alt, false);
+      S.doorFlight[i] = 1;
+      S.doorsClosed[i] = (S.doorsClosed[i] ?? 0) + 1;
+      c.rec.doorClosed(t, i, posMm(c, i), j, alt, 1 - me);
+      return true;
+    }
+  // back inside (escape): the outside line costs more than the move for what is left of her line
+  if (me === 1 && run === 0 && t + 1 - (S.swTick[i] ?? 0) >= F.backTicks) {
+    const left = Math.max(0, (T.flB[x] ?? 0) - pi);
+    const worth = Math.floor((left * (T.lnOutPm[i] ?? 0)) / 1000) > (T.lnSwitch[i] ?? 0);
+    if (worth && !lineTakenBehind(c, i, alt, 0, F.backMm * pu)) {
+      switchLine(c, i, F, 0, SW_ESCAPE, alt, false);
+      return true;
+    }
+  }
+  // she moves out to pass when the one ahead holds her up (blocked), not for the dirty air alone
+  const held = S.blkRun[i] ?? 0;
+  if (held === 0) {
+    S.boxed[i] = 0;
+    return false;
+  }
+  if (held < (T.lnSideAt[i] ?? 0)) return false;
+  // boxed in: someone alongside in her other line; she can only climb or wait
+  if (S.side[i] === 1) {
+    S.boxedTicks[i] = (S.boxedTicks[i] ?? 0) + 1;
+    if (S.boxed[i] === 0) {
+      S.boxed[i] = 1;
+      c.rec.boxedIn(t, i, posMm(c, i), alt, alongside(c, i, alt, 1 - me), S.lnAhead[i] ?? -1);
+    }
+    return false;
+  }
+  S.boxed[i] = 0;
+  // her intelligence reads the other line ahead (0 m at intelligence 0: she moves blind)
+  if (lineTaken(c, i, alt, 1 - me, T.lnLook[i] ?? 0)) return false;
+  switchLine(c, i, F, 1 - me, SW_PASS, alt, false);
+  S.dirtyRun[i] = 0;
+  S.blkRun[i] = 0;
+  return true;
+}
+
+/** The inside of `band` is clear from `back` pu behind her to her look ahead (escape). */
+function lineTakenBehind(c: Ctx, i: number, band: number, line: number, back: number): boolean {
+  const { S, T, n } = c;
+  const pi = S.pos0[i] ?? 0;
+  const front = (T.lnLook[i] ?? 0) + (T.lnSlot[i] ?? 0);
+  for (let j = 0; j < n; j++) {
+    if (j === i || (c.live & (1 << j)) === 0) continue;
+    if ((S.alt0[j] ?? 0) !== band || (S.line0[j] ?? 0) !== line) continue;
+    const d = (S.pos0[j] ?? 0) - pi;
+    if (d > -back && d <= front) return true;
+  }
+  return false;
+}
+
+/** The nearest runner alongside in `line` of `band` (the one who boxes her in), −1 = none. */
+function alongside(c: Ctx, i: number, band: number, line: number): number {
+  const { S, n } = c;
+  const pi = S.pos0[i] ?? 0;
+  let best = -1;
+  let bd = Number.MAX_SAFE_INTEGER;
+  for (let j = 0; j < n; j++) {
+    if (j === i || (c.live & (1 << j)) === 0) continue;
+    if ((S.alt0[j] ?? 0) !== band || (S.line0[j] ?? 0) !== line) continue;
+    const d = Math.abs((S.pos0[j] ?? 0) - pi);
+    if (d < bd) {
+      bd = d;
+      best = j;
+    }
+  }
+  return best;
+}
+
+/**
+ * R9: the flight flows into the next planned one without touching down: down to its band (no
+ * dive, no loss) or up to it, paying the climb if the tank allows (else she holds her band).
+ */
+function chainNext(c: Ctx, i: number, k: number, F: FlightConstants): void {
+  const { T, S } = c;
+  S.flK[i] = k + 1;
+  const x = i * FLIGHTS_MAX + k;
+  S.flRes[i] = Math.max(
+    0,
+    (S.flRes[i] ?? 0) - (S.flHoldLeft[i] ?? 0) - (T.flClimb[x] ?? 0) - (T.flHold[x] ?? 0),
+  );
+  S.flHoldLeft[i] = 0;
+  const alt = S.alt[i] ?? 0;
+  const pos = S.pos[i] ?? 0;
+  const dist = Math.max(0, (T.flB[x] ?? 0) - pos);
+  const style = T.style[i] ?? 0;
+  const liftF = holdLift(F, style, T.liftF[i] ?? 1000);
+  const jr = jrNow(T, S, i, S.seg[i] ?? 0);
+  const energy = S.energy[i] ?? 0;
+  let band = T.flBand[x] ?? alt;
+  let cost = band > alt ? (band - alt) * (T.climbMe[i] ?? 0) : 0;
+  if (cost > 0 && energy - cost < jr + holdMe(F, bandPu(F, band, dist), c.posPerMm, liftF)) {
+    band = alt;
+    cost = 0;
+  }
+  const hold = holdMe(F, bandPu(F, band, dist), c.posPerMm, liftF);
+  S.energy[i] = energy - cost;
+  S.energyClimb[i] = (S.energyClimb[i] ?? 0) + cost;
+  S.flRes[i] = (S.flRes[i] ?? 0) + hold;
+  S.flHoldLeft[i] = hold;
+  S.flCur[i] = k + 1;
+  S.holdPu[i] = 0;
+  S.holdBilled[i] = 0;
+  S.altTarget[i] = band;
+  if (band < alt) {
+    S.flPhase[i] = 3;
+    S.altTimer[i] = wingOf(F, style).diveTicks;
+  } else if (band > alt) {
+    const wing = wingOf(F, style);
+    const v = mms(c, S.vCore[i] ?? 0);
+    S.flPhase[i] = 1;
+    S.climbTk[i] = wing.climbTicks;
+    S.altTimer[i] = wing.climbTicks;
+    c.rec.takeoff(c.t, i, posMm(c, i), {
+      band,
+      cost,
+      fromBand: alt,
+      climbTicks: wing.climbTicks,
+      vMms: v,
+      vAfterMms: v,
+      airPm: T.airOff[x] ?? 0,
+      style: wing.style,
+    });
+    // stamina pays effort: climbing again from a lower band is a small takeoff
+    hpHit(c, i, F.hpSkimTakeoff, "takeoff");
+  }
+}
+
+/**
+ * A planned takeoff (R3): the plan's reserve for this flight is released, then she climbs the
+ * highest band ≤ the planned one whose climb leaves `energy ≥ jr + reserve + hold of that band`
+ * (a cornisa climbs at `cornisaPm`, a jump in progress already holds band 1). None: `noLift`,
+ * she stays on the ground with no damage and no draw. Exhausted, or past the planned end: no lift.
+ * Leaving the ground she keeps her wing's `liftSpeedPm` of the body speed (S1).
+ */
+function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
+  const { T, S } = c;
+  S.flK[i] = k + 1;
+  const x = i * FLIGHTS_MAX + k;
+  S.flRes[i] = Math.max(0, (S.flRes[i] ?? 0) - (T.flClimb[x] ?? 0) - (T.flHold[x] ?? 0));
+  const pos = S.pos[i] ?? 0;
+  const end = T.flB[x] ?? 0;
+  const energy = S.energy[i] ?? 0;
+  const from = flag(S, i, F_AIRBORNE) ? 1 : 0;
+  const target = T.flBand[x] ?? 1;
+  const corn = T.flCorn[x] === 1;
+  const unit0 = Math.floor(((T.climbMe[i] ?? 0) * (corn ? F.cornisaPm : 1000)) / 1000);
+  // stage 3 (allFly): a skim (low band) lifts at skimClimbPm of the climb
+  const unit = F.allFly && target === BAND_LOW ? Math.floor((unit0 * F.skimClimbPm) / 1000) : unit0;
+  const jr = jrNow(T, S, i, S.seg[i] ?? 0);
+  const style = T.style[i] ?? 0;
+  const liftF = holdLift(F, style, T.liftF[i] ?? 1000);
+  const dist = Math.max(0, end - pos);
+  let band = 0;
+  let cost = 0;
+  let hold = 0;
+  // fix (jumpHoldsSkim): a skim planned inside a Salto she jumps holds the jump's band 1, no climb
+  const held = F.jumpHoldsSkim && from === BAND_LOW && target === BAND_LOW;
+  if (!flag(S, i, F_EXHAUSTED) && pos < end)
+    for (let b = target; b > from || (held && b === from); b--) {
+      const cb = (b - from) * unit;
+      const hb = holdMe(F, bandPu(F, b, dist), c.posPerMm, liftF);
+      if (energy - cb >= jr + hb) {
+        band = b;
+        cost = cb;
+        hold = hb;
+        break;
+      }
+    }
+  if (band === 0) {
+    S.noLift[i] = (S.noLift[i] ?? 0) + 1;
+    S.belowPlan[i] = (S.belowPlan[i] ?? 0) + 1;
+    const need =
+      (target - from) * unit + holdMe(F, bandPu(F, target, dist), c.posPerMm, liftF) + jr;
+    c.rec.noLift(c.t, i, posMm(c, i), Math.max(0, need), energy);
+    return;
+  }
+  S.energy[i] = energy - cost;
+  S.energyClimb[i] = (S.energyClimb[i] ?? 0) + cost;
+  S.flRes[i] = (S.flRes[i] ?? 0) + hold;
+  S.flHoldLeft[i] = hold;
+  setFlag(S, i, F_AIRBORNE);
+  clearFlag(S, i, F_PENDING_JUMP);
+  endBurst(S.pulse, i);
+  const wing = wingOf(F, style);
+  const v0 = S.vCore[i] ?? 0;
+  // stage 3 (allFly, skimKeepSpeed): a skim is a shallow lift, no wing loses speed on it
+  const keep = from === 0 && band === BAND_LOW && F.allFly && F.skimKeepSpeed;
+  if (from === 0 && !keep) S.vCore[i] = Math.floor((v0 * wing.liftSpeedPm) / 1000);
+  // stage 3 (allFly): a skim's lift pushes her (decays to her air cruise by kDecel)
+  if (from === 0 && band === BAND_LOW && F.allFly && F.skimLiftMms > 0)
+    S.vCore[i] = (S.vCore[i] ?? 0) + F.skimLiftMms * c.velPerMms;
+  // F7 (round 5): from the ground she climbs band 1 too, at her wing's pace
+  const alt = F.climbFromGround ? from : Math.max(1, from);
+  S.alt[i] = alt;
+  S.altTarget[i] = band;
+  S.flPhase[i] = alt < band ? 1 : 2;
+  S.climbTk[i] = climbTicksOf(F, style, corn);
+  S.altTimer[i] = S.climbTk[i] ?? 1;
+  S.flCur[i] = k + 1;
+  S.holdPu[i] = 0;
+  S.holdBilled[i] = 0;
+  S.flights[i] = (S.flights[i] ?? 0) + 1;
+  S.knocked[i] = 0;
+  S.overWon[i] = 0;
+  S.sideWon[i] = 0;
+  S.belowCounted[i] = 0;
+  S.dirtyRun[i] = 0;
+  S.flApex[i] = alt;
+  S.apexMax[i] = Math.max(S.apexMax[i] ?? 0, alt);
+  if (band < target) below(c, i);
+  c.rec.takeoff(c.t, i, posMm(c, i), {
+    band,
+    cost,
+    fromBand: from,
+    climbTicks: S.climbTk[i] ?? 1,
+    vMms: mms(c, v0),
+    vAfterMms: mms(c, S.vCore[i] ?? 0),
+    airPm: T.airOff[x] ?? 0,
+    style: wing.style,
+  });
+  // stamina pays effort: leaving the ground for the high bands is a hit, a skim a smaller one
+  hpHit(c, i, from === 0 && band > BAND_LOW ? F.hpTakeoff : F.hpSkimTakeoff, "takeoff");
+  if (F.hpHitFloor) S.hpFloor[i] = lineHp(c.R, c.G, T, i, S.b[i] ?? 0, S.pos[i] ?? 0);
+}
+
+/**
+ * Holding a band (R4, step B9): `holdE` per band per 100 m at liftF, billed on the metres moved,
+ * × the band's `bandHoldPm` (L2), × (1000 − airHoldK × air) for her own air (L1) and × her
+ * `dirtyPm` in dirty air (L3); the wing's `holdPm` folds into liftF (S1). If paying breaks `jr`
+ * plus the reserve left, she does not pay and starts down this tick (L6 decides how she lands).
+ */
+function holdTick(c: Ctx, i: number, F: FlightConstants, vOut: number, seg: number): void {
+  const { T, S } = c;
+  const band = climbAsHeld(F, S, i) ? (S.altTarget[i] ?? 0) : (S.alt[i] ?? 0);
+  const air =
+    band < F.ownAirFromBand
+      ? 0
+      : (T.airOff[i * FLIGHTS_MAX + Math.max(0, (S.flCur[i] ?? 1) - 1)] ?? 0);
+  let m = 1000 - F.airHoldK * air;
+  if ((S.dirty[i] ?? 0) > 0) m = Math.floor((m * (T.dirtyPm[i] ?? 1000)) / 1000);
+  // `holdMe` and `bandPu` written out (the same integers): the hold runs every tick in the air
+  const den = c.posPerMm * 1000 * Math.max(1, T.liftH[i] ?? 1000);
+  const num = F.holdE * 10_000;
+  // F3: after a won over she holds at the price of the band she left (clean air)
+  const alt = Math.max(0, band - (F.overCleanHold && S.overWon[i] === 1 ? 1 : 0));
+  // PERF-2: the pu and extra energy of a tick are a pure function of (alt, vOut, m) for her in a
+  // race (den and num are hers and the ruleset's): kept while they hold
+  let inc: number;
+  let extra: number;
+  if (c.holdA[i] === alt && c.holdV[i] === vOut && c.holdM[i] === m) {
+    inc = c.holdInc[i] ?? 0;
+    extra = c.holdX[i] ?? 0;
+  } else {
+    const clean = Math.floor((alt * vOut * bandHoldOf(F, alt)) / 1000);
+    inc = m === 1000 ? clean : Math.floor((clean * m) / 1000);
+    extra = inc > clean ? Math.floor(((inc - clean) * num) / den) : 0;
+    c.holdA[i] = alt;
+    c.holdV[i] = vOut;
+    c.holdM[i] = m;
+    c.holdInc[i] = inc;
+    c.holdX[i] = extra;
+  }
+  if (extra !== 0) S.holdExtra[i] = (S.holdExtra[i] ?? 0) + extra;
+  const pu = (S.holdPu[i] ?? 0) + inc;
+  S.holdPu[i] = pu;
+  const due = Math.floor((pu * num) / den) - (S.holdBilled[i] ?? 0);
+  if (due <= 0) return;
+  const covered = Math.min(due, S.flHoldLeft[i] ?? 0);
+  const resAfter = (S.flRes[i] ?? 0) - covered;
+  const energy = S.energy[i] ?? 0;
+  if (energy - due < (T.jr[is(i, seg)] ?? 0) + resAfter) {
+    startDescent(c, i, F, 1);
+    return;
+  }
+  S.energy[i] = energy - due;
+  S.holdBilled[i] = (S.holdBilled[i] ?? 0) + due;
+  S.energyHold[i] = (S.energyHold[i] ?? 0) + due;
+  S.flHoldLeft[i] = (S.flHoldLeft[i] ?? 0) - covered;
+  S.flRes[i] = resAfter;
+}
+
+/**
+ * Neutral wings (owner 2026-11-08): while she climbs, she flies and pays as if she were already
+ * at her target band (air cruise, hold), so a slow climb (Rampa) and a quick one (Lanza) cost and
+ * give the same; the climb ticks are only the gesture. Off (`neutralStyles` false): the climb is
+ * held speed and pays nothing until the band is reached.
+ */
+function climbAsHeld(F: FlightConstants, S: RaceState, i: number): boolean {
+  return F.neutralStyles && S.flPhase[i] === 1;
+}
+
+/** The descent starts (R1): no thrust, the body speed held, one band every `diveTicks`. */
+function startDescent(c: Ctx, i: number, F: FlightConstants, cause: number): void {
+  const S = c.S;
+  const from = S.alt[i] ?? 0;
+  S.flPhase[i] = 3;
+  S.fromBand[i] = from;
+  S.altTarget[i] = 0;
+  S.fallCause[i] = cause;
+  S.altTimer[i] = wingOf(F, c.T.style[i] ?? 0).diveTicks;
+  S.diveAdded[i] = 0;
+  S.diveAirMm[i] = 0;
+  if (cause === 1) below(c, i);
+  c.rec.diveStart(
+    c.t,
+    i,
+    posMm(c, i),
+    Math.max(1, from),
+    mms(c, S.vCore[i] ?? 0),
+    cause === 1 ? "energy" : S.knocked[i] === 1 ? "knock" : "plan",
+  );
+}
+
+/** F3: the dive's Δv from `from`, plus `overDivePm` ‰ of one band's share after a won line. */
+function diveTotal(c: Ctx, i: number, from: number): number {
+  const F = c.F;
+  const dv = c.T.diveV[i * 4 + from] ?? 0;
+  if (F === null || from <= 0) return dv;
+  // F3: a line won over; two lines: a line won by the side (the larger, never both)
+  const over = F.overDivePm > 0 && c.S.overWon[i] === 1 ? F.overDivePm : 0;
+  const side = F.lines && c.S.sideWon[i] === 1 ? F.sideDivePm : 0;
+  const pm0 = Math.max(over, side);
+  // distance letters: the mile is won on the line up high; off her distance the won line pays less
+  const dPm = c.dist === DIST_MILE ? (c.T.distPm[i] ?? 0) : 0;
+  const pm = dPm !== 0 ? Math.floor((pm0 * (1000 - dPm)) / 1000) : pm0;
+  if (pm <= 0) return dv;
+  return dv + Math.floor((floorDiv(dv, from) * pm) / 1000);
+}
+
+/**
+ * F9: another unfinished runner on the ground, from `nerveBackM` behind to `nerveM` ahead of her,
+ * in the start-of-tick snapshot (step A2), so lane order never changes it.
+ */
+function trafficAtTouchdown(c: Ctx, F: FlightConstants, i: number): boolean {
+  const { S, n } = c;
+  const me = S.pos0[i] ?? 0;
+  const ahead = F.nerveM * 1000 * c.posPerMm;
+  const back = F.nerveBackM * 1000 * c.posPerMm;
+  for (let j = 0; j < n; j++) {
+    if (j === i || (c.live & (1 << j)) === 0 || (S.alt0[j] ?? 0) !== 0) continue;
+    const d = (S.pos0[j] ?? 0) - me;
+    if (d >= -back && d <= ahead) return true;
+  }
+  return false;
+}
+
+/**
+ * Touchdown (R7): from band 2 or 3 the dive adds `diveV[band]` as a surge that `kDecel` brings
+ * back down (≈ Δv² / (2 kDecel) metres); with F2 part of it came band by band in the air and the
+ * rest lands now. F9: diving into traffic is a nerve test (slot 29): held, the dive × (1000 +
+ * nerveBonusPm) ‰; flinched, the wings open: the air share is lost and she pays her landing. L6:
+ * a descent the tank forced lands with her `landPm` and no dive. The flight's unspent hold reserve
+ * is released and a running sprint plan replans.
+ */
+function touchdown(c: Ctx, i: number): void {
+  const { R, T, S } = c;
+  const F = c.F;
+  const from = S.fromBand[i] ?? 0;
+  S.flPhase[i] = 0;
+  S.alt[i] = 0;
+  S.flCur[i] = 0;
+  clearFlag(S, i, F_AIRBORNE);
+  if (F?.lines) {
+    // two lines: on the ground there are none; the next flight starts inside
+    S.line[i] = 0;
+    S.latLeft[i] = 0;
+    S.latTicks[i] = 0;
+    S.boxed[i] = 0;
+    S.blkRun[i] = 0;
+    S.swTick[i] = 0;
+    S.swCause[i] = 0;
+    S.doorFlight[i] = 0;
+  }
+  S.flRes[i] = Math.max(0, (S.flRes[i] ?? 0) - (S.flHoldLeft[i] ?? 0));
+  S.flHoldLeft[i] = 0;
+  const p = posMm(c, i);
+  const forced = S.fallCause[i] === 1;
+  if (forced) S.falls[i] = (S.falls[i] ?? 0) + 1;
+  const added = S.diveAdded[i] ?? 0;
+  const airMm = floorDiv(S.diveAirMm[i] ?? 0, c.velPerMms * 15);
+  S.diveAdded[i] = 0;
+  S.diveAirMm[i] = 0;
+  if (forced && F?.forcedLand) {
+    const v0 = S.vCore[i] ?? 0;
+    const v1 = scale(v0, T.landPm[i] ?? 1000);
+    S.vCore[i] = v1;
+    c.rec.touchdown(c.t, i, p, Math.max(1, from), mms(c, v0 - v1), "energy");
+  } else {
+    let flinched = false;
+    if (from >= 2) {
+      let dv = diveTotal(c, i, from);
+      // F9: the nerve test, at most nerveMax per race, 16 bits of the pre-drawn slot 29 each
+      const k = S.nerveTests[i] ?? 0;
+      if (F !== null && F.nerveM > 0 && k < F.nerveMax && trafficAtTouchdown(c, F, i)) {
+        S.nerveTests[i] = k + 1;
+        const u = ((T.u29[i] ?? 0) >>> (16 * k)) & 0xffff;
+        const pPm = T.nerveP[i] ?? 0;
+        flinched = u * 1000 < pPm * 65536;
+        if (!flinched) {
+          S.nerveHeld[i] = (S.nerveHeld[i] ?? 0) + 1;
+          dv = Math.floor((dv * (1000 + F.nerveBonusPm)) / 1000);
+        }
+        c.rec.nerve(c.t, i, p, !flinched, pPm, flinched ? 0 : mms(c, dv));
+      }
+      if (flinched && F !== null) {
+        // she opens the wings: the share gained in the air is gone and she pays her landing
+        S.surge[i] = Math.max(0, (S.surge[i] ?? 0) - added);
+        const v0 = S.vCore[i] ?? 0;
+        const v1 = scale(v0, T.landPm[i] ?? 1000);
+        S.vCore[i] = v1;
+        c.rec.touchdown(c.t, i, p, from, mms(c, v0 - v1) + mms(c, added), "nerve");
+      } else {
+        const before = S.vCore[i] ?? 0;
+        if (F?.diveSurge) S.surge[i] = (S.surge[i] ?? 0) + dv - added;
+        else S.vCore[i] = before + dv;
+        const dvMms = mms(c, dv);
+        const vBefore = mms(c, before);
+        // neutral wings: the surge decays in the air too, so what is left on touchdown is what
+        // kDecel still turns into metres (the full Δv² would count the air share twice)
+        const leftMms =
+          F !== null && F.neutralStyles && F.diveSurge ? mms(c, S.surge[i] ?? 0) : dvMms;
+        const surgeMm = floorDiv(leftMms * leftMms, 2 * R.kDecel) + airMm;
+        S.dives[i] = (S.dives[i] ?? 0) + 1;
+        if (from === 3) S.grandDives[i] = (S.grandDives[i] ?? 0) + 1;
+        S.diveGainMm[i] = (S.diveGainMm[i] ?? 0) + surgeMm;
+        S.peakMms[i] = Math.max(S.peakMms[i] ?? 0, vBefore + dvMms);
+        // ADR-0009: the part of the dive her passive added (Garra fija), for the log
+        const sPm = T.diveSkillPm[i] ?? 0;
+        const skillMms =
+          sPm > 0 && from >= (T.diveSkillFrom[i] ?? 4)
+            ? dvMms - floorDiv(dvMms * 1000, 1000 + sPm)
+            : 0;
+        const skillId = c.passiveIds[i];
+        c.rec.dive(c.t, i, p, {
+          fromBand: from,
+          gainMms: dvMms,
+          vBeforeMms: vBefore,
+          surgeTicks: ceilDiv(dv, Math.max(1, R.kDecel)),
+          surgeMm,
+          ...(F?.diveAirShare ? { airMms: mms(c, added), airMm } : {}),
+          ...(skillMms > 0 && skillId !== undefined && skillId !== null
+            ? { skillMms, skillId }
+            : {}),
+        });
+      }
+    }
+    if (!flinched) {
+      const cause = forced ? "energy" : S.knocked[i] === 1 ? "knock" : "plan";
+      c.rec.touchdown(c.t, i, p, Math.max(1, from), 0, cause);
+    }
+    // stamina pays effort: pulling out of a dive is a strong hit, per band fallen
+    // (the band won over the line is not charged: the bar budgets her planned dive, and a won
+    // line must still pay on the long tracks, where every hp is metres)
+    if (F !== null && from >= 2)
+      hpHit(c, i, F.hpDiveBand * (from - (S.overWon[i] === 1 ? 1 : 0)), "dive");
+  }
+  if (flag(S, i, F_PLAN_ACTIVE)) requestReplan(S, i, CAUSE_JUMP);
 }
 
 // --- finish and DNF (steps C and E, section 19) ----------------------------------------------------
