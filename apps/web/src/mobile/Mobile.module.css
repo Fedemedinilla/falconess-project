@@ -305,6 +305,17 @@
   margin: 0 -4px;
   padding: 0 4px 4px;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+/*
+ * A scrolling column's items keep their content height: a flex item with overflow other than
+ * visible (the skills list clips its rounded corners) has no automatic minimum height, so it shrank
+ * to the column's height and clipped its own rows, and the column never had anything to scroll.
+ * Zero specificity, so an item that is meant to shrink (the training stage) still says so.
+ */
+:where(.body) > * {
+  flex-shrink: 0;
 }
 .foot {
   flex: none;

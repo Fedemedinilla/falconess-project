@@ -204,3 +204,51 @@ test("at 360 px no horizontal scroll on the menu and the training screen", async
     expect(b?.height ?? 0, id).toBeGreaterThanOrEqual(44);
   }
 });
+
+/**
+ * A finger swipe on the page (CDP touch events, which Chromium turns into a touch scroll the way a
+ * phone does): from (x, y), dy pixels up, in ten moves.
+ */
+async function swipeUp(page: Page, x: number, y: number, dy: number): Promise<void> {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+  for (let i = 1; i <= 10; i++)
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x, y: y - (dy * i) / 10 }],
+    });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await cdp.detach();
+  await page.waitForTimeout(150);
+}
+
+test("the workshop's skills list scrolls by touch to its last skill, which takes a tap", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-habilidades");
+  await expect(page.locator("#m-taller-skills")).toHaveAttribute("aria-selected", "true");
+  const skills = page.locator('[id^="m-habilidad-"]');
+  expect(await skills.count()).toBeGreaterThan(4);
+  const last = skills.last();
+  const foot = (await page.locator("#m-taller-confirmar").boundingBox())?.y ?? 844;
+  // the last skill starts below the fold: a finger swipes the list until it shows
+  for (let i = 0; i < 12; i++) {
+    const box = await last.boundingBox();
+    if (box && box.y + box.height <= foot) break;
+    await swipeUp(page, 195, 560, 300);
+  }
+  const box = await last.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  expect(box.y).toBeGreaterThan(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(foot);
+  // nothing clips it: the point under its middle is the button itself
+  const hit = await page.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.closest("button")?.id ?? "",
+    { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+  );
+  expect(hit).toBe(await last.getAttribute("id"));
+  await page.tap(`#${await last.getAttribute("id")}`, { force: true });
+  if (await last.isEnabled()) await expect(last).toHaveAttribute("aria-pressed", "true");
+});
