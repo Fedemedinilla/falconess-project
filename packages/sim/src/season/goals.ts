@@ -33,7 +33,7 @@ export function inputPosition(input: RunInput): Position | undefined {
  * `goalRaceSetup` with the player in `position` (absent = her wings' default, ADR-0008), seed
  * `${seed}/race/${turn}`, `detail: "results"`. Takes no draw from the season's per-input Rng.
  * Records the result with the position she ran (a DNF is last place with `maxTicks`), pays scrap
- * by place, persists the equipped frame's durability (ADR-0003 D35) and maps the outcome. Returns
+ * and (v3) skill points by place, persists the equipped frame's durability (ADR-0003 D35) and maps the outcome. Returns
  * the outcome, or undefined when no race was due.
  */
 export function runGoalRace(
@@ -67,6 +67,7 @@ export function runGoalRace(
   if (flightOf(ctx.ruleset)?.noWear !== true)
     d.frameDurability[d.equippedFrame] = Math.floor(me.durabilityEnd / 1000);
   d.wallet.scrap += ctx.ruleset.season.scrapByPlace[place - 1] ?? 10;
+  d.skillPoints += ctx.ruleset.season.skillPointsByPlace?.[place - 1] ?? 0;
   note(d, "log.race");
 
   const outcome: RaceOutcome =

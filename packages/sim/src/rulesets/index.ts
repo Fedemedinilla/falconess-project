@@ -60,11 +60,12 @@ export const RULESET_V2: Ruleset = {
 /**
  * ADR-0011: stage 1 of the flight race on v2's season (its goals, vigor and events), with the
  * distance letters, the black box's distance step and no wear. Rival rows of the flying classes
- * get their technique (`V3.FIELD`).
+ * get their technique (`V3.FIELD`); the season pays more skill points (`V3.SEASON`).
  */
 export const RULESET_V3: RulesetV3 = {
   ...RULESET_V2,
   version: V3.RULESET_VERSION,
+  season: V3.SEASON,
   field: V3.FIELD,
   race: V3.RACE,
   flight: V3.FLIGHT,

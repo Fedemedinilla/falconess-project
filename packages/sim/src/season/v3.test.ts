@@ -88,4 +88,25 @@ describe("season on ruleset v3 (ADR-0011)", () => {
     expect(state.distanceAptitude).toBeUndefined();
     expect(canonicalJson(replaySeason(V2, "v2/keep", inputs))).toBe(canonicalJson(state));
   });
+
+  it("pays skill points by place in a goal race (v3); v2 pays none", () => {
+    const S = RULESET_V3.season;
+    expect(S.simulatorSkillPoints).toBe(15);
+    expect(S.skillPointsByPlace).toHaveLength(8);
+    expect(RULESET_V2.season.skillPointsByPlace).toBeUndefined();
+    for (const [ctx, pays] of [
+      [V3, true],
+      [V2, false],
+    ] as const) {
+      let s = startSeason(ctx, "pts", START("peregrina"));
+      const goal = content.getFalconess("peregrina").seasonGoals[0]?.turn ?? 12;
+      while (s.turn < goal) s = advanceSeason(ctx, s, step(s));
+      if (s.pendingEvent) s = advanceSeason(ctx, s, step(s));
+      const before = s.skillPoints;
+      const after = advanceSeason(ctx, s, { kind: "rest" });
+      const place = after.raceResults.at(-1)?.place ?? 0;
+      expect(place).toBeGreaterThan(0);
+      expect(after.skillPoints - before).toBe(pays ? (S.skillPointsByPlace?.[place - 1] ?? -1) : 0);
+    }
+  });
 });

@@ -6,8 +6,13 @@
  * no `flight`, never reach a line of the flight code. The race is frozen (ADR-0010): balance moves
  * content (tracks and calendar, letters, growth, kit), never these rules.
  */
-import { type FieldConstants, RACE as RACE_V1, type RaceConstants } from "../v1/constants.js";
-import { FIELD as FIELD_V2 } from "../v2/constants.js";
+import {
+  type FieldConstants,
+  RACE as RACE_V1,
+  type RaceConstants,
+  type SeasonConstants,
+} from "../v1/constants.js";
+import { FIELD as FIELD_V2, SEASON as SEASON_V2 } from "../v2/constants.js";
 
 export const RULESET_VERSION = "v3" as const;
 
@@ -766,4 +771,16 @@ export const FIELD: FieldConstants = {
     dive: [250, 180, 185, 210, 175],
     hover: [220, 190, 185, 170, 235],
   },
+};
+
+/**
+ * Season of v3: v2's, with more skill points (owner 2026-11-10: «las habilidades tardan mucho»,
+ * 12 simulator weeks paid one skill). The simulator pays 15 instead of 5, and a goal race pays by
+ * place like Umamusume (1st 60 … 8th 5), so a well-played season learns 4-6 skills. Skill costs
+ * stay 60-150.
+ */
+export const SEASON: SeasonConstants = {
+  ...SEASON_V2,
+  simulatorSkillPoints: 15,
+  skillPointsByPlace: [100, 75, 60, 45, 35, 25, 20, 10],
 };
