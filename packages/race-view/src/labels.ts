@@ -32,7 +32,11 @@ export function contentLabels(content: ContentIndex): RaceLabels {
     return item ? content.t(item.textKey) : id;
   };
   return {
-    courseName: (id) => named(content.courses, id),
+    // a v3 catalogue track lives outside the index (ADR-0011 §6) but has its name in the text
+    courseName: (id) =>
+      content.courses.has(id) || !content.text.has(`course.${id}`)
+        ? named(content.courses, id)
+        : content.t(`course.${id}`),
     runnerName: (entry) =>
       entry.falconessId === null ? entry.runnerId : named(content.falconess, entry.falconessId),
     frameName: (id) => named(content.frames, id),

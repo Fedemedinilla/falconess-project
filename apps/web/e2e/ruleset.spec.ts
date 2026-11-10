@@ -2,7 +2,7 @@ import { expect, t, test } from "./fixtures";
 import { closeWeek, loadRun, RUN1, RUN1_WEEK19, readTurn, vigorOf } from "./play";
 
 /**
- * New seasons play ruleset v2; a run keeps the ruleset it was played on. The owner's playtest 1
+ * New seasons play ruleset v3; a run keeps the ruleset it was played on. The owner's playtest 1
  * (seed 397553, ruleset v1) loads as v1, ends with the grade it had, and a copy of it cut before
  * week 19 plays on under v1: high fatigue (vigor 15) turns a training into a forced rest.
  */
@@ -24,7 +24,7 @@ test("the owner's playtest 1 loads as a v1 run and ends as it did", async ({ pag
   expect(copied).toEqual(RUN1);
 });
 
-test("a v1 run plays on under v1 rules: a forced rest at vigor 20 or less; new seasons are v2", async ({
+test("a v1 run plays on under v1 rules: a forced rest at vigor 20 or less; new seasons are v3", async ({
   page,
 }) => {
   await loadRun(page, RUN1_WEEK19);
@@ -64,15 +64,15 @@ test("a v1 run plays on under v1 rules: a forced rest at vigor 20 or less; new s
     page.getByText(t("ui.turn.seed", { seed: "397553", ruleset: "v1" }), { exact: true }),
   ).toBeVisible();
 
-  // a new season starts on v2
+  // a new season starts on v3 (ADR-0011: v2's season with the flight race)
   await page.goto("#inicio");
-  await expect(page.getByText(t("ui.home.eyebrow", { ruleset: "v2" }))).toBeVisible();
+  await expect(page.getByText(t("ui.home.eyebrow", { ruleset: "v3" }))).toBeVisible();
   await page.click("#inicio-nueva");
-  await expect(page.getByText(t("ui.new.eyebrow", { ruleset: "v2" }))).toBeVisible();
-  await page.fill("#nueva-semilla", "pt-e2e-v2");
+  await expect(page.getByText(t("ui.new.eyebrow", { ruleset: "v3" }))).toBeVisible();
+  await page.fill("#nueva-semilla", "pt-e2e-v3");
   await page.click("#nueva-empezar");
   await expect(
-    page.getByText(t("ui.turn.seed", { seed: "pt-e2e-v2", ruleset: "v2" }), { exact: true }),
+    page.getByText(t("ui.turn.seed", { seed: "pt-e2e-v3", ruleset: "v3" }), { exact: true }),
   ).toBeVisible();
   await expect(page.locator('[data-band="safe"]')).toHaveCount(1);
 });

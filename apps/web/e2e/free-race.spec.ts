@@ -47,3 +47,31 @@ test("free race: run the default, change course and seed, run a neutral field", 
   await expect(table.getByRole("row")).toHaveCount(9);
   await expect(table.getByRole("row").filter({ hasText: t("ui.race.you") })).toHaveCount(0);
 });
+
+test("free race on a v3 catalogue track: the side view of the flight and its moments", async ({
+  page,
+}) => {
+  await page.goto("#carrera-libre");
+  await page.click("#libre-cambiar");
+  // every catalogue track is offered (ADR-0011 §6)
+  for (const id of ["breakaway", "circuit", "crossing", "open-sky", "overlook", "steps"])
+    await expect(page.locator(`#libre-pista option[value="${id}"]`)).toHaveCount(1);
+  await page.selectOption("#libre-pista", "breakaway");
+  await page.fill("#libre-semilla", "pt-e2e-vuelo");
+  await page.click("#libre-correr");
+  const flight = page.locator("#libre-vuelo");
+  await expect(flight).toBeVisible();
+  await expect(page.locator("#libre-vuelo-previa")).toContainText(t("course.breakaway"));
+  await expect(page.locator("#libre-vuelo-tarjeta")).toContainText(t("ui.flight.distance.medium"));
+  const takeoff = page
+    .locator("#libre-momentos")
+    .locator('[data-moment="takeoff"], [data-moment="takeoffLow"]')
+    .first();
+  await expect(takeoff).toBeVisible();
+  // a takeoff from the list: the banner names it, the HUD follows her
+  await takeoff.getByRole("button").click();
+  await expect(flight).toHaveAttribute("data-banner", /^takeoff(Low)?$/, { timeout: 15_000 });
+  await page.click("#libre-reproducir");
+  await page.click("#libre-meta");
+  await expect(page.getByRole("table", { name: t("ui.race.result.title") })).toBeVisible();
+});

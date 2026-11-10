@@ -275,11 +275,16 @@ export function parsePlace(text: string): { place: number; field: number } {
 }
 
 /**
- * On a race replay: play it at ×8 to the finish and return the player's place in the
- * classification that appears there.
+ * On a race replay: play it at ×8 to the finish (the v3 flight view: its last seconds at ×4) and
+ * return the player's place in the classification that appears there.
  */
 export async function playReplayToEnd(page: Page, prefix: string): Promise<number> {
-  await page.click(`#${prefix}-velocidad-8`);
+  if ((await page.locator(`#${prefix}-vuelo`).count()) > 0) {
+    // the v3 flight view: from 3 s before the end, at ×4
+    const max = Number(await page.locator(`#${prefix}-tiempo`).getAttribute("max"));
+    await page.click(`#${prefix}-vuelo-x4`);
+    await page.fill(`#${prefix}-tiempo`, String(Math.max(0, max - 45)));
+  } else await page.click(`#${prefix}-velocidad-8`);
   await page.click(`#${prefix}-reproducir`);
   const table = page.getByRole("table", { name: t("ui.race.result.title") });
   await expect(table).toBeVisible({ timeout: 60_000 });

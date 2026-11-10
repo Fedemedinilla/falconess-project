@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, t, test } from "./fixtures";
-import { closeWeek, RACE_WEEK, RUN_KEY } from "./play";
+import { closeWeek, playUntil, RACE_WEEK, RUN_KEY, startSeason } from "./play";
 
 /**
  * The pre-race position card (ADR-0008): on a goal race week and in the free race, her wings'
@@ -168,3 +168,26 @@ for (const width of [360, 430]) {
     expect(scroll).toBeLessThanOrEqual(width);
   });
 }
+
+test("a v3 race week: the card names the distance, her letter and her passive; the workshop has no repair", async ({
+  page,
+}) => {
+  await startSeason(page, "peregrina", "pt-e2e-v3-taller");
+  await playUntil(page, (v) => v.week !== undefined && v.week >= 12 && !v.eventOpen);
+  await expect(page.locator("#turno-posicion")).toBeVisible();
+  const distance = page.locator("#turno-distancia");
+  await expect(distance).toHaveAttribute("data-distance", /^(sprint|mile|medium|long)$/);
+  await expect(page.locator("#turno-pasiva")).toContainText(t("skill.talon-lock"));
+
+  // the workshop on v3: skills and the wings' look, no repair, no parts
+  await page.click("#accion-workshop");
+  await expect(page.locator("#taller")).toBeVisible();
+  await expect(page.locator("#taller-alas-neutras")).toBeVisible();
+  await expect(page.locator("#taller-reparar")).toHaveCount(0);
+  await expect(page.locator("#taller-piezas-explicacion")).toHaveCount(0);
+  await expect(
+    page.locator("#taller legend", { hasText: t("ui.workshop.skills") }).first(),
+  ).toBeVisible();
+  await expect(page.locator('[id^="taller-bastidor-"]').first()).toBeAttached();
+  await page.click("#taller-volver");
+});

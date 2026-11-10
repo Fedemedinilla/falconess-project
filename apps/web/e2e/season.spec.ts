@@ -61,7 +61,25 @@ for (const falconessId of FALCONESS) {
     await expect(recordedPill).toHaveCount(0);
     await expect(page.getByText(t("ui.goalRace.mismatch"))).toHaveCount(0);
     await expect(page.getByText(t("ui.race.pending"))).toBeVisible();
-    await page.selectOption("#carrera-pronostico", { index: 1 });
+    // new seasons race on v3: the side view of the flight, its pre-race card and her moments
+    const flight = page.locator("#carrera-vuelo");
+    await expect(flight).toBeVisible();
+    await expect(page.locator("#carrera-vuelo-tarjeta")).toContainText(t("ui.flight.pre.kicker"));
+    await expect(page.locator("#carrera-vuelo-tarjeta")).toContainText(t("ui.flight.pre.distance"));
+    const moments = page.locator("#carrera-momentos");
+    const takeoff = moments.locator('[data-moment="takeoff"], [data-moment="takeoffLow"]').first();
+    await expect(takeoff).toBeVisible();
+    // a dive from the list (else a takeoff): the replay seeks to it, plays, and the banner names it
+    const dives = moments.locator('[data-moment="dive"], [data-moment="grandDive"]');
+    const dive = (await dives.count()) > 0;
+    await (dive ? dives.first() : takeoff).getByRole("button").click();
+    await expect(page.locator("#carrera-vuelo-tarjeta")).toHaveCount(0);
+    await expect(flight).toHaveAttribute(
+      "data-banner",
+      dive ? /^(dive|grandDive|skillDive)$/ : /^takeoff(Low)?$/,
+      { timeout: 15_000 },
+    );
+    await page.click("#carrera-reproducir");
     const r0 = Date.now();
     const replayPlace = await playReplayToEnd(page, "carrera");
     const replayMs = Date.now() - r0;
@@ -69,11 +87,6 @@ for (const falconessId of FALCONESS) {
       recorded.place,
     );
     await expect(recordedPill).toBeVisible();
-    await expect(
-      page
-        .getByText(textPattern("ui.race.guess.right"))
-        .or(page.getByText(textPattern("ui.race.guess.wrong"))),
-    ).toBeVisible();
     await expect(page.getByRole("heading", { name: t("ui.race.why.title") })).toBeVisible();
 
     // back to the season: «Lo que pasó» was read and stays closed (a waiting event opens now);

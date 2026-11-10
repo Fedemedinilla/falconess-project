@@ -208,7 +208,7 @@ function Hud({
       </div>
       <div>
         <b>{ui("ui.flight.hud.alt")}</b>
-        <span data-band={b}>{altText}</span>
+        <span data-alt={b}>{altText}</span>
         <em>{altX}</em>
       </div>
       <div>

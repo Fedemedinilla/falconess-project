@@ -251,6 +251,17 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
   );
 }
 
+/** A v3 race: her position over the side view of the flight. */
+function FlightFrame({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
+  const view = useMemo(() => raceView(log, labels), [log, labels]);
+  return (
+    <div className={s.viewer}>
+      {view.player && <PlayerPosition player={view.player} labels={labels} idPrefix={idPrefix} />}
+      <FlightReplay log={log} labels={labels} idPrefix={idPrefix} onReveal={onReveal} />
+    </div>
+  );
+}
+
 /** A distinct key per log, so a new race starts a new replay (clock, reveal, selection). */
 const logKeys = new WeakMap<RaceLog, number>();
 let nextKey = 1;
@@ -278,7 +289,7 @@ export function Replay({ log, labels, idPrefix, onReveal }: ReplayProps) {
   // ruleset v3: the side view of the flight; v1 and v2 keep the lane chart
   if (isFlightLog(log) && log.frames !== undefined)
     return (
-      <FlightReplay
+      <FlightFrame
         key={keyOf(log)}
         log={log}
         labels={labels ?? pageLabels()}
