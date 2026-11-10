@@ -1,4 +1,4 @@
-import { contentLabels, type RaceLabels } from "@falconess/race-view";
+import { contentLabels, isFlightLog, type RaceLabels } from "@falconess/race-view";
 import { DEFAULT_POSITION, type RaceLog, SEGMENT_TYPES } from "@falconess/schema";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useGlobalDetail } from "../app/explain";
@@ -11,6 +11,7 @@ import { Panel } from "../ui/Panel";
 import { PositionMark } from "../ui/PositionMark";
 import { Controls } from "./Controls";
 import { ReplayClock } from "./clock";
+import { FlightReplay } from "./flight/FlightReplay";
 import { type ChartMode, LaneChart } from "./LaneChart";
 import { LivePanel } from "./LivePanel";
 import s from "./RaceViewer.module.css";
@@ -274,6 +275,17 @@ export type ReplayProps = {
 
 /** The replay of `log`, started afresh for every new log. */
 export function Replay({ log, labels, idPrefix, onReveal }: ReplayProps) {
+  // ruleset v3: the side view of the flight; v1 and v2 keep the lane chart
+  if (isFlightLog(log) && log.frames !== undefined)
+    return (
+      <FlightReplay
+        key={keyOf(log)}
+        log={log}
+        labels={labels ?? pageLabels()}
+        idPrefix={idPrefix}
+        onReveal={onReveal}
+      />
+    );
   return (
     <RaceReplay
       key={keyOf(log)}

@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 /** Below this width the screens use their phone layout (the CSS breakpoint of the same name). */
 export const NARROW_QUERY = "(max-width: 40rem)";
 
-function mediaList(query: string): MediaQueryList | undefined {
+export function mediaList(query: string): MediaQueryList | undefined {
   return typeof window === "undefined" || typeof window.matchMedia !== "function"
     ? undefined
     : window.matchMedia(query);
