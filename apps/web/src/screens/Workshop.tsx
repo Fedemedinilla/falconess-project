@@ -1,4 +1,6 @@
-import type { PartType, Position } from "@falconess/schema";
+import type { TakeoffStyle } from "@falconess/race-view";
+import type { PartType, Position, Style } from "@falconess/schema";
+import { flightOf } from "@falconess/sim";
 import { useEffect, useRef, useState } from "react";
 import { useDetail } from "../app/explain";
 import { useGame } from "../game/useGame";
@@ -33,6 +35,14 @@ import {
 } from "./model/workshop";
 import { describeOp } from "./TurnSide";
 import s from "./Workshop.module.css";
+
+/** The takeoff gesture of each wing style on v3 (WINGS_V3N). */
+const GESTURE: Record<Style, TakeoffStyle> = {
+  dive: "lance",
+  hover: "column",
+  glide: "ramp",
+  ground: "turbine",
+};
 
 export type WorkshopProps = {
   /** Back to the actions without spending the week. */
@@ -98,6 +108,9 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
   const racePosition =
     race && (race.position ?? wingsPosition(content, raceFrame(ctx.ruleset, state, report.ops)));
   const rerollable = rerollableFrames(ctx, state);
+  // v3 (ADR-0011): one neutral frame profile and no wear; the workshop is skills and the wings'
+  // look (each style its gesture)
+  const neutral = flightOf(ctx.ruleset)?.neutralFrames === true;
   const nextReroll = nextRerollCost(ctx, state, plan);
   const skills = learnableSkills(ctx, state);
   const builds: {
@@ -172,6 +185,11 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
     >
       <div className={s.workshop} ref={bodyRef} tabIndex={-1}>
         <p className={s.lead}>{ui("ui.workshop.lead")}</p>
+        {neutral && (
+          <p className={s.hint} id="taller-alas-neutras">
+            {ui("ui.workshop.neutral")}
+          </p>
+        )}
 
         {/* frame ------------------------------------------------------------------------------ */}
         <fieldset className={s.section}>
@@ -204,8 +222,12 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
                     <span className={s.frameText}>
                       <span className={s.frameName}>{gameText(frame.textKey)}</span>
                       <span className={s.frameMeta}>
-                        {gameText(`style.${frame.style}`)} ·{" "}
-                        {ui("ui.frame.durability", { current: d.current, max: d.max })}
+                        {neutral
+                          ? ui("ui.workshop.gesture", {
+                              style: gameText(`style.${frame.style}`),
+                              gesture: ui(`ui.flight.style.${GESTURE[frame.style]}`),
+                            })
+                          : `${gameText(`style.${frame.style}`)} · ${ui("ui.frame.durability", { current: d.current, max: d.max })}`}
                       </span>
                     </span>
                     {id === state.equippedFrame && (
@@ -218,208 +240,217 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
           </ul>
         </fieldset>
 
-        {/* parts ------------------------------------------------------------------------------ */}
-        <fieldset className={cx(s.section, s.switched)}>
-          <legend className={s.legend}>
-            <Icon name="part" />
-            {ui("ui.workshop.parts")}
-          </legend>
-          <ExplainSwitch
-            id="taller-piezas-explicacion"
-            detail={partsDetail}
-            onChange={setPartsDetail}
-            name={ui("ui.workshop.parts")}
-            className={s.sectionSwitch}
-          />
-          <p className={s.hint}>{uiAt(partsDetail, "ui.workshop.parts.hint")}</p>
-          <div className={s.parts}>
-            {PART_TYPE_ORDER.map((type: PartType) => {
-              const chosen = partOfType(ctx, plan.parts, type);
-              const options = [...content.parts.values()].filter((p) => p.type === type);
-              const part = chosen === undefined ? undefined : content.getPart(chosen);
-              const selectId = `taller-pieza-${type}`;
-              return (
-                <div key={type} className={s.part}>
-                  <label htmlFor={selectId} className={s.partLabel}>
-                    {ui(`ui.part.${type}`)}
-                  </label>
-                  <select
-                    id={selectId}
-                    className={s.select}
-                    value={chosen ?? ""}
-                    onChange={(e) =>
-                      update(
-                        withPart(
-                          ctx,
-                          plan,
-                          type,
-                          e.target.value === "" ? undefined : e.target.value,
-                        ),
-                      )
-                    }
-                  >
-                    <option value="">{ui("ui.workshop.parts.none")}</option>
-                    {options.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {gameText(p.textKey)}
-                      </option>
-                    ))}
-                  </select>
-                  <p className={s.partDesc}>
-                    {part
-                      ? (partsDetail === "brief" && gameBrief(part.textKey)) ||
-                        describeSource(part).join(" · ")
-                      : ui("ui.workshop.parts.empty")}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        {/* build result ----------------------------------------------------------------------- */}
-        <div className={s.section}>
-          <p className={s.legend}>
-            {ui("ui.workshop.build", { frame: gameText(content.getFrame(plan.frameId).textKey) })}
-          </p>
-          <table className={s.build}>
-            <caption className="visually-hidden">{ui("ui.workshop.build.caption")}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{ui("ui.workshop.build.stat")}</th>
-                <th scope="col">{ui("ui.workshop.build.now")}</th>
-                <th scope="col">{ui("ui.workshop.build.after")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {builds.map((b) => (
-                <tr key={b.key}>
-                  <th scope="row">
-                    <Icon name={b.icon} />
-                    {b.label}
-                  </th>
-                  <td>{b.from}</td>
-                  <td className={cx(b.diff > 0 && s.up, b.diff < 0 && s.down)}>{b.to}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {report.rerollsFrame && <p className={s.hint}>{ui("ui.workshop.build.reroll")}</p>}
-        </div>
-
-        {/* repair ----------------------------------------------------------------------------- */}
-        <div className={s.section}>
-          <label className={s.check} htmlFor="taller-reparar">
-            <input
-              type="checkbox"
-              id="taller-reparar"
-              checked={plan.repair}
-              disabled={!plan.repair && report.durability.current >= report.durability.max}
-              onChange={(e) => update({ ...plan, repair: e.target.checked })}
-            />
-            <Icon name="framestat.durability" />
-            <span>
-              {report.durability.current >= report.durability.max && !plan.repair
-                ? ui("ui.workshop.repair.full", {
-                    frame: gameText(content.getFrame(plan.frameId).textKey),
-                  })
-                : report.rerollsFrame
-                  ? ui("ui.workshop.repair.reroll", {
-                      frame: gameText(content.getFrame(plan.frameId).textKey),
-                      from: report.durability.current,
-                    })
-                  : ui("ui.workshop.repair", {
-                      frame: gameText(content.getFrame(plan.frameId).textKey),
-                      from: report.durability.current,
-                      to: report.durability.max,
-                    })}
-            </span>
-          </label>
-        </div>
-
-        {/* quirks ----------------------------------------------------------------------------- */}
-        {rerollable.length > 0 && (
-          <div className={cx(s.section, s.switched)}>
-            <p className={s.legend}>
-              <Icon name="quirk" />
-              {ui("ui.workshop.quirks")}
-            </p>
-            <ExplainSwitch
-              id="taller-peculiaridades-explicacion"
-              detail={quirksDetail}
-              onChange={setQuirksDetail}
-              name={ui("ui.workshop.quirks")}
-              className={s.sectionSwitch}
-            />
-            <p className={s.hint}>
-              {uiAt(quirksDetail, "ui.workshop.quirks.hint", {
-                scrap: state.wallet.scrap,
-                left: report.scrapLeft,
-              })}
-            </p>
-            <ul className={s.rerolls}>
-              {rerollable.map((id) => {
-                const frame = content.getFrame(id);
-                const planned = plan.rerolls.filter((f) => f === id).length;
-                const quirks = state.frameQuirks[id] ?? [];
-                const affordable = report.scrapLeft >= nextReroll;
-                return (
-                  <li key={id} className={s.reroll}>
-                    <div className={s.rerollHead}>
-                      <span className={s.frameName}>{gameText(frame.textKey)}</span>
-                      {planned > 0 && (
-                        <Pill tone="accent">
-                          {ui("ui.workshop.quirks.planned", { n: planned })}
-                        </Pill>
-                      )}
-                    </div>
-                    <ul className={s.quirkList}>
-                      {quirks.map((q) => {
-                        const quirk = content.getQuirk(q);
-                        return (
-                          <li key={q}>
-                            <strong>{gameText(quirk.textKey)}</strong>
-                            <span>
-                              {(quirksDetail === "brief" && gameBrief(quirk.textKey)) ||
-                                describeSource(quirk).join(" · ")}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <div className={s.rerollActions}>
-                      <Button
-                        id={`taller-resortear-${id}`}
-                        size="sm"
-                        disabled={!affordable || full}
-                        onClick={() => update({ ...plan, rerolls: [...plan.rerolls, id] })}
+        {!neutral && (
+          <>
+            {/* parts ------------------------------------------------------------------------------ */}
+            <fieldset className={cx(s.section, s.switched)}>
+              <legend className={s.legend}>
+                <Icon name="part" />
+                {ui("ui.workshop.parts")}
+              </legend>
+              <ExplainSwitch
+                id="taller-piezas-explicacion"
+                detail={partsDetail}
+                onChange={setPartsDetail}
+                name={ui("ui.workshop.parts")}
+                className={s.sectionSwitch}
+              />
+              <p className={s.hint}>{uiAt(partsDetail, "ui.workshop.parts.hint")}</p>
+              <div className={s.parts}>
+                {PART_TYPE_ORDER.map((type: PartType) => {
+                  const chosen = partOfType(ctx, plan.parts, type);
+                  const options = [...content.parts.values()].filter((p) => p.type === type);
+                  const part = chosen === undefined ? undefined : content.getPart(chosen);
+                  const selectId = `taller-pieza-${type}`;
+                  return (
+                    <div key={type} className={s.part}>
+                      <label htmlFor={selectId} className={s.partLabel}>
+                        {ui(`ui.part.${type}`)}
+                      </label>
+                      <select
+                        id={selectId}
+                        className={s.select}
+                        value={chosen ?? ""}
+                        onChange={(e) =>
+                          update(
+                            withPart(
+                              ctx,
+                              plan,
+                              type,
+                              e.target.value === "" ? undefined : e.target.value,
+                            ),
+                          )
+                        }
                       >
-                        {ui("ui.workshop.quirks.reroll", { cost: nextReroll })}
-                      </Button>
-                      {planned > 0 && (
-                        <Button
-                          id={`taller-resortear-quitar-${id}`}
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            const at = plan.rerolls.lastIndexOf(id);
-                            update({ ...plan, rerolls: plan.rerolls.filter((_, i) => i !== at) });
-                          }}
-                        >
-                          {ui("ui.workshop.quirks.undo")}
-                        </Button>
-                      )}
-                    </div>
-                    {!affordable && (
-                      <p className={s.hint}>
-                        {ui("ui.workshop.quirks.noScrap", { cost: nextReroll })}
+                        <option value="">{ui("ui.workshop.parts.none")}</option>
+                        {options.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {gameText(p.textKey)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className={s.partDesc}>
+                        {part
+                          ? (partsDetail === "brief" && gameBrief(part.textKey)) ||
+                            describeSource(part).join(" · ")
+                          : ui("ui.workshop.parts.empty")}
                       </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {/* build result ----------------------------------------------------------------------- */}
+            <div className={s.section}>
+              <p className={s.legend}>
+                {ui("ui.workshop.build", {
+                  frame: gameText(content.getFrame(plan.frameId).textKey),
+                })}
+              </p>
+              <table className={s.build}>
+                <caption className="visually-hidden">{ui("ui.workshop.build.caption")}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{ui("ui.workshop.build.stat")}</th>
+                    <th scope="col">{ui("ui.workshop.build.now")}</th>
+                    <th scope="col">{ui("ui.workshop.build.after")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {builds.map((b) => (
+                    <tr key={b.key}>
+                      <th scope="row">
+                        <Icon name={b.icon} />
+                        {b.label}
+                      </th>
+                      <td>{b.from}</td>
+                      <td className={cx(b.diff > 0 && s.up, b.diff < 0 && s.down)}>{b.to}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {report.rerollsFrame && <p className={s.hint}>{ui("ui.workshop.build.reroll")}</p>}
+            </div>
+
+            {/* repair ----------------------------------------------------------------------------- */}
+            <div className={s.section}>
+              <label className={s.check} htmlFor="taller-reparar">
+                <input
+                  type="checkbox"
+                  id="taller-reparar"
+                  checked={plan.repair}
+                  disabled={!plan.repair && report.durability.current >= report.durability.max}
+                  onChange={(e) => update({ ...plan, repair: e.target.checked })}
+                />
+                <Icon name="framestat.durability" />
+                <span>
+                  {report.durability.current >= report.durability.max && !plan.repair
+                    ? ui("ui.workshop.repair.full", {
+                        frame: gameText(content.getFrame(plan.frameId).textKey),
+                      })
+                    : report.rerollsFrame
+                      ? ui("ui.workshop.repair.reroll", {
+                          frame: gameText(content.getFrame(plan.frameId).textKey),
+                          from: report.durability.current,
+                        })
+                      : ui("ui.workshop.repair", {
+                          frame: gameText(content.getFrame(plan.frameId).textKey),
+                          from: report.durability.current,
+                          to: report.durability.max,
+                        })}
+                </span>
+              </label>
+            </div>
+
+            {/* quirks ----------------------------------------------------------------------------- */}
+            {rerollable.length > 0 && (
+              <div className={cx(s.section, s.switched)}>
+                <p className={s.legend}>
+                  <Icon name="quirk" />
+                  {ui("ui.workshop.quirks")}
+                </p>
+                <ExplainSwitch
+                  id="taller-peculiaridades-explicacion"
+                  detail={quirksDetail}
+                  onChange={setQuirksDetail}
+                  name={ui("ui.workshop.quirks")}
+                  className={s.sectionSwitch}
+                />
+                <p className={s.hint}>
+                  {uiAt(quirksDetail, "ui.workshop.quirks.hint", {
+                    scrap: state.wallet.scrap,
+                    left: report.scrapLeft,
+                  })}
+                </p>
+                <ul className={s.rerolls}>
+                  {rerollable.map((id) => {
+                    const frame = content.getFrame(id);
+                    const planned = plan.rerolls.filter((f) => f === id).length;
+                    const quirks = state.frameQuirks[id] ?? [];
+                    const affordable = report.scrapLeft >= nextReroll;
+                    return (
+                      <li key={id} className={s.reroll}>
+                        <div className={s.rerollHead}>
+                          <span className={s.frameName}>{gameText(frame.textKey)}</span>
+                          {planned > 0 && (
+                            <Pill tone="accent">
+                              {ui("ui.workshop.quirks.planned", { n: planned })}
+                            </Pill>
+                          )}
+                        </div>
+                        <ul className={s.quirkList}>
+                          {quirks.map((q) => {
+                            const quirk = content.getQuirk(q);
+                            return (
+                              <li key={q}>
+                                <strong>{gameText(quirk.textKey)}</strong>
+                                <span>
+                                  {(quirksDetail === "brief" && gameBrief(quirk.textKey)) ||
+                                    describeSource(quirk).join(" · ")}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        <div className={s.rerollActions}>
+                          <Button
+                            id={`taller-resortear-${id}`}
+                            size="sm"
+                            disabled={!affordable || full}
+                            onClick={() => update({ ...plan, rerolls: [...plan.rerolls, id] })}
+                          >
+                            {ui("ui.workshop.quirks.reroll", { cost: nextReroll })}
+                          </Button>
+                          {planned > 0 && (
+                            <Button
+                              id={`taller-resortear-quitar-${id}`}
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const at = plan.rerolls.lastIndexOf(id);
+                                update({
+                                  ...plan,
+                                  rerolls: plan.rerolls.filter((_, i) => i !== at),
+                                });
+                              }}
+                            >
+                              {ui("ui.workshop.quirks.undo")}
+                            </Button>
+                          )}
+                        </div>
+                        {!affordable && (
+                          <p className={s.hint}>
+                            {ui("ui.workshop.quirks.noScrap", { cost: nextReroll })}
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </>
         )}
 
         {/* skills ----------------------------------------------------------------------------- */}
