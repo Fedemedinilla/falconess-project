@@ -625,7 +625,13 @@ function runnerTick(c: Ctx, i: number): boolean {
       ? airDrain(c, i, F, vOut, dK)
       : drainGround(c, i, vOut, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
-  let drip = F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, F, drain0) : 0;
+  // PERF-2: no dirt, not boxed, no block: `effortDrip` would add nothing
+  let drip =
+    F !== null &&
+    (S.alt[i] ?? 0) > 0 &&
+    ((S.dirty[i] ?? 0) > 0 || S.boxed[i] === 1 || (S.blkRun[i] ?? 0) > 0)
+      ? effortDrip(c, i, F, drain0)
+      : 0;
   // the kick on low hp: the drip stops at her floor (the drain itself never does)
   if (drip > 0 && F?.hpHitFloor === true)
     drip = Math.min(drip, Math.max(0, (S.hp[i] ?? 0) - drain0 - (S.hpFloor[i] ?? 0)));
