@@ -1,0 +1,52 @@
+{
+  "id": "breakaway",
+  "version": 1,
+  "traits": ["obstacles"],
+  "textKey": "course.breakaway",
+  "segments": [
+    {
+      "type": "flat",
+      "length": 100
+    },
+    {
+      "type": "jump",
+      "length": 60,
+      "liftRequired": 15
+    },
+    {
+      "type": "flat",
+      "length": 80
+    },
+    {
+      "type": "climb",
+      "length": 520,
+      "grade": 0.25
+    },
+    {
+      "type": "flat",
+      "length": 150
+    },
+    {
+      "type": "climb",
+      "length": 200,
+      "grade": 0.25
+    },
+    {
+      "type": "flat",
+      "length": 150
+    },
+    {
+      "type": "curves",
+      "length": 200,
+      "radius": 50
+    },
+    {
+      "type": "flat",
+      "length": 200
+    },
+    {
+      "type": "canyon",
+      "length": 740
+    }
+  ]
+}

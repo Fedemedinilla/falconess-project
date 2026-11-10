@@ -291,6 +291,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     const len = (c: Course) => c.segments.reduce((q, s) => q + s.length, 0);
     const got = Object.fromEntries(loadCatalogueCourses().map((c) => [c.id, len(c)]));
     expect(got).toEqual({
+      breakaway: 2400,
       circuit: 2200,
       crossing: 3600,
       "open-sky": 2800,
