@@ -2,21 +2,19 @@ import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { Course, Position, RaceEntry, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V2 } from "../rulesets/index.js";
-import { simulateRace, simulateRaceProbed, simulateRaceReversed } from "./engine.js";
-import { freezeSkill } from "./entry.js";
-import { neutralFixtureEntry } from "./fixtures.js";
+import { RULESET_V2, RULESET_V3, type RulesetV3 } from "../rulesets/index.js";
 import {
-  airOffsetPm,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
   FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
-  FLIGHT_V3_E1,
-  RULESET_V3,
-  rulesetV3,
+  rulesetV3With,
   WINGS_V3,
-} from "./flight.js";
+} from "../rulesets/v3/switches.js";
+import { simulateRace, simulateRaceProbed, simulateRaceReversed } from "./engine.js";
+import { freezeSkill } from "./entry.js";
+import { neutralFixtureEntry } from "./fixtures.js";
+import { airOffsetPm } from "./flight.js";
 import { ibps } from "./state.js";
 
 /**
@@ -126,15 +124,15 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
   it("L1: every flight's air has the same width whatever the technique (AIR-4)", () => {
     for (const technique of [0, 300, 600, 900, 1200, 2000]) {
       const v = Array.from({ length: 256 }, (_, byte) =>
-        airOffsetPm(FLIGHT_V3_E1, byte, technique),
+        airOffsetPm(RULESET_V3.flight, byte, technique),
       );
-      expect(Math.max(...v) - Math.min(...v)).toBe(2 * FLIGHT_V3_E1.airWPm);
+      expect(Math.max(...v) - Math.min(...v)).toBe(2 * RULESET_V3.flight.airWPm);
     }
     // technique only moves the centre: ±7.5 ‰ between 300 and 900
-    const mid = (t: number) => airOffsetPm(FLIGHT_V3_E1, 128, t);
+    const mid = (t: number) => airOffsetPm(RULESET_V3.flight, 128, t);
     expect(mid(900) - mid(600)).toBe(7);
     expect(mid(600) - mid(300)).toBe(8);
-    expect(airOffsetPm({ ...FLIGHT_V3_E1, airWPm: 0 }, 77, 900)).toBe(0);
+    expect(airOffsetPm({ ...RULESET_V3.flight, airWPm: 0 }, 77, 900)).toBe(0);
   });
 
   it("L1: the air of each flight comes from the pre-drawn block (no draw in the tick)", () => {
@@ -158,7 +156,7 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
       }
       const flags = log.frames?.runners.flatMap((r) => r.flags) ?? [];
       expect(flags.some((f) => (f & RACE_FRAME_FLAGS.dirtyAir) !== 0)).toBe(true);
-      const off = simulateRace(rulesetV3(1, FLIGHT_OFF_1_2), crowded(600), course, "crowd");
+      const off = simulateRace(rulesetV3With(FLIGHT_OFF_1_2), crowded(600), course, "crowd");
       for (const r of off.results) {
         expect(r.ledger.flight?.dirtyTicks).toBe(0);
         expect((r.ledger.flight?.overs ?? 0) + (r.ledger.flight?.knocks ?? 0)).toBe(0);
@@ -174,7 +172,7 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     const tables = (airPacePm: number) => {
       let vC: number[] = [];
       let vCAir: number[] = [];
-      simulateRaceProbed(rulesetV3(1, { airPacePm }), field(600), course, "pace", (t, A) => {
+      simulateRaceProbed(rulesetV3With({ airPacePm }), field(600), course, "pace", (t, A) => {
         if (t > 0) return;
         const idx = Array.from({ length: 8 }, (_, i) => [0, 1, 2].map((ph) => ibps(i, 0, ph, 0)));
         vC = idx.flat().map((x) => A.tables.vC[x] ?? 0);
@@ -184,7 +182,7 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     };
     const centre = tables(0).vCAir;
     const full = tables(1000);
-    const part = tables(FLIGHT_V3_E1.airPacePm).vCAir;
+    const part = tables(RULESET_V3.flight.airPacePm).vCAir;
     expect(full.vCAir).toEqual(full.vC);
     expect(full.vC.some((v, k) => v !== centre[k])).toBe(true);
     full.vC.forEach((v, k) => {
@@ -201,8 +199,8 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     let close = 0;
     let dirtyClose = 0;
     for (const course of courses().slice(0, 3)) {
-      const a = simulateRace(rulesetV3(1, { fightM: 0 }), crowded(600), course, "fight");
-      const b = simulateRace(rulesetV3(1, { fightM: 1 }), crowded(600), course, "fight");
+      const a = simulateRace(rulesetV3With({ fightM: 0 }), crowded(600), course, "fight");
+      const b = simulateRace(rulesetV3With({ fightM: 1 }), crowded(600), course, "fight");
       for (const r of a.results)
         wide += (r.ledger.flight?.overs ?? 0) + (r.ledger.flight?.knocks ?? 0);
       for (const r of b.results) {
@@ -219,18 +217,18 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     let short = 0;
     let long = 0;
     for (const course of courses().slice(0, 3)) {
-      for (const r of simulateRace(rulesetV3(1, { dirtyHighM: 0 }), crowded(600), course, "wake")
+      for (const r of simulateRace(rulesetV3With({ dirtyHighM: 0 }), crowded(600), course, "wake")
         .results)
         short += r.ledger.flight?.towTicks ?? 0;
       for (const r of simulateRace(RULESET_V3, crowded(600), course, "wake").results)
         long += r.ledger.flight?.towTicks ?? 0;
       // closers that nobody knocks down never hold the high band: the longer wake does not reach them
       const noKnock = { knockTicks: 0 };
-      const a = simulateRace(rulesetV3(1, { ...noKnock, dirtyHighM: 0 }), closers, course, "ceil");
-      const b = simulateRace(rulesetV3(1, noKnock), closers, course, "ceil");
+      const a = simulateRace(rulesetV3With({ ...noKnock, dirtyHighM: 0 }), closers, course, "ceil");
+      const b = simulateRace(rulesetV3With(noKnock), closers, course, "ceil");
       expect(results(b)).toBe(results(a));
     }
-    expect(FLIGHT_V3_E1.dirtyHighM).toBeGreaterThan(FLIGHT_V3_E1.dirtyM);
+    expect(RULESET_V3.flight.dirtyHighM).toBeGreaterThan(RULESET_V3.flight.dirtyM);
     expect(long).toBeGreaterThan(short);
   });
 
@@ -239,24 +237,24 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
     // twice (the keep for the final plus the flight reserve), so less energy reaches 1200 m
     const closers = field(600, () => ({ style: "dive", position: "closer" }));
     const ridge = content.getCourse("ridge");
-    const left = (R: ReturnType<typeof rulesetV3>) => {
+    const left = (R: RulesetV3) => {
       const fr = simulateRace(R, closers, ridge, "keep").frames;
       let e = 0;
       for (const r of fr?.runners ?? [])
         e += r.energy[r.posMm.findIndex((x) => x >= 1_200_000)] ?? 0;
       return e;
     };
-    expect(left(RULESET_V3)).toBeLessThan(left(rulesetV3(1, { keepFlown: false })));
+    expect(left(RULESET_V3)).toBeLessThan(left(rulesetV3With({ keepFlown: false })));
     // a stalk plans a mid-race flight in the high band: her keep still adds its reserve
     for (const course of courses().slice(0, 3))
       expect(results(simulateRace(RULESET_V3, crowded(600), course, "keep"))).toBe(
-        results(simulateRace(rulesetV3(1, { keepFlown: false }), crowded(600), course, "keep")),
+        results(simulateRace(rulesetV3With({ keepFlown: false }), crowded(600), course, "keep")),
       );
   });
 
   it("L6: a fall forced by the tank lands with a loss and no dive", () => {
     // a very bad air (W 400 ‰, ×10 per ‰) makes holding cost more than the plan reserved
-    const R = rulesetV3(1, { airWPm: 400 });
+    const R = rulesetV3With({ airWPm: 400 });
     let falls = 0;
     for (const course of courses().slice(0, 3))
       for (const seed of ["f1", "f2", "f3"]) {
@@ -277,7 +275,7 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
   it("L5: courage sets the dive, η = 700 + 600·min(C, 1200)/1200", () => {
     const gain = (c: number) => {
       const E = field(600).map((e) => ({ ...e, stats: { ...e.stats, courage: c } }));
-      const R = rulesetV3(1, FLIGHT_OFF_1_3); // neutral wings: no ×1.25 of the Lanza
+      const R = rulesetV3With(FLIGHT_OFF_1_3); // neutral wings: no ×1.25 of the Lanza
       const log = simulateRace(R, E, content.getCourse("sprint"), "eta5");
       const d = (log.events ?? []).find((e) => e.kind === "dive" && e.fromBand === 3);
       return d?.kind === "dive" ? d.gainMms : -1;
@@ -291,7 +289,7 @@ describe("ruleset v3 stage 1: the struggle up there (step 1.2)", () => {
 describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () => {
   it("S1: the Lanza leaves 960 ‰ of her speed on the ground, the Rampa all of it", () => {
     // neutral wings (owner 2026-11-08): every wing keeps all her speed; FLIGHT_OFF_NEUTRAL is S1's
-    for (const R of [rulesetV3(1, FLIGHT_OFF_NEUTRAL), RULESET_V3]) {
+    for (const R of [rulesetV3With(FLIGHT_OFF_NEUTRAL), RULESET_V3]) {
       const log = simulateRace(R, field(600), content.getCourse("canyon"), "lift");
       const t = (log.events ?? []).flatMap((e) => (e.kind === "takeoff" ? [e] : []));
       // everyone flies: a skim from the ground (band 1) keeps all her speed and adds the lift push
@@ -324,7 +322,7 @@ describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () 
     // neutral wings: the Turbina climbs to the ceiling too (3 ticks per band, 2 from a cornisa)
     expect(ticks).toEqual({ lance: 2, column: 2, ramp: 4, turbine: 2 });
     const r4: Record<string, number> = {};
-    const old = simulateRace(rulesetV3(1, FLIGHT_OFF_R5), E, content.getCourse("ridge"), "corn");
+    const old = simulateRace(rulesetV3With(FLIGHT_OFF_R5), E, content.getCourse("ridge"), "corn");
     for (const e of old.events ?? []) if (e.kind === "takeoff") r4[e.style] = e.climbTicks;
     expect(r4).toEqual({ lance: 3, column: 3, ramp: 6 });
   });
@@ -346,7 +344,7 @@ describe("ruleset v3 stage 1: takeoff styles and the held skill (step 1.3)", () 
         expect((down?.tick ?? 0) - e.tick).toBe(e.heldTicks);
       }
       const off = simulateRace(
-        rulesetV3(1, { heldSkill: false }),
+        rulesetV3With({ heldSkill: false }),
         E,
         content.getCourse("ridge"),
         seed,

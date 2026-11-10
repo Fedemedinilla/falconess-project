@@ -1,11 +1,11 @@
 import { loadContent } from "@falconess/content";
 import { type EntryInput, PassiveSkill, RaceEntry, type RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
+import { RULESET_V1, RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_HOMES, FLIGHT_OFF_POLISH, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_HOMES, FLIGHT_OFF_POLISH, RULESET_V3, rulesetV3 } from "./flight.js";
 
 /**
  * Homes per track and the weak's own kit (owner 2026-11-09, .work/design7/measure/homes-final.md):
@@ -65,7 +65,7 @@ describe("homes: Garra fija dives harder (ADR-0009 draft)", () => {
 
   it("v1, v2 and v3 with the flag off freeze no dive trait; v3 freezes it", () => {
     const c = content.getCourse("ridge");
-    for (const R of [RULESET_V1, RULESET_V2, rulesetV3(1, FLIGHT_OFF_HOMES)]) {
+    for (const R of [RULESET_V1, RULESET_V2, rulesetV3With(FLIGHT_OFF_HOMES)]) {
       const e = freezeEntry(R, content, peregrina("peregrina-signature"), c, 0);
       expect(e.traits.diveSkill).toBeUndefined();
       expect("diveSkill" in e.traits).toBe(false);
@@ -94,7 +94,7 @@ describe("homes: Garra fija dives harder (ADR-0009 draft)", () => {
   });
 
   it("the flag off: no skill fields in the log, and the race is the polish's", () => {
-    const off = rulesetV3(1, FLIGHT_OFF_HOMES);
+    const off = rulesetV3With(FLIGHT_OFF_HOMES);
     const c = content.getCourse("ridge");
     const log = simulateRace(off, mirror(off, "ridge"), c, "homes-1");
     for (const e of myDives(log)) expect(e.skillMms).toBeUndefined();

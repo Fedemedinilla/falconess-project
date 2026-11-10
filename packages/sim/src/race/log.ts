@@ -13,7 +13,8 @@ import type {
 } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, SEGMENT_TYPES } from "@falconess/schema";
 import type { Ruleset } from "../rulesets/index.js";
-import { effortCosts, type FlightConstants, flightOf, wingOf } from "./flight.js";
+import type { FlightConstants } from "../rulesets/v3/constants.js";
+import { effortCosts, flightOf, wingOf } from "./flight.js";
 import type { CourseGeometry } from "./geometry.js";
 import {
   ACTIVATION_SLOTS,

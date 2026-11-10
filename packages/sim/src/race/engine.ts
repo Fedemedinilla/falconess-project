@@ -3,18 +3,20 @@ import type { Course, RaceEntry, RaceLog, SprintPlanCause } from "@falconess/sch
 import { SprintPlanCause as PlanCauses, RACE_FRAME_FLAGS } from "@falconess/schema";
 import { endBurst } from "../rules/index.js";
 import type { RaceConstants, Ruleset } from "../rulesets/index.js";
-import { type Controller, createController, decide, inPack, rankSnapshot } from "./controller.js";
 import {
   BAND_CEILING,
   BAND_HIGH,
   BAND_LOW,
+  type FlightConstants,
+} from "../rulesets/v3/constants.js";
+import { type Controller, createController, decide, inPack, rankSnapshot } from "./controller.js";
+import {
   bandHoldOf,
   bandPu,
   climbTicksOf,
   DIST_LONG,
   DIST_MILE,
   distanceCode,
-  type FlightConstants,
   flightOf,
   holdLift,
   holdMe,

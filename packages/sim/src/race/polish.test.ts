@@ -1,10 +1,11 @@
 import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { Course, Position, RaceEntry, RaceLog, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import { RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_POLISH, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace } from "./engine.js";
 import { freezeSkill } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_POLISH, RULESET_V3, rulesetV3 } from "./flight.js";
 
 /**
  * Balance polish (2026-11-09, .work/design7/measure/polish-final.md): every great dive keeps room
@@ -36,7 +37,7 @@ function field(st: number, skills: readonly string[] = []): RaceEntry[] {
     return { ...e, distanceAptitude: "B" as const };
   });
 }
-const OFF = rulesetV3(1, FLIGHT_OFF_POLISH);
+const OFF = rulesetV3With(FLIGHT_OFF_POLISH);
 const takeoffs = (log: RaceLog, pos: Position) =>
   (log.events ?? []).flatMap((e) =>
     e.kind === "takeoff" && log.entries[e.lane]?.position === pos ? [e.posMm] : [],

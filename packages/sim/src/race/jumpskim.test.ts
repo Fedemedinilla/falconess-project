@@ -1,15 +1,10 @@
 import { loadCatalogueCourses } from "@falconess/content";
 import type { Course, RaceEntry } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import { RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_JUMPSKIM, FLIGHT_OFF_TRIM, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import {
-  FLIGHT_OFF_JUMPSKIM,
-  FLIGHT_OFF_TRIM,
-  FLIGHT_V3_E1,
-  RULESET_V3,
-  rulesetV3,
-} from "./flight.js";
 
 /**
  * Engine bug (barandas-balance.md §2 and §8, trim-final.md): the Punta's planned skim (band 1) that
@@ -73,7 +68,7 @@ describe("fix: a skim planned inside a Salto she jumps on her legs", () => {
 
   it("with the fix off the skim is lost, as on f08bde5 (the bug this pins)", () => {
     const c = draft();
-    const log = simulateRace(rulesetV3(1, FLIGHT_OFF_JUMPSKIM), field(), c, "jumpskim-1");
+    const log = simulateRace(rulesetV3With(FLIGHT_OFF_JUMPSKIM), field(), c, "jumpskim-1");
     for (const lane of leads) {
       const f = log.results.find((x) => x.runnerId === `r${lane}`)?.ledger.flight;
       expect(f?.flights).toBe(0);
@@ -83,6 +78,6 @@ describe("fix: a skim planned inside a Salto she jumps on her legs", () => {
 
   it("FLIGHT_OFF_TRIM carries the fix's flag (INV-14 keeps measuring the homes engine)", () => {
     expect(FLIGHT_OFF_TRIM.jumpHoldsSkim).toBe(false);
-    expect(FLIGHT_V3_E1.jumpHoldsSkim).toBe(true);
+    expect(RULESET_V3.flight.jumpHoldsSkim).toBe(true);
   });
 });

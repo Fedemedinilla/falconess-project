@@ -10,19 +10,14 @@ import type {
   Style,
 } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V2 } from "../rulesets/index.js";
+import { RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_STAMINA, rulesetV3With } from "../rulesets/v3/switches.js";
 import { boxDistanceFactor, seasonDistanceAptitudes, startSeason } from "../season/start.js";
 import { simulateRace } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { generateField } from "./field.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import {
-  distanceOfLength,
-  FLIGHT_OFF_STAMINA,
-  FLIGHT_V3_E1,
-  RULESET_V3,
-  rulesetV3,
-} from "./flight.js";
+import { distanceOfLength } from "./flight.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock } from "./state.js";
 
@@ -130,12 +125,12 @@ describe("ruleset v3 draft: stamina pays effort (owner 2026-11-09)", () => {
       return Array.from({ length: 8 }, (_, i) => A.tables.hpMax[i] ?? 0);
     };
     const on = hpMax(RULESET_V3);
-    const off = hpMax(rulesetV3(1, { hpPlanRefStamina: 0 }));
+    const off = hpMax(rulesetV3With({ hpPlanRefStamina: 0 }));
     for (const [i, v] of on.entries()) expect(v, `lane ${i}`).toBeGreaterThan(off[i] ?? 0);
   });
 
   it("off (FLIGHT_OFF_STAMINA): no hit, no hpCost, no letter", () => {
-    const off = rulesetV3(1, FLIGHT_OFF_STAMINA);
+    const off = rulesetV3With(FLIGHT_OFF_STAMINA);
     const log = simulateRace(off, field(450, "C"), courseOf("sprint"), "off/1", { detail: "full" });
     expect(hits(log)).toEqual([]);
     for (const r of log.results) expect(r.ledger.flight?.hpCost).toBeUndefined();
@@ -146,7 +141,7 @@ describe("ruleset v3 draft: stamina pays effort (owner 2026-11-09)", () => {
 
 describe("ruleset v3 draft: the four distances (owner 2026-11-09)", () => {
   it("a course's distance comes from its length (sprint ≤ 1400, mile ≤ 1800, medium ≤ 2400)", () => {
-    const F = FLIGHT_V3_E1;
+    const F = RULESET_V3.flight;
     const got = Object.fromEntries(
       ["sprint", "steps", "overlook", "ridge", "circuit", "open-sky", "canyon", "crossing"].map(
         (id) => [id, distanceOfLength(F, lengthMm(courseOf(id)))],

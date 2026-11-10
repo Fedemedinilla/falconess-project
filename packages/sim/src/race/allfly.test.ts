@@ -1,9 +1,10 @@
 import { loadContent } from "@falconess/content";
 import type { Position, RaceEntry, RaceLog, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import { RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_ALLFLY, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace, simulateRaceReversed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_ALLFLY, RULESET_V3, rulesetV3 } from "./flight.js";
 
 /**
  * «Todas vuelan» (owner, 2026-11-08): the lead skims (band 1) early and over Colina, Terreno
@@ -39,7 +40,7 @@ function field(
 type Ev = NonNullable<RaceLog["events"]>[number];
 const events = <K extends Ev["kind"]>(log: RaceLog, kind: K) =>
   (log.events ?? []).filter((e): e is Extract<Ev, { kind: K }> => e.kind === kind);
-const OFF = rulesetV3(1, FLIGHT_OFF_ALLFLY);
+const OFF = rulesetV3With(FLIGHT_OFF_ALLFLY);
 
 describe("todas vuelan (2026-11-08)", () => {
   it("off, the lead and the default pack never take off on the sprint; on, both skim at band 1", () => {
@@ -76,7 +77,7 @@ describe("todas vuelan (2026-11-08)", () => {
         .results.filter((r) => r.lane < 4)
         .reduce((p, r) => p + (r.ledger.energyLift ?? 0), 0);
     const paid = lift(RULESET_V3);
-    const free = lift(rulesetV3(1, { skimJumpPm: 0 }));
+    const free = lift(rulesetV3With({ skimJumpPm: 0 }));
     expect(paid).toBeGreaterThan(free);
   });
 
@@ -87,7 +88,7 @@ describe("todas vuelan (2026-11-08)", () => {
         (e) => e.band === 1 && e.fromBand === 0 && e.style === "turbine",
       );
     const a = take(RULESET_V3);
-    const b = take(rulesetV3(1, { skimLiftMms: 0 }));
+    const b = take(rulesetV3With({ skimLiftMms: 0 }));
     expect(a.length).toBeGreaterThan(0);
     for (const e of a) expect(e.vAfterMms - e.vMms).toBe(RULESET_V3.flight.skimLiftMms);
     for (const e of b) expect(e.vAfterMms).toBe(e.vMms);

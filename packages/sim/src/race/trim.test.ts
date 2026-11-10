@@ -1,18 +1,12 @@
 import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { Course, EntryInput, RaceEntry, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
+import { RULESET_V1, RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_HOMES, FLIGHT_OFF_TRIM, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import {
-  distanceOfLength,
-  FLIGHT_OFF_HOMES,
-  FLIGHT_OFF_TRIM,
-  FLIGHT_V3_E1,
-  RULESET_V3,
-  rulesetV3,
-} from "./flight.js";
+import { distanceOfLength } from "./flight.js";
 
 /**
  * Trim (owner 2026-11-09/10, .work/design7/measure/trim-final.md): Garra fija's dive bonus by race
@@ -83,7 +77,7 @@ describe("trim: Garra fija by distance (ADR-0009 draft)", () => {
       canyon: 500,
       crossing: 500,
     };
-    const off = rulesetV3(1, FLIGHT_OFF_TRIM);
+    const off = rulesetV3With(FLIGHT_OFF_TRIM);
     for (const [id, pm] of Object.entries(want)) {
       const c = courseOf(id);
       expect(freezeEntry(RULESET_V3, content, peregrina(), c, 0).traits.diveSkill).toEqual({
@@ -96,7 +90,7 @@ describe("trim: Garra fija by distance (ADR-0009 draft)", () => {
       });
     }
     // v1, v2 and the homes flag off never freeze it
-    for (const R of [RULESET_V1, RULESET_V2, rulesetV3(1, FLIGHT_OFF_HOMES)])
+    for (const R of [RULESET_V1, RULESET_V2, rulesetV3With(FLIGHT_OFF_HOMES)])
       expect(freezeEntry(R, content, peregrina(), courseOf("sprint"), 0).traits.diveSkill).toBe(
         undefined,
       );
@@ -114,7 +108,7 @@ describe("trim: Garra fija by distance (ADR-0009 draft)", () => {
 
   it("FLIGHT_OFF_HOMES carries the trim flag (INV-13 keeps measuring the polish)", () => {
     expect(FLIGHT_OFF_HOMES.skillFlightDistance).toBe(false);
-    expect(FLIGHT_V3_E1.skillFlightDistance).toBe(true);
+    expect(RULESET_V3.flight.skillFlightDistance).toBe(true);
   });
 });
 
@@ -123,7 +117,7 @@ describe("trim: the Escapada (breakaway), the Punta's home in the Media", () => 
     const c = courseOf("breakaway");
     const L = c.segments.reduce((a, s) => a + s.length, 0);
     expect(L).toBe(2400);
-    expect(distanceOfLength(FLIGHT_V3_E1, L * 1000)).toBe("medium");
+    expect(distanceOfLength(RULESET_V3.flight, L * 1000)).toBe("medium");
     expect(c.segments.map((s) => s.type)).toEqual([
       "flat",
       "jump",

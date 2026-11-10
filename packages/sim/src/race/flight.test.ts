@@ -3,18 +3,17 @@ import { Rng } from "@falconess/rng";
 import type { Course, Position, RaceEntry, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS, RaceLog } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V1, RULESET_V2 } from "../rulesets/index.js";
-import { simulateRace, simulateRaceProbed } from "./engine.js";
-import { neutralFixtureEntry } from "./fixtures.js";
+import { RULESET_V1, RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
 import {
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_ALLFLY,
   FLIGHT_OFF_NEUTRAL,
   FLIGHT_OFF_R5,
-  flightOf,
-  RULESET_V3,
-  rulesetV3,
-} from "./flight.js";
+  rulesetV3With,
+} from "../rulesets/v3/switches.js";
+import { simulateRace, simulateRaceProbed } from "./engine.js";
+import { neutralFixtureEntry } from "./fixtures.js";
+import { flightOf } from "./flight.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock, FLIGHTS_MAX } from "./state.js";
 
@@ -23,7 +22,7 @@ import { buildTables, createRaceArena, drawRaceBlock, FLIGHTS_MAX } from "./stat
  * paid to climb and hold, rest in the air and the dive. v1 and v2 never fly. The tests of the
  * round-2 rules run with `FLIGHT_OFF_1_2` (steps 1.2 and 1.3 off); stage1.test.ts covers those.
  */
-const R2 = rulesetV3(1, FLIGHT_OFF_1_2);
+const R2 = rulesetV3With(FLIGHT_OFF_1_2);
 
 const content = loadContent();
 const S600 = { agility: 600, stamina: 600, technique: 600, courage: 600, intelligence: 600 };
@@ -113,14 +112,16 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     const noJumps = plan(
       content.getCourse("ridge"),
       defaultField(),
-      rulesetV3(1, { packJumps: false }),
+      rulesetV3With({ packJumps: false }),
     );
     expect(noJumps.T.flA[packLane * FLIGHTS_MAX]).toBe(800 * M);
     // with allFly off (two lines, 84dc112) lead and pack keep the ground row of stage 1
     const off = (position: Position) => {
       const entries = defaultField();
       const lane = entries.find((e) => e.position === position)?.laneIndex ?? 0;
-      return plan(content.getCourse("ridge"), entries, rulesetV3(1, FLIGHT_OFF_ALLFLY)).T.flN[lane];
+      return plan(content.getCourse("ridge"), entries, rulesetV3With(FLIGHT_OFF_ALLFLY)).T.flN[
+        lane
+      ];
     };
     expect(off("lead")).toBe(0);
     expect(off("pack")).toBe(0);
@@ -197,7 +198,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
   });
 
   it("an empty tank cannot take off: noLift, no damage, she stays on the ground", () => {
-    const R = rulesetV3(1, { ...FLIGHT_OFF_1_2, climbE: 250 }); // more than any tank (≤ 200)
+    const R = rulesetV3With({ ...FLIGHT_OFF_1_2, climbE: 250 }); // more than any tank (≤ 200)
     const log = simulateRace(R, defaultField(), content.getCourse("sprint"), "nolift");
     const closers = log.entries.filter((e) => e.position === "closer").map((e) => e.laneIndex);
     for (const lane of closers) {
@@ -225,18 +226,18 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
       return d?.kind === "dive" ? d.gainMms : -1;
     };
     const L5 = { nerveM: 0, overDivePm: 0, diveVMms: [0, 0, 5_400, 6_000] as const };
-    const L5old = rulesetV3(1, { ...FLIGHT_OFF_NEUTRAL, ...L5 });
+    const L5old = rulesetV3With({ ...FLIGHT_OFF_NEUTRAL, ...L5 });
     expect(run(R2, 1)).toBe(5100);
     expect(run(R2, 1200)).toBe(6900);
     // L5 and the Lanza's dive ×1.25 (S1): 6000 × 0.7 × 1.25 and 6000 × 1.3 × 1.25
     expect(run(L5old, 1)).toBe(5250);
     expect(run(L5old, 1200)).toBe(9750);
     // neutral wings (owner 2026-11-08): every wing dives the same Δv, 6000 × 0.7 and 6000 × 1.3
-    expect(run(rulesetV3(1, { ...L5, diveCourRel: false }), 1)).toBe(4200);
-    expect(run(rulesetV3(1, { ...L5, diveCourRel: false }), 1200)).toBe(7800);
+    expect(run(rulesetV3With({ ...L5, diveCourRel: false }), 1)).toBe(4200);
+    expect(run(rulesetV3With({ ...L5, diveCourRel: false }), 1200)).toBe(7800);
     // polish (diveCourRel): η reads 600 + C − mean of her five stats (others 600): 121 and 1080
-    expect(run(rulesetV3(1, L5), 1)).toBe(4560);
-    expect(run(rulesetV3(1, L5), 1200)).toBe(7440);
+    expect(run(rulesetV3With(L5), 1)).toBe(4560);
+    expect(run(rulesetV3With(L5), 1200)).toBe(7440);
   });
 
   it("round 4: the hover draft reaches a flight only with draftGroundOnly off; round 5 tows by band (F6)", () => {
@@ -248,11 +249,11 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
         .filter((_, lane) => hover.includes(lane))
         .flatMap((r) => r.flags.filter((f) => (f & FLAGS_ALT) !== 0 && (f & drafting) !== 0));
     };
-    const r4 = rulesetV3(1, FLIGHT_OFF_R5);
+    const r4 = rulesetV3With(FLIGHT_OFF_R5);
     expect(RULESET_V3.flight.draftGroundOnly).toBe(false);
     expect(rows(r4).length).toBeGreaterThan(0);
-    expect(rows(rulesetV3(1, { ...FLIGHT_OFF_R5, draftGroundOnly: true }))).toHaveLength(0);
-    expect(rows(rulesetV3(1, { ...FLIGHT_OFF_1_2, draftGroundOnly: true }))).toHaveLength(0);
+    expect(rows(rulesetV3With({ ...FLIGHT_OFF_R5, draftGroundOnly: true }))).toHaveLength(0);
+    expect(rows(rulesetV3With({ ...FLIGHT_OFF_1_2, draftGroundOnly: true }))).toHaveLength(0);
     // F6: in the air the tow reads only her band and the metres to the one ahead (step A2): every
     // tick she is towed in the air, at the end of the previous tick another runner was ahead of
     // her in her band within the wake, never a runner on the ground
@@ -300,68 +301,5 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     });
     // and they are not part of the v1/v2 content index
     for (const id of Object.keys(got)) expect(content.courses.has(id)).toBe(false);
-  });
-});
-
-describe("ruleset v3 draft: stage 2 preview (design7 R2 lead/pack, R9, R10)", () => {
-  // stage 2 preview as written before «todas vuelan» (its lead plan has no early skim)
-  const E2 = rulesetV3(2, FLIGHT_OFF_ALLFLY);
-
-  it("everyone with flying wings has a plan; the stalk splits around the canyons", () => {
-    const course = content.getCourse("canyon");
-    const entries = defaultField();
-    const { T } = (() => {
-      const G = buildCourseGeometry(E2, course);
-      const A = createRaceArena().reset(entries.length, G);
-      drawRaceBlock(E2, entries, new Rng("plan"), A);
-      buildTables(E2, entries, G, A);
-      return { T: A.tables };
-    })();
-    const flights = (pos: Position) => {
-      const lane = entries.find((e) => e.position === pos && e.style !== "ground")?.laneIndex ?? 0;
-      return Array.from({ length: T.flN[lane] ?? 0 }, (_, k) => {
-        const x = lane * FLIGHTS_MAX + k;
-        return [
-          Math.round((T.flA[x] ?? 0) / M),
-          Math.round((T.flB[x] ?? 0) / M),
-          T.flBand[x],
-          T.flChain[x],
-        ];
-      });
-    };
-    // design7 §5, canyon (stalk from L/4 since round 1): high to 20 m before the first canyon,
-    // low along it, high again to 1980, dive before the second
-    expect(flights("stalk")).toEqual([
-      [750, 880, 2, 1],
-      [880, 1500, 1, 1],
-      [1500, 1980, 2, 0],
-    ]);
-    // the lead flies low over the climb and the water, 20 m each side
-    expect(flights("lead")).toEqual([
-      [380, 920, 1, 0],
-      [2380, 2620, 1, 0],
-    ]);
-    // the pack flies low along both canyons; the fan from the final joins the second
-    expect(flights("pack").map((f) => f[2])).toEqual(flights("pack").map(() => 1));
-  });
-
-  it("nobody holds above band 1 inside a canyon, and ground wings never rise above band 1", () => {
-    for (const cid of ["canyon"]) {
-      const course = content.getCourse(cid);
-      const G = buildCourseGeometry(E2, course);
-      const entries = defaultField();
-      let bad = "";
-      simulateRaceProbed(E2, entries, course, `ceil/${cid}`, (t, A) => {
-        const S = A.state;
-        for (let i = 0; i < entries.length; i++) {
-          const s = S.seg[i] ?? 0;
-          if (G.segType[s] === 5 && (S.alt[i] ?? 0) > 1 && (S.flPhase[i] ?? 0) !== 3)
-            bad ||= `lane ${i} alt ${S.alt[i]} in canyon at ${t}`;
-          if (entries[i]?.style === "ground" && (S.alt[i] ?? 0) > 1)
-            bad ||= `ground rose lane ${i}`;
-        }
-      });
-      expect(bad).toBe("");
-    }
   });
 });

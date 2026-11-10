@@ -1,9 +1,10 @@
 import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { Course, Position, RaceEntry, RaceLog, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import { RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_KICK, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_KICK, FLIGHT_V3_E1, RULESET_V3, rulesetV3 } from "./flight.js";
 import { KICK_OFF, kickPm } from "./sprint.js";
 
 /**
@@ -92,7 +93,7 @@ describe("the kick on low hp", () => {
   });
 
   it("the traffic's hits shrink by her Resistencia twice; the plan's once", () => {
-    expect(FLIGHT_V3_E1.hpTrafficSq).toBe(true);
+    expect(RULESET_V3.flight.hpTrafficSq).toBe(true);
     const log = (st: number) =>
       simulateRace(RULESET_V3, field(st), courseOf("sprint"), "kick/sq", { detail: "full" });
     const per = (l: RaceLog, cause: string) =>
@@ -106,7 +107,7 @@ describe("the kick on low hp", () => {
   });
 
   it("off: no kickPm in the log", () => {
-    const off = rulesetV3(1, FLIGHT_OFF_KICK);
+    const off = rulesetV3With(FLIGHT_OFF_KICK);
     const l = simulateRace(off, field(300), courseOf("sprint"), "kick/off", { detail: "full" });
     for (const p of plans(l)) {
       expect(p.kickPm).toBeUndefined();
@@ -128,14 +129,14 @@ describe("the kick on low hp", () => {
         if (e.kind === "takeoff" && !m.has(e.lane)) m.set(e.lane, e.airPm);
       return [...m.entries()].sort((a, b) => a[0] - b[0]);
     };
-    expect(FLIGHT_V3_E1.airTechRel).toBe(true);
+    expect(RULESET_V3.flight.airTechRel).toBe(true);
     expect(first(RULESET_V3, 300)).toEqual(first(RULESET_V3, 750));
-    const abs = rulesetV3(1, { airTechRel: false });
+    const abs = rulesetV3With({ airTechRel: false });
     expect(first(abs, 300)).not.toEqual(first(abs, 750));
   });
 
   it("with the floor on, the traffic never empties her (hpHitFloor)", () => {
-    const R = rulesetV3(1, { hpHitFloor: true, hpKnock: 2000, hpDoor: 2000, hpSwitch: 2000 });
+    const R = rulesetV3With({ hpHitFloor: true, hpKnock: 2000, hpDoor: 2000, hpSwitch: 2000 });
     for (let k = 0; k < 4; k++) {
       const l = simulateRace(R, field(300), courseOf("sprint"), `kick/floor/${k}`, {
         detail: "full",

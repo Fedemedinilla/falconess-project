@@ -2,9 +2,10 @@ import { loadContent } from "@falconess/content";
 import type { Position, RaceEntry, RaceLog, Style } from "@falconess/schema";
 import { RACE_FRAME_FLAGS } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import { RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_LINES, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace, simulateRaceProbed, simulateRaceReversed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_LINES, RULESET_V3, rulesetV3 } from "./flight.js";
 
 /**
  * Two lines per altitude band (owner, 2026-11-08): inside and outside. The wake is only in her
@@ -47,7 +48,7 @@ const TRACKS = ["sprint", "ridge", "canyon"];
 describe("two lines per band (2026-11-08)", () => {
   it("lines off log no line event, no outside bit and no line ledger", () => {
     const log = simulateRace(
-      rulesetV3(1, FLIGHT_OFF_LINES),
+      rulesetV3With(FLIGHT_OFF_LINES),
       crowd,
       content.getCourse("sprint"),
       "l",

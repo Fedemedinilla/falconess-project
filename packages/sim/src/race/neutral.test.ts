@@ -2,11 +2,12 @@ import { loadContent } from "@falconess/content";
 import { Rng } from "@falconess/rng";
 import type { EntryInput, Position, RaceEntry, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V2 } from "../rulesets/index.js";
+import { RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
+import { WINGS as WINGS_V3N } from "../rulesets/v3/constants.js";
+import { FLIGHT_OFF_NEUTRAL, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace } from "./engine.js";
 import { freezeEntry } from "./entry.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_NEUTRAL, RULESET_V3, rulesetV3, WINGS_V3N } from "./flight.js";
 import { buildCourseGeometry } from "./geometry.js";
 import { buildTables, createRaceArena, drawRaceBlock } from "./state.js";
 import { STYLE_NEUTRAL } from "./units.js";
@@ -75,7 +76,7 @@ describe("ruleset v3 draft: neutral wings (owner 2026-11-08)", () => {
       "repairable",
       "scrap-armor",
     ]);
-    const off = rulesetV3(1, FLIGHT_OFF_NEUTRAL);
+    const off = rulesetV3With(FLIGHT_OFF_NEUTRAL);
     expect(freezeEntry(off, content, input("etoile", null), course, 0).energy).toBe(60);
   });
 

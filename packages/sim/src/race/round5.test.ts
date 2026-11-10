@@ -1,10 +1,10 @@
 import { loadCatalogueCourses, loadContent } from "@falconess/content";
 import type { Position, RaceEntry, RaceLog, Style } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
-import { RULESET_V2 } from "../rulesets/index.js";
+import { RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
+import { FLIGHT_OFF_ALLFLY, FLIGHT_OFF_R5, rulesetV3With } from "../rulesets/v3/switches.js";
 import { simulateRace, simulateRaceProbed, simulateRaceReversed } from "./engine.js";
 import { neutralFixtureEntry } from "./fixtures.js";
-import { FLIGHT_OFF_ALLFLY, FLIGHT_OFF_R5, RULESET_V3, rulesetV3 } from "./flight.js";
 import { ibps } from "./state.js";
 
 /**
@@ -87,7 +87,7 @@ describe("round 5: the dive is felt in the air (F2)", () => {
     }
     expect(per).toMatchObject({ dive: 2, hover: 3, glide: 4 });
     const old = simulateRace(
-      rulesetV3(1, FLIGHT_OFF_R5),
+      rulesetV3With(FLIGHT_OFF_R5),
       E,
       content.getCourse("sprint"),
       "descent",
@@ -120,7 +120,7 @@ describe("round 5: takeoff from the ground (F7), the Turbina (F8) and the pack's
       position: (["lead", "pack", "stalk", "closer"] as const)[lane % 4] ?? "pack",
     }));
     // before «todas vuelan» (allFly off): only the pack skims, and only the Pasillos
-    const log = simulateRace(rulesetV3(1, FLIGHT_OFF_ALLFLY), E, course, "turbine");
+    const log = simulateRace(rulesetV3With(FLIGHT_OFF_ALLFLY), E, course, "turbine");
     const t = events(log, "takeoff");
     expect(t.length).toBeGreaterThan(0);
     for (const e of t) {
@@ -136,7 +136,7 @@ describe("round 5: takeoff from the ground (F7), the Turbina (F8) and the pack's
     ).toBe(true);
     // with groundFlies off (round 4) no ground wing leaves the ground
     const off = simulateRace(
-      rulesetV3(1, { ...FLIGHT_OFF_ALLFLY, groundFlies: false }),
+      rulesetV3With({ ...FLIGHT_OFF_ALLFLY, groundFlies: false }),
       E,
       course,
       "turbine",
@@ -163,7 +163,7 @@ describe("round 5: flying keeps dry (F5)", () => {
       if ((altAt[w.lane]?.[w.tick] ?? 0) !== 0 && (altAt[w.lane]?.[w.tick - 1] ?? 0) !== 0)
         wetInAir++;
     expect(wetInAir).toBe(0);
-    const old = simulateRace(rulesetV3(1, FLIGHT_OFF_R5), entries, course, "dry");
+    const old = simulateRace(rulesetV3With(FLIGHT_OFF_R5), entries, course, "dry");
     expect(events(old, "waterHit").length).toBeGreaterThan(events(log, "waterHit").length);
     // the tables: vCAirHi (no drag, from airTerrainFreeBand) ≥ vCAir (airTerrainPm of the drag)
     simulateRaceProbed(RULESET_V3, entries, course, "dry", (t, A) => {
@@ -183,7 +183,7 @@ describe("round 5: a won line pays (F3) and the nerve (F9)", () => {
     for (const id of ["sprint", "ridge", "canyon"]) {
       const a = simulateRace(RULESET_V3, crowd, content.getCourse(id), "over");
       const b = simulateRace(
-        rulesetV3(1, { overDivePm: 0, sideDivePm: 0 }),
+        rulesetV3With({ overDivePm: 0, sideDivePm: 0 }),
         crowd,
         content.getCourse(id),
         "over",
@@ -232,7 +232,7 @@ describe("round 5: a won line pays (F3) and the nerve (F9)", () => {
             ).toBe(n.gainMms);
         }
         const off = simulateRace(
-          rulesetV3(1, { nerveM: 0 }),
+          rulesetV3With({ nerveM: 0 }),
           E,
           content.getCourse(id),
           `nerve/${st}`,

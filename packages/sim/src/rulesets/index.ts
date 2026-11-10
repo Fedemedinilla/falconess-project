@@ -13,6 +13,8 @@ import {
   TRAINING_STAT,
 } from "./v1/constants.js";
 import * as V2 from "./v2/constants.js";
+import type { FlightConstants } from "./v3/constants.js";
+import * as V3 from "./v3/constants.js";
 
 export type Ruleset = {
   readonly version: string;
@@ -26,7 +28,12 @@ export type Ruleset = {
   readonly trainMoodMult: typeof MOOD_MULT;
   readonly trainingStat: typeof TRAINING_STAT;
   readonly trainingSecondary: typeof TRAINING_SECONDARY;
+  /** The flight race (ruleset v3, ADR-0011); absent in v1 and v2, which never fly. */
+  readonly flight?: FlightConstants;
 };
+
+/** A ruleset with flight (v3 and later). */
+export type RulesetV3 = Ruleset & { readonly flight: FlightConstants };
 
 export const RULESET_V1: Ruleset = {
   version: RULESET_VERSION,
@@ -50,10 +57,27 @@ export const RULESET_V2: Ruleset = {
   trainMoodMult: V2.TRAIN_MOOD_MULT,
 };
 
+/**
+ * ADR-0011: stage 1 of the flight race on v2's season (its goals, vigor and events), with the
+ * distance letters, the black box's distance step and no wear. Rival rows of the flying classes
+ * get their technique (`V3.FIELD`).
+ */
+export const RULESET_V3: RulesetV3 = {
+  ...RULESET_V2,
+  version: V3.RULESET_VERSION,
+  field: V3.FIELD,
+  race: V3.RACE,
+  flight: V3.FLIGHT,
+};
+
 /** The ruleset new runs start on. Saved runs keep the version they started with. */
 export const CURRENT_RULESET: Ruleset = RULESET_V2;
 
-const RULESETS: Readonly<Record<string, Ruleset>> = { v1: RULESET_V1, v2: RULESET_V2 };
+const RULESETS: Readonly<Record<string, Ruleset>> = {
+  v1: RULESET_V1,
+  v2: RULESET_V2,
+  v3: RULESET_V3,
+};
 
 /** Old rulesets stay available so any saved run can be replayed forever. */
 export function getRuleset(version: string): Ruleset {
@@ -62,5 +86,5 @@ export function getRuleset(version: string): Ruleset {
   return r;
 }
 
-export type { FieldConstants, RaceConstants, SeasonConstants };
+export type { FieldConstants, FlightConstants, RaceConstants, SeasonConstants };
 export { moodMult };

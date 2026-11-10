@@ -8,7 +8,6 @@ export {
   goldenEntries,
   runGoldenScenario,
 } from "./race/golden.js";
-// ruleset v3 draft (design7 «Despegar y caer»): a prototype outside rulesets/ until ADR-0009
 export {
   airOffsetPm,
   buildCourseGeometry,
@@ -17,8 +16,37 @@ export {
   disableSkill,
   distanceLetterPm,
   distanceOfLength,
-  FIELD_V3_R4,
   type FixtureBuild,
+  fixtureBuild,
+  flightOf,
+  freezeEntry,
+  freezeSkill,
+  type GenerateFieldArgs,
+  type GoalRaceSetup,
+  generateField,
+  goalRaceSetup,
+  neutralFixtureEntry,
+  PLAYER_RUNNER_ID,
+  type RaceArena,
+  raceMaxTicks,
+  rivalPool,
+  type SimulateOptions,
+  simulateRace,
+} from "./race/index.js";
+export {
+  CURRENT_RULESET,
+  type FlightConstants,
+  getRuleset,
+  RULESET_V1,
+  RULESET_V2,
+  RULESET_V3,
+  type Ruleset,
+  type RulesetV3,
+} from "./rulesets/index.js";
+export { NEUTRAL_WING, WINGS as WINGS_V3N, type WingFlight } from "./rulesets/v3/constants.js";
+// ADR-0011 §7: the invariance switches (B8 and the sim's tests only; nothing plays them)
+export {
+  FIELD_V3_R4,
   FLIGHT_OFF_1_2,
   FLIGHT_OFF_1_3,
   FLIGHT_OFF_ALLFLY,
@@ -31,42 +59,12 @@ export {
   FLIGHT_OFF_R5,
   FLIGHT_OFF_STAMINA,
   FLIGHT_OFF_TRIM,
-  FLIGHT_V3_E1,
-  FLIGHT_V3_E2,
-  type FlightConstants,
-  fixtureBuild,
-  flightOf,
-  freezeEntry,
-  freezeSkill,
-  type GenerateFieldArgs,
-  type GoalRaceSetup,
-  generateField,
-  goalRaceSetup,
-  NEUTRAL_WING,
   NEUTRAL_WINGS_R5,
   NEUTRAL_WINGS_V3N,
-  neutralFixtureEntry,
-  PLAYER_RUNNER_ID,
-  type RaceArena,
-  RULESET_V3,
-  type RulesetV3,
-  raceMaxTicks,
-  rivalPool,
-  rulesetV3,
-  type SimulateOptions,
-  simulateRace,
+  rulesetV3With,
   WINGS_R4,
   WINGS_V3,
-  WINGS_V3N,
-  type WingFlight,
-} from "./race/index.js";
-export {
-  CURRENT_RULESET,
-  getRuleset,
-  RULESET_V1,
-  RULESET_V2,
-  type Ruleset,
-} from "./rulesets/index.js";
+} from "./rulesets/v3/switches.js";
 export { advanceSeason, goalRaceState, InvalidInputError } from "./season/advance.js";
 export { type MoodCause, rngForInput, type SimContext, seasonContext } from "./season/context.js";
 export { eligibleEvents } from "./season/events.js";
