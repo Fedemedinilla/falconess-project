@@ -567,7 +567,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     if (vCore < tgt) vCore = Math.min(tgt, vCore + Math.max(0, up));
     else if (vCore > tgt) vCore = Math.max(tgt, vCore - R.kDecel);
     S.vCore[i] = vCore;
-  } else if (F?.airCruise && (S.flPhase[i] === 2 || climbAsHeld(F, S, i)))
+  } else if (F?.airCruise && (S.flPhase[i] === 2 || (F.neutralStyles && S.flPhase[i] === 1)))
     vCore = airCruiseTick(
       c,
       i,
@@ -640,7 +640,9 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.overheatTicks[i] = (S.overheatTicks[i] ?? 0) + 1;
     if ((S.guardLeft[i] ?? 0) === 0) damage(c, i, T.dmgTick[i] ?? 0);
   }
-  if (F !== null && (S.flPhase[i] === 2 || climbAsHeld(F, S, i))) holdTick(c, i, F, vOut, seg);
+  // `climbAsHeld` written out
+  if (F !== null && (S.flPhase[i] === 2 || (F.neutralStyles && S.flPhase[i] === 1)))
+    holdTick(c, i, F, vOut, seg);
 
   // B10. hp drain at the moved speed (6)
   const q =
@@ -650,7 +652,11 @@ function runnerTick(c: Ctx, i: number): boolean {
       : 0);
   const dK = T.dK[i * 4 + q] ?? 0;
   const drain0 =
-    F !== null && (S.alt[i] ?? 0) > 0 ? airDrain(c, i, F, vOut, dK) : drainGround(c, i, vOut, dK);
+    F !== null && (S.alt[i] ?? 0) > 0
+      ? airDrain(c, i, F, vOut, dK)
+      : c.drainV[i] === vOut && c.drainK[i] === dK
+        ? (c.drainOut[i] ?? 0)
+        : drainGround(c, i, vOut, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
   // PERF-2: no dirt, not boxed, no block: `effortDrip` would add nothing
   let drip =
@@ -787,10 +793,9 @@ function sprintPlan(c: Ctx, i: number): void {
 
 /**
  * `drainMicro` written out (PERF-2: the same integers; `vBase` is checked once per race), kept per
- * lane while vOut and dK hold.
+ * lane: the caller reuses `drainOut` while vOut and dK hold.
  */
 function drainGround(c: Ctx, i: number, vOut: number, dK: number): number {
-  if (c.drainV[i] === vOut && c.drainK[i] === dK) return c.drainOut[i] ?? 0;
   const rPm = Math.floor((vOut * 1000) / c.vBase);
   const d = Math.floor((rPm * rPm * dK) / 1_000_000);
   c.drainV[i] = vOut;
