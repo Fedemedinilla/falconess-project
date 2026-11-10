@@ -172,7 +172,7 @@ export function keepOk(
   i: number,
   keepPm: number,
 ): boolean {
-  const keep = floorDiv((T.Emax[i] ?? 0) * keepPm, 1000);
+  const keep = Math.floor(((T.Emax[i] ?? 0) * keepPm) / 1000);
   const left = (S.energy[i] ?? 0) - costBoost(R, T, i);
   // R3c (v3): what she keeps for later already pays a ceiling plan (the final's great dive)
   const kf = T.keepFlight[i] ?? 0;
@@ -290,7 +290,7 @@ export function selectMode(
     case POS_PACK:
       if (
         ph !== PH_FINAL &&
-        energy - jr >= floorDiv(Emax * (1000 - R.style.groundPreShare), 1000)
+        energy - jr >= Math.floor((Emax * (1000 - R.style.groundPreShare)) / 1000)
       ) {
         mode = MODE_GROUND_CONSTANT;
         ctl.level = T.groundLevel[ib(i, b)] ?? 0;
@@ -331,7 +331,7 @@ export function licenceOk(
       : ceilDiv(Math.max(0, heat + R.kH - heatCap), cool);
   const dmg = T.dmgTick[i] ?? 0;
   const durAfter = (S.dur[i] ?? 0) - (over ? dmg : 0) - dmg * projTicks;
-  if (!(durAfter > floorDiv((T.durMax[i] ?? 0) * R.overheatFloorPm, 1000))) return false;
+  if (!(durAfter > Math.floor(((T.durMax[i] ?? 0) * R.overheatFloorPm) / 1000))) return false;
   if (T.rule[i] === RULE_MASS_THRUST) return true;
   const until = T.immuneUntil[i] ?? IMMUNE_WHOLE_RACE;
   if (until === IMMUNE_WHOLE_RACE) return true;
@@ -406,9 +406,9 @@ export function decide(
     const capLim = T.capLim[i] ?? 0;
     const capMode =
       mode === MODE_SURPLUS
-        ? floorDiv(capLim * R.surplusHeatPm, 1000)
+        ? Math.floor((capLim * R.surplusHeatPm) / 1000)
         : mode === MODE_REGEN
-          ? floorDiv(capLim * R.regenOverflowHeatPm, 1000)
+          ? Math.floor((capLim * R.regenOverflowHeatPm) / 1000)
           : capLim;
     const heatAdd = pulseFrame ? R.pulseTicks * R.kH : R.kH;
     const licMode =
@@ -438,8 +438,8 @@ export function decide(
     if (out.fired) {
       S.pulses[i] = (S.pulses[i] ?? 0) + 1;
       if (out.freeTick) ctl.sink.freeBoost(i, segType);
-      const air = floorDiv(out.thrust * (T.airPm[is(i, seg)] ?? 1000), 1000);
-      const moved = floorDiv(air * (T.stoop[ips(i, ph, seg)] ?? 1000), 1000);
+      const air = Math.floor((out.thrust * (T.airPm[is(i, seg)] ?? 1000)) / 1000);
+      const moved = Math.floor((air * (T.stoop[ips(i, ph, seg)] ?? 1000)) / 1000);
       ctl.sink.pulse(i, P.chain[i] ?? 1, moved, out.freeTick, P.cdFire[i] ?? 0);
     }
     return;

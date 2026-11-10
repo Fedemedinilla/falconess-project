@@ -269,7 +269,7 @@ function runRace(
     vBase: units.vBase,
     posPerMm: units.posPerMm,
     velPerMms: units.velPerMms,
-    pulseCostMe: floorDiv(R.kE * R.pulseCostMult, 1000),
+    pulseCostMe: Math.floor((R.kE * R.pulseCostMult) / 1000),
     dist: (() => {
       const F0 = flightOf(ruleset);
       return F0 !== null ? distanceCode(F0, G.lengthMm) : 0;
@@ -509,7 +509,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   // the kick on low hp: she paces her final cruise to reach the line on what she has
   const cut = S.paceCut[i] ?? 0;
   if (cut > 0 && ph === PH_FINAL && !exhausted)
-    tgt = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, floorDiv(tgt * (1000 - cut), 1000));
+    tgt = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, Math.floor((tgt * (1000 - cut)) / 1000));
   // F6 (round 5): in the air the tow is one rule by band and metres (step A2), for every wing
   const airBand = airborne && F?.airDraftBand === true;
   const drafting = airBand
@@ -520,7 +520,7 @@ function runnerTick(c: Ctx, i: number): boolean {
       !exhausted &&
       !(airborne && F?.draftGroundOnly);
   if (drafting) {
-    if (!airBand) tgt = floorDiv(tgt * R.style.hoverDraftPm, 1000);
+    if (!airBand) tgt = Math.floor((tgt * R.style.hoverDraftPm) / 1000);
     else S.towTicks[i] = (S.towTicks[i] ?? 0) + 1;
     S.draftTicks[i] = (S.draftTicks[i] ?? 0) + 1;
   }
@@ -557,7 +557,7 @@ function runnerTick(c: Ctx, i: number): boolean {
           1000,
         )
       : (T.B[ib(i, b)] ?? 0);
-    thrust = floorDiv(raw * (T.stoop[ips(i, ph, seg)] ?? 1000), 1000);
+    thrust = Math.floor((raw * (T.stoop[ips(i, ph, seg)] ?? 1000)) / 1000);
   }
   let surge = 0;
   if (!airborne && (S.surge[i] ?? 0) > 0) {
@@ -610,8 +610,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.overheatTicks[i] = (S.overheatTicks[i] ?? 0) + 1;
     if ((S.guardLeft[i] ?? 0) === 0) damage(c, i, T.dmgTick[i] ?? 0);
   }
-  if (F !== null && (S.flPhase[i] === 2 || climbAsHeld(F, S, i)))
-    holdTick(c, i, F, vOut, seg);
+  if (F !== null && (S.flPhase[i] === 2 || climbAsHeld(F, S, i))) holdTick(c, i, F, vOut, seg);
 
   // B10. hp drain at the moved speed (6)
   const q =
@@ -621,9 +620,7 @@ function runnerTick(c: Ctx, i: number): boolean {
       : 0);
   const dK = T.dK[i * 4 + q] ?? 0;
   const drain0 =
-    F !== null && (S.alt[i] ?? 0) > 0
-      ? airDrain(c, i, F, vOut, dK)
-      : drainGround(c, i, vOut, dK);
+    F !== null && (S.alt[i] ?? 0) > 0 ? airDrain(c, i, F, vOut, dK) : drainGround(c, i, vOut, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
   // PERF-2: no dirt, not boxed, no block: `effortDrip` would add nothing
   let drip =
@@ -741,8 +738,8 @@ function sprintPlan(c: Ctx, i: number): void {
     reason: p.reason,
     energy: S.energy[i] ?? 0,
     energyPerceived: p.energyPerceived,
-    hp: floorDiv(S.hp[i] ?? 0, 1000),
-    hpPerceived: floorDiv(p.hpPerceived, 1000),
+    hp: Math.floor((S.hp[i] ?? 0) / 1000),
+    hpPerceived: Math.floor(p.hpPerceived / 1000),
     jumpReserve: p.jumpReserve,
     startMm: floorDiv(p.startPos, c.posPerMm),
     endMm: floorDiv(p.endPos, c.posPerMm),
@@ -812,7 +809,7 @@ function regen(c: Ctx, i: number, pack: boolean): void {
   const { T, S } = c;
   const base = T.regenTick[i] ?? 0;
   if (base === 0) return;
-  const eff = pack ? floorDiv(base * (T.packRegen[i] ?? 1000), 1000) : base;
+  const eff = pack ? Math.floor((base * (T.packRegen[i] ?? 1000)) / 1000) : base;
   const before = S.energy[i] ?? 0;
   const after = addCap(before, eff, T.Emax[i] ?? 0);
   S.energy[i] = after;
@@ -843,7 +840,7 @@ function heatToEnergy(c: Ctx, i: number): void {
   if (ratio <= 0) return;
   const heat = S.heat[i] ?? 0;
   const energy = S.energy[i] ?? 0;
-  const gained = Math.min((T.Emax[i] ?? 0) - energy, floorDiv(heat * ratio, 1000));
+  const gained = Math.min((T.Emax[i] ?? 0) - energy, Math.floor((heat * ratio) / 1000));
   S.energy[i] = energy + gained;
   S.heat[i] = 0;
   S.energyFromHeat[i] = (S.energyFromHeat[i] ?? 0) + gained;
@@ -875,7 +872,7 @@ function enterSegment(c: Ctx, i: number, s: number, crossing: boolean): void {
     if (c.F?.noWear) return; // no wear: the water costs no durability (its drag stays in f)
     const guarded = (S.guardLeft[i] ?? 0) > 0 || T.armor[i] === 1;
     const hit0 = guarded ? 0 : waterHitMd(R, G.dragPm[s] ?? 0, T.styleDmg[i] ?? 1000);
-    const hit = skim && c.F !== null ? floorDiv(hit0 * c.F.skimWaterPm, 1000) : hit0;
+    const hit = skim && c.F !== null ? Math.floor((hit0 * c.F.skimWaterPm) / 1000) : hit0;
     if (skim && hit === 0) return;
     damage(c, i, hit);
     rec.waterHit(c.t, i, posMm(c, i), hit);
@@ -891,7 +888,7 @@ function enterSegment(c: Ctx, i: number, s: number, crossing: boolean): void {
       S.alt[i] === BAND_LOW &&
       !through
     ) {
-      const want = floorDiv((G.liftReq[s] ?? 0) * 1000 * c.F.skimJumpPm, 1000);
+      const want = Math.floor(((G.liftReq[s] ?? 0) * 1000 * c.F.skimJumpPm) / 1000);
       const energy = S.energy[i] ?? 0;
       const spent = Math.min(energy, want);
       S.energy[i] = energy - spent;
@@ -978,19 +975,19 @@ function airCruiseTick(
       ? 0
       : (T.airOff[i * FLIGHTS_MAX + Math.max(0, (S.flCur[i] ?? 1) - 1)] ?? 0) +
         (c.F !== null && S.overWon[i] === 1 ? c.F.overAirPm : 0);
-  if (air !== 0) ta = floorDiv(ta * (1000 + air), 1000);
+  if (air !== 0) ta = Math.floor((ta * (1000 + air)) / 1000);
   if (lo && c.F !== null && c.F.skimCruisePm !== 0)
-    ta = floorDiv(ta * (1000 + c.F.skimCruisePm), 1000);
+    ta = Math.floor((ta * (1000 + c.F.skimCruisePm)) / 1000);
   if (c.F !== null && c.F.highCruisePm !== 0 && alt >= BAND_HIGH)
-    ta = floorDiv(ta * (1000 + c.F.highCruisePm), 1000);
-  if (draftPm !== 1000) ta = floorDiv(ta * draftPm, 1000);
+    ta = Math.floor((ta * (1000 + c.F.highCruisePm)) / 1000);
+  if (draftPm !== 1000) ta = Math.floor((ta * draftPm) / 1000);
   // distance letters: off her distance her air cruise gives `distAirPm` ‰
   const dAir = T.distAirPm[i] ?? 0;
-  if (dAir !== 0 && !exhausted) ta = floorDiv(ta * (1000 - dAir), 1000);
+  if (dAir !== 0 && !exhausted) ta = Math.floor((ta * (1000 - dAir)) / 1000);
   // the kick on low hp: the paced final cruise in the air too
   const cut = S.paceCut[i] ?? 0;
   if (cut > 0 && ph === PH_FINAL && !exhausted)
-    ta = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, floorDiv(ta * (1000 - cut), 1000));
+    ta = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, Math.floor((ta * (1000 - cut)) / 1000));
   const v = approachVu(S.vCore[i] ?? 0, ta, T.acc[ibs(i, b, seg)] ?? 0, R.kDecel);
   S.vCore[i] = v;
   return v;
@@ -1011,7 +1008,7 @@ function airDrain(c: Ctx, i: number, F: FlightConstants, vOut: number, dK: numbe
   // distance letters: the long is the legs' rest in the air; off her distance she rests less
   const dPm =
     c.dist === DIST_LONG && F.distanceLetters
-      ? floorDiv((c.T.distPm[i] ?? 0) * F.distanceRestPm, 1000)
+      ? Math.floor(((c.T.distPm[i] ?? 0) * F.distanceRestPm) / 1000)
       : 0;
   const restPm = dPm !== 0 ? Math.floor((restPm0 * (1000 + dPm)) / 1000) : restPm0;
   const dKAir = Math.floor((dK * restPm) / 1000);
@@ -1048,7 +1045,7 @@ function hpHit(
   const dPm =
     F !== null && cause !== "takeoff" && cause !== "dive" ? (F.hpDistPm[c.dist] ?? 1000) : 1000;
   const div = Math.max(1, c.T.stamDiv[i] ?? 1);
-  let micro = floorDiv(floorDiv(hp * 1_000_000 * 1_200_000, div) * dPm, 1000);
+  let micro = Math.floor((floorDiv(hp * 1_000_000 * 1_200_000, div) * dPm) / 1000);
   // the kick on low hp: the traffic's hits shrink by her Resistencia twice
   if (F !== null && F.hpTrafficSq && cause !== "takeoff" && cause !== "dive")
     micro = floorDiv(micro * 1_200_000, div);
@@ -1065,7 +1062,14 @@ function hpHit(
   S.hpCost[i] = (S.hpCost[i] ?? 0) + (before - after);
   if (F !== null && F.hpReplanHp > 0 && flag(S, i, F_PLAN_ACTIVE))
     requestReplan(S, i, CAUSE_EFFORT);
-  c.rec.hpHit(c.t, i, posMm(c, i), cause, floorDiv(before - after, 1000), floorDiv(after, 1000));
+  c.rec.hpHit(
+    c.t,
+    i,
+    posMm(c, i),
+    cause,
+    Math.floor((before - after) / 1000),
+    Math.floor(after / 1000),
+  );
   if (after === 0 && !flag(S, i, F_EXHAUSTED)) {
     setFlag(S, i, F_EXHAUSTED);
     S.hpEmptyMm[i] = posMm(c, i);
@@ -1107,8 +1111,8 @@ function effortDrip(c: Ctx, i: number, F: FlightConstants, drain: number): numbe
   if (F.hpBoxedPm > 0 && (S.boxed[i] === 1 || (S.blkRun[i] ?? 0) > 0)) pm += F.hpBoxedPm;
   if (pm === 0) return 0;
   // a skim's traffic (the low band) is the calm line at ras: it drips hpDirtySkimPm of that
-  if (S.alt[i] === BAND_LOW) pm = floorDiv(pm * F.hpDirtySkimPm, 1000);
-  return floorDiv(floorDiv(drain * pm, 1000) * (F.hpDistPm[c.dist] ?? 1000), 1000);
+  if (S.alt[i] === BAND_LOW) pm = Math.floor((pm * F.hpDirtySkimPm) / 1000);
+  return Math.floor((floorDiv(drain * pm, 1000) * (F.hpDistPm[c.dist] ?? 1000)) / 1000);
 }
 
 /** Stamina pays effort: an exhausted runner starts no new maneuver (over, line switch, door). */
@@ -1581,7 +1585,7 @@ function blocked(c: Ctx, F: FlightConstants, i: number, vOut: number): number {
   const gap = S.lnGap[i] ?? 0;
   const lim = F.blockMm * c.posPerMm;
   if (gap > lim) return vOut;
-  const cap = Math.max(0, Math.floor(gap + (S.disp0[a] ?? 0) - floorDiv(lim, 2)));
+  const cap = Math.max(0, Math.floor(gap + (S.disp0[a] ?? 0) - Math.floor(lim / 2)));
   if (cap >= vOut) return vOut;
   S.blkRun[i] = prev + 1;
   S.blockedTicks[i] = (S.blockedTicks[i] ?? 0) + 1;
@@ -1851,9 +1855,9 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   const from = flag(S, i, F_AIRBORNE) ? 1 : 0;
   const target = T.flBand[x] ?? 1;
   const corn = T.flCorn[x] === 1;
-  const unit0 = floorDiv((T.climbMe[i] ?? 0) * (corn ? F.cornisaPm : 1000), 1000);
+  const unit0 = Math.floor(((T.climbMe[i] ?? 0) * (corn ? F.cornisaPm : 1000)) / 1000);
   // stage 3 (allFly): a skim (low band) lifts at skimClimbPm of the climb
-  const unit = F.allFly && target === BAND_LOW ? floorDiv(unit0 * F.skimClimbPm, 1000) : unit0;
+  const unit = F.allFly && target === BAND_LOW ? Math.floor((unit0 * F.skimClimbPm) / 1000) : unit0;
   const jr = jrNow(T, S, i, S.seg[i] ?? 0);
   const style = T.style[i] ?? 0;
   const liftF = holdLift(F, style, T.liftF[i] ?? 1000);
@@ -1893,7 +1897,7 @@ function takeoff(c: Ctx, i: number, k: number, F: FlightConstants): void {
   const v0 = S.vCore[i] ?? 0;
   // stage 3 (allFly, skimKeepSpeed): a skim is a shallow lift, no wing loses speed on it
   const keep = from === 0 && band === BAND_LOW && F.allFly && F.skimKeepSpeed;
-  if (from === 0 && !keep) S.vCore[i] = floorDiv(v0 * wing.liftSpeedPm, 1000);
+  if (from === 0 && !keep) S.vCore[i] = Math.floor((v0 * wing.liftSpeedPm) / 1000);
   // stage 3 (allFly): a skim's lift pushes her (decays to her air cruise by kDecel)
   if (from === 0 && band === BAND_LOW && F.allFly && F.skimLiftMms > 0)
     S.vCore[i] = (S.vCore[i] ?? 0) + F.skimLiftMms * c.velPerMms;
@@ -2015,9 +2019,9 @@ function diveTotal(c: Ctx, i: number, from: number): number {
   const pm0 = Math.max(over, side);
   // distance letters: the mile is won on the line up high; off her distance the won line pays less
   const dPm = c.dist === DIST_MILE ? (c.T.distPm[i] ?? 0) : 0;
-  const pm = dPm !== 0 ? floorDiv(pm0 * (1000 - dPm), 1000) : pm0;
+  const pm = dPm !== 0 ? Math.floor((pm0 * (1000 - dPm)) / 1000) : pm0;
   if (pm <= 0) return dv;
-  return dv + floorDiv(floorDiv(dv, from) * pm, 1000);
+  return dv + Math.floor((floorDiv(dv, from) * pm) / 1000);
 }
 
 /**
@@ -2091,7 +2095,7 @@ function touchdown(c: Ctx, i: number): void {
         flinched = u * 1000 < pPm * 65536;
         if (!flinched) {
           S.nerveHeld[i] = (S.nerveHeld[i] ?? 0) + 1;
-          dv = floorDiv(dv * (1000 + F.nerveBonusPm), 1000);
+          dv = Math.floor((dv * (1000 + F.nerveBonusPm)) / 1000);
         }
         c.rec.nerve(c.t, i, p, !flinched, pPm, flinched ? 0 : mms(c, dv));
       }

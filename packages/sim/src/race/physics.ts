@@ -37,14 +37,15 @@ export function baseSegmentFactor(
     case SEG_CANYON:
       return 1000;
     case SEG_CLIMB:
-      return 1000 - floorDiv(R.kClimb * gradePm, 1000);
+      return 1000 - Math.floor((R.kClimb * gradePm) / 1000);
     case SEG_DESCENT:
-      return 1000 + floorDiv(R.kDescent * gradePm, 1000);
+      return 1000 + Math.floor((R.kDescent * gradePm) / 1000);
     case SEG_WATER:
-      return 1000 - floorDiv(R.kWater * dragPm, 1000);
+      return 1000 - Math.floor((R.kWater * dragPm) / 1000);
     case SEG_CURVES:
       return (
-        1000 - floorDiv(R.kCurves * (1200 - Math.min(agility, 1200)) * curvesScalePm, 1_200_000)
+        1000 -
+        Math.floor((R.kCurves * (1200 - Math.min(agility, 1200)) * curvesScalePm) / 1_200_000)
       );
     default:
       throw new Error(`unknown segment type code ${type}`);
@@ -65,11 +66,11 @@ export function segmentFactor(
   terms: Pick<RuleTerms, "curvesPm">,
 ): number {
   const type = G.segType[s] ?? SEG_FLAT;
-  const curvesScale = floorDiv(traits.curvesScalePm * terms.curvesPm, 1000);
+  const curvesScale = Math.floor((traits.curvesScalePm * terms.curvesPm) / 1000);
   let f = baseSegmentFactor(R, type, G.gradePm[s] ?? 0, G.dragPm[s] ?? 0, agility, curvesScale);
   const override = traits.segOverridePm[type] ?? 0;
   if (override > 0) f = override;
-  f = floorDiv(f * (traits.segMultiplyPm[type] ?? 1000), 1000);
+  f = Math.floor((f * (traits.segMultiplyPm[type] ?? 1000)) / 1000);
   return clamp(f, R.segFactorMin, R.segFactorMax);
 }
 
@@ -98,8 +99,8 @@ export function accelVu(
   f: number,
   terms: Pick<RuleTerms, "accelPm">,
 ): number {
-  const brief = floorDiv(R.kAcc * (600 + technique) * pwc * f, 1_200_000_000);
-  return floorDiv(brief * terms.accelPm, 1000);
+  const brief = Math.floor((R.kAcc * (600 + technique) * pwc * f) / 1_200_000_000);
+  return Math.floor((brief * terms.accelPm) / 1000);
 }
 
 /**
@@ -117,7 +118,10 @@ export function drainCoefficients(
   const fat = fatiguePm(R, courage);
   const nonFinal = floorDiv(R.kHp * 1000 * 1_200_000, stamDiv);
   const final = floorDiv(R.kHp * 1000 * 1_200_000 * fat, stamDiv * 1000);
-  return [floorDiv(nonFinal * terms.drainPm, 1000), floorDiv(final * terms.drainPm, 1000)];
+  return [
+    Math.floor((nonFinal * terms.drainPm) / 1000),
+    Math.floor((final * terms.drainPm) / 1000),
+  ];
 }
 
 /**
@@ -132,9 +136,9 @@ export function coolTick(
   terms: Pick<RuleTerms, "coolPm">,
 ): number {
   const dissF =
-    1000 + floorDiv(R.coolDissWeight * (floorDiv(dissipation * 1000, R.dissRef) - 1000), 1000);
-  const cool0 = Math.max(1, floorDiv(R.kCool * dissF, 1000));
-  return Math.max(1, floorDiv(cool0 * terms.coolPm, 1000));
+    1000 + Math.floor((R.coolDissWeight * (floorDiv(dissipation * 1000, R.dissRef) - 1000)) / 1000);
+  const cool0 = Math.max(1, Math.floor((R.kCool * dissF) / 1000));
+  return Math.max(1, Math.floor((cool0 * terms.coolPm) / 1000));
 }
 
 /**
@@ -147,7 +151,7 @@ export function overheatDamage(
   terms: Pick<RuleTerms, "overheatDurPm">,
 ): number {
   const styleDmg = style === "ground" ? R.groundDamagePm : 1000;
-  return floorDiv(R.overheatDurPerTick * terms.overheatDurPm * styleDmg, 1_000_000);
+  return Math.floor((R.overheatDurPerTick * terms.overheatDurPm * styleDmg) / 1_000_000);
 }
 
 /**
@@ -160,8 +164,8 @@ export function landingKeepPm(
   technique: number,
   terms: Pick<RuleTerms, "landLossPm">,
 ): number {
-  const landBase = R.landBasePm + floorDiv(R.landTechPm * Math.min(technique, 1200), 1200);
-  return Math.max(0, 1000 - floorDiv((1000 - landBase) * terms.landLossPm, 1000));
+  const landBase = R.landBasePm + Math.floor((R.landTechPm * Math.min(technique, 1200)) / 1200);
+  return Math.max(0, 1000 - Math.floor(((1000 - landBase) * terms.landLossPm) / 1000));
 }
 
 /**
@@ -169,19 +173,19 @@ export function landingKeepPm(
  * runners only): `1000 + fl((R.groundDetourMult − 1000) × detourRule, 1000)`.
  */
 export function groundDetourPm(R: RaceConstants, terms: Pick<RuleTerms, "detourExtraPm">): number {
-  return 1000 + floorDiv((R.groundDetourMult - 1000) * terms.detourExtraPm, 1000);
+  return 1000 + Math.floor(((R.groundDetourMult - 1000) * terms.detourExtraPm) / 1000);
 }
 
 // --- PW, cruise, acceleration, exhaustion and thrust tables (3.3, 5, 6) -------------------------
 
 /** PW of table variant b (3.3): `PW₀ = PW` intact, `PW₁ = fl(PW × R.durabilityZeroPowerMult, 1000)`. */
 export function powerVariant(R: RaceConstants, pw: number, b: number): number {
-  return b === 0 ? pw : floorDiv(pw * R.durabilityZeroPowerMult, 1000);
+  return b === 0 ? pw : Math.floor((pw * R.durabilityZeroPowerMult) / 1000);
 }
 
 /** Weighted PW of 3.3: `1000 + fl(weight × (PW − 1000), 1000)` (weight 1000 = the brief's PW). */
 export function weightedPower(weightPm: number, pw: number): number {
-  return 1000 + floorDiv(weightPm * (pw - 1000), 1000);
+  return 1000 + Math.floor((weightPm * (pw - 1000)) / 1000);
 }
 
 /**
@@ -192,12 +196,12 @@ export function weightedPower(weightPm: number, pw: number): number {
  */
 export function variantPower(R: RaceConstants, weightPm: number, pw: number, b: number): number {
   const weighted = weightedPower(weightPm, pw);
-  return b === 0 ? weighted : floorDiv(weighted * R.brokenSpeedPm, 1000);
+  return b === 0 ? weighted : Math.floor((weighted * R.brokenSpeedPm) / 1000);
 }
 
 /** `vA = fl(VBASE × (1 200 000 + R.kA × A), 1 200 000)` vu: the brief's `v_base·(1 + k_a·A/1200)`. */
 export function agilityCruiseVu(R: RaceConstants, vBaseVu: number, agility: number): number {
-  return floorDiv(vBaseVu * (1_200_000 + R.kA * agility), 1_200_000);
+  return Math.floor((vBaseVu * (1_200_000 + R.kA * agility)) / 1_200_000);
 }
 
 /**
@@ -211,7 +215,7 @@ export function cruiseVu(
   stylePacePm: number,
   pacePm: number,
 ): number {
-  return floorDiv(floorDiv(vA * pwc * f * stylePacePm, 1_000_000_000) * (1000 + pacePm), 1000);
+  return Math.floor((floorDiv(vA * pwc * f * stylePacePm, 1_000_000_000) * (1000 + pacePm)) / 1000);
 }
 
 /**
@@ -233,24 +237,24 @@ export function exhaustSpeedVu(
 
 /** Continuous thrust `B = fl(KBOOST × pwb, 1000)` vu (3.3). */
 export function boostThrustVu(kBoostVu: number, pwb: number): number {
-  return floorDiv(kBoostVu * pwb, 1000);
+  return Math.floor((kBoostVu * pwb) / 1000);
 }
 
 /** Pulse thrust `Bp = fl(KBOOST × pwb × R.pulseBoostMult, 10^6)` vu (3.3, 12). */
 export function pulseThrustVu(R: RaceConstants, kBoostVu: number, pwb: number): number {
-  return floorDiv(kBoostVu * pwb * R.pulseBoostMult, 1_000_000);
+  return Math.floor((kBoostVu * pwb * R.pulseBoostMult) / 1_000_000);
 }
 
 /** Chain pulse thrust `Bpc = fl(Bp × (1000 + traits.pulseChainBonusPm), 1000)` vu (3.3, 12). */
 export function chainThrustVu(bp: number, chainBonusPm: number): number {
-  return floorDiv(bp * (1000 + chainBonusPm), 1000);
+  return Math.floor((bp * (1000 + chainBonusPm)) / 1000);
 }
 
 // --- hp (4, 6) ------------------------------------------------------------------------------------
 
 /** `hpMax = (R.hpBase + fl(R.hpPerKm × Lmm, 10^6)) × 10^6` µhp (section 4); stamina is not in it. */
 export function hpMaxMicro(R: RaceConstants, lengthMm: number): number {
-  return (R.hpBase + floorDiv(R.hpPerKm * lengthMm, 1_000_000)) * 1_000_000;
+  return (R.hpBase + Math.floor((R.hpPerKm * lengthMm) / 1_000_000)) * 1_000_000;
 }
 
 /** `stamDiv = 1 200 000 + R.kS × St`: the brief's drain divisor `(1 + k_s·St/1200)` × 1.2e6. */
@@ -260,7 +264,7 @@ export function staminaDivisor(R: RaceConstants, stamina: number): number {
 
 /** Final-phase fatigue `fat = max(1000, R.fatigueBase − fl(R.fatigueCourage × C, 1200))` ‰. */
 export function fatiguePm(R: RaceConstants, courage: number): number {
-  return Math.max(1000, R.fatigueBase - floorDiv(R.fatigueCourage * courage, 1200));
+  return Math.max(1000, R.fatigueBase - Math.floor((R.fatigueCourage * courage) / 1200));
 }
 
 /**
@@ -269,19 +273,19 @@ export function fatiguePm(R: RaceConstants, courage: number): number {
  */
 export function drainMicro(vOut: number, vBaseVu: number, dK: number): number {
   const rPm = floorDiv(vOut * 1000, vBaseVu);
-  return floorDiv(rPm * rPm * dK, 1_000_000);
+  return Math.floor((rPm * rPm * dK) / 1_000_000);
 }
 
 // --- heat (8) ---------------------------------------------------------------------------------------
 
 /** Courage tolerance `tol = 1000 + fl(R.heatToleranceCourage × C, 1200)` ‰ (8.2). */
 export function heatTolerancePm(R: RaceConstants, courage: number): number {
-  return 1000 + floorDiv(R.heatToleranceCourage * courage, 1200);
+  return 1000 + Math.floor((R.heatToleranceCourage * courage) / 1200);
 }
 
 /** The single overheat threshold `heatCap = fl(D × tol, 1000)` mh (8.2), D = dissipation × 1000. */
 export function heatCapMh(dissipation: number, tolPm: number): number {
-  return floorDiv(dissipation * 1000 * tolPm, 1000);
+  return Math.floor((dissipation * 1000 * tolPm) / 1000);
 }
 
 /** Moved speed while penalised: `fl(vTot × R.heatPenaltyMult, 1000)` (8.3, on output only). */
@@ -296,7 +300,7 @@ export function penalisedVu(R: RaceConstants, vTot: number): number {
  * slow frames dash to 0.85 × their own target instead of overshooting it.
  */
 export function dashEnds(R: RaceConstants, vBaseVu: number, vCore: number, tgt: number): boolean {
-  return vCore >= floorDiv(Math.min(vBaseVu, tgt) * R.dashUntilPm, 1000);
+  return vCore >= Math.floor((Math.min(vBaseVu, tgt) * R.dashUntilPm) / 1000);
 }
 
 /**
@@ -318,12 +322,12 @@ export function styleDamagePm(R: RaceConstants, style: Style): number {
 
 /** `liftF = fl((600 + T) × (1000 + traits.liftBonusPm), 1200)` ‰ of energy (table 3.3, 16 #13). */
 export function liftFactorPm(technique: number, liftBonusPm: number): number {
-  return floorDiv((600 + technique) * (1000 + liftBonusPm), 1200);
+  return Math.floor(((600 + technique) * (1000 + liftBonusPm)) / 1200);
 }
 
 /** `lift = fl(energy × liftF, 1000)` me (14.2): true energy, never perceived. */
 export function liftMe(energy: number, liftF: number): number {
-  return floorDiv(energy * liftF, 1000);
+  return Math.floor((energy * liftF) / 1000);
 }
 
 /** Energy one jump needs: `need = ceilDiv(liftReq × 10^6, liftF)` me (3.3, 14.4). */
@@ -333,12 +337,12 @@ export function jumpNeedMe(liftReq: number, liftF: number): number {
 
 /** Durability lost by a failed jump without guard or armor: `fl(R.kCrash × 1000 × styleDmg, 1000)` md. */
 export function crashDamageMd(R: RaceConstants, styleDmgPm: number): number {
-  return floorDiv(R.kCrash * 1000 * styleDmgPm, 1000);
+  return Math.floor((R.kCrash * 1000 * styleDmgPm) / 1000);
 }
 
 /** Durability lost on entering water without guard or armor: `fl(dragPm × R.waterHitPerDrag × styleDmg, 1000)` md (14.6). */
 export function waterHitMd(R: RaceConstants, dragPm: number, styleDmgPm: number): number {
-  return floorDiv(dragPm * R.waterHitPerDrag * styleDmgPm, 1000);
+  return Math.floor((dragPm * R.waterHitPerDrag * styleDmgPm) / 1000);
 }
 
 /** Progress on a ground detour (14.5): `fl(vOut × 1000, detour)` pu, the longer route at full speed. */
@@ -354,13 +358,14 @@ export function detourDisp(vOut: number, detourPm: number): number {
  */
 export function paceCentrePm(R: RaceConstants, intelligence: number): number {
   return (
-    floorDiv(R.paceCentreSpan * Math.min(intelligence, 1200), 1200) - floorDiv(R.paceCentreSpan, 2)
+    Math.floor((R.paceCentreSpan * Math.min(intelligence, 1200)) / 1200) -
+    Math.floor(R.paceCentreSpan / 2)
   );
 }
 
 /** Plan perception half-width `We = fl(R.planErrorMax × (1200 − min(I, 1200)), 1200)` ‰ (10). */
 export function planErrWindowPm(R: RaceConstants, intelligence: number): number {
-  return floorDiv(R.planErrorMax * (1200 - Math.min(intelligence, 1200)), 1200);
+  return Math.floor((R.planErrorMax * (1200 - Math.min(intelligence, 1200))) / 1200);
 }
 
 /** `pAct = max(R.activationFloor, 1000 − ceilDiv(R.activationNumerator × 1000, I))` ‰ (15.2). */
@@ -389,6 +394,6 @@ export function marginGapMm(
   fA: number,
   posPerMm: number,
 ): number {
-  const posB = prevPos + floorDiv(disp * fA, 1000);
+  const posB = prevPos + Math.floor((disp * fA) / 1000);
   return Math.max(0, floorDiv(L - posB, posPerMm));
 }
