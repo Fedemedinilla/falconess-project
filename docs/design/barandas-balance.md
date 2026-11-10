@@ -149,8 +149,9 @@ del prototipo, commit `f08bde5`).
   bloquea.
 - **Si falla:** optimizar sin cambiar resultados; el registro tiene que salir idéntico byte a byte
   antes y después.
-- **Hoy:** pasa. 4,77 ms. Ojo: la máquina de pruebas da corridas inestables; se toma la mediana de
-  varias.
+- **Hoy:** **falla.** 5,21 ms (mediana de 5 corridas en la Travesía, 3600 m). El 4,77 ms anotado
+  antes era otra medida (la mediana de las cuatro pistas de PERF-1). La máquina de pruebas da corridas
+  sueltas entre 4,9 y 7,5 ms; se toma la mediana.
 
 ### B8 · Lo viejo no se mueve
 
@@ -213,7 +214,7 @@ solo cambian donde estaba el error.
 
 ## 8. Estado de hoy
 
-Con estas ocho barandas, el prototipo de la carrera v3 **ya pasa las ocho**. Quedan como frágiles B2
+Medido con el comando de barandas (2026-11-10): **pasan siete**; B7 (rendimiento) falla por poco. Quedan como frágiles B2
 (Punta y Pelotón sin casa en Milla) y B3 (Acecho a 750). Queda un error del motor por arreglar: el vuelo
 a ras planeado se pierde si arranca dentro de un Salto que la corredora salta corriendo.
 
