@@ -34,7 +34,6 @@ import {
   crashDamageMd,
   dashEnds,
   detourDisp,
-  drainMicro,
   finishMilliOf,
   liftMe,
   marginGapMm,
@@ -247,6 +246,8 @@ function runRace(
   initState(ruleset, E, A);
 
   const units = engineUnits(R);
+  // PERF-2: the drain divides by vBase written out; floorDiv's own check, once per race
+  if (units.vBase === 0) throw new Error("floorDiv by zero");
   const rec = new RaceRecorder(full, E, R.log.sampleEveryTicks);
   const c: Ctx = {
     R,
@@ -443,7 +444,8 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.fallCause[i] !== 1
       ? SEG_DESCENT
       : (G.segType[seg] ?? SEG_FLAT);
-  runSkills(R, T, S, i, ph, segType, c.sink);
+  // PERF-2: a runner with no skill loops over nothing (the call is skipped, the same reads)
+  if ((T.nSkills[i] ?? 0) > 0) runSkills(R, T, S, i, ph, segType, c.sink);
 
   // B4. a jump entered last tick resolves now, after skills
   if (flag(S, i, F_PENDING_JUMP) && !resolveJump(c, i, ph)) {
@@ -519,7 +521,9 @@ function runnerTick(c: Ctx, i: number): boolean {
     }
     const a = (ph === PH_START ? T.accStart : T.acc)[ibs(i, b, seg)] ?? 0;
     const up = a + (S.skillAccel[i] ?? 0) + (dash ? R.kStartDash : 0);
-    vCore = approachVu(vCore, tgt, up, R.kDecel);
+    // `approachVu` written out (PERF-2: the same integers)
+    if (vCore < tgt) vCore = Math.min(tgt, vCore + Math.max(0, up));
+    else if (vCore > tgt) vCore = Math.max(tgt, vCore - R.kDecel);
     S.vCore[i] = vCore;
   } else if (c.F?.airCruise && (S.flPhase[i] === 2 || climbAsHeld(c.F, S, i)))
     vCore = airCruiseTick(
@@ -579,7 +583,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.boostTicks[i * 3 + ph] = (S.boostTicks[i * 3 + ph] ?? 0) + 1;
     S.boostRow[i] = (S.boostRow[i] ?? 0) + 1;
   } else {
-    regen(c, i, pack);
+    if ((T.regenTick[i] ?? 0) !== 0) regen(c, i, pack);
     S.heat[i] = sub0(S.heat[i] ?? 0, T.coolTick[i] ?? 0);
   }
   if (T.clampHeat[i] === 1) S.heat[i] = Math.min(S.heat[i] ?? 0, T.D[i] ?? 0);
@@ -600,7 +604,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   const drain0 =
     c.F !== null && (S.alt[i] ?? 0) > 0
       ? airDrain(c, i, c.F, vOut, dK)
-      : drainMicro(vOut, c.vBase, dK);
+      : drainGround(vOut, c.vBase, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
   let drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
   // the kick on low hp: the drip stops at her floor (the drain itself never does)
@@ -690,7 +694,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   if ((S.heldN[i] ?? 0) > 0) {
     heldSkills(c, i);
     tickSkillTimers(T, S, i, S.skHeld);
-  } else tickSkillTimers(T, S, i);
+  } else if ((S.activeSkills[i] ?? 0) !== 0) tickSkillTimers(T, S, i);
   S.guardLeft[i] = sub0(S.guardLeft[i] ?? 0, 1);
   S.holdLeft[i] = sub0(S.holdLeft[i] ?? 0, 1);
   if (full) S.tickFlags[i] = tickFlags | stateFlags(c, i);
@@ -721,6 +725,12 @@ function sprintPlan(c: Ctx, i: number): void {
     clean: p.clean,
     ...(c.kick.hiPm > 0 ? { kickPm: p.kickPm, pacePm: p.pacePm } : {}),
   });
+}
+
+/** `drainMicro` written out (PERF-2: the same integers; `vBase` is checked once per race). */
+function drainGround(vOut: number, vBase: number, dK: number): number {
+  const rPm = Math.floor((vOut * 1000) / vBase);
+  return Math.floor((rPm * rPm * dK) / 1_000_000);
 }
 
 /** Frame flags that read the runner's state after its tick (20.4). */
