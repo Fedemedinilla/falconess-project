@@ -188,3 +188,87 @@ Exclude: base + `aggressive, fast, screaming`.
   `[Instrumental]` en la letra.
 - Si el resultado suena genérico, bajar etiquetas: quedarse con género, ánimo, 2-3 instrumentos y
   BPM.
+
+## Música de fondo del juego (loops de menú y pantallas)
+
+Suno tiende a meter batería, crescendos y un estribillo, y el tema deja de ser de fondo. Para
+evitarlo hay que atacar los tres campos a la vez: el estilo, las exclusiones y la letra.
+
+### Reglas que funcionan
+
+- **Primero la palabra «instrumental» y «background»** en el estilo: lo primero pesa más.
+- **Pedir lo que no cambia:** «steady dynamics», «no build-up», «loopable», «sparse». Suno sigue
+  mejor una descripción de quietud que una prohibición sola.
+- **Sin batería en el estilo, y además excluirla.** Si hace falta pulso, pedir «soft pulse» o
+  «light shaker», nunca «drums» ni «beat».
+- **BPM moderado y fijo** (85-110): con BPM altos Suno agrega batería sola.
+- **La letra manda la forma.** Usar solo marcas de estructura instrumentales y repetitivas (abajo).
+  Sin `[Chorus]` ni `[Drop]`: invitan a subir la intensidad.
+- **Para la versión «Menú» de un tema que ya tenés**, usar la función de Suno que rehace una canción
+  existente en otro estilo (Cover / Remix, según la versión de Suno): conserva la melodía del Main
+  Theme y cambia la producción con el estilo de abajo. Si no está disponible, describir la melodía
+  en el estilo («melodic motif from the main theme, played softly on piano and strings»).
+- **Style Influence** alto (si tu versión lo tiene): más apego al estilo escrito.
+- Generar 3-4 y quedarse con la más pareja de principio a fin.
+
+### Exclusiones base de fondo (Exclude Styles)
+
+```
+drums, drum kit, heavy percussion, breakbeat, trap, dubstep, EDM drop, build-up, crescendo,
+climax, epic, aggressive, distorted guitar, guitar solo, vocals, choir, rap, spoken word, fast
+tempo, double-time, lo-fi hiss
+```
+
+### Letra (campo Lyrics) para cualquier loop
+
+```
+[Instrumental]
+[Intro: soft]
+[Loop A: calm, steady]
+[Loop B: same energy, variation]
+[Loop A: calm, steady]
+[Outro: soft, seamless to start]
+```
+
+### Estilos por pantalla
+
+**Menú (versión tranquila del Main Theme)**
+
+```
+instrumental, background music, anime game menu theme, calm and confident, sparse arrangement,
+soft piano motif, warm string pads, light synth arpeggio, subtle airy texture, steady dynamics, no
+build-up, loopable, wide soft mix, 95 BPM
+```
+
+**Entrenamiento (con algo de pulso, sin batería)**
+
+```
+instrumental, background music, anime training theme, light and optimistic, soft pulse, plucked
+synth, clean muted guitar, gentle bass, light shaker, steady dynamics, no build-up, loopable,
+105 BPM
+```
+
+**Taller (mecánico y tranquilo)**
+
+```
+instrumental, background music, anime garage ambience, relaxed, soft metallic textures, mellow
+electric piano, warm bass, gentle mechanical clicks, steady dynamics, no build-up, loopable,
+90 BPM
+```
+
+**Previa de carrera (tensión baja, sin explotar)**
+
+```
+instrumental, background music, cinematic anticipation, restrained tension, low string ostinato,
+soft synth pad, distant brass swell, steady dynamics, no drop, no climax, loopable, 100 BPM
+```
+
+**Resultado / fin de temporada (cálido)**
+
+```
+instrumental, background music, anime ending ambience, warm and reflective, soft piano, gentle
+strings, airy pad, steady dynamics, no build-up, loopable, 85 BPM
+```
+
+Si una versión sigue saliendo con batería: sacar el BPM del estilo, agregar `ambient` después de
+`background music` y repetir `no drums` al final del estilo.
