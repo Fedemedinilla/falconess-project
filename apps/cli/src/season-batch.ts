@@ -10,7 +10,6 @@
  * share of all seasons that reached and that passed it). Seeds `batch-0` … `batch-(N−1)`. The
  * ruleset defaults to `CURRENT_RULESET` (ADR-0006); `--ruleset v1` measures the old rules.
  */
-import { loadContent } from "@falconess/content";
 import type { Grade, RunInput, SeasonGoal, SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
@@ -20,7 +19,7 @@ import {
   startSeason,
   statTotal,
 } from "@falconess/sim";
-import { argRuleset, argString, parseArgs } from "./args.js";
+import { argRuleset, argString, parseArgs, seasonContext } from "./args.js";
 import { goalFlagged, placeCounts } from "./goal-rate.js";
 import { POLICIES, type PolicyName, REFERENCE_HANGAR, referencePolicy } from "./policy.js";
 
@@ -193,7 +192,7 @@ const isMain =
   process.argv[1]?.endsWith("season-batch.ts") || process.argv[1]?.endsWith("season-batch.js");
 if (isMain) {
   const args = parseArgs(process.argv.slice(2));
-  const ctx: SimContext = { ruleset: argRuleset(args), content: loadContent() };
+  const ctx: SimContext = seasonContext(argRuleset(args));
   const runs = Number.parseInt(argString(args, "runs", "500"), 10);
   console.log(`ruleset ${ctx.ruleset.version}`);
   const who = argString(args, "falconess", "all");

@@ -1,5 +1,5 @@
 import { loadCalendar, loadCatalogueCourses, loadRawContent } from "@falconess/content";
-import { buildContentIndex, ContentError } from "@falconess/schema";
+import { buildContentIndex, ContentError, withCalendar } from "@falconess/schema";
 
 try {
   const idx = buildContentIndex(loadRawContent());
@@ -26,12 +26,15 @@ try {
   for (const t of calendar.catalogue)
     if (!known.has(t)) problems.push(`calendars/v3: unknown track ${t}`);
   if (problems.length > 0) throw new ContentError(problems);
+  // the v3 goals of each Falconess (calendar «goals») name known Falconess and tracks
+  const v3 = withCalendar(idx, calendar, catalogue);
   console.log(
     "content: OK",
     JSON.stringify({
       ...counts,
       catalogueV3: catalogue.length,
       calendarV3: calendar.catalogue.length,
+      goalsV3: [...v3.falconess.values()].reduce((n, f) => n + f.seasonGoals.length, 0),
     }),
   );
 } catch (e) {

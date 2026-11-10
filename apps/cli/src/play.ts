@@ -8,7 +8,6 @@
 
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
-import { loadContent } from "@falconess/content";
 import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
 import {
   actionBlock,
@@ -21,7 +20,7 @@ import {
   startSeason,
   WorkshopError,
 } from "@falconess/sim";
-import { argRuleset, argString, parseArgs } from "./args.js";
+import { argRuleset, argString, parseArgs, seasonContext } from "./args.js";
 import { goalRaceView } from "./goal-race-view.js";
 import {
   finalSummary,
@@ -37,7 +36,7 @@ import {
 } from "./render.js";
 
 const args = parseArgs(process.argv.slice(2));
-const ctx: SimContext = { ruleset: argRuleset(args), content: loadContent() };
+const ctx: SimContext = seasonContext(argRuleset(args));
 const c = ctx.content;
 const seed = argString(args, "seed", String(Math.floor(Math.random() * 1_000_000)));
 const falconessId = argString(args, "falconess", "peregrina");

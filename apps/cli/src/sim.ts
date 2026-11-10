@@ -5,10 +5,9 @@
  * arguments print the same bytes. Used by the determinism test and by PT0 as a baseline. The
  * ruleset defaults to `CURRENT_RULESET`, the one new runs start on (ADR-0006).
  */
-import { loadContent } from "@falconess/content";
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { advanceSeason, blackBoxFor, type SimContext, startSeason } from "@falconess/sim";
-import { argRuleset, argString, parseArgs } from "./args.js";
+import { argRuleset, argString, parseArgs, seasonContext } from "./args.js";
 import { referencePolicy } from "./policy.js";
 import {
   describeInput,
@@ -46,7 +45,7 @@ export function runSeason(
 const isMain = process.argv[1]?.endsWith("sim.ts") || process.argv[1]?.endsWith("sim.js");
 if (isMain) {
   const args = parseArgs(process.argv.slice(2));
-  const ctx: SimContext = { ruleset: argRuleset(args), content: loadContent() };
+  const ctx: SimContext = seasonContext(argRuleset(args));
   const seed = argString(args, "seed", "42");
   const falconessId = argString(args, "falconess", "peregrina");
   const hangar = argString(args, "hangar", "shiden,mule,nimbus,falke").split(",");

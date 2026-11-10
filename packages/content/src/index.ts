@@ -4,4 +4,5 @@ export {
   loadCatalogueCourses,
   loadContent,
   loadRawContent,
+  loadSeasonContent,
 } from "./node.js";
