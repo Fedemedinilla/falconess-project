@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RacePhase, Rarity, SegmentType, Slug, TextKey, Version } from "./core.js";
+import { Distance, RacePhase, Rarity, SegmentType, Slug, TextKey, Version } from "./core.js";
 import { RaceModifier } from "./modifiers.js";
 
 export const SkillTrigger = z.strictObject({
@@ -54,6 +54,11 @@ export type ActiveSkill = z.infer<typeof ActiveSkill>;
 export const SkillFlight = z.strictObject({
   diveFromBand: z.number().int().min(2).max(3),
   diveVPm: z.number().int().min(0).max(500),
+  /**
+   * ADR-0009 (draft, trim 2026-11-09): ‰ per race distance, read instead of `diveVPm` with the
+   * flight constant `skillFlightDistance` on (Garra fija: less in the Sprint and the Milla).
+   */
+  diveVPmDistance: z.record(Distance, z.number().int().min(0).max(500)).optional(),
 });
 export type SkillFlight = z.infer<typeof SkillFlight>;
 

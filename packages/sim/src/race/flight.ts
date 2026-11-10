@@ -479,6 +479,11 @@ export type FlightConstants = {
    * trait `diveSkill` (false = never: v3 is the balance polish, 6e98e90, byte for byte).
    */
   readonly skillFlight: boolean;
+  /**
+   * Trim (owner 2026-11-09, trim-final.md): the passive's flight ‰ is read per race distance
+   * (`PassiveSkill.flight.diveVPmDistance`; false = `diveVPm` everywhere: homes, 5f470a2).
+   */
+  readonly skillFlightDistance: boolean;
 };
 
 /** S1: a wing's takeoff style (diseno-v3-vuelo.md §3). */
@@ -919,10 +924,18 @@ export const FLIGHT_V3_E1: FlightConstants = {
   closerLastFeature: false,
   // homes per track (owner 2026-11-09, homes-final.md): Garra fija dives harder from the ceiling
   skillFlight: true,
+  // trim (owner 2026-11-09, trim-final.md): Garra fija by distance, less in the Sprint and the Milla
+  skillFlightDistance: true,
 };
 
+/** The trim off: Garra fija's ‰ is the same at every distance (homes, 5f470a2) byte for byte (trim/inv14.ts). */
+export const FLIGHT_OFF_TRIM: Partial<FlightConstants> = { skillFlightDistance: false };
+
 /** A passive's flight effect off (ADR-0009): v3 is the balance polish (6e98e90) byte for byte (homes/inv13.ts). */
-export const FLIGHT_OFF_HOMES: Partial<FlightConstants> = { skillFlight: false };
+export const FLIGHT_OFF_HOMES: Partial<FlightConstants> = {
+  ...FLIGHT_OFF_TRIM,
+  skillFlight: false,
+};
 
 /** The balance polish off: v3 is the kick on low hp (95e469f) byte for byte (polish/inv12.ts). */
 export const FLIGHT_OFF_POLISH: Partial<FlightConstants> = {

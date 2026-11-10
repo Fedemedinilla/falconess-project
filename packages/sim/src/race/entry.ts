@@ -147,9 +147,17 @@ export function freezeEntry(
     F !== null && F.skillFlight && passiveId !== null
       ? content.getPassive(passiveId).flight
       : undefined;
+  const lengthMm = course.segments.reduce((a, sg) => a + sg.length, 0) * 1000;
+  // trim (owner 2026-11-09): with skillFlightDistance the passive's ‰ is the course distance's
+  const skillPm =
+    flight === undefined
+      ? 0
+      : F !== null && F.skillFlightDistance && flight.diveVPmDistance !== undefined
+        ? flight.diveVPmDistance[distanceOfLength(F, lengthMm)]
+        : flight.diveVPm;
   const traits =
-    flight !== undefined && flight.diveVPm > 0
-      ? { ...traits0, diveSkill: { fromBand: flight.diveFromBand, pm: flight.diveVPm } }
+    flight !== undefined && skillPm > 0
+      ? { ...traits0, diveSkill: { fromBand: flight.diveFromBand, pm: skillPm } }
       : traits0;
   const durabilityStart =
     F !== null && F.noWear
@@ -157,7 +165,6 @@ export function freezeEntry(
       : Math.min(fb.durabilityMax, input.durability ?? fb.durabilityMax);
 
   // v3 draft (owner 2026-11-09): the letter of this course's distance, only with the letters on
-  const lengthMm = course.segments.reduce((a, sg) => a + sg.length, 0) * 1000;
   const distanceLetter =
     F !== null && F.distanceLetters && input.distanceAptitude !== undefined
       ? input.distanceAptitude[distanceOfLength(F, lengthMm)]

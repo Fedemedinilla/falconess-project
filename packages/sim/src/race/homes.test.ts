@@ -56,10 +56,11 @@ const myDives = (log: RaceLog) =>
   (log.events ?? []).flatMap((e) => (e.kind === "dive" && e.lane === 0 ? [e] : []));
 
 describe("homes: Garra fija dives harder (ADR-0009 draft)", () => {
-  it("talon-lock carries a v3 flight effect: from band 2, +500 ‰ Δv", () => {
+  it("talon-lock carries a v3 flight effect: from band 2, +500 ‰ Δv (trim: less in the Sprint and the Milla)", () => {
     const s = content.getPassive("talon-lock");
     expect(PassiveSkill.parse(s)).toEqual(s);
-    expect(s.flight).toEqual({ diveFromBand: 2, diveVPm: 500 });
+    expect(s.flight?.diveFromBand).toBe(2);
+    expect(s.flight?.diveVPm).toBe(500);
   });
 
   it("v1, v2 and v3 with the flag off freeze no dive trait; v3 freezes it", () => {

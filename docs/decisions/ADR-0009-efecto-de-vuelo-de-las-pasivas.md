@@ -2,8 +2,8 @@
 
 - Estado: **borrador** (prototipo `.work/design7`, rama `race-v3-proto`); pendiente de que el dueño
   lo apruebe y de que el ruleset v3 deje de ser borrador.
-- Fecha: 2026-11-09
-- Alcance: schema (`skill`: `PassiveSkill.flight`; `race`: `RaceTraits.diveSkill`, evento `dive`:
+- Fecha: 2026-11-09 (recorte por distancia: 2026-11-10)
+- Alcance: schema (`skill`: `PassiveSkill.flight`, `SkillFlight.diveVPmDistance`; `race`: `RaceTraits.diveSkill`, evento `dive`:
   `skillMms`, `skillId`), content (`skills/talon-lock.json`), sim (`freezeEntry`, `planFlights`,
   el toque de la picada, el registro), docs.
 - Contexto de diseño: decisión del dueño del 2026-11-09, opción 3 («subir lo débil con su propio
@@ -29,9 +29,9 @@ y agregarle un miembro obliga a v1 y v2 a tener un manejador para él.
 
 1. **Campo nuevo, opcional y solo de v3:** `PassiveSkill.flight` (`SkillFlight`):
 
-   | Campo          | Tipo         | Significado                                                 |
-   | -------------- | ------------ | ----------------------------------------------------------- |
-   | `diveFromBand` | entero 2-3   | la banda más baja desde la que actúa (2 = alta, 3 = techo)  |
+   | Campo          | Tipo         | Significado                                                |
+   | -------------- | ------------ | ---------------------------------------------------------- |
+   | `diveFromBand` | entero 2-3   | la banda más baja desde la que actúa (2 = alta, 3 = techo) |
    | `diveVPm`      | entero 0-500 | ‰ de Δv que suma a una picada desde esa banda o más arriba |
 
    v1 y v2 no lo leen. v3 lo lee solo con la constante de vuelo `skillFlight` (`FLIGHT_OFF_HOMES`
@@ -49,6 +49,13 @@ y agregarle un miembro obliga a v1 y v2 a tener un manejador para él.
    mostrar «Garra fija» leyendo el registro, sin texto fijo.
 5. **Contenido:** `talon-lock.json` suma `"flight": { "diveFromBand": 2, "diveVPm": 500 }`. Los
    modificadores de v1 no cambian.
+6. **Recorte por distancia (dueño 2026-11-09, `trim-final.md`):** `SkillFlight` suma un campo
+   opcional, `diveVPmDistance` (‰ por distancia de carrera: `sprint`, `mile`, `medium`, `long`,
+   cada uno 0-500). Con la constante de vuelo `skillFlightDistance` prendida, `freezeEntry` copia al
+   rasgo el ‰ de la distancia de la pista (la misma regla de longitud que las letras de distancia);
+   sin ella, `diveVPm` en todas (`FLIGHT_OFF_TRIM`, las casas de 5f470a2 byte a byte, `INV-14`).
+   Garra fija: Sprint 100, Milla 250, Media 500, Larga 500. El rasgo de la entrada ya dice el ‰ de
+   esa carrera, así que el registro y la vista lo leen sin saber la distancia.
 
 ## Consecuencias
 
@@ -62,7 +69,12 @@ y agregarle un miembro obliga a v1 y v2 a tener un manejador para él.
   (por ejemplo, ningún efecto de vuelo de pasiva vale más de X m pareados en su pista más fuerte).
 - Medido (`homes-final.md`, Desbalances): en un espejo de 8 Remates a 600, Peregrina gana sprint 11,8 → 25,6 %, Milla
   +8-9 puntos, Media +7, Larga +2. En el caso del dueño (Sprint, 1500 carreras por par) la Caracara B gana 35,6 → 14,5 %
-  contra la Peregrina de su Agilidad con poca Resistencia. Propuesta abierta: el bono por distancia (menos en Sprint y Milla).
+  contra la Peregrina de su Agilidad con poca Resistencia. **Resuelto con el punto 6** (recorte por distancia, como
+  las condiciones de distancia de las habilidades de Umamusume y la lección 1 del informe: sin gacha se puede bajar con
+  nota de cambio): ver `trim-final.md`.
+- Nota de cambio (para el jugador): «Garra fija: bajamos el bono de la picada desde arriba a +10 % en el Sprint y +25 % en
+  la Milla (sigue +50 % en la Media y la Larga), porque en las pistas cortas la picada ya valía más y la pasiva le ganaba
+  carreras a la que había puesto Resistencia».
 - Los campos de prueba del arnés (fixtures neutras) no tienen pasiva: las tablas de posiciones no
   cambian con este ADR.
 - Golden v1/v2 y `v1-invariance` sin cambios. `INV-13` (`homes/inv13.ts`) prueba que con

@@ -29,6 +29,7 @@ export {
   FLIGHT_OFF_POLISH,
   FLIGHT_OFF_R5,
   FLIGHT_OFF_STAMINA,
+  FLIGHT_OFF_TRIM,
   FLIGHT_V3_E1,
   FLIGHT_V3_E2,
   type FlightConstants,
