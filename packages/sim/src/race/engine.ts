@@ -426,6 +426,8 @@ function posMm(c: Ctx, i: number): number {
 function runnerTick(c: Ctx, i: number): boolean {
   const { R, G, T, S, rec } = c;
   const t = c.t;
+  // the ruleset's flight constants never change in a race (one load, not one per read)
+  const F = c.F;
 
   // B1. phase; final entry (heat-to-energy); plan point
   const pos = S.pos[i] ?? 0;
@@ -448,7 +450,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   // B3. skills in id order
   const seg = S.seg[i] ?? 0;
   const segType =
-    c.F?.diveDescent === true &&
+    F?.diveDescent === true &&
     S.flPhase[i] === 3 &&
     (S.fromBand[i] ?? 0) >= 2 &&
     S.fallCause[i] !== 1
@@ -465,13 +467,13 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B4b. v3 draft (design7 R1-R4, R7): planned takeoff, climb, end of flight, descent, dive
   // (on the ground, only when her next planned takeoff point is reached: flightTick's phase 0)
-  if (c.F !== null) {
+  if (F !== null) {
     const k = S.flK[i] ?? 0;
     if (
       (S.flPhase[i] ?? 0) !== 0 ||
       (k < (T.flN[i] ?? 0) && pos >= (T.flA[i * FLIGHTS_MAX + k] ?? 0))
     )
-      flightTick(c, i, c.F);
+      flightTick(c, i, F);
   }
 
   // B5. the tick's single overheat flag
@@ -489,7 +491,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     // the kick on low hp: the body's replans (a hit, the drip) are never capped
     if (
       (S.planCount[i] ?? 0) <= R.maxReplans ||
-      (c.kick.hiPm > 0 && c.F?.kickReplanFree === true && S.replanCause[i] === CAUSE_EFFORT)
+      (c.kick.hiPm > 0 && F?.kickReplanFree === true && S.replanCause[i] === CAUSE_EFFORT)
     )
       sprintPlan(c, i);
   }
@@ -509,14 +511,14 @@ function runnerTick(c: Ctx, i: number): boolean {
   if (cut > 0 && ph === PH_FINAL && !exhausted)
     tgt = Math.max(T.vMin[ibps(i, b, ph, seg)] ?? 0, floorDiv(tgt * (1000 - cut), 1000));
   // F6 (round 5): in the air the tow is one rule by band and metres (step A2), for every wing
-  const airBand = airborne && c.F?.airDraftBand === true;
+  const airBand = airborne && F?.airDraftBand === true;
   const drafting = airBand
     ? S.dirty[i] === 1 && S.flPhase[i] === 2 && !exhausted
     : style === STYLE_HOVER &&
       ph === PH_MIDDLE &&
       pack &&
       !exhausted &&
-      !(airborne && c.F?.draftGroundOnly);
+      !(airborne && F?.draftGroundOnly);
   if (drafting) {
     if (!airBand) tgt = floorDiv(tgt * R.style.hoverDraftPm, 1000);
     else S.towTicks[i] = (S.towTicks[i] ?? 0) + 1;
@@ -535,7 +537,7 @@ function runnerTick(c: Ctx, i: number): boolean {
     if (vCore < tgt) vCore = Math.min(tgt, vCore + Math.max(0, up));
     else if (vCore > tgt) vCore = Math.max(tgt, vCore - R.kDecel);
     S.vCore[i] = vCore;
-  } else if (c.F?.airCruise && (S.flPhase[i] === 2 || climbAsHeld(c.F, S, i)))
+  } else if (F?.airCruise && (S.flPhase[i] === 2 || climbAsHeld(F, S, i)))
     vCore = airCruiseTick(
       c,
       i,
@@ -543,7 +545,7 @@ function runnerTick(c: Ctx, i: number): boolean {
       ph,
       seg,
       exhausted,
-      drafting ? (airBand ? wingOf(c.F, T.style[i] ?? 0).draftPm : R.style.hoverDraftPm) : 1000,
+      drafting ? (airBand ? wingOf(F, T.style[i] ?? 0).draftPm : R.style.hoverDraftPm) : 1000,
     );
   const boostOn = S.boostOn[i] === 1;
   const pulseTick = S.isPulseTick[i] === 1;
@@ -562,12 +564,12 @@ function runnerTick(c: Ctx, i: number): boolean {
     // v3 draft, `diveSurge` knob: the dive's surge decays by kDecel on top of the body speed
     surge = S.surge[i] ?? 0;
     S.surge[i] = Math.max(0, surge - R.kDecel);
-  } else if (airborne && S.flPhase[i] === 3 && (S.surge[i] ?? 0) > 0 && c.F?.diveAirShare) {
+  } else if (airborne && S.flPhase[i] === 3 && (S.surge[i] ?? 0) > 0 && F?.diveAirShare) {
     // F2 (round 5): the share of the dive gained so far carries her down, undecayed; with neutral
     // styles it decays by kDecel as on the ground, so a slow fall gains no metres over a quick one
     surge = S.surge[i] ?? 0;
     S.diveAirMm[i] = (S.diveAirMm[i] ?? 0) + surge;
-    if (c.F.neutralStyles) S.surge[i] = Math.max(0, surge - R.kDecel);
+    if (F.neutralStyles) S.surge[i] = Math.max(0, surge - R.kDecel);
   }
   const vTot = airborne
     ? vCore + surge
@@ -579,7 +581,14 @@ function runnerTick(c: Ctx, i: number): boolean {
     !(T.heatImmune[i] === 1 && pos < (T.immuneUntil[i] ?? 0));
   let vOut = penalised ? penalisedVu(R, vTot) : vTot;
   // two lines per band: in her band and line nobody flies through the runner ahead
-  if (c.F?.lines && airborne && S.flPhase[i] === 2) vOut = blocked(c, c.F, i, vOut);
+  // PERF-2: nobody ahead in her line and no block running: `blocked` would only keep vOut
+  if (
+    F?.lines &&
+    airborne &&
+    S.flPhase[i] === 2 &&
+    ((S.lnAhead[i] ?? -1) >= 0 || (S.blkRun[i] ?? 0) !== 0)
+  )
+    vOut = blocked(c, F, i, vOut);
   S.vOut[i] = vOut;
 
   // B9. energy, regen, heat, telemetry clamp, overheat damage, broken wings (8.1)
@@ -601,24 +610,24 @@ function runnerTick(c: Ctx, i: number): boolean {
     S.overheatTicks[i] = (S.overheatTicks[i] ?? 0) + 1;
     if ((S.guardLeft[i] ?? 0) === 0) damage(c, i, T.dmgTick[i] ?? 0);
   }
-  if (c.F !== null && (S.flPhase[i] === 2 || climbAsHeld(c.F, S, i)))
-    holdTick(c, i, c.F, vOut, seg);
+  if (F !== null && (S.flPhase[i] === 2 || climbAsHeld(F, S, i)))
+    holdTick(c, i, F, vOut, seg);
 
   // B10. hp drain at the moved speed (6)
   const q =
     (ph === PH_FINAL ? DK_FINAL : 0) +
-    ((c.F?.leadGlidePos ? T.position[i] === POS_LEAD : style === STYLE_GLIDE) && S.ahead[i] === 0
+    ((F?.leadGlidePos ? T.position[i] === POS_LEAD : style === STYLE_GLIDE) && S.ahead[i] === 0
       ? DK_LEAD
       : 0);
   const dK = T.dK[i * 4 + q] ?? 0;
   const drain0 =
-    c.F !== null && (S.alt[i] ?? 0) > 0
-      ? airDrain(c, i, c.F, vOut, dK)
+    F !== null && (S.alt[i] ?? 0) > 0
+      ? airDrain(c, i, F, vOut, dK)
       : drainGround(c, i, vOut, dK);
   // stamina pays effort (2026-11-09): dirty air and a boxed-in struggle drip on top of the drain
-  let drip = c.F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, c.F, drain0) : 0;
+  let drip = F !== null && (S.alt[i] ?? 0) > 0 ? effortDrip(c, i, F, drain0) : 0;
   // the kick on low hp: the drip stops at her floor (the drain itself never does)
-  if (drip > 0 && c.F?.hpHitFloor === true)
+  if (drip > 0 && F?.hpHitFloor === true)
     drip = Math.min(drip, Math.max(0, (S.hp[i] ?? 0) - drain0 - (S.hpFloor[i] ?? 0)));
   const drain = drain0 + drip;
   const hp = sub0(S.hp[i] ?? 0, drain);
@@ -627,9 +636,9 @@ function runnerTick(c: Ctx, i: number): boolean {
     const since = (S.dripSince[i] ?? 0) + drip;
     S.dripSince[i] = since;
     if (
-      c.F !== null &&
-      c.F.hpReplanHp > 0 &&
-      since >= c.F.hpReplanHp * 1_000_000 &&
+      F !== null &&
+      F.hpReplanHp > 0 &&
+      since >= F.hpReplanHp * 1_000_000 &&
       flag(S, i, F_PLAN_ACTIVE)
     ) {
       S.dripSince[i] = 0;
@@ -647,7 +656,9 @@ function runnerTick(c: Ctx, i: number): boolean {
   // B11. move (ground detour as progress scaling, 14.5)
   const detouring = style === STYLE_GROUND && segType === SEG_JUMP;
   let disp = detouring ? detourDisp(vOut, T.detour[i] ?? 1000) : vOut;
-  if (c.F?.lines && (S.alt[i] ?? 0) >= 1) disp = lineDisp(c, i, disp);
+  // PERF-2: no lateral move and the inside line: `lineDisp` would keep disp
+  if (F?.lines && (S.alt[i] ?? 0) >= 1 && ((S.latTicks[i] ?? 0) > 0 || S.line[i] === 1))
+    disp = lineDisp(c, i, disp);
   const newPos = pos + disp;
   S.prevPos[i] = pos;
   S.pos[i] = newPos;
@@ -667,7 +678,7 @@ function runnerTick(c: Ctx, i: number): boolean {
       (mode === MODE_PLAN ? FL.planSpurt : 0) |
       (mode === MODE_KICK ? FL.kick : 0) |
       (drafting ? FL.drafting : 0) |
-      (inDirtyAir(c.F, S, i) ? FL.dirtyAir : 0) |
+      (inDirtyAir(F, S, i) ? FL.dirtyAir : 0) |
       (S.line[i] === 1 && (S.alt[i] ?? 0) >= 1 ? FL.lineOut : 0);
 
   // B12. finish, or segment changes (landing, repair, water hit, jump entry)
