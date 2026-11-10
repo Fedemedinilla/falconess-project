@@ -8,6 +8,7 @@ import type {
 } from "@falconess/schema";
 import { simulateRace } from "../race/engine.js";
 import { goalRaceSetup, PLAYER_RUNNER_ID } from "../race/field.js";
+import { flightOf } from "../race/flight.js";
 import { changeMood, type Draft, note, type SimContext } from "./context.js";
 import { raceLossCostsMood } from "./rules.js";
 
@@ -61,7 +62,10 @@ export function runGoalRace(
     position: entry.position,
     engine: "v1",
   });
-  d.frameDurability[d.equippedFrame] = Math.floor(me.durabilityEnd / 1000);
+  // ADR-0011: wings never wear in v3; the race runs on the neutral profile, so its durability is
+  // not the frame's and the season keeps the frame's own
+  if (flightOf(ctx.ruleset)?.noWear !== true)
+    d.frameDurability[d.equippedFrame] = Math.floor(me.durabilityEnd / 1000);
   d.wallet.scrap += ctx.ruleset.season.scrapByPlace[place - 1] ?? 10;
   note(d, "log.race");
 

@@ -60,7 +60,11 @@ describe("season on ruleset v3 (ADR-0011)", () => {
     }
   });
 
-  it("wings never wear: the workshop has nothing to repair", () => {
+  it("wings never wear: durability never moves and the workshop has nothing to repair", () => {
+    const start = startSeason(V3, "v3/wear", START("caracara"));
+    const { state } = play(V3, "v3/wear", "caracara");
+    expect(state.raceResults.length).toBeGreaterThan(0);
+    expect(state.frameDurability).toEqual(start.frameDurability);
     const s = startSeason(V3, "v3/repair", START("peregrina"));
     expect(() => advanceSeason(V3, s, { kind: "workshop", ops: [{ op: "repair" }] })).toThrow(
       /never wear/,
