@@ -140,13 +140,11 @@ export const FLIGHT_OFF_HOMES: Partial<FlightConstants> = {
 /** The balance polish off: v3 is the kick on low hp (95e469f) byte for byte (polish/inv12.ts). */
 export const FLIGHT_OFF_POLISH: Partial<FlightConstants> = {
   ...FLIGHT_OFF_HOMES,
-  closerRoomM: 0,
   closerRoomMinM: 0,
   diveCourRel: false,
   leadStartJumps: false,
   hpPlanOwn: false,
   diveDescent: false,
-  closerLastFeature: false,
 };
 
 /** The kick on low hp off: v3 is stamina pays effort (31f801b) byte for byte (kick/inv11.ts). */
@@ -200,8 +198,6 @@ export const FLIGHT_OFF_NEUTRAL: Partial<FlightConstants> = {
   highCruisePm: 0,
   skimEscapeTicks: 0,
   packJumps: false,
-  leadGlidePos: false,
-  leadStartAccelPm: 1000,
   bandHoldPm: [1000, 1000, 1300, 1300],
   diveVMms: [0, 0, 5_110, 5_430],
   overDivePm: 650,

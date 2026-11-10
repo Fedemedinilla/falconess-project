@@ -182,15 +182,9 @@ function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] 
     }
     return null;
   };
-  // 1. the edge of the last descent that ends inside the final (polish: unless a Salto of the
-  // final starts after it: the last feature is the one she dives from)
+  // 1. the edge of the last descent that ends inside the final
   let pick: Flight | null = null;
-  let lastJump = -1;
-  if (F.closerLastFeature)
-    for (let s = 0; s < G.S; s++)
-      if (G.segType[s] === SEG_JUMP && (G.segStart[s] ?? 0) >= fs) lastJump = G.segStart[s] ?? 0;
   for (let s = G.S - 1; s >= 0 && pick === null; s--) {
-    if (G.segType[s] === SEG_DESCENT && (G.segStart[s] ?? 0) < lastJump) break;
     if (G.segType[s] !== SEG_DESCENT) continue;
     const sb = G.segEnd[s] ?? 0;
     if (sb > fs) pick = finish(G.segStart[s] ?? 0, sb, true);
@@ -205,7 +199,6 @@ function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] 
       break;
     }
   if (pick !== null) return [pick];
-  if (F.closerRoomM > 0) return roomPlan(F, G, m, minLen, cap, G.L - F.closerRoomM * m);
   // 3. 100 m before the final; if that stretch touches a canyon or an obstacle, after the last
   // one of the final; if that cannot touch down before L − 60 m, 100 m before the final anyway
   const a3 = Math.max(0, fs - F.closerPreFinalM * m);
@@ -229,7 +222,7 @@ function closerPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] 
 }
 
 /**
- * Polish (closerRoomM): the great dive `closerRoomM` before the line. An obstacle or canyon the
+ * Polish (closerRoomMinM): the great dive at most `start` (a point before the line). An obstacle or canyon the
  * flight overlaps, or that starts within `lookM` after the dive, is flown over (the dive moves past
  * it) while the dive keeps `cap`; otherwise the whole flight moves before that feature.
  */
@@ -350,51 +343,6 @@ function packPlan(F: FlightConstants, G: CourseGeometry, m: number): Flight[] {
 }
 
 /**
- * R9: nobody holds above band 1 inside a canyon. A high flight that reaches a canyon drops to band
- * 1 at its edge (no dive, no loss) and climbs back at its exit, paying the climb, as three chained
- * flights; if it would end inside the canyon, or keep less than `canyonExitMinM` after it, it dives
- * `canyonDiveBeforeM` before the canyon instead. One that takes off inside flies low to the exit.
- */
-function ceilingCut(F: FlightConstants, G: CourseGeometry, m: number, fl: Flight[]): Flight[] {
-  const out: Flight[] = [];
-  for (const f of fl) {
-    if (f.band <= BAND_LOW) {
-      out.push(f);
-      continue;
-    }
-    let cur: Flight | null = { ...f };
-    for (let s = 0; s < G.S && cur !== null; s++) {
-      if (G.segType[s] !== SEG_CANYON) continue;
-      const ca = G.segStart[s] ?? 0;
-      const cb = G.segEnd[s] ?? 0;
-      // a flight that ends less than `canyonDiveBeforeM` before the canyon would dive inside it
-      if (cb <= cur.a || ca >= cur.b + F.canyonDiveBeforeM * m) continue;
-      if (ca <= cur.a) {
-        // takes off inside: low until the exit, then up to her band (or low to the end)
-        if (cur.b - cb >= F.canyonExitMinM * m) {
-          out.push({ a: cur.a, b: cb, band: BAND_LOW, corn: cur.corn, chain: true });
-          cur = { ...cur, a: cb, corn: false };
-        } else cur = { ...cur, band: BAND_LOW, b: Math.min(cur.b, cb) };
-      } else if (cur.b <= cb || cur.b - cb < F.canyonExitMinM * m) {
-        const b = ca - F.canyonDiveBeforeM * m;
-        cur = b > cur.a ? { ...cur, b } : null;
-      } else {
-        const drop = Math.max(cur.a + 1, ca - F.canyonDiveBeforeM * m);
-        out.push({ ...cur, b: drop, chain: true });
-        out.push({ a: drop, b: cb, band: BAND_LOW, corn: false, chain: true });
-        cur = { ...cur, a: cb, corn: false };
-      }
-    }
-    if (cur !== null) out.push(cur);
-    else {
-      const last = out[out.length - 1];
-      if (last) last.chain = false;
-    }
-  }
-  return out;
-}
-
-/**
  * The runner's flight plan before tick 0 (R2): a pure function of the geometry, her own position,
  * her wings and her stats, the same the pre-race card can show. Writes `flN`, `flA`, `flB`,
  * `flBand`, `flCorn`, the planned costs (R3, R4) and the reserve `flRes0`, and marks the jumps a
@@ -491,7 +439,6 @@ export function planFlights(
           : pc === POS_PACK
             ? packPlan(F, G, m)
             : [];
-  if (F.canyonCeiling) fl = ceilingCut(F, G, m, fl);
   // F8: a wing never plans above its `maxBand` (the Turbina skims only the low band's flights)
   fl = fl.filter((f) => f.b > f.a && f.band <= wing.maxBand).slice(0, FLIGHTS_MAX);
   let res = 0;

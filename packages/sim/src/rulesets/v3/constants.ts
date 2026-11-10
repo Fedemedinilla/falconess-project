@@ -13,8 +13,6 @@ export const RULESET_VERSION = "v3" as const;
 
 /** Flight constants of ruleset v3 (ADR-0011; design7 §3, §10). Units in the comments. */
 export type FlightConstants = {
-  /** Design stage the draft implements (1 or 2). */
-  readonly stage: number;
   /** Positions that follow a flight plan, in POS_* order [lead, pack, stalk, closer]. */
   readonly planned: readonly [boolean, boolean, boolean, boolean];
   /** Energy units per band climbed at liftF 1000 (R3; climbE). */
@@ -43,15 +41,6 @@ export type FlightConstants = {
   /** The pack's Abanico: L / packFanDiv from the final's start (0 = no Abanico). */
   readonly packFanDiv: number;
   readonly packFanMinM: number;
-  /** R9 (stage 2): nobody above band 1 inside a canyon segment. */
-  readonly canyonCeiling: boolean;
-  /** R9: a high flight that keeps less than this after the canyon dives before it, metres. */
-  readonly canyonExitMinM: number;
-  readonly canyonDiveBeforeM: number;
-  /** R10 (stage 2): ‰ of the curves, water and climb penalty a ground wing pays (1000 = off). */
-  readonly groundGripPm: number;
-  /** R5: true = the hover draft (×1.02) only on the ground; false = also on the air cruise. */
-  readonly draftGroundOnly: boolean;
   /**
    * R3c (feel round 3): when her plan only flies to the ceiling (the great dive of the final,
    * the closer's plan in stage 1), the energy she keeps for later before she boosts (`keepOk`,
@@ -291,14 +280,6 @@ export type FlightConstants = {
   readonly skimEscapeTicks: number;
   /** Pack: also skims every Salto that ends before the final (±20 m, like the lead) (false = off). */
   readonly packJumps: boolean;
-  /**
-   * The Planeo's two ground terms belong to the lead position instead of the glide wing: neutral
-   * wings move them from the wing to the position the Planeo used to run (ADR-0008: Punta = the
-   * old Planeo): glideLeadDrainPm while nobody is ahead, and `leadStartAccelPm` ‰ of the start's
-   * acceleration (the Planeo's 1100 made the Punta win 44 % of the steps at 300; false = off).
-   */
-  readonly leadGlidePos: boolean;
-  readonly leadStartAccelPm: number;
   // --- stamina pays effort (owner, 2026-11-09; .work/design7/measure/stamina-final.md)
   /**
    * Maneuvers cost the body (hp), not only energy: hits in hp at stamina 0, each × 1.2e6 / stamDiv
@@ -410,16 +391,6 @@ export type FlightConstants = {
    */
   readonly airTechRel: boolean;
   // --- balance polish (2026-11-09; .work/design7/measure/polish-final.md)
-  /**
-   * The Remate's dive room: with no descent or Salto inside the final to dive from, her great dive
-   * is planned `closerRoomM` before the line (0 = off: `closerPreFinalM` before the final, i.e. a
-   * third of the track before the line: 400 m of the sprint but 900-1000 m of the long tracks).
-   * Every dive plan keeps at least `closerRoomMinM` to the line (0 = off: `reserveAt`, 60 m): a
-   * Salto 90 m before the line made the circuit's Remate climb over it and dive 60 m out, too late
-   * for the dive or her kick. A dive that cannot keep it is planned before that feature (she
-   * takes it on her legs, like everyone). Reads only the geometry.
-   */
-  readonly closerRoomM: number;
   readonly closerRoomMinM: number;
   /**
    * The dive's power (L5, η) reads her Courage against her own build, `600 + C − (A + S + T + C +
@@ -450,12 +421,6 @@ export type FlightConstants = {
    * Bajada of the final lost her only Bajada skill to the air).
    */
   readonly diveDescent: boolean;
-  /**
-   * The Remate dives from the last feature of the final: a Salto after the last descent wins over
-   * the descent's edge (false = the descent's edge first: on the ridge she held the ceiling 400 m
-   * over the whole Bajada and the Salto, and ran none of the Bajada on her legs).
-   */
-  readonly closerLastFeature: boolean;
   // --- homes per track and the weak's own kit (owner 2026-11-09; .work/design7/measure/homes-final.md)
   /**
    * ADR-0009 (draft): a passive's flight effect (`PassiveSkill.flight`) enters the race as the
@@ -560,8 +525,13 @@ export const BAND_CEILING = 3;
  * the 3rd rival at 500 m against 0.57 s in v2, coin share 35 %). Now the keep pays the flight,
  * priced at her dirty-air hold so the shared ceiling does not force more falls.
  */
+/*
+ * ADR-0011 §2: the knobs the prototype measured and left off in every step (stage 2's canyon
+ * ceiling and ground grip, the hover draft only on the ground, the Planeo's terms on the Punta,
+ * the dive room and the last feature of the final) were removed with their code; the race did not
+ * move a byte (digest of 1656 races and INV-5..INV-15).
+ */
 export const FLIGHT: FlightConstants = {
-  stage: 1,
   // F1 (round 5): the pack skims the Pasillos at the low band (no Abanico until stage 2)
   planned: [false, true, true, true],
   climbE: 8,
@@ -582,11 +552,6 @@ export const FLIGHT: FlightConstants = {
   leadJoinM: 60,
   packFanDiv: 0,
   packFanMinM: 80,
-  canyonCeiling: false,
-  canyonExitMinM: 150,
-  canyonDiveBeforeM: 20,
-  groundGripPm: 1_000,
-  draftGroundOnly: false,
   keepFlown: true,
   airCruise: true,
   diveSurge: true,
@@ -715,8 +680,6 @@ export const FLIGHT: FlightConstants = {
   highCruisePm: 3,
   skimEscapeTicks: 90,
   packJumps: true,
-  leadGlidePos: false,
-  leadStartAccelPm: 1000,
   // stamina pays effort and the four distances (owner 2026-11-09, stamina-final.md)
   hpTakeoff: 30,
   hpSkimTakeoff: 20,
@@ -753,13 +716,11 @@ export const FLIGHT: FlightConstants = {
   // her build, and a dive is a descent for the descent skills. Measured and left off: a dive room
   // for the tracks with no feature in the final (closerRoomM: the Larga's Remate at 300 rose to
   // 45 %) and the Remate diving from the last feature of the final (closerLastFeature: 0 effect)
-  closerRoomM: 0,
   closerRoomMinM: 300,
   diveCourRel: true,
   leadStartJumps: true,
   hpPlanOwn: true,
   diveDescent: true,
-  closerLastFeature: false,
   // homes per track (owner 2026-11-09, homes-final.md): Garra fija dives harder from the ceiling
   skillFlight: true,
   // trim (owner 2026-11-09, trim-final.md): Garra fija by distance, less in the Sprint and the Milla

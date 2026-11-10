@@ -96,7 +96,6 @@ import {
   PH_MIDDLE,
   PH_START,
   POS_LEAD,
-  SEG_CANYON,
   SEG_DESCENT,
   SEG_FLAT,
   SEG_JUMP,
@@ -546,11 +545,7 @@ function runnerTick(c: Ctx, i: number): boolean {
   const airBand = airborne && F?.airDraftBand === true;
   const drafting = airBand
     ? S.dirty[i] === 1 && S.flPhase[i] === 2 && !exhausted
-    : style === STYLE_HOVER &&
-      ph === PH_MIDDLE &&
-      pack &&
-      !exhausted &&
-      !(airborne && F?.draftGroundOnly);
+    : style === STYLE_HOVER && ph === PH_MIDDLE && pack && !exhausted;
   if (drafting) {
     if (!airBand) tgt = Math.floor((tgt * R.style.hoverDraftPm) / 1000);
     else S.towTicks[i] = (S.towTicks[i] ?? 0) + 1;
@@ -648,10 +643,7 @@ function runnerTick(c: Ctx, i: number): boolean {
 
   // B10. hp drain at the moved speed (6)
   const q =
-    (ph === PH_FINAL ? DK_FINAL : 0) +
-    ((F?.leadGlidePos ? T.position[i] === POS_LEAD : style === STYLE_GLIDE) && S.ahead[i] === 0
-      ? DK_LEAD
-      : 0);
+    (ph === PH_FINAL ? DK_FINAL : 0) + (style === STYLE_GLIDE && S.ahead[i] === 0 ? DK_LEAD : 0);
   const dK = T.dK[i * 4 + q] ?? 0;
   const drain0 =
     F !== null && (S.alt[i] ?? 0) > 0
@@ -1570,12 +1562,10 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
   }
   if (run === 0) return false;
   const alt = S.alt[i] ?? 0;
-  // she goes over only if the climb ends before her planned line does; R9 (stage 2): nobody
-  // climbs over inside a canyon with a ceiling, nor on a line that still reaches one
+  // she goes over only if the climb ends before her planned line does
   const style = T.style[i] ?? 0;
   const pos = S.pos[i] ?? 0;
   const dist = Math.max(0, (T.flB[x] ?? 0) - pos);
-  const roof = F.canyonCeiling && lineMeetsCanyon(c, pos, T.flB[x] ?? 0);
   if (
     F.escapeTicks > 0 &&
     run >=
@@ -1585,7 +1575,6 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
     S.escaped[i] === 0 &&
     !still(c, F, i) &&
     alt < Math.min(BAND_CEILING, wingOf(F, style).maxBand) &&
-    !roof &&
     dist > climbTicksOf(F, style, false) * (S.vOut[i] ?? 0)
   ) {
     S.escaped[i] = 1;
@@ -1629,15 +1618,6 @@ function lineFight(c: Ctx, i: number, F: FlightConstants, x: number): boolean {
     hpHit(c, i, F.hpKnock, "fight");
     return true;
   }
-  return false;
-}
-
-/** R9: a canyon segment overlaps [a, b] (pu). */
-function lineMeetsCanyon(c: Ctx, a: number, b: number): boolean {
-  const G = c.G;
-  for (let s = 0; s < G.S; s++)
-    if (G.segType[s] === SEG_CANYON && (G.segStart[s] ?? 0) <= b && (G.segEnd[s] ?? 0) > a)
-      return true;
   return false;
 }
 

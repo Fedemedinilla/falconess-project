@@ -44,13 +44,11 @@ import {
   engineUnits,
   MODE_OFF,
   PH_FINAL,
-  POS_LEAD,
   POS_PACK,
   POS_STALK,
   positionCode,
   ruleCode,
   SEG_CLIMB,
-  SEG_CURVES,
   SEG_DESCENT,
   SEG_JUMP,
   SEG_WATER,
@@ -1031,14 +1029,6 @@ export function buildTables(
     const vA = agilityCruiseVu(R, VBASE, agility);
     T.vA[i] = vA;
     for (let s = 0; s < G.S; s++) T.f[is(i, s)] = segmentFactor(R, G, s, agility, tr, terms);
-    if (F !== null && F.groundGripPm !== 1000 && st === STYLE_GROUND)
-      for (let s = 0; s < G.S; s++) {
-        // v3 draft R10: ground wings pay groundGripPm of the curves, water and climb penalty
-        const type = G.segType[s] ?? 0;
-        const f = T.f[is(i, s)] ?? 1000;
-        if (f < 1000 && (type === SEG_CURVES || type === SEG_WATER || type === SEG_CLIMB))
-          T.f[is(i, s)] = 1000 - floorDiv((1000 - f) * F.groundGripPm, 1000);
-      }
     // distance letters (2026-11-09): her letter for this course's distance (0 = A or none)
     const dPm = F !== null ? distanceLetterPm(F, e.distanceAptitude) : 0;
     const dist = F !== null ? distanceCode(F, G.lengthMm) : 0;
@@ -1082,13 +1072,7 @@ export function buildTables(
         const a = accelVu(R, technique, pwc, f, terms);
         T.acc[ibs(i, b, s)] = a;
         T.accStart[ibs(i, b, s)] =
-          F !== null && F.leadGlidePos
-            ? pc === POS_LEAD
-              ? floorDiv(a * F.leadStartAccelPm, 1000)
-              : a
-            : st === STYLE_GLIDE
-              ? floorDiv(a * R.style.glideStartAccelPm, 1000)
-              : a;
+          st === STYLE_GLIDE ? floorDiv(a * R.style.glideStartAccelPm, 1000) : a;
       }
       const B = boostThrustVu(KBOOST, pwb);
       const Bp = pulseThrustVu(R, KBOOST, pwb);

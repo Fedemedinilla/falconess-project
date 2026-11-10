@@ -240,7 +240,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
     expect(run(rulesetV3With(L5), 1200)).toBe(7440);
   });
 
-  it("round 4: the hover draft reaches a flight only with draftGroundOnly off; round 5 tows by band (F6)", () => {
+  it("round 4: the hover draft reaches a flight; round 5 tows by band (F6)", () => {
     const drafting = RACE_FRAME_FLAGS.drafting;
     const rows = (R: typeof RULESET_V3) => {
       const log = simulateRace(R, defaultField(), content.getCourse("canyon"), "draft-air");
@@ -250,10 +250,7 @@ describe("ruleset v3 draft: flight (design7 stage 1)", () => {
         .flatMap((r) => r.flags.filter((f) => (f & FLAGS_ALT) !== 0 && (f & drafting) !== 0));
     };
     const r4 = rulesetV3With(FLIGHT_OFF_R5);
-    expect(RULESET_V3.flight.draftGroundOnly).toBe(false);
     expect(rows(r4).length).toBeGreaterThan(0);
-    expect(rows(rulesetV3With({ ...FLIGHT_OFF_R5, draftGroundOnly: true }))).toHaveLength(0);
-    expect(rows(rulesetV3With({ ...FLIGHT_OFF_1_2, draftGroundOnly: true }))).toHaveLength(0);
     // F6: in the air the tow reads only her band and the metres to the one ahead (step A2): every
     // tick she is towed in the air, at the end of the previous tick another runner was ahead of
     // her in her band within the wake, never a runner on the ground
