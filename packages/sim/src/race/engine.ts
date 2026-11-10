@@ -178,6 +178,11 @@ type Ctx = {
   drainV: Float64Array;
   drainK: Float64Array;
   drainOut: Float64Array;
+  /**
+   * PERF-2: the last air snapshot found nobody holding a band, so every lane's dirt, line
+   * neighbour and `airDirty` run are idle (only the snapshot writes them).
+   */
+  airQuiet: boolean;
   /** PERF-2: the air cruise target's last inputs and value per lane (NaN = none yet). */
   cruiseCell: Float64Array;
   cruiseAlt: Float64Array;
@@ -335,6 +340,7 @@ function runRace(
     drainV: new Float64Array(MAX_LANES).fill(Number.NaN),
     drainK: new Float64Array(MAX_LANES).fill(Number.NaN),
     drainOut: new Float64Array(MAX_LANES),
+    airQuiet: false,
     cruiseCell: new Float64Array(MAX_LANES).fill(Number.NaN),
     cruiseAlt: new Float64Array(MAX_LANES),
     cruiseAir: new Float64Array(MAX_LANES),
@@ -1224,6 +1230,9 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
     }
   }
   if (lim <= 0) return;
+  // nobody holds a band now nor did at the last snapshot: the loop below would rewrite idle values
+  if (holders === 0 && c.airQuiet) return;
+  c.airQuiet = holders === 0;
   const highReach = F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
   const draftBand = F.airDraftBand;
   const dirtyA = S.dirty;
