@@ -25,6 +25,8 @@ const PATHS = {
   x: "M6 6l12 12M18 6 6 18",
   play: "M7 4l13 8-13 8z",
   skip: "M5 5l9 7-9 7zM17 5v14",
+  speaker: "M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11",
+  mute: "M4 9h4l5-4v14l-5-4H4zM16 9l5 6M21 9l-5 6",
   // the stats of the track card
   flame: "M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 3-6 1 2 2 3 3 3 0-3-1-5 0-8z",
   eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9.5a2.5 2.5 0 1 0 .01 0",

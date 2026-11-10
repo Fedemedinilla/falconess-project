@@ -1,5 +1,5 @@
-import type { Position, TrainingKind, WorkshopOp } from "@falconess/schema";
-import { useEffect, useRef, useState } from "react";
+import type { Position, SeasonState, TrainingKind, WorkshopOp } from "@falconess/schema";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
@@ -18,10 +18,20 @@ import { EndScreen } from "./EndScreen";
 import { Glyph } from "./Glyph";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
-import { trainingCards, vigorView, weekMenu } from "./model";
+import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
 import { accentStyle, Hud } from "./Parts";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
+import {
+  getSoundStyle,
+  nextSoundStyle,
+  playNav,
+  playSound,
+  queueTap,
+  type SoundCue,
+  type SoundStyle,
+  setSoundStyle,
+} from "./sfx";
 import { TrainScreen } from "./TrainScreen";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
 
@@ -67,6 +77,24 @@ export function MobileGame() {
       else root.setAttribute("data-theme", before);
     };
   }, []);
+
+  // every button taps (a screen's own cue replaces the tap of the same click)
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.target instanceof Element && e.target.closest("button")) queueTap();
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
+
+  // a change of screen whooshes (in the click's own commit, so it replaces its tap)
+  const screenName = run ? view.screen : "select";
+  const firstScreen = useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of screen only
+  useLayoutEffect(() => {
+    if (firstScreen.current) firstScreen.current = false;
+    else playNav();
+  }, [screenName]);
 
   // a new run (or a load, or an undo in the test view) starts on the menu
   const firstInput = run?.inputs[0];
@@ -123,6 +151,7 @@ export function MobileGame() {
   const commit = (input: WeekActionInput) => {
     const raceTurn = menu.raceWeek ? state.turn : undefined;
     if (!game.act(withPosition(input, chosen), inputs)) return;
+    playSound(trainingCue(input, state.turn, game.getSnapshot().lastStep?.after, cards));
     setView(raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: false } : MENU);
   };
   /** A week's action: on a race week the pre-race card comes first. */
@@ -281,6 +310,20 @@ export function MobileGame() {
   );
 }
 
+/** A week's sound: a training's result (a crew there makes it a boost), else a confirm. */
+function trainingCue(
+  input: WeekActionInput,
+  turn: number,
+  after: SeasonState | undefined,
+  cards: readonly TrainingCard[],
+): SoundCue {
+  const card = cards.find((c) => c.kind === input.kind);
+  if (!card) return "confirm";
+  const entry = after?.log.find((e) => e.turn === turn && e.input?.kind === input.kind);
+  if (!entry?.notes.includes("log.train.ok")) return entry ? "fail" : "confirm";
+  return card.boosted ? "boost" : "success";
+}
+
 /** The «Menú» sheet: the test view, a new season. */
 function MobileMenu({
   open,
@@ -295,6 +338,14 @@ function MobileMenu({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [confirm, setConfirm] = useState(false);
+  const [sound, setSound] = useState<SoundStyle>(getSoundStyle);
+  const onSound = () => {
+    const next = nextSoundStyle(sound);
+    setSoundStyle(next);
+    setSound(next);
+    // the new style says itself: its success
+    playSound("success");
+  };
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -319,6 +370,17 @@ function MobileMenu({
         <button type="button" className={s.btn} id="m-pruebas" onClick={onTests}>
           <Glyph name="screen" size={20} />
           {ui("ui.m.tests")}
+        </button>
+        <button
+          type="button"
+          className={s.btn}
+          id="m-sonido"
+          data-style={sound}
+          aria-label={ui("ui.m.sound.label", { style: ui(`ui.m.sound.${sound}`) })}
+          onClick={onSound}
+        >
+          <Glyph name={sound === "off" ? "mute" : "speaker"} size={20} />
+          {ui("ui.m.sound", { style: ui(`ui.m.sound.${sound}`) })}
         </button>
         {confirm ? (
           <button type="button" className={cx(s.btn, s.btnMain)} id="m-nueva-si" onClick={onNew}>

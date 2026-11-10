@@ -422,3 +422,49 @@ test("first person: a finger turns her head sideways, up to her neck's reach, an
   // the visor stays put over the view
   await expect(page.locator("#m-carrera-visor")).toBeVisible();
 });
+
+test("sounds: a tap, a change of screen, a training's result; the «Menú» switch cycles the styles", async ({
+  page,
+}) => {
+  // the tests cannot hear: the page names its last cue on <html data-sfx="count:cue">
+  const cue = async () =>
+    ((await page.locator("html").getAttribute("data-sfx")) ?? "").split(":")[1];
+  await startMobile(page);
+  await page.click("#m-entrenar");
+  await expect.poll(cue).toBe("nav");
+  await page.click("#m-entrenar-risk-flight");
+  await expect.poll(cue).toBe("tap");
+  await page.dblclick("#m-entrenar-agility");
+  await expect.poll(cue).toMatch(/^(success|boost|fail)$/);
+  const result = await page.locator("html").getAttribute("data-sfx");
+  // the result is not followed by the whoosh of going back to the menu
+  await page.waitForTimeout(300);
+  expect(await page.locator("html").getAttribute("data-sfx")).toBe(result);
+  await settle(page);
+
+  // the switch: Propulsor → Visor → apagado → Hangar → Propulsor, remembered on reload
+  await page.click("#m-menu");
+  const sw = page.locator("#m-sonido");
+  await expect(sw).toHaveAttribute("data-style", "propulsor");
+  for (const style of ["visor", "off", "hangar"]) {
+    await sw.click();
+    await expect(sw).toHaveAttribute("data-style", style);
+    await expect(sw).toContainText(t(`ui.m.sound.${style}`));
+  }
+  await page.reload();
+  await page.click("#m-continuar");
+  await settle(page);
+  await page.click("#m-menu");
+  await expect(page.locator("#m-sonido")).toHaveAttribute("data-style", "hangar");
+
+  // apagado plays nothing
+  await page.locator("#m-sonido").click();
+  await page.locator("#m-sonido").click();
+  await page.locator("#m-sonido").click();
+  await expect(page.locator("#m-sonido")).toHaveAttribute("data-style", "off");
+  const before = await page.locator("html").getAttribute("data-sfx");
+  await page.click("#m-menu-cerrar");
+  await page.click("#m-entrenar");
+  await page.waitForTimeout(200);
+  expect(await page.locator("html").getAttribute("data-sfx")).toBe(before);
+});
