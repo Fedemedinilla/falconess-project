@@ -136,3 +136,28 @@ test("in a sandboxed iframe at phone width: no storage, copy falls back, no side
   expect(blocked, "requests outside Google Fonts").toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test("the phone game is the default view: art inlined, a week trained, only fonts reach the network", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors = watchErrors(page, { allowFontFailures: true });
+  const blocked = await serve(context);
+  await page.goto(ORIGIN);
+  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
+  // the chibis are inlined: every image has loaded
+  const images = page.locator("img");
+  await expect(images).toHaveCount(3);
+  expect(
+    await images.evaluateAll((els) => els.every((el) => (el as HTMLImageElement).naturalWidth > 0)),
+  ).toBe(true);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-agility");
+  await closeWeek(page);
+  await noSideScroll(page);
+  expect(blocked, "requests outside Google Fonts").toEqual([]);
+  expect(errors).toEqual([]);
+});

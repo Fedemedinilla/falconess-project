@@ -1,0 +1,206 @@
+import { expect, type Page } from "@playwright/test";
+import { t, test } from "./fixtures";
+
+/**
+ * The phone game (#juego, the default view): the approved prototype wired to the real season.
+ * Seasons start on a random seed, so the tests play until they reach the scene they check (a race
+ * week, the end), like the v2 tests do.
+ */
+
+test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+/** The risk color of a failure chance, as the owner set it (per-mille). */
+function toneOf(failPm: number): string {
+  if (failPm <= 0) return "zero";
+  if (failPm < 200) return "low";
+  if (failPm < 400) return "mid";
+  return "high";
+}
+
+const TONE_BG: Readonly<Record<string, string>> = {
+  zero: "rgb(191, 230, 255)",
+  low: "rgb(30, 123, 70)",
+  mid: "rgb(242, 194, 48)",
+  high: "rgb(179, 38, 30)",
+};
+
+async function startMobile(page: Page, falconessId = "peregrina"): Promise<void> {
+  await page.goto("./");
+  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
+  await expect(page.locator("#m-empezar")).toBeDisabled();
+  await page.click(`#m-elegir-${falconessId}`);
+  await expect(page.locator(`#m-elegir-${falconessId}`)).toHaveAttribute("aria-pressed", "true");
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-semana")).toHaveAttribute(
+    "aria-label",
+    t("ui.m.week.aria", { turn: 1, turns: 48, left: 47 }),
+  );
+}
+
+async function week(page: Page): Promise<number> {
+  const label = (await page.locator("#m-semana").getAttribute("aria-label")) ?? "";
+  return Number(/\d+/.exec(label)?.[0] ?? "0");
+}
+
+/** Close «Lo que pasó» and answer any event, until the menu (or the season's end) is free. */
+async function settle(page: Page): Promise<void> {
+  const weekOpen = page.locator("#semana-dialogo[open]");
+  const event = page.locator("#evento-dialogo[open]");
+  for (let i = 0; i < 40; i++) {
+    if ((await weekOpen.count()) > 0) {
+      await page.click("#semana-continuar");
+      await expect(weekOpen).toHaveCount(0);
+      continue;
+    }
+    if ((await event.count()) > 0) {
+      await page.click("#evento-opcion-0");
+      continue;
+    }
+    if ((await page.locator("#m-fin").count()) > 0) return;
+    const menu = page.locator("#m-entrenar");
+    if ((await menu.count()) > 0 && (await menu.isEnabled())) {
+      // the dialog opens right after the input: give it a moment before calling the menu free
+      await page.waitForTimeout(100);
+      if ((await weekOpen.count()) === 0 && (await event.count()) === 0) return;
+      continue;
+    }
+    await page.waitForTimeout(100);
+  }
+  throw new Error("the week did not settle");
+}
+
+/** The week's race, once its action ran: the flight view, «Saltar», the result, «Continuar». */
+async function runRace(page: Page): Promise<void> {
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await page.click("#m-saltar");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  await page.click("#m-carrera-seguir");
+}
+
+test("pick a Falconess, train with a double tap, the failure badge in its risk color", async ({
+  page,
+}) => {
+  await startMobile(page);
+  // the menu: her stats, points, mood and the vigor bar
+  await expect(page.locator("#m-stats [data-stat]")).toHaveCount(5);
+  await expect(page.locator("#m-vigor")).toHaveAttribute("data-vigor", "100");
+  await page.click("#m-entrenar");
+
+  // a tap chooses: the badge hangs on the chosen button, nothing else moves
+  const risk = page.locator("#m-entrenar-risk-flight");
+  const box = await risk.boundingBox();
+  await risk.click();
+  await expect(risk).toHaveAttribute("aria-pressed", "true");
+  expect(await risk.boundingBox()).toEqual(box);
+  const failPm = Number(await risk.getAttribute("data-fail"));
+  const badge = page.locator("#m-fallo");
+  await expect(badge).toHaveText(t("ui.m.fail", { n: Math.max(1, Math.round(failPm / 10)) }));
+  await expect(badge).toHaveAttribute("data-risk", toneOf(failPm));
+  await expect(badge).toHaveCSS("background-color", TONE_BG[toneOf(failPm)] ?? "");
+  // the vigor bar previews the cost
+  await expect(page.locator("#m-vigor-costo")).toBeVisible();
+
+  // a fast double tap on another trains it
+  await page.dblclick("#m-entrenar-agility");
+  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
+  await page.click("#semana-continuar");
+  await settle(page);
+  expect(await week(page)).toBe(2);
+});
+
+test("a race week: pre-race card, the flight view, Saltar and the result", async ({ page }) => {
+  test.setTimeout(120_000);
+  await startMobile(page, "peregrina");
+  let k = 0;
+  while ((await week(page)) < 12) {
+    if (k++ % 2) await page.click("#m-descansar");
+    else {
+      await page.click("#m-entrenar");
+      await page.dblclick("#m-entrenar-agility");
+    }
+    await settle(page);
+  }
+  // the race button opens the card: positions, her letters, distance and passive
+  await page.click("#m-carrera");
+  await expect(page.locator("#m-precarrera-distancia")).toBeVisible();
+  await expect(page.locator("#m-precarrera-pasiva")).toBeVisible();
+  await page.click('label[for="m-posicion-lead"]');
+  await page.click("#m-correr");
+  // the week's action, then the card again with «Correr»
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-technique");
+  await expect(page.locator("#m-precarrera-accion")).toBeVisible();
+  await expect(page.locator("#m-posicion-lead")).toBeChecked();
+  await page.click("#m-correr");
+  await runRace(page);
+  // «Lo que pasó» says the race and the position she ran in
+  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
+  await expect(page.locator("#semana-posicion")).toHaveAttribute("data-position", "lead");
+  await page.click("#semana-continuar");
+  await settle(page);
+});
+
+test("the workshop: wings and skills, as one order that takes the week", async ({ page }) => {
+  await startMobile(page, "cernicala");
+  await page.click("#m-taller");
+  await expect(page.locator("#m-taller-wings")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#m-taller-confirmar")).toBeDisabled();
+  const otherId = await page
+    .locator('[id^="m-ala-"][aria-pressed="false"]')
+    .first()
+    .getAttribute("id");
+  const other = page.locator(`#${otherId}`);
+  await other.click();
+  await expect(other).toHaveAttribute("aria-pressed", "true");
+  await page.click("#m-taller-skills");
+  await expect(page.locator('[id^="m-habilidad-"]').first()).toBeVisible();
+  await page.click("#m-taller-confirmar");
+  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
+  await page.click("#semana-continuar");
+  await settle(page);
+  expect(await week(page)).toBe(2);
+});
+
+test("a short season to its end, then a new one; the test view is one tap away", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await startMobile(page, "caracara");
+  // resting every week: the goal races come (and one ends the season, or all four run)
+  for (let i = 0; i < 80 && (await page.locator("#m-fin").count()) === 0; i++) {
+    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    await page.click("#m-descansar");
+    if (raceWeek) {
+      await page.click("#m-correr");
+      await runRace(page);
+    }
+    await settle(page);
+  }
+  await expect(page.locator("#m-fin")).toBeVisible();
+  await expect(page.locator("#m-fin-nota")).toContainText(/[A-Z]/);
+  await page.click("#m-fin-nueva");
+  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
+  await expect(page.locator("#m-continuar")).toBeVisible();
+
+  await page.click("#m-pruebas-inicio");
+  await expect(page).toHaveURL(/#inicio$/);
+  await page.click("#inicio-juego");
+  await expect(page).toHaveURL(/#juego$/);
+});
+
+test("at 360 px no horizontal scroll on the menu and the training screen", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await startMobile(page);
+  const side = () =>
+    page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+  expect(await side()).toBeLessThanOrEqual(0);
+  await page.click("#m-entrenar");
+  expect(await side()).toBeLessThanOrEqual(0);
+  // 44 px targets
+  for (const id of ["#m-entrenar-agility", "#m-volver", "#m-entrenar-confirmar"]) {
+    const b = await page.locator(id).boundingBox();
+    expect(b?.height ?? 0, id).toBeGreaterThanOrEqual(44);
+  }
+});
