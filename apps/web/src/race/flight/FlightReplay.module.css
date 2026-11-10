@@ -38,6 +38,16 @@
   touch-action: manipulation;
 }
 
+/* first person: a sideways drag turns her head, a vertical one still scrolls the page */
+.canvas.look {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.canvas.look:active {
+  cursor: grabbing;
+}
+
 .hudtop {
   position: absolute;
   inset: 0 0 auto;

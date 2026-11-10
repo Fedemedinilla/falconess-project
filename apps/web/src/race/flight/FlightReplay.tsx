@@ -6,12 +6,18 @@ import {
   type FlightMoment,
   type FlightOverlay,
   type FlightTrack,
+  FPV_LOOK_REST,
+  type FpvLookState,
   flightAhead,
   flightModel,
   flightMoments,
   flightOverlays,
   fpvVisor,
   hpAt,
+  lookMove,
+  lookPress,
+  lookRelease,
+  lookTick,
   type MomentCat,
   orderAt,
   FLIGHT_PHASE as PH,
@@ -377,6 +383,10 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<FlightStage | null>(null);
   const fpvRef = useRef<FirstPersonStage | null>(null);
+  /** Where the player turned her head in first person (dragging on the view), and whether the
+   * last press was a drag (then it is not a tap on a rival). */
+  const lookRef = useRef<FpvLookState>(FPV_LOOK_REST);
+  const dragRef = useRef({ id: -1, x: 0, y: 0, moved: false });
   const live = useRef({
     row: 0,
     playing: false,
@@ -472,8 +482,16 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
         shake: L.shake,
         shakeAmp: L.shakeAmp,
       };
-      if (L.cam === "fpv") fpv.draw({ focus: st.focus, row: L.row, now: L.now, reduced }, dt);
-      else stage.draw(state, dt);
+      if (L.cam === "fpv") {
+        const lk = lookTick(lookRef.current, performance.now(), dt, reduced);
+        lookRef.current = lk;
+        const yaw = Math.round(lk.yaw);
+        if (cv.dataset.yaw !== String(yaw)) cv.dataset.yaw = String(yaw);
+        fpv.draw(
+          { focus: st.focus, row: L.row, now: L.now, reduced, yaw: lk.yaw, lookPitch: lk.pitch },
+          dt,
+        );
+      } else stage.draw(state, dt);
       // the HUD and the slider follow at most ten times a second
       if (L.row !== shown && (!L.playing || now - shownAt >= 100)) {
         shown = L.row;
@@ -574,7 +592,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
       <div className={f.stage}>
         <canvas
           ref={canvasRef}
-          className={f.canvas}
+          className={cx(f.canvas, cam === "fpv" && f.look)}
           id={`${idPrefix}-vuelo-lienzo`}
           role="img"
           aria-label={ui("ui.flight.stage.now", {
@@ -583,7 +601,41 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
             place,
             band: bandName(rowOf(her.band, row)),
           })}
+          data-yaw="0"
+          onPointerDown={(e) => {
+            if (cam !== "fpv" || (e.pointerType === "mouse" && e.button !== 0)) return;
+            dragRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+            lookRef.current = lookPress(lookRef.current, e.clientX, e.clientY, performance.now());
+          }}
+          onPointerMove={(e) => {
+            const d = dragRef.current;
+            if (cam !== "fpv" || d.id !== e.pointerId || lookRef.current.drag === null) return;
+            if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) d.moved = true;
+            lookRef.current = lookMove(
+              lookRef.current,
+              e.clientX,
+              e.clientY,
+              performance.now(),
+              e.currentTarget.getBoundingClientRect().width,
+            );
+          }}
+          onPointerUp={(e) => {
+            if (dragRef.current.id !== e.pointerId) return;
+            dragRef.current.id = -1;
+            lookRef.current = lookRelease(lookRef.current, performance.now(), reduced);
+          }}
+          onPointerCancel={(e) => {
+            // the page took the gesture (a vertical scroll): her head stays where it was
+            if (dragRef.current.id !== e.pointerId) return;
+            dragRef.current.id = -1;
+            lookRef.current = lookRelease(lookRef.current, performance.now(), true);
+          }}
           onClick={(e) => {
+            if (dragRef.current.moved) {
+              dragRef.current.moved = false;
+              return;
+            }
             const r = e.currentTarget.getBoundingClientRect();
             const px = e.clientX - r.left;
             const py = e.clientY - r.top;
@@ -719,6 +771,9 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
             onClick={() => {
               setCam(c);
               live.current.cam = c;
+              lookRef.current = FPV_LOOK_REST;
+              const cv = canvasRef.current;
+              if (cv) cv.dataset.yaw = "0";
             }}
           >
             {ui(`ui.flight.cam.${c}`)}

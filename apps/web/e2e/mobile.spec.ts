@@ -301,3 +301,65 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
   await page.click("#m-saltar");
   await expect(page.locator("#m-resultado")).toBeVisible();
 });
+
+/** A finger drag across the page (CDP touch events): from (x, y) by (dx, dy), in twelve moves. */
+async function fingerDrag(page: Page, x: number, y: number, dx: number, dy: number): Promise<void> {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+  for (let i = 1; i <= 12; i++)
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: x + (dx * i) / 12, y: y + (dy * i) / 12 }],
+    });
+  // the finger rests before it lifts: no flick
+  await page.waitForTimeout(150);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await cdp.detach();
+}
+
+test("first person: a finger turns her head sideways, up to her neck's reach, and it comes back alone", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  // a fake clock (flowing in real time) lets the test skip the idle seconds
+  await page.clock.install();
+  await startMobile(page, "peregrina");
+  while ((await page.locator("#m-carrera").count()) === 0) {
+    await page.click("#m-descansar");
+    await settle(page);
+  }
+  await page.click("#m-carrera");
+  await page.click("#m-volver");
+  await page.click("#m-descansar");
+  await page.click("#m-correr");
+  await page.click("#m-carrera-vista-fpv");
+  await page.click("#m-carrera-vuelo-salida");
+  const cv = page.locator("#m-carrera-vuelo-lienzo");
+  await expect(cv).toHaveAttribute("data-yaw", "0");
+  await cv.scrollIntoViewIfNeeded();
+  const box = await cv.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  const yaw = async () => Number(await cv.getAttribute("data-yaw"));
+  const cy = box.y + box.height * 0.5;
+  // a drag to the left turns her head to the right; the page does not scroll sideways
+  const scrollY = await page.evaluate(() => window.scrollY);
+  await fingerDrag(page, box.x + box.width * 0.7, cy, -120, 4);
+  await expect.poll(yaw).toBeGreaterThan(35);
+  const right = await yaw();
+  expect(right).toBeLessThan(80);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  // a long drag the other way stops at her neck's reach, a little behind her shoulder
+  await fingerDrag(page, box.x + box.width * 0.1, cy, box.width * 0.85, 0);
+  await fingerDrag(page, box.x + box.width * 0.1, cy, box.width * 0.85, 0);
+  await expect.poll(yaw).toBe(-110);
+  // a few seconds untouched: still turned; past the idle time, her eyes ease back to the track
+  await page.clock.fastForward(3000);
+  await page.waitForTimeout(300);
+  expect(await yaw()).toBe(-110);
+  await page.clock.fastForward(2500);
+  await expect.poll(yaw, { timeout: 5000 }).toBeGreaterThan(-110);
+  await expect.poll(yaw, { timeout: 5000 }).toBe(0);
+  // the visor stays put over the view
+  await expect(page.locator("#m-carrera-visor")).toBeVisible();
+});

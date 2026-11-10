@@ -10,6 +10,7 @@
  * keeps the picture and drops the jolt, the field-of-view kick and the moving speed lines.
  */
 import {
+  clipNear,
   curvatureAt,
   type FlightModel,
   FPV_BAND_M,
@@ -38,6 +39,12 @@ const FONT = (w: number, s: number) =>
 const FAR_M = 260;
 const NEAR_M = 0.8;
 const SLICES = 120;
+/** How far behind she sees when she turns her head (m), and the near plane of her eyes (m). */
+const BACK_M = 90;
+const EYE_NEAR = 0.3;
+/** The verge reaches this far to each side of the track (m): the plain when she looks aside. */
+const VERGE_M = 220;
+const DEG = Math.PI / 180;
 /** Field of view (degrees) at rest and its kick in a dive. */
 const FOV = 64;
 const FOV_KICK = 26;
@@ -66,9 +73,16 @@ export type FirstPersonState = {
   /** Wall seconds, for decoration only. */
   now: number;
   reduced: boolean;
+  /** Where the player turned her head, degrees (yaw + right, pitch + up); 0 looks down the track. */
+  yaw?: number;
+  lookPitch?: number;
 };
 
-type Thing = { d: number; draw: () => void };
+/** Something standing on the track: its distance from her eyes (the drawing order) and where. */
+type Thing = { k: number; d: number; lat: number; draw: () => void };
+/** A strip of ground between two depths (m from her, negative behind), drawn far to near. */
+type Strip = { a: number; b: number; key: number };
+type Pt = { x: number; y: number; s: number; z: number };
 
 export class FirstPersonStage {
   readonly #cv: HTMLCanvasElement;
@@ -85,13 +99,17 @@ export class FirstPersonStage {
   #DPR = 1;
   #kick = 0;
   #pitch = 0;
-  /** Per frame: lateral centre of the track at every metre ahead, and the slices. */
+  /** Per frame: lateral centre of the track at every metre ahead and behind. */
   readonly #xc = new Float32Array(FAR_M + 2);
-  readonly #sd = new Float32Array(SLICES);
-  readonly #sx = new Float32Array(SLICES);
-  readonly #sy = new Float32Array(SLICES);
-  readonly #sk = new Float32Array(SLICES);
-  readonly #clip = new Float32Array(SLICES);
+  readonly #xb = new Float32Array(BACK_M + 2);
+  /** The ground's strips, ahead and behind, the farthest first. */
+  readonly #strips: Strip[];
+  /** Her head's turn: cos and sin of the yaw, the yaw in radians. */
+  #cy = 1;
+  #syw = 0;
+  #yaw = 0;
+  /** How far lifting her eyes lowers the world (px). */
+  #lookDrop = 0;
   #f = 300;
   #hy = 200;
   #camY = 0;
@@ -116,6 +134,17 @@ export class FirstPersonStage {
       h += curvatureAt(log.geometry, m - 0.5);
       this.#heading[m] = h;
     }
+    const r = (FAR_M / NEAR_M) ** (1 / (SLICES - 1));
+    const depths = [0];
+    for (let d = NEAR_M; d <= FAR_M * 1.0001; d *= r) depths.push(d);
+    const strips: Strip[] = [];
+    for (let i = 1; i < depths.length; i++) {
+      const a = depths[i - 1] ?? 0;
+      const b = depths[i] ?? 0;
+      strips.push({ a, b, key: b });
+      if (b <= BACK_M) strips.push({ a: -b, b: -a, key: b + 1e-6 });
+    }
+    this.#strips = strips.sort((x, y) => y.key - x.key);
     this.layout();
   }
 
@@ -162,51 +191,75 @@ export class FirstPersonStage {
     return 0;
   }
   #xcAt(d: number): number {
-    const i = clamp(d, 0, FAR_M);
+    const arr = d < 0 ? this.#xb : this.#xc;
+    const top = d < 0 ? BACK_M : FAR_M;
+    const i = clamp(Math.abs(d), 0, top);
     const k = Math.floor(i);
-    const a = this.#xc[k] ?? 0;
-    const b = this.#xc[Math.min(FAR_M + 1, k + 1)] ?? a;
+    const a = arr[k] ?? 0;
+    const b = arr[Math.min(top + 1, k + 1)] ?? a;
     return a + (b - a) * (i - k);
   }
-  /** Screen point of (d ahead, lateral, height over the ground there); scale in px per m. */
-  #P(d: number, lat: number, up: number): { x: number; y: number; s: number } {
-    const s = this.#f / Math.max(NEAR_M, d);
-    return {
-      x: this.#W / 2 + (this.#xcAt(d) + lat - this.#camX) * s,
-      y: this.#hy + (this.#camY - (this.#groundAt(this.#pos + d) + up)) * s,
-      s,
-    };
+  /** Her eyes' frame of (d along the track, lateral, height over the ground): [x, y, z]. */
+  #E(d: number, lat: number, up: number): [number, number, number] {
+    const X = this.#xcAt(d) + lat - this.#camX;
+    const Y = this.#groundAt(this.#pos + d) + up - this.#camY;
+    return [X * this.#cy - d * this.#syw, Y, X * this.#syw + d * this.#cy];
   }
-  /** The crest's screen line at depth d: what nearer ground hides above it. */
-  #clipAt(d: number): number {
-    let y = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < SLICES && (this.#sd[i] ?? 0) < d - 0.5; i++) y = this.#clip[i] ?? y;
-    return y;
+  /** Screen point of (d ahead, lateral, height over the ground there); scale in px per m, depth. */
+  #P(d: number, lat: number, up: number): Pt {
+    const [x, y, z] = this.#E(d, lat, up);
+    const s = this.#f / Math.max(NEAR_M, z);
+    return { x: this.#W / 2 + x * s, y: this.#hy - y * s, s, z };
+  }
+  /** Fill a polygon of track points [d, lateral, up], cut where it passes behind her eyes. */
+  #poly(pts: readonly (readonly [number, number, number])[]) {
+    const cam = pts.map(([d, l, u]) => this.#E(d, l, u));
+    const cut = clipNear(cam, EYE_NEAR);
+    if (cut.length < 3) return;
+    const c = this.#ctx;
+    const cx = this.#W / 2;
+    c.beginPath();
+    for (let i = 0; i < cut.length; i++) {
+      const q = cut[i];
+      if (q === undefined) continue;
+      const s = this.#f / q[2];
+      const x = cx + q[0] * s;
+      const y = this.#hy - q[1] * s;
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    }
+    c.closePath();
+    c.fill();
+  }
+  /** A flat band across the track between depths a and b, from lateral l0 to l1. */
+  #band(a: number, b: number, l0: number, l1: number) {
+    this.#poly([
+      [a, l0, 0],
+      [a, l1, 0],
+      [b, l1, 0],
+      [b, l0, 0],
+    ]);
+  }
+  /**
+   * The screen line above which a thing at (d, lat) shows: nearer ground (a crest, a Salto's lip)
+   * hides what is under the sight line from her eyes over it; +∞ when nothing hides it.
+   */
+  #crestY(d: number, lat: number): number {
+    if (Math.abs(d) < 4) return Number.POSITIVE_INFINITY;
+    const g = this.#groundAt(this.#pos + d);
+    let need = Number.NEGATIVE_INFINITY;
+    for (let k = 1; k < 20; k++) {
+      const t = k / 20;
+      need = Math.max(need, this.#camY + (this.#groundAt(this.#pos + t * d) - this.#camY) / t);
+    }
+    if (need <= g + 0.05) return Number.POSITIVE_INFINITY;
+    return this.#P(d, lat, need - g).y;
   }
 
   // --- drawing ------------------------------------------------------------------------------------
   #hexA(hex: string, a: number) {
     const n = Number.parseInt(hex.slice(1), 16);
     return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
-  }
-  #quad(
-    ax: number,
-    ay: number,
-    bx: number,
-    by: number,
-    cx: number,
-    cy: number,
-    dx: number,
-    dy: number,
-  ) {
-    const c = this.#ctx;
-    c.beginPath();
-    c.moveTo(ax, ay);
-    c.lineTo(bx, by);
-    c.lineTo(cx, cy);
-    c.lineTo(dx, dy);
-    c.closePath();
-    c.fill();
   }
   #chip(x: number, y: number, text: string, bg: string, fg: string, size: number) {
     const c = this.#ctx;
@@ -235,11 +288,17 @@ export class FirstPersonStage {
     this.#pitch += (cam.pitch - this.#pitch) * (dt < 0 ? 1 : Math.min(1, dt * 8));
     const fov = ((FOV + FOV_KICK * this.#kick) * Math.PI) / 180;
     this.#f = W / 2 / Math.tan(fov / 2);
-    this.#hy = H * 0.42 + this.#pitch * H * 0.14;
+    this.#yaw = (st.yaw ?? 0) * DEG;
+    this.#cy = Math.cos(this.#yaw);
+    this.#syw = Math.sin(this.#yaw);
+    // her eyes lifted (+) or lowered: the horizon goes down or up
+    const look = (st.lookPitch ?? 0) * DEG;
+    this.#lookDrop = Math.tan(look) * this.#f;
+    this.#hy = H * 0.42 + this.#pitch * H * 0.14 + this.#lookDrop;
     this.#pos = cam.posM;
     this.#camX = cam.lateralM;
     this.#camY = groundAt(this.#ground, cam.posM) + cam.eyeM;
-    // the track's centre ahead, bending with the curves (her heading is the track's)
+    // the track's centre ahead and behind, bending with the curves (her heading is the track's)
     let dx = 0;
     let x = 0;
     this.#xc[0] = 0;
@@ -247,6 +306,14 @@ export class FirstPersonStage {
       dx += curvatureAt(this.#geo, cam.posM + d - 0.5);
       x += dx;
       this.#xc[d] = x;
+    }
+    dx = 0;
+    x = 0;
+    this.#xb[0] = 0;
+    for (let d = 1; d <= BACK_M + 1; d++) {
+      dx += curvatureAt(this.#geo, cam.posM - d + 0.5);
+      x += dx;
+      this.#xb[d] = x;
     }
 
     c.setTransform(this.#DPR, 0, 0, this.#DPR, 0, 0);
@@ -263,9 +330,52 @@ export class FirstPersonStage {
     this.#road(st);
     this.#things(st);
     c.restore();
-    if (!RM) this.#speedLines(st, cam.speedFx, cam.phase === PH.dive || cam.phase === PH.surge);
+    // the speed lines stream from ahead: they fade as she looks aside
+    const ahead = Math.max(0, Math.cos(this.#yaw));
+    if (!RM && ahead > 0.25)
+      this.#speedLines(st, cam.speedFx * ahead, cam.phase === PH.dive || cam.phase === PH.surge);
     this.#wings(st, cam.alt, cam.phase);
     this.#vignette(st, cam.phase, cam.alt);
+    this.#compass(st.yaw ?? 0);
+  }
+
+  /** A small arc at the top: where her head points within her neck's reach; gone when ahead. */
+  #compass(yawDeg: number) {
+    const a = clamp((Math.abs(yawDeg) - 3) / 9, 0, 1);
+    if (a <= 0) return;
+    const c = this.#ctx;
+    const cx = this.#W / 2;
+    const cy = 64;
+    const r = 15;
+    const up = -Math.PI / 2;
+    const reach = 110 * DEG;
+    c.save();
+    c.globalAlpha = a;
+    c.fillStyle = "rgba(6,8,14,.72)";
+    c.beginPath();
+    c.arc(cx, cy, r + 7, 0, TAU);
+    c.fill();
+    c.lineCap = "round";
+    c.lineWidth = 2;
+    c.strokeStyle = "rgba(244,247,251,.35)";
+    c.beginPath();
+    c.arc(cx, cy, r, up - reach, up + reach);
+    c.stroke();
+    // the track ahead
+    c.fillStyle = "#ffc83d";
+    c.beginPath();
+    c.arc(cx, cy - r, 2.2, 0, TAU);
+    c.fill();
+    // her look: a wedge from the centre
+    const t = up + yawDeg * DEG;
+    c.fillStyle = "#f4f7fb";
+    c.beginPath();
+    c.moveTo(cx + Math.cos(t) * (r + 3), cy + Math.sin(t) * (r + 3));
+    c.lineTo(cx + Math.cos(t + 0.5) * 5, cy + Math.sin(t + 0.5) * 5);
+    c.lineTo(cx + Math.cos(t - 0.5) * 5, cy + Math.sin(t - 0.5) * 5);
+    c.closePath();
+    c.fill();
+    c.restore();
   }
 
   #sky(posM: number) {
@@ -282,7 +392,8 @@ export class FirstPersonStage {
     c.fillRect(-20, -20, W + 40, hy + 21);
     // the sun drifts with her heading in the curves
     const head = this.#heading[clamp(Math.round(posM), 0, this.#heading.length - 1)] ?? 0;
-    const sunX = W * 0.72 - head * W * 0.9;
+    const pan = this.#yaw * this.#f;
+    const sunX = W * 0.72 - head * W * 0.9 - pan;
     const sunY = hy - H * 0.06;
     const sg = c.createRadialGradient(sunX, sunY, 0, sunX, sunY, W * 0.42);
     sg.addColorStop(0, "rgba(255,230,170,.85)");
@@ -290,8 +401,8 @@ export class FirstPersonStage {
     sg.addColorStop(1, "rgba(255,160,90,0)");
     c.fillStyle = sg;
     c.fillRect(-20, -20, W + 40, hy + 20);
-    this.#mesas(hy, head * W * 0.9 + posM * 0.05, 1.2, "#4f2f44", 3);
-    this.#mesas(hy, head * W * 1.6 + posM * 0.16, 0.85, "#6e3a37", 9);
+    this.#mesas(hy, head * W * 0.9 + posM * 0.05 + pan, 1.2, "#4f2f44", 3);
+    this.#mesas(hy, head * W * 1.6 + posM * 0.16 + pan, 0.85, "#6e3a37", 9);
     // the plain below the horizon (the track draws over it)
     const pg = c.createLinearGradient(0, hy, 0, this.#H);
     pg.addColorStop(0, "#6e3a37");
@@ -323,67 +434,37 @@ export class FirstPersonStage {
 
   #road(st: FirstPersonState) {
     const c = this.#ctx;
-    const W = this.#W;
     const half = FPV_TRACK_HALF_M;
-    const r = (FAR_M / NEAR_M) ** (1 / (SLICES - 1));
-    let crest = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < SLICES; i++) {
-      const d = NEAR_M * r ** i;
-      const p = this.#P(d, 0, 0);
-      this.#sd[i] = d;
-      this.#sx[i] = p.x;
-      this.#sy[i] = p.y;
-      this.#sk[i] = p.s;
-      crest = Math.min(crest, p.y);
-      this.#clip[i] = crest;
-    }
     const finalM = this.#m.finalStartMm / 1000;
     const lengthM = this.#m.lengthMm / 1000;
-    for (let i = SLICES - 1; i >= 1; i--) {
-      const yf = this.#sy[i] ?? 0;
-      const yn = this.#sy[i - 1] ?? 0;
-      if (yf >= yn - 0.01) continue; // hidden behind a crest, or facing away
-      const df = this.#sd[i] ?? 0;
-      const dn = this.#sd[i - 1] ?? 0;
-      const mMid = this.#pos + (df + dn) / 2;
+    // the ground behind her shows only when she turns her head far enough
+    const halfFov = Math.atan(this.#W / 2 / this.#f);
+    const back = Math.abs(this.#yaw) + halfFov > 85 * DEG;
+    for (const sp of this.#strips) {
+      if (sp.a < 0 && !back) continue;
+      const behind = sp.b <= 0;
+      // a hair of overlap on the near side hides the seams
+      const ov = (sp.b - sp.a) * 0.2;
+      const a = behind ? sp.a : sp.a - ov;
+      const b = behind ? sp.b + ov : sp.b;
+      const mMid = this.#pos + (sp.a + sp.b) / 2;
       const seg = this.#segType(mMid);
       const [road, road2, verge] = ROAD[seg];
-      const xf = this.#sx[i] ?? 0;
-      const xn = this.#sx[i - 1] ?? 0;
-      const kf = this.#sk[i] ?? 0;
-      const kn = this.#sk[i - 1] ?? 0;
-      const near = df < 90;
+      const dist = Math.max(Math.abs(sp.a), Math.abs(sp.b));
+      const near = dist < 90;
       const band4 = Math.floor(mMid / 4) % 2 === 0;
       const past = mMid > lengthM;
-      // the verge, the full width
+      // the verge, out to the plain
       c.fillStyle = near && Math.floor(mMid / 8) % 2 === 0 ? this.#shade(verge, 0.06) : verge;
-      c.fillRect(-20, yf, W + 40, yn - yf + 0.6);
+      this.#band(a, b, -VERGE_M, VERGE_M);
       // the road
       c.fillStyle = past ? "#4b4f58" : near && band4 ? road : road2;
-      this.#quad(
-        xf - half * kf,
-        yf,
-        xf + half * kf,
-        yf,
-        xn + half * kn,
-        yn + 0.6,
-        xn - half * kn,
-        yn + 0.6,
-      );
+      this.#band(a, b, -half, half);
       if (seg === "water" && near) {
         const shimmer = st.reduced ? 0 : st.now * 2.2;
         c.fillStyle = `rgba(200,235,255,${0.18 + 0.12 * Math.sin(mMid * 0.9 + shimmer)})`;
         const lat = Math.sin(mMid * 0.37) * half * 0.6;
-        this.#quad(
-          xf + (lat - 0.8) * kf,
-          yf,
-          xf + (lat + 0.8) * kf,
-          yf,
-          xn + (lat + 0.8) * kn,
-          yn,
-          xn + (lat - 0.8) * kn,
-          yn,
-        );
+        this.#band(sp.a, sp.b, lat - 0.8, lat + 0.8);
       }
       // the kerbs: white, red and white in the curves
       const kerb = 0.35;
@@ -393,51 +474,40 @@ export class FirstPersonStage {
             ? "#ff5468"
             : "#f4f7fb"
           : "rgba(244,247,251,.55)";
-      for (const side of [-1, 1]) {
-        const e0 = side * half;
-        const e1 = side * (half - kerb);
-        this.#quad(xf + e0 * kf, yf, xf + e1 * kf, yf, xn + e1 * kn, yn, xn + e0 * kn, yn);
-      }
+      for (const side of [-1, 1]) this.#band(sp.a, sp.b, side * half, side * (half - kerb));
       // the two lines' divider, dashed
       if (near && Math.floor(mMid / 3) % 3 === 0 && seg !== "water") {
         c.fillStyle = "rgba(255,240,220,.35)";
-        const w = 0.09;
-        this.#quad(xf - w * kf, yf, xf + w * kf, yf, xn + w * kn, yn, xn - w * kn, yn);
+        this.#band(sp.a, sp.b, -0.09, 0.09);
       }
       // the final's line and the finish's checkers, across the road
       if (mMid >= finalM && mMid < finalM + 1.2) {
         c.fillStyle = "#ffc83d";
-        this.#quad(xf - half * kf, yf, xf + half * kf, yf, xn + half * kn, yn, xn - half * kn, yn);
+        this.#band(sp.a, sp.b, -half, half);
       }
       if (mMid >= lengthM - 1.5 && mMid < lengthM + 1.5) {
         const n = 10;
+        const row = Math.floor((mMid - lengthM + 1.5) / 0.75);
         for (let k = 0; k < n; k++) {
-          const row = Math.floor((mMid - lengthM + 1.5) / 0.75);
           c.fillStyle = (k + row) % 2 === 0 ? "#f4f7fb" : "#11141c";
-          const a = -half + (2 * half * k) / n;
-          const b = a + (2 * half) / n;
-          this.#quad(xf + a * kf, yf, xf + b * kf, yf, xn + b * kn, yn, xn + a * kn, yn);
+          const l0 = -half + (2 * half * k) / n;
+          this.#band(sp.a, sp.b, l0, l0 + (2 * half) / n);
         }
       }
       // a Pasillo's walls
       if (seg === "canyon") {
-        const hf = WALL_M * kf;
-        const hn = WALL_M * kn;
         const block = Math.floor(mMid / 7);
         for (const side of [-1, 1]) {
           const e = side * (half + 0.6);
+          const h = WALL_M * (0.85 + 0.3 * hash(block * 3 + side));
           c.fillStyle =
             (block + (side > 0 ? 1 : 0)) % 2 === 0 ? "rgba(92,48,40,1)" : "rgba(80,40,34,1)";
-          this.#quad(
-            xf + e * kf,
-            yf,
-            xf + e * kf,
-            yf - hf * (0.85 + 0.3 * hash(block * 3 + side)),
-            xn + e * kn,
-            yn - hn * (0.85 + 0.3 * hash(block * 3 + side)),
-            xn + e * kn,
-            yn,
-          );
+          this.#poly([
+            [sp.a, e, 0],
+            [sp.a, e, h],
+            [sp.b, e, h],
+            [sp.b, e, 0],
+          ]);
         }
       }
     }
@@ -460,36 +530,39 @@ export class FirstPersonStage {
     const pos = this.#pos;
     const half = FPV_TRACK_HALF_M;
     const lengthM = this.#m.lengthMm / 1000;
-    // edge posts every 10 m
-    for (let m = Math.ceil((pos + 2) / 10) * 10; m < pos + 150 && m <= lengthM + 30; m += 10) {
+    const look = Math.abs(this.#yaw) > 0.05;
+    const add = (d: number, lat: number, draw: () => void) =>
+      things.push({ k: Math.hypot(d, lat - this.#camX), d, lat, draw });
+    // edge posts every 10 m (behind her too when she looks around)
+    const from = look ? Math.max(0, pos - BACK_M) : pos + 2;
+    for (let m = Math.ceil(from / 10) * 10; m < pos + 150 && m <= lengthM + 30; m += 10) {
       const d = m - pos;
-      for (const side of [-1, 1])
-        things.push({
-          d,
-          draw: () => {
-            const b = this.#P(d, side * (half + 0.9), 0);
-            const tp = this.#P(d, side * (half + 0.9), m % 50 === 0 ? 2.2 : 1.3);
-            const w = Math.max(1, 0.18 * b.s);
-            c.fillStyle = m % 50 === 0 ? "rgba(255,200,61,.9)" : "rgba(244,247,251,.75)";
-            c.fillRect(b.x - w / 2, tp.y, w, b.y - tp.y);
-          },
+      for (const side of [-1, 1]) {
+        const lat = side * (half + 0.9);
+        add(d, lat, () => {
+          const b = this.#P(d, lat, 0);
+          const tp = this.#P(d, lat, m % 50 === 0 ? 2.2 : 1.3);
+          if (b.z < NEAR_M) return;
+          const w = Math.max(1, 0.18 * b.s);
+          c.fillStyle = m % 50 === 0 ? "rgba(255,200,61,.9)" : "rgba(244,247,251,.75)";
+          c.fillRect(b.x - w / 2, tp.y, w, b.y - tp.y);
         });
+      }
     }
-    // the boards of the features ahead
+    // the boards of the features ahead (and the ones she passed, when she looks back)
     for (const s of this.#geo.segments) {
       const d = s.startMm / 1000 - pos;
-      if (s.type === "flat" || d < 3 || d > 170) continue;
-      things.push({
-        d,
-        draw: () => {
-          const p = this.#P(d, half + 2.4, 3.2);
-          const b = this.#P(d, half + 2.4, 0);
-          c.fillStyle = "rgba(244,247,251,.6)";
-          c.fillRect(b.x - Math.max(1, 0.1 * b.s), p.y, Math.max(1.5, 0.2 * b.s), b.y - p.y);
-          const size = clamp(p.s * 0.55, 8, 15);
-          const text = s.type === "descent" ? this.#w.descent : this.#w.segment(s.type);
-          this.#chip(p.x, p.y, text, "rgba(8,10,16,.8)", "#fff", size);
-        },
+      if (s.type === "flat" || d > 170 || d < (look ? -BACK_M : 3)) continue;
+      const lat = half + 2.4;
+      add(d, lat, () => {
+        const p = this.#P(d, lat, 3.2);
+        const b = this.#P(d, lat, 0);
+        if (b.z < 2) return;
+        c.fillStyle = "rgba(244,247,251,.6)";
+        c.fillRect(b.x - Math.max(1, 0.1 * b.s), p.y, Math.max(1.5, 0.2 * b.s), b.y - p.y);
+        const size = clamp(p.s * 0.55, 8, 15);
+        const text = s.type === "descent" ? this.#w.descent : this.#w.segment(s.type);
+        this.#chip(p.x, p.y, text, "rgba(8,10,16,.8)", "#fff", size);
       });
     }
     // the final's gate and the finish's arch
@@ -499,51 +572,56 @@ export class FirstPersonStage {
     ];
     for (const [gm, word, bg, fg] of gates) {
       const d = gm - pos;
-      if (d < 1 || d > FAR_M - 10) continue;
-      things.push({
-        d,
-        draw: () => {
-          const top = 4 * FPV_BAND_M;
-          const l0 = this.#P(d, -half - 0.8, 0);
-          const l1 = this.#P(d, -half - 0.8, top);
-          const r0 = this.#P(d, half + 0.8, 0);
-          const r1 = this.#P(d, half + 0.8, top);
-          const w = Math.max(1.5, 0.35 * l0.s);
-          c.fillStyle = this.#hexA(bg, 0.9);
-          c.fillRect(l1.x - w / 2, l1.y, w, l0.y - l1.y);
-          c.fillRect(r1.x - w / 2, r1.y, w, r0.y - r1.y);
-          c.fillRect(l1.x - w / 2, l1.y, r1.x - l1.x + w, w * 1.2);
+      if (d > FAR_M - 10 || d < (look ? -BACK_M : 1)) continue;
+      add(d, 0, () => {
+        const top = 4 * FPV_BAND_M;
+        const l0 = this.#P(d, -half - 0.8, 0);
+        const l1 = this.#P(d, -half - 0.8, top);
+        const r0 = this.#P(d, half + 0.8, 0);
+        const r1 = this.#P(d, half + 0.8, top);
+        c.fillStyle = this.#hexA(bg, 0.9);
+        // each post on its own (one may be behind her eyes), the bar and the word with both
+        for (const [p0, p1, lat] of [
+          [l0, l1, -half - 0.8],
+          [r0, r1, half + 0.8],
+        ] as const) {
+          if (p0.z < NEAR_M) continue;
+          const w = Math.max(1.5, 0.35 * p0.s);
+          c.fillRect(p1.x - w / 2, p1.y, w, p0.y - p1.y);
           // the band marks on the posts: her altitude has a scale
           for (let k = 1; k <= 3; k++) {
-            const q = this.#P(d, -half - 0.8, k * FPV_BAND_M);
+            const q = this.#P(d, lat, k * FPV_BAND_M);
             c.fillRect(q.x - w * 1.4, q.y - 0.5, w * 2.8, Math.max(1, w * 0.4));
-            const q2 = this.#P(d, half + 0.8, k * FPV_BAND_M);
-            c.fillRect(q2.x - w * 1.4, q2.y - 0.5, w * 2.8, Math.max(1, w * 0.4));
           }
-          const size = clamp(l1.s * 0.9, 9, 22);
-          this.#chip((l1.x + r1.x) / 2, l1.y + w * 0.6, word, bg, fg, size);
-        },
+        }
+        if (l0.z < NEAR_M || r0.z < NEAR_M) return;
+        const w = Math.max(1.5, 0.35 * Math.min(l0.s, r0.s));
+        c.beginPath();
+        c.moveTo(l1.x, l1.y);
+        c.lineTo(r1.x, r1.y);
+        c.lineTo(r1.x, r1.y + w * 1.2);
+        c.lineTo(l1.x, l1.y + w * 1.2);
+        c.closePath();
+        c.fill();
+        const size = clamp(Math.min(l1.s, r1.s) * 0.9, 9, 22);
+        this.#chip((l1.x + r1.x) / 2, (l1.y + r1.y) / 2 + w * 0.6, word, bg, fg, size);
       });
     }
-    // the rivals ahead
+    // the rivals ahead (beside and behind her too when she looks around)
     const sprites: { lane: number; x: number; y: number; r: number }[] = [];
-    for (const rv of fpvRivals(this.#m, st.focus, st.row, FAR_M - 20))
-      things.push({
-        d: rv.aheadM,
-        draw: () => {
-          c.globalAlpha = rv.presence;
-          const s = this.#figure(st, rv.lane, rv.aheadM, rv.lateralM, rv.alt, rv.phase);
-          c.globalAlpha = 1;
-          if (s && rv.presence > 0.5) sprites.push(s);
-        },
+    for (const rv of fpvRivals(this.#m, st.focus, st.row, FAR_M - 20, look ? BACK_M - 10 : 0))
+      add(rv.aheadM, rv.lateralM, () => {
+        c.globalAlpha = rv.presence;
+        const s = this.#figure(st, rv.lane, rv.aheadM, rv.lateralM, rv.alt, rv.phase);
+        c.globalAlpha = 1;
+        if (s && rv.presence > 0.5) sprites.push(s);
       });
-    things.sort((a, b) => b.d - a.d);
+    things.sort((a, b) => b.k - a.k);
     for (const t of things) {
-      if (t.d <= NEAR_M) continue;
-      // hidden behind a crest: clip what is below the nearer ground's line
-      const clip = this.#clipAt(t.d);
-      const base = this.#P(t.d, 0, 0).y;
-      if (base > clip + 1) {
+      if (t.k <= NEAR_M) continue;
+      // hidden behind a crest or a Salto's lip: clip what is under the sight line over it
+      const clip = this.#crestY(t.d, t.lat);
+      if (clip < this.#H + 40) {
         c.save();
         c.beginPath();
         c.rect(-20, -40, this.#W + 40, clip + 40);
@@ -567,8 +645,14 @@ export class FirstPersonStage {
     const c = this.#ctx;
     const up = Math.max(0, alt) * FPV_BAND_M;
     const p = this.#P(d, lat, up + 0.9);
+    // a rival right beside her eyes fades out rather than fill the view
+    const close = clamp((p.z - 2.5) / 3, 0, 1);
+    if (close <= 0) return null;
+    c.globalAlpha *= close;
     const g = this.#P(d, lat, 0);
     const s = p.s;
+    // her wings foreshorten as she is seen from the side (she runs along the track)
+    const side = clamp(Math.abs(this.#cy), 0.22, 1);
     const pos: Position = this.#log.entries[lane]?.position ?? "pack";
     const P = POS_COLOR[pos];
     const glow = WING_GLOW[this.#log.entries[lane]?.style ?? "glide"];
@@ -589,16 +673,16 @@ export class FirstPersonStage {
     const aloft = clamp(alt, 0, 1);
     const diving = phase === PH.dive || phase === PH.falling;
     const flap = st.reduced || phase !== PH.climb ? 0 : Math.sin(st.now * 14 + lane) * 0.25;
-    const span = diving ? 0.55 : lerp(0.75, 1.7, aloft);
+    const span = (diving ? 0.55 : lerp(0.75, 1.7, aloft)) * side;
     const lift = diving ? 0.35 : lerp(0.05, 0.25, aloft) + flap;
     const sh = { x: p.x, y: p.y - 0.35 * s };
-    for (const side of [-1, 1]) {
+    for (const wing of [-1, 1]) {
       c.fillStyle = this.#hexA(glow, 0.78);
       c.beginPath();
-      c.moveTo(sh.x + side * 0.18 * s, sh.y);
-      c.lineTo(sh.x + side * span * s, sh.y - lift * s);
-      c.lineTo(sh.x + side * span * 0.82 * s, sh.y - (lift - 0.22) * s);
-      c.lineTo(sh.x + side * 0.2 * s, sh.y + 0.42 * s);
+      c.moveTo(sh.x + wing * 0.18 * s, sh.y);
+      c.lineTo(sh.x + wing * span * s, sh.y - lift * s);
+      c.lineTo(sh.x + wing * span * 0.82 * s, sh.y - (lift - 0.22) * s);
+      c.lineTo(sh.x + wing * 0.2 * s, sh.y + 0.42 * s);
       c.closePath();
       c.fill();
       c.strokeStyle = "rgba(10,14,22,.55)";
@@ -674,15 +758,22 @@ export class FirstPersonStage {
     const P = POS_COLOR[pos];
     const glow = WING_GLOW[this.#log.entries[lane]?.style ?? "glide"];
     const fold = phase === PH.dive || phase === PH.falling ? 0.45 : 1;
-    const reach = W * 0.2 * k * fold;
-    const y0 = H * 0.86;
     const tilt = this.#pitch * H * 0.03;
+    // she turns her head: the wing on that side fills more of its edge (she looks along it), the
+    // other one slides out of view; lifting her eyes lowers both
+    const turn = Math.sin(this.#yaw);
+    const y0 = H * 0.86 + this.#lookDrop;
     for (const side of [-1, 1]) {
+      const along = side * turn;
+      const grow = along > 0 ? 1 + 0.9 * along : Math.max(0, 1 + 1.3 * along);
+      if (grow <= 0.05) continue;
       const x0 = side < 0 ? 0 : W;
+      const reach = W * 0.2 * k * fold * grow;
+      const rise = H * 0.04 * Math.max(0, along);
       c.fillStyle = this.#hexA(P.c1, 0.92);
       c.beginPath();
-      c.moveTo(x0, y0 - H * 0.12);
-      c.lineTo(x0 - side * reach, y0 - H * 0.05 * fold + tilt);
+      c.moveTo(x0, y0 - H * 0.12 - rise);
+      c.lineTo(x0 - side * reach, y0 - H * 0.05 * fold + tilt - rise);
       c.lineTo(x0 - side * reach * 0.7, y0 + H * 0.02);
       c.lineTo(x0, y0 + H * 0.08);
       c.closePath();
@@ -690,8 +781,8 @@ export class FirstPersonStage {
       c.strokeStyle = this.#hexA(glow, 0.85);
       c.lineWidth = 2;
       c.beginPath();
-      c.moveTo(x0, y0 - H * 0.12);
-      c.lineTo(x0 - side * reach, y0 - H * 0.05 * fold + tilt);
+      c.moveTo(x0, y0 - H * 0.12 - rise);
+      c.lineTo(x0 - side * reach, y0 - H * 0.05 * fold + tilt - rise);
       c.stroke();
     }
   }
