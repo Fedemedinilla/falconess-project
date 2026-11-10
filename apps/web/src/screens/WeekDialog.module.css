@@ -8,7 +8,9 @@
   --tone: var(--accent);
   --tone-soft: var(--surface-2);
   width: min(32rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 2rem);
+  /* some phone webviews resolve dvh to 0 inside the artifact frame: never shrink below 18rem */
+  max-height: calc(100vh - 2rem);
+  max-height: max(18rem, calc(100dvh - 2rem));
   padding: 0;
   border: 1px solid var(--line-strong);
   border-top: 4px solid var(--tone);
@@ -73,6 +75,7 @@
 /* --- headline ------------------------------------------------------------------------------------ */
 
 .head {
+  flex: none;
   display: grid;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-4);
@@ -132,6 +135,7 @@
 /* --- changes ------------------------------------------------------------------------------------- */
 
 .body {
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -362,6 +366,7 @@
 /* --- buttons ------------------------------------------------------------------------------------- */
 
 .foot {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -395,7 +400,8 @@
  */
 @media (max-height: 760px) {
   .dialog {
-    max-height: calc(100dvh - 1rem);
+    max-height: calc(100vh - 1rem);
+    max-height: max(18rem, calc(100dvh - 1rem));
   }
 
   .head {
