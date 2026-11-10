@@ -3,6 +3,7 @@ import { RULESET_V1, RULESET_V2, type SimContext } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { goalFlagged, goalPassRate } from "./goal-rate.js";
 import {
+  addSpecialization,
   GRADE_ORDER,
   renderSeasonBatch,
   runSeasonBatch,
@@ -35,6 +36,7 @@ describe("pnpm sim:season-batch", () => {
       expect(m.goals.reduce((n, g) => n + g.won, 0)).toBe(m.wins);
       for (const g of m.goals) expect(g.won).toBeLessThanOrEqual(g.passed);
       expect(m.allWon).toBeLessThanOrEqual(m.completed);
+      expect(m.specialization.seasons).toBe(m.completed);
 
       const text = renderSeasonBatch(m).join("\n");
       expect(text).toContain("cernicala  runs 4");
@@ -67,6 +69,27 @@ describe("pnpm sim:season-batch", () => {
       /passed 42% {2}reached 46% {2}passed\/reached 91% {2}won\/reached 50%$/,
     );
     expect(lines[2]).toMatch(/passed 0% {2}reached 0% {2}passed\/reached — {2}won\/reached —$/);
+  });
+
+  it("specialization counts the stats at 800 and 1000 and the 2nd − 3rd gap", () => {
+    const sp = { seasons: 0, atLeast800: 0, atLeast1000: 0, gap2nd3rd: 0 };
+    addSpecialization(sp, {
+      agility: 1003,
+      stamina: 658,
+      technique: 581,
+      courage: 389,
+      intelligence: 700,
+    });
+    addSpecialization(sp, {
+      agility: 1200,
+      stamina: 678,
+      technique: 1064,
+      courage: 564,
+      intelligence: 730,
+    });
+    expect(sp).toEqual({ seasons: 2, atLeast800: 3, atLeast1000: 3, gap2nd3rd: 42 + 334 });
+    const text = renderSeasonBatch({ ...runSeasonBatch(ctx, "peregrina", 0), specialization: sp });
+    expect(text.join("\n")).toContain("stats ≥ 800 1.50  ≥ 1000 1.50  2nd − 3rd stat 188");
   });
 
   it("goal-rate: the rate and the flag use the seasons that reached the goal", () => {

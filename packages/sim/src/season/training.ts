@@ -24,7 +24,10 @@ export function facilityLevel(ctx: SimContext, uses: number): number {
 }
 
 /** The parts of the state a training's gain reads. */
-type GainState = Pick<SeasonState, "facilityUses" | "crewPresence" | "falconessId" | "mood">;
+type GainState = Pick<
+  SeasonState,
+  "facilityUses" | "crewPresence" | "falconessId" | "mood" | "stats"
+>;
 
 /**
  * gain = floor(base[level] × (1 + Σ crewBonus) × m_train_mood × (1 + growth)): one floor at the
@@ -53,24 +56,59 @@ export function trainingGain(
 export type StatGain = { readonly stat: StatName; readonly gain: number };
 
 /**
+ * A raw gain `raw` on a stat at `value` after the ruleset's diminishing returns (`growthBands`):
+ * the raw points are spent band by band, each band's points counting its ‰, so a gain that
+ * crosses a threshold pays full up to it and the rest at the band's rate. One floor at the end;
+ * at least 1. Without bands the raw gain is returned unchanged (v1, v2).
+ */
+export function softenedGain(ctx: SimContext, value: number, raw: number): number {
+  const bands = ctx.ruleset.season.growthBands;
+  if (bands === undefined || bands.length === 0) return raw;
+  let at = value * 1000; // milli-points
+  let left = raw * 1000; // raw milli-points still to spend
+  while (left > 0) {
+    let pm = 1000;
+    let next = Number.POSITIVE_INFINITY;
+    for (const [from, rate] of bands) {
+      if (at >= from * 1000) pm = rate;
+      else if (from * 1000 < next) next = from * 1000;
+    }
+    const need = next === Number.POSITIVE_INFINITY ? left : Math.ceil(((next - at) * 1000) / pm);
+    if (left <= need) {
+      at += Math.floor((left * pm) / 1000);
+      left = 0;
+    } else {
+      at = next;
+      left -= need;
+    }
+  }
+  return Math.max(1, Math.floor(at / 1000) - value);
+}
+
+/**
  * What a successful training adds, the main stat first: the primary and its secondary (at
- * `secondaryGain`), or a risk flight's courage and agility. Before the statMax cap; a failure
+ * `secondaryGain`), or a risk flight's courage and agility, each after the diminishing returns of
+ * its stat (`softenedGain`; the "+N" the player sees). Before the statMax cap; a failure
  * loses `failLossPm` ‰ of each (at least 1).
  */
 export function trainingGains(ctx: SimContext, state: GainState, kind: TrainingKind): StatGain[] {
   const S = ctx.ruleset.season;
+  const soft = (stat: StatName, raw: number): StatGain => ({
+    stat,
+    gain: softenedGain(ctx, state.stats[stat], raw),
+  });
   if (kind === "train:risk-flight") {
     const g = trainingGain(ctx, state, kind, "courage");
     return [
-      { stat: "courage", gain: scale(g, S.riskFlightCourage) },
-      { stat: "agility", gain: scale(g, S.riskFlightAgility) },
+      soft("courage", scale(g, S.riskFlightCourage)),
+      soft("agility", scale(g, S.riskFlightAgility)),
     ];
   }
   const primary = ctx.ruleset.trainingStat[kind];
   const g = trainingGain(ctx, state, kind, primary);
-  const out: StatGain[] = [{ stat: primary, gain: g }];
+  const out: StatGain[] = [soft(primary, g)];
   const secondary = ctx.ruleset.trainingSecondary[kind];
-  if (secondary) out.push({ stat: secondary, gain: Math.max(1, scale(g, S.secondaryGain)) });
+  if (secondary) out.push(soft(secondary, Math.max(1, scale(g, S.secondaryGain))));
   return out;
 }
 

@@ -762,10 +762,14 @@ export const RACE: RaceConstants = {
  * against the careful policy, which rests a lot; a sensible player (the attentive policy) won
  * every goal. 60 + 14 t puts the rivals at 228 / 396 / 564 / 704 per stat on T12 / T24 / T36 /
  * T46 (v2: 192 / 324 / 456 / 566), near the attentive player's mean stat.
+ *
+ * Growth with trade-offs (owner 2026-11-10, «es muy fácil maxear todos los stats»): with the
+ * smaller secondary gain and the diminishing returns of `SEASON.growthBands` the attentive player
+ * ends ≈ 250 points of stat total lower, and 60 + 14 t left her 2-8 % of seasons at B. Back to
+ * v2's 60 + 11 t (192 / 324 / 456 / 566); the goal places of `calendars/v3.json` even the three.
  */
 export const FIELD: FieldConstants = {
   ...FIELD_V2,
-  rivalPerTurn: 14,
   rivalWeights: {
     ...FIELD_V2.rivalWeights,
     dive: [250, 180, 185, 210, 175],
@@ -783,4 +787,33 @@ export const SEASON: SeasonConstants = {
   ...SEASON_V2,
   simulatorSkillPoints: 15,
   skillPointsByPlace: [100, 75, 60, 45, 35, 25, 20, 10],
+  /**
+   * Growth with trade-offs (owner 2026-11-10: «es muy fácil maxear todos los stats … estoy
+   * eligiendo qué quiero súper-subir y qué solo subir»). A training's secondary stat gets 200 ‰ of
+   * the main gain instead of 500 ‰ (an Agility week gave Technique +26 to +49, so Technique reached
+   * 1064 without training it), and each stat has diminishing returns like Umamusume («el excedente
+   * sobre 1200 cuenta a la mitad»): points at 600 or more count 750 ‰, at 900 or more 500 ‰. The
+   * attentive player ends with Agility ≈ 790-890 and one stat her goals ask for; the owner's two
+   * seasons replay to Agility 1003 instead of 1200.
+   */
+  secondaryGain: 200,
+  growthBands: [
+    [600, 750],
+    [900, 500],
+  ],
+  /**
+   * The season score is mostly the stat total, so the letters shrink with growth: v2's thresholds
+   * × 0.8 (a season that passes its goals scored ≈ 3900 and now ≈ 3100; B stays «passed the goals»).
+   */
+  gradeThresholds: [
+    ["SS", 3960],
+    ["S", 3610],
+    ["A", 3260],
+    ["B", 2550],
+    ["C", 2200],
+    ["D", 1850],
+    ["E", 1500],
+    ["F", 1140],
+    ["G", 0],
+  ],
 };

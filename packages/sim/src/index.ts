@@ -92,7 +92,13 @@ export {
   vigor,
 } from "./season/rules.js";
 export { boxDistanceFactor, seasonDistanceAptitudes, startSeason } from "./season/start.js";
-export { facilityLevel, type StatGain, trainingGain, trainingGains } from "./season/training.js";
+export {
+  facilityLevel,
+  type StatGain,
+  softenedGain,
+  trainingGain,
+  trainingGains,
+} from "./season/training.js";
 export {
   learnCap,
   maxDurability,

@@ -147,6 +147,13 @@ export type SeasonConstants = Omit<
    * v2). Ruleset v3 sets it (owner 2026-11-10).
    */
   readonly skillPointsByPlace?: readonly number[];
+  /**
+   * Diminishing returns on training (Umamusume: «el excedente sobre 1200 cuenta a la mitad»): each
+   * `[from, pm]` makes the part of a gain that lands at or above stat `from` count `pm` ‰, the
+   * highest band that applies; thresholds ascending. Absent = every point counts (v1, v2). Ruleset
+   * v3 sets it (owner 2026-11-10: «es muy fácil maxear todos los stats»).
+   */
+  readonly growthBands?: ReadonlyArray<readonly [number, number]>;
 };
 export const SEASON: SeasonConstants = SEASON_V1;
 

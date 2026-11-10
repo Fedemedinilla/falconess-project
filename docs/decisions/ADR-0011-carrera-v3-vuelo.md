@@ -151,6 +151,12 @@ y byte a byte iguales. Los golden v1 no cambian. **2026-11-10 (dificultad A):** 
 semana 46 de `v3-01` … `v3-09` tiene otras stats (704 por stat en vez de 566); el motor no cambió.
 Se regrabaron esos nueve dos veces, iguales byte a byte; los tres campos parejos (`v3-10` …
 `v3-12`) y los golden v1 no se movieron.
+**2026-11-10 (crecimiento con decisiones):** el crecimiento v3 se achicó (ganancia secundaria 200 ‰,
+rendimientos decrecientes desde 600 y 900) y las rivales volvieron a crecer 11 por semana
+(`V3.FIELD` hereda `rivalPerTurn` de la v2: 566 por stat a la semana 46). Los nueve golden con campo
+de la semana 46 (`v3-01` … `v3-09`) se regrabaron dos veces con `pnpm golden:update -- --set v3
+--yes` (la segunda escribió 0 de 12) y quedaron byte a byte iguales a los de antes de `547eaee`; el
+motor no cambió. Los tres campos parejos y los golden v1 no se movieron.
 
 ### 9. Lo que no cambia
 
