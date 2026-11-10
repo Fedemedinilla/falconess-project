@@ -79,7 +79,7 @@
       "id": "B4",
       "name": "Las Falconess, parejas",
       "protects": "que ninguna Falconess sea la mala del juego",
-      "metric": "métrica 7: % de temporadas con nota B o mejor, política de referencia, por Falconess y base",
+      "metric": "métrica 7: % de temporadas con nota B o mejor, política de referencia (v3: la jugadora atenta, desde 2026-11-10), por Falconess y base",
       "gate": {
         "falconess": ["peregrina", "cernicala", "caracara"],
         "seasonsPerBase": 1000,

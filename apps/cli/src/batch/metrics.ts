@@ -865,6 +865,8 @@ const S7_POLICY: Record<ReturnType<typeof referencePolicyKind>, string> = {
   "lowest-stat": "'train the lowest stat'",
   careful:
     "'careful' (train the lowest stat; rest or go out as soon as that training's failure chance is above 0, go out with mood below +1)",
+  attentive:
+    "'attentive' (Agility as the pillar plus the Stamina her goals ask for; rest when vigor adds 10 % to the failure chance, simulator on a tired week, race in her best letter)",
 };
 
 /** S7's first note, built from the ruleset: v1 keeps the words of its baseline report. */

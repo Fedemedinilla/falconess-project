@@ -15,6 +15,7 @@ import {
   learnCap,
   lowestStat,
   RULESET_V1,
+  RULESET_V2,
   type Ruleset,
   resolveFrameBuild,
   type SimContext,
@@ -375,20 +376,26 @@ export const POLICIES = {
 export type PolicyName = keyof typeof POLICIES;
 
 /**
- * The reference policy of the run's ruleset (metric 7, `sim:season-batch`, `pnpm sim`; ADR-0006
- * «Consecuencias», Métrica 7: option (a) of the v2 study): ruleset v1 keeps `lowestStatPolicy`,
- * so v1's metrics stay comparable; every later ruleset plays `carefulPolicy`, since without a
- * forced rest a reference player has to look after vigor and mood herself.
+ * The reference policy of the run's ruleset (metric 7, B4 of ADR-0010, `sim:season-batch`,
+ * `pnpm sim`): ruleset v1 keeps `lowestStatPolicy` and v2 `carefulPolicy` (ADR-0006 «Métrica 7»),
+ * so their metrics stay comparable; v3 plays `attentivePolicy` (owner 2026-11-10: the careful
+ * player rests so much that rivals tuned to her were trivial for a person playing sensibly).
  */
 export function referencePolicy(ctx: SimContext, state: SeasonState): RunInput {
-  return referencePolicyKind(ctx.ruleset) === "lowest-stat"
-    ? lowestStatPolicy(ctx, state)
-    : carefulPolicy(ctx, state);
+  switch (referencePolicyKind(ctx.ruleset)) {
+    case "lowest-stat":
+      return lowestStatPolicy(ctx, state);
+    case "careful":
+      return carefulPolicy(ctx, state);
+    case "attentive":
+      return attentivePolicy(ctx, state);
+  }
 }
 
 /** Which policy `referencePolicy` plays on a ruleset (the batch report names it, S7's note). */
-export type ReferencePolicyKind = "lowest-stat" | "careful";
+export type ReferencePolicyKind = "lowest-stat" | "careful" | "attentive";
 
 export function referencePolicyKind(ruleset: Ruleset): ReferencePolicyKind {
-  return ruleset.version === RULESET_V1.version ? "lowest-stat" : "careful";
+  if (ruleset.version === RULESET_V1.version) return "lowest-stat";
+  return ruleset.version === RULESET_V2.version ? "careful" : "attentive";
 }

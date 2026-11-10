@@ -45,5 +45,10 @@ estables, balance con contenido y rotación de pistas, desbalance local aceptado
   calendario).
 - Un desbalance local que no rompe B1 es diseño, no error: es la «casa» de una posición.
 - Cambiar un umbral de este ADR requiere un ADR nuevo con la decisión del dueño.
+- B4 se mide con la política de referencia del ruleset. Para la v3 es, desde el 2026-11-10, la
+  «jugadora atenta» (la Agilidad como pilar más lo que piden sus metas; ver
+  `docs/design/barandas-balance.md` §4, B4): el dueño encontró la temporada «muy fácil» porque las
+  rivales estaban calibradas contra la política cuidadosa, que descansa mucho. Cambia quién juega
+  la medida, no el umbral (≥ 60 % de cota de Wilson y ≤ 12 puntos siguen iguales).
 - Cuando la carrera v3 entre al juego, `pnpm sim:batch` y `pnpm sim:season-batch` reportan las ocho
   barandas, y CI falla si alguna no pasa.

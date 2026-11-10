@@ -25,6 +25,7 @@ import {
   REFERENCE_HANGAR,
   REST_AT_FATIGUE,
   referencePolicy,
+  referencePolicyKind,
   STAMINA_FOR_DISTANCE,
   skillsToLearn,
   usefulGenericActives,
@@ -263,6 +264,14 @@ describe("attentive policy: the human-like player (owner's feedback 2026-11-10)"
     const goal = v3.content.getFalconess("cernicala").seasonGoals[0];
     const week = { ...at(s, 0, 1), turn: goal?.turn ?? 1 };
     expect(attentivePolicy(v3, week)).toMatchObject({ position: "stalk" });
+  });
+
+  it("is the reference of v3 (B4 of ADR-0010); v2 keeps the careful one", () => {
+    const s = at(fresh("caracara"), 50, 1);
+    expect(referencePolicy(v3, s)).toEqual(attentivePolicy(v3, s));
+    expect(referencePolicyKind(RULESET_V3)).toBe("attentive");
+    expect(referencePolicyKind(RULESET_V2)).toBe("careful");
+    expect(referencePolicyKind(RULESET_V1)).toBe("lowest-stat");
   });
 
   it("plays a whole season", () => {
