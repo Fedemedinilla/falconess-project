@@ -272,3 +272,66 @@ strings, airy pad, steady dynamics, no build-up, loopable, 85 BPM
 
 Si una versión sigue saliendo con batería: sacar el BPM del estilo, agregar `ambient` después de
 `background music` y repetir `no drums` al final del estilo.
+
+## Sonido propio: Future Funk + Nu Metal (de fondo)
+
+Idea del dueño: en vez del Future Funk que usan muchos juegos así, una mezcla propia de Future Funk
+y Nu Metal. El problema: la palabra «nu metal» arrastra batería pesada, doble bombo, quiebres y
+gritos. La solución es **no nombrar el género Nu Metal**, sino pedir sus **texturas**, bajas en la
+mezcla, y dejar que el Future Funk ponga el groove.
+
+- **Del Future Funk:** groove de city pop y disco filtrado, bajo funky, pads con filtro que abre y
+  cierra, compresión con bombeo (sidechain) suave, Rhodes, brillo de los 80.
+- **Del Nu Metal (solo textura):** guitarra de 7 cuerdas afinada grave pero limpia o con palm mute
+  bajo en la mezcla, rayones de vinilo (scratches) del DJ, ambiente oscuro, bajo con algo de
+  distorsión. Nada de gritos, doble bombo ni quiebres.
+
+### Menú (fondo)
+
+```
+instrumental, background music, future funk, nu-metal textures, laid-back groove, filtered disco
+chords, funky slap bass, low-tuned 7-string guitar played clean and palm-muted, low in the mix,
+vinyl scratches, warm rhodes, soft sidechain pump, light four-on-the-floor kick low in the mix,
+steady dynamics, no build-up, loopable, 104 BPM
+```
+
+### Entrenamiento (un poco más de energía)
+
+```
+instrumental, background music, future funk, nu-metal textures, groovy and confident, chopped
+filtered disco loop, slap bass, palm-muted drop-tuned guitar chugs low in the mix, turntable
+scratches, bright synth stabs, soft four-on-the-floor kick, steady dynamics, no breakdown,
+loopable, 112 BPM
+```
+
+### Taller (oscuro y tranquilo)
+
+```
+instrumental, background music, future funk, dark nu-metal ambience, slow groove, filtered rhodes
+chords, deep bass, clean low-tuned guitar harmonics, distant vinyl scratches, mechanical textures,
+steady dynamics, no build-up, loopable, 96 BPM
+```
+
+### Exclusiones para esta mezcla (Exclude Styles)
+
+```
+screaming, growl, harsh vocals, rap, vocals, double kick, blast beat, breakdown, mosh, heavy
+drums, loud crash cymbals, metalcore, build-up, crescendo, climax, EDM drop, guitar solo,
+distorted lead guitar, fast tempo
+```
+
+### Letra (Lyrics)
+
+```
+[Instrumental]
+[Intro: filtered, soft]
+[Groove A: laid-back, steady]
+[Groove B: same energy, guitar texture]
+[Groove A: laid-back, steady]
+[Outro: filtered, seamless to start]
+```
+
+**Si igual sale demasiado pesado:** sacar `nu-metal textures` y dejar solo los instrumentos
+(`low-tuned 7-string guitar played clean`, `vinyl scratches`), agregar `lounge` después de
+`future funk` y repetir `no heavy drums` al final. **Si queda sin carácter metal:** subir la guitarra
+de a una palabra (`palm-muted drop-tuned guitar chugs`) en vez de volver a nombrar el género.
