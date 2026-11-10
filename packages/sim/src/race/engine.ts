@@ -1126,11 +1126,27 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   const pos = S.pos;
   const altA = S.alt;
   const line = S.line;
+  const flPhase = S.flPhase;
   c.swLast = false;
+  // PERF-2: the live runners of each band (bit per lane), and those holding a band (phase 2):
+  // only a holder scans, and only her band, in increasing lane order like a scan of every j
+  let band1 = 0;
+  let band2 = 0;
+  let band3 = 0;
+  let bandX = 0;
+  let holders = 0;
   for (let i = 0; i < n; i++) {
     S.pos0[i] = pos[i] ?? 0;
     const ai = altA[i] ?? 0;
     S.alt0[i] = ai;
+    if (ai === 0) continue;
+    if ((live & (1 << i)) !== 0) {
+      if (ai === 1) band1 |= 1 << i;
+      else if (ai === 2) band2 |= 1 << i;
+      else if (ai === 3) band3 |= 1 << i;
+      else bandX |= 1 << i;
+      if (ai >= 1 && flPhase[i] === 2) holders |= 1 << i;
+    }
     // two lines: only a runner in the air has a line (every read of these is gated on alt0 ≥ 1)
     if (lines && ai >= 1) {
       if ((S.swTick[i] ?? 0) === c.t) c.swLast = true;
@@ -1143,42 +1159,57 @@ function airSnapshot(c: Ctx, F: FlightConstants, live: number): void {
   }
   if (lim <= 0) return;
   const highReach = F.dirtyHighM > 0 ? F.dirtyHighM * 1000 * c.posPerMm : lim;
-  const flPhase = S.flPhase;
+  const draftBand = F.airDraftBand;
+  const dirtyA = S.dirty;
+  const since = S.dirtySince;
   for (let i = 0; i < n; i++) {
+    if ((holders & (1 << i)) === 0) {
+      // not holding a band: no wake, nobody alongside (the values a scan of nobody leaves)
+      dirtyA[i] = 0;
+      if (lines) {
+        S.lnAhead[i] = -1;
+        S.lnGap[i] = 0;
+        S.side[i] = 0;
+      }
+      if ((since[i] ?? 0) > 0) dirtyLog(c, i, false);
+      continue;
+    }
     const ai = altA[i] ?? 0;
     // L3: the high band's wake reaches dirtyHighM (feel round 2), the others dirtyM
     const reach = ai === 2 ? highReach : lim;
     let gap = reach + 1;
     let ahead = -1;
     let side = 0;
-    if (ai >= 1 && flPhase[i] === 2 && (live & (1 << i)) !== 0) {
-      const pi = pos[i] ?? 0;
-      const li = line[i] ?? 0;
-      const slot = lines ? (c.T.lnSlot[i] ?? 0) : 0;
-      for (let j = 0; j < n; j++) {
-        if ((altA[j] ?? 0) !== ai || j === i || (live & (1 << j)) === 0) continue;
-        const d = (pos[j] ?? 0) - pi;
-        // two lines: the wake is only in her line; alongside in the other line takes her slot
-        if (lines && (line[j] ?? 0) !== li) {
-          if (d < slot && d > -slot) side = 1;
-          continue;
-        }
-        if (d > 0 && d < gap) {
-          gap = d;
-          ahead = j;
-        }
+    const pi = pos[i] ?? 0;
+    const li = line[i] ?? 0;
+    const slot = lines ? (c.T.lnSlot[i] ?? 0) : 0;
+    let m = (ai === 1 ? band1 : ai === 2 ? band2 : ai === 3 ? band3 : bandX) & ~(1 << i);
+    while (m !== 0) {
+      const bit = m & -m;
+      m ^= bit;
+      const j = 31 - Math.clz32(bit);
+      if (bandX !== 0 && (altA[j] ?? 0) !== ai) continue;
+      const d = (pos[j] ?? 0) - pi;
+      // two lines: the wake is only in her line; alongside in the other line takes her slot
+      if (lines && (line[j] ?? 0) !== li) {
+        if (d < slot && d > -slot) side = 1;
+        continue;
+      }
+      if (d > 0 && d < gap) {
+        gap = d;
+        ahead = j;
       }
     }
     const dirty = gap > reach ? 0 : gap > fight ? 1 : 2;
-    S.dirty[i] = dirty;
+    dirtyA[i] = dirty;
     if (lines) {
       S.lnAhead[i] = dirty > 0 ? ahead : -1;
       S.lnGap[i] = dirty > 0 ? gap : 0;
       S.side[i] = side;
     }
     // `dirtyLog` acts only when the dirt starts or ends (inDirtyAir written out, PERF-1)
-    const on = F.airDraftBand ? dirty === 2 : dirty > 0;
-    if (on !== (S.dirtySince[i] ?? 0) > 0) dirtyLog(c, i, on);
+    const on = draftBand ? dirty === 2 : dirty > 0;
+    if (on !== (since[i] ?? 0) > 0) dirtyLog(c, i, on);
   }
 }
 
