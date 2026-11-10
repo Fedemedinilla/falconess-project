@@ -13,6 +13,11 @@
 #   seasons played by clicks with their T12 replays, copy and load, the free race, and the
 #   published single-file page wrapped like the host does. Any console error fails it. Traces and
 #   screenshots of a failure, and the season timings, are uploaded.
+# - barandas-quick: `pnpm balance:barandas -- --quick` (ADR-0010, ADR-0011): the eight guardrails
+#   of race v3 on small samples. A gate on B8 (v1, v2 and every v3 switch off move 0 bytes, the
+#   goldens hold) and on the harness itself (a guardrail with no data fails); B1-B7 on these
+#   samples are a smoke test, not a verdict. The full run (`pnpm balance:barandas`, ≈ 30-40 min)
+#   is the requirement of any balance change and goes with its PR (docs/commands.md).
 # - The 10 000-race balance batch lives in balance.yml (report only, 60-s budget).
 name: ci
 
@@ -72,6 +77,28 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm sim:batch -- --runs 1000 --report out/smoke.json --max-wall-ms 6000
+
+  barandas-quick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm balance:barandas -- --quick --label ci
+      - if: always()
+        run: cat out/barandas/barandas-ci-quick.md >> "$GITHUB_STEP_SUMMARY" || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: barandas-quick
+          path: out/barandas/barandas-ci-quick.*
+          retention-days: 14
+          if-no-files-found: ignore
 
   e2e:
     runs-on: ubuntu-latest
