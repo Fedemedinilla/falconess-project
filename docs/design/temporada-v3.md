@@ -1290,3 +1290,92 @@ muy abajo (≈ 0-5 %): descansar de más ya no alcanza.
 
 La partida guardada del dueño (semilla 418317) se jugó con las metas viejas: con este contenido ya no
 se reproduce igual.
+
+## Crecimiento con decisiones (2026-11-10)
+
+**Qué vio el dueño (otra temporada, semilla 848748, Peregrina, nota A):** «Muy fácil. Es muy fácil
+maxear todos los stats o al menos elevarlos mucho. En vez de estar decidiendo si quiero más agilidad
+o más resistencia, estoy eligiendo qué quiero súper-subir y qué solo subir.» Terminó con Agilidad
+1200 (el tope), Técnica 1064, Inteligencia 730, Resistencia 678 y Coraje 564.
+
+**Causa:** cada entrenamiento sumaba la mitad de su ganancia a una stat secundaria. Una semana de
+Agilidad daba Agilidad +52 a +99 y Técnica +26 a +49; el Simulador, Inteligencia +63 a +97 y Técnica
++31 a +48. La Técnica llegaba a 1064 con tres semanas propias, y nada frenaba a una stat ya alta.
+
+**Técnica de Cygames que se copia:** rendimientos decrecientes. En Umamusume «el valor por encima de
+1200 cuenta a la mitad» (`research-balance-umamusume.md`, punto 5): subir lo que ya es alto rinde
+menos que subir otra cosa, y eso obliga a elegir.
+
+**Cambio (palanca de crecimiento, `V3.SEASON`):**
+
+| Qué                     | Antes             | Ahora                                                     |
+| ----------------------- | ----------------- | --------------------------------------------------------- |
+| Ganancia secundaria     | 500 ‰ de la main  | 200 ‰                                                     |
+| Rendimiento decreciente | ninguno           | lo que cae en 600 o más cuenta 750 ‰; en 900 o más, 500 ‰ |
+| Letras de la nota       | B 3190, A 4070, … | × 0,8 (B 2550, A 3260, S 3610, SS 3960)                   |
+
+El «+N» que ve el jugador ya es el real (`trainingGains` aplica los tramos). Las letras bajan con
+el total de stats porque la nota es casi toda el total: una temporada que pasa sus metas sumaba ≈ 3900
+y ahora ≈ 3100; B sigue siendo «pasó sus metas». La ganancia principal y los niveles del gimnasio no
+cambian. El motor de carrera no cambia.
+
+**Recalibración de la dificultad A:** con el crecimiento nuevo la atenta pasaba sus metas en 2-8 % de
+las temporadas contra las rivales 60 + 14 t. Las rivales vuelven a 60 + 11 t (192 / 324 / 456 / 566
+por stat a T12 / T24 / T36 / T46) y los puestos de las metas emparejan a las tres:
+
+- **Peregrina:** T36 Sprint ≤ 4 → ≤ 5, T46 Mirador ≤ 3 → ≤ 4.
+- **Cernícala:** T24 Escapada ≤ 7 → ≤ 6.
+- **Caracara:** T12 Escapada ≤ 6 → ≤ 5, T46 Cielo abierto ≤ 4 → ≤ 3.
+
+**Resultado** (1000 temporadas por Falconess y base, m7v3a / m7v3b, nota B o mejor; entre corchetes
+la cota de Wilson):
+
+| Falconess | Atenta (su build)         | Cuidadosa   | Solo Agilidad |
+| --------- | ------------------------- | ----------- | ------------- |
+| Peregrina | 65,5 [62,5] / 65,9 [62,9] | 6,3 / 6,5   | 8,0 / 7,9     |
+| Cernícala | 68,1 [65,1] / 64,8 [61,8] | 16,5 / 17,1 | 0,4 / 0,8     |
+| Caracara  | 65,6 [62,6] / 65,6 [62,6] | 5,4 / 6,1   | 0,1 / 0,1     |
+
+**Especialización** (informe, no puerta; `pnpm sim:season-batch -- --policy atenta`): stats finales
+de la atenta en las temporadas que pasan todas sus metas, dos bases.
+
+| Falconess | Stats finales antes (Ag-Re-Té-Co-In) | Ahora               | Stats ≥ 800 | Stats ≥ 1000 | 2.ª − 3.ª |
+| --------- | ------------------------------------ | ------------------- | ----------- | ------------ | --------- |
+| Peregrina | 1135-636-854-472-636                 | 879-496-503-376-613 | 1,88 → 0,97 | 0,99 → 0,01  | 168 → 114 |
+| Cernícala | 942-665-849-422-783                  | 782-561-457-339-712 | 2,21 → 0,55 | 0,25 → 0,00  | 64 → 141  |
+| Caracara  | 982-844-809-487-639                  | 795-677-459-344-612 | 2,40 → 0,47 | 0,40 → 0,00  | 64 → 94   |
+
+La Técnica ya no es gratis (−300 a −350) y la Agilidad no toca el tope. En Peregrina la brecha 2.ª −
+3.ª bajó porque antes la 2.ª era la Técnica regalada (854); ahora la 2.ª es la Inteligencia de las
+semanas de Simulador.
+
+**Las dos temporadas del dueño, rejugadas con sus mismas entradas** (calendario v3, `withCalendar`):
+
+| Partida        | Antes (Ag-Re-Té-Co-In)            | Ahora                            |
+| -------------- | --------------------------------- | -------------------------------- |
+| semilla 418317 | 1200-720-1113-497-960, S, 1-1-1-1 | 1003-689-538-306-867, S, 1-1-1-1 |
+| semilla 848748 | 1200-678-1064-564-730, S, 1-1-1-1 | 1003-658-581-389-700, S, 1-1-1-1 |
+
+Sus 12-13 semanas de Agilidad dan ≈ 1000, no 1200; la Técnica queda a la mitad. La Inteligencia
+sigue alta en la primera porque eligió 12 semanas de Simulador: es su decisión, no un regalo.
+
+**Límite honesto:** el dueño juega mejor que la atenta. Con las rivales viejas (60 + 14 t) y el
+crecimiento nuevo, sus dos partidas igual terminan 1-1-1-2 y 1-1-2-1; con las de ahora gana todo.
+La dificultad A está calibrada para la atenta (60-65 %), no para él. Si la Inteligencia del Simulador
+sigue sintiéndose gratis, la próxima palanca es la ganancia del Simulador, no las rivales.
+
+**Barandas** (`pnpm balance:barandas`, completo, commit `656b417`): B1 pasa (17,7-36,5 %), B2 frágil
+(como antes), B3 frágil (Acecho 750 v3a 27,8 %, igual), B4 pasa (cota mínima 61,8 %, Cernícala v3b;
+brecha 2,6 / 1,1 puntos), B5 pasa (motor sin cambios), B6 pasa, B7 frágil (p95 4,58 ms con la máquina
+quieta; la primera corrida, con otros procesos, dio 5,26), B8 pasa (0 bytes, 17 chequeos). Los nueve
+golden v3 con campo de la semana 46 volvieron, byte a byte, a los de antes de `547eaee` (ADR-0011).
+
+**Notas de cambio para el jugador:**
+
+- «Entrenar una stat ya alta rinde menos: desde 600 cada punto cuenta tres cuartos y desde 900, la
+  mitad. El "+N" del entrenamiento ya muestra lo que sube de verdad.»
+- «Cada entrenamiento sube mucho menos su stat secundaria (antes la mitad, ahora un quinto): la
+  Técnica y el Coraje se entrenan, no llegan solos.»
+- «Las notas de la temporada se ajustaron al crecimiento nuevo: B sigue siendo pasar tus metas.»
+- «Las rivales crecen un poco más lento y las metas piden otros puestos: Peregrina y Caracara se
+  juegan la temporada en la final; Cernícala, también en la Escapada de la semana 24.»

@@ -117,6 +117,10 @@ del prototipo, commit `f08bde5`).
   sigue siendo la referencia de la v2. El umbral no cambia.
 - **Umbral:** cada Falconess en **60 % o más** (cota inferior de Wilson) y **12 puntos o menos** entre
   la mejor y la peor.
+- **Informe (no puerta), desde el 2026-11-10:** la **especialización** de la atenta en las temporadas
+  que pasan sus metas (`pnpm sim:season-batch -- --policy atenta`): cuántas stats terminan en 800 o
+  más y en 1000 o más, y la distancia entre la 2.ª y la 3.ª stat. Mide que una temporada bien jugada
+  suba dos stats y no todas (temporada-v3.md, «Crecimiento con decisiones»).
 - **Si falla:** el kit de esa Falconess: su habilidad única o pasiva, sus letras o cómo crece al
   entrenar (palancas 1 a 3). Nunca la Agilidad ni una regla del motor.
 - **Hoy:** pasa. Peregrina 70,7 %, Cernícala 74,9 %, Caracara 70,7 %; 4,2 puntos entre la mejor y la
