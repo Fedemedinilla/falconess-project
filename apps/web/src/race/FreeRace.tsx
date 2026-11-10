@@ -1,5 +1,6 @@
 import { FIELD_LIMITS } from "@falconess/race-view";
 import type { ContentIndex, RaceLog } from "@falconess/schema";
+import { CURRENT_RULESET } from "@falconess/sim";
 import { type FormEvent, useId, useMemo, useState } from "react";
 import { ScreenExplainDefault } from "../app/ExplainDefault";
 import { useDetail } from "../app/explain";
@@ -23,6 +24,7 @@ import {
   type FreeRaceForm,
   formWings,
   frameChoices,
+  freeCourses,
   intField,
   MAX_PARTS,
   normalizeForm,
@@ -33,12 +35,17 @@ import {
 import { Replay } from "./RaceReplay";
 import { metres, uiPlural } from "./words";
 
+/** The free race runs on the current rules, like `pnpm sim:race` (v3: the flight, ADR-0011). */
+function freeContext() {
+  return simContext(CURRENT_RULESET.version);
+}
+
 type Outcome =
   | { readonly ok: true; readonly form: FreeRaceForm; readonly log: RaceLog }
   | { readonly ok: false; readonly form: FreeRaceForm; readonly detail: string };
 
 function run(form: FreeRaceForm): Outcome {
-  const ctx = simContext();
+  const ctx = freeContext();
   const clean = normalizeForm(ctx, form);
   try {
     return { ok: true, form: clean, log: runFreeRace(ctx, clean) };
@@ -52,7 +59,7 @@ let lastOutcome: Outcome | undefined;
 
 /** The race in one line: course, field, rivals' week and seed. */
 function summary(form: FreeRaceForm, content: ContentIndex): string {
-  const course = content.courses.get(form.courseId);
+  const course = freeCourses(freeContext()).get(form.courseId);
   const courseName = course ? gameText(course.textKey) : form.courseId;
   if (form.field === "neutral")
     return ui("ui.freeRace.summary.neutral", {
@@ -192,7 +199,7 @@ function CheckList({
  * The default form gives a race at once.
  */
 export function FreeRace() {
-  const ctx = useMemo(() => simContext(), []);
+  const ctx = useMemo(() => freeContext(), []);
   const { content } = ctx;
   const [outcome, setOutcome] = useState<Outcome>(() => {
     lastOutcome ??= run(defaultForm(content));
@@ -282,7 +289,7 @@ export function FreeRace() {
                   value={form.courseId}
                   onChange={(e) => set({ courseId: e.currentTarget.value })}
                 >
-                  {[...content.courses.values()].map((c) => (
+                  {[...freeCourses(ctx).values()].map((c) => (
                     <option key={c.id} value={c.id}>
                       {ui("ui.freeRace.course.option", {
                         name: gameText(c.textKey),

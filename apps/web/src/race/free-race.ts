@@ -13,17 +13,20 @@ import {
 } from "@falconess/race-view";
 import {
   type ContentIndex,
+  type Course,
   DEFAULT_POSITION,
   type Position,
   type RaceLog,
 } from "@falconess/schema";
 import {
+  flightOf,
   freezeEntry,
   generateField,
   neutralFixtureEntry,
   type SimContext,
   simulateRace,
 } from "@falconess/sim";
+import { catalogueCourses } from "../content/load";
 
 export type FreeRaceForm = {
   readonly courseId: string;
@@ -50,6 +53,16 @@ export const MAX_PARTS = 4;
 
 /** Content ids, sorted so lists are stable. */
 const ids = (map: ReadonlyMap<string, unknown>) => [...map.keys()].sort();
+
+/**
+ * The courses the free race offers: the content's, and on a ruleset that flies (v3) every
+ * catalogue track too (ADR-0011 §6), as `pnpm sim:race` does.
+ */
+export function freeCourses(ctx: SimContext): ReadonlyMap<string, Course> {
+  const courses = new Map(ctx.content.courses);
+  if (flightOf(ctx.ruleset) !== null) for (const c of catalogueCourses()) courses.set(c.id, c);
+  return courses;
+}
 
 /** A sensible race at rest: Peregrina on her signature frame against season-start rivals. */
 export function defaultForm(content: ContentIndex): FreeRaceForm {
@@ -124,7 +137,7 @@ export function normalizeForm(ctx: SimContext, form: FreeRaceForm): FreeRaceForm
   const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
   return {
     ...form,
-    courseId: content.courses.has(form.courseId)
+    courseId: freeCourses(ctx).has(form.courseId)
       ? form.courseId
       : (ids(content.courses)[0] ?? form.courseId),
     seed: form.seed.trim() === "" ? "1" : form.seed.trim(),
@@ -157,7 +170,7 @@ export function fieldSpecOf(form: FreeRaceForm): FieldSpec {
 
 /** The field and the race, run by the sim; throws what the sim throws for an impossible field. */
 export function runFreeRace(ctx: SimContext, form: FreeRaceForm): RaceLog {
-  const course = ctx.content.getCourse(form.courseId);
+  const course = freeCourses(ctx).get(form.courseId) ?? ctx.content.getCourse(form.courseId);
   const engine = { generateField, freezeEntry, neutralFixtureEntry };
   const entries = buildField(engine, ctx, course, form.seed, fieldSpecOf(form));
   return simulateRace(ctx.ruleset, entries, course, form.seed, { detail: "full" });

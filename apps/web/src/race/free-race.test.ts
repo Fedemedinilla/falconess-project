@@ -1,6 +1,7 @@
-import { buildField, contentLabels, signatureFrameOf } from "@falconess/race-view";
+import { buildField, contentLabels, isFlightLog, signatureFrameOf } from "@falconess/race-view";
 import { DEFAULT_POSITION, POSITIONS } from "@falconess/schema";
 import {
+  CURRENT_RULESET,
   freezeEntry,
   generateField,
   neutralFixtureEntry,
@@ -8,7 +9,7 @@ import {
   simulateRace,
 } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
-import { simContext } from "../content/load";
+import { catalogueCourses, simContext } from "../content/load";
 import {
   cliArgs,
   defaultForm,
@@ -16,6 +17,7 @@ import {
   fieldSpecOf,
   formWings,
   frameChoices,
+  freeCourses,
   intField,
   normalizeForm,
   runFreeRace,
@@ -142,5 +144,23 @@ describe("the free race form", () => {
     if (!player) throw new Error("no player");
     expect(labels.runnerName(player)).toBe("Peregrina");
     expect(labels.livery(player.manufacturer)?.primary).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+});
+
+describe("the free race on ruleset v3 (the flight, ADR-0011)", () => {
+  const v3 = simContext(CURRENT_RULESET.version);
+
+  it("offers every catalogue track besides the content's, and races one", () => {
+    const ids = [...freeCourses(v3).keys()];
+    for (const c of catalogueCourses()) expect(ids).toContain(c.id);
+    expect(ids).toContain("ridge");
+    // v1 does not fly: only the content's courses
+    expect([...freeCourses(ctx).keys()].sort()).toEqual([...ctx.content.courses.keys()].sort());
+    const form = normalizeForm(v3, { ...defaultForm(v3.content), courseId: "breakaway" });
+    expect(form.courseId).toBe("breakaway");
+    const log = runFreeRace(v3, form);
+    expect(log.rulesetVersion).toBe(CURRENT_RULESET.version);
+    expect(log.courseId).toBe("breakaway");
+    expect(isFlightLog(log)).toBe(true);
   });
 });
