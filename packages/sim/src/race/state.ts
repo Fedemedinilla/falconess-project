@@ -375,7 +375,8 @@ export type RaceState = {
   readonly posFrac: Int32Array;
   /**
    * Step A scratch (PERF-2): lanes + 1 by rank key, best first, kept from the tick before so the
-   * sort is almost always one pass. The last slot holds the n it was built for (0 = a fresh arena).
+   * sort is almost always one pass. Slot 8 holds the n it was built for (0 = a fresh arena), slot 9
+   * is 1 when `ahead` and `posFrac` were last written from a strict order (no tie).
    */
   readonly rankOrder: Int32Array;
   // results (19)
@@ -729,7 +730,7 @@ function createState(): RaceState {
     key: f64(N),
     ahead: i32(N),
     posFrac: i32(N),
-    rankOrder: i32(N + 1),
+    rankOrder: i32(N + 2),
     place: i32(N),
     deadHeat: u8(N),
     timeTicks: i32(N),

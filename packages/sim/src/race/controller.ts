@@ -70,32 +70,48 @@ export function rankSnapshot(S: RaceState, n: number): void {
   // always one pass); `ahead` = how many keys are strictly greater = the index of the first lane
   // with her key, so equal keys share a rank and the order among them never matters
   const ord = S.rankOrder;
+  let fresh = false;
   if (ord[MAX_LANES] !== n) {
     for (let k = 0; k < n; k++) ord[k] = k + 1;
     ord[MAX_LANES] = n;
+    fresh = true;
   }
+  let moved = false;
+  let ties = false;
   for (let k = 1; k < n; k++) {
     const x = ord[k] ?? 1;
     const kx = key[x - 1] ?? 0;
     let m = k - 1;
+    const km = key[(ord[m] ?? 1) - 1] ?? 0;
+    if (km >= kx) {
+      // in place: with no move the compares are the adjacent pairs, so they see every tie
+      if (km === kx) ties = true;
+      continue;
+    }
+    moved = true;
     while (m >= 0 && (key[(ord[m] ?? 1) - 1] ?? 0) < kx) {
       ord[m + 1] = ord[m] ?? 1;
       m--;
     }
     ord[m + 1] = x;
   }
+  // the same strict order as the last snapshot (slot n + 1: it had no ties): the same ranks
+  if (!fresh && !moved && !ties && ord[MAX_LANES + 1] === 1) return;
   const ahead = S.ahead;
   const frac = posFracRow(n);
   let rank = 0;
   let prev = 0;
+  let strict = 1;
   for (let k = 0; k < n; k++) {
     const l = (ord[k] ?? 1) - 1;
     const kl = key[l] ?? 0;
     if (k === 0 || kl !== prev) rank = k;
+    else strict = 0;
     prev = kl;
     ahead[l] = rank;
     S.posFrac[l] = frac[rank] ?? 0;
   }
+  ord[MAX_LANES + 1] = strict;
 }
 
 /** `fl(ahead × 1000, n − 1)` for every `ahead` of a field of n (0 for n ≤ 1), built once per n. */
