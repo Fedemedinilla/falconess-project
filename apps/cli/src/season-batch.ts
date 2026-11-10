@@ -7,7 +7,8 @@
  * bonuses, the mean final stats, the goal races' win rate and place distribution (ADR-0005
  * «Pasada 2») and the goal pass-rate table (per goal: the share of the seasons that reached the
  * race and passed it, flagged under 80 % as a diagnostic, the share of them that won it, plus the
- * share of all seasons that reached and that passed it). Seeds `batch-0` … `batch-(N−1)`. The
+ * share of all seasons that reached and that passed it), and the specialization of the completed
+ * seasons (report only: stats ≥ 800 and ≥ 1000, the gap between the 2nd and 3rd stat). Seeds `batch-0` … `batch-(N−1)`. The
  * ruleset defaults to `CURRENT_RULESET` (ADR-0006); `--ruleset v1` measures the old rules.
  */
 import type { Grade, RunInput, SeasonGoal, SeasonState } from "@falconess/schema";
@@ -65,7 +66,31 @@ export type SeasonBatchSummary = {
   simulatorWeeks: number;
   /** Skill points left unspent at season end, summed. */
   ptsLeft: number;
+  /** Specialization (report only, owner 2026-11-10): the final stats of the completed seasons. */
+  specialization: Specialization;
 };
+
+/**
+ * «Especialización» (report only): over completed seasons, how many final stats reach 800 and 1000
+ * (summed) and the gap between the 2nd and the 3rd highest stat (summed). A season that builds
+ * two stats has one or two stats ≥ 800 and a wide 2nd-3rd gap; one that raises everything has
+ * three or four and a narrow gap.
+ */
+export type Specialization = {
+  seasons: number;
+  atLeast800: number;
+  atLeast1000: number;
+  gap2nd3rd: number;
+};
+
+/** Adds one completed season's final stats to `spec`. */
+export function addSpecialization(spec: Specialization, stats: Record<string, number>): void {
+  const sorted = STAT_ORDER.map((k) => stats[k] ?? 0).sort((a, b) => b - a);
+  spec.seasons++;
+  spec.atLeast800 += sorted.filter((v) => v >= 800).length;
+  spec.atLeast1000 += sorted.filter((v) => v >= 1000).length;
+  spec.gap2nd3rd += (sorted[1] ?? 0) - (sorted[2] ?? 0);
+}
 
 /**
  * Plays `runs` seasons of one Falconess with `policy` (the ruleset's reference policy by default)
@@ -102,6 +127,7 @@ export function runSeasonBatch(
     skillsLearned: 0,
     simulatorWeeks: 0,
     ptsLeft: 0,
+    specialization: { seasons: 0, atLeast800: 0, atLeast1000: 0, gap2nd3rd: 0 },
   };
   const places: number[] = [];
   for (let i = 0; i < runs; i++) {
@@ -129,8 +155,10 @@ export function runSeasonBatch(
     out.score.stats += stats;
     out.score.skills += skills;
     out.score.races += seasonScore(ctx, s) - stats - skills;
-    if (s.endReason === "completed") out.completed++;
-    else out.failTurns[s.turn] = (out.failTurns[s.turn] ?? 0) + 1;
+    if (s.endReason === "completed") {
+      out.completed++;
+      addSpecialization(out.specialization, s.stats);
+    } else out.failTurns[s.turn] = (out.failTurns[s.turn] ?? 0) + 1;
     out.totalTurns += s.turn;
     out.races += s.raceResults.length;
     out.wins += s.raceResults.filter((r) => r.place === 1).length;
@@ -181,6 +209,11 @@ export function renderSeasonBatch(m: SeasonBatchSummary): string[] {
   lines.push(
     `  skills learned ${(m.skillsLearned / Math.max(1, m.runs)).toFixed(2)} per season (unique included)  skill points left ${mean(m.ptsLeft, m.runs)}  simulator weeks ${(m.simulatorWeeks / Math.max(1, m.runs)).toFixed(1)}`,
   );
+  const sp = m.specialization;
+  if (sp.seasons > 0)
+    lines.push(
+      `  specialization (completed seasons, report only): stats ≥ 800 ${(sp.atLeast800 / sp.seasons).toFixed(2)}  ≥ 1000 ${(sp.atLeast1000 / sp.seasons).toFixed(2)}  2nd − 3rd stat ${mean(sp.gap2nd3rd, sp.seasons)}`,
+    );
   for (const c of m.curve)
     if (c.reached > 0)
       lines.push(
