@@ -3295,3 +3295,75 @@ prototype agree. No rule and no constant changed; each number is pinned by a tes
   hide, and re-run after step 2. Sources: `.work/design/scratch-critic/partwin.mjs`
   (win-rate model) and `stabilizer.mjs` (body-only sprint replica of section 5; scales re-measured
   by the spec editor).
+
+## 30. Ruleset v3: flight (ADR-0011)
+
+Stage 1 of the flight race («Despegar, luchar y caer», `docs/design/carrera-v3-vuelo.md`), in the
+game since ADR-0011. The engine is frozen (ADR-0010): only bugs are fixed; balance moves content.
+v1 and v2 never reach this section's code: every flight path is behind `flightOf(ruleset)`, which
+is null for a ruleset without `flight`.
+
+### 30.1 Where it lives
+
+| What | File |
+| --- | --- |
+| Flight constants (`FLIGHT`), race and field overrides (`RACE`, `FIELD`), neutral wings (`WINGS`) | `packages/sim/src/rulesets/v3/constants.ts` |
+| Invariance switches `FLIGHT_OFF_*`, old wing tables, `rulesetV3With` (B8 and tests only) | `packages/sim/src/rulesets/v3/switches.ts` |
+| Plans (`planFlights`), band and hold helpers, distances and letters, `flightOf` | `packages/sim/src/race/flight.ts` |
+| Flight steps inside the tick (B4b, B8 and B10 in the air, A2 dirty air, C2 passes, two lines) | `packages/sim/src/race/engine.ts` |
+| Flight tables and state (plan, band, line, ledger) | `packages/sim/src/race/state.ts` |
+| Kick on low hp (`kick`, `KickRule`) | `packages/sim/src/race/sprint.ts` |
+| Neutral frame, letters and the passive's dive trait at freeze | `packages/sim/src/race/entry.ts` |
+| Log: flight events, `RaceLedger.flight`, frame flags `altLow`, `altHigh`, `dirtyAir`, `lineOut` | `packages/schema/src/race.ts`, `packages/sim/src/race/log.ts` |
+
+### 30.2 What v3 adds to the tick (section 18)
+
+- **Before tick 0:** each runner's flight plan, a pure function of the geometry, her position
+  (ADR-0008), her wings' gesture and her stats (`RaceEntry.flightPlan`, the pre-race card can show
+  it). Planned costs and the energy reserve of the plan are booked; jumps a flight covers need no
+  lift. The hp bar budgets the plan's hits at her own Resistencia.
+- **A2 (snapshot):** dirty air: a runner holding her band with another ahead in the same band
+  and line within `dirtyM` (`dirtyHighM` in the high band) holds at a higher price and rests less.
+- **B4b:** planned takeoff (gesture: ticks per band of her wing), climb, holding, the end of the
+  flight, the descent and the dive (Δv by band, part of it in the air, decaying by `kDecel`);
+  the struggle: going over after `escapeTicks` in dirty air, being knocked down
+  (`knockTicks` + Courage), forced landing without energy, the nerve test when diving onto
+  traffic (Courage); two lines per band (switch, side pass, boxed in, door).
+- **B8 in the air:** the body approaches her air cruise (her pace draw at `airPacePm`, her own
+  pre-drawn air ±`airWPm` ‰ around a Technique centre), the tow in another's wake by band and
+  metres, the outside line's extra metres.
+- **B10 in the air:** the legs rest at `airDrainPm`, not in dirty air; maneuvers cost hp
+  (`hpHit`: takeoff, dive per band, line switch, knock, door; Resistencia shrinks them).
+- **B6:** in the Sprint the final's kick is shortened by the hp left beyond the cruise to the
+  line (`kickHiPm`, logged as `sprintPlan.kickPm`).
+- **B13:** a skill that fires in the air is held and released whole at the touchdown
+  (`skill.heldTicks`).
+- **C2:** passes in the air and in the dive surge (`pass`, `passSide`), log and ledger only.
+
+No step draws: every random value of a v3 race is pre-drawn before tick 0 (17), so a race
+depends only on its seed and its entries, and the lane order of step B never changes a result
+(INV-4, `simulateRaceReversed`).
+
+### 30.3 Distances and letters
+
+The distance comes from the course length (`distanceMaxM`: Sprint ≤ 1400 m, Milla ≤ 1800 m,
+Media ≤ 2400 m, Larga). The entry carries the letter of that distance
+(`RaceEntry.distanceAptitude`, B for rivals). It acts on flight: `distancePm` (B 0, A −30 ‰,
+C +30 ‰ of difficulty) scaled by the distance's `distanceAirPm`, `distanceRestPm` and
+`distanceDivePm` on the air, the rest and the dive. See `docs/formulas.md` («Vuelo (ruleset v3)»).
+
+### 30.4 Neutral wings
+
+With `neutralFrames` every frame races on `neutralFrame` (PW 1.0, energy 100, dissipation 60):
+no manufacturer rule, no frame passive, no part or quirk effect, no wear (`noWear`: no durability
+loss, no repair, no break). The style keeps only its gesture (`WINGS`) and, with
+`neutralStyles`, the ground physics of every style are the same. The Falconess's own passive
+(`Falconess.passive`) races with her; a passive's flight effect is ADR-0009's `diveSkill` trait.
+
+### 30.5 Tests, goldens and guardrails
+
+- Unit tests of each rule: `packages/sim/src/race/{flight,stage1,round5,lines,allfly,neutral,stamina,kick,polish,homes,trim,jumpskim}.test.ts`.
+- Goldens: `tests/golden/v3/` (`golden-v3.ts`, `pnpm golden:update -- --set v3 --yes`).
+- Guardrails: `pnpm balance:barandas` (ADR-0010, B1-B8; `--quick` in CI). B8 compares v1, v2,
+  v2 seasons and every `FLIGHT_OFF_*` switch with `apps/cli/src/balance/invariance.json`.
+- Performance: `pnpm bench` gates v3 on the Travesía (3600 m) at p95 < 5 ms (B7).

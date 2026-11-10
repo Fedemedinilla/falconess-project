@@ -223,6 +223,8 @@ export const Build = z.object({
 
 Cinco stats de Falconess (1–1200, como Umamusume), cuatro stats de alas que solo multiplican o presupuestan, y tres recursos que se consumen en carrera más la durabilidad. Cada stat de alas tiene una stat "dueña" para que el jugador sepa qué entrenar.
 
+**Ruleset v3 (ADR-0011, carrera con vuelo, el que juegan las temporadas nuevas):** las alas pierden sus stats y sus reglas de fabricante. Todas corren con el mismo perfil (PW 1,0, energía 100, disipación 60); el estilo queda como gesto de despegue (Lanza, Columna, Rampa, Turbina). Las alas no se gastan ni se rompen: no hay desgaste ni reparación, y la durabilidad no cuenta en carrera. Piezas y peculiaridades no tienen efecto en carrera. La pasiva firma es de la Falconess (`Falconess.passive`) y corre con ella en cualquier ala. Lo que sigue en esta sección vale para v1 y v2, que se conservan.
+
 | Stat de Falconess | Gobierna en carrera                                                                                   | Gobierna en entrenamiento            |
 | ----------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `agility`         | Velocidad de crucero; penalización en `curves`                                                        | —                                    |
@@ -259,6 +261,8 @@ Cinco stats de Falconess (1–1200, como Umamusume), cuatro stats de alas que so
 Las rivales corren en la posición de sus alas (ADR-0008, por ahora). El jugador la elige en la semana de carrera (si no elige, corre en la de sus alas).
 
 **Aptitudes:** multiplicadores por letra de **posición**: S 1,10 · A 1,05 · B 1,00 · C 0,95 · D 0,90 · E 0,85 · F 0,80 · G 0,70. La letra de la posición elegida multiplica `intelligence` efectiva (peor posición = peores decisiones de boost); las alas no tienen letra (ADR-0008: cada letra de estilo pasó a la posición por defecto de ese estilo). `agility` no lleva letra (ADR-0007 quitó la aptitud de bioma). Es la misma lógica que la aptitud de distancia y de estilo de carrera en Umamusume, reconstruida por la comunidad.
+
+**Distancias (ruleset v3, ADR-0011):** cuatro distancias por el largo de la pista (Sprint ≤ 1400 m, Milla ≤ 1800 m, Media ≤ 2400 m, Larga) y una letra por distancia para cada Falconess, en escalera (Peregrina A-A-B-C, Cernícala C-B-A-B, Caracara C-C-B-A). La letra actúa en el vuelo (B es el cero, A +3 %, C −3 %); las rivales son B. La caja negra sube como máximo una letra de distancia, hasta B. Nueve pistas en el catálogo v3 (Sprint; Escalera, Mirador; Pista de saltos, Circuito, Escapada; Cielo abierto, Pista larga, Travesía) y un calendario con pista del mes (`packages/content/calendars/v3.json`).
 
 **Ánimo:** cinco niveles que multiplican todas las stats efectivas: 1,10 / 1,05 / 1,00 / 0,98 / 0,95.
 
@@ -358,6 +362,8 @@ Cinco fabricantes, cada uno con una regla mecánica implementada como `Manufactu
 
 Las alas firma del MVP (`peregrina-signature` por Kōryū, `cernicala-signature` por Altair, `caracara-signature` por Boneyard) copian las stats del bastidor genérico de su estilo y solo cambian el `passive`. El simulador verifica que el genérico rinde entre el 85 % y el 90 % de la firma en tasa de victoria (sección 12).
 
+En v3 (ADR-0011) las alas firma valen por identidad y acabados, no por rendimiento: la pasiva pasó a la Falconess y la regla 85-90 % de abajo (invariante 2) solo aplica a v1 y v2.
+
 **Piezas (`content/parts/`):** cuatro tipos por cinco fabricantes; cada pieza aplica `mods` y, visualmente, lleva la paleta de su marca. Valores de arranque: turbina `powerToWeight +0,1 / dissipation −10` (Steinhaus) o `powerToWeight +0,05 / dissipation +10` (Lumière); batería `energy +20`; estabilizadores `durability +20` o reducción de penalización en `curves`; firmware `skillSlots +1` (Altair) o `intelligence efectiva +30`. Máximo una pieza por tipo y cuatro por build.
 
 **Peculiaridades Boneyard (`content/quirks.json`, 12 iniciales):** `cheap-fuel` (energy +15, dissipation −10), `loose-rivets` (durability −20, PW +0,1), `old-radio` (activación +10 % en fase media), `patched-tank` (energy −10, durability +40), `hot-head` (sin penalización de calor en los primeros 300 m), `mud-runner` (`water` sin penalización), `thin-air` (`climb` +5 %, `descent` −5 %), `heavy-paint` (PW −0,05, durability +25), `lucky-bolt` (una habilidad aleatoria gana `activationBase` 1,0), `stutter` (ráfagas no disponibles), `glider-tape` (`jump` +10 % lift), `scrap-heart` (regen +0,25 por tick). Re-sorteo: cuesta `chatarra` (moneda de crafteo) con precio creciente por bastidor y se reinicia cada temporada; usa el stream `quirks`.
@@ -378,6 +384,8 @@ Una temporada son 48 turnos (semanas); cada turno el jugador elige una acción, 
 | `workshop`          | Instala o cambia bastidor y piezas; repara `durability`; re-sortea peculiaridades (cuesta `chatarra`) | +5                 | Sin fallo                                              |
 | `rest`              | fatiga −40; ánimo +0 o +1 (50 %)                                                                      | —                  | —                                                      |
 | `outing`            | ánimo +1 fijo; vínculo con cuadrilla +5                                                               | fatiga −10         | —                                                      |
+
+En v3 (ADR-0011) el taller no repara (no hay desgaste): queda para habilidades y para cambiar de alas. La chatarra pierde su uso principal; su nuevo uso está pendiente (T18).
 
 La ganancia real = base × (1 + bonificaciones de cuadrilla presentes) × multiplicador de ánimo, redondeada hacia abajo; `fatigue ≥ 80` fuerza el descanso (ruleset v1; desde el ruleset v2, ADR-0006, la barra se muestra como Vigor = 100 − fatiga, no hay descanso forzado y el fallo sube con poco vigor). Los números son iniciales y los ajusta el simulador por lotes contra la curva objetivo: una Falconess entrenada con criterio termina la temporada con stats entre 550 y 800, y una build perfecta roza 1000 en dos stats.
 

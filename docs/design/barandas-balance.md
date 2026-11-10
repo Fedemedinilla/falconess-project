@@ -54,9 +54,10 @@ cambios.
   Cielo abierto, Pista larga, Travesía).
 - **Tamaño:** al menos 1600 carreras por celda (posición × pista × nivel × base) y 1000 temporadas por
   Falconess y base. Los porcentajes llevan intervalo de Wilson al 95 %.
-- **Herramienta:** el arnés de balance (`.work/design7/harness/`, a pasar a `sim:batch` y
-  `sim:season-batch` cuando la v3 entre al juego). Una corrida completa, con todas las barandas, es
-  el requisito de cualquier cambio de balance.
+- **Herramienta:** `pnpm balance:barandas` (ADR-0011; portado del arnés de design7, mismas semillas
+  y estadísticas; umbrales en `apps/cli/src/balance/barandas.json`). Una corrida completa, con
+  todas las barandas, es el requisito de cualquier cambio de balance; `-- --quick` corre en CI como
+  puerta de B8.
 
 Un resultado es **frágil** si pasa pero el intervalo de Wilson cruza el umbral. Lo frágil no bloquea;
 se anota y se vigila en el próximo cambio.

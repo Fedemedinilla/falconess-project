@@ -1,8 +1,8 @@
-# ADR-0009: Un efecto de vuelo para las pasivas (borrador v3)
+# ADR-0009: Un efecto de vuelo para las pasivas (ruleset v3)
 
-- Estado: **borrador** (prototipo `.work/design7`, rama `race-v3-proto`); pendiente de que el dueño
-  lo apruebe y de que el ruleset v3 deje de ser borrador.
-- Fecha: 2026-11-09 (recorte por distancia: 2026-11-10)
+- Estado: aceptado (dueño, 2026-11-10: «llevar la etapa 1 al juego»). Nació como borrador en el
+  prototipo `.work/design7` (rama `race-v3-proto`) y entra al juego con el ruleset v3 (ADR-0011).
+- Fecha: 2026-11-09 (recorte por distancia: 2026-11-10; aceptado: 2026-11-10)
 - Alcance: schema (`skill`: `PassiveSkill.flight`, `SkillFlight.diveVPmDistance`; `race`: `RaceTraits.diveSkill`, evento `dive`:
   `skillMms`, `skillId`), content (`skills/talon-lock.json`), sim (`freezeEntry`, `planFlights`,
   el toque de la picada, el registro), docs.
@@ -11,7 +11,7 @@
 
 ## Contexto
 
-En el borrador v3 Peregrina es la Falconess más floja (métrica 7: 64,9 % [61,9-67,8] en el arnés,
+En el prototipo de v3 Peregrina es la Falconess más floja (métrica 7: 64,9 % [61,9-67,8] en el arnés,
 66 % en 4000 temporadas) y su meta difícil, la T46 (ridge, 3.ª o mejor), es un espejo de Remates
 donde pierde contra rivales de más Agilidad. Su pasiva firma, «Garra fija» (`talon-lock`), habla el
 vocabulario de v1: pulsos y bajadas en el suelo. En v3 la Remate vuela por encima de la Bajada de
@@ -47,8 +47,10 @@ y agregarle un miembro obliga a v1 y v2 a tener un manejador para él.
    que puso la pasiva) y `skillId` (la pasiva). Solo aparecen cuando una pasiva cambió esa picada,
    así que los registros de v1, v2 y de v3 con la perilla apagada no cambian. La vista puede
    mostrar «Garra fija» leyendo el registro, sin texto fijo.
-5. **Contenido:** `talon-lock.json` suma `"flight": { "diveFromBand": 2, "diveVPm": 500 }`. Los
-   modificadores de v1 no cambian.
+5. **Contenido:** `talon-lock.json` suma `"flight": { "diveFromBand": 2, "diveVPm": 500,
+   "diveVPmDistance": { … } }`. Los modificadores de v1 no cambian. En v3 las alas no tienen
+   pasiva (ADR-0011 §3): la pasiva corre con la Falconess (`Falconess.passive`), sea cual sea el
+   ala.
 6. **Recorte por distancia (dueño 2026-11-09, `trim-final.md`):** `SkillFlight` suma un campo
    opcional, `diveVPmDistance` (‰ por distancia de carrera: `sprint`, `mile`, `medium`, `long`,
    cada uno 0-500). Con la constante de vuelo `skillFlightDistance` prendida, `freezeEntry` copia al
@@ -56,6 +58,11 @@ y agregarle un miembro obliga a v1 y v2 a tener un manejador para él.
    sin ella, `diveVPm` en todas (`FLIGHT_OFF_TRIM`, las casas de 5f470a2 byte a byte, `INV-14`).
    Garra fija: Sprint 100, Milla 250, Media 500, Larga 500. El rasgo de la entrada ya dice el ‰ de
    esa carrera, así que el registro y la vista lo leen sin saber la distancia.
+
+7. **En el juego (ADR-0011):** `skillFlight` y `skillFlightDistance` están prendidas en
+   `packages/sim/src/rulesets/v3/constants.ts`; `FLIGHT_OFF_HOMES` y `FLIGHT_OFF_TRIM` viven en
+   `rulesets/v3/switches.ts` solo para la prueba de invariancia (B8 de ADR-0010, grupos
+   `off-homes` y `off-trim` de `apps/cli/src/balance/invariance.json`).
 
 ## Consecuencias
 
@@ -77,7 +84,7 @@ y agregarle un miembro obliga a v1 y v2 a tener un manejador para él.
   carreras a la que había puesto Resistencia».
 - Los campos de prueba del arnés (fixtures neutras) no tienen pasiva: las tablas de posiciones no
   cambian con este ADR.
-- Golden v1/v2 y `v1-invariance` sin cambios. `INV-13` (`homes/inv13.ts`) prueba que con
+- Golden v1/v2 y `v1-invariance` sin cambios. `INV-13` (`homes/inv13.ts` del prototipo; en el juego, el grupo `off-homes` de `pnpm balance:barandas`) prueba que con
   `FLIGHT_OFF_HOMES` el v3 es el pulido de balance (6e98e90) byte a byte, con una parte que corre a
   Peregrina con su pasiva en registros full.
 - Queda abierta la puerta para que otras pasivas tengan efectos de vuelo (otro campo opcional de

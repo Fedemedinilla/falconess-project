@@ -42,8 +42,11 @@ describe("docs/commands.md", () => {
 
 describe("golden scripts", () => {
   it("test:golden runs the golden test file and golden:update runs the generator", () => {
-    expect(pkg.scripts["test:golden"]).toBe("vitest run --project sim src/race/golden.test.ts");
+    expect(pkg.scripts["test:golden"]).toBe(
+      "vitest run --project sim src/race/golden.test.ts src/race/golden-v3.test.ts",
+    );
     expect(existsSync(join(ROOT, "packages/sim/src/race/golden.test.ts"))).toBe(true);
+    expect(existsSync(join(ROOT, "packages/sim/src/race/golden-v3.test.ts"))).toBe(true);
     expect(pkg.scripts["golden:update"]).toBe("tsx apps/cli/src/golden-update.ts");
     expect(existsSync(join(ROOT, "apps/cli/src/golden-update.ts"))).toBe(true);
   });

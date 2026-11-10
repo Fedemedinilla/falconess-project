@@ -49,7 +49,8 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 pnpm typecheck · pnpm test · pnpm test:golden · pnpm lint · pnpm content:validate · pnpm bench
 pnpm sim -- --seed 42 --falconess peregrina · pnpm play -- --seed 42 --falconess peregrina
 pnpm sim:race -- --seed 1 --course ridge · pnpm sim:batch -- --runs 10000
-pnpm sim:season-batch -- --runs 500 · pnpm golden:update -- --yes (solo el líder, con ADR)
+pnpm sim:season-batch -- --runs 500 · pnpm balance:barandas [-- --quick] (carrera v3, ADR-0010)
+pnpm golden:update -- --yes [--set v3] (solo el líder, con ADR)
 Detalle de cada comando: docs/commands.md.
 
 ## Lecciones aprendidas
@@ -104,3 +105,5 @@ Detalle de cada comando: docs/commands.md.
 - Pulido de balance (design7, 2026-11-09): un término absoluto de stat que solo actúa en el vuelo (η de la picada por Coraje, el presupuesto del plan a Resistencia 600) hace que «volar contra no volar» cambie de signo con el nivel (open-sky Remate −7,7 m a 300, +1,8 m a 750): medir `neutral/fly.ts` a 300 y 750 antes de culpar a una posición; y la distancia de la picada a la meta decide al Remate más que su potencia (60 m: 17 %, 250 m sobre el último Salto: 35 %).
 - Casas por pista (design7, 2026-11-09): un bono de pasiva sobre la picada (+50 % de Δv) vale el doble en las pistas cortas que en las largas (espejo de Remates: Sprint 11,8 → 25,6 %, Larga +2 puntos), porque la picada ya valía más donde la σ es chica; antes de fijar un bono de una Falconess, medir su espejo por pista y el caso del dueño, no solo la métrica 7. Un criterio pesado por calendario (CAL-1) se arregla con la rotación de pistas (pista del mes) sin tocar el motor: buscar la oferta antes de tocar una posición.
 - Al diseñar una pista para una posición, medir también cuánto vuela esa posición ahí (aire % y vuelos): en la Escapada la primera versión ganaba porque el vuelo a ras de la Punta arrancaba dentro de un Salto y se perdía (corría sin pagar físico), no por el diseño.
+- Al pasar el prototipo v3 al juego (ADR-0011), el digest de `.work/design7/perf/digest.ts` (1656 carreras) más INV-5..15 probaron cada paso de la limpieza; `pnpm balance:barandas` guarda esa prueba como B8 (`apps/cli/src/balance/invariance.json`). Antes de borrar una perilla, verificar que esté apagada también en todos los `FLIGHT_OFF_*`.
+- La temporada v3 copiaba la durabilidad del perfil neutro (100) a las alas tras cada carrera y la política reparaba alas «gastadas» que no se gastan: un valor que el motor deja de usar (durabilidad con `noWear`) igual se escribe al estado; revisar qué vuelve de la carrera a la temporada cuando una regla se apaga.

@@ -474,6 +474,44 @@ scoreWinBonus × victorias + scorePodiumBonus × segundos y terceros puestos`, y
 `scorePodiumBonus` 20, `gradeCapOnGoalFailure`; los tamaños de muestra viven en el lote
 (`apps/cli`), no en el ruleset.
 
+### Vuelo (ruleset v3, ADR-0011)
+
+Intención: que volar se sienta (despegue por ala, lucha arriba, picada) y que no sea gratis; que
+la Agilidad siga siendo el pilar, la Resistencia la segunda en Media y Larga y que el azar no
+decida (ADR-0010). Constantes en `packages/sim/src/rulesets/v3/constants.ts`; todo en enteros,
+‰ y unidades del motor (sección 30 de `docs/race-engine.md`).
+
+- **Distancia:** Sprint si el largo es ≤ 1400 m, Milla ≤ 1800 m, Media ≤ 2400 m, Larga si no.
+- **Letra de distancia:** `d = distancePm[letra]` (S −60, A −30, B 0, C +30, D +60 … ‰ de
+  dificultad; las rivales son B, o sea 0). Actúa en el aspecto de vuelo de esa distancia:
+  - todas: crucero en el aire × (1000 − ⌊d × distanceAirPm[dist] / 1000⌋) / 1000
+    (`distanceAirPm` 250 / 250 / 200 / 100);
+  - Sprint (despegue y picada): costo de subir × (1000 + d) / 1000 y η de la picada × (1000 −
+    min(900, 2d)) / 1000;
+  - Milla (la línea arriba): el bono de la línea ganada × (1000 − d) / 1000;
+  - Larga (el descanso): descanso de las piernas × (1000 + ⌊d × 250 / 1000⌋) / 1000.
+    Rango: con A o C, ±0,3 a ±0,75 % del crucero en el aire y ±3 % del costo, del bono o del
+    descanso de su aspecto (stamina-final.md del prototipo).
+- **Aire propio:** `aire = centro − W + ⌊byte × (2W + 1) / 256⌋` ‰ del crucero, con
+  `centro = ⌊airTechPm × (min(Técnica, 1200) − 600) / 1200⌋`, `W = airWPm` (18) y `byte`
+  pre-sorteado por vuelo. Rango: ±18 ‰ más ±15 ‰ por Técnica.
+- **Sostener una banda:** `banda × pu × bandHoldPm[banda] / 1000` (baja con `skimHoldPm`), ×
+  `dirtyHoldPm` / 1000 en aire sucio (×2,5 a Técnica 0, menos con Técnica).
+- **Picada:** Δv = ⌊diveVMms[banda] × η × diveWingPm / 10⁶⌋, η = diveEtaBasePm + diveEtaCouragePm ×
+  min(C, 1200) / 1200 (‰; con `diveCourRel`, el Coraje se lee contra su propia build), × (1000 +
+  pm) / 1000 con la pasiva de vuelo (ADR-0009: Garra fija +100 / +250 / +500 / +500 ‰ por
+  distancia desde la banda alta). La línea ganada suma `overDivePm` (800) o `sideDivePm` (650) de
+  una banda más. Rango: alta ≈ 5 m, techo ≈ 6 m nominales; la gran picada deja ≥ 300 m a la meta.
+- **Físico del esfuerzo:** cada maniobra resta hp (`hpTakeoff` 30, vuelo a ras 20, `hpDiveBand` 15
+  por banda, `hpSwitch` 32, `hpKnock` y `hpDoor` 144 en tráfico, cuyos golpes la Resistencia achica dos veces, `hpTrafficSq`;
+  `hpDirtyPm`, `hpBoxedPm` por tick), × `hpDistPm[dist]` / 1000 (1000 / 50 / 20 / 0: casi solo en
+  el Sprint) y achicado por la Resistencia; la barra presupuesta los golpes del propio plan a su
+  Resistencia (`hpPlanOwn`).
+- **Remate a físico bajo (Sprint):** `kick(h) = 1000` si `h ≥ 150`, si no `⌊1000 h / 150⌋`, con
+  `h` el físico que sobra al planear el remate, en ‰ de su barra, más allá del crucero a la meta.
+  El remate gasta `kick` ‰ de su energía; el resto queda. Rango: la Resistencia en el Sprint pasa
+  de 0,2 a ≈ 0,8 m por +100 (2,3 m en carreras peleadas).
+
 ## Constantes v1 (valores iniciales, BRIEF §6)
 
 | Constante       | Valor     | Intención                                        |
