@@ -9,6 +9,7 @@ import s from "./Mobile.module.css";
 import { crewInitials, statCells, type TrainingCard } from "./model";
 import { StatStrip } from "./Parts";
 import { placeScene } from "./sceneLayout";
+import { playPing } from "./sfx";
 
 const GLYPH: Readonly<Record<TrainingKind, GlyphName>> = {
   "train:agility": "wind",
@@ -29,6 +30,26 @@ export function trainButtonId(kind: TrainingKind): string {
  * the five round trainings. A tap chooses (nothing moves), a second tap on the chosen one trains;
  * «Fallo N %» hangs on the chosen button's top edge in its risk color (option 3).
  */
+/**
+ * A training's result on the training screen (owner 2026-11-11, like Umamusume's): what it came
+ * to, the stats it moved and the skill points, and where the numbers count up from.
+ */
+export type TrainResult = {
+  readonly kind: TrainingKind;
+  readonly outcome: "success" | "boost" | "fail";
+  readonly gains: readonly { readonly stat: StatName; readonly delta: number }[];
+  readonly points: number;
+  readonly from: Readonly<Record<StatName, number>>;
+  readonly fromPoints: number;
+};
+
+/** When the stamp lands and each «+N» after it, ms. */
+const STAMP_MS = 120;
+const FIRST_POP_MS = 520;
+const POP_STEP_MS = 300;
+/** The result stays this long after its last «+N», then the week goes on (a tap goes sooner). */
+const HOLD_MS = 1100;
+
 export function TrainScreen({
   ctx,
   state,
@@ -38,6 +59,8 @@ export function TrainScreen({
   onSelect,
   onConfirm,
   onBack,
+  result,
+  onResultDone,
 }: {
   ctx: SimContext;
   state: SeasonState;
@@ -47,9 +70,46 @@ export function TrainScreen({
   onSelect: (kind: TrainingKind) => void;
   onConfirm: (kind: TrainingKind) => void;
   onBack: () => void;
+  /** Set right after a training ran: the screen plays its result, then calls `onResultDone`. */
+  result?: TrainResult | undefined;
+  onResultDone?: () => void;
 }) {
   const art = runnerArt(state.falconessId);
-  const card = cards.find((c) => c.kind === selected);
+  // the result's «+N», one after the other: the stats it moved, then the skill points
+  const popOrder = result
+    ? [
+        ...result.gains.map((g) => ({ key: g.stat, delta: g.delta })),
+        ...(result.points > 0 ? [{ key: "points", delta: result.points }] : []),
+      ]
+    : [];
+  const delayOf = (i: number) => FIRST_POP_MS + i * POP_STEP_MS;
+  const pops = result && {
+    stats: Object.fromEntries(
+      popOrder.flatMap((p, i) =>
+        p.key === "points" ? [] : [[p.key, { delta: p.delta, delay: delayOf(i) }]],
+      ),
+    ),
+    points:
+      result.points > 0 ? { delta: result.points, delay: delayOf(popOrder.length - 1) } : undefined,
+    from: result.from,
+    fromPoints: result.fromPoints,
+  };
+  const resultEnd = delayOf(Math.max(0, popOrder.length - 1)) + HOLD_MS;
+  // the pings climb with the «+N» (a failure has none)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per result
+  useEffect(() => {
+    if (!result) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    if (result.outcome !== "fail")
+      popOrder.forEach((_, i) => {
+        timers.push(setTimeout(() => playPing(i, popOrder.length), delayOf(i)));
+      });
+    timers.push(setTimeout(() => onResultDone?.(), resultEnd));
+    return () => {
+      for (const t of timers) clearTimeout(t);
+    };
+  }, [result]);
+  const card = result ? undefined : cards.find((c) => c.kind === selected);
   const crew = card?.crews[0];
   const maker = crew && ctx.content.getManufacturer(crew.manufacturer);
   const gains: Partial<Record<StatName, number>> | undefined = card
@@ -57,7 +117,8 @@ export function TrainScreen({
     : undefined;
   const name = (kind: TrainingKind) => ui(`ui.m.train.name.${kind}`);
   const stageRef = useRef<HTMLDivElement>(null);
-  const active = selected !== undefined && art?.training?.[selected] ? selected : undefined;
+  const showing = result ? result.kind : selected;
+  const active = showing !== undefined && art?.training?.[showing] ? showing : undefined;
   // which way the scene slides in: from the right when the player moved right
   const order = cards.map((c) => c.kind);
   const last = useRef<TrainingKind | undefined>(undefined);
@@ -81,6 +142,24 @@ export function TrainScreen({
               </div>
             )}
           </div>
+          {result && (
+            <div className={s.ribbon} id="m-cinta">
+              <Glyph name={GLYPH[result.kind]} size={26} color="#1d1704" weight={2.4} />
+              <div>
+                <b>{name(result.kind)}</b>
+              </div>
+            </div>
+          )}
+          {result && (
+            <p
+              className={cx(s.stamp, result.outcome === "fail" && s.stampFail)}
+              id="m-resultado"
+              data-outcome={result.outcome}
+              style={{ animationDelay: `${STAMP_MS}ms` }}
+            >
+              {ui(`ui.m.result.${result.outcome}`)}
+            </p>
+          )}
           {card && (
             <div className={s.ribbon} id="m-cinta">
               <Glyph name={GLYPH[card.kind]} size={26} color="#1d1704" weight={2.4} />
@@ -131,6 +210,7 @@ export function TrainScreen({
           gains={gains ?? {}}
           pointsGain={card?.skillPoints}
           long
+          {...(pops ? { pops } : {})}
         />
         <p className="visually-hidden" aria-live="polite">
           {card
@@ -141,7 +221,7 @@ export function TrainScreen({
               })
             : ""}
         </p>
-        <div className={s.rounds}>
+        <div className={cx(s.rounds, result && s.leaving)} inert={result ? true : undefined}>
           {cards.map((c) => {
             const sel = c.kind === selected;
             return (
@@ -198,7 +278,17 @@ export function TrainScreen({
           })}
         </div>
       </div>
-      <div className={s.foot}>
+      {result && (
+        // a tap anywhere goes on sooner
+        <button
+          type="button"
+          className={s.resultSkip}
+          id="m-resultado-seguir"
+          aria-label={ui("ui.m.result.next")}
+          onClick={() => onResultDone?.()}
+        />
+      )}
+      <div className={cx(s.foot, result && s.leaving)} inert={result ? true : undefined}>
         <button type="button" className={cx(s.btn, s.back)} id="m-volver" onClick={onBack}>
           <Glyph name="back" size={20} weight={2.4} />
           <span>{ui("ui.m.back")}</span>

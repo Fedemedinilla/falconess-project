@@ -1,5 +1,6 @@
 import type { ContentIndex, StatName } from "@falconess/schema";
 import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { Letter } from "../screens/shared/Letter";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
@@ -192,11 +193,65 @@ export type StatStripProps = {
   pointsGain?: number | undefined;
   /** Long labels (the training screen) or short ones (the menu). */
   long?: boolean;
+  /**
+   * A training's result (owner 2026-11-11, like Umamusume's): each stat that moved shows a big
+   * «+N» with rising chevrons over its cell, one after the other (`delay`, ms), and its number
+   * counts from `from` up to its new value. Replaces `gains`.
+   */
+  pops?: {
+    readonly stats: Partial<Record<StatName, { readonly delta: number; readonly delay: number }>>;
+    readonly points?: { readonly delta: number; readonly delay: number } | undefined;
+    readonly from: Readonly<Record<StatName, number>>;
+    readonly fromPoints: number;
+  };
 };
 
+/** A number that counts from `from` to `to` once its `delay` has passed (ms). */
+function CountUp({ from, to, delay }: { from: number; to: number; delay: number }) {
+  const [v, setV] = useState(from);
+  useEffect(() => {
+    if (from === to) return;
+    let raf = 0;
+    const start = performance.now() + delay;
+    const dur = 520;
+    const tick = (now: number) => {
+      const t = Math.min(1, Math.max(0, (now - start) / dur));
+      // ease-out: fast at first, settling on the value
+      const e = 1 - (1 - t) * (1 - t) * (1 - t);
+      setV(Math.round(from + (to - from) * e));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [from, to, delay]);
+  return <>{v}</>;
+}
+
+/** The «+N» of a result over its cell: chevrons rising behind the number. */
+function Pop({ delta, delay, small = false }: { delta: number; delay: number; small?: boolean }) {
+  const up = delta >= 0;
+  return (
+    <span
+      className={cx(s.pop, !up && s.popDown, small && s.popSmall)}
+      style={{ animationDelay: `${delay}ms` }}
+      data-delta={delta}
+    >
+      <span className={s.popArrows} style={{ animationDelay: `${delay}ms` }} aria-hidden="true" />
+      <span className={s.popN}>{formatSigned(delta)}</span>
+    </span>
+  );
+}
+
 /** Her five stats as numbers with medal colors (no rank letters), and her skill points. */
-export function StatStrip({ stats, skillPoints, gains, pointsGain, long = false }: StatStripProps) {
-  const showGains = gains !== undefined;
+export function StatStrip({
+  stats,
+  skillPoints,
+  gains,
+  pointsGain,
+  long = false,
+  pops,
+}: StatStripProps) {
+  const showGains = gains !== undefined && pops === undefined;
   return (
     <div className={cx(s.strip, long && s.stripLong)} id="m-stats">
       {showGains && (
@@ -217,11 +272,25 @@ export function StatStrip({ stats, skillPoints, gains, pointsGain, long = false 
           </div>
         </div>
       )}
+      {pops && (
+        <div className={s.gains} aria-hidden="true" id="m-resultado-pops">
+          {stats.map((c) => {
+            const p = pops.stats[c.stat];
+            return <div key={c.stat}>{p && <Pop delta={p.delta} delay={p.delay} />}</div>;
+          })}
+          <div>
+            {pops.points && <Pop delta={pops.points.delta} delay={pops.points.delay} small />}
+          </div>
+        </div>
+      )}
       <div className={s.srow}>
         {stats.map((c) => (
           <div
             key={c.stat}
-            className={cx(s.sc, gains?.[c.stat] !== undefined && s.scOn)}
+            className={cx(
+              s.sc,
+              (gains?.[c.stat] !== undefined || pops?.stats[c.stat] !== undefined) && s.scOn,
+            )}
             data-stat={c.stat}
             data-tier={c.tier}
             data-cap={c.capped || undefined}
@@ -236,7 +305,15 @@ export function StatStrip({ stats, skillPoints, gains, pointsGain, long = false 
               {long ? ui(`ui.m.stat.${c.stat}`) : ui(`ui.stat.abbr.${c.stat}`)}
             </span>
             <span className={cx(s.sv, s.sn, s[`t${c.tier}`])} aria-hidden="true">
-              {c.value}
+              {pops?.stats[c.stat] ? (
+                <CountUp
+                  from={pops.from[c.stat]}
+                  to={c.value}
+                  delay={pops.stats[c.stat]?.delay ?? 0}
+                />
+              ) : (
+                c.value
+              )}
             </span>
             {c.capped && (
               <span className={s.cap0} aria-hidden="true">
@@ -255,7 +332,11 @@ export function StatStrip({ stats, skillPoints, gains, pointsGain, long = false 
             {ui("ui.m.points")}
           </span>
           <span className={s.sv} aria-hidden="true">
-            {skillPoints}
+            {pops?.points ? (
+              <CountUp from={pops.fromPoints} to={skillPoints} delay={pops.points.delay} />
+            ) : (
+              skillPoints
+            )}
           </span>
         </div>
       </div>

@@ -2338,3 +2338,154 @@
     animation: none;
   }
 }
+
+/* a training's result (owner 2026-11-11): the stamp, the «+N» with rising chevrons */
+.leaving {
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+  transition:
+    opacity 0.22s ease-in,
+    transform 0.28s cubic-bezier(0.4, 0, 1, 1);
+}
+.stamp {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10%;
+  z-index: 2;
+  margin: 0;
+  text-align: center;
+  font-family: var(--cn);
+  font-weight: 800;
+  font-style: italic;
+  font-size: 54px;
+  line-height: 1;
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #fff6c2 0%, #ffd23f 45%, #ff8a00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1.5px #7a2a00;
+  filter: drop-shadow(0 3px 0 #fff) drop-shadow(0 6px 10px rgb(122 42 0 / 0.45));
+  animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.stampFail {
+  background: linear-gradient(180deg, #e8eef3 0%, #9aa8b5 55%, #5c6b78 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: 1.5px #2a3440;
+  filter: drop-shadow(0 3px 0 #fff) drop-shadow(0 6px 10px rgb(20 32 43 / 0.4));
+  animation-name: stampFail;
+}
+@keyframes stampIn {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(-6deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-3deg);
+  }
+}
+@keyframes stampFail {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(4px);
+  }
+  85% {
+    transform: translateX(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pop {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 36px;
+  animation: popRise 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+.popN {
+  position: relative;
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1;
+  color: #b34f00;
+  -webkit-text-stroke: 1px #fff;
+  text-shadow:
+    0 2px 0 #fff,
+    0 0 8px rgb(255 210 63 / 0.9);
+}
+.popSmall .popN {
+  font-size: 22px;
+}
+/* chevrons rising behind the number */
+.popArrows {
+  position: absolute;
+  inset: -6px 2px 0;
+  background:
+    linear-gradient(135deg, transparent 50%, rgb(255 205 50 / 0.95) 50% 62%, transparent 62%) 0 0 /
+    50% 50% repeat-x,
+    linear-gradient(225deg, transparent 50%, rgb(255 205 50 / 0.95) 50% 62%, transparent 62%) 100% 0
+    / 50% 50% repeat-x;
+  opacity: 0;
+  animation: arrowsUp 0.9s ease-out both;
+}
+.popDown .popN {
+  color: #b3261e;
+}
+.popDown .popArrows {
+  display: none;
+}
+@keyframes popRise {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes arrowsUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+.resultSkip {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp,
+  .pop {
+    animation-duration: 0.01s;
+  }
+  .popArrows {
+    display: none;
+  }
+}

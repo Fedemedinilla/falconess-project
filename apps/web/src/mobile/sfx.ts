@@ -277,3 +277,28 @@ export function playNav(): void {
   if (performance.now() - lastCueAt < 200) return;
   playSound("nav");
 }
+
+/**
+ * The stat «ping» of a training's result (owner 2026-11-11): bright bell pings climbing a major
+ * arpeggio, one per stat that went up (and the skill points), so three gains sound «ping,
+ * piiing, ping!» going up. `step` is its place (0 first), `of` how many there are; the one in
+ * the middle of three rings longer. Same in every sound style; silent when sound is off.
+ */
+export function playPing(step: number, of: number): void {
+  if (currentStyle() === "off") return;
+  const c = audio();
+  if (!c) return;
+  // E5, A5, C#6, E6, A6: a major arpeggio that keeps climbing
+  const notes = [659.25, 880, 1108.73, 1318.51, 1760];
+  const f = notes[Math.min(step, notes.length - 1)] ?? 880;
+  const long = of === 3 && step === 1;
+  const d = long ? 0.55 : 0.32;
+  try {
+    tone(c, { type: "sine", f, d, v: 0.22, a: 0.004 });
+    tone(c, { type: "triangle", f: f * 2, d: d * 0.6, v: 0.05, a: 0.004 });
+    // a soft shimmer on top, like a bell
+    tone(c, { type: "sine", f: f * 3.01, d: d * 0.35, v: 0.025, a: 0.004 });
+  } catch {
+    // no sound: the numbers still show
+  }
+}

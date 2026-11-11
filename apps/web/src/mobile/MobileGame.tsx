@@ -12,6 +12,7 @@ import {
   wingsPosition,
   withPosition,
 } from "../screens/model/position";
+import { weekSummary } from "../screens/model/week";
 import { WeekDialog } from "../screens/WeekDialog";
 import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
@@ -36,7 +37,7 @@ import {
   type SoundStyle,
   setSoundStyle,
 } from "./sfx";
-import { TrainScreen } from "./TrainScreen";
+import { type TrainResult, TrainScreen } from "./TrainScreen";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
 
 type View =
@@ -45,7 +46,8 @@ type View =
   | { readonly screen: "workshop"; readonly tab: WorkshopTab }
   | { readonly screen: "prerace"; readonly input?: WeekActionInput | undefined }
   | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
-  | { readonly screen: "before"; readonly turn: number };
+  | { readonly screen: "before"; readonly turn: number }
+  | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
 
 const MENU: View = { screen: "menu" };
 
@@ -160,9 +162,30 @@ export function MobileGame() {
   const commit = (input: WeekActionInput) => {
     const raceTurn = menu.raceWeek ? state.turn : undefined;
     if (!game.act(withPosition(input, chosen), inputs)) return;
-    playSound(trainingCue(input, state.turn, game.getSnapshot().lastStep?.after, cards));
+    const step = game.getSnapshot().lastStep;
+    const cue = trainingCue(input, state.turn, step?.after, cards);
+    playSound(cue);
     // a race week shows what the action did before the race (testers 2026-11-11)
-    setView(raceTurn !== undefined ? { screen: "before", turn: raceTurn } : MENU);
+    const next: View = raceTurn !== undefined ? { screen: "before", turn: raceTurn } : MENU;
+    // a training plays its result on the training screen first (owner 2026-11-11)
+    const kind = cards.find((c) => c.kind === input.kind)?.kind;
+    if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
+      const summary = weekSummary(ctx, step);
+      setView({
+        screen: "trained",
+        next,
+        result: {
+          kind,
+          outcome: cue,
+          gains: summary.stats,
+          points: Math.max(0, step.after.skillPoints - step.before.skillPoints),
+          from: step.before.stats,
+          fromPoints: step.before.skillPoints,
+        },
+      });
+      return;
+    }
+    setView(next);
   };
   /** A week's action: on a race week the pre-race card comes first. */
   const act = (input: WeekActionInput) => {
@@ -222,6 +245,22 @@ export function MobileGame() {
           pendingEvent={pending}
           canRecap={snap.lastStep !== undefined && snap.lastStepSeen}
           onAction={onMenu}
+        />
+      );
+      break;
+    case "trained":
+      screen = (
+        <TrainScreen
+          ctx={ctx}
+          state={state}
+          cards={cards}
+          selected={undefined}
+          injured={false}
+          onSelect={() => undefined}
+          onConfirm={() => undefined}
+          onBack={() => undefined}
+          result={view.result}
+          onResultDone={() => setView(view.next)}
         />
       );
       break;
