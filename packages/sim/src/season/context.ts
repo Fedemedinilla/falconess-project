@@ -43,6 +43,15 @@ function entry(d: Draft): TurnLogEntry {
   return fresh;
 }
 
+/** ADR-0013: one parent's part at the start or at an inspiration, on the turn's entry. */
+export function logInspiration(
+  d: Draft,
+  rec: NonNullable<TurnLogEntry["inspirations"]>[number],
+): void {
+  const e = entry(d);
+  e.inspirations = [...(e.inspirations ?? []), rec];
+}
+
 export function note(d: Draft, text: string): void {
   entry(d).notes.push(text);
 }

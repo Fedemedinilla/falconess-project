@@ -535,6 +535,14 @@ test("inheritance: up to two of this browser's black boxes go into the new seaso
   await page.click('[data-box="b3"]');
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
+  // the inheritance card: what each box gave at the start
+  const card = page.locator("#m-inspiracion");
+  await expect(card).toHaveAttribute("data-kind", "start");
+  await expect(card.locator("li[data-parent]")).toHaveCount(2);
+  await expect(card.locator('li[data-parent="0"]')).toContainText(t("stat.agility"));
+  await expect(card.locator('li[data-parent="0"]')).toContainText("+40");
+  await page.click("#m-inspiracion-seguir");
+  await expect(card).toHaveCount(0);
   await expect(page.locator("#m-semana")).toBeVisible();
   const save = await page.evaluate(() => localStorage.getItem("falconess.pruebas.partida") ?? "");
   expect(save).toContain('"id":"b1"');

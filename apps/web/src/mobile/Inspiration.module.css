@@ -1,0 +1,202 @@
+/* ADR-0013: the inheritance card. Her art glows and flashes white, sparks fly, then the card. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  background: radial-gradient(circle at 50% 38%, #fff6c9 0%, #f3c64a 28%, #1b2330 72%);
+  animation: fade 0.3s ease-out both;
+  overflow: hidden;
+}
+.stage {
+  position: relative;
+  width: 220px;
+  height: 260px;
+  flex: none;
+}
+.rays {
+  position: absolute;
+  inset: -60px;
+  background: repeating-conic-gradient(rgba(255, 255, 255, 0.35) 0deg 8deg, transparent 8deg 24deg);
+  border-radius: 50%;
+  mask: radial-gradient(circle, #000 20%, transparent 70%);
+  animation:
+    spin 6s linear infinite,
+    rise 1.6s ease-out both;
+}
+.art {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  animation: evolve 1.8s ease-in-out both;
+}
+.spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 12px 4px #fff3a8;
+  opacity: 0;
+  transform: rotate(calc(var(--i) * 36deg)) translateY(0);
+  animation: spark 1.2s ease-out calc(1.2s + var(--i) * 0.04s) both;
+}
+.card {
+  width: min(100%, 360px);
+  padding: 16px;
+  border-radius: 18px;
+  background: #fff;
+  color: #14202b;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) 1.6s both;
+}
+.title {
+  margin: 0;
+  font-family: var(--cn, sans-serif);
+  font-size: 28px;
+  line-height: 32px;
+  text-align: center;
+}
+.sub {
+  margin: 2px 0 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #4b5967;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff6d6;
+}
+.rowOff {
+  background: #eef1f4;
+  color: #6b7785;
+}
+.box {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b5a17;
+}
+.rowOff .box {
+  color: inherit;
+}
+.gain {
+  font-family: var(--cn, sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+}
+.letter {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e7b46;
+}
+.go {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 14px;
+  background: #c0392b;
+  color: #fff;
+  font-family: var(--cn, sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+/* the evolution: she pulses, turns into a white silhouette that flickers, then comes back bright */
+@keyframes evolve {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 0 #fff);
+    transform: scale(0.96);
+  }
+  20% {
+    filter: brightness(1.6) drop-shadow(0 0 18px #fff);
+  }
+  30%,
+  50%,
+  70% {
+    filter: brightness(0) invert(1) drop-shadow(0 0 24px #fff);
+    transform: scale(1.04);
+  }
+  40%,
+  60% {
+    filter: brightness(1.8) drop-shadow(0 0 16px #fff6b0);
+  }
+  85% {
+    filter: brightness(0) invert(1) drop-shadow(0 0 40px #fff);
+    transform: scale(1.08);
+  }
+  100% {
+    filter: brightness(1.1) drop-shadow(0 0 14px #fff3a8);
+    transform: scale(1);
+  }
+}
+@keyframes spark {
+  0% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 36deg)) translateY(0) scale(1);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 36deg)) translateY(-150px) scale(0.3);
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.92);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .rays,
+  .art,
+  .spark,
+  .card {
+    animation: none;
+  }
+  .spark {
+    display: none;
+  }
+}

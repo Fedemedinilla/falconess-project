@@ -17,6 +17,8 @@ import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { EndScreen } from "./EndScreen";
 import { Glyph } from "./Glyph";
+import { InspirationOverlay } from "./Inspiration";
+import { inspirationScene } from "./inspirationScene";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
@@ -65,6 +67,7 @@ export function MobileGame() {
   const [view, setView] = useState<View>(MENU);
   const [weekPosition, setWeekPosition] = useState<WeekPosition>();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sceneDone, setSceneDone] = useState<string>();
   const run = snap.run;
   const inputs = run?.inputs.length ?? 0;
 
@@ -299,12 +302,27 @@ export function MobileGame() {
   }
 
   const onMenuScreen = view.screen === "menu";
+  // ADR-0013: an inspiration (or the season's start with parents) shows its card first
+  const startInput = run.inputs[0];
+  const parents = startInput?.kind === "start" ? startInput.parents : [];
+  const scene = onMenuScreen
+    ? inspirationScene(run.seed, state, inputs, snap.lastStep, snap.lastStepSeen)
+    : undefined;
+  const showScene = scene !== undefined && scene.key !== sceneDone;
   return (
     <div className={cx(s.app, view.screen === "race" && s.appWide)} style={style}>
       {view.screen !== "race" && hud}
       {screen}
       {/* «Lo que pasó» and the event wait until the race and its result were seen */}
-      {onMenuScreen && (
+      {showScene && scene && (
+        <InspirationOverlay
+          scene={scene}
+          falconessId={state.falconessId}
+          parents={parents}
+          onDone={() => setSceneDone(scene.key)}
+        />
+      )}
+      {onMenuScreen && !showScene && (
         <>
           <WeekDialog
             className={s.weekDialog}

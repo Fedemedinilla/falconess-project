@@ -1,7 +1,7 @@
 import { Rng } from "@falconess/rng";
 import type { StatName } from "@falconess/schema";
 import { STAT_ORDER } from "../stats.js";
-import { addDelta, type Draft, note, type SimContext } from "./context.js";
+import { addDelta, type Draft, logInspiration, note, type SimContext } from "./context.js";
 import { statCap } from "./difficulty.js";
 
 /**
@@ -18,9 +18,12 @@ export function inspire(ctx: SimContext, d: Draft): void {
   if (!I.inspirationTurns.includes(d.turn)) return;
   const rng = new Rng(`${d.seed}/inspiration/${d.turn}`);
   let any = false;
-  for (const p of parents) {
+  for (const [parent, p] of parents.entries()) {
     const chance = I.inspirationChancePm[p.stars - 1] ?? 0;
-    if (!rng.chancePermille("training", chance)) continue;
+    if (!rng.chancePermille("training", chance)) {
+      logInspiration(d, { parent, stars: p.stars, inspired: false, stat: p.stat, gain: 0 });
+      continue;
+    }
     any = true;
     const before = d.stats[p.stat];
     const after = Math.min(
@@ -29,6 +32,13 @@ export function inspire(ctx: SimContext, d: Draft): void {
     );
     d.stats[p.stat] = after;
     if (after !== before) addDelta(d, p.stat, after - before);
+    logInspiration(d, {
+      parent,
+      stars: p.stars,
+      inspired: true,
+      stat: p.stat,
+      gain: after - before,
+    });
     // at the season's cap the inspiration has nothing to add: say so, not «le pasa Agilidad»
     note(d, after === before ? "log.inherit.capped" : `log.inherit.inspiration.${p.stat}`);
   }

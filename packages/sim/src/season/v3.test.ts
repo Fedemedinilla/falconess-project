@@ -278,6 +278,13 @@ describe("inheritance with luck (ADR-0013)", () => {
       { stat: "stamina", stars: 1 },
     ]);
     expect(bare.inheritance).toBeUndefined();
+    // the log says what each box gave, for the game's card
+    const rec = s.log[0]?.inspirations;
+    expect(rec?.map((r) => [r.parent, r.stat, r.gain, r.inspired])).toEqual([
+      [0, "agility", 40, true],
+      [1, "stamina", 20, true],
+    ]);
+    expect(bare.log[0]?.inspirations).toBeUndefined();
   });
   it("inspires at weeks 24 and 40 by chance, the same way on every replay", () => {
     let inspired = 0;
@@ -287,6 +294,9 @@ describe("inheritance with luck (ADR-0013)", () => {
       const again = to(withParents(`insp-${i}`), 24);
       expect(canonicalJson(again)).toBe(canonicalJson(s));
       const notes = s.log.flatMap((e) => e.notes);
+      // one record per parent, inspired or not, on the week that begins
+      const recs = s.log.find((e) => e.turn === 24)?.inspirations ?? [];
+      expect(recs.map((r) => r.parent)).toEqual([0, 1]);
       inspired += notes.filter((n) => n.startsWith("log.inherit.inspiration.")).length;
       none += notes.filter((n) => n === "log.inherit.none").length;
       // nothing before week 24

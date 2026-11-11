@@ -14,7 +14,7 @@ import { resolveFrameBuild } from "../frame-build.js";
 import { flightOf } from "../race/flight.js";
 import type { Ruleset } from "../rulesets/index.js";
 import { aptitudeRank, upgradeAptitude } from "../stats.js";
-import { type Draft, note, rngForInput, type SimContext } from "./context.js";
+import { type Draft, logInspiration, note, rngForInput, type SimContext } from "./context.js";
 import { statCap } from "./difficulty.js";
 import { rollCrewPresence } from "./hangar.js";
 import { rollQuirks } from "./workshop.js";
@@ -32,15 +32,37 @@ const TRAINING_KINDS: readonly TrainingKind[] = [
 /** Apply up to two parents' factors (BRIEF §8). Resolved once, at turn 0, with stream `training`. */
 function applyInheritance(ctx: SimContext, d: Draft, parents: readonly BlackBox[], rng: Rng): void {
   const S = ctx.ruleset.season;
-  for (const p of parents) {
+  parents.forEach((p, parent) => {
     const { stat, stars } = p.factors.stat;
-    d.stats[stat] = Math.min(statCap(ctx.ruleset, d), d.stats[stat] + stars * S.statInheritPerStar);
+    const before = d.stats[stat];
+    d.stats[stat] = Math.min(statCap(ctx.ruleset, d), before + stars * S.statInheritPerStar);
     const apt = p.factors.aptitude;
     const chance = S.aptitudeInheritChance[apt.stars - 1] ?? 300;
+    const from = d.positionAptitude[apt.key] as Aptitude;
+    let lifted = false;
     if (rng.chancePermille("training", chance)) {
-      d.positionAptitude[apt.key] = upgradeAptitude(d.positionAptitude[apt.key] as Aptitude);
+      d.positionAptitude[apt.key] = upgradeAptitude(from);
+      lifted = d.positionAptitude[apt.key] !== from;
     }
-  }
+    // ADR-0013 (v3): what each box gave, for the game's inheritance card
+    if (S.inheritance !== undefined)
+      logInspiration(d, {
+        parent,
+        stars,
+        inspired: true,
+        stat,
+        gain: d.stats[stat] - before,
+        ...(lifted
+          ? {
+              letter: {
+                position: apt.key,
+                from,
+                to: d.positionAptitude[apt.key] as Aptitude,
+              },
+            }
+          : {}),
+      });
+  });
 }
 
 /** A distance a black box can lift: up to B, never to a specialist's A (owner 2026-11-09). */

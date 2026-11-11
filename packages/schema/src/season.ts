@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BlackBox } from "./blackbox.js";
 import {
+  Aptitude,
   Difficulty,
   Distance,
   DistanceAptitudes,
@@ -113,6 +114,23 @@ export const TurnLogEntry = z.strictObject({
    */
   fatigueDelta: z.number().int().optional(),
   event: LoggedEvent.optional(),
+  /**
+   * ADR-0013: what each parent's black box did at the season's start or at an inspiration week,
+   * in parent order: whether it inspired her, the stat and what it really added (0 at the cap),
+   * and the position letter it lifted, if any. Absent without parents (and on v1, v2).
+   */
+  inspirations: z
+    .array(
+      z.strictObject({
+        parent: z.number().int().min(0).max(1),
+        stars: z.number().int().min(1).max(3),
+        inspired: z.boolean(),
+        stat: StatName,
+        gain: z.number().int().min(0),
+        letter: z.strictObject({ position: Position, from: Aptitude, to: Aptitude }).optional(),
+      }),
+    )
+    .optional(),
 });
 export type TurnLogEntry = z.infer<typeof TurnLogEntry>;
 
