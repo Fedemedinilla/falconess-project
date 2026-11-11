@@ -96,6 +96,45 @@ describe("pairing", () => {
   });
 });
 
+describe("position", () => {
+  const traits: World = { ...world("traits", ["Swift", "Bold", "Keen"]), position: "first" };
+  const colors: World = { ...world("colors", ["Crimson", "Ochre"]), position: "first" };
+  const nouns = world("raptors", ["Kestrel", "Merlin", "Hobby"]);
+
+  it("puts a first-position world first, whatever the order says", () => {
+    for (const order of ["fixed", "free"] as const) {
+      const out = generateNames([nouns, traits], {
+        ...base,
+        a: "raptors",
+        b: "traits",
+        order,
+        count: 9,
+      });
+      for (const n of out.names) expect(n.firstWorld).toBe("traits");
+    }
+  });
+
+  it("never pairs two first-position worlds when picking freely", () => {
+    const out = generateNames([traits, colors, nouns], {
+      ...base,
+      a: undefined,
+      b: undefined,
+      count: 12,
+    });
+    for (const n of out.names) expect([n.firstWorld, n.secondWorld]).toContain("raptors");
+  });
+
+  it("leaves worlds without a position as before", () => {
+    const plain = generateNames(WORLDS, { ...base, order: "free", count: 10 }).names.map(
+      (n) => n.name,
+    );
+    const withAny = WORLDS.map((w) => ({ ...w, position: "any" as const }));
+    expect(
+      generateNames(withAny, { ...base, order: "free", count: 10 }).names.map((n) => n.name),
+    ).toEqual(plain);
+  });
+});
+
 describe("filters", () => {
   it("respects the maximum length in characters", () => {
     const out = names({ maxChars: 10, count: 20 });

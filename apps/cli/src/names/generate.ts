@@ -20,12 +20,26 @@ export type World = {
   readonly lang: string;
   /** "house" worlds only act as a prefix and are left out of "any with any" pairing. */
   readonly role: "word" | "house";
+  /**
+   * Where this world's word sits in a name: "first" for adjectives and colors (Swift Kestrel),
+   * "second" for words that only close a name, "any" otherwise. Overrides --order.
+   */
+  readonly position?: Position | undefined;
   readonly provisional: boolean;
   readonly words: readonly string[];
   readonly source?: string | undefined;
   /** Imported per-word data, keyed by the word as written in `words`. */
   readonly stats?: Readonly<Record<string, WordStats>> | undefined;
 };
+
+export type Position = "first" | "second" | "any";
+
+/** Two worlds that both insist on the same slot cannot make a name together (Swift Crimson). */
+function compatible(x: World, y: World): boolean {
+  const a = x.position ?? "any";
+  const b = y.position ?? "any";
+  return a === "any" || b === "any" || a !== b;
+}
 
 export type GenerateOptions = {
   readonly seed: string;
@@ -150,12 +164,19 @@ export function generateNames(worlds: readonly World[], opts: GenerateOptions): 
   while (names.length < wanted && attempts < maxAttempts) {
     attempts++;
     const wa = fixedA ?? pick(rng, pool);
-    const others = pool.length > 1 ? pool.filter((w) => w.id !== wa.id) : pool;
+    const distinct = pool.length > 1 ? pool.filter((w) => w.id !== wa.id) : pool;
+    const fitting = distinct.filter((w) => compatible(wa, w));
+    const others = fitting.length > 0 ? fitting : distinct;
     const wb = fixedB ?? pick(rng, others);
 
     let first = { word: pick(rng, wa.words), world: wa };
     let second = { word: pick(rng, wb.words), world: wb };
     if (opts.order === "free" && rng.nextInt(STREAM, 2) === 1) [first, second] = [second, first];
+    // A world's declared position wins over the order (no extra draw, so seeds stay stable).
+    const p1 = first.world.position ?? "any";
+    const p2 = second.world.position ?? "any";
+    if ((p1 === "second" && p2 !== "second") || (p2 === "first" && p1 !== "first"))
+      [first, second] = [second, first];
     const houseWord = house ? pick(rng, house.words) : undefined;
 
     const name = [houseWord, first.word, second.word].filter((x) => x !== undefined).join(" ");

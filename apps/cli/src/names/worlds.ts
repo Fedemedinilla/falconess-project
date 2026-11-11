@@ -10,6 +10,7 @@ export const WorldFile = z
     name: z.string().min(1),
     lang: z.string().min(2),
     role: z.enum(["word", "house"]).default("word"),
+    position: z.enum(["first", "second", "any"]).default("any"),
     provisional: z.boolean().default(false),
     words: z.array(z.string().trim().min(1)).min(1),
     /** Where the words came from, e.g. "datamuse:recipes/winds.json". */

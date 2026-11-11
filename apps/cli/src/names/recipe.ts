@@ -19,13 +19,20 @@ export const RecipeFile = z
     name: z.string().min(1),
     lang: z.string().min(2),
     role: z.enum(["word", "house"]).default("word"),
+    /** Copied to the world: "first" for adjectives and colors. */
+    position: z.enum(["first", "second", "any"]).default("any"),
     /** Datamuse queries, run in order. */
     queries: z.array(Query).default([]),
-    /** WordNet walk: every lemma below these senses, down to `depth` levels. */
+    /**
+     * WordNet walk below these senses, down to `depth` levels: kinds of a noun ("wind.n.01"),
+     * ways of doing a verb ("dart.v.01") or adjectives similar to one ("fast.a.01").
+     */
     wordnet: z
       .object({
         roots: z
-          .array(z.string().regex(SENSE_REF, 'use a sense reference like "wind.n.01"'))
+          .array(
+            z.string().regex(SENSE_REF, 'use a sense reference like "wind.n.01" or "fast.a.01"'),
+          )
           .min(1),
         depth: z.number().int().min(1).max(6).default(3),
         /** Include named instances (stars, places), not only kinds. */
@@ -86,6 +93,7 @@ export type ImportedWorld = {
     name: string;
     lang: string;
     role?: "house";
+    position?: "first" | "second";
     provisional: true;
     source: string;
     words: string[];
@@ -132,12 +140,15 @@ export type WordData = {
   syllables(word: string): number | undefined;
 };
 
+/** WordNet's letters to the tags recipes filter on (Datamuse's: n, v, adj). */
+const POS_TAG = { n: "n", v: "v", a: "adj" } as const;
+
 export function fromWordNet(hits: readonly WordNetHit[], data: WordData): Candidate[] {
   return hits.map((h) => ({
     word: h.word,
     freq: data.freq(h.word),
     syllables: data.syllables(h.word),
-    pos: ["n"],
+    pos: [POS_TAG[h.pos]],
     origin: "wordnet" as const,
     note: h.gloss,
   }));
@@ -223,6 +234,7 @@ export function filterCandidates(
       name: recipe.name,
       lang: recipe.lang,
       ...(recipe.role === "house" ? { role: "house" as const } : {}),
+      ...(recipe.position === "any" ? {} : { position: recipe.position }),
       provisional: true,
       source: `${sourceKinds}:recipes/${id}.json`,
       words,

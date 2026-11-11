@@ -11,7 +11,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argString, parseArgs } from "./args.js";
-import { loadWordData, loadWordNet } from "./names/lexicon.js";
+import { loadWordData, loadWordNets } from "./names/lexicon.js";
 import {
   type Candidate,
   fetchRecipe,
@@ -21,7 +21,7 @@ import {
   parseRecipe,
   type WordData,
 } from "./names/recipe.js";
-import type { WordNet } from "./names/wordnet.js";
+import { type WordNets, walk } from "./names/wordnet.js";
 import { loadExcluded } from "./names/worlds.js";
 
 const ROOT = fileURLToPath(new URL("../names/", import.meta.url));
@@ -32,9 +32,9 @@ async function fetchJson(url: string): Promise<unknown> {
   return res.json();
 }
 
-let offline: { wordnet: WordNet; data: WordData } | undefined;
-function lexicon(): { wordnet: WordNet; data: WordData } {
-  offline ??= { wordnet: loadWordNet(), data: loadWordData() };
+let offline: { wordnet: WordNets; data: WordData } | undefined;
+function lexicon(): { wordnet: WordNets; data: WordData } {
+  offline ??= { wordnet: loadWordNets(), data: loadWordData() };
   return offline;
 }
 
@@ -43,8 +43,9 @@ async function main(argv: readonly string[]): Promise<void> {
 
   const senses = args.senses;
   if (typeof senses === "string") {
-    const found = lexicon().wordnet.senses(senses);
-    if (found.length === 0) console.log(`WordNet has no noun "${senses}".`);
+    const nets = lexicon().wordnet;
+    const found = [...nets.n.senses(senses), ...nets.v.senses(senses), ...nets.a.senses(senses)];
+    if (found.length === 0) console.log(`WordNet has no "${senses}".`);
     for (const s of found)
       console.log(`${s.ref.padEnd(22)} ${s.words.join(", ")}\n${"".padEnd(22)} ${s.gloss}`);
     return;
@@ -72,7 +73,7 @@ async function main(argv: readonly string[]): Promise<void> {
     if (recipe.wordnet) {
       const { wordnet, data } = lexicon();
       const { roots, depth, instances } = recipe.wordnet;
-      candidates.push(...fromWordNet(wordnet.descendants(roots, depth, instances), data));
+      candidates.push(...fromWordNet(walk(wordnet, roots, depth, instances), data));
     }
     const { world, dropped, kept } = filterCandidates(id, recipe, candidates, worn);
 

@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { dictionary } from "cmu-pronouncing-dictionary";
 import type { WordData } from "./recipe.js";
-import { WordNet } from "./wordnet.js";
+import { type Pos, WordNet, type WordNets } from "./wordnet.js";
 
 /**
  * Loads the offline word sources from their npm packages (devDependencies of apps/cli):
@@ -15,12 +15,17 @@ const require = createRequire(import.meta.url);
 /** SUBTLEX-US counts come from a corpus of about 51 million words of film and TV subtitles. */
 const SUBTLEX_CORPUS_MILLIONS = 51;
 
-export function loadWordNet(): WordNet {
+const FILES: Record<Pos, string> = { n: "noun", v: "verb", a: "adj" };
+
+export function loadWordNets(): WordNets {
   const dict = join(dirname(require.resolve("wordnet-db/package.json")), "dict");
-  return WordNet.parse(
-    readFileSync(join(dict, "index.noun"), "utf8"),
-    readFileSync(join(dict, "data.noun"), "utf8"),
-  );
+  const load = (pos: Pos) =>
+    WordNet.parse(
+      readFileSync(join(dict, `index.${FILES[pos]}`), "utf8"),
+      readFileSync(join(dict, `data.${FILES[pos]}`), "utf8"),
+      pos,
+    );
+  return { n: load("n"), v: load("v"), a: load("a") };
 }
 
 function loadFrequencies(): Map<string, number> {
