@@ -29,6 +29,7 @@ pnpm names -- --a raptors --b any --house makers --n 20 --seed 7 --out names.md
 | `--worn` | Archivo de palabras gastadas (−3 cada una); `none` lo desactiva. | `apps/cli/names/worn.txt` |
 | `--max-repeat` | Cuántos nombres de la lista pueden compartir una palabra. | 2 |
 | `--pool` | Candidatos por nombre pedido al puntuar. | 8 |
+| `--favorites` | Archivo de nombres favoritos (uno por línea); cada palabra suya suma +1 cuando vuelve a salir. `none` lo desactiva. | `apps/cli/names/favorites.txt` |
 | `--explain` | Muestra debajo de cada nombre qué reglas sumaron o restaron. | apagado |
 | `--exclude` | Archivo de excluidos; `none` lo desactiva. | `apps/cli/names/excluded.txt` |
 | `--worlds` | Carpeta de mundos. | `apps/cli/names/worlds/` |
@@ -51,6 +52,7 @@ Reglas en `apps/cli/src/names/score.ts`, todas en enteros:
 | Aliteración, según `--alliteration` | ±1 |
 | Cada palabra gastada (casa incluida) | −3 |
 | Nombre de 12 caracteres o menos | +1 |
+| Cada palabra que ya está en un favorito | +1 |
 
 Las sílabas salen de los datos importados del mundo (`stats`); si una palabra no los tiene, se
 estiman contando grupos de vocales. A igual puntaje se respeta el orden de sorteo, así que la
@@ -147,3 +149,31 @@ Google Books; WordNet, SUBTLEX-US), así que son comparables en orden de magnitu
 Las dos fuentes mezclan sentidos («wind» también trae instrumentos de viento; WordNet, «Twister» o
 «Starlet»), así que el flujo es: correr con `--dry-run --glosses --show-dropped`, agregar a `deny`
 lo que no corresponde y recién después escribir.
+
+## Página «Gatera de nombres» y su base de datos
+
+La interfaz es un artefacto de claude.ai (privado del dueño): genera con el mismo código que
+`pnpm names` (misma semilla, mismas opciones y mismos favoritos dan la misma lista) y guarda en la
+base del artefacto:
+
+| Documento | Qué tiene |
+| --- | --- |
+| `worlds/<id>` | Un mundo, con los mismos campos que `apps/cli/names/worlds/<id>.json`. |
+| `favorites/<nombre-normalizado>` | Un favorito: `name`, `first`, `second`, `house`, `firstWorld`, `secondWorld`, `score`, `at`. |
+| `config/lists` | Excluidos y palabras gastadas, como texto (una entrada por línea). |
+
+Lee y escribe quien puede usar el artefacto (reglas por defecto); quien solo lo ve no escribe y la
+página se lo indica. Sin acceso a la base, la página funciona con los mundos del repo que trae
+adentro y guarda en el navegador.
+
+El repo y la base no se sincronizan solos. Se pasa de uno a otro desde una sesión de Claude Code,
+que lee y escribe la base con su herramienta de datos del artefacto:
+
+- **Repo → página** (después de `pnpm names:import`): pedirle a Claude que suba
+  `apps/cli/names/worlds/*.json` a `worlds/` y, si cambiaron, `excluded.txt` y `worn.txt` a
+  `config/lists`. También hay que republicar la página para que los mundos que trae adentro (los
+  que se ven sin base) queden al día.
+- **Página → repo**: pedirle a Claude que baje `favorites/` a `apps/cli/names/favorites.txt` y los
+  mundos editados a `apps/cli/names/worlds/`. Sin Claude: el botón «Copiar para favorites.txt» de
+  la página y «Copiar JSON» de cada mundo.
+
