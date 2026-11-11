@@ -10,10 +10,18 @@ import {
   Version,
 } from "./core.js";
 
+/** The rounds of the Copa (ADR-0012), the end of an Exigente season. */
+export const CupRound = z.enum(["qualifier", "semifinal", "final"]);
+export type CupRound = z.infer<typeof CupRound>;
+
 export const SeasonGoal = z.strictObject({
   turn: z.number().int().min(1).max(48),
   courseId: Slug,
   minPlace: z.number().int().min(1).max(8),
+  /** ADR-0012: a round of the Copa (its name on screen). */
+  cup: CupRound.optional(),
+  /** ADR-0012: the rival built on the player's own Falconess runs in this race. */
+  mirrorRival: z.boolean().optional(),
 });
 export type SeasonGoal = z.infer<typeof SeasonGoal>;
 
@@ -44,6 +52,8 @@ export const Falconess = z.strictObject({
   distanceAptitude: DistanceAptitudes.optional(),
   sponsor: Slug,
   seasonGoals: z.array(SeasonGoal).min(1).max(8),
+  /** ADR-0012: her goals on Exigente (from the ruleset's calendar); absent = `seasonGoals`. */
+  exigenteGoals: z.array(SeasonGoal).min(1).max(8).optional(),
   textKey: TextKey,
 });
 export type Falconess = z.infer<typeof Falconess>;

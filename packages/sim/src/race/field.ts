@@ -202,11 +202,76 @@ export function goalRaceSetup(
 ): GoalRaceSetup {
   const course = ctx.content.getCourse(goal.courseId);
   const raceSeed = `${state.seed}/race/${goal.turn}`;
+  const player = playerEntryInput(state, position);
   const entries = generateField(ctx.ruleset, ctx.content, {
     course,
     turn: goal.turn,
     raceSeed,
-    player: playerEntryInput(state, position),
+    player,
   });
+  const M = ctx.ruleset.season.mirrorRival;
+  if (goal.mirrorRival !== true || M === undefined) return { course, raceSeed, entries };
+  // ADR-0012: the Copa's rival takes the lane and wings of «rival-1» (the field's draws stay as
+  // they were), built on the player's Falconess
+  const i = entries.findIndex((e) => e.runnerId === "rival-1");
+  const slot = entries[i];
+  if (slot === undefined) throw new Error(`goal race ${raceSeed}: no rival lane for the mirror`);
+  const input = mirrorRivalInput(ctx, player, goal.turn, slot.frameId);
+  entries[i] = freezeEntry(ctx.ruleset, ctx.content, input, course, slot.laneIndex);
   return { course, raceSeed, entries };
+}
+
+/** The runner id of the Copa's rival (ADR-0012): the race view names her. */
+export const MIRROR_RUNNER_ID = "mirror";
+
+/**
+ * The Copa's rival (ADR-0012, «Gerifalte»), built on the player's entry: her stat total is the
+ * field's mean total at `turn` × `floorPm` ‰ plus `excessPm` ‰ of the player's total above that,
+ * spread in the player's own shares (capped at `statMax`); she has the player's letters, runs in
+ * the player's position and knows the player's generic skills (no unique ones, no signature
+ * passive: she is nobody's Falconess). No draw.
+ */
+export function mirrorRivalInput(
+  ctx: SimContext,
+  player: EntryInput,
+  turn: number,
+  frameId: string,
+): EntryInput {
+  const S = ctx.ruleset.season;
+  const M = S.mirrorRival;
+  if (M === undefined) throw new Error(`ruleset ${ctx.ruleset.version} has no mirror rival`);
+  const F = ctx.ruleset.field;
+  const floor = Math.floor(
+    (STAT_ORDER.length * (F.rivalBase + F.rivalPerTurn * turn) * M.floorPm) / 1000,
+  );
+  let total = 0;
+  for (const stat of STAT_ORDER) total += player.baseStats[stat];
+  const target = floor + Math.floor((Math.max(0, total - floor) * M.excessPm) / 1000);
+  const baseStats: FalconessStats = { ...player.baseStats };
+  for (const stat of STAT_ORDER)
+    baseStats[stat] = clamp(
+      Math.floor((player.baseStats[stat] * target) / Math.max(1, total)),
+      S.statMin,
+      S.statMax,
+    );
+  return {
+    runnerId: MIRROR_RUNNER_ID,
+    kind: "rival",
+    falconessId: null,
+    baseStats,
+    mood: 0,
+    positionAptitude: { ...player.positionAptitude },
+    ...(player.distanceAptitude === undefined
+      ? {}
+      : { distanceAptitude: { ...player.distanceAptitude } }),
+    // her position is the player's (the player's wings' default when the week chose none)
+    position: player.position ?? DEFAULT_POSITION[ctx.content.getFrame(player.frameId).style],
+    frameId,
+    parts: [],
+    quirks: [],
+    learnedSkills: player.learnedSkills.filter(
+      (id) => ctx.content.getSkill(id).uniqueTo === undefined,
+    ),
+    durability: null,
+  };
 }

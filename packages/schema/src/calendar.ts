@@ -37,6 +37,11 @@ export const Calendar = z
      */
     goals: z.record(Slug, z.array(SeasonGoal).min(1).max(8)).optional(),
     /**
+     * Each Falconess's goals on Exigente (ADR-0012): a harder ladder in her comfort zone that ends
+     * in the Copa. A Falconess absent here races her Normal goals on Exigente too.
+     */
+    exigenteGoals: z.record(Slug, z.array(SeasonGoal).min(1).max(8)).optional(),
+    /**
      * What each catalogue track asks for (ADR-0011 §8, 2026-11-10): its 2-3 stats that matter
      * most, the most important first, each with a letter. Generated, never written by hand
      * (`pnpm content:track-demands`); shown by the game's track card. When present, every
@@ -115,9 +120,18 @@ export function withCalendar(
   const falconess = new Map<string, Falconess>();
   for (const [id, f] of base.falconess) {
     const goals = calendar.goals?.[id];
-    falconess.set(id, goals === undefined ? f : { ...f, seasonGoals: goals });
+    const exigente = calendar.exigenteGoals?.[id];
+    falconess.set(id, {
+      ...f,
+      ...(goals === undefined ? {} : { seasonGoals: goals }),
+      ...(exigente === undefined ? {} : { exigenteGoals: exigente }),
+    });
   }
-  for (const [id, goals] of Object.entries(calendar.goals ?? {})) {
+  const allGoals = [
+    ...Object.entries(calendar.goals ?? {}),
+    ...Object.entries(calendar.exigenteGoals ?? {}),
+  ];
+  for (const [id, goals] of allGoals) {
     if (!base.falconess.has(id))
       problems.push(`calendars/${calendar.id}: unknown falconess "${id}"`);
     for (const g of goals)

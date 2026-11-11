@@ -44,6 +44,13 @@ export const STYLES = Style.options;
  * Race position, chosen before each race (ADR-0008): how she manages her energy. Punta (lead),
  * Pelotón (pack), Acecho (stalk), Remate (closer), front to back.
  */
+/**
+ * A season's difficulty (ADR-0012, owner 2026-11-11): Normal caps every stat at 900 (no 3-star
+ * black box), Exigente at 1200 and races a harder goal ladder that ends in the Copa. Absent = Normal.
+ */
+export const Difficulty = z.enum(["normal", "exigente"]);
+export type Difficulty = z.infer<typeof Difficulty>;
+
 export const Position = z.enum(["lead", "pack", "stalk", "closer"]);
 export type Position = z.infer<typeof Position>;
 export const POSITIONS = Position.options;

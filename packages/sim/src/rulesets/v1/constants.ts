@@ -3,7 +3,7 @@
  * Change only with a `pnpm sim:batch` report attached to the PR. Never delete a ruleset.
  * Multipliers are per-mille (1000 = ×1.0); distances and speeds ×1000 inside the race engine.
  */
-import type { Aptitude, Grade, Mood, StatName, TrainingKind } from "@falconess/schema";
+import type { Aptitude, Difficulty, Grade, Mood, StatName, TrainingKind } from "@falconess/schema";
 
 export const RULESET_VERSION = "v1" as const;
 
@@ -154,6 +154,17 @@ export type SeasonConstants = Omit<
    * v3 sets it (owner 2026-11-10: «es muy fácil maxear todos los stats»).
    */
   readonly growthBands?: ReadonlyArray<readonly [number, number]>;
+  /**
+   * ADR-0012: the most any stat can reach on each difficulty (Star Savior's caps: Normal 900, so no
+   * 3-star black box; Exigente the ruleset's `statMax`). Absent = `statMax` everywhere (v1, v2).
+   */
+  readonly statCapByDifficulty?: Readonly<Record<Difficulty, number>>;
+  /**
+   * ADR-0012: the Copa's rival built on the player's Falconess. Her stat total is the field's
+   * mean total at the race × `floorPm` ‰ plus `excessPm` ‰ of whatever the player has above that;
+   * her stats keep the player's shares. Absent = no such rival (v1, v2).
+   */
+  readonly mirrorRival?: { readonly floorPm: number; readonly excessPm: number };
 };
 export const SEASON: SeasonConstants = SEASON_V1;
 

@@ -6,6 +6,8 @@ export {
   type GoalRaceSetup,
   generateField,
   goalRaceSetup,
+  MIRROR_RUNNER_ID,
+  mirrorRivalInput,
   PLAYER_RUNNER_ID,
   rivalPool,
 } from "./field.js";

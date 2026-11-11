@@ -30,6 +30,8 @@ export {
   type GoalRaceSetup,
   generateField,
   goalRaceSetup,
+  MIRROR_RUNNER_ID,
+  mirrorRivalInput,
   neutralFixtureEntry,
   PLAYER_RUNNER_ID,
   type RaceArena,
@@ -72,6 +74,7 @@ export {
 } from "./rulesets/v3/switches.js";
 export { advanceSeason, goalRaceState, InvalidInputError } from "./season/advance.js";
 export { type MoodCause, rngForInput, type SimContext, seasonContext } from "./season/context.js";
+export { difficultyOf, seasonGoalsOf, statCap } from "./season/difficulty.js";
 export { eligibleEvents } from "./season/events.js";
 export { goalForTurn, inputPosition } from "./season/goals.js";
 export { createBlackBox, gradeFor, seasonScore, stableInputsHash } from "./season/grade.js";

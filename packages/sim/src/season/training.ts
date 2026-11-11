@@ -9,6 +9,7 @@ import {
   note,
   type SimContext,
 } from "./context.js";
+import { statCap } from "./difficulty.js";
 import { addBond } from "./hangar.js";
 import {
   moodDriftPm,
@@ -116,7 +117,7 @@ function applyStat(ctx: SimContext, d: Draft, stat: StatName, delta: number): vo
   const before = d.stats[stat];
   const after = Math.max(
     ctx.ruleset.season.statMin,
-    Math.min(ctx.ruleset.season.statMax, before + delta),
+    Math.min(statCap(ctx.ruleset, d), before + delta),
   );
   d.stats[stat] = after;
   if (after !== before) addDelta(d, stat, after - before);

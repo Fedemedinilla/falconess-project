@@ -10,7 +10,7 @@ import type {
   StatName,
   TurnLogEntry,
 } from "@falconess/schema";
-import { type SimContext, STAT_ORDER } from "@falconess/sim";
+import { type SimContext, STAT_ORDER, seasonGoalsOf } from "@falconess/sim";
 import { gameText, ui } from "../../text/ui";
 
 export type GoalStatus = {
@@ -32,9 +32,7 @@ function failedTurn(state: SeasonState): number | undefined {
 
 /** Every goal race of the season with its result so far, in turn order. */
 export function goalStatuses(ctx: SimContext, state: SeasonState): GoalStatus[] {
-  const goals = [...ctx.content.getFalconess(state.falconessId).seasonGoals].sort(
-    (a, b) => a.turn - b.turn,
-  );
+  const goals = [...seasonGoalsOf(ctx, state)].sort((a, b) => a.turn - b.turn);
   const failed = failedTurn(state);
   return goals.map((goal) => {
     const result = state.raceResults.find((r) => r.turn === goal.turn);

@@ -788,6 +788,19 @@ export const SEASON: SeasonConstants = {
   simulatorSkillPoints: 15,
   skillPointsByPlace: [100, 75, 60, 45, 35, 25, 20, 10],
   /**
+   * ADR-0012 (owner 2026-11-11, after Star Savior): Normal caps every stat at 900, so a Normal
+   * season never leaves a 3-star black box (best stat ≥ 1000); Exigente keeps `statMax`.
+   */
+  statCapByDifficulty: { normal: 900, exigente: 1200 },
+  /**
+   * ADR-0012: the Copa's rival («Gerifalte») is the field's mean total × 0.95 plus 80 % of what the
+   * player has above that, in the player's own shares: she follows a stronger player closely, but
+   * training still pays. Measured on Exigente (`.work/play1/zz-cup.ts`, 60 seasons each): at the
+   * owner's level (attentive stats × 1.2) 63-70 % of seasons pass every goal and the final is won
+   * 65-77 %; × 1.4 still loses 1 final in 6-9; the attentive player passes 8-14 %.
+   */
+  mirrorRival: { floorPm: 950, excessPm: 800 },
+  /**
    * Growth with trade-offs (owner 2026-11-10: «es muy fácil maxear todos los stats … estoy
    * eligiendo qué quiero súper-subir y qué solo subir»). A training's secondary stat gets 200 ‰ of
    * the main gain instead of 500 ‰ (an Agility week gave Technique +26 to +49, so Technique reached

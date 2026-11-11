@@ -98,6 +98,119 @@
       }
     ]
   },
+  "exigenteGoals": {
+    "peregrina": [
+      {
+        "turn": 12,
+        "courseId": "sprint",
+        "minPlace": 5
+      },
+      {
+        "turn": 24,
+        "courseId": "steps",
+        "minPlace": 4
+      },
+      {
+        "turn": 36,
+        "courseId": "sprint",
+        "minPlace": 3
+      },
+      {
+        "turn": 44,
+        "courseId": "steps",
+        "minPlace": 4,
+        "cup": "qualifier"
+      },
+      {
+        "turn": 46,
+        "courseId": "steps",
+        "minPlace": 3,
+        "cup": "semifinal",
+        "mirrorRival": true
+      },
+      {
+        "turn": 48,
+        "courseId": "sprint",
+        "minPlace": 1,
+        "cup": "final",
+        "mirrorRival": true
+      }
+    ],
+    "cernicala": [
+      {
+        "turn": 12,
+        "courseId": "overlook",
+        "minPlace": 5
+      },
+      {
+        "turn": 24,
+        "courseId": "steps",
+        "minPlace": 4
+      },
+      {
+        "turn": 36,
+        "courseId": "circuit",
+        "minPlace": 3
+      },
+      {
+        "turn": 44,
+        "courseId": "overlook",
+        "minPlace": 4,
+        "cup": "qualifier"
+      },
+      {
+        "turn": 46,
+        "courseId": "circuit",
+        "minPlace": 3,
+        "cup": "semifinal",
+        "mirrorRival": true
+      },
+      {
+        "turn": 48,
+        "courseId": "steps",
+        "minPlace": 1,
+        "cup": "final",
+        "mirrorRival": true
+      }
+    ],
+    "caracara": [
+      {
+        "turn": 12,
+        "courseId": "open-sky",
+        "minPlace": 5
+      },
+      {
+        "turn": 24,
+        "courseId": "canyon",
+        "minPlace": 4
+      },
+      {
+        "turn": 36,
+        "courseId": "crossing",
+        "minPlace": 3
+      },
+      {
+        "turn": 44,
+        "courseId": "open-sky",
+        "minPlace": 4,
+        "cup": "qualifier"
+      },
+      {
+        "turn": 46,
+        "courseId": "crossing",
+        "minPlace": 3,
+        "cup": "semifinal",
+        "mirrorRival": true
+      },
+      {
+        "turn": 48,
+        "courseId": "canyon",
+        "minPlace": 1,
+        "cup": "final",
+        "mirrorRival": true
+      }
+    ]
+  },
   "trackDemands": {
     "sprint": [
       {

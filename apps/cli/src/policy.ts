@@ -19,6 +19,7 @@ import {
   type Ruleset,
   resolveFrameBuild,
   type SimContext,
+  seasonGoalsOf,
   trainingRisk,
 } from "@falconess/sim";
 
@@ -59,9 +60,8 @@ export function needsRepair(ctx: SimContext, state: SeasonState): boolean {
  * ties by id. Empty after the last goal race.
  */
 export function usefulGenericActives(ctx: SimContext, state: SeasonState): ActiveSkill[] {
-  const courses = ctx.content
-    .getFalconess(state.falconessId)
-    .seasonGoals.filter((g) => g.turn >= state.turn)
+  const courses = seasonGoalsOf(ctx, state)
+    .filter((g) => g.turn >= state.turn)
     .map((g) => ctx.content.getCourse(g.courseId));
   if (courses.length === 0) return [];
   const out: ActiveSkill[] = [];
@@ -225,7 +225,7 @@ const DISTANCE_ORDER: readonly Distance[] = ["sprint", "mile", "medium", "long"]
 export function longestGoalDistance(ctx: SimContext, state: SeasonState): Distance | undefined {
   const F = flightOf(ctx.ruleset);
   if (F === null) return undefined;
-  const goals = ctx.content.getFalconess(state.falconessId).seasonGoals;
+  const goals = seasonGoalsOf(ctx, state);
   const ahead = goals.filter((g) => g.turn >= state.turn);
   let best = -1;
   for (const g of ahead.length > 0 ? ahead : goals) {
@@ -338,9 +338,7 @@ export function attentivePolicy(
     if (visit) return visit;
   }
   const R = ctx.ruleset;
-  const raceWeek = ctx.content
-    .getFalconess(state.falconessId)
-    .seasonGoals.some((g) => g.turn === state.turn);
+  const raceWeek = seasonGoalsOf(ctx, state).some((g) => g.turn === state.turn);
   const withPosition = (input: RunInput): RunInput =>
     raceWeek && flightOf(R) !== null && input.kind !== "event:choose" && input.kind !== "start"
       ? { ...input, position: bestLetterPosition(ctx, state) }

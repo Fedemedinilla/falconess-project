@@ -10,14 +10,15 @@ import { simulateRace } from "../race/engine.js";
 import { goalRaceSetup, PLAYER_RUNNER_ID } from "../race/field.js";
 import { flightOf } from "../race/flight.js";
 import { changeMood, type Draft, note, type SimContext } from "./context.js";
+import { seasonGoalsOf } from "./difficulty.js";
 import { raceLossCostsMood } from "./rules.js";
 
 /** The goal race of the state's turn, if any. */
 export function goalForTurn(
   ctx: SimContext,
-  s: Pick<SeasonState, "falconessId" | "turn">,
+  s: Pick<SeasonState, "falconessId" | "turn" | "difficulty">,
 ): SeasonGoal | undefined {
-  return ctx.content.getFalconess(s.falconessId).seasonGoals.find((g) => g.turn === s.turn);
+  return seasonGoalsOf(ctx, s).find((g) => g.turn === s.turn);
 }
 
 /**

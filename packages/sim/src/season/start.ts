@@ -15,6 +15,7 @@ import { flightOf } from "../race/flight.js";
 import type { Ruleset } from "../rulesets/index.js";
 import { aptitudeRank, upgradeAptitude } from "../stats.js";
 import { type Draft, note, rngForInput, type SimContext } from "./context.js";
+import { statCap } from "./difficulty.js";
 import { rollCrewPresence } from "./hangar.js";
 import { rollQuirks } from "./workshop.js";
 
@@ -33,7 +34,7 @@ function applyInheritance(ctx: SimContext, d: Draft, parents: readonly BlackBox[
   const S = ctx.ruleset.season;
   for (const p of parents) {
     const { stat, stars } = p.factors.stat;
-    d.stats[stat] = Math.min(S.statMax, d.stats[stat] + stars * S.statInheritPerStar);
+    d.stats[stat] = Math.min(statCap(ctx.ruleset, d), d.stats[stat] + stars * S.statInheritPerStar);
     const apt = p.factors.aptitude;
     const chance = S.aptitudeInheritChance[apt.stars - 1] ?? 300;
     if (rng.chancePermille("training", chance)) {
@@ -97,6 +98,8 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
   if (new Set(input.hangar).size !== input.hangar.length)
     throw new Error("hangar has duplicate frames");
 
+  if (input.difficulty === "exigente" && ctx.ruleset.season.statCapByDifficulty === undefined)
+    throw new Error(`ruleset ${ctx.ruleset.version} has no Exigente difficulty`);
   const rng = rngForInput(seed, 0);
   const preferred = input.hangar.find(
     (f) => DEFAULT_POSITION[ctx.content.getFrame(f).style] === falconess.preferredPosition,
@@ -125,6 +128,7 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
     status: "active",
     turn: 1,
     falconessId: falconess.id,
+    ...(input.difficulty === undefined ? {} : { difficulty: input.difficulty }),
     stats: { ...falconess.baseStats },
     positionAptitude: { ...falconess.positionAptitude },
     mood: 0,

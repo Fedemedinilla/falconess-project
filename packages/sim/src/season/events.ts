@@ -11,6 +11,7 @@ import {
   note,
   type SimContext,
 } from "./context.js";
+import { statCap } from "./difficulty.js";
 import { addBond, hangarManufacturers } from "./hangar.js";
 import { learnCap, maxDurability } from "./workshop.js";
 
@@ -95,7 +96,7 @@ export function applyEffects(ctx: SimContext, d: Draft, fx: EventEffects): void 
     const delta = fx.stats[stat];
     if (delta === undefined || delta === 0) continue;
     const before = d.stats[stat];
-    d.stats[stat] = Math.max(S.statMin, Math.min(S.statMax, before + delta));
+    d.stats[stat] = Math.max(S.statMin, Math.min(statCap(ctx.ruleset, d), before + delta));
     if (d.stats[stat] !== before) addDelta(d, stat, d.stats[stat] - before);
   }
   changeMood(d, fx.mood);

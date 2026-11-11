@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BlackBox } from "./blackbox.js";
 import {
+  Difficulty,
   Distance,
   DistanceAptitudes,
   FalconessStats,
@@ -40,6 +41,8 @@ export const RunInput = z.discriminatedUnion("kind", [
     falconessId: Slug,
     hangar: z.array(Slug).min(1).max(4),
     parents: z.array(BlackBox).max(2).default([]),
+    /** ADR-0012: absent = Normal (every save made before the difficulties). */
+    difficulty: Difficulty.optional(),
   }),
   z.strictObject({ kind: z.literal("train:agility"), ...RaceWeek }),
   z.strictObject({ kind: z.literal("train:stamina"), ...RaceWeek }),
@@ -131,6 +134,8 @@ export const SeasonState = z.strictObject({
   endReason: SeasonEndReason.optional(),
   turn: z.number().int().min(0).max(48),
   falconessId: Slug,
+  /** ADR-0012: the season's difficulty, from its `start` input; absent = Normal. */
+  difficulty: Difficulty.optional(),
   stats: FalconessStats,
   positionAptitude: PositionAptitudes,
   /**

@@ -20,6 +20,7 @@ import {
   restOptions,
   type SimContext,
   actionBlock as simActionBlock,
+  statCap,
   trainingGains,
   trainingMoodMultiplier,
   trainingRisk,
@@ -115,7 +116,7 @@ export function trainingPreview(
   // what a success adds, up to the stat's room (the sim clamps at statMax)
   const gains = trainingGains(ctx, state, kind).map(({ stat, gain }) => ({
     stat,
-    gain: Math.max(0, Math.min(gain, S.statMax - state.stats[stat])),
+    gain: Math.max(0, Math.min(gain, statCap(ctx.ruleset, state) - state.stats[stat])),
   }));
   const { failPm, injuryPm } = trainingRisk(ctx.ruleset, state.fatigue, kind);
   const exhausted = kind !== "train:risk-flight" && injuryPm > 0;

@@ -1,10 +1,17 @@
-import { loadContent } from "@falconess/content";
+import { loadContent, loadSeasonContent } from "@falconess/content";
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
+import {
+  goalRaceSetup,
+  MIRROR_RUNNER_ID,
+  mirrorRivalInput,
+  playerEntryInput,
+} from "../race/field.js";
 import { canonicalJson } from "../race/golden.js";
 import { CURRENT_RULESET, RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
 import { advanceSeason } from "./advance.js";
 import { type SimContext, seasonContext } from "./context.js";
+import { seasonGoalsOf } from "./difficulty.js";
 import { blackBoxFor, replaySeason } from "./replay.js";
 import { startSeason } from "./start.js";
 import { softenedGain, trainingGains } from "./training.js";
@@ -123,7 +130,8 @@ describe("season on ruleset v3 (ADR-0011)", () => {
   });
 
   it("shows the softened gains: a secondary at 200 ‰ and the main stat's diminishing returns", () => {
-    const s = startSeason(V3, "gains", START("peregrina"));
+    // Exigente: Normal's cap (900, ADR-0012) would stop the stat at 950 below
+    const s = startSeason(V3, "gains", { ...START("peregrina"), difficulty: "exigente" });
     const [main, second] = trainingGains(V3, s, "train:agility");
     expect(main?.stat).toBe("agility");
     expect(second).toEqual({
@@ -138,5 +146,85 @@ describe("season on ruleset v3 (ADR-0011)", () => {
     // fresh vigor: no failure chance
     expect(after.log.at(-1)?.notes).toContain("log.train.ok");
     expect(after.stats.agility - 950).toBe(soft?.gain);
+  });
+
+  describe("difficulties (ADR-0012)", () => {
+    const at = (s: SeasonState, agility: number): SeasonState => ({
+      ...s,
+      stats: { ...s.stats, agility },
+    });
+    it("Normal stops every stat at 900; Exigente goes on to statMax", () => {
+      const normal = startSeason(V3, "cap", START("peregrina"));
+      expect(normal.difficulty).toBeUndefined();
+      const n = advanceSeason(V3, at(normal, 895), { kind: "train:agility" });
+      expect(n.stats.agility).toBe(900);
+      const hard = startSeason(V3, "cap", { ...START("peregrina"), difficulty: "exigente" });
+      expect(hard.difficulty).toBe("exigente");
+      const h = advanceSeason(V3, at(hard, 895), { kind: "train:agility" });
+      expect(h.stats.agility).toBeGreaterThan(900);
+    });
+    it("a save made before the difficulties replays as Normal, byte for byte", () => {
+      const a = startSeason(V3, "old", START("cernicala"));
+      const b = startSeason(V3, "old", { ...START("cernicala"), difficulty: "normal" });
+      const { difficulty, ...rest } = b;
+      expect(difficulty).toBe("normal");
+      expect(canonicalJson(rest)).toBe(canonicalJson(a));
+    });
+    it("v1 and v2 have no Exigente", () => {
+      expect(() =>
+        startSeason(V2, "v2", { ...START("peregrina"), difficulty: "exigente" }),
+      ).toThrow(/no Exigente/);
+    });
+  });
+});
+
+describe("the Copa's rival (ADR-0012)", () => {
+  const ctx: SimContext = { ruleset: RULESET_V3, content: loadSeasonContent("v3") };
+  it("runs only in a mirror goal, in rival-1's lane, built on the player's shares", () => {
+    const s = startSeason(ctx, "copa", { ...START("cernicala"), difficulty: "exigente" });
+    const strong = {
+      ...s,
+      stats: { agility: 900, stamina: 600, technique: 500, courage: 400, intelligence: 700 },
+    };
+    const goals = seasonGoalsOf(ctx, strong);
+    const final = goals.find((g) => g.cup === "final");
+    const first = goals[0];
+    expect(final?.mirrorRival).toBe(true);
+    if (!final || !first) throw new Error("no goals");
+    const plain = goalRaceSetup(ctx, strong, first);
+    expect(plain.entries.some((e) => e.runnerId === MIRROR_RUNNER_ID)).toBe(false);
+    const cup = goalRaceSetup(ctx, { ...strong, turn: final.turn }, final);
+    const without = goalRaceSetup(
+      ctx,
+      { ...strong, turn: final.turn },
+      { ...final, mirrorRival: false },
+    );
+    const mirror = cup.entries.find((e) => e.runnerId === MIRROR_RUNNER_ID);
+    const rival1 = without.entries.find((e) => e.runnerId === "rival-1");
+    expect(mirror?.laneIndex).toBe(rival1?.laneIndex);
+    // the other lanes are the same runners
+    expect(
+      cup.entries.filter((e) => e.runnerId !== MIRROR_RUNNER_ID).map((e) => e.runnerId),
+    ).toEqual(without.entries.filter((e) => e.runnerId !== "rival-1").map((e) => e.runnerId));
+    const input = mirrorRivalInput(
+      ctx,
+      { ...playerEntryInput(strong), position: "stalk" },
+      final.turn,
+      "falke",
+    );
+    // her shares are the player's: Agility first, Courage last
+    const b = input.baseStats;
+    expect(b.agility).toBeGreaterThan(b.intelligence);
+    expect(b.intelligence).toBeGreaterThan(b.stamina);
+    expect(b.courage).toBeLessThan(b.technique);
+    expect(input.position).toBe("stalk");
+    // she follows the player: 80 % of the excess over the floor
+    const M = RULESET_V3.season.mirrorRival;
+    const F = RULESET_V3.field;
+    if (!M) throw new Error("no mirror constants");
+    const floor = Math.floor((5 * (F.rivalBase + F.rivalPerTurn * final.turn) * M.floorPm) / 1000);
+    const total = Object.values(b).reduce((n, v) => n + v, 0);
+    const expected = floor + Math.floor(((3100 - floor) * M.excessPm) / 1000);
+    expect(Math.abs(total - expected)).toBeLessThanOrEqual(5);
   });
 });
