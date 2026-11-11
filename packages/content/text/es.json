@@ -1479,8 +1479,6 @@
   "ui.m.race.eyebrow": "Carrera objetivo · semana {turn}",
   "ui.m.race.failed": "Objetivo fallado",
   "ui.m.race.goal": "Objetivo: {place}.º o mejor. Si termina más atrás, la temporada se acaba.",
-  "ui.m.before.eyebrow": "Antes de la carrera",
-  "ui.m.before.go": "Ir a la carrera",
   "ui.m.race.goal.win": "Objetivo: ganar. Si no gana, la temporada se acaba.",
   "ui.m.race.mirror": "Corre Gerifalte: una rival armada a imagen de tu Falconess, con sus mismas fortalezas.",
   "ui.m.race.hint.pick": "Tocá una posición. La carrera se corre después de la acción de la semana.",

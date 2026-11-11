@@ -5,15 +5,13 @@ import { PlayerAdviceNote } from "../race/AdviceNote";
 import { pageLabels, Replay } from "../race/RaceReplay";
 import { raceDistance, type WeekActionInput } from "../screens/model/position";
 import { goalStatuses } from "../screens/model/season";
-import { type WeekStep, weekSummary } from "../screens/model/week";
 import { Letter } from "../screens/shared/Letter";
 import { PositionPicker } from "../screens/shared/PositionPicker";
 import { useGoalRaceLog } from "../screens/shared/useGoalRaceLog";
 import { describeInput } from "../screens/TurnSide";
-import { formatSeconds, formatSigned } from "../text/format";
+import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { Icon } from "../ui/Icon";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
@@ -250,63 +248,5 @@ function ResultCard({
       </div>
       {advice}
     </>
-  );
-}
-
-/**
- * Before the race (testers 2026-11-11: «mandás a entrenar y te manda a la carrera sin mostrar qué
- * pasó»): on a race week the action and the race are one input, so the action's result shows here
- * first, from the step's own summary (`weekSummary`: its line and the stats it moved), then
- * «Ir a la carrera». The race and the rest of the week stay in «Lo que pasó» after the race.
- */
-export function BeforeRaceScreen({
-  ctx,
-  step,
-  onGo,
-}: {
-  ctx: SimContext;
-  step: WeekStep;
-  onGo: () => void;
-}) {
-  const summary = weekSummary(ctx, step);
-  const line = summary.actionLine;
-  return (
-    <div className={s.screen}>
-      <div className={s.body}>
-        <div className={cx(s.panel, s.raceCard)} id="m-antes">
-          <p className={s.cap}>
-            <Glyph name="flag" size={16} />
-            {ui("ui.m.before.eyebrow")}
-          </p>
-          <h1 className={s.title}>{describeInput(ctx, step.input)}</h1>
-          {line && (
-            <p
-              className={cx(s.beforeLine, s[`tone-${line.tone}`])}
-              id="m-antes-linea"
-              data-tone={line.tone}
-            >
-              <Icon name={line.icon} />
-              {line.text}
-            </p>
-          )}
-          {summary.stats.length > 0 && (
-            <ul className={s.beforeStats} id="m-antes-stats">
-              {summary.stats.map(({ stat, delta }) => (
-                <li key={stat} data-stat={stat} data-dir={delta < 0 ? "down" : "up"}>
-                  <span>{gameText(`stat.${stat}`)}</span>
-                  <strong>{formatSigned(delta)}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-      <div className={s.foot}>
-        <button type="button" className={cx(s.btn, s.btnMain)} id="m-antes-ir" onClick={onGo}>
-          <Glyph name="play" size={20} />
-          {ui("ui.m.before.go")}
-        </button>
-      </div>
-    </div>
   );
 }

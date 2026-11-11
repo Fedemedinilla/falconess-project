@@ -23,7 +23,7 @@ import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
 import { accentStyle, Hud } from "./Parts";
-import { BeforeRaceScreen, PreRaceScreen, RaceScreen } from "./RaceScreens";
+import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
 import {
   getSoundStyle,
@@ -141,6 +141,7 @@ export function MobileGame() {
         <WeekDialog
           className={s.weekDialog}
           advice={false}
+          part="race"
           onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
         />
       </div>
@@ -275,17 +276,29 @@ export function MobileGame() {
       );
       break;
     }
-    case "before": {
-      const step = snap.lastStep;
-      screen = step ? (
-        <BeforeRaceScreen
-          ctx={ctx}
-          step={step}
-          onGo={() => setView({ screen: "race", turn: view.turn, result: false })}
-        />
-      ) : null;
+    case "before":
+      // the menu stays behind «Lo que pasó» of the action; the race starts when it closes
+      screen = (
+        <>
+          <MenuScreen
+            ctx={ctx}
+            state={state}
+            menu={menu}
+            pendingEvent={false}
+            canRecap={false}
+            onAction={() => undefined}
+          />
+          <WeekDialog
+            className={s.weekDialog}
+            advice={false}
+            part="action"
+            actionOpen
+            onActionDone={() => setView({ screen: "race", turn: view.turn, result: false })}
+            onViewRace={() => undefined}
+          />
+        </>
+      );
       break;
-    }
     case "race":
       screen = (
         <RaceScreen
@@ -327,6 +340,7 @@ export function MobileGame() {
           <WeekDialog
             className={s.weekDialog}
             advice={false}
+            part="race"
             onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
           />
           {pending && <EventDialog />}

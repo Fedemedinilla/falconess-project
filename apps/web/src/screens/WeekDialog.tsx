@@ -44,6 +44,9 @@ function keyedNotes(notes: readonly WeekNote[]): { id: string; note: WeekNote }[
   });
 }
 
+/** The notes a goal race leaves (the race's part of a split race week). */
+const RACE_NOTE = /^log\.(race|goal|mood\.race)/;
+
 /** Controls inside the dialog that Enter activates on its own. */
 const INTERACTIVE = "button, a, input, select, textarea, summary";
 
@@ -54,6 +57,15 @@ export type WeekDialogProps = {
   className?: string | undefined;
   /** Show the race tip (the phone game already showed it under the race's result). */
   advice?: boolean | undefined;
+  /**
+   * The phone game splits a race week in two (testers 2026-11-11): "action" shows what the week's
+   * action did, as on any week, before the race (open while `actionOpen`, closed with
+   * `onActionDone`, the step stays unread); "race" then shows the race and what came after it.
+   * "all" (default) is the whole step at once.
+   */
+  part?: "all" | "action" | "race";
+  actionOpen?: boolean;
+  onActionDone?: () => void;
 };
 
 /**
@@ -65,15 +77,24 @@ export type WeekDialogProps = {
  * once, it does not open again for that week (`GameController.acknowledgeStep`); the recap line
  * above the actions brings it back.
  */
-export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogProps) {
+export function WeekDialog({
+  onViewRace,
+  className,
+  advice = true,
+  part: wanted = "all",
+  actionOpen = false,
+  onActionDone,
+}: WeekDialogProps) {
   const { game, snap } = useGame();
   const step = snap.lastStep;
-  const open = weekDialogWaiting(snap);
   const summary = useMemo(
     () => (step ? weekSummary(game.context(), step) : undefined),
     [game, step],
   );
-  const race = summary?.race;
+  // a week without a race has nothing to split
+  const part = summary?.race ? wanted : "all";
+  const open = part === "action" ? actionOpen && weekDialogWaiting(snap) : weekDialogWaiting(snap);
+  const race = part === "action" ? undefined : summary?.race;
   // a goal race finished 3rd or worse: the tip says what to train (Umamusume)
   const adviceLog = useGoalRaceLog(
     advice && open && race && race.place >= ADVICE_FROM_PLACE ? race.turn : undefined,
@@ -116,9 +137,17 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
 
   if (!step || !summary) return null;
 
-  const close = () => game.acknowledgeStep();
+  const close = () => (part === "action" ? onActionDone?.() : game.acknowledgeStep());
   const ctx = game.context();
-  const { headline } = summary;
+  // the action's part leads with the action's own line; the race's with the race
+  const headline = part === "action" ? (summary.actionLine ?? summary.headline) : summary.headline;
+  const showAction = part !== "race";
+  const notes =
+    part === "action"
+      ? summary.notes.filter((n) => !RACE_NOTE.test(n.key))
+      : part === "race"
+        ? summary.notes.filter((n) => RACE_NOTE.test(n.key))
+        : summary.notes;
 
   const onBackdrop = (e: MouseEvent<HTMLDialogElement>) => {
     // the dialog box fills the element: a click on the element itself is on the backdrop; the
@@ -175,7 +204,7 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
               <Icon name={headline.icon} size="lg" className={s.titleIcon} />
               <span>{headline.text}</span>
             </h2>
-            {summary.context !== undefined && (
+            {part !== "action" && summary.context !== undefined && (
               <p className={s.context}>
                 {race && (
                   // the race position she ran in (ADR-0008), first: what the player chose
@@ -197,13 +226,13 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
           </header>
 
           <div className={s.body} id={BODY_ID}>
-            {summary.actionLine && (
+            {part === "all" && summary.actionLine && (
               <p className={cx(s.line, s[`line-${summary.actionLine.tone}`])}>
                 <Icon name={summary.actionLine.icon} />
                 {summary.actionLine.text}
               </p>
             )}
-            {summary.event && (
+            {part !== "action" && summary.event && (
               <div
                 className={cx(s.event, s[`event-${summary.event.tone}`])}
                 id="semana-evento"
@@ -237,7 +266,7 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
                 )}
               </div>
             )}
-            {summary.stats.length > 0 && (
+            {showAction && summary.stats.length > 0 && (
               <ul className={s.stats} aria-label={ui("ui.turn.stats")}>
                 {summary.stats.map(({ stat, delta }) => (
                   <li key={stat} className={delta < 0 ? s.down : s.up}>
@@ -248,7 +277,7 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
                 ))}
               </ul>
             )}
-            {summary.rows.length > 0 && (
+            {showAction && summary.rows.length > 0 && (
               <ul className={s.rows} aria-label={ui("ui.week.changes")}>
                 {summary.rows.map((row) => (
                   <li key={`${row.id}-${row.value}-${row.cause ?? ""}`} className={s.row}>
@@ -278,10 +307,10 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
                 ))}
               </ul>
             )}
-            {summary.stats.length === 0 && summary.rows.length === 0 && (
+            {showAction && summary.stats.length === 0 && summary.rows.length === 0 && (
               <p className={s.none}>{ui("ui.week.none")}</p>
             )}
-            {keyedNotes(summary.notes).map(({ id, note }) => (
+            {keyedNotes(notes).map(({ id, note }) => (
               <p
                 key={id}
                 className={cx(s.line, s.note, note.tone !== "neutral" && s[`note-${note.tone}`])}
@@ -302,7 +331,7 @@ export function WeekDialog({ onViewRace, className, advice = true }: WeekDialogP
           </div>
 
           <footer className={s.foot}>
-            {summary.eventNext && (
+            {part !== "action" && summary.eventNext && (
               // in the footer, next to «Continuar»: it never scrolls out of sight
               <p className={cx(s.line, s.next)} id="semana-evento-espera">
                 <Icon name="event" />

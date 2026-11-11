@@ -58,7 +58,7 @@ async function toRace(page: Page): Promise<void> {
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await page.click("#m-correr");
-  await page.click("#m-antes-ir");
+  await page.click("#semana-continuar");
   await page.click("#m-carrera-vista-fpv");
   await page.click("#m-carrera-vuelo-salida");
   await page.click("#m-carrera-reproducir");
