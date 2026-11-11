@@ -48,9 +48,17 @@ inspiraciones, en las cajas, en sus stats y estrellas».
 
 ## Medida
 
-Ver la tabla en el informe al dueño (`.work/play1/inh-calib.txt`, 60 temporadas por fila, 2 semillas
-de carrera, Exigente). Sin cajas la atenta pasa 9-14 %; con dos cajas de 2★ la herencia la lleva a
-«difícil pero manejable», y al nivel del dueño la Copa sigue sin ser segura.
+Exigente completa, 60 temporadas por fila y Falconess, 2 semillas de carrera (`.work/play1/zz-cup.ts`,
+`.work/play1/inh-calib.txt`). «Tu nivel» es la atenta con las stats × 1,2.
+
+| Herencia                                 | Atenta  | Nivel del dueño |
+| ---------------------------------------- | ------- | --------------- |
+| Sin cajas                                | 8-14 %  | 63-70 %         |
+| Dos cajas de 1★ (Agilidad)               | 15-28 % | 68-79 %         |
+| Dos cajas de 2★ (Agilidad + Resistencia) | 28-45 % | 74-79 %         |
+
+Con dos buenas cajas Gerifalte llega delante de la jugadora en el 15-21 % de las Copas (sin cajas,
+24-26 %). Con chances 55/70/85 % las dos cajas de 2★ daban 23-41 %: se subieron a 65/80/90 %.
 
 ## Consecuencias
 
