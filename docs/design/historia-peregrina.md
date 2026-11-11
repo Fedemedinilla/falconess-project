@@ -4,6 +4,10 @@ Estado: borrador de estructura (2026-11-11). La historia la escribe el dueño; e
 dice qué escenas hacen falta, cuándo salen y en qué formato. Lo escrito pasa después a
 `docs/characters/peregrina.md` (biblia) y a eventos `handwritten: true`.
 
+Base teórica: `docs/design/investigacion-personajes.md` (informe de Claude Research con fuentes en
+japonés, chino y coreano, 2026-11-11): sus 18 reglas, la plantilla de ficha, la plantilla de arco y la
+lista de verificación de 26 preguntas.
+
 ## 1. Punto de partida
 
 Lo que ya está fijado en el juego:
