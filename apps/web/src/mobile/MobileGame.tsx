@@ -126,7 +126,7 @@ export function MobileGame() {
   const state = run.state;
   const style = accentStyle(ctx.content, state.falconessId);
 
-  if (state.status === "ended" && view.screen !== "race")
+  if (state.status === "ended" && view.screen !== "race" && view.screen !== "before")
     return (
       <div className={s.app} style={style}>
         <EndScreen
