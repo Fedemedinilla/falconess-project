@@ -1,8 +1,9 @@
 import type { SeasonState, StatName, TrainingKind } from "@falconess/schema";
 import { type SimContext, statCap } from "@falconess/sim";
+import { useEffect, useMemo, useRef } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { runnerArt } from "./art";
+import { type RunnerArt, runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { crewInitials, statCells, type TrainingCard } from "./model";
@@ -59,12 +60,7 @@ export function TrainScreen({
     <div className={s.screen}>
       <div className={s.body}>
         <div className={s.stage}>
-          <div className={s.glow} aria-hidden="true" />
-          {art && (
-            <div className={s.runner} aria-hidden="true">
-              <img src={art.chibi} alt="" draggable={false} />
-            </div>
-          )}
+          <TrainingStage art={art} selected={selected} order={cards.map((c) => c.kind)} />
           {card && (
             <div className={s.ribbon} id="m-cinta">
               <Glyph name={GLYPH[card.kind]} size={26} color="#1d1704" weight={2.4} />
@@ -200,6 +196,71 @@ export function TrainScreen({
           {card ? ui("ui.m.train.confirm", { name: name(card.kind) }) : ui("ui.m.train.pick")}
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The stage behind the ribbon (owner 2026-11-11): the chosen training's illustration, full bleed,
+ * or her chibi when it has none. Every layer stays mounted (the images are decoded once) and the
+ * chosen one cross-fades in while the others fade out, sliding a little from the side of the
+ * button the player moved to, then drifting slowly while it stays. Reduced motion keeps the
+ * cross-fade only.
+ */
+function TrainingStage({
+  art,
+  selected,
+  order,
+}: {
+  art: RunnerArt | undefined;
+  selected: TrainingKind | undefined;
+  order: readonly TrainingKind[];
+}) {
+  const scenes = art?.training ?? {};
+  const kinds = order.filter((k) => scenes[k] !== undefined);
+  const active = selected !== undefined && scenes[selected] ? selected : undefined;
+  // which way the scene slides in: from the right when the player moved right
+  const last = useRef<TrainingKind | undefined>(undefined);
+  const dir = useMemo(() => {
+    const from = last.current === undefined ? -1 : order.indexOf(last.current);
+    const to = selected === undefined ? -1 : order.indexOf(selected);
+    return from === -1 || to === -1 || from === to ? 0 : to > from ? 1 : -1;
+  }, [selected, order]);
+  useEffect(() => {
+    last.current = selected;
+  }, [selected]);
+  return (
+    <div
+      className={cx(s.scenes, active && s.scenesOn)}
+      style={{ "--dir": dir }}
+      aria-hidden="true"
+      id="m-escena"
+      data-scene={active ?? "chibi"}
+    >
+      <div className={cx(s.sceneChibi, !active && s.sceneOn)}>
+        <div className={s.glow} />
+        {art && (
+          <div className={s.runner}>
+            <img src={art.chibi} alt="" draggable={false} />
+          </div>
+        )}
+      </div>
+      {kinds.map((k) => {
+        const scene = scenes[k];
+        if (!scene) return null;
+        const on = k === active;
+        return (
+          <img
+            key={k}
+            className={cx(s.scene, on && s.sceneOn)}
+            src={scene.src}
+            alt=""
+            draggable={false}
+            data-kind={k}
+            style={{ objectPosition: scene.focus }}
+          />
+        );
+      })}
     </div>
   );
 }

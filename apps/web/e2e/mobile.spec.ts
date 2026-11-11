@@ -587,3 +587,22 @@ test("export: the run in play, and every season this browser played", async ({ p
   await expect(page.locator("#m-exportar[open]")).toBeVisible();
   expect(await page.locator("#m-exportar-texto").inputValue()).toBe(text);
 });
+
+test("training scenes: Peregrina's art for the chosen training, cross-fading on change", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-entrenar");
+  const stage = page.locator("#m-escena");
+  await expect(stage).toHaveAttribute("data-scene", "chibi");
+  await page.click("#m-entrenar-stamina");
+  await expect(stage).toHaveAttribute("data-scene", "train:stamina");
+  await page.click("#m-entrenar-agility");
+  await expect(stage).toHaveAttribute("data-scene", "train:agility");
+  // the chosen scene ends fully shown, the one before fully hidden
+  await expect(stage.locator('img[data-kind="train:agility"]')).toHaveCSS("opacity", "1");
+  await expect(stage.locator('img[data-kind="train:stamina"]')).toHaveCSS("opacity", "0");
+  // a training without its art yet shows her chibi
+  await page.click("#m-entrenar-technique");
+  await expect(stage).toHaveAttribute("data-scene", "chibi");
+});
