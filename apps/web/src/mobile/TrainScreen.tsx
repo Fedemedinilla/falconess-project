@@ -1,6 +1,6 @@
 import type { SeasonState, StatName, TrainingKind } from "@falconess/schema";
 import { type SimContext, statCap } from "@falconess/sim";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { type RunnerArt, runnerArt } from "./art";
@@ -8,6 +8,7 @@ import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { crewInitials, statCells, type TrainingCard } from "./model";
 import { StatStrip } from "./Parts";
+import { placeScene } from "./sceneLayout";
 
 const GLYPH: Readonly<Record<TrainingKind, GlyphName>> = {
   "train:agility": "wind",
@@ -55,12 +56,31 @@ export function TrainScreen({
     ? Object.fromEntries(card.gains.map((g) => [g.stat, g.gain]))
     : undefined;
   const name = (kind: TrainingKind) => ui(`ui.m.train.name.${kind}`);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const active = selected !== undefined && art?.training?.[selected] ? selected : undefined;
+  // which way the scene slides in: from the right when the player moved right
+  const order = cards.map((c) => c.kind);
+  const last = useRef<TrainingKind | undefined>(undefined);
+  const from = last.current === undefined ? -1 : order.indexOf(last.current);
+  const to = selected === undefined ? -1 : order.indexOf(selected);
+  const dir = from === -1 || to === -1 || from === to ? 0 : to > from ? 1 : -1;
+  useEffect(() => {
+    last.current = selected;
+  }, [selected]);
 
   return (
     <div className={s.screen}>
+      <TrainingBackdrop art={art} active={active} dir={dir} stage={stageRef} />
       <div className={s.body}>
-        <div className={s.stage}>
-          <TrainingStage art={art} selected={selected} order={cards.map((c) => c.kind)} />
+        <div className={s.stage} ref={stageRef}>
+          <div className={cx(s.chibiLayer, active && s.chibiOff)} aria-hidden="true">
+            <div className={s.glow} />
+            {art && (
+              <div className={s.runner}>
+                <img src={art.chibi} alt="" draggable={false} />
+              </div>
+            )}
+          </div>
           {card && (
             <div className={s.ribbon} id="m-cinta">
               <Glyph name={GLYPH[card.kind]} size={26} color="#1d1704" weight={2.4} />
@@ -201,66 +221,75 @@ export function TrainScreen({
 }
 
 /**
- * The stage behind the ribbon (owner 2026-11-11): the chosen training's illustration, full bleed,
- * or her chibi when it has none. Every layer stays mounted (the images are decoded once) and the
- * chosen one cross-fades in while the others fade out, sliding a little from the side of the
- * button the player moved to, then drifting slowly while it stays. Reduced motion keeps the
- * cross-fade only.
+ * The training's illustration behind the whole screen (owner 2026-11-11: «full cover»), her face
+ * centered on the stage between the top bar and the stats. Every layer stays mounted (decoded
+ * once); the chosen one cross-fades in, sliding a little from the side the player moved to, and
+ * then drifts slowly. A light veil under the stats keeps them readable. Reduced motion keeps the
+ * cross-fade only. Without a scene the screen keeps its sky and the stage its chibi.
  */
-function TrainingStage({
+function TrainingBackdrop({
   art,
-  selected,
-  order,
+  active,
+  dir,
+  stage,
 }: {
   art: RunnerArt | undefined;
-  selected: TrainingKind | undefined;
-  order: readonly TrainingKind[];
+  active: TrainingKind | undefined;
+  dir: number;
+  stage: React.RefObject<HTMLDivElement | null>;
 }) {
   const scenes = art?.training ?? {};
-  const kinds = order.filter((k) => scenes[k] !== undefined);
-  const active = selected !== undefined && scenes[selected] ? selected : undefined;
-  // which way the scene slides in: from the right when the player moved right
-  const last = useRef<TrainingKind | undefined>(undefined);
-  const dir = useMemo(() => {
-    const from = last.current === undefined ? -1 : order.indexOf(last.current);
-    const to = selected === undefined ? -1 : order.indexOf(selected);
-    return from === -1 || to === -1 || from === to ? 0 : to > from ? 1 : -1;
-  }, [selected, order]);
-  useEffect(() => {
-    last.current = selected;
-  }, [selected]);
+  const kinds = (Object.keys(scenes) as TrainingKind[]).filter((k) => scenes[k] !== undefined);
+  const ref = useRef<HTMLDivElement>(null);
+  const [frame, setFrame] = useState<{ w: number; h: number; x: number; y: number }>();
+  useLayoutEffect(() => {
+    const box = ref.current;
+    const st = stage.current;
+    if (!box || !st) return;
+    const measure = () => {
+      const b = box.getBoundingClientRect();
+      const r = st.getBoundingClientRect();
+      setFrame({
+        w: b.width,
+        h: b.height,
+        x: r.left - b.left + r.width / 2,
+        y: r.top - b.top + r.height * 0.55,
+      });
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    ro.observe(st);
+    return () => ro.disconnect();
+  }, [stage]);
+  if (kinds.length === 0) return null;
   return (
     <div
-      className={cx(s.scenes, active && s.scenesOn)}
+      ref={ref}
+      className={cx(s.backdrop, active && s.backdropOn)}
       style={{ "--dir": dir }}
       aria-hidden="true"
       id="m-escena"
       data-scene={active ?? "chibi"}
     >
-      <div className={cx(s.sceneChibi, !active && s.sceneOn)}>
-        <div className={s.glow} />
-        {art && (
-          <div className={s.runner}>
-            <img src={art.chibi} alt="" draggable={false} />
-          </div>
-        )}
-      </div>
       {kinds.map((k) => {
         const scene = scenes[k];
         if (!scene) return null;
-        const on = k === active;
+        const p = frame && placeScene(scene, { width: frame.w, height: frame.h }, frame);
         return (
           <img
             key={k}
-            className={cx(s.scene, on && s.sceneOn)}
+            className={cx(s.scene, k === active && s.sceneOn)}
             src={scene.src}
             alt=""
             draggable={false}
             data-kind={k}
-            style={{ objectPosition: scene.focus }}
+            style={p ? { left: p.left, top: p.top, width: p.width, height: p.height } : undefined}
           />
         );
       })}
+      <div className={s.veil} />
     </div>
   );
 }

@@ -2269,71 +2269,72 @@
   font-weight: 700;
 }
 
-/* the training screen's scenes (owner 2026-11-11): full-bleed art that cross-fades on change */
-.scenes {
+/* the training screen's scenes (owner 2026-11-11): full cover behind the whole screen */
+.backdrop {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   overflow: hidden;
-  border-radius: 18px;
-  transition: box-shadow 0.4s ease;
-}
-.scenesOn {
-  box-shadow:
-    inset 0 0 0 2px rgb(255 255 255 / 0.6),
-    0 10px 26px rgb(20 32 43 / 0.25);
-}
-/* a soft shade at the top and the bottom so the ribbon, the crew and the stats read over the art */
-.scenesOn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgb(20 32 43 / 0.28), transparent 28%),
-    linear-gradient(0deg, rgb(20 32 43 / 0.22), transparent 22%);
 }
-.sceneChibi,
 .scene {
   position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition:
-    opacity 0.42s cubic-bezier(0.2, 0.7, 0.2, 1),
-    transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
-  transform: translateX(calc(var(--dir, 0) * 7%)) scale(1.06);
-  will-change: opacity, transform;
-}
-.scene {
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transform: translateX(calc(var(--dir, 0) * 6%)) scale(1.05);
+  transform-origin: 50% 30%;
+  transition:
+    opacity 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: opacity, transform;
 }
 .sceneOn {
   opacity: 1;
   transform: none;
-  z-index: 1;
-}
-/* while it stays, the scene drifts slowly: the art keeps moving like the action in it */
-.scene.sceneOn {
-  animation: sceneDrift 9s ease-in-out 0.55s infinite alternate;
+  animation: sceneDrift 9s ease-in-out 0.6s infinite alternate;
 }
 @keyframes sceneDrift {
   from {
     transform: scale(1);
   }
   to {
-    transform: scale(1.045) translateY(-1.2%);
+    transform: scale(1.04) translateY(-0.8%);
   }
 }
+/* a light veil under the stats and the buttons, and a whisper behind the top bar */
+.veil {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  background:
+    linear-gradient(180deg, rgb(20 32 43 / 0.18) 0%, transparent 16%),
+    linear-gradient(0deg, rgb(244 247 250 / 0.96) 0%, rgb(244 247 250 / 0.82) 30%, transparent 52%);
+}
+.backdropOn .veil {
+  opacity: 1;
+}
+/* the chibi leaves the stage while a scene is on */
+.chibiLayer {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.35s ease;
+}
+.chibiOff {
+  opacity: 0;
+}
 @media (prefers-reduced-motion: reduce) {
-  .sceneChibi,
   .scene {
     transform: none;
     transition: opacity 0.3s ease;
   }
-  .scene.sceneOn {
+  .sceneOn {
     animation: none;
   }
 }

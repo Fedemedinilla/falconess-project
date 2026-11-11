@@ -16,11 +16,18 @@ import peregrinaTrainRiskFlight from "./art/peregrina-train-risk-flight.webp";
 import peregrinaTrainStamina from "./art/peregrina-train-stamina.webp";
 
 /**
- * A training's illustration (owner 2026-11-11, Gemini from her splash): a 9:16 scene shown on the
- * training screen's stage, cropped around `focus` (CSS `object-position`, the part that must stay
- * in view: her face and the action).
+ * A training's illustration (owner 2026-11-11, Gemini from her splash): a 9:16 scene that fills
+ * the training screen, placed so her face (`fx`, `fy`: fractions of the image) lands in the open
+ * part of the screen between the top bar and the stats.
  */
-export type TrainingArt = { readonly src: string; readonly focus: string };
+export type TrainingArt = {
+  readonly src: string;
+  /** Natural size, px. */
+  readonly w: number;
+  readonly h: number;
+  readonly fx: number;
+  readonly fy: number;
+};
 
 export type RunnerArt = {
   readonly splash: string;
@@ -41,9 +48,9 @@ const ART: Readonly<Record<string, RunnerArt>> = {
     fy: 0.1,
     cx: 0.45,
     training: {
-      "train:agility": { src: peregrinaTrainAgility, focus: "50% 22%" },
-      "train:stamina": { src: peregrinaTrainStamina, focus: "50% 30%" },
-      "train:risk-flight": { src: peregrinaTrainRiskFlight, focus: "50% 24%" },
+      "train:agility": { src: peregrinaTrainAgility, w: 720, h: 1290, fx: 0.63, fy: 0.23 },
+      "train:stamina": { src: peregrinaTrainStamina, w: 720, h: 1290, fx: 0.5, fy: 0.4 },
+      "train:risk-flight": { src: peregrinaTrainRiskFlight, w: 720, h: 1290, fx: 0.56, fy: 0.33 },
     },
   },
   cernicala: { splash: cernicalaSplash, chibi: cernicalaChibi, ar: 0.46, fy: 0.105, cx: 0.47 },
