@@ -43,7 +43,7 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 
 pnpm typecheck · pnpm test · pnpm test:golden · pnpm content:validate · pnpm sim -- --seed 42
 pnpm play -- --seed 42 · pnpm sim:batch -- --runs 10000 · pnpm lint
-pnpm names -- --a sky --b forge --n 30 --seed 1 (herramienta de nombres; ver docs/commands.md)
+pnpm names -- --a winds --b alloys --n 30 --seed 1 · pnpm names:import -- --all (herramienta de nombres; ver docs/commands.md)
 
 ## Lecciones aprendidas
 
@@ -54,3 +54,4 @@ pnpm names -- --a sky --b forge --n 30 --seed 1 (herramienta de nombres; ver doc
 - Las ganancias de entrenamiento 8–14 del brief dejan la temporada en ~135 por stat con 48 turnos; la base inicial recalibrada es 44–76 (ver docs/formulas.md).
 - El RNG por input se deriva de `seed/inputsApplied`: el estado no carga RNG y la reproducción es trivial.
 - Las herramientas de desarrollo que necesitan azar usan `new Rng("<herramienta>:<semilla>")` con un stream existente; no se agregan streams del juego a `packages/rng` por ellas.
+- Datamuse (`rel_gen`) mezcla sentidos de la palabra consultada: toda receta de nombres se revisa con `--dry-run --show-dropped` y se poda con `deny` antes de escribir el mundo.
