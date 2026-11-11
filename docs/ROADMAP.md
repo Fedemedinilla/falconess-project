@@ -1,6 +1,6 @@
 # Roadmap de desarrollo: Falconess (MVP y primeras pruebas jugables)
 
-Versión 0.2 · 2026-10-27 · Fuente de verdad del diseño: `docs/BRIEF.md`
+Versión 0.3 · 2026-11-11 (estado real en §0) · Fuente de verdad del diseño: `docs/BRIEF.md`
 
 **Prioridades acordadas (v0.2):** la variedad del dominio va primero: personajes, stats, marcas y
 sus reglas, estilos, bastidores, piezas, peculiaridades y habilidades. El gacha y el multiplayer
@@ -11,6 +11,47 @@ Este roadmap convierte el brief en un plan de 30 días hábiles con cinco fases,
 y un hito de decisión. El arte queda fuera de alcance: toda la presentación del MVP usa formas
 geométricas y texto. Cuando el documento se desvía del brief lo dice de forma explícita y la
 desviación requiere un ADR en `docs/decisions/` antes de aplicarse.
+
+---
+
+## 0. Estado al 2026-11-11
+
+El plan de 30 días se siguió hasta la fase 2. Desde ahí el trabajo se guió por las pruebas del
+dueño en un iPhone: la carrera pasó a ser de vuelo (ruleset v3), la interfaz se hizo para el
+celular en React (sin Phaser) y se agregaron sistemas que el plan no tenía. Cada desvío tiene su
+ADR (0006-0013). Juego publicado para pruebas: artifact de claude.ai «Prueba jugable Falconess» y
+demo en un archivo (`pnpm --filter @falconess/web build:demo`).
+
+| Fase                               | Estado                                                                                                                            | Qué falta                                                                                                                                                                    |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 · Bootstrap                      | Hecha                                                                                                                             | —                                                                                                                                                                            |
+| 1 · Núcleo de temporada            | Hecha                                                                                                                             | —                                                                                                                                                                            |
+| 2 · Motor de carrera y lote        | Hecha, y reemplazada en el juego por la carrera v3 de vuelo (ADR-0011), con el motor congelado y 8 barandas de balance (ADR-0010) | —                                                                                                                                                                            |
+| 3 · Herencia, economía y contenido | Mitad                                                                                                                             | Biblias de voz (dueño), eventos de 31 a 40 con los de historia, generadores y evaluación de voz; los factores de habilidad y afinidad de la caja negra todavía no hacen nada |
+| 4 · Interfaz web                   | Hecha salvo los gráficos post-carrera (uPlot)                                                                                     | Gráficos post-carrera, si todavía se quieren                                                                                                                                 |
+| 5 · Publicación y prueba externa   | Empezada                                                                                                                          | Cuestionario PT3, página de itch.io, 10 testers, observación y hito D37                                                                                                      |
+
+**Agregado fuera del plan** (cada uno con su ADR o su nota en `docs/design/temporada-v3.md`):
+
+- Temporada v2: vigor, curva de fallo, ánimo, eventos de suerte (ADR-0006).
+- Pistas sin biomas (ADR-0007), posición de carrera elegida por el jugador (ADR-0008), pasivas de
+  vuelo (ADR-0009).
+- Carrera v3 de vuelo: 4 bandas con 2 líneas, despegues, picada, pelea arriba, distancias con
+  letras; alas sin stats (ADR-0011). Motor congelado con 8 barandas (ADR-0010).
+- Letras de pista medidas (`pnpm content:track-demands`), crecimiento con rendimiento decreciente.
+- Dificultades Normal (tope 900) y Exigente (tope 1200, escalera en la zona de confort y la Copa
+  contra Gerifalte, que se arma sobre la Falconess del jugador) (ADR-0012).
+- Herencia con suerte: cajas negras sorteadas, dos padres, inspiraciones en las semanas 24 y 40,
+  con su animación (ADR-0013).
+- Juego para el celular: vista lateral y en primera persona con cámara que gira, sonidos
+  sintetizados con tres estilos, exportar partida y temporadas anteriores, demo en un archivo.
+
+**Decisiones abiertas:** el taller cuesta una semana (T4 decía que no); las carreras opcionales (T3)
+no están en el juego; el Sprint, la Escalera y el Circuito piden las mismas letras; la baranda de
+Exigente (E1) se mide a mano y no entra en `pnpm balance:barandas`.
+
+**Siguiente paso:** fase 5 (cuestionario PT3 y página de itch.io; el botón de exportar ya está) y,
+en paralelo, las biblias de voz del dueño para destrabar los eventos que faltan.
 
 ---
 
@@ -210,15 +251,15 @@ contenido suficiente para que 48 turnos no se repitan.
 
 Tareas, en orden:
 
-- [ ] D15 · `grade` G–SS en función de stats, resultados y habilidades. `BlackBox` con factores
+- [x] D15 · `grade` G–SS en función de stats, resultados y habilidades. `BlackBox` con factores
   `stat`, `aptitude`, `skill`, `frameAffinity`. Herencia de dos cajas al turno 0 con stream
   `training`, resultado registrado en los `RunInput` iniciales.
-- [ ] D16 · Economía mínima: `feathers` por `grade`, `scrap` por carreras y desguace, costo creciente
+- [x] D16 · Economía mínima: `feathers` por `grade`, `scrap` por carreras y desguace, costo creciente
   de re-sorteo. Esquema `GachaPool` en `schema` y `content/gacha.json` validado, sin función de
   tirada ni pantalla (fuera de foco; base lista). Tests de invariantes anti pay-to-win 1, 3 y 4
   en `economy.test.ts`; el 2 (genérico/firma 0,85–0,90) lo mide el lote. El 5 (clase Chatarra)
   se posterga con el multiplayer.
-- [ ] D17 · `tools/policies/lowest-stat.ts` y `pnpm sim:season-batch -- --runs 1000`: la política de
+- [x] D17 · `tools/policies/lowest-stat.ts` y `pnpm sim:season-batch -- --runs 1000`: la política de
   referencia juega temporadas completas sin interfaz y reporta distribución de `grade`, stats
   finales y `feathers`. Objetivo: B en el 60 % de los casos. Ajustar ganancias de entrenamiento
   del brief §8 contra la curva 550–800. Estado con el ruleset v2 (ADR-0006 «Consecuencias»): la
@@ -237,6 +278,14 @@ Tareas, en orden:
 - [ ] D21 · `tools/evals/voice/` con 30 situaciones golden por Falconess, juez con rúbrica,
   `pnpm evals:voice <id>`, calibración con 20 situaciones juzgadas a mano. Subagente
   `voice-reviewer.md`. Segunda pasada de balance con `sim:batch` y `sim:season-batch`.
+
+**Estado (2026-11-11): mitad.** D15-D17 hechas y ampliadas: la caja negra se sortea al terminar la
+temporada y se hereda de a dos padres con inspiraciones en las semanas 24 y 40 (ADR-0013); la
+nota usa los umbrales de v3; la política de referencia de v3 es la «jugadora atenta», que llega a B
+o mejor en el 64 / 68 / 63 % de las temporadas de Peregrina, Cernícala y Caracara (500 cada una,
+Normal). Faltan D18-D21: las biblias de voz las escribe el dueño, y los eventos (31 de 40) y las
+herramientas de contenido esperan por ellas. Los factores de habilidad y afinidad de la caja todavía
+no se aplican en la temporada.
 
 **Criterio de aceptación (brief §14, semana 3):** `content:gen events` ≥ 80 % válidos;
 `evals:voice` ≥ 0,85 en las tres; política de referencia logra B en el 60 %.
@@ -258,13 +307,13 @@ rectángulos. La cenital gana sentido cuando lleguen carriles y bloqueos (v1).
 
 Tareas, en orden:
 
-- [ ] D22 · `apps/web` con Vite + React 19 + CSS Modules; `packages/ui-kit` con tabla de stats,
+- [x] D22 · `apps/web` con Vite + React 19 + CSS Modules; `packages/ui-kit` con tabla de stats,
   barra de recursos y calendario. Pantallas: **Nueva crianza** (elegir Falconess, 4 bastidores
   para el hangar, 2 cajas negras) y **Turno** (panel de stats, fatiga, ánimo, cuadrilla presente,
   8 acciones). Las carreras se muestran como tabla de resultados, sin escena todavía.
-- [ ] D23 · **Evento** (modal con opciones), **Taller** (equipar, reparar, re-sortear con costo
+- [x] D23 · **Evento** (modal con opciones), **Taller** (equipar, reparar, re-sortear con costo
   visible), **Pre-carrera** (elegir bastidor del hangar, ver las 8 entradas y la pista por segmentos).
-- [ ] D24–D25 · Escena Phaser 4 que lee `RaceLog`: pista lateral por segmentos coloreados por tipo,
+- [x] D24–D25 · Escena Phaser 4 que lee `RaceLog`: pista lateral por segmentos coloreados por tipo,
   una figura por corredora con color de fabricante, marcadores de eventos (boost, ráfaga, salto,
   sobrecalentamiento), velocidad ×1 / ×2 / saltar al final. Instalar las skills oficiales de
   Phaser en `.claude/skills/` antes de empezar. Si al cierre de D25 la escena no reproduce el log
@@ -273,10 +322,19 @@ Tareas, en orden:
   eventos marcados. **Fin de temporada**: `grade`, caja negra, exportar `Build` como JSON y como
   imagen (canvas). Guardado local en `localStorage` como semilla + `RunInput[]` + `schemaVersion`;
   cargar reproduce.
-- [ ] D27 · Playwright E2E: crear crianza, 48 turnos con acciones fijas, ver carrera, exportar `Build`,
+- [x] D27 · Playwright E2E: crear crianza, 48 turnos con acciones fijas, ver carrera, exportar `Build`,
   sin errores de consola. Pulido de flujo: atajos de teclado, botón "repetir acción", resumen de
   turno en una línea.
-- [ ] D28 · **PT2** interna (ver §4). Corrección de bloqueantes el mismo día.
+- [x] D28 · **PT2** interna (ver §4). Corrección de bloqueantes el mismo día.
+
+**Estado (2026-11-11): hecha salvo los gráficos de D26.** Se hizo en React con CSS Modules, sin
+`packages/ui-kit` (los componentes viven en `apps/web`) y sin Phaser: la carrera se dibuja en un
+canvas 2D (el plan B de D25), de costado y en primera persona. Hay dos vistas: el juego para el
+celular (`#juego`, la principal) y la vista de pruebas con todo el detalle. De D26 están el fin de
+temporada con la caja negra, el guardado como semilla + entradas y el exportar; faltan las curvas
+post-carrera con uPlot. Los E2E de Playwright corren temporadas enteras. La PT2 fue informal: el
+dueño y testers amigos jugando la demo en el celular. Se agregó audio (sonidos de interfaz
+sintetizados), que el plan dejaba afuera.
 
 **Criterio de aceptación (brief §14, semana 4):** E2E pasa; una temporada completa en navegador en
 < 45 min medida con cronómetro en PT2.
@@ -300,6 +358,13 @@ visuales que no cambien la legibilidad de la simulación.
 - [ ] D37 · **Hito de decisión** (brief §14): ≥ 6 de 10 juegan una segunda temporada sin que se les
   pida → prueba de arte (Peregrina en tres estados y su bastidor firma) y página de Steam. Si no,
   revisión del loop con los datos exportados antes de gastar en arte.
+
+**Estado (2026-11-11): empezada.** Hecho: la demo estática en un solo archivo
+(`build:demo`, abre desde el celular) y «Exportar partida» en el juego, que también exporta las
+temporadas anteriores del navegador (archivo, compartir o texto; sin tiempos por turno todavía).
+Falta: el cuestionario PT3 y su enlace al cerrar la temporada, la página de itch.io, reclutar los 10
+testers externos, la ventana de observación y el hito. Con la herencia y Exigente, la segunda
+temporada ya tiene un motivo dentro del juego.
 
 ---
 
