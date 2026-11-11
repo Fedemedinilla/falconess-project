@@ -1,0 +1,30 @@
+{
+  "name": "Raptors and falconry",
+  "lang": "en",
+  "queries": [
+    "rel_gen=falcon",
+    "rel_gen=hawk",
+    "rel_gen=eagle",
+    "rel_gen=vulture",
+    "rel_gen=owl",
+    "rel_trg=falconry"
+  ],
+  "maxFreq": 3,
+  "deny": [
+    "Archery",
+    "Boyce",
+    "Camel",
+    "Eagles",
+    "Falcon",
+    "Hawking",
+    "Hawks",
+    "Horseback",
+    "Kazakhstan",
+    "Peregrine",
+    "Raptor",
+    "Samurai",
+    "Swan",
+    "Tercel",
+    "Uae"
+  ]
+}

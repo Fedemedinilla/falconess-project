@@ -1,0 +1,120 @@
+{
+  "name": "Clouds and constellations",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse:recipes/clouds.json",
+  "words": [
+    "Auriga",
+    "Bootes",
+    "Centaurus",
+    "Cepheus",
+    "Cirrus",
+    "Contrail",
+    "Corvus",
+    "Crux",
+    "Cumulus",
+    "Cygnus",
+    "Draco",
+    "Hydra",
+    "Lodestar",
+    "Lyra",
+    "Nimbus",
+    "Orion",
+    "Pegasus",
+    "Perseus",
+    "Pollux",
+    "Regulus",
+    "Spica",
+    "Stratus"
+  ],
+  "stats": {
+    "Auriga": {
+      "freq": 0.033813,
+      "syllables": 3
+    },
+    "Bootes": {
+      "freq": 0.042414,
+      "syllables": 1
+    },
+    "Centaurus": {
+      "freq": 0.067201,
+      "syllables": 3
+    },
+    "Cepheus": {
+      "freq": 0.034042,
+      "syllables": 3
+    },
+    "Cirrus": {
+      "freq": 0.340369,
+      "syllables": 2
+    },
+    "Contrail": {
+      "freq": 0.027399,
+      "syllables": 2
+    },
+    "Corvus": {
+      "freq": 0.097862,
+      "syllables": 2
+    },
+    "Crux": {
+      "freq": 1.184011,
+      "syllables": 1
+    },
+    "Cumulus": {
+      "freq": 0.477839,
+      "syllables": 3
+    },
+    "Cygnus": {
+      "freq": 0.142278,
+      "syllables": 2
+    },
+    "Draco": {
+      "freq": 0.155019,
+      "syllables": 2
+    },
+    "Hydra": {
+      "freq": 0.57827,
+      "syllables": 2
+    },
+    "Lodestar": {
+      "freq": 0.077733,
+      "syllables": 2
+    },
+    "Lyra": {
+      "freq": 0.229941,
+      "syllables": 2
+    },
+    "Nimbus": {
+      "freq": 0.306105,
+      "syllables": 2
+    },
+    "Orion": {
+      "freq": 1.015376,
+      "syllables": 3
+    },
+    "Pegasus": {
+      "freq": 0.475818,
+      "syllables": 3
+    },
+    "Perseus": {
+      "freq": 0.602169,
+      "syllables": 3
+    },
+    "Pollux": {
+      "freq": 0.203086,
+      "syllables": 2
+    },
+    "Regulus": {
+      "freq": 0.165016,
+      "syllables": 3
+    },
+    "Spica": {
+      "freq": 0.145945,
+      "syllables": 2
+    },
+    "Stratus": {
+      "freq": 0.146524,
+      "syllables": 2
+    }
+  }
+}

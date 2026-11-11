@@ -134,7 +134,10 @@ describe("world files", () => {
   it("loads the bundled worlds", () => {
     const dir = fileURLToPath(new URL("../../names/worlds/", import.meta.url));
     const worlds = loadWorlds(dir);
-    expect(worlds.map((w) => w.id)).toEqual(expect.arrayContaining(["sky", "forge", "bloom"]));
+    expect(worlds.map((w) => w.id)).toEqual(
+      expect.arrayContaining(["winds", "raptors", "alloys", "clouds"]),
+    );
+    expect(worlds.find((w) => w.id === "winds")?.stats?.Zephyr?.syllables).toBe(2);
     expect(worlds.find((w) => w.id === "makers")?.role).toBe("house");
   });
 

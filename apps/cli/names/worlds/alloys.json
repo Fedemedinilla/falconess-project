@@ -1,0 +1,110 @@
+{
+  "name": "Alloys and metals",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse:recipes/alloys.json",
+  "words": [
+    "Alnico",
+    "Babbitt",
+    "Bismuth",
+    "Chromium",
+    "Cobalt",
+    "Electrum",
+    "Gallium",
+    "Inconel",
+    "Indium",
+    "Invar",
+    "Osmium",
+    "Pewter",
+    "Pinchbeck",
+    "Rhenium",
+    "Rhodium",
+    "Solder",
+    "Stellite",
+    "Tantalum",
+    "Tungsten",
+    "Wolfram"
+  ],
+  "stats": {
+    "Alnico": {
+      "freq": 0.044353,
+      "syllables": 3
+    },
+    "Babbitt": {
+      "freq": 0.588438,
+      "syllables": 2
+    },
+    "Bismuth": {
+      "freq": 0.886567,
+      "syllables": 2
+    },
+    "Chromium": {
+      "freq": 2.734767,
+      "syllables": 3
+    },
+    "Cobalt": {
+      "freq": 2.579527,
+      "syllables": 2
+    },
+    "Electrum": {
+      "freq": 0.064101,
+      "syllables": 3
+    },
+    "Gallium": {
+      "freq": 0.723962,
+      "syllables": 3
+    },
+    "Inconel": {
+      "freq": 0.094318,
+      "syllables": 3
+    },
+    "Indium": {
+      "freq": 0.596021,
+      "syllables": 3
+    },
+    "Invar": {
+      "freq": 0.070804,
+      "syllables": 2
+    },
+    "Osmium": {
+      "freq": 0.377167,
+      "syllables": 3
+    },
+    "Pewter": {
+      "freq": 0.556219,
+      "syllables": 2
+    },
+    "Pinchbeck": {
+      "freq": 0.067796,
+      "syllables": 2
+    },
+    "Rhenium": {
+      "freq": 0.168215,
+      "syllables": 3
+    },
+    "Rhodium": {
+      "freq": 0.272094,
+      "syllables": 3
+    },
+    "Solder": {
+      "freq": 1.655726,
+      "syllables": 2
+    },
+    "Stellite": {
+      "freq": 0.049882,
+      "syllables": 2
+    },
+    "Tantalum": {
+      "freq": 0.534393,
+      "syllables": 3
+    },
+    "Tungsten": {
+      "freq": 2.04136,
+      "syllables": 2
+    },
+    "Wolfram": {
+      "freq": 0.575428,
+      "syllables": 2
+    }
+  }
+}

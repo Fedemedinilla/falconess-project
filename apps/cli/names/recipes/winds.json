@@ -1,0 +1,32 @@
+{
+  "name": "Winds and weather",
+  "lang": "en",
+  "queries": [
+    "rel_gen=wind",
+    "rel_gen=storm",
+    "rel_gen=atmospheric+phenomenon",
+    "rel_gen=precipitation"
+  ],
+  "maxFreq": 3,
+  "deny": [
+    "Bagpipe",
+    "Clew",
+    "Curl",
+    "Draught",
+    "Fohn",
+    "Hailstorm",
+    "Kazoo",
+    "Panpipe",
+    "Pipework",
+    "Rainstorm",
+    "Simoon",
+    "Snowfall",
+    "Snowstorm",
+    "Souther",
+    "Spool",
+    "Syrinx",
+    "Trice",
+    "Windstorm",
+    "Woodwind"
+  ]
+}

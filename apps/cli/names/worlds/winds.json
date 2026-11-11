@@ -1,0 +1,125 @@
+{
+  "name": "Winds and weather",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse:recipes/winds.json",
+  "words": [
+    "Airstream",
+    "Blizzard",
+    "Boreas",
+    "Chinook",
+    "Crosswind",
+    "Doldrums",
+    "Easterly",
+    "Firestorm",
+    "Foehn",
+    "Gust",
+    "Harmattan",
+    "Headwind",
+    "Monsoon",
+    "Norther",
+    "Simoom",
+    "Sleet",
+    "Southerly",
+    "Squall",
+    "Tailwind",
+    "Virga",
+    "Wester",
+    "Westerly",
+    "Zephyr"
+  ],
+  "stats": {
+    "Airstream": {
+      "freq": 0.188978,
+      "syllables": 2
+    },
+    "Blizzard": {
+      "freq": 0.882223,
+      "syllables": 2
+    },
+    "Boreas": {
+      "freq": 0.130117,
+      "syllables": 3
+    },
+    "Chinook": {
+      "freq": 0.446909,
+      "syllables": 2
+    },
+    "Crosswind": {
+      "freq": 0.082974,
+      "syllables": 2
+    },
+    "Doldrums": {
+      "freq": 0.264329,
+      "syllables": 2
+    },
+    "Easterly": {
+      "freq": 0.807994,
+      "syllables": 3
+    },
+    "Firestorm": {
+      "freq": 0.151721,
+      "syllables": 2
+    },
+    "Foehn": {
+      "freq": 0.030233,
+      "syllables": 1
+    },
+    "Gust": {
+      "freq": 0.978147,
+      "syllables": 1
+    },
+    "Harmattan": {
+      "freq": 0.196351,
+      "syllables": 3
+    },
+    "Headwind": {
+      "freq": 0.055083,
+      "syllables": 2
+    },
+    "Monsoon": {
+      "freq": 1.834596,
+      "syllables": 2
+    },
+    "Norther": {
+      "freq": 0.072973,
+      "syllables": 2
+    },
+    "Simoom": {
+      "freq": 0.01653,
+      "syllables": 2
+    },
+    "Sleet": {
+      "freq": 0.458721,
+      "syllables": 1
+    },
+    "Southerly": {
+      "freq": 0.70989,
+      "syllables": 3
+    },
+    "Squall": {
+      "freq": 0.42368,
+      "syllables": 1
+    },
+    "Tailwind": {
+      "freq": 0.034415,
+      "syllables": 2
+    },
+    "Virga": {
+      "freq": 0.049359,
+      "syllables": 2
+    },
+    "Wester": {
+      "freq": 0.182953,
+      "syllables": 2
+    },
+    "Westerly": {
+      "freq": 0.946732,
+      "syllables": 3
+    },
+    "Zephyr": {
+      "freq": 0.251485,
+      "syllables": 2
+    }
+  }
+}

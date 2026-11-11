@@ -1,0 +1,30 @@
+{
+  "name": "Clouds and constellations",
+  "lang": "en",
+  "queries": ["rel_gen=cloud", "rel_gen=star", "rel_gen=constellation"],
+  "maxFreq": 3,
+  "deny": [
+    "Aerosol",
+    "Aries",
+    "Capricorn",
+    "Centaur",
+    "Crater",
+    "Gemini",
+    "Harlequin",
+    "Hercules",
+    "Hexagram",
+    "Idol",
+    "Libra",
+    "Lupus",
+    "Mushroom",
+    "Pentacle",
+    "Pentagram",
+    "Pisces",
+    "Scorpio",
+    "Scorpius",
+    "Speckle",
+    "Stipple",
+    "Taurus",
+    "Virgo"
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "name": "Raptors and falconry",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse:recipes/raptors.json",
+  "words": [
+    "Buzzard",
+    "Eaglet",
+    "Falconer",
+    "Goshawk",
+    "Gyrfalcon",
+    "Harpy",
+    "Harrier",
+    "Hobby",
+    "Kestrel",
+    "Kite",
+    "Merlin",
+    "Mews",
+    "Osprey",
+    "Owlet",
+    "Quarry",
+    "Redtail",
+    "Tiercel"
+  ],
+  "stats": {
+    "Buzzard": {
+      "freq": 0.369061,
+      "syllables": 2
+    },
+    "Eaglet": {
+      "freq": 0.040793,
+      "syllables": 2
+    },
+    "Falconer": {
+      "freq": 0.497164,
+      "syllables": 3
+    },
+    "Goshawk": {
+      "freq": 0.076833,
+      "syllables": 2
+    },
+    "Gyrfalcon": {
+      "freq": 0.01915,
+      "syllables": 3
+    },
+    "Harpy": {
+      "freq": 0.122252,
+      "syllables": 2
+    },
+    "Harrier": {
+      "freq": 0.223865,
+      "syllables": 3
+    },
+    "Hobby": {
+      "freq": 2.138429,
+      "syllables": 2
+    },
+    "Kestrel": {
+      "freq": 0.173689,
+      "syllables": 2
+    },
+    "Kite": {
+      "freq": 1.31012,
+      "syllables": 1
+    },
+    "Merlin": {
+      "freq": 1.315317,
+      "syllables": 2
+    },
+    "Mews": {
+      "freq": 0.241683,
+      "syllables": 1
+    },
+    "Osprey": {
+      "freq": 0.251898,
+      "syllables": 2
+    },
+    "Owlet": {
+      "freq": 0.027871,
+      "syllables": 2
+    },
+    "Quarry": {
+      "freq": 2.305601,
+      "syllables": 2
+    },
+    "Redtail": {
+      "freq": 0.017366,
+      "syllables": 2
+    },
+    "Tiercel": {
+      "freq": 0.044452,
+      "syllables": 2
+    }
+  }
+}
