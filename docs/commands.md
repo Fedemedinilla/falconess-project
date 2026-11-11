@@ -89,7 +89,7 @@ Mundos actuales, todos provisorios:
 | `raptors` | 23 | sustantivos | cualquiera | Kestrel, Tiercel, Erne |
 | `alloys` | 29 | sustantivos | cualquiera | Inconel, Nichrome, Ormolu |
 | `clouds` | 51 | sustantivos | cualquiera | Cirrus, Spica, Carina |
-| `colors` | 49 | sustantivos de color | primera | Vermilion, Gamboge, Cerulean |
+| `colors` | 75 | sustantivos de color | primera | Gold, Silver, Vermilion, Gamboge, Cerulean |
 | `traits` | 64 | adjetivos | primera | Intrepid, Refulgent, Blistering |
 | `moves` | 25 | verbos | cualquiera | Swoop, Stoop, Nosedive |
 
