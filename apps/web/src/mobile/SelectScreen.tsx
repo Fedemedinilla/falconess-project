@@ -1,11 +1,13 @@
 import type { Difficulty } from "@falconess/schema";
 import { useState } from "react";
+import { readBoxes } from "../game/boxes";
 import { randomSeed } from "../game/seed";
 import { useGame } from "../game/useGame";
 import { defaultHangar } from "../screens/model/new-season";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
+import { boxText } from "./EndScreen";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
@@ -22,6 +24,13 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
   const roster = [...content.falconess.values()];
   const [picked, setPicked] = useState<string | undefined>();
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  // ADR-0013: this browser's v3 boxes, up to two chosen as parents
+  const [boxes] = useState(() =>
+    readBoxes().filter((b) => b.rulesetVersion === ctx.ruleset.version),
+  );
+  const [parents, setParents] = useState<readonly string[]>([]);
+  const toggleParent = (id: string) =>
+    setParents((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 2 ? [...p, id] : p));
   const hasExigente = ctx.ruleset.season.statCapByDifficulty !== undefined;
   const saved = game.savedRun();
   const savedName = (() => {
@@ -33,7 +42,14 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
 
   const start = () => {
     if (!picked) return;
-    game.start(picked, defaultHangar(content), randomSeed(), hasExigente ? difficulty : undefined);
+    const chosen = boxes.filter((b) => parents.includes(b.id));
+    game.start(
+      picked,
+      defaultHangar(content),
+      randomSeed(),
+      hasExigente ? difficulty : undefined,
+      chosen,
+    );
   };
 
   return (
@@ -101,6 +117,33 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
                 <span className={s.diffS}>{ui(`ui.m.difficulty.${d}.line`)}</span>
               </button>
             ))}
+          </fieldset>
+        )}
+        {boxes.length > 0 && (
+          <fieldset className={s.heir} id="m-herencia" aria-label={ui("ui.m.box.title")}>
+            <p className={s.heirT}>
+              <b>{ui("ui.m.box.title")}</b> {ui("ui.m.box.sub", { n: parents.length })}
+            </p>
+            {boxes.map((b) => {
+              const on = parents.includes(b.id);
+              const f = content.falconess.get(b.falconessId);
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  aria-pressed={on}
+                  className={cx(s.heirB, on && s.diffOn)}
+                  data-box={b.id}
+                  disabled={!on && parents.length >= 2}
+                  onClick={() => toggleParent(b.id)}
+                >
+                  <span className={s.heirN}>
+                    {f ? gameText(f.textKey) : b.falconessId} · {b.grade}
+                  </span>
+                  <span className={s.heirS}>{boxText(b)}</span>
+                </button>
+              );
+            })}
           </fieldset>
         )}
         <p className={s.aitag}>{ui("ui.m.aiArt")}</p>

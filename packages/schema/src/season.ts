@@ -136,6 +136,14 @@ export const SeasonState = z.strictObject({
   falconessId: Slug,
   /** ADR-0012: the season's difficulty, from its `start` input; absent = Normal. */
   difficulty: Difficulty.optional(),
+  /**
+   * ADR-0013: the parents' stat factors, kept for their inspirations at the ruleset's weeks;
+   * absent without parents or on a ruleset without inspirations (v1, v2).
+   */
+  inheritance: z
+    .array(z.strictObject({ stat: StatName, stars: z.number().int().min(1).max(3) }))
+    .max(2)
+    .optional(),
   stats: FalconessStats,
   positionAptitude: PositionAptitudes,
   /**

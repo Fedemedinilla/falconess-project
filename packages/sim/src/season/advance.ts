@@ -5,6 +5,7 @@ import { resolveEvent, rollEvent } from "./events.js";
 import { goalForTurn, inputPosition, runGoalRace } from "./goals.js";
 import { gradeFor } from "./grade.js";
 import { rollCrewPresence } from "./hangar.js";
+import { inspire } from "./inheritance.js";
 import { actionBlock } from "./rules.js";
 import { applyOuting, applyRest, applyTraining } from "./training.js";
 import { applyWorkshop } from "./workshop.js";
@@ -43,6 +44,7 @@ function finishTurn(ctx: SimContext, d: Draft, rng: Rng, goalFailed: boolean): v
   d.turn += 1;
   delete d.lastRace;
   rollCrewPresence(ctx, d, rng);
+  inspire(ctx, d);
 }
 
 /**

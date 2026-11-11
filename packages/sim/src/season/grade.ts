@@ -2,6 +2,7 @@ import { fnv1a32 } from "@falconess/rng";
 import type { Aptitude, BlackBox, Grade, Position, RunInput } from "@falconess/schema";
 import { aptitudeRank, highestStat, statTotal } from "../stats.js";
 import type { Draft, SimContext } from "./context.js";
+import { rollBoxStat } from "./inheritance.js";
 import { boxDistanceFactor } from "./start.js";
 
 export function seasonScore(ctx: SimContext, d: Draft): number {
@@ -43,9 +44,11 @@ const BOX_TIE_ORDER: readonly Position[] = ["closer", "stalk", "lead", "pack"];
 
 /** Inheritance record (BRIEF §8, caja negra). Produced once at season end. */
 export function createBlackBox(ctx: SimContext, d: Draft, inputs: readonly RunInput[]): BlackBox {
-  const stat = highestStat(d.stats);
+  // ADR-0013 (v3): the stat and its stars are drawn; v1 and v2 keep the best stat by thresholds
+  const rolled = rollBoxStat(ctx, d.stats, d.seed, stableInputsHash(inputs));
+  const stat = rolled?.stat ?? highestStat(d.stats);
   const v = d.stats[stat];
-  const stars = v >= 1000 ? 3 : v >= 800 ? 2 : 1;
+  const stars = rolled?.stars ?? (v >= 1000 ? 3 : v >= 800 ? 2 : 1);
 
   let best: BlackBox["factors"]["aptitude"] | undefined;
   const consider = (key: Position, letter: Aptitude) => {

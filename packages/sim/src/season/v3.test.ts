@@ -12,6 +12,7 @@ import { CURRENT_RULESET, RULESET_V2, RULESET_V3 } from "../rulesets/index.js";
 import { advanceSeason } from "./advance.js";
 import { type SimContext, seasonContext } from "./context.js";
 import { seasonGoalsOf } from "./difficulty.js";
+import { rollBoxStat } from "./inheritance.js";
 import { blackBoxFor, replaySeason } from "./replay.js";
 import { startSeason } from "./start.js";
 import { softenedGain, trainingGains } from "./training.js";
@@ -226,5 +227,88 @@ describe("the Copa's rival (ADR-0012)", () => {
     const total = Object.values(b).reduce((n, v) => n + v, 0);
     const expected = floor + Math.floor(((3100 - floor) * M.excessPm) / 1000);
     expect(Math.abs(total - expected)).toBeLessThanOrEqual(5);
+  });
+});
+
+describe("inheritance with luck (ADR-0013)", () => {
+  const ctx: SimContext = { ruleset: RULESET_V3, content: loadSeasonContent("v3") };
+  const box = (stat: "agility" | "stamina", stars: 1 | 2 | 3) => ({
+    id: `b-${stat}-${stars}`,
+    rulesetVersion: "v3",
+    falconessId: "cernicala",
+    grade: "B" as const,
+    factors: {
+      stat: { stat, stars },
+      aptitude: {
+        kind: "position" as const,
+        key: "stalk" as const,
+        letter: "B" as const,
+        stars: 1 as const,
+      },
+      skills: [],
+      frameAffinity: "altair",
+    },
+    seed: "x",
+    inputsHash: "0",
+  });
+  const withParents = (seed: string) =>
+    startSeason(ctx, seed, {
+      ...START("peregrina"),
+      difficulty: "exigente",
+      parents: [box("agility", 2), box("stamina", 1)],
+    });
+  /** From week `turn` - 1, one rest (and any event): the inspirations land as week `turn` begins. */
+  const to = (s: SeasonState, turn: number) => {
+    let x: SeasonState = { ...s, turn: turn - 1 };
+    while (x.status === "active" && x.turn < turn)
+      x = advanceSeason(
+        ctx,
+        x,
+        x.pendingEvent ? { kind: "event:choose", option: 0 } : { kind: "rest" },
+      );
+    return x;
+  };
+  it("the start always pays 20 per star; the parents are kept for the inspirations", () => {
+    const bare = startSeason(ctx, "inh", { ...START("peregrina"), difficulty: "exigente" });
+    const s = withParents("inh");
+    expect(s.stats.agility - bare.stats.agility).toBe(40);
+    expect(s.stats.stamina - bare.stats.stamina).toBe(20);
+    expect(s.inheritance).toEqual([
+      { stat: "agility", stars: 2 },
+      { stat: "stamina", stars: 1 },
+    ]);
+    expect(bare.inheritance).toBeUndefined();
+  });
+  it("inspires at weeks 24 and 40 by chance, the same way on every replay", () => {
+    let inspired = 0;
+    let none = 0;
+    for (let i = 0; i < 12; i++) {
+      const s = to(withParents(`insp-${i}`), 24);
+      const again = to(withParents(`insp-${i}`), 24);
+      expect(canonicalJson(again)).toBe(canonicalJson(s));
+      const notes = s.log.flatMap((e) => e.notes);
+      inspired += notes.filter((n) => n.startsWith("log.inherit.inspiration.")).length;
+      none += notes.filter((n) => n === "log.inherit.none").length;
+      // nothing before week 24
+      const early = to(withParents(`insp-${i}`), 23).log.flatMap((e) => e.notes);
+      expect(early.some((n) => n.startsWith("log.inherit"))).toBe(false);
+    }
+    expect(inspired).toBeGreaterThan(0);
+    expect(inspired + none).toBeGreaterThanOrEqual(12);
+  });
+  it("a box draws its stat and stars; Normal (cap 900) never leaves 3 stars", () => {
+    const stats = { agility: 900, stamina: 640, technique: 500, courage: 420, intelligence: 700 };
+    const seen = new Map<string, number>();
+    for (let i = 0; i < 300; i++) {
+      const r = rollBoxStat(ctx, stats, `box-${i}`, "h");
+      if (!r) throw new Error("v3 rolls its boxes");
+      expect(r.stars).toBeLessThan(3);
+      seen.set(r.stat, (seen.get(r.stat) ?? 0) + 1);
+    }
+    // the best stat is the likeliest, not the only one
+    expect(seen.get("agility") ?? 0).toBeGreaterThan(seen.get("intelligence") ?? 0);
+    expect(seen.size).toBeGreaterThan(2);
+    expect(rollBoxStat(ctx, stats, "same", "h")).toEqual(rollBoxStat(ctx, stats, "same", "h"));
+    expect(rollBoxStat({ ...ctx, ruleset: RULESET_V2 }, stats, "v2", "h")).toBeUndefined();
   });
 });

@@ -6,7 +6,7 @@
  * Framework-free on purpose: React subscribes through `useGame` (useSyncExternalStore), tests
  * drive it directly. Snapshots are immutable and change identity only when something changed.
  */
-import type { ContentIndex, Difficulty, RunInput, SeasonState } from "@falconess/schema";
+import type { BlackBox, ContentIndex, Difficulty, RunInput, SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
   CURRENT_RULESET,
@@ -152,12 +152,13 @@ export class GameController {
     hangar: readonly string[],
     seed: string,
     difficulty?: Difficulty,
+    parents: readonly BlackBox[] = [],
   ): boolean {
     const input: RunInput = {
       kind: "start",
       falconessId,
       hangar: [...hangar],
-      parents: [],
+      parents: [...parents],
       ...(difficulty === undefined ? {} : { difficulty }),
     };
     const ctx = this.newRunContext();

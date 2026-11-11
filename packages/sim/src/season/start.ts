@@ -151,6 +151,9 @@ export function startSeason(ctx: SimContext, seed: string, input: StartInput): S
     log: [],
   };
   applyInheritance(ctx, d, input.parents, rng);
+  // ADR-0013: the parents come back at the inspiration weeks (no draw here)
+  if (ctx.ruleset.season.inheritance !== undefined && input.parents.length > 0)
+    d.inheritance = input.parents.map((p) => ({ ...p.factors.stat }));
   // v3: the distance letters (no draw: the training stream above is untouched)
   const dist = seasonDistanceAptitudes(ctx.ruleset, falconess, input.parents);
   if (dist !== undefined) {

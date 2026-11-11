@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import type { BlackBox } from "@falconess/schema";
+import { useEffect, useMemo } from "react";
+import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { seasonSummary } from "../screens/model/end";
@@ -34,6 +36,11 @@ export function EndScreen({
     () => seasonSummary(ctx, state, run.seed, run.inputs),
     [ctx, state, run.seed, run.inputs],
   );
+  // ADR-0013: the season's black box joins this browser's boxes (the select screen offers them)
+  const box = summary.blackBox;
+  useEffect(() => {
+    if (state.rulesetVersion === "v3") addBox(box);
+  }, [box, state.rulesetVersion]);
   const art = runnerArt(state.falconessId);
   const name = gameText(ctx.content.getFalconess(state.falconessId).textKey);
   const goals = goalStatuses(ctx, state);
@@ -84,6 +91,10 @@ export function EndScreen({
             </li>
           ))}
         </ul>
+        <p className={cx(s.panel, s.boxLine)} id="m-fin-caja">
+          <Glyph name="book" size={18} />
+          {boxText(box)}
+        </p>
         <StatStrip stats={statCells(state)} skillPoints={state.skillPoints} long />
         <button type="button" className={s.linkBtn} id="m-fin-pruebas" onClick={onTests}>
           {ui("ui.m.end.detail")}
@@ -104,4 +115,14 @@ export function EndScreen({
       </div>
     </div>
   );
+}
+
+/** «Caja negra: Agilidad ★★ · Remate A». */
+export function boxText(box: BlackBox): string {
+  return ui("ui.m.box.line", {
+    stat: gameText(`stat.${box.factors.stat.stat}`),
+    stars: "★".repeat(box.factors.stat.stars),
+    position: gameText(`position.${box.factors.aptitude.key}`),
+    letter: box.factors.aptitude.letter,
+  });
 }

@@ -801,6 +801,23 @@ export const SEASON: SeasonConstants = {
    */
   mirrorRival: { floorPm: 950, excessPm: 800 },
   /**
+   * ADR-0013 (owner 2026-11-11): inheritance is what turns Exigente from very hard into hard but
+   * manageable. Each star is worth 20 points of its stat at the start (always) and at each
+   * inspiration (weeks 24 and 40, by chance); the box's stat and stars are drawn at season end.
+   */
+  statInheritPerStar: 20,
+  inheritance: {
+    statFloor: 400,
+    starsByValue: [
+      [0, [1000, 0, 0]],
+      [600, [700, 300, 0]],
+      [800, [250, 750, 0]],
+      [1000, [0, 500, 500]],
+    ],
+    inspirationTurns: [24, 40],
+    inspirationChancePm: [650, 800, 900],
+  },
+  /**
    * Growth with trade-offs (owner 2026-11-10: «es muy fácil maxear todos los stats … estoy
    * eligiendo qué quiero súper-subir y qué solo subir»). A training's secondary stat gets 200 ‰ of
    * the main gain instead of 500 ‰ (an Agility week gave Technique +26 to +49, so Technique reached

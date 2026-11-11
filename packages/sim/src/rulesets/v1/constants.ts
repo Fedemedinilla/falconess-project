@@ -165,6 +165,29 @@ export type SeasonConstants = Omit<
    * her stats keep the player's shares. Absent = no such rival (v1, v2).
    */
   readonly mirrorRival?: { readonly floorPm: number; readonly excessPm: number };
+  /**
+   * ADR-0013: inheritance with luck (Umamusume's sparks and inspirations). Absent = v1/v2's fixed
+   * box (best stat, stars by thresholds) and the start bonus only.
+   */
+  readonly inheritance?: InheritanceConstants;
+};
+
+/** ADR-0013: how a black box is rolled at season end and how it inspires a child. */
+export type InheritanceConstants = {
+  /**
+   * The box's stat: drawn among the five, each weighted by how far it is above `statFloor`
+   * (at least 1), so the best stat is the likeliest but not certain.
+   */
+  readonly statFloor: number;
+  /**
+   * Its stars: `[from, [1★, 2★, 3★] ‰]` by the drawn stat's value, the highest `from` that
+   * applies (ascending). Normal's cap (900) keeps a box under 3★ when 3★ starts at 1000.
+   */
+  readonly starsByValue: ReadonlyArray<readonly [number, readonly [number, number, number]]>;
+  /** Weeks a parent may inspire her again (besides the season's start, which always does). */
+  readonly inspirationTurns: readonly number[];
+  /** Chance of an inspiration by the box's stars (1★, 2★, 3★), ‰. */
+  readonly inspirationChancePm: readonly [number, number, number];
 };
 export const SEASON: SeasonConstants = SEASON_V1;
 

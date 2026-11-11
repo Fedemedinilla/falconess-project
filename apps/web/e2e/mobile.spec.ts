@@ -237,9 +237,12 @@ test("a short season to its end, then a new one; the test view is one tap away",
   }
   await expect(page.locator("#m-fin")).toBeVisible();
   await expect(page.locator("#m-fin-nota")).toContainText(/[A-Z]/);
+  // ADR-0013: the season's black box is shown and kept for the next season
+  await expect(page.locator("#m-fin-caja")).toContainText("★");
   await page.click("#m-fin-nueva");
   await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
   await expect(page.locator("#m-continuar")).toBeVisible();
+  await expect(page.locator("#m-herencia button[data-box]")).toHaveCount(1);
 
   await page.click("#m-pruebas-inicio");
   await expect(page).toHaveURL(/#inicio$/);
@@ -490,4 +493,44 @@ test("Normal: no Exigente chip and no stat at the cap at the start", async ({ pa
   await startMobile(page, "cernicala");
   await expect(page.locator("#m-exigente")).toHaveCount(0);
   await expect(page.locator("#m-stats [data-cap]")).toHaveCount(0);
+});
+
+test("inheritance: up to two of this browser's black boxes go into the new season", async ({
+  page,
+}) => {
+  const box = (id: string, stat: string, stars: number) => ({
+    id,
+    rulesetVersion: "v3",
+    falconessId: "peregrina",
+    grade: "B",
+    factors: {
+      stat: { stat, stars },
+      aptitude: { kind: "position", key: "closer", letter: "A", stars: 2 },
+      skills: [],
+      frameAffinity: "koryu",
+    },
+    seed: "s",
+    inputsHash: "h",
+  });
+  const boxes = [box("b1", "agility", 2), box("b2", "stamina", 1), box("b3", "technique", 1)];
+  await page.addInitScript((list) => {
+    localStorage.setItem("falconess.juego.cajas", JSON.stringify(list));
+  }, boxes);
+  await page.goto("./");
+  const list = page.locator("#m-herencia button[data-box]");
+  await expect(list).toHaveCount(3);
+  await page.click('[data-box="b1"]');
+  await page.click('[data-box="b2"]');
+  // two at most
+  await expect(page.locator('[data-box="b3"]')).toBeDisabled();
+  await page.click('[data-box="b2"]');
+  await expect(page.locator('[data-box="b3"]')).toBeEnabled();
+  await page.click('[data-box="b3"]');
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-semana")).toBeVisible();
+  const save = await page.evaluate(() => localStorage.getItem("falconess.pruebas.partida") ?? "");
+  expect(save).toContain('"id":"b1"');
+  expect(save).toContain('"id":"b3"');
+  expect(save).not.toContain('"id":"b2"');
 });

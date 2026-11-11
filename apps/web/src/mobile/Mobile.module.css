@@ -2133,3 +2133,59 @@
   flex: none;
   margin-top: 1px;
 }
+
+/* ADR-0013: the black boxes on the character select and at the season's end */
+.heir {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.heirT {
+  margin: 0;
+  font-size: 13px;
+  line-height: 17px;
+  color: var(--tx2);
+}
+.heirT b {
+  color: var(--ink);
+  font-family: var(--cn);
+  font-size: 16px;
+}
+.heirB {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-align: left;
+}
+.heirB:disabled {
+  opacity: 0.5;
+}
+.heirN {
+  font-family: var(--cn);
+  font-size: 16px;
+  font-weight: 700;
+}
+.heirS {
+  font-size: 13px;
+  color: var(--tx2);
+}
+.boxLine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
