@@ -2433,17 +2433,36 @@
 .popSmall .popN {
   font-size: 22px;
 }
-/* chevrons rising behind the number */
+/* «^» chevrons rising from behind the number, one after another */
 .popArrows {
   position: absolute;
-  inset: -6px 2px 0;
-  background:
-    linear-gradient(135deg, transparent 50%, rgb(255 205 50 / 0.95) 50% 62%, transparent 62%) 0 0 /
-    50% 50% repeat-x,
-    linear-gradient(225deg, transparent 50%, rgb(255 205 50 / 0.95) 50% 62%, transparent 62%) 100% 0
-    / 50% 50% repeat-x;
+  left: 50%;
+  bottom: 70%;
+  width: 34px;
+  height: 40px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.chev {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 34px;
+  height: 17px;
+  overflow: visible;
   opacity: 0;
-  animation: arrowsUp 0.9s ease-out both;
+  animation: arrowsUp 0.8s ease-out both;
+}
+.chev polyline {
+  fill: none;
+  stroke: #ffd23f;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.chev .chevEdge {
+  stroke: #b34f00;
+  stroke-width: 7;
 }
 .popDown .popN {
   color: #b3261e;
@@ -2464,14 +2483,14 @@
 @keyframes arrowsUp {
   0% {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px);
   }
-  30% {
+  25% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateY(-16px);
+    transform: translateY(-26px);
   }
 }
 .resultSkip {

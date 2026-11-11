@@ -236,7 +236,19 @@ function Pop({ delta, delay, small = false }: { delta: number; delay: number; sm
       style={{ animationDelay: `${delay}ms` }}
       data-delta={delta}
     >
-      <span className={s.popArrows} style={{ animationDelay: `${delay}ms` }} aria-hidden="true" />
+      <span className={s.popArrows} aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <svg
+            key={i}
+            className={s.chev}
+            viewBox="0 0 24 12"
+            style={{ animationDelay: `${delay + i * 140}ms` }}
+          >
+            <polyline className={s.chevEdge} points="3,10 12,3 21,10" />
+            <polyline points="3,10 12,3 21,10" />
+          </svg>
+        ))}
+      </span>
       <span className={s.popN}>{formatSigned(delta)}</span>
     </span>
   );
