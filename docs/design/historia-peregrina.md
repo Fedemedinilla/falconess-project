@@ -52,32 +52,61 @@ accidente como única motivación, el romance con el entrenador, la burla del cu
 7. ¿Qué piensa de Gerifalte?
 8. ¿Qué nunca haría?
 
-## 2. Estructura: qué escenas escribir
+## 2. Estructura decidida (dueño, 2026-11-11)
 
-Una **escena** son de 6 a 12 líneas de diálogo con su arte de fondo; se pasa tocando la pantalla.
-Un **evento** es una situación corta (2 a 4 líneas) con 2 o 3 opciones que dan stats o ánimo.
+**Premisa: Ícaro, sin culpa.** Peregrina sube tan alto y tan rápido que se choca con una pista que
+no es de su rubro. No por orgullo, estupidez ni ego: cree de verdad, sincera e inocentemente, que es
+la protagonista invencible. El jugador también se lo cree, porque gana de verdad cuatro veces.
 
-| #   | Cuándo sale                      | Tipo   | Qué tiene que pasar                                        |
-| --- | -------------------------------- | ------ | ---------------------------------------------------------- |
-| P   | Semana 1, al empezar             | Escena | Prólogo: la conocemos, su meta de la temporada             |
-| E1  | Semana 3                         | Evento | (ya existe: «la primera Bajada»; se puede reescribir)      |
-| M1a | Antes de la meta 1 (semana 12)   | Escena | Nervios o confianza antes de su primera carrera importante |
-| M1b | Después de la meta 1, si la pasa | Escena | Corta (3-5 líneas)                                         |
-| E2  | Entre las semanas 14 y 20        | Evento | Primer roce con su ideal de «modelo»                       |
-| M2a | Antes de la meta 2 (semana 24)   | Escena | Una pista que le cuesta (Mirador / Escalera)               |
-| M2b | Después de la meta 2, si la pasa | Escena | Corta                                                      |
-| E3  | Entre las semanas 26 y 32        | Evento | El conflicto central se pone serio                         |
-| E4  | Entre las semanas 26 y 32        | Evento | Pide que haya pasado E3                                    |
-| M3a | Antes de la meta 3 (semana 36)   | Escena | El punto más bajo, o la decisión                           |
-| M3b | Después de la meta 3, si la pasa | Escena | Corta                                                      |
-| E5  | Entre las semanas 38 y 44        | Evento | Lo que aprendió, puesto a prueba                           |
-| M4a | Antes de la meta final           | Escena | Normal: semana 46. Exigente: la Copa y Gerifalte           |
-| F1  | Al fallar cualquier meta         | Escena | Final de derrota: digno, no humillante, deja ganas de más  |
-| F2  | Al cumplir todas las metas       | Escena | Final bueno                                                |
-| F3  | Al ganar la Copa de Exigente     | Escena | Final especial                                             |
+**Las metas cuentan la historia.** Normal:
 
-Total: 12 escenas (4 cortas) y 5 eventos. Si son muchas, lo mínimo jugable es P, M1a, M2a, M3a,
-M4a, F1 y F2.
+| Semana | Meta          | Pista                    | Qué pasa                                               |
+| ------ | ------------- | ------------------------ | ------------------------------------------------------ |
+| 10     | Salir primera | La suya (Sprint o Milla) | Debut ganador                                          |
+| 20     | Salir primera | La suya                  | Sigue invicta                                          |
+| 30     | Salir primera | La suya                  | Sigue invicta                                          |
+| 40     | Salir primera | La suya                  | La cima: la invitan a la gran carrera Larga            |
+| 48     | **Correr**    | Larga (su letra es C)    | Una Falconess hecha para resistir la pasa como si nada |
+
+«Correr» se cumple con cualquier puesto, como las carreras de prueba de Umamusume: el jugador no
+falla nada y ella pierde por primera vez. No llora, no se enfurece, no lo entiende.
+
+En Exigente: las cuatro victorias contra campos más fuertes y después la Copa contra Gerifalte en
+una pista Larga, como quinta meta.
+
+**Finales** (todos con el mismo sentimiento, su primera derrota):
+
+- Pierde la Larga (el común): la derrota sin culpa del jugador.
+- Falla una de las victorias: la primera derrota llega antes y la temporada termina ahí.
+- Gana las cinco (raro: hace falta mucha Resistencia): el final soñado.
+
+**La rival de la Larga** es una Falconess nueva, con nombre, armada para las carreras largas
+(Resistencia, Larga A). No es villana: gana porque es su distancia. Como en Umamusume, las Falconess
+con nombre aparecen en las historias de las otras; esta puede tener la suya más adelante.
+
+### Escenas y eventos
+
+| #   | Cuándo sale              | Tipo   | Qué tiene que pasar                                  |
+| --- | ------------------------ | ------ | ---------------------------------------------------- |
+| P   | Semana 1                 | Escena | La conocemos; su meta; «nunca perdí»                 |
+| M1a | Antes de la semana 10    | Escena | Su primera carrera importante                        |
+| M1b | Después, si gana         | Escena | Corta                                                |
+| E1  | Semanas 11-19            | Evento | Una rival llora al perder y Peregrina no lo entiende |
+| M2a | Antes de la semana 20    | Escena |                                                      |
+| M2b | Después, si gana         | Escena | Corta                                                |
+| E2  | Semanas 21-29            | Evento | Una novata le pregunta qué se siente al perder       |
+| M3a | Antes de la semana 30    | Escena |                                                      |
+| M3b | Después, si gana         | Escena | Corta; aparece la Falconess de la Larga, mirando     |
+| E3  | Semanas 31-39            | Evento |                                                      |
+| M4a | Antes de la semana 40    | Escena | La cima                                              |
+| M4b | Después, si gana         | Escena | La invitación a la Larga; ella acepta feliz          |
+| E4  | Semanas 41-47            | Evento | Vos sabés que la Larga no es su rubro; ella no       |
+| M5a | Antes de la semana 48    | Escena | Antes de la Larga                                    |
+| F1  | Pierde la Larga          | Escena | El final canónico: no sabe cómo reaccionar           |
+| F2  | Falla una victoria antes | Escena | La misma reacción, más temprano                      |
+| F3  | Gana las cinco           | Escena | El final soñado                                      |
+
+Lo mínimo jugable: P, M1a, M2a, M3a, M4a, M5a, F1 y F2.
 
 ## 3. Formato
 
