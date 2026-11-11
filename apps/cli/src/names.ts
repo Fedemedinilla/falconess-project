@@ -16,6 +16,7 @@ import { loadExcluded, loadWorlds } from "./names/worlds.js";
 const DEFAULT_WORLDS = fileURLToPath(new URL("../names/worlds/", import.meta.url));
 const DEFAULT_EXCLUDED = fileURLToPath(new URL("../names/excluded.txt", import.meta.url));
 const DEFAULT_WORN = fileURLToPath(new URL("../names/worn.txt", import.meta.url));
+const DEFAULT_FAVORITES = fileURLToPath(new URL("../names/favorites.txt", import.meta.url));
 
 function intArg(args: Record<string, string | true>, key: string): number | undefined {
   const v = args[key];
@@ -58,6 +59,7 @@ function main(argv: readonly string[]): void {
   const worn = argString(args, "worn", DEFAULT_WORN);
   const pool = intArg(args, "pool");
   const maxRepeat = intArg(args, "max-repeat");
+  const favorites = argString(args, "favorites", DEFAULT_FAVORITES);
 
   const result = generateNames(worlds, {
     seed,
@@ -77,6 +79,7 @@ function main(argv: readonly string[]): void {
             alliteration,
             ...(pool === undefined ? {} : { pool }),
             ...(maxRepeat === undefined ? {} : { maxRepeat }),
+            favorites: favorites === "none" ? [] : loadExcluded(favorites),
           },
   });
 

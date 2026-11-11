@@ -57,6 +57,15 @@ describe("scoreName", () => {
     expect(rules({ ...g, alliteration: "neutral" })).not.toContain("alliteration");
   });
 
+  it("adds a point per word already liked in a favorite", () => {
+    const liked = new Set(["gold", "week"]);
+    expect(rules({ liked })).toContain("liked:gold");
+    expect(scoreName(input({ liked })).score).toBe(5);
+    expect(
+      scoreName(input({ first: "Week", second: "Gold", name: "Week Gold", liked })).score,
+    ).toBe(6);
+  });
+
   it("costs 3 points per worn word, house included", () => {
     const worn = new Set(["storm", "altair"]);
     const r = scoreName(input({ first: "Storm", second: "Ship", name: "Altair Storm Ship", worn }));
@@ -126,6 +135,17 @@ describe("ranking in generateNames", () => {
     expect(new Set(firsts).size).toBe(firsts.length);
     expect(new Set(seconds).size).toBe(seconds.length);
     expect(all.length).toBeLessThanOrEqual(4);
+  });
+
+  it("ranks names with favorite words higher", () => {
+    const plain = generateNames(worlds, { ...opts, count: 3, rank }).names.map((n) => n.name);
+    const fav = generateNames(worlds, {
+      ...opts,
+      count: 3,
+      rank: { ...rank, favorites: ["Marmalade Week"] },
+    }).names;
+    expect(fav[0]?.reasons).toContainEqual({ rule: "liked:week", points: 1 });
+    expect(fav.map((n) => n.name)).not.toEqual(plain);
   });
 
   it("leaves names unranked when rank is off", () => {

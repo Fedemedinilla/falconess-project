@@ -18,6 +18,8 @@ export type ScoreInput = {
   readonly name: string;
   readonly worn: ReadonlySet<string>;
   readonly alliteration: Alliteration;
+  /** Normalized words taken from the owner's favorites; each one reused earns a point. */
+  readonly liked?: ReadonlySet<string> | undefined;
 };
 
 export type ScoreReason = { readonly rule: string; readonly points: number };
@@ -39,7 +41,8 @@ export function guessSyllables(word: string): number {
 /**
  * Integer score for a candidate; higher sounds more like a racer's name. Rules follow the
  * handoff's notes on Umamusume names: short and pronounceable, a short or strong first element
- * and a second one that closes (Twin Turbo, Gold Ship), no sing-song echoes, no worn words.
+ * and a second one that closes (Twin Turbo, Gold Ship), no sing-song echoes, no worn words, and
+ * a nudge toward words the owner already marked as favorites.
  */
 export function scoreName(input: ScoreInput): { score: number; reasons: ScoreReason[] } {
   const reasons: ScoreReason[] = [];
@@ -66,6 +69,8 @@ export function scoreName(input: ScoreInput): { score: number; reasons: ScoreRea
   for (const t of normalize(input.name).split(" ")) if (input.worn.has(t)) add(`worn:${t}`, -3);
 
   if (input.name.length <= 12) add("compact", 1);
+
+  for (const w of a === b ? [a] : [a, b]) if (input.liked?.has(w)) add(`liked:${w}`, 1);
 
   return { score: reasons.reduce((s, r) => s + r.points, 0), reasons };
 }

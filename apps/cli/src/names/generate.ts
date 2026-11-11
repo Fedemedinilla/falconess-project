@@ -64,6 +64,8 @@ export type RankOptions = {
   readonly pool?: number;
   /** How many names in the list may share one word (house words excluded); defaults to 2. */
   readonly maxRepeat?: number;
+  /** Favorite names; every word in them earns +1 when it shows up again. */
+  readonly favorites?: readonly string[];
 };
 
 export type GeneratedName = {
@@ -138,6 +140,7 @@ export function generateNames(worlds: readonly World[], opts: GenerateOptions): 
   const rank = opts.rank;
   const wanted = rank ? opts.count * (rank.pool ?? 8) : opts.count;
   const worn = new Set((rank?.worn ?? []).map(normalize));
+  const liked = new Set((rank?.favorites ?? []).flatMap((f) => tokens(f)));
   const syllables = (w: World, word: string) => w.stats?.[word]?.syllables ?? guessSyllables(word);
   const maxAttempts = opts.maxAttempts ?? opts.count * 200;
   const seen = new Set<string>();
@@ -175,6 +178,7 @@ export function generateNames(worlds: readonly World[], opts: GenerateOptions): 
           name,
           worn,
           alliteration: rank.alliteration,
+          liked,
         })
       : undefined;
     names.push({
