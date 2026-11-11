@@ -9,15 +9,21 @@
     "rel_gen=owl",
     "rel_trg=falconry"
   ],
+  "wordnet": {
+    "roots": ["bird_of_prey.n.01", "owl.n.01"],
+    "depth": 4
+  },
   "maxFreq": 3,
   "deny": [
     "Archery",
     "Boyce",
     "Camel",
     "Eagles",
+    "Ern",
     "Falcon",
     "Hawking",
     "Hawks",
+    "Hooter",
     "Horseback",
     "Kazakhstan",
     "Peregrine",

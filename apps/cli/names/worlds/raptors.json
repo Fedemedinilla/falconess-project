@@ -2,12 +2,16 @@
   "name": "Raptors and falconry",
   "lang": "en",
   "provisional": true,
-  "source": "datamuse:recipes/raptors.json",
+  "source": "datamuse+wordnet:recipes/raptors.json",
   "words": [
     "Buzzard",
+    "Carancha",
+    "Condor",
     "Eaglet",
+    "Erne",
     "Falconer",
     "Goshawk",
+    "Griffon",
     "Gyrfalcon",
     "Harpy",
     "Harrier",
@@ -20,16 +24,30 @@
     "Owlet",
     "Quarry",
     "Redtail",
-    "Tiercel"
+    "Ringtail",
+    "Tiercel",
+    "Vulture"
   ],
   "stats": {
     "Buzzard": {
       "freq": 0.369061,
       "syllables": 2
     },
+    "Carancha": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Condor": {
+      "freq": 1.176,
+      "syllables": 2
+    },
     "Eaglet": {
       "freq": 0.040793,
       "syllables": 2
+    },
+    "Erne": {
+      "freq": 0,
+      "syllables": 1
     },
     "Falconer": {
       "freq": 0.497164,
@@ -37,6 +55,10 @@
     },
     "Goshawk": {
       "freq": 0.076833,
+      "syllables": 2
+    },
+    "Griffon": {
+      "freq": 0.039,
       "syllables": 2
     },
     "Gyrfalcon": {
@@ -87,8 +109,16 @@
       "freq": 0.017366,
       "syllables": 2
     },
+    "Ringtail": {
+      "freq": 0.059,
+      "syllables": 2
+    },
     "Tiercel": {
       "freq": 0.044452,
+      "syllables": 2
+    },
+    "Vulture": {
+      "freq": 1.765,
       "syllables": 2
     }
   }

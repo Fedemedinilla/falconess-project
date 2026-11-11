@@ -7,18 +7,26 @@
     "rel_gen=atmospheric+phenomenon",
     "rel_gen=precipitation"
   ],
+  "wordnet": {
+    "roots": ["wind.n.01", "storm.n.01"],
+    "depth": 3
+  },
   "maxFreq": 3,
   "deny": [
     "Bagpipe",
+    "Bize",
     "Clew",
     "Curl",
     "Draught",
+    "Duster",
     "Fohn",
     "Hailstorm",
     "Kazoo",
+    "Languor",
     "Panpipe",
     "Pipework",
     "Rainstorm",
+    "Sandblast",
     "Simoon",
     "Snowfall",
     "Snowstorm",
@@ -26,6 +34,8 @@
     "Spool",
     "Syrinx",
     "Trice",
+    "Twister",
+    "Whiff",
     "Windstorm",
     "Woodwind"
   ]

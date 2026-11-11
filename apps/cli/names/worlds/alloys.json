@@ -2,19 +2,28 @@
   "name": "Alloys and metals",
   "lang": "en",
   "provisional": true,
-  "source": "datamuse:recipes/alloys.json",
+  "source": "datamuse+wordnet:recipes/alloys.json",
   "words": [
     "Alnico",
     "Babbitt",
     "Bismuth",
+    "Bronze",
     "Chromium",
     "Cobalt",
+    "Constantan",
     "Electrum",
+    "Elinvar",
     "Gallium",
+    "Gunmetal",
     "Inconel",
     "Indium",
     "Invar",
+    "Latten",
+    "Nichrome",
+    "Ormolu",
+    "Oroide",
     "Osmium",
+    "Permalloy",
     "Pewter",
     "Pinchbeck",
     "Rhenium",
@@ -38,6 +47,10 @@
       "freq": 0.886567,
       "syllables": 2
     },
+    "Bronze": {
+      "freq": 2.804,
+      "syllables": 1
+    },
     "Chromium": {
       "freq": 2.734767,
       "syllables": 3
@@ -46,12 +59,24 @@
       "freq": 2.579527,
       "syllables": 2
     },
+    "Constantan": {
+      "freq": 0,
+      "syllables": 3
+    },
     "Electrum": {
       "freq": 0.064101,
       "syllables": 3
     },
+    "Elinvar": {
+      "freq": 0,
+      "syllables": 3
+    },
     "Gallium": {
       "freq": 0.723962,
+      "syllables": 3
+    },
+    "Gunmetal": {
+      "freq": 0.039,
       "syllables": 3
     },
     "Inconel": {
@@ -66,8 +91,28 @@
       "freq": 0.070804,
       "syllables": 2
     },
+    "Latten": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Nichrome": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Ormolu": {
+      "freq": 0.039,
+      "syllables": 3
+    },
+    "Oroide": {
+      "freq": 0,
+      "syllables": 2
+    },
     "Osmium": {
       "freq": 0.377167,
+      "syllables": 3
+    },
+    "Permalloy": {
+      "freq": 0.039,
       "syllables": 3
     },
     "Pewter": {

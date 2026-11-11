@@ -2,6 +2,10 @@
   "name": "Alloys and metals",
   "lang": "en",
   "queries": ["rel_gen=alloy", "rel_gen=metal"],
+  "wordnet": {
+    "roots": ["alloy.n.01"],
+    "depth": 3
+  },
   "maxFreq": 3,
   "deny": [
     "Amalgam",
@@ -16,6 +20,7 @@
     "Curium",
     "Cutlass",
     "Erbium",
+    "Eureka",
     "Falchion",
     "Fermium",
     "Francium",
@@ -23,12 +28,14 @@
     "Holmium",
     "Lanthanum",
     "Lutetium",
+    "Oreide",
     "Radium",
     "Rapier",
     "Saber",
     "Sabre",
     "Scandium",
     "Shunter",
+    "Stainless",
     "Strontium",
     "Technetium",
     "Terbium",
