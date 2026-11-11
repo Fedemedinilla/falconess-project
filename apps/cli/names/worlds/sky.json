@@ -1,0 +1,27 @@
+{
+  "name": "Sky and weather",
+  "lang": "en",
+  "provisional": true,
+  "words": [
+    "Storm",
+    "Gale",
+    "Cloud",
+    "Zephyr",
+    "Aurora",
+    "Rain",
+    "Thunder",
+    "Dawn",
+    "Dusk",
+    "Comet",
+    "Nova",
+    "Breeze",
+    "Mist",
+    "Halo",
+    "Squall",
+    "Frost",
+    "Sun",
+    "Moon",
+    "Star",
+    "Tempest"
+  ]
+}
