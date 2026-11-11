@@ -62,6 +62,8 @@ export type RankOptions = {
   readonly alliteration: Alliteration;
   /** Candidates gathered per requested name; defaults to 8. */
   readonly pool?: number;
+  /** How many names in the list may share one word (house words excluded); defaults to 2. */
+  readonly maxRepeat?: number;
 };
 
 export type GeneratedName = {
@@ -188,8 +190,20 @@ export function generateNames(worlds: readonly World[], opts: GenerateOptions): 
   }
 
   // Array.prototype.sort is stable, so equal scores keep their (seeded) draw order.
-  const chosen = rank
-    ? names.sort((x, y) => (y.score ?? 0) - (x.score ?? 0)).slice(0, opts.count)
-    : names;
+  const chosen = rank ? pickBest(names, opts.count, rank.maxRepeat ?? 2) : names;
   return { names: chosen, attempts, exhausted: chosen.length < opts.count };
+}
+
+/** Best scores first, skipping names whose words already appear `maxRepeat` times in the list. */
+function pickBest(names: GeneratedName[], count: number, maxRepeat: number): GeneratedName[] {
+  const uses = new Map<string, number>();
+  const out: GeneratedName[] = [];
+  for (const n of [...names].sort((x, y) => (y.score ?? 0) - (x.score ?? 0))) {
+    if (out.length === count) break;
+    const words = [normalize(n.first), normalize(n.second)];
+    if (words.some((w) => (uses.get(w) ?? 0) >= maxRepeat)) continue;
+    for (const w of words) uses.set(w, (uses.get(w) ?? 0) + 1);
+    out.push(n);
+  }
+  return out;
 }

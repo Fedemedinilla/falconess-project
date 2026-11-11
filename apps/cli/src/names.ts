@@ -57,6 +57,7 @@ function main(argv: readonly string[]): void {
     throw new Error("--alliteration must be prefer, avoid or neutral");
   const worn = argString(args, "worn", DEFAULT_WORN);
   const pool = intArg(args, "pool");
+  const maxRepeat = intArg(args, "max-repeat");
 
   const result = generateNames(worlds, {
     seed,
@@ -75,6 +76,7 @@ function main(argv: readonly string[]): void {
             worn: worn === "none" ? [] : loadExcluded(worn),
             alliteration,
             ...(pool === undefined ? {} : { pool }),
+            ...(maxRepeat === undefined ? {} : { maxRepeat }),
           },
   });
 

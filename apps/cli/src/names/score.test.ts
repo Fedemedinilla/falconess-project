@@ -110,9 +110,22 @@ describe("ranking in generateNames", () => {
   });
 
   it("uses imported syllable stats over the guess", () => {
-    const all = generateNames(worlds, { ...opts, count: 16, rank }).names;
+    const all = generateNames(worlds, {
+      ...opts,
+      count: 16,
+      rank: { ...rank, maxRepeat: 16 },
+    }).names;
     const c = all.find((n) => n.name === "Twin Constellation");
     expect(c?.reasons).toContainEqual({ rule: "syllables", points: 1 }); // 1 + 4 imported = 5
+  });
+
+  it("lets one word appear at most maxRepeat times in the list", () => {
+    const all = generateNames(worlds, { ...opts, count: 8, rank: { ...rank, maxRepeat: 1 } }).names;
+    const firsts = all.map((n) => n.first);
+    const seconds = all.map((n) => n.second);
+    expect(new Set(firsts).size).toBe(firsts.length);
+    expect(new Set(seconds).size).toBe(seconds.length);
+    expect(all.length).toBeLessThanOrEqual(4);
   });
 
   it("leaves names unranked when rank is off", () => {
