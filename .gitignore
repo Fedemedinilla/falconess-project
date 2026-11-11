@@ -7,4 +7,5 @@ tools/.usage.json
 coverage/
 .work/
 apps/web/dist-artifact/
+apps/web/dist-demo/
 .tsbuild/

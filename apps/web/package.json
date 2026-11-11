@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:artifact": "vite build --mode artifact",
+    "build:demo": "vite build --mode artifact && node scripts/demo.mjs",
     "preview": "vite preview",
     "test:e2e": "vite build && vite build --mode artifact && playwright test",
     "test:e2e:dev": "E2E_DEV=1 playwright test --project app",
