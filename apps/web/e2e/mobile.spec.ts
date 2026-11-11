@@ -602,7 +602,8 @@ test("training scenes: Peregrina's art for the chosen training, cross-fading on 
   // the chosen scene ends fully shown, the one before fully hidden
   await expect(stage.locator('img[data-kind="train:agility"]')).toHaveCSS("opacity", "1");
   await expect(stage.locator('img[data-kind="train:stamina"]')).toHaveCSS("opacity", "0");
-  // a training without its art yet shows her chibi
   await page.click("#m-entrenar-technique");
-  await expect(stage).toHaveAttribute("data-scene", "chibi");
+  await expect(stage).toHaveAttribute("data-scene", "train:technique");
+  await page.click("#m-entrenar-simulator");
+  await expect(stage).toHaveAttribute("data-scene", "train:simulator");
 });

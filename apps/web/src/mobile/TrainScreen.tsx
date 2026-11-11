@@ -253,7 +253,7 @@ function TrainingBackdrop({
         w: b.width,
         h: b.height,
         x: r.left - b.left + r.width / 2,
-        y: r.top - b.top + r.height * 0.55,
+        y: r.top - b.top + r.height * 0.42,
       });
     };
     measure();

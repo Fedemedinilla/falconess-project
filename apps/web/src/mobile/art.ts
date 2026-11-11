@@ -13,7 +13,9 @@ import peregrinaChibi from "./art/peregrina-chibi.webp";
 import peregrinaSplash from "./art/peregrina-splash.webp";
 import peregrinaTrainAgility from "./art/peregrina-train-agility.webp";
 import peregrinaTrainRiskFlight from "./art/peregrina-train-risk-flight.webp";
+import peregrinaTrainSimulator from "./art/peregrina-train-simulator.webp";
 import peregrinaTrainStamina from "./art/peregrina-train-stamina.webp";
+import peregrinaTrainTechnique from "./art/peregrina-train-technique.webp";
 
 /**
  * A training's illustration (owner 2026-11-11, Gemini from her splash): a 9:16 scene that fills
@@ -51,6 +53,8 @@ const ART: Readonly<Record<string, RunnerArt>> = {
       "train:agility": { src: peregrinaTrainAgility, w: 720, h: 1290, fx: 0.63, fy: 0.23 },
       "train:stamina": { src: peregrinaTrainStamina, w: 720, h: 1290, fx: 0.5, fy: 0.4 },
       "train:risk-flight": { src: peregrinaTrainRiskFlight, w: 720, h: 1290, fx: 0.56, fy: 0.33 },
+      "train:technique": { src: peregrinaTrainTechnique, w: 720, h: 1290, fx: 0.47, fy: 0.35 },
+      "train:simulator": { src: peregrinaTrainSimulator, w: 720, h: 1290, fx: 0.46, fy: 0.225 },
     },
   },
   cernicala: { splash: cernicalaSplash, chibi: cernicalaChibi, ar: 0.46, fy: 0.105, cx: 0.47 },
