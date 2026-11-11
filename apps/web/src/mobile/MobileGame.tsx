@@ -21,7 +21,7 @@ import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
 import { accentStyle, Hud } from "./Parts";
-import { PreRaceScreen, RaceScreen } from "./RaceScreens";
+import { BeforeRaceScreen, PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
 import {
   getSoundStyle,
@@ -41,7 +41,8 @@ type View =
   | { readonly screen: "train"; readonly selected?: TrainingKind | undefined }
   | { readonly screen: "workshop"; readonly tab: WorkshopTab }
   | { readonly screen: "prerace"; readonly input?: WeekActionInput | undefined }
-  | { readonly screen: "race"; readonly turn: number; readonly result: boolean };
+  | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
+  | { readonly screen: "before"; readonly turn: number };
 
 const MENU: View = { screen: "menu" };
 
@@ -153,7 +154,8 @@ export function MobileGame() {
     const raceTurn = menu.raceWeek ? state.turn : undefined;
     if (!game.act(withPosition(input, chosen), inputs)) return;
     playSound(trainingCue(input, state.turn, game.getSnapshot().lastStep?.after, cards));
-    setView(raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: false } : MENU);
+    // a race week shows what the action did before the race (testers 2026-11-11)
+    setView(raceTurn !== undefined ? { screen: "before", turn: raceTurn } : MENU);
   };
   /** A week's action: on a race week the pre-race card comes first. */
   const act = (input: WeekActionInput) => {
@@ -268,6 +270,17 @@ export function MobileGame() {
           onBack={() => setView(MENU)}
         />
       );
+      break;
+    }
+    case "before": {
+      const step = snap.lastStep;
+      screen = step ? (
+        <BeforeRaceScreen
+          ctx={ctx}
+          step={step}
+          onGo={() => setView({ screen: "race", turn: view.turn, result: false })}
+        />
+      ) : null;
       break;
     }
     case "race":

@@ -191,6 +191,10 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   await expect(page.locator("#m-precarrera-accion")).toBeVisible();
   await expect(page.locator("#m-posicion-lead")).toBeChecked();
   await page.click("#m-correr");
+  // the training's result before the race (testers 2026-11-11)
+  await expect(page.locator("#m-antes")).toBeVisible();
+  await expect(page.locator("#m-antes-linea")).toBeVisible();
+  await page.click("#m-antes-ir");
   await runRace(page);
   // «Lo que pasó» says the race and the position she ran in
   await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
@@ -231,6 +235,7 @@ test("a short season to its end, then a new one; the test view is one tap away",
     await page.click("#m-descansar");
     if (raceWeek) {
       await page.click("#m-correr");
+      await page.click("#m-antes-ir");
       await runRace(page);
     }
     await settle(page);
@@ -328,6 +333,7 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await page.click("#m-correr");
+  await page.click("#m-antes-ir");
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
   // the side view is the default
   await expect(page.locator("#m-carrera-vista-side")).toHaveAttribute("aria-pressed", "true");
@@ -394,6 +400,7 @@ test("first person: a finger turns her head sideways, up to her neck's reach, an
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await page.click("#m-correr");
+  await page.click("#m-antes-ir");
   await page.click("#m-carrera-vista-fpv");
   await page.click("#m-carrera-vuelo-salida");
   const cv = page.locator("#m-carrera-vuelo-lienzo");
