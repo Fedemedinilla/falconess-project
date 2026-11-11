@@ -1,0 +1,135 @@
+{
+  "name": "Moves (verbs)",
+  "lang": "en",
+  "provisional": true,
+  "source": "wordnet:recipes/moves.json",
+  "words": [
+    "Chute",
+    "Dart",
+    "Escalade",
+    "Flit",
+    "Flutter",
+    "Freewheel",
+    "Glide",
+    "Hasten",
+    "Hover",
+    "Hurtle",
+    "Nosedive",
+    "Plunge",
+    "Pounce",
+    "Scoot",
+    "Scud",
+    "Skid",
+    "Skim",
+    "Skitter",
+    "Skydive",
+    "Soar",
+    "Sprint",
+    "Stoop",
+    "Swoop",
+    "Whizz",
+    "Zoom"
+  ],
+  "stats": {
+    "Chute": {
+      "freq": 3.608,
+      "syllables": 1
+    },
+    "Dart": {
+      "freq": 1.922,
+      "syllables": 1
+    },
+    "Escalade": {
+      "freq": 0.373,
+      "syllables": 3
+    },
+    "Flit": {
+      "freq": 0.49,
+      "syllables": 1
+    },
+    "Flutter": {
+      "freq": 0.863,
+      "syllables": 2
+    },
+    "Freewheel": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Glide": {
+      "freq": 2.353,
+      "syllables": 1
+    },
+    "Hasten": {
+      "freq": 0.725,
+      "syllables": 2
+    },
+    "Hover": {
+      "freq": 1.157,
+      "syllables": 2
+    },
+    "Hurtle": {
+      "freq": 0.02,
+      "syllables": 2
+    },
+    "Nosedive": {
+      "freq": 0.157,
+      "syllables": 2
+    },
+    "Plunge": {
+      "freq": 2.235,
+      "syllables": 1
+    },
+    "Pounce": {
+      "freq": 1.098,
+      "syllables": 1
+    },
+    "Scoot": {
+      "freq": 2.98,
+      "syllables": 1
+    },
+    "Scud": {
+      "freq": 0.608,
+      "syllables": 1
+    },
+    "Skid": {
+      "freq": 2.176,
+      "syllables": 1
+    },
+    "Skim": {
+      "freq": 0.843,
+      "syllables": 1
+    },
+    "Skitter": {
+      "freq": 0.059,
+      "syllables": 2
+    },
+    "Skydive": {
+      "freq": 0.216,
+      "syllables": 2
+    },
+    "Soar": {
+      "freq": 1.529,
+      "syllables": 1
+    },
+    "Sprint": {
+      "freq": 0.706,
+      "syllables": 1
+    },
+    "Stoop": {
+      "freq": 2.451,
+      "syllables": 1
+    },
+    "Swoop": {
+      "freq": 1.529,
+      "syllables": 1
+    },
+    "Whizz": {
+      "freq": 0.216,
+      "syllables": 1
+    },
+    "Zoom": {
+      "freq": 3.549,
+      "syllables": 1
+    }
+  }
+}

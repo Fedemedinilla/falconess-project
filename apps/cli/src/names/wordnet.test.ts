@@ -76,6 +76,14 @@ describe("adjectives and verbs", () => {
     ]);
   });
 
+  it("can keep the roots' own lemmas", () => {
+    expect(verb.descendants(["rush.v.01"], 1, true, true).map((h) => [h.word, h.depth])).toEqual([
+      ["rush", 0],
+      ["dart", 1],
+      ["hurtle", 1],
+    ]);
+  });
+
   it("follows verb troponyms", () => {
     expect(verb.descendants(["rush.v.01"], 1, true).map((h) => h.word)).toEqual(["dart", "hurtle"]);
   });
@@ -108,7 +116,12 @@ describe("WordNet recipes", () => {
   });
 
   it("accepts a WordNet-only recipe with defaults and rejects an empty one", () => {
-    expect(recipe.wordnet).toEqual({ roots: ["wind.n.01"], depth: 3, instances: true });
+    expect(recipe.wordnet).toEqual({
+      roots: ["wind.n.01"],
+      depth: 3,
+      instances: true,
+      includeRoots: false,
+    });
     expect(() => parseRecipe("x", { name: "x", lang: "en" })).toThrow(/needs Datamuse queries/);
     expect(() =>
       parseRecipe("x", { name: "x", lang: "en", wordnet: { roots: ["wind"] } }),

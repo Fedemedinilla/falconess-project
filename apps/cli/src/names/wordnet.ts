@@ -120,13 +120,25 @@ export class WordNet {
    * Breadth-first walk below each root, in root order. The roots' own lemmas are left out (they
    * are the generic word); a lemma is reported once, at its first (shallowest) appearance.
    */
-  descendants(roots: readonly string[], depth: number, instances: boolean): WordNetHit[] {
+  descendants(
+    roots: readonly string[],
+    depth: number,
+    instances: boolean,
+    includeRoots = false,
+  ): WordNetHit[] {
     const hits: WordNetHit[] = [];
     const seenSynsets = new Set<string>();
     const seenWords = new Set<string>();
     for (const root of roots) {
       const start = this.resolve(root);
       seenSynsets.add(start.offset);
+      if (includeRoots)
+        for (const word of start.words) {
+          const key = word.toLowerCase();
+          if (seenWords.has(key)) continue;
+          seenWords.add(key);
+          hits.push({ word, depth: 0, root, gloss: start.gloss, pos: this.pos });
+        }
       let frontier: Synset[] = [start];
       for (let d = 1; d <= depth && frontier.length > 0; d++) {
         const next: Synset[] = [];
@@ -168,11 +180,12 @@ export function walk(
   roots: readonly string[],
   depth: number,
   instances: boolean,
+  includeRoots = false,
 ): WordNetHit[] {
   const seen = new Set<string>();
   const out: WordNetHit[] = [];
   for (const root of roots) {
-    for (const hit of nets[posOf(root)].descendants([root], depth, instances)) {
+    for (const hit of nets[posOf(root)].descendants([root], depth, instances, includeRoots)) {
       const key = `${hit.pos}:${hit.word.toLowerCase()}`;
       if (seen.has(key)) continue;
       seen.add(key);

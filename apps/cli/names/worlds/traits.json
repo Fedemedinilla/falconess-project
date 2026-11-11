@@ -1,0 +1,331 @@
+{
+  "name": "Traits (adjectives)",
+  "lang": "en",
+  "position": "first",
+  "provisional": true,
+  "source": "datamuse+wordnet:recipes/traits.json",
+  "words": [
+    "Aerial",
+    "Ardent",
+    "Audacious",
+    "Beaming",
+    "Blazing",
+    "Blinding",
+    "Blistering",
+    "Coruscant",
+    "Courageous",
+    "Daredevil",
+    "Dauntless",
+    "Dazzling",
+    "Effulgent",
+    "Fearless",
+    "Feral",
+    "Ferocious",
+    "Fulgent",
+    "Gallant",
+    "Gleaming",
+    "Glinting",
+    "Glistening",
+    "Glistering",
+    "Glittering",
+    "Glossy",
+    "Gritty",
+    "Hardy",
+    "Hasty",
+    "Headlong",
+    "Heroic",
+    "Incisive",
+    "Intrepid",
+    "Keen",
+    "Lambent",
+    "Lucent",
+    "Luminous",
+    "Lustrous",
+    "Majestic",
+    "Mettlesome",
+    "Nacreous",
+    "Nervy",
+    "Opaline",
+    "Piercing",
+    "Radiant",
+    "Reckless",
+    "Refulgent",
+    "Shimmery",
+    "Silken",
+    "Silky",
+    "Silvern",
+    "Silvery",
+    "Sleek",
+    "Speedy",
+    "Spirited",
+    "Spunky",
+    "Stalwart",
+    "Twinkling",
+    "Unbroken",
+    "Undaunted",
+    "Untamed",
+    "Valiant",
+    "Valorous",
+    "Vaulting",
+    "Vivid",
+    "Winged"
+  ],
+  "stats": {
+    "Aerial": {
+      "freq": 4.494294,
+      "syllables": 3
+    },
+    "Ardent": {
+      "freq": 0.588,
+      "syllables": 2
+    },
+    "Audacious": {
+      "freq": 0.51,
+      "syllables": 3
+    },
+    "Beaming": {
+      "freq": 0.824,
+      "syllables": 2
+    },
+    "Blazing": {
+      "freq": 1.824,
+      "syllables": 2
+    },
+    "Blinding": {
+      "freq": 1.471,
+      "syllables": 2
+    },
+    "Blistering": {
+      "freq": 0.471,
+      "syllables": 3
+    },
+    "Coruscant": {
+      "freq": 0.02,
+      "syllables": 3
+    },
+    "Courageous": {
+      "freq": 3.157,
+      "syllables": 3
+    },
+    "Daredevil": {
+      "freq": 0.647,
+      "syllables": 3
+    },
+    "Dauntless": {
+      "freq": 0.137,
+      "syllables": 2
+    },
+    "Dazzling": {
+      "freq": 1.294,
+      "syllables": 3
+    },
+    "Effulgent": {
+      "freq": 0.137,
+      "syllables": 3
+    },
+    "Fearless": {
+      "freq": 2.98,
+      "syllables": 2
+    },
+    "Feral": {
+      "freq": 0.176,
+      "syllables": 2
+    },
+    "Ferocious": {
+      "freq": 1.549,
+      "syllables": 3
+    },
+    "Fulgent": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Gallant": {
+      "freq": 2.460695,
+      "syllables": 2
+    },
+    "Gleaming": {
+      "freq": 0.706,
+      "syllables": 2
+    },
+    "Glinting": {
+      "freq": 0.059,
+      "syllables": 2
+    },
+    "Glistening": {
+      "freq": 0.549,
+      "syllables": 3
+    },
+    "Glistering": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Glittering": {
+      "freq": 0.314,
+      "syllables": 3
+    },
+    "Glossy": {
+      "freq": 0.471,
+      "syllables": 2
+    },
+    "Gritty": {
+      "freq": 0.451,
+      "syllables": 2
+    },
+    "Hardy": {
+      "freq": 3.686,
+      "syllables": 2
+    },
+    "Hasty": {
+      "freq": 2.622877,
+      "syllables": 2
+    },
+    "Headlong": {
+      "freq": 1.169443,
+      "syllables": 2
+    },
+    "Heroic": {
+      "freq": 4.588,
+      "syllables": 3
+    },
+    "Incisive": {
+      "freq": 0.157,
+      "syllables": 3
+    },
+    "Intrepid": {
+      "freq": 0.608,
+      "syllables": 3
+    },
+    "Keen": {
+      "freq": 4.471,
+      "syllables": 1
+    },
+    "Lambent": {
+      "freq": 0.039,
+      "syllables": 2
+    },
+    "Lucent": {
+      "freq": 0.098,
+      "syllables": 2
+    },
+    "Luminous": {
+      "freq": 0.765,
+      "syllables": 3
+    },
+    "Lustrous": {
+      "freq": 0.294,
+      "syllables": 2
+    },
+    "Majestic": {
+      "freq": 1.373,
+      "syllables": 3
+    },
+    "Mettlesome": {
+      "freq": 0.02,
+      "syllables": 3
+    },
+    "Nacreous": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Nervy": {
+      "freq": 0.157,
+      "syllables": 2
+    },
+    "Opaline": {
+      "freq": 0.02,
+      "syllables": 3
+    },
+    "Piercing": {
+      "freq": 1.373,
+      "syllables": 2
+    },
+    "Radiant": {
+      "freq": 2.157,
+      "syllables": 3
+    },
+    "Reckless": {
+      "freq": 4.922,
+      "syllables": 2
+    },
+    "Refulgent": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Shimmery": {
+      "freq": 0.078,
+      "syllables": 3
+    },
+    "Silken": {
+      "freq": 0.412,
+      "syllables": 2
+    },
+    "Silky": {
+      "freq": 0.784,
+      "syllables": 2
+    },
+    "Silvern": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Silvery": {
+      "freq": 0.49,
+      "syllables": 3
+    },
+    "Sleek": {
+      "freq": 0.843,
+      "syllables": 1
+    },
+    "Speedy": {
+      "freq": 1.961,
+      "syllables": 2
+    },
+    "Spirited": {
+      "freq": 1.216,
+      "syllables": 3
+    },
+    "Spunky": {
+      "freq": 0.627,
+      "syllables": 2
+    },
+    "Stalwart": {
+      "freq": 0.431,
+      "syllables": 2
+    },
+    "Twinkling": {
+      "freq": 0.549,
+      "syllables": 3
+    },
+    "Unbroken": {
+      "freq": 0.392,
+      "syllables": 3
+    },
+    "Undaunted": {
+      "freq": 0.275,
+      "syllables": 3
+    },
+    "Untamed": {
+      "freq": 0.647,
+      "syllables": 3
+    },
+    "Valiant": {
+      "freq": 2.471,
+      "syllables": 2
+    },
+    "Valorous": {
+      "freq": 0.059,
+      "syllables": 3
+    },
+    "Vaulting": {
+      "freq": 0.216,
+      "syllables": 2
+    },
+    "Vivid": {
+      "freq": 2.039,
+      "syllables": 2
+    },
+    "Winged": {
+      "freq": 2.391516,
+      "syllables": 1
+    }
+  }
+}

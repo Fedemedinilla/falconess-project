@@ -1,0 +1,256 @@
+{
+  "name": "Colors",
+  "lang": "en",
+  "position": "first",
+  "provisional": true,
+  "source": "wordnet:recipes/colors.json",
+  "words": [
+    "Apricot",
+    "Aqua",
+    "Azure",
+    "Burgundy",
+    "Canary",
+    "Caramel",
+    "Cardinal",
+    "Carmine",
+    "Carnation",
+    "Cerise",
+    "Cerulean",
+    "Chalk",
+    "Charcoal",
+    "Chartreuse",
+    "Chestnut",
+    "Claret",
+    "Coral",
+    "Crimson",
+    "Cyan",
+    "Dun",
+    "Ebony",
+    "Ecru",
+    "Emerald",
+    "Fawn",
+    "Gamboge",
+    "Hazel",
+    "Indigo",
+    "Ivory",
+    "Lavender",
+    "Lazuline",
+    "Magenta",
+    "Maize",
+    "Maroon",
+    "Mauve",
+    "Mocha",
+    "Ochre",
+    "Sable",
+    "Saffron",
+    "Sanguine",
+    "Sapphire",
+    "Scarlet",
+    "Sepia",
+    "Tangerine",
+    "Taupe",
+    "Teal",
+    "Topaz",
+    "Turquoise",
+    "Umber",
+    "Vermilion"
+  ],
+  "stats": {
+    "Apricot": {
+      "freq": 0.627,
+      "syllables": 3
+    },
+    "Aqua": {
+      "freq": 1.373,
+      "syllables": 2
+    },
+    "Azure": {
+      "freq": 0.294,
+      "syllables": 2
+    },
+    "Burgundy": {
+      "freq": 2.686,
+      "syllables": 3
+    },
+    "Canary": {
+      "freq": 2.922,
+      "syllables": 3
+    },
+    "Caramel": {
+      "freq": 1.235,
+      "syllables": 3
+    },
+    "Cardinal": {
+      "freq": 4.078,
+      "syllables": 3
+    },
+    "Carmine": {
+      "freq": 2.176,
+      "syllables": 2
+    },
+    "Carnation": {
+      "freq": 0.843,
+      "syllables": 3
+    },
+    "Cerise": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Cerulean": {
+      "freq": 0.314,
+      "syllables": 3
+    },
+    "Chalk": {
+      "freq": 3.588,
+      "syllables": 1
+    },
+    "Charcoal": {
+      "freq": 1.765,
+      "syllables": 2
+    },
+    "Chartreuse": {
+      "freq": 0.529,
+      "syllables": 2
+    },
+    "Chestnut": {
+      "freq": 1.275,
+      "syllables": 2
+    },
+    "Claret": {
+      "freq": 0.294,
+      "syllables": 2
+    },
+    "Coral": {
+      "freq": 2.373,
+      "syllables": 2
+    },
+    "Crimson": {
+      "freq": 1.314,
+      "syllables": 2
+    },
+    "Cyan": {
+      "freq": 0.176,
+      "syllables": 2
+    },
+    "Dun": {
+      "freq": 0.255,
+      "syllables": 1
+    },
+    "Ebony": {
+      "freq": 0.863,
+      "syllables": 3
+    },
+    "Ecru": {
+      "freq": 0.137,
+      "syllables": 2
+    },
+    "Emerald": {
+      "freq": 2.569,
+      "syllables": 2
+    },
+    "Fawn": {
+      "freq": 0.706,
+      "syllables": 1
+    },
+    "Gamboge": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Hazel": {
+      "freq": 1.078,
+      "syllables": 2
+    },
+    "Indigo": {
+      "freq": 0.314,
+      "syllables": 3
+    },
+    "Ivory": {
+      "freq": 1.392,
+      "syllables": 3
+    },
+    "Lavender": {
+      "freq": 2.039,
+      "syllables": 3
+    },
+    "Lazuline": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Magenta": {
+      "freq": 0.627,
+      "syllables": 3
+    },
+    "Maize": {
+      "freq": 0.176,
+      "syllables": 1
+    },
+    "Maroon": {
+      "freq": 1.196,
+      "syllables": 2
+    },
+    "Mauve": {
+      "freq": 0.529,
+      "syllables": 1
+    },
+    "Mocha": {
+      "freq": 1.294,
+      "syllables": 2
+    },
+    "Ochre": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Sable": {
+      "freq": 0.824,
+      "syllables": 2
+    },
+    "Saffron": {
+      "freq": 0.608,
+      "syllables": 2
+    },
+    "Sanguine": {
+      "freq": 0.137,
+      "syllables": 2
+    },
+    "Sapphire": {
+      "freq": 1.196,
+      "syllables": 3
+    },
+    "Scarlet": {
+      "freq": 3.275,
+      "syllables": 2
+    },
+    "Sepia": {
+      "freq": 0.059,
+      "syllables": 3
+    },
+    "Tangerine": {
+      "freq": 0.745,
+      "syllables": 3
+    },
+    "Taupe": {
+      "freq": 0.686,
+      "syllables": 1
+    },
+    "Teal": {
+      "freq": 0.51,
+      "syllables": 1
+    },
+    "Topaz": {
+      "freq": 1,
+      "syllables": 2
+    },
+    "Turquoise": {
+      "freq": 0.882,
+      "syllables": 2
+    },
+    "Umber": {
+      "freq": 0.275,
+      "syllables": 2
+    },
+    "Vermilion": {
+      "freq": 0.176,
+      "syllables": 3
+    }
+  }
+}

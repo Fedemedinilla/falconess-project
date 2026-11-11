@@ -72,8 +72,8 @@ async function main(argv: readonly string[]): Promise<void> {
       candidates.push(...fromDatamuse(await fetchRecipe(recipe, fetchJson)));
     if (recipe.wordnet) {
       const { wordnet, data } = lexicon();
-      const { roots, depth, instances } = recipe.wordnet;
-      candidates.push(...fromWordNet(walk(wordnet, roots, depth, instances), data));
+      const { roots, depth, instances, includeRoots } = recipe.wordnet;
+      candidates.push(...fromWordNet(walk(wordnet, roots, depth, instances, includeRoots), data));
     }
     const { world, dropped, kept } = filterCandidates(id, recipe, candidates, worn);
 

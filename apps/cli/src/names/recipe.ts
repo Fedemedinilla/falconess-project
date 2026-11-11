@@ -37,6 +37,8 @@ export const RecipeFile = z
         depth: z.number().int().min(1).max(6).default(3),
         /** Include named instances (stars, places), not only kinds. */
         instances: z.boolean().default(true),
+        /** Keep the roots' own lemmas too: right for "bold.a.01", wrong for the generic "wind". */
+        includeRoots: z.boolean().default(false),
       })
       .strict()
       .optional(),
