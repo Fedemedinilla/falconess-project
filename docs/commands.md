@@ -76,10 +76,24 @@ mundo es agregar un archivo:
 ```
 
 `role` es `word` (por defecto) o `house`; los mundos `house` no entran en el «cualquiera con
-cualquiera». `source` y `stats` son opcionales y los escribe el importador. No se aceptan palabras
+cualquiera». `position` dice dónde va la palabra del mundo: `first` (adjetivos y colores: *Swift
+Kestrel*, nunca *Kestrel Swift*), `second` o `any` (por defecto). Manda sobre `--order` y sobre
+`--a`/`--b`, y al elegir mundos libremente no se cruzan dos que quieran el mismo lugar. `source` y `stats` son opcionales y los escribe el importador. No se aceptan palabras
 repetidas, `stats` de palabras que no están en `words` ni campos desconocidos.
 
-Mundos actuales, todos provisorios: `winds` (41), `raptors` (23), `alloys` (29) y `clouds` (51), importados de Datamuse y WordNet,
+Mundos actuales, todos provisorios:
+
+| Mundo | Palabras | Tipo | Lugar | Ejemplos |
+| --- | --- | --- | --- | --- |
+| `winds` | 41 | sustantivos | cualquiera | Khamsin, Mistral, Foehn |
+| `raptors` | 23 | sustantivos | cualquiera | Kestrel, Tiercel, Erne |
+| `alloys` | 29 | sustantivos | cualquiera | Inconel, Nichrome, Ormolu |
+| `clouds` | 51 | sustantivos | cualquiera | Cirrus, Spica, Carina |
+| `colors` | 49 | sustantivos de color | primera | Vermilion, Gamboge, Cerulean |
+| `traits` | 64 | adjetivos | primera | Intrepid, Refulgent, Blistering |
+| `moves` | 25 | verbos | cualquiera | Swoop, Stoop, Nosedive |
+
+Todos salen de Datamuse y WordNet,
 y `makers` (los cinco fabricantes de `docs/BRIEF.md`, escrito a mano).
 
 ### Excluidos y gastadas
@@ -130,14 +144,16 @@ Cada receta es `apps/cli/names/recipes/<id>.json` y escribe `apps/cli/names/worl
 | Campo | Qué hace | Por defecto |
 | --- | --- | --- |
 | `queries` | Consultas de Datamuse en orden. `rel_gen=X` trae «tipos de X»; `rel_trg=X`, palabras asociadas; `ml=X`, de significado parecido. `md` y `max` los pone el importador. | `[]` |
-| `wordnet.roots` | Sentidos de WordNet (`palabra.n.NN`) debajo de los cuales se juntan palabras. | sin WordNet |
+| `wordnet.roots` | Sentidos de WordNet debajo de los cuales se juntan palabras: `palabra.n.NN` trae tipos de un sustantivo, `palabra.v.NN` formas de un verbo («rush» → *dart, hurtle*), `palabra.a.NN` adjetivos parecidos («fast» → *fleet, blistering*). | sin WordNet |
+| `wordnet.includeRoots` | Guardar también las palabras de la raíz. Sirve para adjetivos y verbos (*Bold*, *Swoop*), no para sustantivos genéricos (*wind*). | `false` |
+| `position` | Se copia al mundo: `first` para adjetivos y colores. | `any` |
 | `wordnet.depth` | Cuántos niveles bajar en el árbol (1 a 6). | 3 |
 | `wordnet.instances` | Incluir nombres propios (estrellas, lugares), no solo tipos. | `true` |
 | `unknownFreq` | Qué hacer con palabras que la lista de frecuencias no conoce (pasa con términos raros de WordNet como *Khamsin*): `keep` las guarda con `freq` 0, `drop` las descarta. | `keep` |
 | `maxFreq`, `minFreq` | Banda de frecuencia en apariciones por millón de palabras: arriba de `maxFreq` es demasiado común, abajo de `minFreq` suele ser taxonomía. | 5 y 0,01 |
 | `syllables` | Rango de sílabas. | `[1, 3]` |
 | `minLength`, `maxLength` | Largo de la palabra en letras. | 3 y 10 |
-| `pos` | Categorías gramaticales que se aceptan (`n`, `v`, `adj`, `adv`). | `["n"]` |
+| `pos` | Categorías gramaticales que se aceptan (`n`, `v`, `adj`, `adv`). Una receta de adjetivos pone `["adj"]`; una de verbos, `["v"]`. | `["n"]` |
 | `deny` | Palabras revisadas a mano y rechazadas: otro sentido, duplicado de grafía, demasiado cerca de un nombre real o del juego. | `[]` |
 | `perQuery` | Resultados pedidos por consulta. | 200 |
 | `role` | `house` para un mundo de prefijos. | `word` |

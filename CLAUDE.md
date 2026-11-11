@@ -57,3 +57,4 @@ pnpm names -- --a winds --b alloys --n 30 --seed 1 · pnpm names:import -- --all
 - Datamuse (`rel_gen`) mezcla sentidos de la palabra consultada: toda receta de nombres se revisa con `--dry-run --show-dropped` y se poda con `deny` antes de escribir el mundo.
 - WordNet se cita por sentido (`wind.n.01`), no por palabra: `pnpm names:import -- --senses <palabra>` antes de elegir la raíz de una receta; los términos raros de WordNet no figuran en SUBTLEX y llegan con frecuencia desconocida.
 - La página de nombres guarda mundos y favoritos en la base del artefacto, no en el repo: sincronizar a mano con Claude (ver docs/commands.md) y republicar la página cuando cambian los mundos del repo.
+- Adjetivos y colores van primero en un nombre: los mundos que los traen llevan `position: "first"`; las recetas de adjetivos y verbos necesitan `includeRoots` para no perder la palabra raíz.
