@@ -5,9 +5,13 @@
   "provisional": true,
   "source": "wordnet:recipes/colors.json",
   "words": [
+    "Amber",
     "Apricot",
     "Aqua",
     "Azure",
+    "Black",
+    "Blue",
+    "Brown",
     "Burgundy",
     "Canary",
     "Caramel",
@@ -19,8 +23,10 @@
     "Chalk",
     "Charcoal",
     "Chartreuse",
+    "Cherry",
     "Chestnut",
     "Claret",
+    "Copper",
     "Coral",
     "Crimson",
     "Cyan",
@@ -30,9 +36,13 @@
     "Emerald",
     "Fawn",
     "Gamboge",
+    "Gold",
+    "Green",
+    "Grey",
     "Hazel",
     "Indigo",
     "Ivory",
+    "Jade",
     "Lavender",
     "Lazuline",
     "Magenta",
@@ -40,22 +50,42 @@
     "Maroon",
     "Mauve",
     "Mocha",
+    "Navy",
     "Ochre",
+    "Olive",
+    "Orange",
+    "Peach",
+    "Pearl",
+    "Pink",
+    "Purple",
+    "Red",
+    "Rose",
+    "Ruby",
     "Sable",
     "Saffron",
+    "Salmon",
     "Sanguine",
     "Sapphire",
     "Scarlet",
     "Sepia",
+    "Silver",
+    "Tan",
     "Tangerine",
     "Taupe",
     "Teal",
     "Topaz",
     "Turquoise",
     "Umber",
-    "Vermilion"
+    "Vermilion",
+    "Violet",
+    "White",
+    "Yellow"
   ],
   "stats": {
+    "Amber": {
+      "freq": 9.275,
+      "syllables": 2
+    },
     "Apricot": {
       "freq": 0.627,
       "syllables": 3
@@ -67,6 +97,18 @@
     "Azure": {
       "freq": 0.294,
       "syllables": 2
+    },
+    "Black": {
+      "freq": 167.941,
+      "syllables": 1
+    },
+    "Blue": {
+      "freq": 102.392,
+      "syllables": 1
+    },
+    "Brown": {
+      "freq": 60.118,
+      "syllables": 1
     },
     "Burgundy": {
       "freq": 2.686,
@@ -112,12 +154,20 @@
       "freq": 0.529,
       "syllables": 2
     },
+    "Cherry": {
+      "freq": 13.588,
+      "syllables": 2
+    },
     "Chestnut": {
       "freq": 1.275,
       "syllables": 2
     },
     "Claret": {
       "freq": 0.294,
+      "syllables": 2
+    },
+    "Copper": {
+      "freq": 6.588,
       "syllables": 2
     },
     "Coral": {
@@ -156,6 +206,18 @@
       "freq": 0,
       "syllables": 2
     },
+    "Gold": {
+      "freq": 78.941,
+      "syllables": 1
+    },
+    "Green": {
+      "freq": 72.471,
+      "syllables": 1
+    },
+    "Grey": {
+      "freq": 9.196,
+      "syllables": 1
+    },
     "Hazel": {
       "freq": 1.078,
       "syllables": 2
@@ -167,6 +229,10 @@
     "Ivory": {
       "freq": 1.392,
       "syllables": 3
+    },
+    "Jade": {
+      "freq": 5.078,
+      "syllables": 1
     },
     "Lavender": {
       "freq": 2.039,
@@ -196,8 +262,48 @@
       "freq": 1.294,
       "syllables": 2
     },
+    "Navy": {
+      "freq": 25.686,
+      "syllables": 2
+    },
     "Ochre": {
       "freq": 0,
+      "syllables": 2
+    },
+    "Olive": {
+      "freq": 7.353,
+      "syllables": 2
+    },
+    "Orange": {
+      "freq": 22.314,
+      "syllables": 2
+    },
+    "Peach": {
+      "freq": 6.353,
+      "syllables": 1
+    },
+    "Pearl": {
+      "freq": 15.667,
+      "syllables": 1
+    },
+    "Pink": {
+      "freq": 28.471,
+      "syllables": 1
+    },
+    "Purple": {
+      "freq": 12.333,
+      "syllables": 2
+    },
+    "Red": {
+      "freq": 148.059,
+      "syllables": 1
+    },
+    "Rose": {
+      "freq": 53.02,
+      "syllables": 1
+    },
+    "Ruby": {
+      "freq": 11.902,
       "syllables": 2
     },
     "Sable": {
@@ -206,6 +312,10 @@
     },
     "Saffron": {
       "freq": 0.608,
+      "syllables": 2
+    },
+    "Salmon": {
+      "freq": 6.549,
       "syllables": 2
     },
     "Sanguine": {
@@ -223,6 +333,14 @@
     "Sepia": {
       "freq": 0.059,
       "syllables": 3
+    },
+    "Silver": {
+      "freq": 31.745,
+      "syllables": 2
+    },
+    "Tan": {
+      "freq": 8.608,
+      "syllables": 1
     },
     "Tangerine": {
       "freq": 0.745,
@@ -251,6 +369,18 @@
     "Vermilion": {
       "freq": 0.176,
       "syllables": 3
+    },
+    "Violet": {
+      "freq": 8.039,
+      "syllables": 3
+    },
+    "White": {
+      "freq": 171.451,
+      "syllables": 1
+    },
+    "Yellow": {
+      "freq": 33.804,
+      "syllables": 2
     }
   }
 }
