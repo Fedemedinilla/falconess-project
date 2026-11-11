@@ -77,7 +77,7 @@ mundo es agregar un archivo:
 cualquiera». `source` y `stats` son opcionales y los escribe el importador. No se aceptan palabras
 repetidas, `stats` de palabras que no están en `words` ni campos desconocidos.
 
-Mundos actuales, todos provisorios: `winds`, `raptors`, `alloys` y `clouds` (importados de Datamuse)
+Mundos actuales, todos provisorios: `winds` (41), `raptors` (23), `alloys` (29) y `clouds` (51), importados de Datamuse y WordNet,
 y `makers` (los cinco fabricantes de `docs/BRIEF.md`, escrito a mano).
 
 ### Excluidos y gastadas
@@ -88,18 +88,30 @@ y `makers` (los cinco fabricantes de `docs/BRIEF.md`, escrito a mano).
 - `apps/cli/names/worn.txt`: palabras trilladas. No prohíbe: resta 3 puntos al rankear, y el
   importador las descarta.
 
-## `pnpm names:import`: mundos desde Datamuse
+## `pnpm names:import`: mundos desde Datamuse y WordNet
 
-Arma mundos con la API de [Datamuse](https://www.datamuse.com/api/) (gratis, sin clave). Necesita
-red solo al importar; el resultado es un archivo de mundo común y generar nombres sigue sin red.
-Código: `apps/cli/src/names-import.ts` y `apps/cli/src/names/recipe.ts`.
+Arma mundos con dos fuentes que se pueden combinar en una receta:
+
+- [Datamuse](https://www.datamuse.com/api/): API gratis, sin clave. Necesita red al importar.
+- WordNet 3.1 de Princeton, sin red, desde paquetes npm que son `devDependencies` de `apps/cli`
+  (no del juego): `wordnet-db` (la base), `subtlex-word-frequencies` (frecuencia de uso, corpus
+  SUBTLEX-US de unos 51 millones de palabras de subtítulos) y `cmu-pronouncing-dictionary`
+  (sílabas a partir de la pronunciación).
+
+El resultado es un archivo de mundo común: generar nombres no usa ninguna de las dos fuentes.
+Código: `apps/cli/src/names-import.ts`, `apps/cli/src/names/recipe.ts`, `apps/cli/src/names/wordnet.ts`
+y `apps/cli/src/names/lexicon.ts`.
 
 ```bash
-pnpm names:import -- --recipe winds --dry-run --show-dropped
+pnpm names:import -- --senses wind
+pnpm names:import -- --recipe winds --dry-run --glosses --show-dropped
 pnpm names:import -- --all
 ```
 
-`--dry-run` muestra lo que quedaría sin escribir; `--show-dropped` agrupa lo descartado por motivo.
+`--senses <palabra>` lista los sentidos de WordNet con su definición, para elegir la raíz correcta
+(`wind.n.01` es el viento; `wind.n.02`, «los vientos de cambio»). `--dry-run` muestra lo que
+quedaría sin escribir; `--glosses` muestra cada palabra con su fuente (`dm` o `wn`) y, si viene de
+WordNet, su definición; `--show-dropped` agrupa lo descartado por motivo.
 Cada receta es `apps/cli/names/recipes/<id>.json` y escribe `apps/cli/names/worlds/<id>.json`:
 
 ```json
@@ -107,6 +119,7 @@ Cada receta es `apps/cli/names/recipes/<id>.json` y escribe `apps/cli/names/worl
   "name": "Winds and weather",
   "lang": "en",
   "queries": ["rel_gen=wind", "rel_gen=storm"],
+  "wordnet": { "roots": ["wind.n.01", "storm.n.01"], "depth": 3 },
   "maxFreq": 3,
   "deny": ["Bagpipe", "Kazoo"]
 }
@@ -114,7 +127,11 @@ Cada receta es `apps/cli/names/recipes/<id>.json` y escribe `apps/cli/names/worl
 
 | Campo | Qué hace | Por defecto |
 | --- | --- | --- |
-| `queries` | Consultas de Datamuse en orden. `rel_gen=X` trae «tipos de X»; `rel_trg=X`, palabras asociadas; `ml=X`, de significado parecido. `md` y `max` los pone el importador. | obligatorio |
+| `queries` | Consultas de Datamuse en orden. `rel_gen=X` trae «tipos de X»; `rel_trg=X`, palabras asociadas; `ml=X`, de significado parecido. `md` y `max` los pone el importador. | `[]` |
+| `wordnet.roots` | Sentidos de WordNet (`palabra.n.NN`) debajo de los cuales se juntan palabras. | sin WordNet |
+| `wordnet.depth` | Cuántos niveles bajar en el árbol (1 a 6). | 3 |
+| `wordnet.instances` | Incluir nombres propios (estrellas, lugares), no solo tipos. | `true` |
+| `unknownFreq` | Qué hacer con palabras que la lista de frecuencias no conoce (pasa con términos raros de WordNet como *Khamsin*): `keep` las guarda con `freq` 0, `drop` las descarta. | `keep` |
 | `maxFreq`, `minFreq` | Banda de frecuencia en apariciones por millón de palabras: arriba de `maxFreq` es demasiado común, abajo de `minFreq` suele ser taxonomía. | 5 y 0,01 |
 | `syllables` | Rango de sílabas. | `[1, 3]` |
 | `minLength`, `maxLength` | Largo de la palabra en letras. | 3 y 10 |
@@ -123,5 +140,10 @@ Cada receta es `apps/cli/names/recipes/<id>.json` y escribe `apps/cli/names/worl
 | `perQuery` | Resultados pedidos por consulta. | 200 |
 | `role` | `house` para un mundo de prefijos. | `word` |
 
-Datamuse mezcla sentidos («wind» también trae instrumentos de viento), así que el flujo es: correr
-con `--dry-run --show-dropped`, agregar a `deny` lo que no corresponde y recién después escribir.
+Una receta necesita `queries`, `wordnet` o las dos. Si una palabra llega por las dos fuentes, se
+quedan los datos de Datamuse. Las frecuencias de cada fuente salen de corpus distintos (Datamuse usa
+Google Books; WordNet, SUBTLEX-US), así que son comparables en orden de magnitud, no exactas.
+
+Las dos fuentes mezclan sentidos («wind» también trae instrumentos de viento; WordNet, «Twister» o
+«Starlet»), así que el flujo es: correr con `--dry-run --glosses --show-dropped`, agregar a `deny`
+lo que no corresponde y recién después escribir.

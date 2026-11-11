@@ -55,3 +55,4 @@ pnpm names -- --a winds --b alloys --n 30 --seed 1 · pnpm names:import -- --all
 - El RNG por input se deriva de `seed/inputsApplied`: el estado no carga RNG y la reproducción es trivial.
 - Las herramientas de desarrollo que necesitan azar usan `new Rng("<herramienta>:<semilla>")` con un stream existente; no se agregan streams del juego a `packages/rng` por ellas.
 - Datamuse (`rel_gen`) mezcla sentidos de la palabra consultada: toda receta de nombres se revisa con `--dry-run --show-dropped` y se poda con `deny` antes de escribir el mundo.
+- WordNet se cita por sentido (`wind.n.01`), no por palabra: `pnpm names:import -- --senses <palabra>` antes de elegir la raíz de una receta; los términos raros de WordNet no figuran en SUBTLEX y llegan con frecuencia desconocida.
