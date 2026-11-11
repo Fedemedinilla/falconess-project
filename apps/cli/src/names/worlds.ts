@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { z } from "zod";
-import { normalize, type World } from "./generate.js";
+import type { World } from "./generate.js";
+import { normalize } from "./normalize.js";
 
 /** One file per world: `<id>.json`. The id is the file name, so adding a world is adding a file. */
 export const WorldFile = z
@@ -11,9 +12,22 @@ export const WorldFile = z
     role: z.enum(["word", "house"]).default("word"),
     provisional: z.boolean().default(false),
     words: z.array(z.string().trim().min(1)).min(1),
+    /** Where the words came from, e.g. "datamuse:recipes/winds.json". */
+    source: z.string().min(1).optional(),
+    stats: z
+      .record(
+        z.string(),
+        z
+          .object({ freq: z.number().nonnegative(), syllables: z.number().int().positive() })
+          .strict(),
+      )
+      .optional(),
   })
   .strict()
   .superRefine((w, ctx) => {
+    for (const key of Object.keys(w.stats ?? {}))
+      if (!w.words.includes(key))
+        ctx.addIssue({ code: "custom", message: `stats for "${key}", which is not in words` });
     const seen = new Set<string>();
     for (const word of w.words) {
       const key = normalize(word);

@@ -1,0 +1,35 @@
+# Worn-out words: each one in a name costs 3 points when ranking, and the importer drops them.
+# One per line; case and accents are ignored. Add the ones that keep showing up and bore you.
+apex
+aurora
+blaze
+celestial
+crystal
+cyber
+dream
+echo
+eclipse
+ember
+eternal
+frost
+infinity
+legend
+luna
+moon
+mystic
+neon
+nebula
+nova
+phoenix
+quantum
+shadow
+solar
+spirit
+star
+storm
+sun
+thunder
+titan
+vortex
+whisper
+zenith

@@ -159,7 +159,7 @@ describe("output", () => {
 
   it("writes a CSV with an empty favorite column", () => {
     const lines = toCsv(out).trim().split("\n");
-    expect(lines[0]).toBe("favorite,name,house,first,second,first_world,second_world");
+    expect(lines[0]).toBe("favorite,name,house,first,second,first_world,second_world,score");
     expect(lines).toHaveLength(3);
     expect(lines[1]?.startsWith(`,${out[0]?.name},`)).toBe(true);
   });

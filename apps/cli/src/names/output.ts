@@ -6,9 +6,27 @@ function csvCell(value: string): string {
 
 /** CSV with an empty `favorite` column to mark by hand (or in a spreadsheet). */
 export function toCsv(names: readonly GeneratedName[]): string {
-  const header = ["favorite", "name", "house", "first", "second", "first_world", "second_world"];
+  const header = [
+    "favorite",
+    "name",
+    "house",
+    "first",
+    "second",
+    "first_world",
+    "second_world",
+    "score",
+  ];
   const rows = names.map((n) =>
-    ["", n.name, n.house ?? "", n.first, n.second, n.firstWorld, n.secondWorld].map(csvCell),
+    [
+      "",
+      n.name,
+      n.house ?? "",
+      n.first,
+      n.second,
+      n.firstWorld,
+      n.secondWorld,
+      n.score === undefined ? "" : String(n.score),
+    ].map(csvCell),
   );
   return `${[header, ...rows].map((r) => r.join(",")).join("\n")}\n`;
 }

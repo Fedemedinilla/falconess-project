@@ -1,4 +1,14 @@
 import { Rng, type StreamName } from "@falconess/rng";
+import { normalize } from "./normalize.js";
+import {
+  type Alliteration,
+  guessSyllables,
+  type ScoreReason,
+  scoreName,
+  type WordStats,
+} from "./score.js";
+
+export { normalize } from "./normalize.js";
 
 /**
  * A "world" is a themed list of words. Names come from joining one word of world A with one word
@@ -12,6 +22,9 @@ export type World = {
   readonly role: "word" | "house";
   readonly provisional: boolean;
   readonly words: readonly string[];
+  readonly source?: string | undefined;
+  /** Imported per-word data, keyed by the word as written in `words`. */
+  readonly stats?: Readonly<Record<string, WordStats>> | undefined;
 };
 
 export type GenerateOptions = {
@@ -36,6 +49,19 @@ export type GenerateOptions = {
   readonly excluded: readonly string[];
   /** Draw budget before giving up; defaults to 200 per requested name. */
   readonly maxAttempts?: number;
+  /**
+   * Ranking. When set, the generator gathers `pool` × count valid candidates, scores them and keeps
+   * the best `count` (ties keep draw order). When undefined, names come out in draw order.
+   */
+  readonly rank?: RankOptions | undefined;
+};
+
+export type RankOptions = {
+  /** Normalized single words that sound worn out; each costs points. */
+  readonly worn: readonly string[];
+  readonly alliteration: Alliteration;
+  /** Candidates gathered per requested name; defaults to 8. */
+  readonly pool?: number;
 };
 
 export type GeneratedName = {
@@ -45,6 +71,9 @@ export type GeneratedName = {
   readonly second: string;
   readonly firstWorld: string;
   readonly secondWorld: string;
+  /** Present when ranking is on. */
+  readonly score?: number | undefined;
+  readonly reasons?: readonly ScoreReason[] | undefined;
 };
 
 export type GenerateResult = {
@@ -59,16 +88,6 @@ export type GenerateResult = {
  * stream from an Rng seeded under its own "names:" prefix and never shares state with a season.
  */
 const STREAM: StreamName = "events";
-
-/** Lowercase, accents stripped, single spaces: "Kōryū  Storm" and "koryu storm" compare equal. */
-export function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ");
-}
 
 function tokens(text: string): string[] {
   return normalize(text).split(" ").filter(Boolean);
@@ -114,19 +133,23 @@ export function generateNames(worlds: readonly World[], opts: GenerateOptions): 
   }
 
   const rng = new Rng(`names:${opts.seed}`);
+  const rank = opts.rank;
+  const wanted = rank ? opts.count * (rank.pool ?? 8) : opts.count;
+  const worn = new Set((rank?.worn ?? []).map(normalize));
+  const syllables = (w: World, word: string) => w.stats?.[word]?.syllables ?? guessSyllables(word);
   const maxAttempts = opts.maxAttempts ?? opts.count * 200;
   const seen = new Set<string>();
   const names: GeneratedName[] = [];
   let attempts = 0;
 
-  while (names.length < opts.count && attempts < maxAttempts) {
+  while (names.length < wanted && attempts < maxAttempts) {
     attempts++;
     const wa = fixedA ?? pick(rng, pool);
     const others = pool.length > 1 ? pool.filter((w) => w.id !== wa.id) : pool;
     const wb = fixedB ?? pick(rng, others);
 
-    let first = { word: pick(rng, wa.words), world: wa.id };
-    let second = { word: pick(rng, wb.words), world: wb.id };
+    let first = { word: pick(rng, wa.words), world: wa };
+    let second = { word: pick(rng, wb.words), world: wb };
     if (opts.order === "free" && rng.nextInt(STREAM, 2) === 1) [first, second] = [second, first];
     const houseWord = house ? pick(rng, house.words) : undefined;
 
@@ -141,15 +164,32 @@ export function generateNames(worlds: readonly World[], opts: GenerateOptions): 
     if (seen.has(key)) continue;
 
     seen.add(key);
+    const scored = rank
+      ? scoreName({
+          first: first.word,
+          second: second.word,
+          firstSyllables: syllables(first.world, first.word),
+          secondSyllables: syllables(second.world, second.word),
+          name,
+          worn,
+          alliteration: rank.alliteration,
+        })
+      : undefined;
     names.push({
       name,
       house: houseWord,
       first: first.word,
       second: second.word,
-      firstWorld: first.world,
-      secondWorld: second.world,
+      firstWorld: first.world.id,
+      secondWorld: second.world.id,
+      score: scored?.score,
+      reasons: scored?.reasons,
     });
   }
 
-  return { names, attempts, exhausted: names.length < opts.count };
+  // Array.prototype.sort is stable, so equal scores keep their (seeded) draw order.
+  const chosen = rank
+    ? names.sort((x, y) => (y.score ?? 0) - (x.score ?? 0)).slice(0, opts.count)
+    : names;
+  return { names: chosen, attempts, exhausted: chosen.length < opts.count };
 }

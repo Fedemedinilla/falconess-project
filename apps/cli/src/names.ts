@@ -15,6 +15,7 @@ import { loadExcluded, loadWorlds } from "./names/worlds.js";
 
 const DEFAULT_WORLDS = fileURLToPath(new URL("../names/worlds/", import.meta.url));
 const DEFAULT_EXCLUDED = fileURLToPath(new URL("../names/excluded.txt", import.meta.url));
+const DEFAULT_WORN = fileURLToPath(new URL("../names/worn.txt", import.meta.url));
 
 function intArg(args: Record<string, string | true>, key: string): number | undefined {
   const v = args[key];
@@ -49,6 +50,13 @@ function main(argv: readonly string[]): void {
   const exclude = argString(args, "exclude", DEFAULT_EXCLUDED);
   const house = worldArg(args, "house");
   const seed = argString(args, "seed", "1");
+  const rankOn = argString(args, "rank", "on");
+  if (rankOn !== "on" && rankOn !== "off") throw new Error("--rank must be on or off");
+  const alliteration = argString(args, "alliteration", "neutral");
+  if (alliteration !== "prefer" && alliteration !== "avoid" && alliteration !== "neutral")
+    throw new Error("--alliteration must be prefer, avoid or neutral");
+  const worn = argString(args, "worn", DEFAULT_WORN);
+  const pool = intArg(args, "pool");
 
   const result = generateNames(worlds, {
     seed,
@@ -60,12 +68,25 @@ function main(argv: readonly string[]): void {
     maxWords: intArg(args, "max-words"),
     order,
     excluded: exclude === "none" ? [] : loadExcluded(exclude),
+    rank:
+      rankOn === "off"
+        ? undefined
+        : {
+            worn: worn === "none" ? [] : loadExcluded(worn),
+            alliteration,
+            ...(pool === undefined ? {} : { pool }),
+          },
   });
 
   result.names.forEach((n, i) => {
+    const score = n.score === undefined ? "" : `${String(n.score).padStart(3)}  `;
     console.log(
-      `${String(i + 1).padStart(3)}. ${n.name.padEnd(28)} ${n.firstWorld} + ${n.secondWorld}`,
+      `${String(i + 1).padStart(3)}. ${score}${n.name.padEnd(28)} ${n.firstWorld} + ${n.secondWorld}`,
     );
+    if (args.explain && n.reasons)
+      console.log(
+        `${"".padEnd(10)}${n.reasons.map((r) => `${r.rule} ${r.points > 0 ? "+" : ""}${r.points}`).join(", ")}`,
+      );
   });
   if (result.exhausted)
     console.error(
