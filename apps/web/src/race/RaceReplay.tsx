@@ -5,6 +5,7 @@ import { useGlobalDetail } from "../app/explain";
 import { getContent } from "../content/load";
 import { Letter } from "../screens/shared/Letter";
 import { uiAt } from "../text/brief";
+import { perLang } from "../text/lang";
 import { ui } from "../text/ui";
 import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
@@ -19,12 +20,11 @@ import { Results } from "./Results";
 import { type RaceView, type RunnerView, raceView } from "./view";
 import { metres } from "./words";
 
-let defaultLabels: RaceLabels | undefined;
+const defaultLabels = perLang(() => contentLabels(getContent()));
 
 /** Game names and liveries from the page's content. */
 export function pageLabels(): RaceLabels {
-  defaultLabels ??= contentLabels(getContent());
-  return defaultLabels;
+  return defaultLabels();
 }
 
 /** The terrain the strip over the lanes is colored by: the types this course has. */

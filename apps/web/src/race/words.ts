@@ -17,6 +17,7 @@ import {
 import type { RaceEntry, RaceLog, RaceResult } from "@falconess/schema";
 import { MIRROR_RUNNER_ID } from "@falconess/sim";
 import { formatFixed, formatInt } from "../text/format";
+import { locale, perLang } from "../text/lang";
 import { type TextVars, ui } from "../text/ui";
 import { type IconName, segmentIcon } from "../ui/icons";
 
@@ -40,14 +41,14 @@ export const factor = (pm: number) => formatFixed(pm, 1000, 2);
 
 /** A formatted number with its sign: "+1,23", "−0,40", "0,00". */
 export function withSign(text: string): string {
-  return /^[−-]/.test(text) || /^0(?:,0+)?$/.test(text) ? text : `+${text}`;
+  return /^[−-]/.test(text) || /^0(?:[.,]0+)?$/.test(text) ? text : `+${text}`;
 }
 
-const plural = new Intl.PluralRules("es");
+const plural = perLang(() => new Intl.PluralRules(locale()));
 
 /** `<key>.one` or `<key>.other` by `n`, with `n` and the other variables filled in. */
 export function uiPlural(key: string, n: number, vars: TextVars = {}): string {
-  return ui(`${key}.${plural.select(n) === "one" ? "one" : "other"}`, { n, ...vars });
+  return ui(`${key}.${plural().select(n) === "one" ? "one" : "other"}`, { n, ...vars });
 }
 
 // --- runners ------------------------------------------------------------------------------------

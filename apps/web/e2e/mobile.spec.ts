@@ -607,3 +607,75 @@ test("training scenes: Peregrina's art for the chosen training, cross-fading on 
   await page.click("#m-entrenar-simulator");
   await expect(stage).toHaveAttribute("data-scene", "train:simulator");
 });
+
+/** Lines of the page that read as Spanish (common Spanish-only words or punctuation). */
+async function spanishLines(page: Page): Promise<string[]> {
+  const text = await page.evaluate(() => document.body.innerText);
+  return text
+    .split("\n")
+    .filter((l) =>
+      /[¿¡ñ]|\b(de|del|la|los|las|que|para|con|una|semana|carrera|meta|entrenar|descansar|seguir)\b/i.test(
+        l,
+      ),
+    );
+}
+
+test("language: the menu switches to English and a whole short season reads in English", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await page.goto("./");
+  await page.click("#m-idioma-inicio");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("#m-idioma-inicio")).toHaveAttribute("data-lang", "en");
+  expect(await spanishLines(page)).toEqual([]);
+  await page.click("#m-elegir-caracara");
+  await page.click("#m-empezar");
+  const seen = new Set<string>();
+  const look = async () => {
+    for (const l of await spanishLines(page)) seen.add(l);
+  };
+  for (let i = 0; i < 80 && (await page.locator("#m-fin").count()) === 0; i++) {
+    await look();
+    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    await page.click("#m-descansar");
+    await look();
+    if (raceWeek) {
+      await look();
+      await page.click("#m-correr");
+      await look();
+      await page.click("#semana-continuar");
+      await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+      await look();
+      await page.click("#m-saltar");
+      await expect(page.locator("#m-resultado")).toBeVisible();
+      await look();
+      await page.click("#m-carrera-seguir");
+    }
+    await look();
+    await settle(page);
+  }
+  await expect(page.locator("#m-fin")).toBeVisible();
+  await look();
+  expect([...seen]).toEqual([]);
+  // the menu's switch, and back to Spanish: the season's end in Spanish again
+  await page.click("#m-fin-nueva");
+  await page.click("#m-idioma-inicio");
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
+});
+
+test("language: the switch in «Menú» keeps the run in play", async ({ page }) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-agility");
+  await settle(page);
+  await page.click("#m-menu");
+  await page.click("#m-idioma");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  expect(await week(page)).toBe(2);
+  expect(await spanishLines(page)).toEqual([]);
+  // kept for the next visit
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});

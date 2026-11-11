@@ -21,6 +21,7 @@ import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export"
 import { Glyph } from "./Glyph";
 import { InspirationOverlay } from "./Inspiration";
 import { inspirationScene } from "./inspirationScene";
+import { LangButton } from "./LangButton";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
@@ -504,6 +505,7 @@ function MobileMenu({
           <Glyph name={sound === "off" ? "mute" : "speaker"} size={20} />
           {ui("ui.m.sound", { style: ui(`ui.m.sound.${sound}`) })}
         </button>
+        <LangButton className={s.btn} id="m-idioma" />
         {confirm ? (
           <button type="button" className={cx(s.btn, s.btnMain)} id="m-nueva-si" onClick={onNew}>
             {ui("ui.m.new.confirm")}

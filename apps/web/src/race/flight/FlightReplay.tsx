@@ -741,7 +741,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
                       >
                         {P.glyph}
                       </span>{" "}
-                      C{t.lane + 1}
+                      {ui("ui.flight.lane", { lane: t.lane + 1 })}
                     </span>
                     <small>{styleName(t.style)}</small>
                   </button>
@@ -915,7 +915,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
                 >
                   {P.glyph}
                 </span>{" "}
-                C{t.lane + 1}
+                {ui("ui.flight.lane", { lane: t.lane + 1 })}
               </span>
               <small style={{ color: t.lane === focus ? "inherit" : `var(--st-${t.style})` }}>
                 {styleName(t.style)}

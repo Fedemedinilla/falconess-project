@@ -10,6 +10,7 @@ import {
   withCalendar,
 } from "@falconess/schema";
 import { getRuleset, RULESET_V1, type SimContext } from "@falconess/sim";
+import { type Lang, lang } from "../text/lang";
 import { rawContentFromModules } from "./raw";
 
 const MODULES: Record<string, unknown> = import.meta.glob<unknown>(
@@ -33,7 +34,7 @@ const CALENDARS: Record<string, unknown> = import.meta.glob<unknown>(
   { eager: true, import: "default" },
 );
 
-let cached: ContentIndex | undefined;
+const cached = new Map<Lang, ContentIndex>();
 const seasonCache = new Map<string, ContentIndex>();
 let catalogue: readonly Course[] | undefined;
 
@@ -48,10 +49,30 @@ export function catalogueCourses(): readonly Course[] {
   return catalogue;
 }
 
-/** The validated content index (throws ContentError once, at first use, if content is broken). */
+/** The text table of a language file (`text/<lang>.json`), or an empty one. */
+function textTable(l: Lang): Record<string, unknown> {
+  for (const [path, table] of Object.entries(MODULES)) {
+    if (path.endsWith(`/text/${l}.json`) && typeof table === "object" && table !== null)
+      return { ...table };
+  }
+  return {};
+}
+
+/**
+ * The validated content index in the page's language (throws ContentError once, at first use, if
+ * content is broken). The entities are the same in every language, only the text changes: Spanish
+ * is the source, and a key the other language lacks shows in Spanish.
+ */
 export function getContent(): ContentIndex {
-  cached ??= buildContentIndex(rawContentFromModules(MODULES));
-  return cached;
+  const l = lang();
+  let idx = cached.get(l);
+  if (!idx) {
+    const raw = rawContentFromModules(MODULES);
+    if (l !== "es") raw.text = { ...raw.text, ...textTable(l) };
+    idx = buildContentIndex(raw);
+    cached.set(l, idx);
+  }
+  return idx;
 }
 
 const calendarCache = new Map<string, Calendar | null>();
@@ -76,14 +97,15 @@ export function seasonCalendar(rulesetVersion: string): Calendar | undefined {
  * goals; v1 and v2 get `getContent()` unchanged.
  */
 export function seasonContent(rulesetVersion: string): ContentIndex {
-  const hit = seasonCache.get(rulesetVersion);
+  const key = `${lang()}/${rulesetVersion}`;
+  const hit = seasonCache.get(key);
   if (hit) return hit;
   const calendar = seasonCalendar(rulesetVersion);
   const idx =
     calendar === undefined
       ? getContent()
       : withCalendar(getContent(), calendar, catalogueCourses());
-  seasonCache.set(rulesetVersion, idx);
+  seasonCache.set(key, idx);
   return idx;
 }
 
@@ -97,15 +119,11 @@ export function simContext(rulesetVersion: string = RULESET_V1.version): SimCont
 }
 
 /**
- * A text straight from es.json, without validating the rest of the content: the crash screen
+ * A text straight from the language file (Spanish when it lacks the key), without validating the rest of the content: the crash screen
  * uses it when the index itself failed to build.
  */
-export function rawText(key: string, lang = "es"): string | undefined {
-  for (const [path, table] of Object.entries(MODULES)) {
-    if (!path.endsWith(`/text/${lang}.json`)) continue;
-    if (typeof table !== "object" || table === null || !(key in table)) return undefined;
-    const value: unknown = Reflect.get(table, key);
-    return typeof value === "string" ? value : undefined;
-  }
-  return undefined;
+export function rawText(key: string, l: Lang = lang()): string | undefined {
+  const value: unknown = textTable(l)[key];
+  if (typeof value === "string") return value;
+  return l === "es" ? undefined : rawText(key, "es");
 }

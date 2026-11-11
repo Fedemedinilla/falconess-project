@@ -18,16 +18,17 @@ import type {
 import { STAT_ORDER } from "@falconess/sim";
 import { getContent } from "../../content/load";
 import { formatFixed, formatInt, formatPermille, formatSigned } from "../../text/format";
+import { locale, perLang } from "../../text/lang";
 import { gameText, ui, uiCount } from "../../text/ui";
 import { type IconName, statIcon } from "../../ui/icons";
 
 const TICKS_PER_SECOND = 15;
 const MINUS = "−";
-const trimmed = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 3 });
+const trimmed = perLang(() => new Intl.NumberFormat(locale(), { maximumFractionDigits: 3 }));
 
 /** A content decimal as written, up to three places: 1.003 → "1,003", 0.5 → "0,5". */
 export function formatDecimal(x: number): string {
-  return trimmed.format(x).replace("-", MINUS);
+  return trimmed().format(x).replace("-", MINUS);
 }
 
 /** A content decimal with its sign: "+0,05", "−10". */
@@ -199,7 +200,7 @@ export function describeActiveSkill(skill: ActiveSkill): string {
 }
 
 function capitalize(s: string): string {
-  return s.charAt(0).toLocaleUpperCase("es") + s.slice(1);
+  return s.charAt(0).toLocaleUpperCase(locale()) + s.slice(1);
 }
 
 /** One effect of an event option: its words and the emoji of what it changes. */

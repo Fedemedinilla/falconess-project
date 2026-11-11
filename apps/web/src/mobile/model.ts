@@ -18,6 +18,7 @@ import {
 } from "../screens/model/actions";
 import { isRaceWeek, type RaceDistance, raceDistance } from "../screens/model/position";
 import { nextGoal } from "../screens/model/season";
+import { locale } from "../text/lang";
 
 /**
  * The color of a failure chance (owner, 2026-10-30): light blue at 0 %, green from 1 to 19 %,
@@ -229,5 +230,5 @@ export function crewInitials(name: string): string {
     words.length >= 2
       ? `${words[0]?.[0] ?? ""}${words[1]?.[0] ?? ""}`
       : (words[0] ?? "").slice(0, 2);
-  return letters.toLocaleUpperCase("es");
+  return letters.toLocaleUpperCase(locale());
 }

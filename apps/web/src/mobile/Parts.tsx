@@ -242,6 +242,7 @@ function Pop({ delta, delay, small = false }: { delta: number; delay: number; sm
             key={i}
             className={s.chev}
             viewBox="0 0 24 12"
+            aria-hidden="true"
             style={{ animationDelay: `${delay + i * 140}ms` }}
           >
             <polyline className={s.chevEdge} points="3,10 12,3 21,10" />

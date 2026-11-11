@@ -5,6 +5,7 @@ import { routeHref } from "../app/route";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { formatInt } from "../text/format";
+import { locale, perLang } from "../text/lang";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
@@ -16,7 +17,7 @@ import { PositionMark } from "../ui/PositionMark";
 import { SeasonStrip } from "../ui/SeasonStrip";
 import s from "./Home.module.css";
 
-const list = new Intl.ListFormat("es", { style: "long", type: "conjunction" });
+const list = perLang(() => new Intl.ListFormat(locale(), { style: "long", type: "conjunction" }));
 
 type MenuItem = {
   id: string;
@@ -42,7 +43,7 @@ function Roster() {
       {[...content.falconess.values()].map((f) => {
         const sponsor = content.getManufacturer(f.sponsor);
         const signature = frames.find((fr) => fr.signatureOf === f.id);
-        const weeks = list.format(f.seasonGoals.map((g) => formatInt(g.turn)));
+        const weeks = list().format(f.seasonGoals.map((g) => formatInt(g.turn)));
         return (
           <article key={f.id} className={s.runner}>
             <header className={s.runnerHead}>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { exportFileName, type SeasonEntry } from "../game/history";
+import { locale } from "../text/lang";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Glyph } from "./Glyph";
@@ -249,7 +250,7 @@ export function HistorySheet({
   onClose: () => void;
 }) {
   const ref = useSheet(open);
-  const date = new Intl.DateTimeFormat("es", {
+  const date = new Intl.DateTimeFormat(locale(), {
     day: "numeric",
     month: "short",
     hour: "2-digit",

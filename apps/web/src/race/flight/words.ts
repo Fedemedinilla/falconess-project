@@ -12,10 +12,11 @@ import type {
 } from "@falconess/race-view";
 import type { RaceEvent, RaceLog } from "@falconess/schema";
 import { formatFixed, formatSeconds } from "../../text/format";
+import { locale } from "../../text/lang";
 import { gameText, ui } from "../../text/ui";
 import { POS_COLOR, type StageWords } from "./stage";
 
-const upper = (s: string) => s.toLocaleUpperCase("es");
+const upper = (s: string) => s.toLocaleUpperCase(locale());
 
 /** mm/s as whole km/h. */
 export const kmh = (mms: number) => Math.round((mms * 3.6) / 1000);

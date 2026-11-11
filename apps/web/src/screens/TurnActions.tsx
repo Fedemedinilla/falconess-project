@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
 import { formatInt, formatSeconds, formatSigned } from "../text/format";
+import { locale, perLang } from "../text/lang";
 import { gameText, ui, uiCount } from "../text/ui";
 import { Button } from "../ui/Button";
 import { cx } from "../ui/cx";
@@ -65,7 +66,9 @@ export type TurnActionsProps = {
 };
 
 /** "+30 (25 %), +50 (50 %) o +70 (25 %)". */
-const disjunction = new Intl.ListFormat("es", { style: "long", type: "disjunction" });
+const disjunction = perLang(
+  () => new Intl.ListFormat(locale(), { style: "long", type: "disjunction" }),
+);
 
 const SHORTCUT: Readonly<Record<ActionKind, number>> = Object.fromEntries(
   ACTION_KINDS.map((k, i) => [k, i + 1]),
@@ -328,7 +331,7 @@ export function TurnActions({
   const restNote = [
     rest.options.length > 1
       ? ui("ui.action.rest.options", {
-          options: disjunction.format(
+          options: disjunction().format(
             rest.options.map((o) =>
               ui("ui.action.rest.option", {
                 vigor: formatSigned(o.vigor),

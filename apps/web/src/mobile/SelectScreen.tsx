@@ -10,6 +10,7 @@ import { runnerArt } from "./art";
 import { boxText } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { Glyph } from "./Glyph";
+import { LangButton } from "./LangButton";
 import s from "./Mobile.module.css";
 
 /**
@@ -178,6 +179,7 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
           onClose={() => setHistoryOpen(false)}
         />
         <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
+        <LangButton className={s.linkBtn} id="m-idioma-inicio" />
         <button type="button" className={s.linkBtn} id="m-pruebas-inicio" onClick={onTests}>
           {ui("ui.m.tests")}
         </button>

@@ -1,23 +1,25 @@
+import { lang, locale, perLang } from "./lang";
+
 /**
- * Numbers in Spanish style (decimal comma, thin grouping from five digits, "12,5 %"). The game
+ * Numbers in the page's language (Spanish: decimal comma, thin grouping from five digits, "12,5 %";
+ * English: "12.5%"). The game
  * hands out integers in public units (×1000, per-mille, ticks); these helpers round them with
  * integer arithmetic first, like the CLI does, so the browser and the terminal show the same digits.
  */
 
-const LOCALE = "es-ES";
 const MINUS = "−";
 
-const intFormat = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
-const fixedFormats = new Map<number, Intl.NumberFormat>();
+const intFormat = perLang(() => new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }));
+const fixedFormats = perLang(() => new Map<number, Intl.NumberFormat>());
 
 function fixedFormat(decimals: number): Intl.NumberFormat {
-  let f = fixedFormats.get(decimals);
+  let f = fixedFormats().get(decimals);
   if (!f) {
-    f = new Intl.NumberFormat(LOCALE, {
+    f = new Intl.NumberFormat(locale(), {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });
-    fixedFormats.set(decimals, f);
+    fixedFormats().set(decimals, f);
   }
   return f;
 }
@@ -29,7 +31,7 @@ function withMinus(s: string): string {
 
 /** An integer: 7, 1200, 12.345, −3. */
 export function formatInt(n: number): string {
-  return withMinus(intFormat.format(n));
+  return withMinus(intFormat().format(n));
 }
 
 /**
@@ -55,7 +57,7 @@ export function formatSigned(n: number): string {
 
 /** Per-mille as a percentage: formatPermille(125, 1) = "12,5 %". */
 export function formatPermille(pm: number, decimals = 0): string {
-  return `${formatFixed(pm, 10, decimals)} %`;
+  return `${formatFixed(pm, 10, decimals)}${lang() === "en" ? "" : " "}%`;
 }
 
 /** Ticks (15 per second) as seconds: formatSeconds(183, 1) = "12,2". */
