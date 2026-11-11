@@ -48,6 +48,30 @@ async function copyText(text: string, field: HTMLTextAreaElement | null): Promis
   }
 }
 
+/** What this page needs of the claude.ai `downloads` capability (published artifact only). */
+type Saver = (request: { filename: string; data: string }) => Promise<unknown>;
+
+/**
+ * Inside claude.ai a page may not download by itself: it offers the file through the viewer's
+ * `downloads` capability (a confirmation, the share sheet in the iOS app). Undefined anywhere
+ * else (the standalone demo, the dev server), where a plain download works.
+ */
+async function claudeSaver(): Promise<Saver | undefined> {
+  const claude: unknown = Reflect.get(globalThis, "claude");
+  if (typeof claude !== "object" || claude === null) return undefined;
+  const use: unknown = Reflect.get(claude, "use");
+  if (typeof use !== "function") return undefined;
+  try {
+    const ns: unknown = await use.call(claude, "downloads");
+    if (typeof ns !== "object" || ns === null) return undefined;
+    const save: unknown = Reflect.get(ns, "save");
+    if (typeof save !== "function") return undefined;
+    return (request) => Promise.resolve(save.call(ns, request));
+  } catch {
+    return undefined;
+  }
+}
+
 function fileOf(item: ExportItem): File | undefined {
   try {
     return new File([item.text], item.fileName, { type: "application/json" });
@@ -90,8 +114,21 @@ export function ExportSheet({
       // the player closed the sheet, or the page may not share: nothing to say
     }
   };
-  const download = () => {
+  const download = async () => {
     if (!item) return;
+    const saver = await claudeSaver();
+    if (saver) {
+      try {
+        await saver({ filename: item.fileName, data: item.text });
+        setStatus("downloaded");
+      } catch (e) {
+        // the viewer said no: nothing to report; anything else, the text below still works
+        const code: unknown =
+          typeof e === "object" && e !== null ? Reflect.get(e, "code") : undefined;
+        setStatus(code === "declined" ? "idle" : "failed");
+      }
+      return;
+    }
     try {
       const url = URL.createObjectURL(new Blob([item.text], { type: "application/json" }));
       const a = document.createElement("a");
