@@ -1,7 +1,8 @@
 /**
- * Builds world files from Datamuse recipes (dev tool, needs network once per import):
+ * Builds world files from recipes that combine Datamuse (network) and WordNet (offline):
  *
- *   pnpm names:import -- --recipe winds --dry-run --show-dropped
+ *   pnpm names:import -- --senses wind
+ *   pnpm names:import -- --recipe winds --dry-run --show-dropped --glosses
  *   pnpm names:import -- --all
  *
  * Recipes live in apps/cli/names/recipes/<id>.json and write apps/cli/names/worlds/<id>.json.
@@ -10,7 +11,17 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argString, parseArgs } from "./args.js";
-import { buildWorld, fetchRecipe, parseRecipe } from "./names/recipe.js";
+import { loadWordData, loadWordNet } from "./names/lexicon.js";
+import {
+  type Candidate,
+  fetchRecipe,
+  filterCandidates,
+  fromDatamuse,
+  fromWordNet,
+  parseRecipe,
+  type WordData,
+} from "./names/recipe.js";
+import type { WordNet } from "./names/wordnet.js";
 import { loadExcluded } from "./names/worlds.js";
 
 const ROOT = fileURLToPath(new URL("../names/", import.meta.url));
@@ -21,8 +32,24 @@ async function fetchJson(url: string): Promise<unknown> {
   return res.json();
 }
 
+let offline: { wordnet: WordNet; data: WordData } | undefined;
+function lexicon(): { wordnet: WordNet; data: WordData } {
+  offline ??= { wordnet: loadWordNet(), data: loadWordData() };
+  return offline;
+}
+
 async function main(argv: readonly string[]): Promise<void> {
   const args = parseArgs(argv);
+
+  const senses = args.senses;
+  if (typeof senses === "string") {
+    const found = lexicon().wordnet.senses(senses);
+    if (found.length === 0) console.log(`WordNet has no noun "${senses}".`);
+    for (const s of found)
+      console.log(`${s.ref.padEnd(22)} ${s.words.join(", ")}\n${"".padEnd(22)} ${s.gloss}`);
+    return;
+  }
+
   const recipesDir = join(ROOT, "recipes");
   const worldsDir = argString(args, "worlds", join(ROOT, "worlds"));
   const wornFile = argString(args, "worn", join(ROOT, "worn.txt"));
@@ -34,15 +61,32 @@ async function main(argv: readonly string[]): Promise<void> {
         .map((f) => basename(f, ".json"))
         .sort()
     : [argString(args, "recipe", "")].filter(Boolean);
-  if (ids.length === 0) throw new Error("Pass --recipe <id> or --all");
+  if (ids.length === 0) throw new Error("Pass --recipe <id>, --all or --senses <word>");
 
   for (const id of ids) {
     const raw: unknown = JSON.parse(readFileSync(join(recipesDir, `${id}.json`), "utf8"));
     const recipe = parseRecipe(id, raw);
-    const { world, dropped } = buildWorld(id, recipe, await fetchRecipe(recipe, fetchJson), worn);
+    const candidates: Candidate[] = [];
+    if (recipe.queries.length > 0)
+      candidates.push(...fromDatamuse(await fetchRecipe(recipe, fetchJson)));
+    if (recipe.wordnet) {
+      const { wordnet, data } = lexicon();
+      const { roots, depth, instances } = recipe.wordnet;
+      candidates.push(...fromWordNet(wordnet.descendants(roots, depth, instances), data));
+    }
+    const { world, dropped, kept } = filterCandidates(id, recipe, candidates, worn);
 
-    console.log(`\n${id}: ${world.words.length} kept, ${dropped.length} dropped`);
-    console.log(world.words.map((w) => `${w} (f ${world.stats[w]?.freq.toFixed(2)})`).join(", "));
+    const fromWn = kept.filter((k) => k.origin === "wordnet").length;
+    console.log(
+      `\n${id}: ${world.words.length} kept (${world.words.length - fromWn} Datamuse, ${fromWn} WordNet), ${dropped.length} dropped`,
+    );
+    if (args.glosses)
+      for (const k of kept)
+        console.log(
+          `  ${k.word.padEnd(12)} ${k.origin === "wordnet" ? "wn" : "dm"}  ${k.note ?? ""}`,
+        );
+    else
+      console.log(world.words.map((w) => `${w} (f ${world.stats[w]?.freq.toFixed(2)})`).join(", "));
     if (args["show-dropped"]) {
       const byReason = new Map<string, string[]>();
       for (const d of dropped) byReason.set(d.reason, [...(byReason.get(d.reason) ?? []), d.word]);
