@@ -147,6 +147,7 @@
   "log.inherit.inspiration.courage": "Inspiración de la herencia: la caja negra le pasa Coraje.",
   "log.inherit.inspiration.intelligence": "Inspiración de la herencia: la caja negra le pasa Inteligencia.",
   "log.inherit.none": "Esta vez la herencia no la inspiró.",
+  "log.inherit.capped": "La herencia la inspiró, pero esa stat ya está en el tope de la temporada.",
   "log.rest": "Descanso.",
   "log.rest.forced": "Fatiga alta: descanso forzado.",
   "log.season.end": "Fin de temporada.",

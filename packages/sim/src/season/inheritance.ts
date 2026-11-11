@@ -7,7 +7,7 @@ import { statCap } from "./difficulty.js";
 /**
  * ADR-0013, the inspirations: on each of the ruleset's inspiration weeks, as the week begins, each
  * parent inspires her with the chance of her box's stars and adds `stars × statInheritPerStar` to
- * the box's stat (up to the season's cap). Draws from its own `Rng(`${seed}/inspiration/${turn}`)`,
+ * the box's stat (up to the season's cap; at the cap it notes `log.inherit.capped`). Draws from its own `Rng(`${seed}/inspiration/${turn}`)`,
  * one per parent in order, so no other draw of the season moves. Notes `log.inherit.inspiration`
  * once per parent that inspires her, `log.inherit.none` when none did.
  */
@@ -29,7 +29,8 @@ export function inspire(ctx: SimContext, d: Draft): void {
     );
     d.stats[p.stat] = after;
     if (after !== before) addDelta(d, p.stat, after - before);
-    note(d, `log.inherit.inspiration.${p.stat}`);
+    // at the season's cap the inspiration has nothing to add: say so, not «le pasa Agilidad»
+    note(d, after === before ? "log.inherit.capped" : `log.inherit.inspiration.${p.stat}`);
   }
   if (!any) note(d, "log.inherit.none");
 }

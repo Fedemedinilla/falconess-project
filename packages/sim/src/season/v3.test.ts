@@ -296,6 +296,18 @@ describe("inheritance with luck (ADR-0013)", () => {
     expect(inspired).toBeGreaterThan(0);
     expect(inspired + none).toBeGreaterThanOrEqual(12);
   });
+  it("an inspiration on a stat at the cap says so and adds nothing", () => {
+    for (let i = 0; i < 12; i++) {
+      const s = withParents(`cap-${i}`);
+      const capped = { ...s, stats: { ...s.stats, agility: 1200 } };
+      const after = to(capped, 24);
+      const notes = after.log.flatMap((e) => e.notes);
+      expect(notes).not.toContain("log.inherit.inspiration.agility");
+      expect(after.stats.agility).toBe(1200);
+      if (notes.includes("log.inherit.capped")) return;
+    }
+    throw new Error("no capped inspiration in 12 seasons");
+  });
   it("a box draws its stat and stars; Normal (cap 900) never leaves 3 stars", () => {
     const stats = { agility: 900, stamina: 640, technique: 500, courage: 420, intelligence: 700 };
     const seen = new Map<string, number>();
