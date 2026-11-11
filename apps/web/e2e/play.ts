@@ -44,6 +44,10 @@ export type TurnView = {
 
 /** One read of the page: what the policy needs to decide. */
 export async function readTurn(page: Page): Promise<TurnView> {
+  // right after a route change (back from a race replay) the Turn screen may not be drawn yet
+  await page.waitForFunction(
+    () => location.hash !== "#temporada" || document.querySelector("meter") !== null,
+  );
   return page.evaluate((key) => {
     let week: number | undefined;
     for (const el of document.querySelectorAll("header [title]")) {

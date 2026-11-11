@@ -18,6 +18,7 @@ import {
   startSeason,
   WorkshopError,
 } from "@falconess/sim";
+import { putHistory, readHistory, type SeasonEntry } from "./history";
 import {
   parseSavedRun,
   runFingerprint,
@@ -279,6 +280,11 @@ export class GameController {
     return run ? serializeRun(this.#toSave(run)) : undefined;
   }
 
+  /** This browser's seasons, newest first (`history.ts`). */
+  history(): SeasonEntry[] {
+    return readHistory(this.#store);
+  }
+
   /** Write the run in play to storage now. True when it was stored. */
   save(): boolean {
     const run = this.#snap.run;
@@ -336,9 +342,22 @@ export class GameController {
     }
   }
 
-  /** Install a run and save it (autosave after every change). */
+  /** Install a run and save it (autosave after every change), and keep it in the history. */
   #setRun(run: ActiveRun, lastStep?: Step, seen = true): void {
-    const saved = writeKey(this.#store, RUN_KEY, serializeRun(this.#toSave(run)));
+    const text = serializeRun(this.#toSave(run));
+    const saved = writeKey(this.#store, RUN_KEY, text);
+    const s = run.state;
+    putHistory(this.#store, {
+      seed: run.seed,
+      falconessId: s.falconessId,
+      difficulty: s.difficulty ?? "normal",
+      turn: s.turn,
+      status: s.status,
+      ...(s.endReason === undefined ? {} : { endReason: s.endReason }),
+      ...(s.grade === undefined ? {} : { grade: s.grade }),
+      updatedAt: new Date().toISOString(),
+      save: text,
+    });
     const lastStepSeen = lastStep === undefined || seen;
     this.#emit({ run, lastStep, lastStepSeen, error: undefined, saved });
   }

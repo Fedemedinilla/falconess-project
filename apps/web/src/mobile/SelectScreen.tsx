@@ -8,6 +8,7 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
 import { boxText } from "./EndScreen";
+import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
@@ -24,6 +25,8 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
   const roster = [...content.falconess.values()];
   const [picked, setPicked] = useState<string | undefined>();
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [exporting, setExporting] = useState<ExportItem>();
   // ADR-0013: this browser's v3 boxes, up to two chosen as parents
   const [boxes] = useState(() =>
     readBoxes().filter((b) => b.rulesetVersion === ctx.ruleset.version),
@@ -157,6 +160,24 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
             {ui("ui.m.pick.continue", { name: savedName })}
           </button>
         )}
+        <button
+          type="button"
+          className={s.linkBtn}
+          id="m-temporadas-inicio"
+          onClick={() => setHistoryOpen(true)}
+        >
+          {ui("ui.m.history.title")}
+        </button>
+        <HistorySheet
+          open={historyOpen}
+          entries={historyOpen ? game.history() : []}
+          onExport={(e) => {
+            setHistoryOpen(false);
+            setExporting(entryItem(e));
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+        <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
         <button type="button" className={s.linkBtn} id="m-pruebas-inicio" onClick={onTests}>
           {ui("ui.m.tests")}
         </button>

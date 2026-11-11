@@ -16,6 +16,7 @@ import { WeekDialog } from "../screens/WeekDialog";
 import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { EndScreen } from "./EndScreen";
+import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { Glyph } from "./Glyph";
 import { InspirationOverlay } from "./Inspiration";
 import { inspirationScene } from "./inspirationScene";
@@ -68,6 +69,8 @@ export function MobileGame() {
   const [weekPosition, setWeekPosition] = useState<WeekPosition>();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sceneDone, setSceneDone] = useState<string>();
+  const [exporting, setExporting] = useState<ExportItem>();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const run = snap.run;
   const inputs = run?.inputs.length ?? 0;
 
@@ -346,9 +349,28 @@ export function MobileGame() {
           {pending && <EventDialog />}
         </>
       )}
+      <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
+      <HistorySheet
+        open={historyOpen}
+        entries={historyOpen ? game.history() : []}
+        onExport={(e) => {
+          setHistoryOpen(false);
+          setExporting(entryItem(e));
+        }}
+        onClose={() => setHistoryOpen(false)}
+      />
       <MobileMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
+        onExport={() => {
+          setMenuOpen(false);
+          const entry = game.history().find((e) => e.seed === run.seed);
+          if (entry) setExporting(entryItem(entry));
+        }}
+        onHistory={() => {
+          setMenuOpen(false);
+          setHistoryOpen(true);
+        }}
         onTests={toTests}
         onNew={() => {
           setMenuOpen(false);
@@ -377,11 +399,15 @@ function trainingCue(
 function MobileMenu({
   open,
   onClose,
+  onExport,
+  onHistory,
   onTests,
   onNew,
 }: {
   open: boolean;
   onClose: () => void;
+  onExport: () => void;
+  onHistory: () => void;
   onTests: () => void;
   onNew: () => void;
 }) {
@@ -416,6 +442,14 @@ function MobileMenu({
         <h2 className={s.dlTitle} id="m-menu-titulo">
           {ui("ui.m.menu")}
         </h2>
+        <button type="button" className={s.btn} id="m-exportar-partida" onClick={onExport}>
+          <Glyph name="down" size={20} />
+          {ui("ui.m.export.run")}
+        </button>
+        <button type="button" className={s.btn} id="m-temporadas" onClick={onHistory}>
+          <Glyph name="book" size={20} />
+          {ui("ui.m.history.title")}
+        </button>
         <button type="button" className={s.btn} id="m-pruebas" onClick={onTests}>
           <Glyph name="screen" size={20} />
           {ui("ui.m.tests")}

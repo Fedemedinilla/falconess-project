@@ -551,3 +551,39 @@ test("inheritance: up to two of this browser's black boxes go into the new seaso
   expect(save).toContain('"id":"b3"');
   expect(save).not.toContain('"id":"b2"');
 });
+
+test("export: the run in play, and every season this browser played", async ({ page }) => {
+  await startMobile(page, "caracara");
+  await page.click("#m-descansar");
+  await settle(page);
+  // «Menú» → «Exportar partida»: the save as a file or as text
+  await page.click("#m-menu");
+  await page.click("#m-exportar-partida");
+  const sheet = page.locator("#m-exportar[open]");
+  await expect(sheet).toBeVisible();
+  const text = await page.locator("#m-exportar-texto").inputValue();
+  const save = JSON.parse(text);
+  expect(save.schemaVersion).toBe(1);
+  expect(save.inputs[0].falconessId).toBe("caracara");
+  expect(save.inputs.length).toBeGreaterThan(1);
+  const download = page.waitForEvent("download");
+  await page.click("#m-exportar-descargar");
+  expect((await download).suggestedFilename()).toMatch(/^falconess-caracara-s\d+-.+\.json$/);
+  await page.click("#m-exportar-cerrar");
+
+  // a new season: the old one stays in «Temporadas anteriores»
+  await page.click("#m-menu");
+  await page.click("#m-nueva");
+  await page.click("#m-nueva-si");
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-semana")).toBeVisible();
+  await page.click("#m-menu");
+  await page.click("#m-temporadas");
+  const rows = page.locator("#m-historial li[data-seed]");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(1)).toContainText(t("falconess.caracara"));
+  await rows.nth(1).getByRole("button").click();
+  await expect(page.locator("#m-exportar[open]")).toBeVisible();
+  expect(await page.locator("#m-exportar-texto").inputValue()).toBe(text);
+});

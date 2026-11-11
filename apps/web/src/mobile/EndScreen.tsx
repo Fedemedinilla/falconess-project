@@ -1,5 +1,5 @@
 import type { BlackBox } from "@falconess/schema";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
@@ -9,6 +9,7 @@ import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
+import { type ExportItem, ExportSheet, entryItem } from "./Export";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 import { statCells } from "./model";
@@ -30,6 +31,7 @@ export function EndScreen({
   onTests: () => void;
 }) {
   const { game } = useGame();
+  const [exporting, setExporting] = useState<ExportItem>();
   const ctx = game.context();
   const state = run.state;
   const summary = useMemo(
@@ -96,6 +98,19 @@ export function EndScreen({
           {boxText(box)}
         </p>
         <StatStrip stats={statCells(state)} skillPoints={state.skillPoints} long />
+        <button
+          type="button"
+          className={cx(s.btn, s.btnWide)}
+          id="m-fin-exportar"
+          onClick={() => {
+            const entry = game.history().find((e) => e.seed === run.seed);
+            if (entry) setExporting(entryItem(entry));
+          }}
+        >
+          <Glyph name="down" size={20} />
+          {ui("ui.m.export.season")}
+        </button>
+        <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
         <button type="button" className={s.linkBtn} id="m-fin-pruebas" onClick={onTests}>
           {ui("ui.m.end.detail")}
         </button>
