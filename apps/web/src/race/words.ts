@@ -15,6 +15,7 @@ import {
   type WhyTerm,
 } from "@falconess/race-view";
 import type { RaceEntry, RaceLog, RaceResult } from "@falconess/schema";
+import { MIRROR_RUNNER_ID } from "@falconess/sim";
 import { formatFixed, formatInt } from "../text/format";
 import { type TextVars, ui } from "../text/ui";
 import { type IconName, segmentIcon } from "../ui/icons";
@@ -57,6 +58,7 @@ export function uiPlural(key: string, n: number, vars: TextVars = {}): string {
  */
 export function runnerName(entry: RaceEntry, labels: RaceLabels): string {
   if (entry.falconessId !== null) return labels.runnerName(entry);
+  if (entry.runnerId === MIRROR_RUNNER_ID) return ui("ui.race.runner.mirror");
   const rival = /^rival-(\d+)$/.exec(entry.runnerId);
   if (rival) return ui("ui.race.runner.rival", { n: rival[1] ?? "" });
   const neutral = /^neutral-([a-z]+)-(\d+)$/.exec(entry.runnerId);
@@ -74,6 +76,7 @@ export function runnerName(entry: RaceEntry, labels: RaceLabels): string {
  */
 export function runnerShort(entry: RaceEntry, labels: RaceLabels): string {
   if (entry.kind === "player") return ui("ui.race.lane.you");
+  if (entry.runnerId === MIRROR_RUNNER_ID) return ui("ui.race.lane.mirror");
   const rival = /^rival-(\d+)$/.exec(entry.runnerId);
   if (rival) return ui("ui.race.lane.rival", { n: rival[1] ?? "" });
   const neutral = /^neutral-([a-z]+)-(\d+)$/.exec(entry.runnerId);

@@ -5,8 +5,8 @@
  * here only the presentation choices live: the risk colors of a failure chance, the medal tiers of
  * a stat, which trainings the delta button calls boosted, the crews' badges.
  */
-import type { Mood, SeasonState, StatName, TrainingKind } from "@falconess/schema";
-import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
+import type { CupRound, Mood, SeasonState, StatName, TrainingKind } from "@falconess/schema";
+import { bondLevel, type SimContext, STAT_ORDER, statCap } from "@falconess/sim";
 import {
   type ActionKind,
   actionBlock,
@@ -154,9 +154,19 @@ export type GoalCard = {
   readonly weeksLeft: number;
   /** v3: the distance, its length and her letter there (undefined on v1/v2). */
   readonly distance: RaceDistance | undefined;
+  /** ADR-0012: a round of the Copa (Exigente). */
+  readonly cup: CupRound | undefined;
+  /** ADR-0012: Gerifalte, the rival built on her, runs in it. */
+  readonly mirror: boolean;
 };
 
-export type StatCell = { readonly stat: StatName; readonly value: number; readonly tier: StatTier };
+export type StatCell = {
+  readonly stat: StatName;
+  readonly value: number;
+  readonly tier: StatTier;
+  /** ADR-0012: at the season's cap (900 on Normal): training it adds nothing. */
+  readonly capped: boolean;
+};
 
 export type WeekMenu = {
   readonly turn: number;
@@ -176,11 +186,13 @@ export type WeekMenu = {
   readonly boosted: readonly TrainingKind[];
 };
 
-export function statCells(state: SeasonState): StatCell[] {
+/** Her stats as cells; `cap` is the season's stat cap (`statCap`), none when absent. */
+export function statCells(state: SeasonState, cap = Number.POSITIVE_INFINITY): StatCell[] {
   return STAT_ORDER.map((stat) => ({
     stat,
     value: state.stats[stat],
     tier: statTier(state.stats[stat]),
+    capped: state.stats[stat] >= cap,
   }));
 }
 
@@ -197,9 +209,11 @@ export function weekMenu(ctx: SimContext, state: SeasonState): WeekMenu {
       minPlace: next.goal.minPlace,
       weeksLeft: next.weeksLeft,
       distance: raceDistance(ctx, state, next.goal.courseId),
+      cup: next.goal.cup,
+      mirror: next.goal.mirrorRival === true,
     },
     mood: state.mood,
-    stats: statCells(state),
+    stats: statCells(state, statCap(ctx.ruleset, state)),
     skillPoints: state.skillPoints,
     raceWeek: isRaceWeek(ctx, state),
     injured: actionBlock(ctx, state, "rest") === "injured",

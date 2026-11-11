@@ -1,7 +1,7 @@
 import type { RunInput, SeasonState } from "@falconess/schema";
 import { advanceSeason, CURRENT_RULESET, type SimContext, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
-import { getContent } from "../content/load";
+import { getContent, simContext } from "../content/load";
 import { trainingPreview, vigorOf } from "../screens/model/actions";
 import {
   crewInitials,
@@ -144,5 +144,45 @@ describe("small words", () => {
     expect([-2, -1, 0, 1, 2].map(moodTone)).toEqual(["lo", "lo", "mid", "hi", "hi"]);
     expect(crewInitials("Kōryū Racing")).toBe("KR");
     expect(crewInitials("Boneyard")).toBe("BO");
+  });
+});
+
+describe("difficulties (ADR-0012)", () => {
+  const v3 = simContext(CURRENT_RULESET.version);
+  const begin = (difficulty?: "normal" | "exigente") =>
+    startSeason(v3, "diff", {
+      kind: "start",
+      falconessId: "cernicala",
+      hangar: ["shiden", "mule", "nimbus", "falke"],
+      parents: [],
+      ...(difficulty === undefined ? {} : { difficulty }),
+    });
+  it("marks a stat at the season's cap: 900 on Normal, never below 1200 on Exigente", () => {
+    const at900 = (s: SeasonState) => ({ ...s, stats: { ...s.stats, agility: 900 } });
+    const normal = weekMenu(v3, at900(begin()));
+    expect(normal.stats.find((c) => c.stat === "agility")?.capped).toBe(true);
+    expect(normal.stats.filter((c) => c.capped)).toHaveLength(1);
+    const hard = weekMenu(v3, at900(begin("exigente")));
+    expect(hard.stats.some((c) => c.capped)).toBe(false);
+  });
+  it("names the Copa's rounds and Gerifalte on Exigente's last goals", () => {
+    const s = begin("exigente");
+    // every goal before the final passed
+    const raceResults = [12, 24, 36, 44, 46].map((turn) => ({
+      courseId: "steps",
+      turn,
+      place: 1,
+      fieldSize: 8,
+      timeTicks: 1000,
+      frameId: s.equippedFrame,
+      position: "stalk" as const,
+      engine: "v1" as const,
+    }));
+    const final = { ...s, turn: 47, raceResults };
+    const menu = weekMenu(v3, final);
+    expect(menu.goal?.cup).toBe("final");
+    expect(menu.goal?.mirror).toBe(true);
+    expect(menu.goal?.minPlace).toBe(1);
+    expect(weekMenu(v3, begin()).goal?.cup).toBeUndefined();
   });
 });

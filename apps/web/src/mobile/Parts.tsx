@@ -26,6 +26,11 @@ const MOOD_GLYPH: Readonly<Record<number, GlyphName>> = {
   2: "dup",
 };
 
+/** «3.º o mejor», or «Ganar» when only first place passes. */
+export function placeText(minPlace: number): string {
+  return minPlace === 1 ? ui("ui.m.goal.win") : ui("ui.m.goal.place", { place: minPlace });
+}
+
 function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: ContentIndex }) {
   if (!goal)
     return (
@@ -52,9 +57,13 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
         <Glyph name="flag" size={20} color="#1d1704" weight={2.4} />
       </span>
       <div className={s.goalT}>
-        <div className={s.goalN}>{course}</div>
+        <div className={s.goalN} data-cup={goal.cup}>
+          {goal.cup
+            ? ui("ui.m.cup.pill", { round: ui(`ui.m.cup.short.${goal.cup}`), course })
+            : course}
+        </div>
         <div className={s.goalS}>
-          {when} · {ui("ui.m.goal.place", { place: goal.minPlace })}
+          {when} · {placeText(goal.minPlace)}
         </div>
       </div>
       {d && (
@@ -116,6 +125,8 @@ function VigorBar({ vigor }: { vigor: VigorView }) {
 }
 
 export type HudProps = {
+  /** ADR-0012: Exigente shows a chip under the calendar. */
+  hard?: boolean;
   turn: number;
   turns: number;
   goal: GoalCard | undefined;
@@ -125,7 +136,7 @@ export type HudProps = {
 };
 
 /** The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood. */
-export function Hud({ turn, turns, goal, vigor, mood, content }: HudProps) {
+export function Hud({ hard = false, turn, turns, goal, vigor, mood, content }: HudProps) {
   const tone = moodTone(mood);
   return (
     <header className={s.hud}>
@@ -135,8 +146,13 @@ export function Hud({ turn, turns, goal, vigor, mood, content }: HudProps) {
         aria-label={ui("ui.m.week.aria", { turn, turns, left: turns - turn })}
         role="img"
       >
-        <div className={s.calH} aria-hidden="true">
-          {ui("ui.m.week")}
+        {/* ADR-0012: on Exigente the calendar's header says so */}
+        <div
+          className={cx(s.calH, hard && s.calHard)}
+          id={hard ? "m-exigente" : undefined}
+          aria-hidden="true"
+        >
+          {hard ? ui("ui.m.difficulty.exigente") : ui("ui.m.week")}
         </div>
         <div className={s.calN} aria-hidden="true">
           {turn}
@@ -208,7 +224,12 @@ export function StatStrip({ stats, skillPoints, gains, pointsGain, long = false 
             className={cx(s.sc, gains?.[c.stat] !== undefined && s.scOn)}
             data-stat={c.stat}
             data-tier={c.tier}
-            aria-label={`${gameText(`stat.${c.stat}`)} ${c.value}`}
+            data-cap={c.capped || undefined}
+            aria-label={
+              c.capped
+                ? ui("ui.m.stat.capped.aria", { stat: gameText(`stat.${c.stat}`), n: c.value })
+                : `${gameText(`stat.${c.stat}`)} ${c.value}`
+            }
             role="img"
           >
             <span className={s.sh} aria-hidden="true">
@@ -217,6 +238,11 @@ export function StatStrip({ stats, skillPoints, gains, pointsGain, long = false 
             <span className={cx(s.sv, s.sn, s[`t${c.tier}`])} aria-hidden="true">
               {c.value}
             </span>
+            {c.capped && (
+              <span className={s.cap0} aria-hidden="true">
+                {ui("ui.m.stat.capped")}
+              </span>
+            )}
           </div>
         ))}
         <div

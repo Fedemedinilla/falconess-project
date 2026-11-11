@@ -1,4 +1,4 @@
-import type { Position, SeasonState } from "@falconess/schema";
+import type { CupRound, Position, SeasonState } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import { type ReactNode, useState } from "react";
 import { PlayerAdviceNote } from "../race/AdviceNote";
@@ -28,6 +28,8 @@ export function PreRaceScreen({
   state,
   courseId,
   minPlace,
+  cup,
+  mirror = false,
   wings,
   position,
   input,
@@ -39,6 +41,9 @@ export function PreRaceScreen({
   state: SeasonState;
   courseId: string;
   minPlace: number;
+  /** ADR-0012: a round of the Copa, and whether Gerifalte runs in it. */
+  cup?: CupRound | undefined;
+  mirror?: boolean;
   wings: Position;
   position: Position | undefined;
   /** The week's action waiting for the race, if one was chosen. */
@@ -59,8 +64,21 @@ export function PreRaceScreen({
             <Glyph name="flag" size={16} />
             {ui("ui.m.race.eyebrow", { turn: state.turn })}
           </p>
+          {cup && (
+            <p className={s.cupTag} id="m-copa" data-cup={cup}>
+              {ui(`ui.m.cup.${cup}`)}
+            </p>
+          )}
           <h1 className={s.title}>{course}</h1>
-          <p className={s.sub}>{ui("ui.m.race.goal", { place: minPlace })}</p>
+          <p className={s.sub}>
+            {minPlace === 1 ? ui("ui.m.race.goal.win") : ui("ui.m.race.goal", { place: minPlace })}
+          </p>
+          {mirror && (
+            <p className={s.mirrorNote} id="m-gerifalte">
+              <Glyph name="eye" size={16} />
+              {ui("ui.m.race.mirror")}
+            </p>
+          )}
           {d && (
             <p className={s.raceFacts} id="m-precarrera-distancia" data-distance={d.distance}>
               <span>

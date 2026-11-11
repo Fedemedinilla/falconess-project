@@ -468,3 +468,26 @@ test("sounds: a tap, a change of screen, a training's result; the «Menú» swit
   await page.waitForTimeout(200);
   expect(await page.locator("html").getAttribute("data-sfx")).toBe(before);
 });
+
+test("difficulty: Normal by default, Exigente shows its chip and its harder ladder", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await expect(page.locator("#m-dificultad-normal")).toHaveAttribute("aria-pressed", "true");
+  await page.click("#m-dificultad-exigente");
+  await expect(page.locator("#m-dificultad-exigente")).toHaveAttribute("aria-pressed", "true");
+  await page.click("#m-elegir-cernicala");
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-exigente")).toHaveText(t("ui.m.difficulty.exigente"));
+  // the first Exigente goal: Mirador, 5th or better (Normal asks 6th)
+  await expect(page.locator("#m-meta")).toContainText(t("ui.m.goal.place", { place: 5 }));
+  // the save carries the difficulty
+  const save = await page.evaluate(() => localStorage.getItem("falconess.pruebas.partida") ?? "");
+  expect(save).toContain('"difficulty":"exigente"');
+});
+
+test("Normal: no Exigente chip and no stat at the cap at the start", async ({ page }) => {
+  await startMobile(page, "cernicala");
+  await expect(page.locator("#m-exigente")).toHaveCount(0);
+  await expect(page.locator("#m-stats [data-cap]")).toHaveCount(0);
+});

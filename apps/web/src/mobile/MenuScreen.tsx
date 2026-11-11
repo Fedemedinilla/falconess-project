@@ -9,7 +9,7 @@ import { DeltaButton } from "./DeltaButton";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { WeekMenu } from "./model";
-import { StatStrip } from "./Parts";
+import { placeText, StatStrip } from "./Parts";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { trackCard } from "./track";
 
@@ -134,7 +134,7 @@ export function MenuScreen({
               <b>{ui("ui.m.race.week")}</b>
               <span>
                 {gameText(ctx.content.getCourse(goal.courseId).textKey)} ·{" "}
-                {ui("ui.m.goal.place", { place: goal.minPlace })}
+                {placeText(goal.minPlace)}
               </span>
             </span>
             <span className={s.raceBarGo}>{ui("ui.m.race.open")}</span>

@@ -1,5 +1,5 @@
 import type { SeasonState, StatName, TrainingKind } from "@falconess/schema";
-import type { SimContext } from "@falconess/sim";
+import { type SimContext, statCap } from "@falconess/sim";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
@@ -110,7 +110,7 @@ export function TrainScreen({
           )}
         </div>
         <StatStrip
-          stats={statCells(state)}
+          stats={statCells(state, statCap(ctx.ruleset, state))}
           skillPoints={state.skillPoints}
           gains={gains ?? {}}
           pointsGain={card?.skillPoints}

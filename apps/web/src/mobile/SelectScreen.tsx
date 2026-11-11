@@ -1,3 +1,4 @@
+import type { Difficulty } from "@falconess/schema";
 import { useState } from "react";
 import { randomSeed } from "../game/seed";
 import { useGame } from "../game/useGame";
@@ -20,6 +21,8 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
   const content = ctx.content;
   const roster = [...content.falconess.values()];
   const [picked, setPicked] = useState<string | undefined>();
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const hasExigente = ctx.ruleset.season.statCapByDifficulty !== undefined;
   const saved = game.savedRun();
   const savedName = (() => {
     const first = saved?.inputs[0];
@@ -30,7 +33,7 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
 
   const start = () => {
     if (!picked) return;
-    game.start(picked, defaultHangar(content), randomSeed());
+    game.start(picked, defaultHangar(content), randomSeed(), hasExigente ? difficulty : undefined);
   };
 
   return (
@@ -40,7 +43,10 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
         <p className={s.sub}>
           {ui("ui.m.pick.sub", {
             turns: ctx.ruleset.season.turns,
-            goals: roster[0]?.seasonGoals.length ?? 0,
+            goals:
+              (difficulty === "exigente"
+                ? roster[0]?.exigenteGoals?.length
+                : roster[0]?.seasonGoals.length) ?? 0,
           })}
         </p>
         <div className={s.pickList}>
@@ -80,6 +86,23 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
             );
           })}
         </div>
+        {hasExigente && (
+          <fieldset className={s.diff} id="m-dificultad" aria-label={ui("ui.m.difficulty")}>
+            {(["normal", "exigente"] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-pressed={difficulty === d}
+                id={`m-dificultad-${d}`}
+                className={cx(s.diffB, difficulty === d && s.diffOn)}
+                onClick={() => setDifficulty(d)}
+              >
+                <span className={s.diffN}>{ui(`ui.m.difficulty.${d}`)}</span>
+                <span className={s.diffS}>{ui(`ui.m.difficulty.${d}.line`)}</span>
+              </button>
+            ))}
+          </fieldset>
+        )}
         <p className={s.aitag}>{ui("ui.m.aiArt")}</p>
         {saved && savedName && (
           <button

@@ -1,4 +1,5 @@
 import type { Position, SeasonState, TrainingKind, WorkshopOp } from "@falconess/schema";
+import { difficultyOf } from "@falconess/sim";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
@@ -191,6 +192,7 @@ export function MobileGame() {
 
   const hud = (
     <Hud
+      hard={difficultyOf(state) === "exigente"}
       turn={menu.turn}
       turns={menu.turns}
       goal={menu.goal}
@@ -254,6 +256,8 @@ export function MobileGame() {
           state={state}
           courseId={goal.courseId}
           minPlace={goal.minPlace}
+          cup={goal.cup}
+          mirror={goal.mirror}
           wings={wings}
           position={chosen}
           input={input}

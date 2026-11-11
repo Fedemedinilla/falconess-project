@@ -6,7 +6,7 @@
  * Framework-free on purpose: React subscribes through `useGame` (useSyncExternalStore), tests
  * drive it directly. Snapshots are immutable and change identity only when something changed.
  */
-import type { ContentIndex, RunInput, SeasonState } from "@falconess/schema";
+import type { ContentIndex, Difficulty, RunInput, SeasonState } from "@falconess/schema";
 import {
   advanceSeason,
   CURRENT_RULESET,
@@ -147,8 +147,19 @@ export class GameController {
    * Start a season on the current ruleset (`CURRENT_RULESET`, ADR-0006). False (and `error`) when
    * the sim rejects the start input.
    */
-  start(falconessId: string, hangar: readonly string[], seed: string): boolean {
-    const input: RunInput = { kind: "start", falconessId, hangar: [...hangar], parents: [] };
+  start(
+    falconessId: string,
+    hangar: readonly string[],
+    seed: string,
+    difficulty?: Difficulty,
+  ): boolean {
+    const input: RunInput = {
+      kind: "start",
+      falconessId,
+      hangar: [...hangar],
+      parents: [],
+      ...(difficulty === undefined ? {} : { difficulty }),
+    };
     const ctx = this.newRunContext();
     try {
       const state = startSeason(ctx, seed, input);
