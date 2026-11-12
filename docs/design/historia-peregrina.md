@@ -8,6 +8,9 @@ Base teórica: `docs/design/investigacion-personajes.md` (informe de Claude Rese
 japonés, chino y coreano, 2026-11-11): sus 18 reglas, la plantilla de ficha, la plantilla de arco y la
 lista de verificación de 26 preguntas.
 
+Reglas generales de cómo se hace una escena (formatos, tiempos, arte, escritura e implementación):
+`docs/design/escenas.md`.
+
 ## 1. Punto de partida
 
 Lo que ya está fijado en el juego:
