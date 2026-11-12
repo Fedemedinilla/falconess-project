@@ -159,6 +159,22 @@ con nombre aparecen en las historias de las otras; esta puede tener la suya más
 Opcional, para darle vida a la temporada: una línea corta de Peregrina la primera vez que hace cada
 tipo de entrenamiento (Técnica: «¿Esto tiene un botón para adelantar?»).
 
+## 2b. Cómo se muestran las escenas (dueño, 2026-11-12)
+
+Elegido entre cinco maquetas jugables (artifact «Escenas de Peregrina»). En las tres, la interfaz
+se desvanece mientras dura la escena, y siempre se puede saltar: queda un aviso con el título del
+capítulo y dónde volver a verlo (Menú → Historia).
+
+- **Cuadro de diálogo (escena común):** cuadro abajo con el nombre en una placa con los colores del
+  fabricante, texto que se escribe solo, Auto, Registro y Saltar. Los retratos van encima del
+  cuadro.
+- **Cinemático (escenas clave):** bandas negras, penumbra, subtítulos que aparecen palabra por
+  palabra y frases clave grandes en el centro. Para el prólogo y la presentación de la Falconess,
+  el final de la temporada y algún diálogo o evento secreto durante la temporada.
+- **Chat con la Falconess (opcional):** un canal directo para conocerla mejor, si el jugador quiere.
+  El jugador elige preguntas en «pills» de opciones y ella contesta con su personalidad y su forma
+  de hablar.
+
 ## 3. Formato
 
 No hace falta prolijidad: con el nombre de quien habla y la línea alcanza. Las acotaciones van
