@@ -69,3 +69,52 @@ elegida para las otras dos; descartar cualquier resultado con letras o logos.
 
 Estado (2026-10-30): set provisional aprobado con estos prompts (segunda vuelta de Peregrina y
 Cernícala). Siguiente paso: los chibis.
+
+## Bustos de expresión de Peregrina (escenas de historia, 2026-11-12)
+
+Para las escenas de diálogo: un busto por gesto, todos con el mismo encuadre para que se puedan
+cambiar uno por otro sin que la figura salte. Se generan **de a uno**, en la misma conversación de
+Gemini, adjuntando siempre el splash aprobado de Peregrina como referencia. Se pide el **primero**
+(«tranquila») y, cuando sale bien, se usa ese busto como segunda referencia para todos los demás.
+
+Bloque base (se pega igual en cada pedido, cambiando solo la línea de la expresión):
+
+```text
+Use the attached image as a strict character reference: the exact same woman, Peregrina. Keep her face shape,
+eye shape and color, the dark falcon "moustache" marks painted below each eye, her short layered slate
+blue-grey hair with the cream-blonde streak, and her red racing suit with angular yellow stripes and zip
+collar exactly as in the reference. Same anime gacha art style, clean line art, soft cel shading with one
+shadow tone, soft key light from the upper left.
+
+Visual-novel dialogue bust portrait: from the top of the head to the middle of the chest, facing the viewer in
+a slight 3/4 turn, centered. Square image. The top of her hair sits about 8 % below the top edge and the
+chest is cut by the bottom edge, at the same size and position in every image of this set. No helmet, no wings
+visible. Plain flat white background, no shadow, no scenery.
+
+Expression: [EXPRESIÓN]
+
+Avoid: any text, letters, numbers or logos; speech bubbles; extra characters; hands covering the face;
+cropped head; different hair or outfit; chibi proportions; busy background.
+```
+
+Las expresiones, en orden de prioridad (las primeras seis alcanzan para el prólogo y las metas):
+
+| #   | Archivo                      | [EXPRESIÓN]                                                                                                                                                         |
+| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `peregrina-bust-calm.webp`   | Relaxed and carefree, a small easy confident smile, eyelids slightly lowered, as if nothing could ever go wrong.                                                    |
+| 2   | `peregrina-bust-happy.webp`  | Bright happy grin showing teeth, eyes sparkling, eyebrows up, full of energy.                                                                                       |
+| 3   | `peregrina-bust-eager.webp`  | Impatient and eager, leaning slightly forward, wide eyes, an excited open-mouth smile, one eyebrow raised, already thinking about the next race.                   |
+| 4   | `peregrina-bust-bored.webp`  | Bored to death, half-closed eyes, cheek puffed, mouth flattened sideways, a tiny sweat drop, she cannot stand waiting.                                              |
+| 5   | `peregrina-bust-annoyed.webp` | Annoyed and pouting, cheeks slightly puffed, eyebrows pulled down, small anime anger mark on her temple, comic rather than aggressive.                             |
+| 6   | `peregrina-bust-surprised.webp` | Caught off guard, eyes wide open, small round open mouth, eyebrows high, a comic "huh?!" moment.                                                                |
+| 7   | `peregrina-bust-focused.webp` | Determined and focused, steady sharp gaze straight ahead, mouth closed in a firm line, chin slightly down, a pilot before takeoff.                                 |
+| 8   | `peregrina-bust-tired.webp`  | Exhausted after a long race, hair messy and damp with sweat, heavy eyelids, mouth slightly open catching her breath, flushed cheeks.                              |
+| 9   | `peregrina-bust-sad.webp`    | Quietly sad, eyes looking down and slightly glossy, eyebrows raised in the middle, a small closed mouth, holding it in, no tears falling.                           |
+| 10  | `peregrina-bust-blank.webp`  | Blank and lost: she does not understand what happened. Empty unfocused eyes looking slightly past the viewer, neutral open lips, no tears, no anger, no smile, pale. |
+
+La 10 es la del final: es la expresión más importante de la historia (no llora, no se enfurece,
+no lo entiende). Si sale con lágrimas o con tristeza marcada, pedir de nuevo con: «Less sad, more
+empty and confused. Like her mind stopped.»
+
+Si una sale con otro encuadre, corregir en la misma conversación con: «Same framing and size as the
+first bust: top of the hair 8 % below the top edge, cut at mid-chest, centered.»
