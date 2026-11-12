@@ -1529,6 +1529,7 @@
   "ui.m.tests": "Test view",
   "ui.m.lang": "Language: {lang}",
   "ui.m.lang.label": "Language: {lang}. Tap to switch to {next}.",
+  "ui.m.title.tap": "TAP TO START",
   "ui.m.sound": "Sound: {style}",
   "ui.m.sound.label": "Sound: {style}. Tap to change style",
   "ui.m.sound.hangar": "Hangar",

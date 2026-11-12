@@ -1,6 +1,7 @@
 import type { Position, SeasonState, TrainingKind, WorkshopOp } from "@falconess/schema";
 import { difficultyOf, type SimContext } from "@falconess/sim";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
@@ -38,6 +39,7 @@ import {
   type SoundStyle,
   setSoundStyle,
 } from "./sfx";
+import { TitleScreen } from "./TitleScreen";
 import { type TrainResult, TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
@@ -52,6 +54,12 @@ type View =
   | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
 
 const MENU: View = { screen: "menu" };
+
+/**
+ * The title screen shows once per visit, when the page opens on the game (owner 2026-11-12); a
+ * visit that starts in the test view goes to the game without it.
+ */
+let titleDone = typeof location !== "undefined" && parseHash(location.hash) !== "juego";
 
 /** The action whose vigor the bar previews on a screen. */
 function previewKind(view: View): ActionKind | undefined {
@@ -99,8 +107,8 @@ export function MobileGame() {
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
-  // the transition between screens (owner 2026-11-12): a new page starts fully covered by it;
-  // a training's result stays on its screen and «Lo que pasó» over the menu is the menu
+  // the emblem transition (owner 2026-11-12) covers the way into a race: the race page starts
+  // fully covered by it
   const ended = run?.state.status === "ended" && view.screen !== "race" && view.screen !== "before";
   const page = !run
     ? "select"
@@ -111,13 +119,23 @@ export function MobileGame() {
         : view.screen === "before"
           ? "menu"
           : view.screen;
+  const [title, setTitle] = useState(() => !titleDone);
+  const titleScreen = title && (
+    <TitleScreen
+      onStart={() => {
+        titleDone = true;
+        setTitle(false);
+      }}
+    />
+  );
   const [cover, setCover] = useState<number>();
   const endCover = useCallback(() => setCover(undefined), []);
   const firstPage = useRef(true);
   // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of page only
   useLayoutEffect(() => {
     if (firstPage.current) firstPage.current = false;
-    else if (!reducedMotion()) setCover((c) => (c ?? 0) + 1);
+    // only on the way to a race (owner 2026-11-12: on every screen it got in the way)
+    else if (page === "race" && !reducedMotion()) setCover((c) => (c ?? 0) + 1);
   }, [page]);
   const colors = transitionColors(game, run?.state.falconessId);
   const transition = cover !== undefined && (
@@ -160,6 +178,7 @@ export function MobileGame() {
       <div className={s.app}>
         <SelectScreen onTests={toTests} />
         {transition}
+        {titleScreen}
       </div>
     );
 
@@ -183,6 +202,7 @@ export function MobileGame() {
           onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
         />
         {transition}
+        {titleScreen}
       </div>
     );
 
@@ -433,6 +453,7 @@ export function MobileGame() {
         onClose={() => setHistoryOpen(false)}
       />
       {transition}
+      {titleScreen}
       <MobileMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

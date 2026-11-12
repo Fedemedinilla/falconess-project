@@ -145,6 +145,7 @@ test("the phone game is the default view: art inlined, a week trained, only font
   const errors = watchErrors(page, { allowFontFailures: true });
   const blocked = await serve(context);
   await page.goto(ORIGIN);
+  await page.click("#m-titulo");
   await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
   // the chibis are inlined: every image has loaded
   const images = page.locator("img");

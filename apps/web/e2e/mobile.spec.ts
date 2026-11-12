@@ -34,8 +34,15 @@ const TONE_BG: Readonly<Record<string, string>> = {
   high: "rgb(179, 38, 30)",
 };
 
+/** The title screen (owner 2026-11-12): a tap anywhere starts. */
+async function pastTitle(page: Page): Promise<void> {
+  await page.click("#m-titulo");
+  await expect(page.locator("#m-titulo")).toHaveCount(0);
+}
+
 async function startMobile(page: Page, falconessId = "peregrina"): Promise<void> {
   await page.goto("./");
+  await pastTitle(page);
   await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
   await expect(page.locator("#m-empezar")).toBeDisabled();
   await page.click(`#m-elegir-${falconessId}`);
@@ -464,6 +471,7 @@ test("sounds: a tap, a change of screen, a training's result; the «Menú» swit
     await expect(sw).toContainText(t(`ui.m.sound.${style}`));
   }
   await page.reload();
+  await pastTitle(page);
   await page.click("#m-continuar");
   await settle(page);
   await page.click("#m-menu");
@@ -485,6 +493,7 @@ test("difficulty: Normal by default, Exigente shows its chip and its harder ladd
   page,
 }) => {
   await page.goto("./");
+  await pastTitle(page);
   await expect(page.locator("#m-dificultad-normal")).toHaveAttribute("aria-pressed", "true");
   await page.click("#m-dificultad-exigente");
   await expect(page.locator("#m-dificultad-exigente")).toHaveAttribute("aria-pressed", "true");
@@ -526,6 +535,7 @@ test("inheritance: up to two of this browser's black boxes go into the new seaso
     localStorage.setItem("falconess.juego.cajas", JSON.stringify(list));
   }, boxes);
   await page.goto("./");
+  await pastTitle(page);
   const list = page.locator("#m-herencia button[data-box]");
   await expect(list).toHaveCount(3);
   await page.click('[data-box="b1"]');
@@ -625,6 +635,7 @@ test("language: the menu switches to English and a whole short season reads in E
 }) => {
   test.setTimeout(240_000);
   await page.goto("./");
+  await pastTitle(page);
   await page.click("#m-idioma-inicio");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("#m-idioma-inicio")).toHaveAttribute("data-lang", "en");
@@ -680,25 +691,47 @@ test("language: the switch in «Menú» keeps the run in play", async ({ page })
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
-test("screen transition: the sponsor's colors cover the change of screen, then it clears", async ({
+test("screen transition: the sponsor's emblem covers the way into a race, and only that", async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   await startMobile(page, "peregrina");
-  // starting the season was a change of screen too: let it clear
-  await expect(page.locator("#m-transicion")).toHaveCount(0, { timeout: 3000 });
+  // other screens change without it (owner 2026-11-12)
   await page.click("#m-entrenar");
+  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  await page.click("#m-volver");
+  while ((await page.locator("#m-carrera").count()) === 0) {
+    await page.click("#m-descansar");
+    await settle(page);
+  }
+  await page.click("#m-carrera");
+  await page.click("#m-correr");
+  await page.click("#m-descansar");
+  await page.click("#m-correr");
+  await page.click("#semana-continuar");
   const cover = page.locator("#m-transicion");
   await expect(cover).toBeVisible();
   // Kōryū's red first, its yellow line opening in the middle
   await expect(cover).toHaveCSS("background-color", "rgb(192, 57, 43)");
   await expect(cover).toHaveCount(0, { timeout: 3000 });
-  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
 });
 
-test("screen transition: none with reduced motion", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await startMobile(page, "peregrina");
-  await page.click("#m-entrenar");
-  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
-  await expect(page.locator("#m-transicion")).toHaveCount(0);
+test("the title screen: the name, «Tocá para empezar», and a tap anywhere starts", async ({
+  page,
+}) => {
+  await page.goto("./");
+  const title = page.locator("#m-titulo");
+  await expect(title).toBeVisible();
+  await expect(title).toContainText("FALCONESS");
+  await expect(title).toContainText(t("ui.m.title.tap"));
+  await title.click({ position: { x: 40, y: 40 } });
+  await expect(title).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
+  // once per visit: the test view and back, no title again
+  await page.click("#m-pruebas-inicio");
+  await page.click("#inicio-juego");
+  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
+  await expect(title).toHaveCount(0);
 });

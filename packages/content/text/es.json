@@ -1529,6 +1529,7 @@
   "ui.m.tests": "Vista de pruebas",
   "ui.m.lang": "Idioma: {lang}",
   "ui.m.lang.label": "Idioma: {lang}. Tocá para cambiar a {next}.",
+  "ui.m.title.tap": "TOCÁ PARA EMPEZAR",
   "ui.m.sound": "Sonido: {style}",
   "ui.m.sound.label": "Sonido: {style}. Tocar para cambiar de estilo",
   "ui.m.sound.hangar": "Hangar",
