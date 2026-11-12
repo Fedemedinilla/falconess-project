@@ -81,7 +81,9 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
   if (s.pendingEvent) {
     const e = c.getEvent(s.pendingEvent.eventId);
     console.log(`\n  ★ ${c.t(e.textKey)}`);
-    e.options.forEach((o, i) => console.log(`    ${i + 1}. ${c.t(o.textKey)}`));
+    e.options.forEach((o, i) => {
+      console.log(`    ${i + 1}. ${c.t(o.textKey)}`);
+    });
     for (;;) {
       const n = Number.parseInt(await ask("  opción> "), 10);
       if (n >= 1 && n <= e.options.length) return { kind: "event:choose", option: n - 1 };
