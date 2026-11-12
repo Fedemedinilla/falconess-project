@@ -1,6 +1,6 @@
 {
   "id": "peregrina-nap",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "finish",
@@ -38,12 +38,25 @@
       "textKey": "story.peregrina-nap.6"
     },
     {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-nap.7",
+      "expression": "calm"
+    },
+    {
       "speaker": "narrator",
-      "textKey": "story.peregrina-nap.7"
+      "textKey": "story.peregrina-nap.8"
     },
     {
       "speaker": "jefa",
-      "textKey": "story.peregrina-nap.8"
+      "textKey": "story.peregrina-nap.9"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-nap.10"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-nap.11"
     }
   ]
 }

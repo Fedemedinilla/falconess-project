@@ -1,6 +1,6 @@
 {
   "id": "peregrina-invitation",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "cine",
   "background": "finish",
@@ -38,14 +38,26 @@
       "expression": "happy"
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-invitation.7"
+    },
+    {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-invitation.7",
+      "textKey": "story.peregrina-invitation.8",
       "expression": "calm",
       "key": true
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-invitation.8"
+      "textKey": "story.peregrina-invitation.9"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-invitation.10"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-invitation.11"
     }
   ]
 }

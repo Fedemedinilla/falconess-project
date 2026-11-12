@@ -1,6 +1,6 @@
 {
   "id": "peregrina-first-vos",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "hangar",
@@ -21,34 +21,51 @@
       "expression": "tired"
     },
     {
-      "speaker": "peregrina",
-      "textKey": "story.peregrina-first-vos.3",
-      "expression": "surprised"
+      "speaker": "trainer",
+      "textKey": "story.peregrina-first-vos.3"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-first-vos.4",
-      "expression": "focused"
+      "expression": "surprised"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-first-vos.5",
+      "expression": "focused"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.6",
       "expression": "calm",
       "key": true
     },
     {
       "speaker": "trainer",
-      "textKey": "story.peregrina-first-vos.6"
-    },
-    {
-      "speaker": "peregrina",
-      "textKey": "story.peregrina-first-vos.7",
-      "expression": "happy"
+      "textKey": "story.peregrina-first-vos.7"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-first-vos.8",
+      "expression": "happy"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-first-vos.9"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.10",
       "expression": "eager"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-first-vos.11"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.12",
+      "expression": "annoyed"
     }
   ]
 }

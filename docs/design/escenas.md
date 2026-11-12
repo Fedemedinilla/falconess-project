@@ -79,7 +79,7 @@ Los menús y las escenas son interfaces muy distintas: el paso de una a otra nun
 
 ## 4. Escritura
 
-- **Largo:** escena común de 5 a 10 líneas; cinemático de 6 a 12; una línea, una o dos oraciones.
+- **Largo:** escena común de 6 a 12 líneas; cinemático de 6 a 14; una línea, una o dos oraciones.
   Un chat, de 1 a 4 burbujas por respuesta.
 - **Quién habla:**
   - `narrator`: sin placa, en cursiva, en presente y corto («Y ya no estaba.»);
@@ -101,6 +101,21 @@ Los menús y las escenas son interfaces muy distintas: el paso de una a otra nun
 - **El chat es su voz más directa:** respuestas con personalidad, nunca un manual de juego.
 - **Cada texto en los dos idiomas:** `es.json` y `en.json`, mismas claves (`story.<escena>.<n>`,
   `chat.<tema>.<n>`). La traducción conserva el tono, no las palabras.
+
+## 4b. La voz del jugador («Vos», `trainer`) (dueño, 2026-11-12)
+
+El jugador habla seguido en las escenas: no es un testigo mudo.
+
+- **Neutro y razonable:** dice lo que diría cualquiera en su lugar. Nunca la trata mal, no se enoja
+  con ella, no es despistado ni tonto: nada que aleje al jugador de su propio personaje.
+- **Recién llegado que aprende:** es nuevo en el mundo de esta Falconess. Pregunta mucho, se
+  sorprende, quiere entender qué la mueve.
+- **Firme cuando ya la conoce:** una vez que entiende cómo funciona, habla de entrenamiento claro y
+  corto, sin dudar. Firme no es duro.
+- **Siempre amable y abierto a charlar.**
+- **Su rol cambia según la Falconess:** puede sentirse padre, entrenador, hermano o amigo. La guía de
+  cada Falconess define cuál.
+- **Sin género:** habla de vos y nada en el texto le asigna género.
 
 ## 5. Cuándo sale cada escena (`trigger`)
 
@@ -133,12 +148,15 @@ sale una por vez.
 
 ## 7. Lista antes de dar una escena por terminada
 
-1. ¿Es el formato correcto (común, clave u opcional)?
-2. ¿Tiene fondo, tarjeta (rótulo y título) y su disparador?
-3. ¿Cada línea de un personaje marca su expresión?
-4. ¿Tiene 5-12 líneas y, si es cinemático, una sola frase clave?
-5. ¿Se reconoce quién habla sin leer el nombre?
-6. ¿Algo de lo que dice o hace la muestra, en vez de describirla?
-7. ¿Siembra algo de lo que viene?
-8. ¿Está en castellano y en inglés, y pasan los tests?
-9. ¿La viste en el teléfono, entera y saltándola?
+1. ¿La escribí con la biblia de personajes a mano (`docs/design/investigacion-personajes.md`):
+   mostrar y no contar, con personalidad, nunca aburrido?
+2. ¿Es el formato correcto (común, clave u opcional)?
+3. ¿Tiene fondo, tarjeta (rótulo y título) y su disparador?
+4. ¿Cada línea de un personaje marca su expresión?
+5. ¿Tiene 6-12 líneas (cinemático hasta 14) y, si es cinemático, una sola frase clave?
+6. ¿Se reconoce quién habla sin leer el nombre?
+7. ¿El jugador habla con su voz: pregunta, se sorprende, firme en lo de entrenar, siempre amable?
+8. ¿Algo de lo que dice o hace la muestra, en vez de describirla?
+9. ¿Siembra algo de lo que viene?
+10. ¿Está en castellano y en inglés, y pasan los tests?
+11. ¿La viste en el teléfono, entera y saltándola?

@@ -1,6 +1,6 @@
 {
   "id": "peregrina-rookie",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "hangar",
@@ -47,13 +47,17 @@
       "expression": "happy"
     },
     {
-      "speaker": "jefa",
+      "speaker": "trainer",
       "textKey": "story.peregrina-rookie.9"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-rookie.10",
       "expression": "calm"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-rookie.11"
     }
   ]
 }

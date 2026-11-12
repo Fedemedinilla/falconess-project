@@ -1,6 +1,6 @@
 {
   "id": "peregrina-summit",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "cine",
   "background": "track",
@@ -29,18 +29,31 @@
       "expression": "happy"
     },
     {
-      "speaker": "jefa",
+      "speaker": "trainer",
       "textKey": "story.peregrina-summit.5"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-summit.6",
+      "expression": "focused"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-summit.7"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-summit.8",
       "expression": "focused",
       "key": true
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-summit.9"
+    },
+    {
       "speaker": "narrator",
-      "textKey": "story.peregrina-summit.7"
+      "textKey": "story.peregrina-summit.10"
     }
   ]
 }

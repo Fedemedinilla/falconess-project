@@ -1,6 +1,6 @@
 {
   "id": "peregrina-tears",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "finish",
@@ -47,8 +47,17 @@
       "expression": "calm"
     },
     {
-      "speaker": "narrator",
+      "speaker": "trainer",
       "textKey": "story.peregrina-tears.9"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-tears.10",
+      "expression": "surprised"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-tears.11"
     }
   ]
 }

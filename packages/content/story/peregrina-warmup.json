@@ -1,6 +1,6 @@
 {
   "id": "peregrina-warmup",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "track",
@@ -18,43 +18,51 @@
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-warmup.2",
-      "expression": "focused"
+      "expression": "surprised"
     },
     {
-      "speaker": "narrator",
+      "speaker": "trainer",
       "textKey": "story.peregrina-warmup.3"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-warmup.4",
-      "expression": "bored"
+      "expression": "focused"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-warmup.5"
     },
     {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-warmup.5",
+      "textKey": "story.peregrina-warmup.6",
       "expression": "bored"
-    },
-    {
-      "speaker": "trainer",
-      "textKey": "story.peregrina-warmup.6"
     },
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-warmup.7",
+      "expression": "bored"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-warmup.8"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-warmup.9",
       "expression": "surprised"
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-warmup.8"
+      "textKey": "story.peregrina-warmup.10"
     },
     {
       "speaker": "jefa",
-      "textKey": "story.peregrina-warmup.9"
+      "textKey": "story.peregrina-warmup.11"
     },
     {
-      "speaker": "peregrina",
-      "textKey": "story.peregrina-warmup.10",
-      "expression": "calm"
+      "speaker": "trainer",
+      "textKey": "story.peregrina-warmup.12"
     }
   ]
 }

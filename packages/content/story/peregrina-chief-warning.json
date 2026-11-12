@@ -1,6 +1,6 @@
 {
   "id": "peregrina-chief-warning",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "hangar",
@@ -21,26 +21,46 @@
       "expression": "bored"
     },
     {
-      "speaker": "jefa",
+      "speaker": "trainer",
       "textKey": "story.peregrina-chief-warning.3"
     },
     {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-chief-warning.4"
+    },
+    {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-chief-warning.4",
+      "textKey": "story.peregrina-chief-warning.5",
       "expression": "calm"
     },
     {
       "speaker": "jefa",
-      "textKey": "story.peregrina-chief-warning.5"
+      "textKey": "story.peregrina-chief-warning.6"
     },
     {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-chief-warning.6",
+      "textKey": "story.peregrina-chief-warning.7",
       "expression": "happy"
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-chief-warning.7"
+      "textKey": "story.peregrina-chief-warning.8"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-chief-warning.9"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-chief-warning.10"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-chief-warning.11"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-chief-warning.12"
     }
   ]
 }

@@ -94,6 +94,15 @@ Borrador de trabajo: pasa a `docs/characters/peregrina.md` cuando el dueño la a
   - Los nombres de la jefa y la novata salen del generador de nombres.
 - **Final:** pierde la Larga y no llora, no se enfurece, no lo entiende.
 
+### El entrenador con Peregrina (dueño, 2026-11-12)
+
+- **Rol: un padre que quiere conocer a su nueva hija modelo.** La admira, le sorprende todo lo que
+  hace, pregunta para entenderla y la cuida.
+- **Su propio arco:** de a poco se da cuenta de que a ella le falta resistencia, pero no quiere
+  arruinarle la ilusión. Lo insinúa, la empuja a entrenar distinto, y cuando llega la Larga
+  intenta decírselo sin romperle el sueño.
+- Sigue las reglas generales de la voz del jugador (`docs/design/escenas.md`, 4b).
+
 ### Milana (la rival de la Larga)
 
 - **Especie:** milano real, la rapaz que planea horas sin aletear.

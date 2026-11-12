@@ -1,6 +1,6 @@
 {
   "id": "peregrina-end-failed",
-  "version": 2,
+  "version": 3,
   "falconess": "peregrina",
   "style": "cine",
   "background": "finish",
@@ -25,27 +25,35 @@
       "expression": "blank"
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-end-failed.4"
+    },
+    {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-end-failed.4",
+      "textKey": "story.peregrina-end-failed.5",
       "expression": "blank"
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-end-failed.5"
-    },
-    {
-      "speaker": "trainer",
       "textKey": "story.peregrina-end-failed.6"
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-end-failed.7"
+    },
+    {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-end-failed.7",
+      "textKey": "story.peregrina-end-failed.8",
       "expression": "blank",
       "key": true
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-end-failed.9"
+    },
+    {
       "speaker": "narrator",
-      "textKey": "story.peregrina-end-failed.8"
+      "textKey": "story.peregrina-end-failed.10"
     }
   ]
 }
