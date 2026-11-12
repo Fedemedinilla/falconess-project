@@ -1,0 +1,54 @@
+# The playable demo on GitHub Pages (owner 2026-11-12): every push to playtest-ui or main builds
+# the single-file demo (`pnpm --filter @falconess/web build:demo`, the same file sent to the
+# testers) and publishes it, so the latest Falconess is always one link away:
+# https://fedemedinilla.github.io/falconess-project/
+#
+# One-time setup in the repository: Settings → Pages → Build and deployment → Source:
+# «GitHub Actions». The published page is public even if the repository is private.
+name: demo
+
+on:
+  push:
+    branches: [playtest-ui, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: demo-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @falconess/web build:demo
+      - name: Page folder
+        run: |
+          mkdir -p site
+          cp apps/web/dist-demo/index.html site/index.html
+          echo "${GITHUB_SHA::7} · $(date -u +%Y-%m-%dT%H:%MZ)" > site/version.txt
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
