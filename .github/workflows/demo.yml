@@ -1,6 +1,7 @@
 # The playable demo on GitHub Pages (owner 2026-11-12): every push to playtest-ui or main builds
-# the single-file demo (`pnpm --filter @falconess/web build:demo`, the same file sent to the
-# testers) and publishes it, so the latest Falconess is always one link away:
+# the game (`pnpm --filter @falconess/web build`, files apart, so the music streams instead of
+# riding inside the page as in the single-file demo) and publishes it, so the latest Falconess is
+# always one link away:
 # https://fedemedinilla.github.io/falconess-project/
 #
 # One-time setup in the repository: Settings → Pages → Build and deployment → Source:
@@ -33,11 +34,10 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @falconess/web build:demo
+      - run: pnpm --filter @falconess/web build
       - name: Page folder
         run: |
-          mkdir -p site
-          cp apps/web/dist-demo/index.html site/index.html
+          cp -r apps/web/dist site
           echo "${GITHUB_SHA::7} · $(date -u +%Y-%m-%dT%H:%MZ)" > site/version.txt
       - uses: actions/upload-pages-artifact@v3
         with:

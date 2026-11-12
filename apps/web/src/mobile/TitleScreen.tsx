@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ui } from "../text/ui";
+import { unlockMusic } from "./music";
 import { playSound } from "./sfx";
 import s from "./TitleScreen.module.css";
 import { FalconEmblem } from "./Transition";
@@ -18,6 +19,8 @@ export function TitleScreen({ onStart }: { onStart: () => void }) {
     if (leaving) return;
     setLeaving(true);
     playSound("confirm");
+    // the tap is the gesture the browser waits for: the title theme starts (or keeps going)
+    unlockMusic();
     setTimeout(onStart, LEAVE_MS);
   };
   return (

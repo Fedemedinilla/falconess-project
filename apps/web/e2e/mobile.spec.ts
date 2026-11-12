@@ -716,6 +716,8 @@ test("screen transition: the sponsor's emblem covers the way into a race, and on
   await expect(cover).toHaveCSS("background-color", "rgb(192, 57, 43)");
   await expect(cover).toHaveCount(0, { timeout: 3000 });
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  // and the race's own music
+  expect(await page.evaluate(() => document.documentElement.dataset.music)).toBe("race");
 });
 
 test("the title screen: the name, «Tocá para empezar», and a tap anywhere starts", async ({
@@ -734,4 +736,38 @@ test("the title screen: the name, «Tocá para empezar», and a tap anywhere sta
   await page.click("#inicio-juego");
   await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
   await expect(title).toHaveCount(0);
+});
+
+test("music: the title theme from the title's tap, the menu theme in the season, off in «Menú»", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const plays: string[] = [];
+    Reflect.set(window, "__plays", plays);
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) {
+      plays.push(this.currentSrc || this.src);
+      return play.call(this);
+    };
+  });
+  const music = () => page.evaluate(() => document.documentElement.dataset.music);
+  const plays = () => page.evaluate(() => (Reflect.get(window, "__plays") as string[]).length);
+  await page.goto("./");
+  await expect.poll(music).toBe("title");
+  await pastTitle(page);
+  expect(await plays()).toBeGreaterThan(0);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await expect.poll(music).toBe("menu");
+  // the switch, kept on reload
+  await page.click("#m-menu");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "true");
+  await page.click("#m-musica");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
+  await expect(page.locator("#m-musica")).toContainText(t("ui.m.music.off"));
+  await page.reload();
+  await pastTitle(page);
+  await page.click("#m-continuar");
+  await page.click("#m-menu");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
 });

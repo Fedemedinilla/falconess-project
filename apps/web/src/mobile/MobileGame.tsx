@@ -26,6 +26,7 @@ import { LangButton } from "./LangButton";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
+import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
 import { accentStyle, Hud } from "./Parts";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
@@ -128,6 +129,11 @@ export function MobileGame() {
       }}
     />
   );
+  // the music follows the page (owner 2026-11-12): the title theme until a season starts, the
+  // race's own in a race, the menu theme everywhere else
+  const track = title || page === "select" ? "title" : page === "race" ? "race" : "menu";
+  useEffect(() => setMusic(track), [track]);
+  useEffect(() => stopMusic, []);
   const [cover, setCover] = useState<number>();
   const endCover = useCallback(() => setCover(undefined), []);
   const firstPage = useRef(true);
@@ -524,6 +530,7 @@ function MobileMenu({
   const ref = useRef<HTMLDialogElement>(null);
   const [confirm, setConfirm] = useState(false);
   const [sound, setSound] = useState<SoundStyle>(getSoundStyle);
+  const [music, setMusicState] = useState(getMusicOn);
   const onSound = () => {
     const next = nextSoundStyle(sound);
     setSoundStyle(next);
@@ -574,6 +581,19 @@ function MobileMenu({
         >
           <Glyph name={sound === "off" ? "mute" : "speaker"} size={20} />
           {ui("ui.m.sound", { style: ui(`ui.m.sound.${sound}`) })}
+        </button>
+        <button
+          type="button"
+          className={s.btn}
+          id="m-musica"
+          data-on={music}
+          onClick={() => {
+            setMusicOn(!music);
+            setMusicState(!music);
+          }}
+        >
+          <Glyph name={music ? "note" : "mute"} size={20} />
+          {ui("ui.m.music", { state: ui(music ? "ui.m.music.on" : "ui.m.music.off") })}
         </button>
         <LangButton className={s.btn} id="m-idioma" />
         {confirm ? (

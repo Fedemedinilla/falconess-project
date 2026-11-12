@@ -47,7 +47,7 @@ export function setSoundStyle(next: SoundStyle): void {
 }
 
 type Ctor = typeof AudioContext;
-function audio(): AudioContext | undefined {
+export function audio(): AudioContext | undefined {
   if (!ctx) {
     const w = globalThis as typeof globalThis & { webkitAudioContext?: Ctor };
     const C: Ctor | undefined = globalThis.AudioContext ?? w.webkitAudioContext;
