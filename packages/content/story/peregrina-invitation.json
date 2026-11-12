@@ -1,0 +1,51 @@
+{
+  "id": "peregrina-invitation",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "cine",
+  "background": "finish",
+  "titleKey": "story.peregrina-invitation.title",
+  "kickerKey": "story.peregrina-invitation.kicker",
+  "trigger": {
+    "kind": "end",
+    "result": "completed"
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-invitation.1"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-invitation.2"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-invitation.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-invitation.4",
+      "expression": "eager"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-invitation.5"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-invitation.6",
+      "expression": "happy"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-invitation.7",
+      "expression": "calm",
+      "key": true
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-invitation.8"
+    }
+  ]
+}

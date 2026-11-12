@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-rookie-topic",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-rookie-topic.q",
+  "fromTurn": 13,
+  "replyKeys": [
+    "chat.peregrina-rookie-topic.1",
+    "chat.peregrina-rookie-topic.2",
+    "chat.peregrina-rookie-topic.3"
+  ]
+}

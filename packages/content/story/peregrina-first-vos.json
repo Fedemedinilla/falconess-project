@@ -1,0 +1,54 @@
+{
+  "id": "peregrina-first-vos",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "background": "hangar",
+  "titleKey": "story.peregrina-first-vos.title",
+  "kickerKey": "story.peregrina-first-vos.kicker",
+  "trigger": {
+    "kind": "turn",
+    "turn": 39
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-first-vos.1"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.2",
+      "expression": "tired"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.3",
+      "expression": "surprised"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.4",
+      "expression": "focused"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.5",
+      "expression": "calm",
+      "key": true
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-first-vos.6"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.7",
+      "expression": "happy"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-first-vos.8",
+      "expression": "eager"
+    }
+  ]
+}

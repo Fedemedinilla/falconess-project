@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-the-sleeper",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-the-sleeper.q",
+  "fromTurn": 37,
+  "replyKeys": [
+    "chat.peregrina-the-sleeper.1",
+    "chat.peregrina-the-sleeper.2",
+    "chat.peregrina-the-sleeper.3"
+  ]
+}

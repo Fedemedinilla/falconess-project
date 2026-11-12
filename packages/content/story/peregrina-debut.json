@@ -1,6 +1,6 @@
 {
   "id": "peregrina-debut",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "track",
@@ -36,6 +36,15 @@
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-debut.6",
+      "expression": "eager"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-debut.7"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut.8",
       "expression": "eager"
     }
   ]

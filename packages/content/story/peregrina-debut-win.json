@@ -1,6 +1,6 @@
 {
   "id": "peregrina-debut-win",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "box",
   "background": "finish",
@@ -31,8 +31,25 @@
       "expression": "surprised"
     },
     {
-      "speaker": "jefa",
+      "speaker": "novata",
       "textKey": "story.peregrina-debut-win.5"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-debut-win.6"
+    },
+    {
+      "speaker": "novata",
+      "textKey": "story.peregrina-debut-win.7"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-debut-win.8"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut-win.9",
+      "expression": "calm"
     }
   ]
 }

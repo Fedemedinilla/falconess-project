@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-favorite-track",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-favorite-track.q",
+  "fromTurn": 1,
+  "replyKeys": [
+    "chat.peregrina-favorite-track.1",
+    "chat.peregrina-favorite-track.2",
+    "chat.peregrina-favorite-track.3"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "id": "peregrina-nap",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "background": "finish",
+  "titleKey": "story.peregrina-nap.title",
+  "kickerKey": "story.peregrina-nap.kicker",
+  "trigger": {
+    "kind": "goal-after",
+    "goal": 2,
+    "result": "win"
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-nap.1"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-nap.2"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-nap.3"
+    },
+    {
+      "speaker": "milana",
+      "textKey": "story.peregrina-nap.4"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-nap.5",
+      "expression": "eager"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-nap.6"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-nap.7"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-nap.8"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "peregrina-summit",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "cine",
+  "background": "track",
+  "titleKey": "story.peregrina-summit.title",
+  "kickerKey": "story.peregrina-summit.kicker",
+  "trigger": {
+    "kind": "goal-before",
+    "goal": 3
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-summit.1"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-summit.2"
+    },
+    {
+      "speaker": "novata",
+      "textKey": "story.peregrina-summit.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-summit.4",
+      "expression": "happy"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-summit.5"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-summit.6",
+      "expression": "focused",
+      "key": true
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-summit.7"
+    }
+  ]
+}

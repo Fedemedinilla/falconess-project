@@ -1,0 +1,59 @@
+{
+  "id": "peregrina-rookie",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "background": "hangar",
+  "titleKey": "story.peregrina-rookie.title",
+  "kickerKey": "story.peregrina-rookie.kicker",
+  "trigger": {
+    "kind": "turn",
+    "turn": 28
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-rookie.1"
+    },
+    {
+      "speaker": "novata",
+      "textKey": "story.peregrina-rookie.2"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-rookie.3",
+      "expression": "surprised"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-rookie.4",
+      "expression": "calm"
+    },
+    {
+      "speaker": "novata",
+      "textKey": "story.peregrina-rookie.5"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-rookie.6"
+    },
+    {
+      "speaker": "sfx",
+      "textKey": "story.peregrina-rookie.7"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-rookie.8",
+      "expression": "happy"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-rookie.9"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-rookie.10",
+      "expression": "calm"
+    }
+  ]
+}

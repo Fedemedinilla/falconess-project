@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-hardest-training",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-hardest-training.q",
+  "fromTurn": 20,
+  "replyKeys": [
+    "chat.peregrina-hardest-training.1",
+    "chat.peregrina-hardest-training.2",
+    "chat.peregrina-hardest-training.3"
+  ]
+}

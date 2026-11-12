@@ -1,6 +1,6 @@
 {
   "id": "peregrina-end-failed",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "cine",
   "background": "finish",
@@ -30,18 +30,22 @@
       "expression": "blank"
     },
     {
-      "speaker": "trainer",
+      "speaker": "narrator",
       "textKey": "story.peregrina-end-failed.5"
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-end-failed.6"
+    },
+    {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-end-failed.6",
+      "textKey": "story.peregrina-end-failed.7",
       "expression": "blank",
       "key": true
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-end-failed.7"
+      "textKey": "story.peregrina-end-failed.8"
     }
   ]
 }

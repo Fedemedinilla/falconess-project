@@ -178,6 +178,30 @@ capítulo y dónde volver a verlo (Menú → Historia).
   El jugador elige preguntas en «pills» de opciones y ella contesta con su personalidad y su forma
   de hablar.
 
+## 2c. Escenas en el juego (2026-11-12)
+
+Ubicadas en las metas actuales de Peregrina (semanas 12, 24, 36 y 46). Cuando entren sus metas
+nuevas (cuatro victorias y la Larga), se mueven a las semanas 10, 20, 30, 40 y 48 y se suma la Larga.
+
+| Escena                             | Formato | Fondo  | Cuándo                 | Qué pasa                                                    |
+| ---------------------------------- | ------- | ------ | ---------------------- | ----------------------------------------------------------- |
+| Prólogo · Lista para despegar      | cine    | hangar | semana 1               | Llega tarde corriendo; «¿Plan? Ser rápida.»                 |
+| No hace falta calentar             | cuadro  | pista  | antes de la meta 1     | La Novata y su cartel; «calentar rápido».                   |
+| ¿Mañana se puede?                  | cuadro  | meta   | gana la meta 1         | Firma la gorra de la Novata sin frenar.                     |
+| Fue solo una carrera               | cuadro  | meta   | semana 16              | Cernícala llora y ella no lo entiende.                      |
+| Ir lento                           | cuadro  | pista  | antes de la meta 2     | Doce segundos de calentar lento le parecen una temporada.   |
+| La cara del afiche                 | cuadro  | meta   | gana la meta 2         | La prensa; ya mira la carrera larga del calendario.         |
+| No aplica                          | cuadro  | hangar | semana 28              | La Novata: «¿Qué se siente perder?» «No sé. Nunca me pasó.» |
+| Una pista que no se gana corriendo | cuadro  | hangar | antes de la meta 3     | La advertencia de la Jefa.                                  |
+| La que dormía                      | cuadro  | meta   | gana la meta 3         | Milana duerme en la tribuna; la Jefa la reconoce.           |
+| Vos tenías razón                   | cuadro  | hangar | semana 39              | La pileta le salvó una carrera: pasa al vos.                |
+| La cima                            | cine    | pista  | antes de la meta 4     | «Yo soy el viento, Jefa.» Un segundo quieta.                |
+| La invitación                      | cine    | meta   | final, todas las metas | La invitan a la gran Larga; se anota. La foto de Milana.    |
+| ¿Y ahora qué se hace?              | cine    | meta   | final, falla una meta  | Su primera derrota: en blanco, quieta.                      |
+
+Chat: 9 temas (por qué corre, su día libre, la Jefa, si alguna vez perdió, su pista favorita, por
+qué Kōryū, la Novata, lo más difícil de entrenar, la que dormía en la tribuna).
+
 ## 3. Formato
 
 No hace falta prolijidad: con el nombre de quien habla y la línea alcanza. Las acotaciones van

@@ -1,0 +1,46 @@
+{
+  "id": "peregrina-chief-warning",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "background": "hangar",
+  "titleKey": "story.peregrina-chief-warning.title",
+  "kickerKey": "story.peregrina-chief-warning.kicker",
+  "trigger": {
+    "kind": "goal-before",
+    "goal": 2
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-chief-warning.1"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-chief-warning.2",
+      "expression": "bored"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-chief-warning.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-chief-warning.4",
+      "expression": "calm"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-chief-warning.5"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-chief-warning.6",
+      "expression": "happy"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-chief-warning.7"
+    }
+  ]
+}

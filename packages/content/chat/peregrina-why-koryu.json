@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-why-koryu",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-why-koryu.q",
+  "fromTurn": 1,
+  "replyKeys": [
+    "chat.peregrina-why-koryu.1",
+    "chat.peregrina-why-koryu.2",
+    "chat.peregrina-why-koryu.3"
+  ]
+}
