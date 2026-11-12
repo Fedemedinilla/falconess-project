@@ -15,25 +15,25 @@ pnpm names -- --n 30 --seed 1 --order free --explain
 pnpm names -- --a raptors --b any --house makers --n 20 --seed 7 --out names.md
 ```
 
-| Opción | Qué hace | Por defecto |
-| --- | --- | --- |
-| `--a`, `--b` | Mundo de la primera y de la segunda palabra. `any` (u omitirlo) elige cualquier mundo de palabras, sin repetir el de la otra. | `any` |
-| `--house` | Mundo casa que va como prefijo. | sin prefijo |
-| `--n` | Cuántos nombres. | 30 |
-| `--seed` | Semilla. Misma semilla y mismas opciones, mismos nombres. | `1` |
-| `--max-chars` | Largo máximo del nombre entero, con espacios. | 16 (26 con `--house`) |
-| `--max-words` | Máximo de palabras del nombre entero. | sin límite |
-| `--order` | `fixed`: el mundo A va primero. `free`: pueden invertirse. | `fixed` |
-| `--rank` | `on`: junta 8 candidatos por nombre pedido, los puntúa y se queda con los mejores. `off`: orden de sorteo. | `on` |
-| `--alliteration` | `prefer` suma un punto si las dos palabras empiezan igual, `avoid` lo resta, `neutral` no cuenta. | `neutral` |
-| `--worn` | Archivo de palabras gastadas (−3 cada una); `none` lo desactiva. | `apps/cli/names/worn.txt` |
-| `--max-repeat` | Cuántos nombres de la lista pueden compartir una palabra. | 2 |
-| `--pool` | Candidatos por nombre pedido al puntuar. | 8 |
-| `--favorites` | Archivo de nombres favoritos (uno por línea); cada palabra suya suma +1 cuando vuelve a salir. `none` lo desactiva. | `apps/cli/names/favorites.txt` |
-| `--explain` | Muestra debajo de cada nombre qué reglas sumaron o restaron. | apagado |
-| `--exclude` | Archivo de excluidos; `none` lo desactiva. | `apps/cli/names/excluded.txt` |
-| `--worlds` | Carpeta de mundos. | `apps/cli/names/worlds/` |
-| `--out` | Además de la terminal, escribe `.csv` (columna `favorite` vacía y `score`) o `.md` (lista con `[ ]`). | sin archivo |
+| Opción           | Qué hace                                                                                                                      | Por defecto                    |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `--a`, `--b`     | Mundo de la primera y de la segunda palabra. `any` (u omitirlo) elige cualquier mundo de palabras, sin repetir el de la otra. | `any`                          |
+| `--house`        | Mundo casa que va como prefijo.                                                                                               | sin prefijo                    |
+| `--n`            | Cuántos nombres.                                                                                                              | 30                             |
+| `--seed`         | Semilla. Misma semilla y mismas opciones, mismos nombres.                                                                     | `1`                            |
+| `--max-chars`    | Largo máximo del nombre entero, con espacios.                                                                                 | 16 (26 con `--house`)          |
+| `--max-words`    | Máximo de palabras del nombre entero.                                                                                         | sin límite                     |
+| `--order`        | `fixed`: el mundo A va primero. `free`: pueden invertirse.                                                                    | `fixed`                        |
+| `--rank`         | `on`: junta 8 candidatos por nombre pedido, los puntúa y se queda con los mejores. `off`: orden de sorteo.                    | `on`                           |
+| `--alliteration` | `prefer` suma un punto si las dos palabras empiezan igual, `avoid` lo resta, `neutral` no cuenta.                             | `neutral`                      |
+| `--worn`         | Archivo de palabras gastadas (−3 cada una); `none` lo desactiva.                                                              | `apps/cli/names/worn.txt`      |
+| `--max-repeat`   | Cuántos nombres de la lista pueden compartir una palabra.                                                                     | 2                              |
+| `--pool`         | Candidatos por nombre pedido al puntuar.                                                                                      | 8                              |
+| `--favorites`    | Archivo de nombres favoritos (uno por línea); cada palabra suya suma +1 cuando vuelve a salir. `none` lo desactiva.           | `apps/cli/names/favorites.txt` |
+| `--explain`      | Muestra debajo de cada nombre qué reglas sumaron o restaron.                                                                  | apagado                        |
+| `--exclude`      | Archivo de excluidos; `none` lo desactiva.                                                                                    | `apps/cli/names/excluded.txt`  |
+| `--worlds`       | Carpeta de mundos.                                                                                                            | `apps/cli/names/worlds/`       |
+| `--out`          | Además de la terminal, escribe `.csv` (columna `favorite` vacía y `score`) o `.md` (lista con `[ ]`).                         | sin archivo                    |
 
 Filtros que siempre aplican: no repite una palabra dentro del mismo nombre ni un nombre en la lista,
 sin distinguir mayúsculas ni acentos. Si los filtros son muy estrictos, devuelve los que encontró y lo
@@ -43,16 +43,16 @@ avisa por stderr.
 
 Reglas en `apps/cli/src/names/score.ts`, todas en enteros:
 
-| Regla | Puntos |
-| --- | --- |
+| Regla                                                                  | Puntos           |
+| ---------------------------------------------------------------------- | ---------------- |
 | Sílabas de las dos palabras (sin la casa): 4 o menos / 5 / 6 / 7 o más | +2 / +1 / 0 / −2 |
-| Primera palabra igual o más corta que la segunda («Twin Turbo») | +1 |
-| Primera palabra con 2 sílabas o más que la segunda | −1 |
-| Las dos palabras terminan en las mismas tres letras | −2 |
-| Aliteración, según `--alliteration` | ±1 |
-| Cada palabra gastada (casa incluida) | −3 |
-| Nombre de 12 caracteres o menos | +1 |
-| Cada palabra que ya está en un favorito | +1 |
+| Primera palabra igual o más corta que la segunda («Twin Turbo»)        | +1               |
+| Primera palabra con 2 sílabas o más que la segunda                     | −1               |
+| Las dos palabras terminan en las mismas tres letras                    | −2               |
+| Aliteración, según `--alliteration`                                    | ±1               |
+| Cada palabra gastada (casa incluida)                                   | −3               |
+| Nombre de 12 caracteres o menos                                        | +1               |
+| Cada palabra que ya está en un favorito                                | +1               |
 
 Las sílabas salen de los datos importados del mundo (`stats`); si una palabra no los tiene, se
 estiman contando grupos de vocales. A igual puntaje se respeta el orden de sorteo, así que la
@@ -76,22 +76,22 @@ mundo es agregar un archivo:
 ```
 
 `role` es `word` (por defecto) o `house`; los mundos `house` no entran en el «cualquiera con
-cualquiera». `position` dice dónde va la palabra del mundo: `first` (adjetivos y colores: *Swift
-Kestrel*, nunca *Kestrel Swift*), `second` o `any` (por defecto). Manda sobre `--order` y sobre
+cualquiera». `position` dice dónde va la palabra del mundo: `first` (adjetivos y colores: _Swift
+Kestrel_, nunca _Kestrel Swift_), `second` o `any` (por defecto). Manda sobre `--order` y sobre
 `--a`/`--b`, y al elegir mundos libremente no se cruzan dos que quieran el mismo lugar. `source` y `stats` son opcionales y los escribe el importador. No se aceptan palabras
 repetidas, `stats` de palabras que no están en `words` ni campos desconocidos.
 
 Mundos actuales, todos provisorios:
 
-| Mundo | Palabras | Tipo | Lugar | Ejemplos |
-| --- | --- | --- | --- | --- |
-| `winds` | 41 | sustantivos | cualquiera | Khamsin, Mistral, Foehn |
-| `raptors` | 23 | sustantivos | cualquiera | Kestrel, Tiercel, Erne |
-| `alloys` | 29 | sustantivos | cualquiera | Inconel, Nichrome, Ormolu |
-| `clouds` | 51 | sustantivos | cualquiera | Cirrus, Spica, Carina |
-| `colors` | 75 | sustantivos de color | primera | Gold, Silver, Vermilion, Gamboge, Cerulean |
-| `traits` | 64 | adjetivos | primera | Intrepid, Refulgent, Blistering |
-| `moves` | 25 | verbos | cualquiera | Swoop, Stoop, Nosedive |
+| Mundo     | Palabras | Tipo                 | Lugar      | Ejemplos                                   |
+| --------- | -------- | -------------------- | ---------- | ------------------------------------------ |
+| `winds`   | 41       | sustantivos          | cualquiera | Khamsin, Mistral, Foehn                    |
+| `raptors` | 23       | sustantivos          | cualquiera | Kestrel, Tiercel, Erne                     |
+| `alloys`  | 29       | sustantivos          | cualquiera | Inconel, Nichrome, Ormolu                  |
+| `clouds`  | 51       | sustantivos          | cualquiera | Cirrus, Spica, Carina                      |
+| `colors`  | 75       | sustantivos de color | primera    | Gold, Silver, Vermilion, Gamboge, Cerulean |
+| `traits`  | 64       | adjetivos            | primera    | Intrepid, Refulgent, Blistering            |
+| `moves`   | 25       | verbos               | cualquiera | Swoop, Stoop, Nosedive                     |
 
 Todos salen de Datamuse y WordNet,
 y `makers` (los cinco fabricantes de `docs/BRIEF.md`, escrito a mano).
@@ -141,22 +141,22 @@ Cada receta es `apps/cli/names/recipes/<id>.json` y escribe `apps/cli/names/worl
 }
 ```
 
-| Campo | Qué hace | Por defecto |
-| --- | --- | --- |
-| `queries` | Consultas de Datamuse en orden. `rel_gen=X` trae «tipos de X»; `rel_trg=X`, palabras asociadas; `ml=X`, de significado parecido. `md` y `max` los pone el importador. | `[]` |
-| `wordnet.roots` | Sentidos de WordNet debajo de los cuales se juntan palabras: `palabra.n.NN` trae tipos de un sustantivo, `palabra.v.NN` formas de un verbo («rush» → *dart, hurtle*), `palabra.a.NN` adjetivos parecidos («fast» → *fleet, blistering*). | sin WordNet |
-| `wordnet.includeRoots` | Guardar también las palabras de la raíz. Sirve para adjetivos y verbos (*Bold*, *Swoop*), no para sustantivos genéricos (*wind*). | `false` |
-| `position` | Se copia al mundo: `first` para adjetivos y colores. | `any` |
-| `wordnet.depth` | Cuántos niveles bajar en el árbol (1 a 6). | 3 |
-| `wordnet.instances` | Incluir nombres propios (estrellas, lugares), no solo tipos. | `true` |
-| `unknownFreq` | Qué hacer con palabras que la lista de frecuencias no conoce (pasa con términos raros de WordNet como *Khamsin*): `keep` las guarda con `freq` 0, `drop` las descarta. | `keep` |
-| `maxFreq`, `minFreq` | Banda de frecuencia en apariciones por millón de palabras: arriba de `maxFreq` es demasiado común, abajo de `minFreq` suele ser taxonomía. | 5 y 0,01 |
-| `syllables` | Rango de sílabas. | `[1, 3]` |
-| `minLength`, `maxLength` | Largo de la palabra en letras. | 3 y 10 |
-| `pos` | Categorías gramaticales que se aceptan (`n`, `v`, `adj`, `adv`). Una receta de adjetivos pone `["adj"]`; una de verbos, `["v"]`. | `["n"]` |
-| `deny` | Palabras revisadas a mano y rechazadas: otro sentido, duplicado de grafía, demasiado cerca de un nombre real o del juego. | `[]` |
-| `perQuery` | Resultados pedidos por consulta. | 200 |
-| `role` | `house` para un mundo de prefijos. | `word` |
+| Campo                    | Qué hace                                                                                                                                                                                                                                 | Por defecto |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `queries`                | Consultas de Datamuse en orden. `rel_gen=X` trae «tipos de X»; `rel_trg=X`, palabras asociadas; `ml=X`, de significado parecido. `md` y `max` los pone el importador.                                                                    | `[]`        |
+| `wordnet.roots`          | Sentidos de WordNet debajo de los cuales se juntan palabras: `palabra.n.NN` trae tipos de un sustantivo, `palabra.v.NN` formas de un verbo («rush» → _dart, hurtle_), `palabra.a.NN` adjetivos parecidos («fast» → _fleet, blistering_). | sin WordNet |
+| `wordnet.includeRoots`   | Guardar también las palabras de la raíz. Sirve para adjetivos y verbos (_Bold_, _Swoop_), no para sustantivos genéricos (_wind_).                                                                                                        | `false`     |
+| `position`               | Se copia al mundo: `first` para adjetivos y colores.                                                                                                                                                                                     | `any`       |
+| `wordnet.depth`          | Cuántos niveles bajar en el árbol (1 a 6).                                                                                                                                                                                               | 3           |
+| `wordnet.instances`      | Incluir nombres propios (estrellas, lugares), no solo tipos.                                                                                                                                                                             | `true`      |
+| `unknownFreq`            | Qué hacer con palabras que la lista de frecuencias no conoce (pasa con términos raros de WordNet como _Khamsin_): `keep` las guarda con `freq` 0, `drop` las descarta.                                                                   | `keep`      |
+| `maxFreq`, `minFreq`     | Banda de frecuencia en apariciones por millón de palabras: arriba de `maxFreq` es demasiado común, abajo de `minFreq` suele ser taxonomía.                                                                                               | 5 y 0,01    |
+| `syllables`              | Rango de sílabas.                                                                                                                                                                                                                        | `[1, 3]`    |
+| `minLength`, `maxLength` | Largo de la palabra en letras.                                                                                                                                                                                                           | 3 y 10      |
+| `pos`                    | Categorías gramaticales que se aceptan (`n`, `v`, `adj`, `adv`). Una receta de adjetivos pone `["adj"]`; una de verbos, `["v"]`.                                                                                                         | `["n"]`     |
+| `deny`                   | Palabras revisadas a mano y rechazadas: otro sentido, duplicado de grafía, demasiado cerca de un nombre real o del juego.                                                                                                                | `[]`        |
+| `perQuery`               | Resultados pedidos por consulta.                                                                                                                                                                                                         | 200         |
+| `role`                   | `house` para un mundo de prefijos.                                                                                                                                                                                                       | `word`      |
 
 Una receta necesita `queries`, `wordnet` o las dos. Si una palabra llega por las dos fuentes, se
 quedan los datos de Datamuse. Las frecuencias de cada fuente salen de corpus distintos (Datamuse usa
@@ -182,11 +182,11 @@ toca uno sin el otro, o se reimportan mundos sin actualizar la página, `pnpm te
 Genera con el mismo código que `pnpm names` (misma semilla, mismas opciones y mismos favoritos dan
 la misma lista) y guarda en la base del artefacto:
 
-| Documento | Qué tiene |
-| --- | --- |
-| `worlds/<id>` | Un mundo, con los mismos campos que `apps/cli/names/worlds/<id>.json`. |
+| Documento                        | Qué tiene                                                                                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `worlds/<id>`                    | Un mundo, con los mismos campos que `apps/cli/names/worlds/<id>.json`.                       |
 | `favorites/<nombre-normalizado>` | Un favorito: `name`, `first`, `second`, `house`, `firstWorld`, `secondWorld`, `score`, `at`. |
-| `config/lists` | Excluidos y palabras gastadas, como texto (una entrada por línea). |
+| `config/lists`                   | Excluidos y palabras gastadas, como texto (una entrada por línea).                           |
 
 Lee y escribe quien puede usar el artefacto (reglas por defecto); quien solo lo ve no escribe y la
 página se lo indica. Sin acceso a la base, la página funciona con los mundos del repo que trae
@@ -202,4 +202,3 @@ que lee y escribe la base con su herramienta de datos del artefacto:
 - **Página → repo**: pedirle a Claude que baje `favorites/` a `apps/cli/names/favorites.txt` y los
   mundos editados a `apps/cli/names/worlds/`. Sin Claude: el botón «Copiar para favorites.txt» de
   la página y «Copiar JSON» de cada mundo.
-
