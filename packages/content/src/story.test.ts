@@ -22,7 +22,9 @@ describe("story scenes and chat topics (owner 2026-11-12)", () => {
   const topics = files("chat").map((c) => ChatTopic.parse(c));
   const es = text("es");
   const en = text("en");
-  const falconess = new Set(readdirSync(join(CONTENT_ROOT, "falconess")).map((f) => f.replace(/\.json$/, "")));
+  const falconess = new Set(
+    readdirSync(join(CONTENT_ROOT, "falconess")).map((f) => f.replace(/\.json$/, "")),
+  );
 
   it("validate, with unique ids, for Falconess that exist", () => {
     expect(scenes.length).toBeGreaterThan(0);
