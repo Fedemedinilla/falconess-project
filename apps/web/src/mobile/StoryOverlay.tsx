@@ -18,8 +18,12 @@ const BACKDROP: Readonly<Record<StoryBackground, string>> = {
 const UNNAMED = new Set(["narrator", "sfx"]);
 const TYPE_MS = 26;
 const WORD_MS = 110;
+/** The steps of the way in (Story.module.css): the game dims, the scene arrives, then the card. */
+const INTRO_MS = 1300;
 const CARD_MS = 1500;
-const AUTO_MS = 1500;
+/** Auto: how long a finished line stays before the next one (owner 2026-11-12: 1.5 s was too fast). */
+const AUTO_MS = 4500;
+const LEAVE_MS = 800;
 
 function reduced(): boolean {
   return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -64,14 +68,14 @@ export function StoryOverlay({
       if (done.current) return;
       done.current = true;
       setLeaving(true);
-      setTimeout(() => onDone(skipped), 450);
+      setTimeout(() => onDone(skipped), reduced() ? 0 : LEAVE_MS);
     },
     [onDone],
   );
 
   // the chapter's card, then the first line
   useEffect(() => {
-    const t = setTimeout(() => setIndex(0), reduced() ? 300 : CARD_MS);
+    const t = setTimeout(() => setIndex(0), reduced() ? 300 : INTRO_MS + CARD_MS);
     return () => clearTimeout(t);
   }, []);
 
@@ -121,6 +125,8 @@ export function StoryOverlay({
       aria-modal="true"
       aria-label={gameText(scene.titleKey)}
     >
+      <span className={s.veil} aria-hidden="true" />
+      <span className={s.base} aria-hidden="true" />
       {scene.background && (
         <>
           <img className={s.backdrop} src={BACKDROP[scene.background]} alt="" draggable={false} />
