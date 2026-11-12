@@ -72,6 +72,23 @@ Borrador de trabajo: pasa a `docs/characters/peregrina.md` cuando el dueño la a
 - **El arte que ya tiene encaja con ella:** Técnica, aburrida en el banco con el cerebro humeando;
   Simulador, «¿WTF?» mirándose las manos; Vuelo de riesgo, cara de pánico; Resistencia, decidida
   en la pileta (el entrenamiento que menos le gusta y el que le habría salvado la Larga).
+- **Miedo (nunca lo dice):** no saber qué es si no es rápida. Nunca construyó otra cosa. Se creía
+  (y todos la veían como) la protagonista, y se durmió en los laureles de «solo mi velocidad lo
+  resuelve todo». La Larga le muestra que no es la protagonista: por eso la derrota la deja en
+  blanco, no enojada.
+- **Al ganar:** ya está pensando en la siguiente. «¿Cuándo es la próxima? ¿Mañana se puede?» Cero
+  paciencia hasta para festejar.
+- **Cómo llega a la Larga (las tres cosas juntas):** por estar invicta la invitan (fans, prensa,
+  Kōryū); se anota corriendo, antes de que el entrenador pueda opinar; y en un evento el jugador
+  puede intentar frenarla, pero ella va igual. Nadie tiene la culpa, y el jugador siente que lo
+  intentó.
+- **Vínculos:**
+  - **La jefa de cuadrilla de Kōryū:** veterana del box, la conoce de chica, la reta por apurada. Sabe
+    lo que viene y no lo dice.
+  - **Una novata que la admira:** la copia en todo, también en lo torpe. Por ella se ve qué significa
+    ser la modelo.
+  - **Cernícala y Caracara:** las otras jugables aparecen como compañeras o rivales.
+  - Los nombres de la jefa y la novata salen del generador de nombres.
 - **Final:** pierde la Larga y no llora, no se enfurece, no lo entiende.
 
 ### Milana (la rival de la Larga)
@@ -114,29 +131,33 @@ una pista Larga, como quinta meta.
 (Resistencia, Larga A). No es villana: gana porque es su distancia. Como en Umamusume, las Falconess
 con nombre aparecen en las historias de las otras; esta puede tener la suya más adelante.
 
-### Escenas y eventos
+### Escaleta (propuesta, 2026-11-12, para revisar con el dueño)
 
-| #   | Cuándo sale              | Tipo   | Qué tiene que pasar                                  |
-| --- | ------------------------ | ------ | ---------------------------------------------------- |
-| P   | Semana 1                 | Escena | La conocemos; su meta; «nunca perdí»                 |
-| M1a | Antes de la semana 10    | Escena | Su primera carrera importante                        |
-| M1b | Después, si gana         | Escena | Corta                                                |
-| E1  | Semanas 11-19            | Evento | Una rival llora al perder y Peregrina no lo entiende |
-| M2a | Antes de la semana 20    | Escena |                                                      |
-| M2b | Después, si gana         | Escena | Corta                                                |
-| E2  | Semanas 21-29            | Evento | Una novata le pregunta qué se siente al perder       |
-| M3a | Antes de la semana 30    | Escena |                                                      |
-| M3b | Después, si gana         | Escena | Corta; aparece la Falconess de la Larga, mirando     |
-| E3  | Semanas 31-39            | Evento |                                                      |
-| M4a | Antes de la semana 40    | Escena | La cima                                              |
-| M4b | Después, si gana         | Escena | La invitación a la Larga; ella acepta feliz          |
-| E4  | Semanas 41-47            | Evento | Vos sabés que la Larga no es su rubro; ella no       |
-| M5a | Antes de la semana 48    | Escena | Antes de la Larga                                    |
-| F1  | Pierde la Larga          | Escena | El final canónico: no sabe cómo reaccionar           |
-| F2  | Falla una victoria antes | Escena | La misma reacción, más temprano                      |
-| F3  | Gana las cinco           | Escena | El final soñado                                      |
+«La Jefa» y «la Novata» son nombres provisorios hasta que salgan del generador.
 
-Lo mínimo jugable: P, M1a, M2a, M3a, M4a, M5a, F1 y F2.
+| #   | Cuándo                   | Qué pasa                                                                                                                                                                                                                                          |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P   | Semana 1                 | Llega corriendo y tarde a conocer al entrenador. Se presenta formal, con jerga de piloto: «Peregrina, Kōryū, lista para despegar». Detrás, sus afiches. La Jefa la reta por apurada. Su plan para la temporada: «ser rápida». Ya salió.           |
+| M1a | Antes de la semana 10    | Su debut del año (Sprint). La Novata en la grada con un cartel hecho a mano. Peregrina no aguanta la espera en la largada.                                                                                                                        |
+| M1b | Si gana                  | «¿Cuándo es la próxima? ¿Mañana se puede?» Le firma un autógrafo a la Novata sin frenar.                                                                                                                                                          |
+| E1  | Semanas 11-19            | Cernícala (o Caracara) queda devastada después de perder contra ella. Peregrina no entiende: «Fue una carrera. Hay otra la semana que viene». Opciones: explicarle / dejarlo pasar.                                                               |
+| M2a | Antes de la semana 20    | Por consejo del entrenador intenta calentar «lento». No le sale: comedia.                                                                                                                                                                         |
+| M2b | Si gana                  | Prensa, flashes. Ella ya está mirando el calendario.                                                                                                                                                                                              |
+| E2  | Semanas 21-29            | La Novata le pregunta qué se siente perder. «No sé. Nunca me pasó». La Novata la copia en todo, también en lo torpe, y se cae.                                                                                                                    |
+| M3a | Antes de la semana 30    | La Jefa, al pasar: «Algún día te va a tocar una pista que no se gana corriendo». Peregrina se ríe.                                                                                                                                                |
+| M3b | Si gana                  | En la grada, una Falconess duerme la siesta en plena carrera: Milana. Peregrina ni la ve; la Jefa sí.                                                                                                                                             |
+| E3  | Semanas 31-39            | Un entrenamiento que odiaba le salvó una carrera. Por primera vez le da la razón al entrenador: pasa al vos y pide probar algo distinto.                                                                                                          |
+| M4a | Antes de la semana 40    | La cima: si gana, termina el año invicta en su terreno. El estadio lleno.                                                                                                                                                                         |
+| M4b | Si gana                  | Kōryū y la prensa la invitan a la gran Larga de fin de temporada. Se anota corriendo, ahí mismo, antes de que el entrenador pueda hablar.                                                                                                         |
+| E4  | Semanas 41-47            | El entrenador intenta frenarla. Opciones: decirle la verdad / entrenar Resistencia con ella (da stats: sube un poco la chance de ganar) / dejarla ir. Ninguna la frena. Se cruza a Milana tirada en el pasto: «¿Vos sos la rápida? Qué cansador». |
+| M5a | Antes de la semana 48    | Antes de la Larga. Su ritual de siempre. Milana bosteza en la largada.                                                                                                                                                                            |
+| —   | La carrera (semana 48)   | La carrera real del motor: Milana administra cada respiración y al final la pasa como si Peregrina fuera una piedra quieta.                                                                                                                       |
+| F1  | Pierde la Larga          | Se queda parada en la pista. No llora, no se enoja, no entiende. Mira la grada (la Novata, la Jefa) y le pregunta al entrenador: «¿Y ahora… qué se hace?». Silencio.                                                                              |
+| F2  | Falla una victoria antes | La misma reacción, más temprano: su primera derrota llega antes de lo esperado.                                                                                                                                                                   |
+| F3  | Gana las cinco           | El final soñado: gana agotada por primera vez en su vida. Milana le sonríe: «Nada mal, rápida». Y Peregrina no sabe qué hacer con el cansancio.                                                                                                   |
+
+Opcional, para darle vida a la temporada: una línea corta de Peregrina la primera vez que hace cada
+tipo de entrenamiento (Técnica: «¿Esto tiene un botón para adelantar?»).
 
 ## 3. Formato
 
