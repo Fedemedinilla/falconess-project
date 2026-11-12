@@ -1,6 +1,6 @@
 # Roadmap de desarrollo: Falconess (MVP y primeras pruebas jugables)
 
-Versión 0.3 · 2026-11-11 (estado real en §0) · Fuente de verdad del diseño: `docs/BRIEF.md`
+Versión 0.4 · 2026-11-12 (estado real en §0) · Fuente de verdad del diseño: `docs/BRIEF.md`
 
 **Prioridades acordadas (v0.2):** la variedad del dominio va primero: personajes, stats, marcas y
 sus reglas, estilos, bastidores, piezas, peculiaridades y habilidades. El gacha y el multiplayer
@@ -14,22 +14,24 @@ desviación requiere un ADR en `docs/decisions/` antes de aplicarse.
 
 ---
 
-## 0. Estado al 2026-11-11
+## 0. Estado al 2026-11-12
 
 El plan de 30 días se siguió hasta la fase 2. Desde ahí el trabajo se guió por las pruebas del
 dueño en un iPhone: la carrera pasó a ser de vuelo (ruleset v3), la interfaz se hizo para el
 celular en React (sin Phaser) y se agregaron sistemas que el plan no tenía. Cada desvío tiene su
-ADR (0006-0013). Juego publicado para pruebas: artifact de claude.ai «Prueba jugable Falconess» y
-demo en un archivo (`pnpm --filter @falconess/web build:demo`).
+ADR (0006-0013). Juego publicado para pruebas, siempre en la última versión:
+https://fedemedinilla.github.io/falconess-project/ (GitHub Pages, `.github/workflows/demo.yml`, se
+publica solo en cada push a `playtest-ui` o `main`), además del artifact de claude.ai «Prueba
+jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build:demo`).
 
 | Fase                               | Estado                                                                                                                            | Qué falta                                                                                                                                                                    |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0 · Bootstrap                      | Hecha                                                                                                                             | —                                                                                                                                                                            |
 | 1 · Núcleo de temporada            | Hecha                                                                                                                             | —                                                                                                                                                                            |
 | 2 · Motor de carrera y lote        | Hecha, y reemplazada en el juego por la carrera v3 de vuelo (ADR-0011), con el motor congelado y 8 barandas de balance (ADR-0010) | —                                                                                                                                                                            |
-| 3 · Herencia, economía y contenido | Mitad                                                                                                                             | Biblias de voz (dueño), eventos de 31 a 40 con los de historia, generadores y evaluación de voz; los factores de habilidad y afinidad de la caja negra todavía no hacen nada |
+| 3 · Herencia, economía y contenido | Mitad                                                                                                                             | La historia de Peregrina (en curso con el dueño), biblias de voz, eventos de 31 a 40, generadores y evaluación de voz; los factores de habilidad y afinidad de la caja negra |
 | 4 · Interfaz web                   | Hecha salvo los gráficos post-carrera (uPlot)                                                                                     | Gráficos post-carrera, si todavía se quieren                                                                                                                                 |
-| 5 · Publicación y prueba externa   | Empezada                                                                                                                          | Cuestionario PT3, página de itch.io, 10 testers, observación y hito D37                                                                                                      |
+| 5 · Publicación y prueba externa   | Empezada: demo pública en GitHub Pages, exportar partida, juego en castellano e inglés                                            | Cuestionario PT3 (dentro del juego), página de itch.io, 10 testers, observación y hito D37                                                                                   |
 
 **Agregado fuera del plan** (cada uno con su ADR o su nota en `docs/design/temporada-v3.md`):
 
@@ -45,13 +47,31 @@ demo en un archivo (`pnpm --filter @falconess/web build:demo`).
   con su animación (ADR-0013).
 - Juego para el celular: vista lateral y en primera persona con cámara que gira, sonidos
   sintetizados con tres estilos, exportar partida y temporadas anteriores, demo en un archivo.
+- Presentación (2026-11-11/12), adelantada respecto al principio 6 por pedido del dueño:
+  - arte provisional de Peregrina en pantalla completa para cada entrenamiento
+    (`docs/design/prompts-arte-provisional.md`);
+  - el resultado del entrenamiento sobre la tabla de stats («¡ÉXITO!», «+N» con flechas y tres
+    «ping» en escalera);
+  - pantalla de título («Tocá para empezar»);
+  - la transición del emblema al entrar a una carrera;
+  - música del dueño (Suno): temas de título, menú y carrera, normalizados a −18 LUFS, con
+    fundidos y bucle sin cortes; interruptor «Música» en el menú.
+- Idiomas: castellano e inglés con un botón en el menú (`text/en.json`, mismas claves que
+  `es.json`, comprobado por test).
+- Historias de temporada (diseño, `docs/design/historia-peregrina.md`): las metas de cada Falconess
+  se moldean a su historia; Peregrina tendrá cuatro «salir primera» y una Larga de «correr», con una
+  Falconess nueva de resistencia como rival. Base teórica en
+  `docs/design/investigacion-personajes.md`.
+- Nombres compuestos para las Falconess (estilo Special Week): generador en preparación en otra
+  sesión (`docs/handoff/generador-de-nombres.md`).
 
 **Decisiones abiertas:** el taller cuesta una semana (T4 decía que no); las carreras opcionales (T3)
 no están en el juego; el Sprint, la Escalera y el Circuito piden las mismas letras; la baranda de
 Exigente (E1) se mide a mano y no entra en `pnpm balance:barandas`.
 
-**Siguiente paso:** fase 5 (cuestionario PT3 y página de itch.io; el botón de exportar ya está) y,
-en paralelo, las biblias de voz del dueño para destrabar los eventos que faltan.
+**Siguiente paso:** la historia de Peregrina con el dueño (biblia, escenas y sus metas nuevas, con el
+sistema de escenas en la web), y después la fase 5: el cuestionario PT3 dentro del juego y la
+página de itch.io.
 
 ---
 
@@ -71,7 +91,8 @@ en paralelo, las biblias de voz del dueño para destrabar los eventos que faltan
 5. **Una tarea por sesión de Claude Code.** Cada tarea de este roadmap está pensada para caber en
    una sesión con un subsistema a la vez.
 6. **Arte: cero.** Rectángulos, círculos, colores de paleta de fabricante y texto. Nada más hasta
-   el hito de decisión del día 30.
+   el hito de decisión del día 30. (Superado por decisión del dueño: arte provisional, música y
+   transiciones entraron antes de PT3; ver §0.)
 7. **Puertas abiertas.** Todo lo recortado deja su base lista: los esquemas de `GachaPool`, `Build`
    y `BlackBox` existen desde la fase 1 aunque no tengan pantalla; el estado se guarda como semilla
    más `RunInput[]`; todo lleva `rulesetVersion`; `packages/sim` no tiene dependencias y compila para
