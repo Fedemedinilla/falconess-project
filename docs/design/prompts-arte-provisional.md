@@ -88,14 +88,21 @@ shadow tone, soft key light from the upper left.
 
 Visual-novel dialogue bust portrait: from the top of the head to the middle of the chest, facing the viewer in
 a slight 3/4 turn, centered. Square image. The top of her hair sits about 8 % below the top edge and the
-chest is cut by the bottom edge, at the same size and position in every image of this set. No helmet, no wings
-visible. Plain flat white background, no shadow, no scenery.
+chest is cut by the bottom edge, at the same size and position in every image of this set. No helmet.
+IMPORTANT: she is NOT wearing her mechanical wings in these portraits (she only puts them on to race).
+Remove the wing frame and its back mount completely, even though the reference shows them: nothing
+mechanical behind her shoulders or head, only her racing suit. Plain flat white background, no shadow,
+no scenery.
 
 Expression: [EXPRESIÓN]
 
-Avoid: any text, letters, numbers or logos; speech bubbles; extra characters; hands covering the face;
-cropped head; different hair or outfit; chibi proportions; busy background.
+Avoid: wings, wing frame, wing mount or any mechanical parts on her back or behind her shoulders; any
+text, letters, numbers or logos; speech bubbles; extra characters; hands covering the face; cropped head;
+different hair or outfit; chibi proportions; busy background.
 ```
+
+Si igual aparecen las alas, corregir en la misma conversación con: «Remove the wings completely. She is
+not wearing the wing frame, only her racing suit.»
 
 Las expresiones, en orden de prioridad (las primeras seis alcanzan para el prólogo y las metas):
 
