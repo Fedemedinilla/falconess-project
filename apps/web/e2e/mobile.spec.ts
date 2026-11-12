@@ -679,3 +679,26 @@ test("language: the switch in «Menú» keeps the run in play", async ({ page })
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
+
+test("screen transition: the sponsor's colors cover the change of screen, then it clears", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  // starting the season was a change of screen too: let it clear
+  await expect(page.locator("#m-transicion")).toHaveCount(0, { timeout: 3000 });
+  await page.click("#m-entrenar");
+  const cover = page.locator("#m-transicion");
+  await expect(cover).toBeVisible();
+  // Kōryū's red first, its yellow line opening in the middle
+  await expect(cover).toHaveCSS("background-color", "rgb(192, 57, 43)");
+  await expect(cover).toHaveCount(0, { timeout: 3000 });
+  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+});
+
+test("screen transition: none with reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await startMobile(page, "peregrina");
+  await page.click("#m-entrenar");
+  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+});

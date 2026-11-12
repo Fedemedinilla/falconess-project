@@ -1,6 +1,6 @@
 import type { Position, SeasonState, TrainingKind, WorkshopOp } from "@falconess/schema";
-import { difficultyOf } from "@falconess/sim";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { difficultyOf, type SimContext } from "@falconess/sim";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { navigate } from "../app/useRoute";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
@@ -39,6 +39,7 @@ import {
   setSoundStyle,
 } from "./sfx";
 import { type TrainResult, TrainScreen } from "./TrainScreen";
+import { ScreenTransition } from "./Transition";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
 
 type View =
@@ -98,6 +99,36 @@ export function MobileGame() {
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
+  // the transition between screens (owner 2026-11-12): a new page starts fully covered by it;
+  // a training's result stays on its screen and «Lo que pasó» over the menu is the menu
+  const ended = run?.state.status === "ended" && view.screen !== "race" && view.screen !== "before";
+  const page = !run
+    ? "select"
+    : ended
+      ? "end"
+      : view.screen === "trained"
+        ? "train"
+        : view.screen === "before"
+          ? "menu"
+          : view.screen;
+  const [cover, setCover] = useState<number>();
+  const endCover = useCallback(() => setCover(undefined), []);
+  const firstPage = useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of page only
+  useLayoutEffect(() => {
+    if (firstPage.current) firstPage.current = false;
+    else if (!reducedMotion()) setCover((c) => (c ?? 0) + 1);
+  }, [page]);
+  const colors = transitionColors(game, run?.state.falconessId);
+  const transition = cover !== undefined && (
+    <ScreenTransition
+      key={cover}
+      primary={colors.primary}
+      secondary={colors.secondary}
+      onDone={endCover}
+    />
+  );
+
   // a change of screen whooshes (in the click's own commit, so it replaces its tap)
   const screenName = run ? view.screen : "select";
   const firstScreen = useRef(true);
@@ -128,6 +159,7 @@ export function MobileGame() {
     return (
       <div className={s.app}>
         <SelectScreen onTests={toTests} />
+        {transition}
       </div>
     );
 
@@ -150,6 +182,7 @@ export function MobileGame() {
           part="race"
           onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
         />
+        {transition}
       </div>
     );
 
@@ -399,6 +432,7 @@ export function MobileGame() {
         }}
         onClose={() => setHistoryOpen(false)}
       />
+      {transition}
       <MobileMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -419,6 +453,21 @@ export function MobileGame() {
       />
     </div>
   );
+}
+
+/** The sponsor's two colors of the Falconess in play (Kōryū's red and yellow before one is picked). */
+function transitionColors(
+  game: { context(): SimContext },
+  falconessId: string | undefined,
+): { primary: string; secondary: string } {
+  const content = falconessId === undefined ? undefined : game.context().content;
+  const f = falconessId === undefined ? undefined : content?.falconess.get(falconessId);
+  const palette = f ? content?.getManufacturer(f.sponsor).palette : undefined;
+  return { primary: palette?.primary ?? "#c0392b", secondary: palette?.secondary ?? "#f1c40f" };
+}
+
+function reducedMotion(): boolean {
+  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
 /** A week's sound: a training's result (a crew there makes it a boost), else a confirm. */
