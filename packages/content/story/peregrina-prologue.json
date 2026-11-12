@@ -3,6 +3,7 @@
   "version": 1,
   "falconess": "peregrina",
   "style": "cine",
+  "background": "hangar",
   "titleKey": "story.peregrina-prologue.title",
   "kickerKey": "story.peregrina-prologue.kicker",
   "trigger": {

@@ -54,12 +54,18 @@ export const StoryTrigger = z.discriminatedUnion("kind", [
 ]);
 export type StoryTrigger = z.infer<typeof StoryTrigger>;
 
+/** The painted backdrop of a scene (docs/design/prompts-arte-provisional.md, «Fondos»). */
+export const StoryBackground = z.enum(["hangar", "track", "finish"]);
+export type StoryBackground = z.infer<typeof StoryBackground>;
+
 export const StoryScene = z.strictObject({
   id: Slug,
   version: Version,
   falconess: Slug,
   /** `box`: the dialogue box (a common scene); `cine`: the cinematic (a key scene). */
   style: z.enum(["box", "cine"]),
+  /** Its backdrop; absent, the game shows through blurred (box) or a dark sky (cine). */
+  background: StoryBackground.optional(),
   /** The chapter's name: on its title card, the skip notice and «Historia». */
   titleKey: TextKey,
   /** The chapter's label above the name («Prólogo», «Capítulo 1»). */

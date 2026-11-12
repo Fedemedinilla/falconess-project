@@ -33,6 +33,48 @@
     #0b0b0f 70%
   );
 }
+/* the painted backdrop: it covers the screen, slowly drifting; a shade at the bottom keeps the
+   dialogue readable, darker in the cinematic */
+.backdrop {
+  position: absolute;
+  inset: -3%;
+  width: 106%;
+  height: 106%;
+  object-fit: cover;
+  object-position: center 30%;
+  pointer-events: none;
+  animation: drift 24s ease-in-out infinite alternate;
+}
+.box:has(.backdrop) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: #1b2234;
+}
+.box .backdrop {
+  filter: saturate(1.05);
+  mask-image: none;
+}
+/* the shade over the backdrop (an element, so it stays under the dialogue) */
+.shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 45%, rgb(10 14 22 / 0.55) 100%);
+}
+.cine .shade {
+  background: radial-gradient(120% 80% at 50% 45%, transparent 30%, rgb(5 6 10 / 0.7) 100%);
+}
+.cine .backdrop {
+  filter: brightness(0.55) saturate(0.9);
+}
+@keyframes drift {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.04) translate(-1%, -1%);
+  }
+}
 /* the whole screen is the «next» button, under the other controls */
 .stage {
   position: absolute;
@@ -511,6 +553,7 @@
   .card,
   .bar,
   .glow,
+  .backdrop,
   .more,
   .bubble,
   .chat,

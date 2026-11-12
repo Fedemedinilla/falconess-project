@@ -1,8 +1,18 @@
-import type { StoryLine, StoryScene } from "@falconess/schema";
+import type { StoryBackground, StoryLine, StoryScene } from "@falconess/schema";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import bgFinish from "./art/bg-finish.webp";
+import bgHangar from "./art/bg-hangar.webp";
+import bgTrack from "./art/bg-track.webp";
 import s from "./Story.module.css";
+
+/** The painted backdrops of the scenes (owner 2026-11-12, made with Gemini). */
+const BACKDROP: Readonly<Record<StoryBackground, string>> = {
+  hangar: bgHangar,
+  track: bgTrack,
+  finish: bgFinish,
+};
 
 /** Speakers without a name plate. */
 const UNNAMED = new Set(["narrator", "sfx"]);
@@ -106,10 +116,17 @@ export function StoryOverlay({
       id="m-capitulo"
       data-scene={scene.id}
       data-style={scene.style}
+      data-background={scene.background}
       role="dialog"
       aria-modal="true"
       aria-label={gameText(scene.titleKey)}
     >
+      {scene.background && (
+        <>
+          <img className={s.backdrop} src={BACKDROP[scene.background]} alt="" draggable={false} />
+          <span className={s.shade} aria-hidden="true" />
+        </>
+      )}
       <button
         type="button"
         className={s.stage}

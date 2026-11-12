@@ -3,6 +3,7 @@
   "version": 1,
   "falconess": "peregrina",
   "style": "cine",
+  "background": "finish",
   "titleKey": "story.peregrina-end-failed.title",
   "kickerKey": "story.peregrina-end-failed.kicker",
   "trigger": {

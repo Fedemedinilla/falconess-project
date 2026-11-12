@@ -3,6 +3,7 @@
   "version": 1,
   "falconess": "peregrina",
   "style": "box",
+  "background": "track",
   "titleKey": "story.peregrina-debut.title",
   "kickerKey": "story.peregrina-debut.kicker",
   "trigger": {
