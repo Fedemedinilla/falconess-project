@@ -134,3 +134,61 @@ con: «Less sad, more empty and confused. Like her mind stopped. Completely stil
 Si una sale con otro encuadre, corregir en la misma conversación con: «Same framing and size as the
 first portrait: waist-up, top of the hair 6 % below the top edge, cut at the hips, centered, hands
 inside the image.»
+
+## Fondos de las escenas comunes (2026-11-12)
+
+Fondos para el cuadro de diálogo de las escenas. Van a pantalla completa en el celular, con el
+cuadro de diálogo tapando el tercio de abajo y el retrato de la Falconess encima: por eso **sin
+personajes en primer plano** y con lo interesante en la mitad de arriba. Formato vertical 9:16.
+Bloque común de estilo, igual en los tres (se pega primero):
+
+```text
+Anime gacha game background art, painted, polished and cinematic, in the style of a high-budget sports anime.
+Vertical 9:16 mobile background. Clean shapes, soft cel-shaded painting with rich light and atmosphere.
+No main character in the foreground: the lower third stays calm and simple (a dialogue box will cover it),
+the most interesting detail sits in the middle and upper part of the image. No text, no letters, no numbers,
+no logos, no real brands, no watermark.
+```
+
+### 1. La pista antes de la carrera
+
+```text
+An open-field off-road racing track for winged racers on a bright late-afternoon before a race. Low camera angle
+close to the ground, wide lens, strong perspective: the dirt-and-grass track curves away from the viewer toward a
+huge grandstand packed with a cheering crowd in the far distance, colorful flags and banners waving. Rolling hills
+with a big ramp-like jump and a steep descent along the course. A few small winged racers warming up far away,
+tiny silhouettes with mechanical wings, some gliding low over the track. Dramatic sky with tall clouds lit warm
+gold, long shadows, light dust in the air catching the sun, shallow depth of field with the foreground grass
+slightly blurred. Sense of anticipation and scale.
+```
+
+### 2. La línea de llegada
+
+```text
+The finish line of an open-field off-road racing track for winged racers. Dynamic three-quarter camera angle,
+standing just past the finish line looking back along the final straight, the finish gantry towering overhead in
+the upper part of the image with checkered patterns and timing lights (no readable text). A grandstand full of
+people far in the background, confetti and streamers drifting in the air, camera flashes sparkling in the crowd.
+The track surface shows fresh tire-like skid marks and wing-blast streaks in the dirt. Golden-hour backlight with
+lens flare through the gantry, light haze, crisp foreground edge and softly blurred distance. Feels like the
+moment right after a big win.
+```
+
+### 3. El hangar de Kōryū
+
+```text
+Inside the racing hangar of Kōryū Racing, a proud, aggressive, sporty racing school with a strong identity in
+glossy racing red with sharp yellow accents (inspired by the elegance of a classic Italian racing team, but
+original: no real brand, no prancing horse, no car). High ceiling with exposed steel trusses painted red, rows of
+warm spotlights, a polished dark floor reflecting the red and yellow. In the middle distance, a pair of sleek
+red-and-yellow mechanical racing wings mounted on a work stand with panels open, tools and cables around it.
+Mechanics in red jumpsuits with yellow stripes working at the far end: one under a hoist, one checking a
+tablet, one carrying a wing panel, small and out of focus. Trophy shelf with gleaming cups along one wall, red
+banners with an abstract yellow falcon-wing emblem (no letters), a big open hangar door at the back showing the
+track and the sky. Camera at chest height with a slight low angle and a wide lens, strong leading lines from the
+floor markings toward the open door. Warm, energetic, competitive atmosphere.
+```
+
+Si Gemini mete letras o logos, corregir en la misma conversación con: «Remove every letter, number and
+logo. Keep everything else.» Si mete un personaje grande en primer plano: «No characters in the
+foreground, only small figures in the distance.»
