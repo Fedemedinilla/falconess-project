@@ -5,11 +5,12 @@ import type {
   TrainingKind,
   WorkshopOp,
 } from "@falconess/schema";
-import { difficultyOf, type SimContext } from "@falconess/sim";
+import { advanceSeason, difficultyOf, type SimContext } from "@falconess/sim";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
 import { allScenes, allTopics } from "../content/story";
+import type { Step } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
 import type { ActionKind } from "../screens/model/actions";
@@ -69,7 +70,14 @@ type View =
   | { readonly screen: "menu" }
   | { readonly screen: "train"; readonly selected?: TrainingKind | undefined }
   | { readonly screen: "workshop"; readonly tab: WorkshopTab }
-  | { readonly screen: "prerace"; readonly input?: WeekActionInput | undefined }
+  | {
+      readonly screen: "prerace";
+      readonly input?: WeekActionInput | undefined;
+      /** The action's result was already shown (a race week's preview): no way back, no repeat. */
+      readonly decided?: boolean;
+    }
+  /** A race week's action previewed: «Lo que pasó» of the action, before the position. */
+  | { readonly screen: "preview"; readonly input: WeekActionInput; readonly step: Step }
   | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
   | { readonly screen: "before"; readonly turn: number }
   | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
@@ -137,7 +145,7 @@ export function MobileGame() {
       ? "end"
       : view.screen === "trained"
         ? "train"
-        : view.screen === "before"
+        : view.screen === "before" || view.screen === "preview"
           ? "menu"
           : view.screen;
   const [title, setTitle] = useState(() => !titleDone);
@@ -330,10 +338,57 @@ export function MobileGame() {
     }
     setView(next);
   };
-  /** A week's action: on a race week the pre-race card comes first. */
+  /** The result of a training, for the result on the training screen. */
+  const trainResult = (
+    kind: TrainingKind,
+    outcome: "success" | "boost" | "fail",
+    step: Step,
+    points: number,
+  ): TrainResult => ({
+    kind,
+    outcome,
+    gains: weekSummary(ctx, step).stats,
+    points,
+    from: step.before.stats,
+    fromPoints: step.before.skillPoints,
+  });
+  /**
+   * A week's action. On a race week (owner 2026-11-12) its result comes first, then the race
+   * position: the week is previewed with the season's own pure step (the action does not depend
+   * on the position; only the race does), its result shows as on any week, then the pre-race card
+   * runs the real input. After the preview the action is decided: the card has no «Volver».
+   */
   const act = (input: WeekActionInput) => {
-    if (menu.raceWeek) setView({ screen: "prerace", input });
-    else commit(input);
+    if (!menu.raceWeek) {
+      commit(input);
+      return;
+    }
+    let after: SeasonState;
+    try {
+      after = advanceSeason(ctx, state, withPosition(input, chosen));
+    } catch {
+      setView({ screen: "prerace", input });
+      return;
+    }
+    const step: Step = { before: state, input: withPosition(input, chosen), after };
+    const cue = trainingCue(input, state.turn, after, cards);
+    playSound(cue);
+    const next: View = { screen: "preview", input, step };
+    const kind = cards.find((c) => c.kind === input.kind)?.kind;
+    if (kind && (cue === "success" || cue === "boost" || cue === "fail")) {
+      // the race's skill points are not hers yet: only the Simulator's own
+      const points =
+        kind === "train:simulator" && cue !== "fail" ? ctx.ruleset.season.simulatorSkillPoints : 0;
+      setView({ screen: "trained", next, result: trainResult(kind, cue, step, points) });
+      return;
+    }
+    setView(next);
+  };
+  /** The race week's real input, after its preview: straight to the race. */
+  const runRaceWeek = (input: WeekActionInput) => {
+    const turn = state.turn;
+    if (!game.act(withPosition(input, chosen), inputs)) return;
+    setView({ screen: "race", turn, result: false });
   };
 
   const onMenu = (action: MenuAction) => {
@@ -455,12 +510,38 @@ export function MobileGame() {
           onPosition={(position: Position) =>
             setWeekPosition(position === wings ? undefined : { turn: state.turn, position })
           }
-          onRun={() => (input ? commit(input) : setView(MENU))}
-          onBack={() => setView(MENU)}
+          onRun={() =>
+            input ? (view.decided ? runRaceWeek(input) : commit(input)) : setView(MENU)
+          }
+          onBack={view.decided ? undefined : () => setView(MENU)}
         />
       );
       break;
     }
+    case "preview":
+      // the menu behind «Lo que pasó» of the previewed action; the position card comes next
+      screen = (
+        <>
+          <MenuScreen
+            ctx={ctx}
+            state={state}
+            menu={menu}
+            pendingEvent={false}
+            canRecap={false}
+            onAction={() => undefined}
+          />
+          <WeekDialog
+            className={s.weekDialog}
+            advice={false}
+            part="action"
+            actionOpen
+            preview={view.step}
+            onActionDone={() => setView({ screen: "prerace", input: view.input, decided: true })}
+            onViewRace={() => undefined}
+          />
+        </>
+      );
+      break;
     case "before":
       // the menu stays behind «Lo que pasó» of the action; the race starts when it closes
       screen = (

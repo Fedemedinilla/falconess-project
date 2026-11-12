@@ -220,6 +220,18 @@
   z-index: 2;
   pointer-events: none;
 }
+.wordOff {
+  visibility: hidden;
+}
+.wordOn {
+  animation: wordIn 0.35s ease both;
+}
+@keyframes wordIn {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
 .subtitle small {
   display: block;
   font:

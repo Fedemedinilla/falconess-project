@@ -1,5 +1,5 @@
 import { type MouseEvent, useEffect, useMemo, useRef } from "react";
-import type { GameSnapshot } from "../game/controller";
+import type { GameSnapshot, Step } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { PlayerAdviceNote } from "../race/AdviceNote";
 import { ADVICE_FROM_PLACE } from "../race/advice";
@@ -66,6 +66,11 @@ export type WeekDialogProps = {
   part?: "all" | "action" | "race";
   actionOpen?: boolean;
   onActionDone?: () => void;
+  /**
+   * A step not applied yet (the phone game's race week, owner 2026-11-12): its action's result
+   * shows before the race position is chosen. Only with `part="action"`.
+   */
+  preview?: Step | undefined;
 };
 
 /**
@@ -84,16 +89,20 @@ export function WeekDialog({
   part: wanted = "all",
   actionOpen = false,
   onActionDone,
+  preview,
 }: WeekDialogProps) {
   const { game, snap } = useGame();
-  const step = snap.lastStep;
+  const step = preview ?? snap.lastStep;
   const summary = useMemo(
     () => (step ? weekSummary(game.context(), step) : undefined),
     [game, step],
   );
   // a week without a race has nothing to split
   const part = summary?.race ? wanted : "all";
-  const open = part === "action" ? actionOpen && weekDialogWaiting(snap) : weekDialogWaiting(snap);
+  const open =
+    part === "action"
+      ? actionOpen && (preview !== undefined || weekDialogWaiting(snap))
+      : weekDialogWaiting(snap);
   const race = part === "action" ? undefined : summary?.race;
   // a goal race finished 3rd or worse: the tip says what to train (Umamusume)
   const adviceLog = useGoalRaceLog(

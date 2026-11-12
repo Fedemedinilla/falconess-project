@@ -50,7 +50,8 @@ export function PreRaceScreen({
   input: WeekActionInput | undefined;
   onPosition: (position: Position) => void;
   onRun: () => void;
-  onBack: () => void;
+  /** Absent once the week's action already showed its result: the action is decided. */
+  onBack?: (() => void) | undefined;
 }) {
   const d = raceDistance(ctx, state, courseId);
   const course = gameText(ctx.content.getCourse(courseId).textKey);
@@ -114,10 +115,12 @@ export function PreRaceScreen({
         )}
       </div>
       <div className={s.foot}>
-        <button type="button" className={cx(s.btn, s.back)} id="m-volver" onClick={onBack}>
-          <Glyph name="back" size={20} weight={2.4} />
-          <span>{ui("ui.m.back")}</span>
-        </button>
+        {onBack && (
+          <button type="button" className={cx(s.btn, s.back)} id="m-volver" onClick={onBack}>
+            <Glyph name="back" size={20} weight={2.4} />
+            <span>{ui("ui.m.back")}</span>
+          </button>
+        )}
         <button
           type="button"
           className={cx(s.btn, s.btnMain)}

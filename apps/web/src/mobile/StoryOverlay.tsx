@@ -97,9 +97,7 @@ export function StoryOverlay({
 
   const style = { "--s1": primary, "--s2": secondary } as CSSProperties;
   const name = line && speakerName(line);
-  const visible = cine
-    ? text.split(" ").slice(0, shown).join(" ")
-    : text.slice(0, Math.min(shown, text.length));
+  const visible = text.slice(0, Math.min(shown, text.length));
 
   return (
     <div
@@ -182,7 +180,14 @@ export function StoryOverlay({
           aria-live="polite"
         >
           {name && !line.key && <small>{name}</small>}
-          {visible}
+          {/* every word takes its place from the start (the ones to come stay invisible), so the
+              line never grows and never pushes the speaker's name (owner 2026-11-12) */}
+          {text.split(" ").map((w, k) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the words of a fixed line, in order
+            <span key={k} className={k < shown ? s.wordOn : s.wordOff}>
+              {w}{" "}
+            </span>
+          ))}
         </p>
       )}
 

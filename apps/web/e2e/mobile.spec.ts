@@ -214,15 +214,18 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   // the week's action, then the card again with «Correr»
   await page.click("#m-entrenar");
   await page.dblclick("#m-entrenar-technique");
-  await expect(page.locator("#m-precarrera-accion")).toBeVisible();
-  await expect(page.locator("#m-posicion-lead")).toBeChecked();
-  await page.click("#m-correr");
-  // the training's result first, in «Lo que pasó» as on any week, without the race
-  // (testers 2026-11-11); its «Continuar» starts the race
+  // the training's result first (owner 2026-11-12): on the training screen, then in «Lo que
+  // pasó» as on any week, without the race; then the position, then the race
+  await expect(page.locator("#m-resultado")).toBeVisible();
   await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
   await expect(page.locator("#semana-ver-carrera")).toHaveCount(0);
   await expect(page.locator("#semana-posicion")).toHaveCount(0);
   await page.click("#semana-continuar");
+  await expect(page.locator("#m-precarrera-accion")).toBeVisible();
+  await expect(page.locator("#m-posicion-lead")).toBeChecked();
+  // the action is decided once its result was seen: no way back
+  await expect(page.locator("#m-volver")).toHaveCount(0);
+  await page.click("#m-correr");
   await runRace(page);
   // «Lo que pasó» says the race and the position she ran in
   await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
@@ -262,8 +265,8 @@ test("a short season to its end, then a new one; the test view is one tap away",
     const raceWeek = (await page.locator("#m-carrera").count()) > 0;
     await page.click("#m-descansar");
     if (raceWeek) {
-      await page.click("#m-correr");
       await page.click("#semana-continuar");
+      await page.click("#m-correr");
       await runRace(page);
     }
     await settle(page);
@@ -360,8 +363,8 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
   await page.click("#m-carrera");
   await page.click("#m-volver");
   await page.click("#m-descansar");
-  await page.click("#m-correr");
   await page.click("#semana-continuar");
+  await page.click("#m-correr");
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
   // the side view is the default
   await expect(page.locator("#m-carrera-vista-side")).toHaveAttribute("aria-pressed", "true");
@@ -427,8 +430,8 @@ test("first person: a finger turns her head sideways, up to her neck's reach, an
   await page.click("#m-carrera");
   await page.click("#m-volver");
   await page.click("#m-descansar");
-  await page.click("#m-correr");
   await page.click("#semana-continuar");
+  await page.click("#m-correr");
   await page.click("#m-carrera-vista-fpv");
   await page.click("#m-carrera-vuelo-salida");
   const cv = page.locator("#m-carrera-vuelo-lienzo");
@@ -673,9 +676,9 @@ test("language: the menu switches to English and a whole short season reads in E
     await look();
     if (raceWeek) {
       await look();
-      await page.click("#m-correr");
-      await look();
       await page.click("#semana-continuar");
+      await look();
+      await page.click("#m-correr");
       await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
       await look();
       await page.click("#m-saltar");
@@ -728,8 +731,8 @@ test("screen transition: the sponsor's emblem covers the way into a race, and on
   await page.click("#m-carrera");
   await page.click("#m-correr");
   await page.click("#m-descansar");
-  await page.click("#m-correr");
   await page.click("#semana-continuar");
+  await page.click("#m-correr");
   const cover = page.locator("#m-transicion");
   await expect(cover).toBeVisible();
   // Kōryū's red first, its yellow line opening in the middle
