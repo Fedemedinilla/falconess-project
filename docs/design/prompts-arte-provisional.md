@@ -150,28 +150,45 @@ the most interesting detail sits in the middle and upper part of the image. No t
 no logos, no real brands, no watermark.
 ```
 
+Escala (dueño, 2026-11-12): no es una pista de autos ni de caballos. Una Falconess corre y vuela
+muchísimo más rápido, así que la pista es enorme: kilómetros de largo, ancha como un valle, con
+espacio vertical para volar por bandas de altura. Los dos prompts de pista llevan este bloque de
+escala después del de estilo:
+
+```text
+SCALE IS ESSENTIAL: this is not a car circuit and not a horse track. It is a racecourse for winged racers who
+run and fly far faster than any car, so everything is huge. The course is kilometers long and as wide as a
+valley, a broad band of packed earth and grass with no asphalt, no curbs, no tire marks and no fences close to
+the camera. It stretches all the way to the horizon, over hills, ramps and long descents, and it has vertical
+room: very tall slim marker pylons and floating ring gates high in the air mark the flight bands above the
+ground. People, flags and stands look tiny because of the distance.
+```
+
 ### 1. La pista antes de la carrera
 
 ```text
-An open-field off-road racing track for winged racers on a bright late-afternoon before a race. Low camera angle
-close to the ground, wide lens, strong perspective: the dirt-and-grass track curves away from the viewer toward a
-huge grandstand packed with a cheering crowd in the far distance, colorful flags and banners waving. Rolling hills
-with a big ramp-like jump and a steep descent along the course. A few small winged racers warming up far away,
-tiny silhouettes with mechanical wings, some gliding low over the track. Dramatic sky with tall clouds lit warm
-gold, long shadows, light dust in the air catching the sun, shallow depth of field with the foreground grass
-slightly blurred. Sense of anticipation and scale.
+The vast open-field racecourse for winged racers on a bright late-afternoon before a race. Low camera angle
+close to the ground, ultra-wide lens, strong perspective: the immense course sweeps away from the viewer in a
+long curve across a wide valley, rising over a giant ramp-like hill and dropping into a long descent, then
+disappearing toward the horizon. Tall marker pylons and floating ring gates high above the course mark the
+flight lanes. A huge grandstand packed with a cheering crowd sits far, far away on a hillside, small in the
+frame, colorful flags and banners waving. A few winged racers warming up in the distance are tiny silhouettes
+with mechanical wings, some gliding high above the track. Enormous sky with towering clouds lit warm gold, long
+shadows, light dust catching the sun, shallow depth of field with the foreground grass slightly blurred. A sense
+of anticipation and of breathtaking scale.
 ```
 
 ### 2. La línea de llegada
 
 ```text
-The finish line of an open-field off-road racing track for winged racers. Dynamic three-quarter camera angle,
-standing just past the finish line looking back along the final straight, the finish gantry towering overhead in
-the upper part of the image with checkered patterns and timing lights (no readable text). A grandstand full of
-people far in the background, confetti and streamers drifting in the air, camera flashes sparkling in the crowd.
-The track surface shows fresh tire-like skid marks and wing-blast streaks in the dirt. Golden-hour backlight with
-lens flare through the gantry, light haze, crisp foreground edge and softly blurred distance. Feels like the
-moment right after a big win.
+The finish of the vast open-field racecourse for winged racers. Dynamic three-quarter camera angle, standing
+just past the finish line on the ground and looking back along an immense final straight that runs for
+kilometers toward the horizon. The finish gate is gigantic: two very tall towers joined high in the sky by a
+wide arch with checkered patterns and timing lights (no readable text), tall enough for racers to fly through.
+A grandstand full of people stretches along the straight far in the background, confetti and streamers drifting
+in the air, camera flashes sparkling in the crowd. Long scorched streaks in the grass from wing blasts and dust
+still hanging in the air, no tire marks. Golden-hour backlight with lens flare through the arch, light haze,
+crisp foreground edge and softly blurred distance. Feels like the moment right after a big win.
 ```
 
 ### 3. El hangar de Kōryū
