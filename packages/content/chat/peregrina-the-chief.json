@@ -1,0 +1,11 @@
+{
+  "id": "peregrina-the-chief",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-the-chief.q",
+  "fromTurn": 1,
+  "replyKeys": [
+    "chat.peregrina-the-chief.1",
+    "chat.peregrina-the-chief.2"
+  ]
+}

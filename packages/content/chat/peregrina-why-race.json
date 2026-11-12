@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-why-race",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-why-race.q",
+  "fromTurn": 1,
+  "replyKeys": [
+    "chat.peregrina-why-race.1",
+    "chat.peregrina-why-race.2",
+    "chat.peregrina-why-race.3"
+  ]
+}

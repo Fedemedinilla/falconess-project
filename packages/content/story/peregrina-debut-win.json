@@ -1,0 +1,37 @@
+{
+  "id": "peregrina-debut-win",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "titleKey": "story.peregrina-debut-win.title",
+  "kickerKey": "story.peregrina-debut-win.kicker",
+  "trigger": {
+    "kind": "goal-after",
+    "goal": 0,
+    "result": "win"
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-debut-win.1"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut-win.2",
+      "expression": "eager"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-debut-win.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut-win.4",
+      "expression": "surprised"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-debut-win.5"
+    }
+  ]
+}

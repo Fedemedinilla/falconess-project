@@ -1,0 +1,11 @@
+{
+  "id": "peregrina-day-off",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-day-off.q",
+  "fromTurn": 1,
+  "replyKeys": [
+    "chat.peregrina-day-off.1",
+    "chat.peregrina-day-off.2"
+  ]
+}

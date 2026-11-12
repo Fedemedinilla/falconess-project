@@ -1,0 +1,41 @@
+{
+  "id": "peregrina-debut",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "titleKey": "story.peregrina-debut.title",
+  "kickerKey": "story.peregrina-debut.kicker",
+  "trigger": {
+    "kind": "goal-before",
+    "goal": 0
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-debut.1"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut.2",
+      "expression": "happy"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-debut.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut.4",
+      "expression": "bored"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-debut.5"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-debut.6",
+      "expression": "eager"
+    }
+  ]
+}

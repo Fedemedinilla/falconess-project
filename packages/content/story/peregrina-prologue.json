@@ -1,0 +1,63 @@
+{
+  "id": "peregrina-prologue",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "cine",
+  "titleKey": "story.peregrina-prologue.title",
+  "kickerKey": "story.peregrina-prologue.kicker",
+  "trigger": {
+    "kind": "start"
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-prologue.1"
+    },
+    {
+      "speaker": "sfx",
+      "textKey": "story.peregrina-prologue.2"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-prologue.3",
+      "expression": "eager"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-prologue.4"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-prologue.5",
+      "expression": "calm"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-prologue.6",
+      "expression": "happy"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-prologue.7"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-prologue.8",
+      "expression": "calm",
+      "key": true
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-prologue.9",
+      "expression": "eager"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-prologue.10"
+    },
+    {
+      "speaker": "jefa",
+      "textKey": "story.peregrina-prologue.11"
+    }
+  ]
+}

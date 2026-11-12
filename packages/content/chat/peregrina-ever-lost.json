@@ -1,0 +1,12 @@
+{
+  "id": "peregrina-ever-lost",
+  "version": 1,
+  "falconess": "peregrina",
+  "questionKey": "chat.peregrina-ever-lost.q",
+  "fromTurn": 10,
+  "replyKeys": [
+    "chat.peregrina-ever-lost.1",
+    "chat.peregrina-ever-lost.2",
+    "chat.peregrina-ever-lost.3"
+  ]
+}

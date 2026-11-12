@@ -1,8 +1,15 @@
-import type { Position, SeasonState, TrainingKind, WorkshopOp } from "@falconess/schema";
+import type {
+  Position,
+  SeasonState,
+  StoryScene,
+  TrainingKind,
+  WorkshopOp,
+} from "@falconess/schema";
 import { difficultyOf, type SimContext } from "@falconess/sim";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
+import { allScenes, allTopics } from "../content/story";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
 import type { ActionKind } from "../screens/model/actions";
@@ -15,8 +22,9 @@ import {
 } from "../screens/model/position";
 import { weekSummary } from "../screens/model/week";
 import { WeekDialog } from "../screens/WeekDialog";
-import { ui } from "../text/ui";
+import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { Glyph } from "./Glyph";
@@ -30,6 +38,9 @@ import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
 import { accentStyle, Hud } from "./Parts";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
+import st from "./Story.module.css";
+import { StoryListSheet } from "./StoryListSheet";
+import { StoryOverlay } from "./StoryOverlay";
 import {
   getSoundStyle,
   nextSoundStyle,
@@ -40,6 +51,15 @@ import {
   type SoundStyle,
   setSoundStyle,
 } from "./sfx";
+import {
+  dueScene,
+  markRead,
+  markSeen,
+  openTopics,
+  readTopics,
+  seenEver,
+  seenInRun,
+} from "./storyModel";
 import { TitleScreen } from "./TitleScreen";
 import { type TrainResult, TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
@@ -121,6 +141,22 @@ export function MobileGame() {
           ? "menu"
           : view.screen;
   const [title, setTitle] = useState(() => !titleDone);
+  // story scenes and the chat (owner 2026-11-12)
+  const [, setStoryTick] = useState(0);
+  const [replay, setReplay] = useState<StoryScene>();
+  const [storyToast, setStoryToast] = useState<{
+    n: number;
+    kicker: string;
+    title: string;
+    skipped: boolean;
+  }>();
+  const [chatOpen, setChatOpen] = useState(false);
+  const [storyListOpen, setStoryListOpen] = useState(false);
+  useEffect(() => {
+    if (!storyToast) return;
+    const id = setTimeout(() => setStoryToast(undefined), 4000);
+    return () => clearTimeout(id);
+  }, [storyToast]);
   const titleScreen = title && (
     <TitleScreen
       onStart={() => {
@@ -192,6 +228,52 @@ export function MobileGame() {
   const state = run.state;
   const style = accentStyle(ctx.content, state.falconessId);
 
+  /** The story scene due now (or one asked from «Historia»), once nothing else is on screen. */
+  const storyScene = (free: boolean): StoryScene | undefined => {
+    if (replay) return replay;
+    const idle =
+      free &&
+      (snap.lastStep === undefined || snap.lastStepSeen) &&
+      !title &&
+      cover === undefined &&
+      !menuOpen &&
+      !chatOpen &&
+      !storyListOpen;
+    return idle ? dueScene(allScenes(), ctx, state, seenInRun(run.seed)) : undefined;
+  };
+  const storyLayer = (sc: StoryScene | undefined) => (
+    <>
+      {sc && (
+        <StoryOverlay
+          key={`${sc.id}/${replay ? "again" : "first"}`}
+          scene={sc}
+          primary={colors.primary}
+          secondary={colors.secondary}
+          onDone={(skipped) => {
+            if (!replay) markSeen(run.seed, sc.id);
+            setReplay(undefined);
+            setStoryTick((n) => n + 1);
+            setStoryToast({
+              n: Date.now(),
+              kicker: gameText(sc.kickerKey),
+              title: gameText(sc.titleKey),
+              skipped,
+            });
+          }}
+        />
+      )}
+      {storyToast && (
+        <div key={storyToast.n} className={st.toast} id="m-capitulo-aviso" role="status">
+          <b>
+            {storyToast.kicker} · {storyToast.title}
+          </b>
+          <br />
+          {ui(storyToast.skipped ? "ui.m.story.skipped" : "ui.m.story.seen")}
+        </div>
+      )}
+    </>
+  );
+
   if (state.status === "ended" && view.screen !== "race" && view.screen !== "before")
     return (
       <div className={s.app} style={style}>
@@ -207,6 +289,7 @@ export function MobileGame() {
           part="race"
           onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
         />
+        {storyLayer(storyScene(true))}
         {transition}
         {titleScreen}
       </div>
@@ -437,6 +520,7 @@ export function MobileGame() {
           onDone={() => setSceneDone(scene.key)}
         />
       )}
+      {storyLayer(storyScene(onMenuScreen && !showScene && !pending))}
       {onMenuScreen && !showScene && (
         <>
           <WeekDialog
@@ -448,6 +532,31 @@ export function MobileGame() {
           {pending && <EventDialog />}
         </>
       )}
+      {chatOpen && (
+        <ChatSheet
+          name={gameText(`falconess.${state.falconessId}`)}
+          topics={openTopics(allTopics(), state)}
+          read={readTopics()}
+          primary={colors.primary}
+          secondary={colors.secondary}
+          onRead={(id) => {
+            markRead(id);
+            setStoryTick((n) => n + 1);
+          }}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
+      <StoryListSheet
+        open={storyListOpen}
+        scenes={allScenes().filter(
+          (sc) => sc.falconess === state.falconessId && seenEver().has(sc.id),
+        )}
+        onWatch={(sc) => {
+          setStoryListOpen(false);
+          setReplay(sc);
+        }}
+        onClose={() => setStoryListOpen(false)}
+      />
       <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
       <HistorySheet
         open={historyOpen}
@@ -473,6 +582,16 @@ export function MobileGame() {
           setHistoryOpen(true);
         }}
         onTests={toTests}
+        chatName={gameText(`falconess.${state.falconessId}`)}
+        chatNew={openTopics(allTopics(), state).some((tp) => !readTopics().has(tp.id))}
+        onChat={() => {
+          setMenuOpen(false);
+          setChatOpen(true);
+        }}
+        onStory={() => {
+          setMenuOpen(false);
+          setStoryListOpen(true);
+        }}
         onNew={() => {
           setMenuOpen(false);
           game.newSeason();
@@ -519,6 +638,10 @@ function MobileMenu({
   onHistory,
   onTests,
   onNew,
+  chatName,
+  chatNew,
+  onChat,
+  onStory,
 }: {
   open: boolean;
   onClose: () => void;
@@ -526,6 +649,10 @@ function MobileMenu({
   onHistory: () => void;
   onTests: () => void;
   onNew: () => void;
+  chatName: string;
+  chatNew: boolean;
+  onChat: () => void;
+  onStory: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [confirm, setConfirm] = useState(false);
@@ -559,6 +686,21 @@ function MobileMenu({
         <h2 className={s.dlTitle} id="m-menu-titulo">
           {ui("ui.m.menu")}
         </h2>
+        <button
+          type="button"
+          className={s.btn}
+          id="m-chat-abrir"
+          data-new={chatNew}
+          onClick={onChat}
+        >
+          <Glyph name="chat" size={20} />
+          {ui("ui.m.chat.with", { name: chatName })}
+          {chatNew && <span className={st.newTag}>{ui("ui.m.chat.new")}</span>}
+        </button>
+        <button type="button" className={s.btn} id="m-historia-abrir" onClick={onStory}>
+          <Glyph name="book" size={20} />
+          {ui("ui.m.story.title")}
+        </button>
         <button type="button" className={s.btn} id="m-exportar-partida" onClick={onExport}>
           <Glyph name="down" size={20} />
           {ui("ui.m.export.run")}

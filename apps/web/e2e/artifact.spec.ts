@@ -155,6 +155,8 @@ test("the phone game is the default view: art inlined, a week trained, only font
   ).toBe(true);
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
+  // her prologue first (owner 2026-11-12)
+  await page.click("#m-capitulo-saltar");
   await page.click("#m-entrenar");
   await page.dblclick("#m-entrenar-agility");
   await closeWeek(page);

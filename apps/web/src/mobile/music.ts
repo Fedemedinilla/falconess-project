@@ -141,7 +141,10 @@ function begin(track: Track, slot: 0 | 1, fade: number): Playing | undefined {
   }
   const p = v.el.play();
   // held back until a tap (autoplay rules): the next tap starts it again
-  if (p) p.catch(() => (playing?.voice === v ? (playing = undefined) : undefined));
+  if (p)
+    p.catch(() => {
+      if (playing?.voice === v) playing = undefined;
+    });
   ramp(v, LEVEL[track], fade);
   return { track, voice: v, slot };
 }

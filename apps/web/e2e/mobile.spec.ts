@@ -40,6 +40,14 @@ async function pastTitle(page: Page): Promise<void> {
   await expect(page.locator("#m-titulo")).toHaveCount(0);
 }
 
+/** A story scene in the way (owner 2026-11-12): skip it and let its notice go. */
+async function skipScene(page: Page): Promise<boolean> {
+  if ((await page.locator("#m-capitulo").count()) === 0) return false;
+  await page.click("#m-capitulo-saltar");
+  await expect(page.locator("#m-capitulo")).toHaveCount(0);
+  return true;
+}
+
 async function startMobile(page: Page, falconessId = "peregrina"): Promise<void> {
   await page.goto("./");
   await pastTitle(page);
@@ -52,6 +60,11 @@ async function startMobile(page: Page, falconessId = "peregrina"): Promise<void>
     "aria-label",
     t("ui.m.week.aria", { turn: 1, turns: 48, left: 47 }),
   );
+  // Peregrina's prologue opens her season
+  if (falconessId === "peregrina") {
+    await expect(page.locator("#m-capitulo")).toBeVisible();
+    await skipScene(page);
+  }
 }
 
 async function week(page: Page): Promise<number> {
@@ -73,12 +86,18 @@ async function settle(page: Page): Promise<void> {
       await page.click("#evento-opcion-0");
       continue;
     }
+    if (await skipScene(page)) continue;
     if ((await page.locator("#m-fin").count()) > 0) return;
     const menu = page.locator("#m-entrenar");
     if ((await menu.count()) > 0 && (await menu.isEnabled())) {
       // the dialog opens right after the input: give it a moment before calling the menu free
       await page.waitForTimeout(100);
-      if ((await weekOpen.count()) === 0 && (await event.count()) === 0) return;
+      if (
+        (await weekOpen.count()) === 0 &&
+        (await event.count()) === 0 &&
+        (await page.locator("#m-capitulo").count()) === 0
+      )
+        return;
       continue;
     }
     await page.waitForTimeout(100);
@@ -588,6 +607,7 @@ test("export: the run in play, and every season this browser played", async ({ p
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
   await expect(page.locator("#m-semana")).toBeVisible();
+  await skipScene(page);
   await page.click("#m-menu");
   await page.click("#m-temporadas");
   const rows = page.locator("#m-historial li[data-seed]");
@@ -759,6 +779,7 @@ test("music: the title theme from the title's tap, the menu theme in the season,
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
   await expect.poll(music).toBe("menu");
+  await skipScene(page);
   // the switch, kept on reload
   await page.click("#m-menu");
   await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "true");
@@ -770,4 +791,45 @@ test("music: the title theme from the title's tap, the menu theme in the season,
   await page.click("#m-continuar");
   await page.click("#m-menu");
   await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
+});
+
+test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays it again; the chat answers", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-prologue");
+  await expect(scene).toHaveAttribute("data-style", "cine");
+  await expect(scene).toContainText(t("story.peregrina-prologue.title"));
+  // a tap completes the line, the next one moves on
+  await page.waitForTimeout(1700);
+  await page.click("#m-capitulo-seguir");
+  await expect(scene).toContainText(t("story.peregrina-prologue.1"));
+  await page.click("#m-capitulo-saltar");
+  await expect(scene).toHaveCount(0);
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
+  // «Historia» lists it and plays it again
+  await page.click("#m-menu");
+  await page.click("#m-historia-abrir");
+  await page.click('#m-historia [data-scene="peregrina-prologue"] button');
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-prologue");
+  await page.click("#m-capitulo-saltar");
+  await expect(scene).toHaveCount(0);
+  // the chat: a new topic, her answer bubble by bubble
+  await page.click("#m-menu");
+  await expect(page.locator("#m-chat-abrir")).toHaveAttribute("data-new", "true");
+  await page.click("#m-chat-abrir");
+  await page.click('[data-topic="peregrina-why-race"]');
+  await expect(page.locator("#m-chat")).toContainText(t("chat.peregrina-why-race.3"), {
+    timeout: 8000,
+  });
+  await expect(page.locator('[data-topic="peregrina-why-race"]')).toHaveAttribute(
+    "data-read",
+    "true",
+  );
+  await page.click("#m-chat-cerrar");
+  await expect(page.locator("#m-chat")).toHaveCount(0);
 });
