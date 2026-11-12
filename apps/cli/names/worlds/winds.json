@@ -1,0 +1,215 @@
+{
+  "name": "Winds and weather",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse+wordnet:recipes/winds.json",
+  "words": [
+    "Airstream",
+    "Antitrade",
+    "Bise",
+    "Blizzard",
+    "Bluster",
+    "Boreas",
+    "Chinook",
+    "Crosswind",
+    "Cyclone",
+    "Doldrums",
+    "Downdraft",
+    "Easterly",
+    "Firestorm",
+    "Foehn",
+    "Gust",
+    "Harmattan",
+    "Headwind",
+    "Khamsin",
+    "Levanter",
+    "Mistral",
+    "Monsoon",
+    "Norther",
+    "Northerly",
+    "Sandstorm",
+    "Simoom",
+    "Sirocco",
+    "Sleet",
+    "Southerly",
+    "Squall",
+    "Tailwind",
+    "Tempest",
+    "Thermal",
+    "Tornado",
+    "Tramontane",
+    "Typhoon",
+    "Updraft",
+    "Virga",
+    "Wester",
+    "Westerly",
+    "Whirlwind",
+    "Zephyr"
+  ],
+  "stats": {
+    "Airstream": {
+      "freq": 0.188978,
+      "syllables": 2
+    },
+    "Antitrade": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Bise": {
+      "freq": 0,
+      "syllables": 1
+    },
+    "Blizzard": {
+      "freq": 0.882223,
+      "syllables": 2
+    },
+    "Bluster": {
+      "freq": 0.196,
+      "syllables": 2
+    },
+    "Boreas": {
+      "freq": 0.130117,
+      "syllables": 3
+    },
+    "Chinook": {
+      "freq": 0.446909,
+      "syllables": 2
+    },
+    "Crosswind": {
+      "freq": 0.082974,
+      "syllables": 2
+    },
+    "Cyclone": {
+      "freq": 0.471,
+      "syllables": 2
+    },
+    "Doldrums": {
+      "freq": 0.264329,
+      "syllables": 2
+    },
+    "Downdraft": {
+      "freq": 0.02,
+      "syllables": 2
+    },
+    "Easterly": {
+      "freq": 0.807994,
+      "syllables": 3
+    },
+    "Firestorm": {
+      "freq": 0.151721,
+      "syllables": 2
+    },
+    "Foehn": {
+      "freq": 0.030233,
+      "syllables": 1
+    },
+    "Gust": {
+      "freq": 0.978147,
+      "syllables": 1
+    },
+    "Harmattan": {
+      "freq": 0.196351,
+      "syllables": 3
+    },
+    "Headwind": {
+      "freq": 0.055083,
+      "syllables": 2
+    },
+    "Khamsin": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Levanter": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Mistral": {
+      "freq": 0.118,
+      "syllables": 2
+    },
+    "Monsoon": {
+      "freq": 1.834596,
+      "syllables": 2
+    },
+    "Norther": {
+      "freq": 0.072973,
+      "syllables": 2
+    },
+    "Northerly": {
+      "freq": 0.059,
+      "syllables": 3
+    },
+    "Sandstorm": {
+      "freq": 0.824,
+      "syllables": 2
+    },
+    "Simoom": {
+      "freq": 0.01653,
+      "syllables": 2
+    },
+    "Sirocco": {
+      "freq": 0.098,
+      "syllables": 3
+    },
+    "Sleet": {
+      "freq": 0.458721,
+      "syllables": 1
+    },
+    "Southerly": {
+      "freq": 0.70989,
+      "syllables": 3
+    },
+    "Squall": {
+      "freq": 0.42368,
+      "syllables": 1
+    },
+    "Tailwind": {
+      "freq": 0.034415,
+      "syllables": 2
+    },
+    "Tempest": {
+      "freq": 0.706,
+      "syllables": 2
+    },
+    "Thermal": {
+      "freq": 2.196,
+      "syllables": 2
+    },
+    "Tornado": {
+      "freq": 2.549,
+      "syllables": 3
+    },
+    "Tramontane": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Typhoon": {
+      "freq": 1.471,
+      "syllables": 2
+    },
+    "Updraft": {
+      "freq": 0.157,
+      "syllables": 2
+    },
+    "Virga": {
+      "freq": 0.049359,
+      "syllables": 2
+    },
+    "Wester": {
+      "freq": 0.182953,
+      "syllables": 2
+    },
+    "Westerly": {
+      "freq": 0.946732,
+      "syllables": 3
+    },
+    "Whirlwind": {
+      "freq": 0.961,
+      "syllables": 2
+    },
+    "Zephyr": {
+      "freq": 0.251485,
+      "syllables": 2
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "Moves (verbs)",
+  "lang": "en",
+  "wordnet": {
+    "roots": [
+      "rush.v.01",
+      "fly.v.01",
+      "fly.v.02",
+      "soar.v.03",
+      "glide.v.01",
+      "dive.v.01",
+      "climb.v.01",
+      "zoom.v.01",
+      "swoop.v.01",
+      "swoop.v.02",
+      "hurtle.v.01",
+      "streak.v.01",
+      "sprint.v.01",
+      "flit.v.01",
+      "dash.v.01"
+    ],
+    "depth": 2,
+    "includeRoots": true
+  },
+  "pos": ["v"],
+  "maxFreq": 5,
+  "deny": [
+    "Aquaplane",
+    "Barge",
+    "Hie",
+    "Hotfoot",
+    "Parachute",
+    "Plunk",
+    "Poise",
+    "Ramp",
+    "Skateboard",
+    "Slew",
+    "Slue",
+    "Snowboard",
+    "Surfboard",
+    "Windsurf"
+  ]
+}

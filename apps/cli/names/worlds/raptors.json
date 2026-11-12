@@ -1,0 +1,125 @@
+{
+  "name": "Raptors and falconry",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse+wordnet:recipes/raptors.json",
+  "words": [
+    "Buzzard",
+    "Carancha",
+    "Condor",
+    "Eaglet",
+    "Erne",
+    "Falconer",
+    "Goshawk",
+    "Griffon",
+    "Gyrfalcon",
+    "Harpy",
+    "Harrier",
+    "Hobby",
+    "Kestrel",
+    "Kite",
+    "Merlin",
+    "Mews",
+    "Osprey",
+    "Owlet",
+    "Quarry",
+    "Redtail",
+    "Ringtail",
+    "Tiercel",
+    "Vulture"
+  ],
+  "stats": {
+    "Buzzard": {
+      "freq": 0.369061,
+      "syllables": 2
+    },
+    "Carancha": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Condor": {
+      "freq": 1.176,
+      "syllables": 2
+    },
+    "Eaglet": {
+      "freq": 0.040793,
+      "syllables": 2
+    },
+    "Erne": {
+      "freq": 0,
+      "syllables": 1
+    },
+    "Falconer": {
+      "freq": 0.497164,
+      "syllables": 3
+    },
+    "Goshawk": {
+      "freq": 0.076833,
+      "syllables": 2
+    },
+    "Griffon": {
+      "freq": 0.039,
+      "syllables": 2
+    },
+    "Gyrfalcon": {
+      "freq": 0.01915,
+      "syllables": 3
+    },
+    "Harpy": {
+      "freq": 0.122252,
+      "syllables": 2
+    },
+    "Harrier": {
+      "freq": 0.223865,
+      "syllables": 3
+    },
+    "Hobby": {
+      "freq": 2.138429,
+      "syllables": 2
+    },
+    "Kestrel": {
+      "freq": 0.173689,
+      "syllables": 2
+    },
+    "Kite": {
+      "freq": 1.31012,
+      "syllables": 1
+    },
+    "Merlin": {
+      "freq": 1.315317,
+      "syllables": 2
+    },
+    "Mews": {
+      "freq": 0.241683,
+      "syllables": 1
+    },
+    "Osprey": {
+      "freq": 0.251898,
+      "syllables": 2
+    },
+    "Owlet": {
+      "freq": 0.027871,
+      "syllables": 2
+    },
+    "Quarry": {
+      "freq": 2.305601,
+      "syllables": 2
+    },
+    "Redtail": {
+      "freq": 0.017366,
+      "syllables": 2
+    },
+    "Ringtail": {
+      "freq": 0.059,
+      "syllables": 2
+    },
+    "Tiercel": {
+      "freq": 0.044452,
+      "syllables": 2
+    },
+    "Vulture": {
+      "freq": 1.765,
+      "syllables": 2
+    }
+  }
+}

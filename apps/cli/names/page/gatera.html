@@ -1,0 +1,748 @@
+<title>Gatera de nombres Falconess</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: panel de control a la izquierda (arriba en el teléfono), gatera de nombres a la derecha como placas numeradas de largada. */
+:root {
+  --bg: #eef2f5;
+  --panel: #ffffff;
+  --ink: #14222e;
+  --muted: #5b6b78;
+  --line: #d3dce3;
+  --accent: #1d5fa8;
+  --accent-ink: #ffffff;
+  --gate: #e3ebf2;
+  --signal: #b8551f;
+  --fav: #c28a12;
+  --warn-bg: #fbeee4;
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171e; --panel: #16212b; --ink: #e4ebf1; --muted: #93a3b1; --line: #2a3a47;
+    --accent: #6aa8ec; --accent-ink: #0b1620; --gate: #1d2b37; --signal: #e8925e; --fav: #e6b545;
+    --warn-bg: #3a2516; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f171e; --panel: #16212b; --ink: #e4ebf1; --muted: #93a3b1; --line: #2a3a47;
+  --accent: #6aa8ec; --accent-ink: #0b1620; --gate: #1d2b37; --signal: #e8925e; --fav: #e6b545;
+  --warn-bg: #3a2516; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; letter-spacing: 0.01em; margin: 0; text-transform: uppercase; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.lede { color: var(--muted); margin: 0; max-width: 62ch; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
+.layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 820px) { .controls { position: static; } }
+label, .lbl { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: block; margin-bottom: 4px; }
+.field { min-width: 0; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select, input, textarea {
+  width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
+}
+input[type="number"], .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+textarea { font-family: var(--font-mono); font-size: 0.85rem; resize: vertical; }
+select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+fieldset.group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: var(--bg); color: var(--muted); padding: 7px; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 7px 12px; }
+button:hover { border-color: var(--accent); }
+.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 10px; }
+.primary:hover { filter: brightness(1.08); }
+.seedrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.hint { font-size: 0.8rem; color: var(--muted); margin: 0; }
+details summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details[open] summary { margin-bottom: 8px; }
+.results { display: grid; gap: 14px; min-width: 0; }
+.status { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.meta { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions button { font-size: 0.85rem; padding: 5px 10px; }
+.warn { background: var(--warn-bg); border: 1px solid var(--signal); color: var(--ink); border-radius: 6px; padding: 8px 12px; font-size: 0.88rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
+.plate { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: stretch; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.plate.is-fav { border-color: var(--fav); }
+.gate { background: var(--gate); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.plate.is-fav .gate { background: var(--fav); color: var(--accent-ink); }
+.body { padding: 9px 4px 9px 12px; min-width: 0; }
+.house { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--signal); }
+.name { font-family: var(--font-display); font-weight: 600; font-size: 1.45rem; line-height: 1.1; overflow-wrap: anywhere; }
+.src { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.pts { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; }
+.pts.low { color: var(--signal); }
+.why { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+.star { border: 0; background: transparent; font-size: 1.25rem; color: var(--line); padding: 0 12px; border-radius: 0; }
+.star:hover { color: var(--fav); }
+.star[aria-pressed="true"] { color: var(--fav); }
+.favs ol { margin: 0; padding-left: 1.4em; columns: 2 200px; column-gap: 24px; }
+.favs li { font-family: var(--font-display); font-size: 1.15rem; font-weight: 500; }
+.favs li button { font-family: var(--font-body); font-size: 0.75rem; border: 0; background: none; color: var(--muted); padding: 0 4px; }
+.empty { color: var(--muted); font-size: 0.9rem; margin: 0; }
+.worlds-head { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font-family: var(--font-mono); font-size: 0.85rem; padding: 4px 10px; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.editor .wide { grid-column: 1 / -1; }
+.chip { display: inline-block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--signal); color: var(--signal); border-radius: 4px; padding: 0 5px; vertical-align: middle; }
+.err { color: var(--signal); font-size: 0.85rem; margin: 0; }
+.dbstatus { display: flex; align-items: center; gap: 8px; margin: -8px 0 0; font-size: 0.85rem; color: var(--muted); }
+.dbstatus .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dbstatus[data-kind="live"] .dot { background: var(--accent); }
+.dbstatus[data-kind="ro"] .dot, .dbstatus[data-kind="local"] .dot { background: var(--signal); }
+#migrate-favs { justify-self: start; }
+.star:disabled { opacity: 0.4; cursor: default; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); background: var(--ink); color: var(--panel); padding: 8px 14px; border-radius: 6px; font-size: 0.88rem; }
+.copybox { width: 100%; min-height: 120px; }
+code { font-family: var(--font-mono); font-size: 0.85em; }
+@media (prefers-reduced-motion: no-preference) { .plate { animation: in 0.25s ease both; } @keyframes in { from { transform: translateY(4px); opacity: 0.4; } } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Gatera de <span>nombres</span></h1>
+    <p class="lede">Una palabra de cada mundo, como <em>Special Week</em> o <em>Gold Ship</em>, ordenadas por cómo suenan. Con los mismos mundos, semilla y opciones da la misma lista que <code>pnpm names</code>.</p>
+  </header>
+  <p class="dbstatus" id="db-status" data-kind="wait" role="status"><span class="dot" aria-hidden="true"></span><span id="db-status-text">Conectando con la base del artefacto…</span></p>
+
+  <div class="layout">
+    <form class="panel controls" id="form" autocomplete="off">
+      <div class="row">
+        <div class="field"><label for="a">Primera palabra</label><select id="a"></select></div>
+        <div class="field"><label for="b">Segunda palabra</label><select id="b"></select></div>
+      </div>
+      <div class="field"><label for="house">Casa (prefijo)</label><select id="house"></select></div>
+      <div class="field">
+        <fieldset class="group">
+        <legend class="lbl">Orden</legend>
+        <div class="seg">
+          <button type="button" id="order-fixed" aria-pressed="true">Fijo (A primero)</button>
+          <button type="button" id="order-free" aria-pressed="false">Libre</button>
+        </div>
+        </fieldset>
+      </div>
+      <div class="row">
+        <div class="field"><label for="n">Cantidad</label><input id="n" type="number" min="1" max="500" value="30"></div>
+        <div class="field"><label for="seed">Semilla</label>
+          <div class="seedrow"><input id="seed" class="mono" value="1"><button type="button" id="next-seed" title="Probar con la semilla siguiente">+1</button></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="maxChars">Máx. caracteres</label><input id="maxChars" type="number" min="1" placeholder="auto"></div>
+        <div class="field"><label for="maxWords">Máx. palabras</label><input id="maxWords" type="number" min="1" placeholder="sin límite"></div>
+      </div>
+      <p class="hint" id="chars-hint">Vacío: 16 caracteres, o 26 con casa. Cuentan los espacios.</p>
+      <div class="field">
+        <fieldset class="group">
+        <legend class="lbl">Ranking</legend>
+        <div class="seg">
+          <button type="button" id="rank-on" aria-pressed="true">Por puntaje</button>
+          <button type="button" id="rank-off" aria-pressed="false">Orden de sorteo</button>
+        </div>
+        </fieldset>
+      </div>
+      <div class="row">
+        <div class="field"><label for="alliteration">Aliteración</label>
+          <select id="alliteration"><option value="neutral">No cuenta</option><option value="prefer">Preferir</option><option value="avoid">Evitar</option></select></div>
+        <div class="field"><label for="maxRepeat">Repetir palabra</label><input id="maxRepeat" type="number" min="1" placeholder="2"></div>
+      </div>
+      <label class="lbl" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="useFavs" style="width:auto" checked> Que pesen mis favoritos (+1 por palabra)</label>
+      <label class="lbl" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="explain" style="width:auto"> Mostrar por qué suma o resta</label>
+      <details>
+        <summary>Excluidos</summary>
+        <label for="excluded">Una entrada por línea</label>
+        <textarea id="excluded" rows="7"></textarea>
+        <p class="hint">Una sola palabra la prohíbe en cualquier nombre; varias palabras prohíben ese nombre exacto. No distingue mayúsculas ni acentos.</p>
+      </details>
+      <details>
+        <summary>Palabras gastadas</summary>
+        <label for="worn">Una por línea · restan 3 puntos</label>
+        <textarea id="worn" rows="7"></textarea>
+      </details>
+      <button type="submit" class="primary">Generar</button>
+    </form>
+
+    <div class="results">
+      <section class="panel">
+        <div class="status">
+          <h2>Largada</h2>
+          <span class="meta" id="meta"></span>
+        </div>
+        <div class="warn" id="warn" hidden></div>
+        <ol class="grid" id="list"></ol>
+        <div class="actions">
+          <button type="button" id="copy-md">Copiar como Markdown</button>
+          <button type="button" id="copy-csv">Copiar como CSV</button>
+          <button type="button" id="copy-cli">Copiar comando</button>
+        </div>
+      </section>
+
+      <section class="panel favs">
+        <div class="status">
+          <h2>Favoritos <span class="meta" id="fav-count"></span></h2>
+          <div class="actions">
+            <button type="button" id="copy-favs-txt">Copiar para favorites.txt</button>
+            <button type="button" id="copy-favs">Copiar CSV</button>
+            <button type="button" id="clear-favs">Vaciar</button>
+          </div>
+        </div>
+        <p class="empty" id="fav-empty">Tocá la estrella de un nombre para guardarlo acá. Las palabras de tus favoritos suman un punto la próxima vez que generes.</p>
+        <button type="button" id="migrate-favs" hidden></button>
+        <ol id="favs"></ol>
+      </section>
+
+      <section class="panel">
+        <div class="worlds-head">
+          <h2>Mundos</h2>
+          <div class="actions">
+            <button type="button" id="new-world">Nuevo mundo</button>
+            <button type="button" id="reset-worlds">Restaurar mundos del repo</button>
+          </div>
+        </div>
+        <p class="warn" id="worlds-note" hidden>La base todavía no tiene mundos: estás viendo los del repo. Cualquier cambio que hagas los guarda en la base.</p>
+        <div class="tabs" role="tablist" id="tabs"></div>
+        <div class="editor" id="editor"></div>
+        <p class="hint">Los cambios se usan al generar y quedan en este navegador. Los mundos salen de Datamuse y WordNet con <code>pnpm names:import</code> y viven en la base del artefacto; los cambios que hagas acá se guardan ahí. Para llevarlos al repo, pedíselo a Claude en la sesión del proyecto o copiá el JSON y guardalo como <code>apps/cli/names/worlds/&lt;id&gt;.json</code>.</p>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+// GEN-START — port of packages/rng (xoshiro128**, Rng.nextInt) and apps/cli/src/names/{generate,score}.ts
+function rotl(x, k) { return ((x << k) | (x >>> (32 - k))) >>> 0; }
+function fnv1a32(input) {
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < input.length; i++) { h ^= input.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+function splitmix32(x) {
+  let z = (x + 0x9e3779b9) >>> 0;
+  z = Math.imul(z ^ (z >>> 16), 0x85ebca6b) >>> 0;
+  z = Math.imul(z ^ (z >>> 13), 0xc2b2ae35) >>> 0;
+  return (z ^ (z >>> 16)) >>> 0;
+}
+function deriveState(seed, stream) {
+  const base = fnv1a32(`${seed}\u0000${stream}`);
+  const s = [splitmix32(base), splitmix32((base + 1) >>> 0), splitmix32((base + 2) >>> 0), splitmix32((base + 3) >>> 0)];
+  if (s.every((w) => w === 0)) s[0] = 1;
+  return s;
+}
+class Stream {
+  constructor(seed, stream) { [this.s0, this.s1, this.s2, this.s3] = deriveState(seed, stream); }
+  nextU32() {
+    const result = Math.imul(rotl(Math.imul(this.s1, 5) >>> 0, 7), 9) >>> 0;
+    const t = (this.s1 << 9) >>> 0;
+    this.s2 = (this.s2 ^ this.s0) >>> 0; this.s3 = (this.s3 ^ this.s1) >>> 0;
+    this.s1 = (this.s1 ^ this.s2) >>> 0; this.s0 = (this.s0 ^ this.s3) >>> 0;
+    this.s2 = (this.s2 ^ t) >>> 0; this.s3 = rotl(this.s3, 11);
+    return result;
+  }
+  nextInt(n) {
+    if (n === 1) return 0;
+    const TWO_32 = 4294967296, limit = TWO_32 - (TWO_32 % n);
+    let x = this.nextU32();
+    while (x >= limit) x = this.nextU32();
+    return x % n;
+  }
+}
+function normalize(text) {
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim().replace(/\s+/g, " ");
+}
+function tokens(text) { return normalize(text).split(" ").filter(Boolean); }
+function guessSyllables(word) {
+  const w = normalize(word).replace(/[^a-z]/g, "");
+  if (w === "") return 1;
+  const groups = w.match(/[aeiouy]+/g)?.length ?? 0;
+  const syllabicLe = /[^aeiouy]le$/.test(w);
+  const silentE = groups > 1 && w.endsWith("e") && !syllabicLe ? 1 : 0;
+  return Math.max(1, groups - silentE);
+}
+function scoreName(i) {
+  const reasons = [];
+  const add = (rule, points) => { if (points !== 0) reasons.push({ rule, points }); };
+  const total = i.firstSyllables + i.secondSyllables;
+  add("syllables", total <= 4 ? 2 : total === 5 ? 1 : total === 6 ? 0 : -2);
+  if (i.firstSyllables <= i.secondSyllables) add("short-first", 1);
+  else if (i.firstSyllables > i.secondSyllables + 1) add("long-first", -1);
+  const a = normalize(i.first), b = normalize(i.second);
+  if (a.length >= 3 && b.length >= 3 && a.slice(-3) === b.slice(-3)) add("echo", -2);
+  if (a[0] === b[0]) add("alliteration", i.alliteration === "prefer" ? 1 : i.alliteration === "avoid" ? -1 : 0);
+  for (const t of normalize(i.name).split(" ")) if (i.worn.has(t)) add(`worn:${t}`, -3);
+  if (i.name.length <= 12) add("compact", 1);
+  for (const w of a === b ? [a] : [a, b]) if (i.liked?.has(w)) add(`liked:${w}`, 1);
+  return { score: reasons.reduce((s, r) => s + r.points, 0), reasons };
+}
+function pickBest(names, count, maxRepeat) {
+  const uses = new Map(), out = [];
+  for (const n of [...names].sort((x, y) => (y.score ?? 0) - (x.score ?? 0))) {
+    if (out.length === count) break;
+    const words = [normalize(n.first), normalize(n.second)];
+    if (words.some((w) => (uses.get(w) ?? 0) >= maxRepeat)) continue;
+    for (const w of words) uses.set(w, (uses.get(w) ?? 0) + 1);
+    out.push(n);
+  }
+  return out;
+}
+function compatible(x, y) {
+  const a = x.position ?? "any", b = y.position ?? "any";
+  return a === "any" || b === "any" || a !== b;
+}
+function generateNames(worlds, o) {
+  const find = (id) => {
+    const w = worlds.find((x) => x.id === id);
+    if (!w) throw new Error(`No existe el mundo "${id}".`);
+    if (w.words.length === 0) throw new Error(`El mundo "${id}" no tiene palabras.`);
+    return w;
+  };
+  const fixedA = o.a === undefined ? undefined : find(o.a);
+  const fixedB = o.b === undefined ? undefined : find(o.b);
+  const house = o.house === undefined ? undefined : find(o.house);
+  const pool = worlds.filter((w) => w.role === "word" && w.words.length > 0);
+  if ((!fixedA || !fixedB) && pool.length === 0) throw new Error("No hay mundos de palabras para elegir.");
+  const bannedWords = new Set(), bannedNames = new Set();
+  for (const e of o.excluded) {
+    const t = tokens(e);
+    if (t.length === 1) bannedWords.add(t[0]); else if (t.length > 1) bannedNames.add(t.join(" "));
+  }
+  const rng = new Stream(`names:${o.seed}`, "events");
+  const pick = (items) => items[rng.nextInt(items.length)];
+  const rank = o.rank;
+  const wanted = rank ? o.count * (rank.pool ?? 8) : o.count;
+  const worn = new Set((rank?.worn ?? []).map(normalize));
+  const liked = new Set((rank?.favorites ?? []).flatMap((f) => tokens(f)));
+  const syllables = (w, word) => w.stats?.[word]?.syllables ?? guessSyllables(word);
+  const maxAttempts = o.count * 200;
+  const seen = new Set(), names = [];
+  let attempts = 0;
+  while (names.length < wanted && attempts < maxAttempts) {
+    attempts++;
+    const wa = fixedA ?? pick(pool);
+    const distinct = pool.length > 1 ? pool.filter((w) => w.id !== wa.id) : pool;
+    const fitting = distinct.filter((w) => compatible(wa, w));
+    const others = fitting.length > 0 ? fitting : distinct;
+    const wb = fixedB ?? pick(others);
+    let first = { word: pick(wa.words), world: wa };
+    let second = { word: pick(wb.words), world: wb };
+    if (o.order === "free" && rng.nextInt(2) === 1) [first, second] = [second, first];
+    const p1 = first.world.position ?? "any", p2 = second.world.position ?? "any";
+    if ((p1 === "second" && p2 !== "second") || (p2 === "first" && p1 !== "first")) [first, second] = [second, first];
+    const houseWord = house ? pick(house.words) : undefined;
+    const name = [houseWord, first.word, second.word].filter((x) => x !== undefined).join(" ");
+    const t = tokens(name), key = t.join(" ");
+    if (new Set(t).size !== t.length) continue;
+    if (o.maxWords !== undefined && t.length > o.maxWords) continue;
+    if (name.length > o.maxChars) continue;
+    if (bannedNames.has(key) || t.some((x) => bannedWords.has(x))) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const scored = rank ? scoreName({ first: first.word, second: second.word, firstSyllables: syllables(first.world, first.word), secondSyllables: syllables(second.world, second.word), name, worn, alliteration: rank.alliteration, liked }) : undefined;
+    names.push({ name, house: houseWord, first: first.word, second: second.word, firstWorld: first.world.id, secondWorld: second.world.id, score: scored?.score, reasons: scored?.reasons });
+  }
+  const chosen = rank ? pickBest(names, o.count, rank.maxRepeat ?? 2) : names;
+  return { names: chosen, attempts, exhausted: chosen.length < o.count };
+}
+// GEN-END
+
+const DEFAULT_WORLDS = [{"id": "alloys", "name": "Alloys and metals", "lang": "en", "role": "word", "position": "any", "provisional": true, "words": ["Alnico", "Babbitt", "Bismuth", "Bronze", "Chromium", "Cobalt", "Constantan", "Electrum", "Elinvar", "Gallium", "Gunmetal", "Inconel", "Indium", "Invar", "Latten", "Nichrome", "Ormolu", "Oroide", "Osmium", "Permalloy", "Pewter", "Pinchbeck", "Rhenium", "Rhodium", "Solder", "Stellite", "Tantalum", "Tungsten", "Wolfram"], "source": "datamuse+wordnet:recipes/alloys.json", "stats": {"Alnico": {"freq": 0.044353, "syllables": 3}, "Babbitt": {"freq": 0.588438, "syllables": 2}, "Bismuth": {"freq": 0.886567, "syllables": 2}, "Bronze": {"freq": 2.804, "syllables": 1}, "Chromium": {"freq": 2.734767, "syllables": 3}, "Cobalt": {"freq": 2.579527, "syllables": 2}, "Constantan": {"freq": 0, "syllables": 3}, "Electrum": {"freq": 0.064101, "syllables": 3}, "Elinvar": {"freq": 0, "syllables": 3}, "Gallium": {"freq": 0.723962, "syllables": 3}, "Gunmetal": {"freq": 0.039, "syllables": 3}, "Inconel": {"freq": 0.094318, "syllables": 3}, "Indium": {"freq": 0.596021, "syllables": 3}, "Invar": {"freq": 0.070804, "syllables": 2}, "Latten": {"freq": 0, "syllables": 2}, "Nichrome": {"freq": 0, "syllables": 2}, "Ormolu": {"freq": 0.039, "syllables": 3}, "Oroide": {"freq": 0, "syllables": 2}, "Osmium": {"freq": 0.377167, "syllables": 3}, "Permalloy": {"freq": 0.039, "syllables": 3}, "Pewter": {"freq": 0.556219, "syllables": 2}, "Pinchbeck": {"freq": 0.067796, "syllables": 2}, "Rhenium": {"freq": 0.168215, "syllables": 3}, "Rhodium": {"freq": 0.272094, "syllables": 3}, "Solder": {"freq": 1.655726, "syllables": 2}, "Stellite": {"freq": 0.049882, "syllables": 2}, "Tantalum": {"freq": 0.534393, "syllables": 3}, "Tungsten": {"freq": 2.04136, "syllables": 2}, "Wolfram": {"freq": 0.575428, "syllables": 2}}}, {"id": "clouds", "name": "Clouds and constellations", "lang": "en", "role": "word", "position": "any", "provisional": true, "words": ["Antlia", "Apus", "Aquila", "Ara", "Auriga", "Bootes", "Caelum", "Carina", "Centaurus", "Cepheus", "Cetus", "Chamaeleon", "Charioteer", "Circinus", "Cirrus", "Columba", "Contrail", "Corvus", "Crux", "Cumulus", "Cygnus", "Delphinus", "Dorado", "Draco", "Fornax", "Grus", "Hydra", "Lepus", "Lodestar", "Lyra", "Mensa", "Musca", "Nimbus", "Octans", "Ophiuchus", "Orion", "Pavo", "Pegasus", "Perseus", "Pictor", "Pollux", "Puppis", "Pyxis", "Regulus", "Sagitta", "Serpens", "Spica", "Stratus", "Triangulum", "Vela", "Volans"], "source": "datamuse+wordnet:recipes/clouds.json", "stats": {"Antlia": {"freq": 0, "syllables": 2}, "Apus": {"freq": 0, "syllables": 2}, "Aquila": {"freq": 0.353, "syllables": 3}, "Ara": {"freq": 0.196, "syllables": 2}, "Auriga": {"freq": 0.033813, "syllables": 3}, "Bootes": {"freq": 0.042414, "syllables": 1}, "Caelum": {"freq": 0.02, "syllables": 2}, "Carina": {"freq": 0.216, "syllables": 3}, "Centaurus": {"freq": 0.067201, "syllables": 3}, "Cepheus": {"freq": 0.034042, "syllables": 3}, "Cetus": {"freq": 0.059, "syllables": 2}, "Chamaeleon": {"freq": 0, "syllables": 3}, "Charioteer": {"freq": 0.039, "syllables": 3}, "Circinus": {"freq": 0, "syllables": 3}, "Cirrus": {"freq": 0.340369, "syllables": 2}, "Columba": {"freq": 0.059, "syllables": 3}, "Contrail": {"freq": 0.027399, "syllables": 2}, "Corvus": {"freq": 0.097862, "syllables": 2}, "Crux": {"freq": 1.184011, "syllables": 1}, "Cumulus": {"freq": 0.477839, "syllables": 3}, "Cygnus": {"freq": 0.142278, "syllables": 2}, "Delphinus": {"freq": 0, "syllables": 3}, "Dorado": {"freq": 0.784, "syllables": 3}, "Draco": {"freq": 0.155019, "syllables": 2}, "Fornax": {"freq": 0, "syllables": 2}, "Grus": {"freq": 0, "syllables": 1}, "Hydra": {"freq": 0.57827, "syllables": 2}, "Lepus": {"freq": 0, "syllables": 2}, "Lodestar": {"freq": 0.077733, "syllables": 2}, "Lyra": {"freq": 0.229941, "syllables": 2}, "Mensa": {"freq": 0.294, "syllables": 2}, "Musca": {"freq": 0, "syllables": 2}, "Nimbus": {"freq": 0.306105, "syllables": 2}, "Octans": {"freq": 0, "syllables": 2}, "Ophiuchus": {"freq": 0, "syllables": 3}, "Orion": {"freq": 1.015376, "syllables": 3}, "Pavo": {"freq": 0, "syllables": 2}, "Pegasus": {"freq": 0.475818, "syllables": 3}, "Perseus": {"freq": 0.602169, "syllables": 3}, "Pictor": {"freq": 0, "syllables": 2}, "Pollux": {"freq": 0.203086, "syllables": 2}, "Puppis": {"freq": 0, "syllables": 2}, "Pyxis": {"freq": 0, "syllables": 2}, "Regulus": {"freq": 0.165016, "syllables": 3}, "Sagitta": {"freq": 0, "syllables": 3}, "Serpens": {"freq": 0, "syllables": 2}, "Spica": {"freq": 0.145945, "syllables": 2}, "Stratus": {"freq": 0.146524, "syllables": 2}, "Triangulum": {"freq": 0, "syllables": 3}, "Vela": {"freq": 0.02, "syllables": 2}, "Volans": {"freq": 0, "syllables": 2}}}, {"id": "colors", "name": "Colors", "lang": "en", "role": "word", "position": "first", "provisional": true, "words": ["Amber", "Apricot", "Aqua", "Azure", "Black", "Blue", "Brown", "Burgundy", "Canary", "Caramel", "Cardinal", "Carmine", "Carnation", "Cerise", "Cerulean", "Chalk", "Charcoal", "Chartreuse", "Cherry", "Chestnut", "Claret", "Copper", "Coral", "Crimson", "Cyan", "Dun", "Ebony", "Ecru", "Emerald", "Fawn", "Gamboge", "Gold", "Green", "Grey", "Hazel", "Indigo", "Ivory", "Jade", "Lavender", "Lazuline", "Magenta", "Maize", "Maroon", "Mauve", "Mocha", "Navy", "Ochre", "Olive", "Orange", "Peach", "Pearl", "Pink", "Purple", "Red", "Rose", "Ruby", "Sable", "Saffron", "Salmon", "Sanguine", "Sapphire", "Scarlet", "Sepia", "Silver", "Tan", "Tangerine", "Taupe", "Teal", "Topaz", "Turquoise", "Umber", "Vermilion", "Violet", "White", "Yellow"], "source": "wordnet:recipes/colors.json", "stats": {"Amber": {"freq": 9.275, "syllables": 2}, "Apricot": {"freq": 0.627, "syllables": 3}, "Aqua": {"freq": 1.373, "syllables": 2}, "Azure": {"freq": 0.294, "syllables": 2}, "Black": {"freq": 167.941, "syllables": 1}, "Blue": {"freq": 102.392, "syllables": 1}, "Brown": {"freq": 60.118, "syllables": 1}, "Burgundy": {"freq": 2.686, "syllables": 3}, "Canary": {"freq": 2.922, "syllables": 3}, "Caramel": {"freq": 1.235, "syllables": 3}, "Cardinal": {"freq": 4.078, "syllables": 3}, "Carmine": {"freq": 2.176, "syllables": 2}, "Carnation": {"freq": 0.843, "syllables": 3}, "Cerise": {"freq": 0, "syllables": 2}, "Cerulean": {"freq": 0.314, "syllables": 3}, "Chalk": {"freq": 3.588, "syllables": 1}, "Charcoal": {"freq": 1.765, "syllables": 2}, "Chartreuse": {"freq": 0.529, "syllables": 2}, "Cherry": {"freq": 13.588, "syllables": 2}, "Chestnut": {"freq": 1.275, "syllables": 2}, "Claret": {"freq": 0.294, "syllables": 2}, "Copper": {"freq": 6.588, "syllables": 2}, "Coral": {"freq": 2.373, "syllables": 2}, "Crimson": {"freq": 1.314, "syllables": 2}, "Cyan": {"freq": 0.176, "syllables": 2}, "Dun": {"freq": 0.255, "syllables": 1}, "Ebony": {"freq": 0.863, "syllables": 3}, "Ecru": {"freq": 0.137, "syllables": 2}, "Emerald": {"freq": 2.569, "syllables": 2}, "Fawn": {"freq": 0.706, "syllables": 1}, "Gamboge": {"freq": 0, "syllables": 2}, "Gold": {"freq": 78.941, "syllables": 1}, "Green": {"freq": 72.471, "syllables": 1}, "Grey": {"freq": 9.196, "syllables": 1}, "Hazel": {"freq": 1.078, "syllables": 2}, "Indigo": {"freq": 0.314, "syllables": 3}, "Ivory": {"freq": 1.392, "syllables": 3}, "Jade": {"freq": 5.078, "syllables": 1}, "Lavender": {"freq": 2.039, "syllables": 3}, "Lazuline": {"freq": 0, "syllables": 3}, "Magenta": {"freq": 0.627, "syllables": 3}, "Maize": {"freq": 0.176, "syllables": 1}, "Maroon": {"freq": 1.196, "syllables": 2}, "Mauve": {"freq": 0.529, "syllables": 1}, "Mocha": {"freq": 1.294, "syllables": 2}, "Navy": {"freq": 25.686, "syllables": 2}, "Ochre": {"freq": 0, "syllables": 2}, "Olive": {"freq": 7.353, "syllables": 2}, "Orange": {"freq": 22.314, "syllables": 2}, "Peach": {"freq": 6.353, "syllables": 1}, "Pearl": {"freq": 15.667, "syllables": 1}, "Pink": {"freq": 28.471, "syllables": 1}, "Purple": {"freq": 12.333, "syllables": 2}, "Red": {"freq": 148.059, "syllables": 1}, "Rose": {"freq": 53.02, "syllables": 1}, "Ruby": {"freq": 11.902, "syllables": 2}, "Sable": {"freq": 0.824, "syllables": 2}, "Saffron": {"freq": 0.608, "syllables": 2}, "Salmon": {"freq": 6.549, "syllables": 2}, "Sanguine": {"freq": 0.137, "syllables": 2}, "Sapphire": {"freq": 1.196, "syllables": 3}, "Scarlet": {"freq": 3.275, "syllables": 2}, "Sepia": {"freq": 0.059, "syllables": 3}, "Silver": {"freq": 31.745, "syllables": 2}, "Tan": {"freq": 8.608, "syllables": 1}, "Tangerine": {"freq": 0.745, "syllables": 3}, "Taupe": {"freq": 0.686, "syllables": 1}, "Teal": {"freq": 0.51, "syllables": 1}, "Topaz": {"freq": 1, "syllables": 2}, "Turquoise": {"freq": 0.882, "syllables": 2}, "Umber": {"freq": 0.275, "syllables": 2}, "Vermilion": {"freq": 0.176, "syllables": 3}, "Violet": {"freq": 8.039, "syllables": 3}, "White": {"freq": 171.451, "syllables": 1}, "Yellow": {"freq": 33.804, "syllables": 2}}}, {"id": "makers", "name": "Manufacturers (house)", "lang": "en", "role": "house", "position": "any", "provisional": true, "words": ["Kōryū", "Steinhaus", "Lumière", "Altair", "Boneyard"]}, {"id": "moves", "name": "Moves (verbs)", "lang": "en", "role": "word", "position": "any", "provisional": true, "words": ["Chute", "Dart", "Escalade", "Flit", "Flutter", "Freewheel", "Glide", "Hasten", "Hover", "Hurtle", "Nosedive", "Plunge", "Pounce", "Scoot", "Scud", "Skid", "Skim", "Skitter", "Skydive", "Soar", "Sprint", "Stoop", "Swoop", "Whizz", "Zoom"], "source": "wordnet:recipes/moves.json", "stats": {"Chute": {"freq": 3.608, "syllables": 1}, "Dart": {"freq": 1.922, "syllables": 1}, "Escalade": {"freq": 0.373, "syllables": 3}, "Flit": {"freq": 0.49, "syllables": 1}, "Flutter": {"freq": 0.863, "syllables": 2}, "Freewheel": {"freq": 0, "syllables": 2}, "Glide": {"freq": 2.353, "syllables": 1}, "Hasten": {"freq": 0.725, "syllables": 2}, "Hover": {"freq": 1.157, "syllables": 2}, "Hurtle": {"freq": 0.02, "syllables": 2}, "Nosedive": {"freq": 0.157, "syllables": 2}, "Plunge": {"freq": 2.235, "syllables": 1}, "Pounce": {"freq": 1.098, "syllables": 1}, "Scoot": {"freq": 2.98, "syllables": 1}, "Scud": {"freq": 0.608, "syllables": 1}, "Skid": {"freq": 2.176, "syllables": 1}, "Skim": {"freq": 0.843, "syllables": 1}, "Skitter": {"freq": 0.059, "syllables": 2}, "Skydive": {"freq": 0.216, "syllables": 2}, "Soar": {"freq": 1.529, "syllables": 1}, "Sprint": {"freq": 0.706, "syllables": 1}, "Stoop": {"freq": 2.451, "syllables": 1}, "Swoop": {"freq": 1.529, "syllables": 1}, "Whizz": {"freq": 0.216, "syllables": 1}, "Zoom": {"freq": 3.549, "syllables": 1}}}, {"id": "raptors", "name": "Raptors and falconry", "lang": "en", "role": "word", "position": "any", "provisional": true, "words": ["Buzzard", "Carancha", "Condor", "Eaglet", "Erne", "Falconer", "Goshawk", "Griffon", "Gyrfalcon", "Harpy", "Harrier", "Hobby", "Kestrel", "Kite", "Merlin", "Mews", "Osprey", "Owlet", "Quarry", "Redtail", "Ringtail", "Tiercel", "Vulture"], "source": "datamuse+wordnet:recipes/raptors.json", "stats": {"Buzzard": {"freq": 0.369061, "syllables": 2}, "Carancha": {"freq": 0, "syllables": 3}, "Condor": {"freq": 1.176, "syllables": 2}, "Eaglet": {"freq": 0.040793, "syllables": 2}, "Erne": {"freq": 0, "syllables": 1}, "Falconer": {"freq": 0.497164, "syllables": 3}, "Goshawk": {"freq": 0.076833, "syllables": 2}, "Griffon": {"freq": 0.039, "syllables": 2}, "Gyrfalcon": {"freq": 0.01915, "syllables": 3}, "Harpy": {"freq": 0.122252, "syllables": 2}, "Harrier": {"freq": 0.223865, "syllables": 3}, "Hobby": {"freq": 2.138429, "syllables": 2}, "Kestrel": {"freq": 0.173689, "syllables": 2}, "Kite": {"freq": 1.31012, "syllables": 1}, "Merlin": {"freq": 1.315317, "syllables": 2}, "Mews": {"freq": 0.241683, "syllables": 1}, "Osprey": {"freq": 0.251898, "syllables": 2}, "Owlet": {"freq": 0.027871, "syllables": 2}, "Quarry": {"freq": 2.305601, "syllables": 2}, "Redtail": {"freq": 0.017366, "syllables": 2}, "Ringtail": {"freq": 0.059, "syllables": 2}, "Tiercel": {"freq": 0.044452, "syllables": 2}, "Vulture": {"freq": 1.765, "syllables": 2}}}, {"id": "traits", "name": "Traits (adjectives)", "lang": "en", "role": "word", "position": "first", "provisional": true, "words": ["Aerial", "Ardent", "Audacious", "Beaming", "Blazing", "Blinding", "Blistering", "Coruscant", "Courageous", "Daredevil", "Dauntless", "Dazzling", "Effulgent", "Fearless", "Feral", "Ferocious", "Fulgent", "Gallant", "Gleaming", "Glinting", "Glistening", "Glistering", "Glittering", "Glossy", "Gritty", "Hardy", "Hasty", "Headlong", "Heroic", "Incisive", "Intrepid", "Keen", "Lambent", "Lucent", "Luminous", "Lustrous", "Majestic", "Mettlesome", "Nacreous", "Nervy", "Opaline", "Piercing", "Radiant", "Reckless", "Refulgent", "Shimmery", "Silken", "Silky", "Silvern", "Silvery", "Sleek", "Speedy", "Spirited", "Spunky", "Stalwart", "Twinkling", "Unbroken", "Undaunted", "Untamed", "Valiant", "Valorous", "Vaulting", "Vivid", "Winged"], "source": "datamuse+wordnet:recipes/traits.json", "stats": {"Aerial": {"freq": 4.494294, "syllables": 3}, "Ardent": {"freq": 0.588, "syllables": 2}, "Audacious": {"freq": 0.51, "syllables": 3}, "Beaming": {"freq": 0.824, "syllables": 2}, "Blazing": {"freq": 1.824, "syllables": 2}, "Blinding": {"freq": 1.471, "syllables": 2}, "Blistering": {"freq": 0.471, "syllables": 3}, "Coruscant": {"freq": 0.02, "syllables": 3}, "Courageous": {"freq": 3.157, "syllables": 3}, "Daredevil": {"freq": 0.647, "syllables": 3}, "Dauntless": {"freq": 0.137, "syllables": 2}, "Dazzling": {"freq": 1.294, "syllables": 3}, "Effulgent": {"freq": 0.137, "syllables": 3}, "Fearless": {"freq": 2.98, "syllables": 2}, "Feral": {"freq": 0.176, "syllables": 2}, "Ferocious": {"freq": 1.549, "syllables": 3}, "Fulgent": {"freq": 0, "syllables": 2}, "Gallant": {"freq": 2.460695, "syllables": 2}, "Gleaming": {"freq": 0.706, "syllables": 2}, "Glinting": {"freq": 0.059, "syllables": 2}, "Glistening": {"freq": 0.549, "syllables": 3}, "Glistering": {"freq": 0, "syllables": 3}, "Glittering": {"freq": 0.314, "syllables": 3}, "Glossy": {"freq": 0.471, "syllables": 2}, "Gritty": {"freq": 0.451, "syllables": 2}, "Hardy": {"freq": 3.686, "syllables": 2}, "Hasty": {"freq": 2.622877, "syllables": 2}, "Headlong": {"freq": 1.169443, "syllables": 2}, "Heroic": {"freq": 4.588, "syllables": 3}, "Incisive": {"freq": 0.157, "syllables": 3}, "Intrepid": {"freq": 0.608, "syllables": 3}, "Keen": {"freq": 4.471, "syllables": 1}, "Lambent": {"freq": 0.039, "syllables": 2}, "Lucent": {"freq": 0.098, "syllables": 2}, "Luminous": {"freq": 0.765, "syllables": 3}, "Lustrous": {"freq": 0.294, "syllables": 2}, "Majestic": {"freq": 1.373, "syllables": 3}, "Mettlesome": {"freq": 0.02, "syllables": 3}, "Nacreous": {"freq": 0, "syllables": 2}, "Nervy": {"freq": 0.157, "syllables": 2}, "Opaline": {"freq": 0.02, "syllables": 3}, "Piercing": {"freq": 1.373, "syllables": 2}, "Radiant": {"freq": 2.157, "syllables": 3}, "Reckless": {"freq": 4.922, "syllables": 2}, "Refulgent": {"freq": 0, "syllables": 3}, "Shimmery": {"freq": 0.078, "syllables": 3}, "Silken": {"freq": 0.412, "syllables": 2}, "Silky": {"freq": 0.784, "syllables": 2}, "Silvern": {"freq": 0, "syllables": 2}, "Silvery": {"freq": 0.49, "syllables": 3}, "Sleek": {"freq": 0.843, "syllables": 1}, "Speedy": {"freq": 1.961, "syllables": 2}, "Spirited": {"freq": 1.216, "syllables": 3}, "Spunky": {"freq": 0.627, "syllables": 2}, "Stalwart": {"freq": 0.431, "syllables": 2}, "Twinkling": {"freq": 0.549, "syllables": 3}, "Unbroken": {"freq": 0.392, "syllables": 3}, "Undaunted": {"freq": 0.275, "syllables": 3}, "Untamed": {"freq": 0.647, "syllables": 3}, "Valiant": {"freq": 2.471, "syllables": 2}, "Valorous": {"freq": 0.059, "syllables": 3}, "Vaulting": {"freq": 0.216, "syllables": 2}, "Vivid": {"freq": 2.039, "syllables": 2}, "Winged": {"freq": 2.391516, "syllables": 1}}}, {"id": "winds", "name": "Winds and weather", "lang": "en", "role": "word", "position": "any", "provisional": true, "words": ["Airstream", "Antitrade", "Bise", "Blizzard", "Bluster", "Boreas", "Chinook", "Crosswind", "Cyclone", "Doldrums", "Downdraft", "Easterly", "Firestorm", "Foehn", "Gust", "Harmattan", "Headwind", "Khamsin", "Levanter", "Mistral", "Monsoon", "Norther", "Northerly", "Sandstorm", "Simoom", "Sirocco", "Sleet", "Southerly", "Squall", "Tailwind", "Tempest", "Thermal", "Tornado", "Tramontane", "Typhoon", "Updraft", "Virga", "Wester", "Westerly", "Whirlwind", "Zephyr"], "source": "datamuse+wordnet:recipes/winds.json", "stats": {"Airstream": {"freq": 0.188978, "syllables": 2}, "Antitrade": {"freq": 0, "syllables": 3}, "Bise": {"freq": 0, "syllables": 1}, "Blizzard": {"freq": 0.882223, "syllables": 2}, "Bluster": {"freq": 0.196, "syllables": 2}, "Boreas": {"freq": 0.130117, "syllables": 3}, "Chinook": {"freq": 0.446909, "syllables": 2}, "Crosswind": {"freq": 0.082974, "syllables": 2}, "Cyclone": {"freq": 0.471, "syllables": 2}, "Doldrums": {"freq": 0.264329, "syllables": 2}, "Downdraft": {"freq": 0.02, "syllables": 2}, "Easterly": {"freq": 0.807994, "syllables": 3}, "Firestorm": {"freq": 0.151721, "syllables": 2}, "Foehn": {"freq": 0.030233, "syllables": 1}, "Gust": {"freq": 0.978147, "syllables": 1}, "Harmattan": {"freq": 0.196351, "syllables": 3}, "Headwind": {"freq": 0.055083, "syllables": 2}, "Khamsin": {"freq": 0, "syllables": 2}, "Levanter": {"freq": 0, "syllables": 3}, "Mistral": {"freq": 0.118, "syllables": 2}, "Monsoon": {"freq": 1.834596, "syllables": 2}, "Norther": {"freq": 0.072973, "syllables": 2}, "Northerly": {"freq": 0.059, "syllables": 3}, "Sandstorm": {"freq": 0.824, "syllables": 2}, "Simoom": {"freq": 0.01653, "syllables": 2}, "Sirocco": {"freq": 0.098, "syllables": 3}, "Sleet": {"freq": 0.458721, "syllables": 1}, "Southerly": {"freq": 0.70989, "syllables": 3}, "Squall": {"freq": 0.42368, "syllables": 1}, "Tailwind": {"freq": 0.034415, "syllables": 2}, "Tempest": {"freq": 0.706, "syllables": 2}, "Thermal": {"freq": 2.196, "syllables": 2}, "Tornado": {"freq": 2.549, "syllables": 3}, "Tramontane": {"freq": 0, "syllables": 3}, "Typhoon": {"freq": 1.471, "syllables": 2}, "Updraft": {"freq": 0.157, "syllables": 2}, "Virga": {"freq": 0.049359, "syllables": 2}, "Wester": {"freq": 0.182953, "syllables": 2}, "Westerly": {"freq": 0.946732, "syllables": 3}, "Whirlwind": {"freq": 0.961, "syllables": 2}, "Zephyr": {"freq": 0.251485, "syllables": 2}}}];
+const DEFAULT_WORN = "apex\naurora\nblaze\ncelestial\ncrystal\ncyber\ndream\necho\neclipse\nember\neternal\nfrost\ninfinity\nlegend\nluna\nmoon\nmystic\nneon\nnebula\nnova\nphoenix\nquantum\nshadow\nsolar\nspirit\nstar\nstorm\nsun\nthunder\ntitan\nvortex\nwhisper\nzenith";
+const DEFAULT_EXCLUDED = "# Nombres de especie actuales del juego\nPeregrina\nCernícala\nCaracara\nGerifalte\nEsmerejona\nAguilucha";
+
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k, fallback) { try { const v = localStorage.getItem("falconess-names:v3:" + k); return v === null ? fallback : JSON.parse(v); } catch { return fallback; } },
+  set(k, v) { try { localStorage.setItem("falconess-names:v3:" + k, JSON.stringify(v)); } catch { /* sin almacenamiento: sigue en memoria */ } },
+};
+const clone = (x) => JSON.parse(JSON.stringify(x));
+
+/* Fuente de datos: la base del artefacto (db) cuando está; si no, este navegador. */
+let db = null;            // namespace de la capacidad db, o null
+let dbLive = false;       // ya respondió la base al menos una vez
+let readOnly = false;     // el visitante no puede escribir datos compartidos
+let worlds = store.get("worlds", clone(DEFAULT_WORLDS));
+let favs = store.get("favs", []);
+let order = "fixed";
+let rankOn = true;
+let current = { names: [], opts: null };
+let activeWorld = worlds[0]?.id;
+let editorDirty = false;  // no pisar el editor mientras alguien escribe
+
+function sortWorlds() { worlds.sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0)); }
+function sortFavs() { favs.sort((x, y) => (x.at ?? 0) - (y.at ?? 0)); }
+
+function setStatus(kind, text) {
+  $("db-status").dataset.kind = kind;
+  $("db-status-text").textContent = text;
+}
+
+function fillSelects() {
+  const keep = { a: $("a").value, b: $("b").value, house: $("house").value };
+  const opt = (v, t) => `<option value="${esc(v)}">${esc(t)}</option>`;
+  const all = worlds.map((w) => opt(w.id, w.id)).join("");
+  $("a").innerHTML = opt("any", "Cualquiera") + all;
+  $("b").innerHTML = opt("any", "Cualquiera") + all;
+  $("house").innerHTML = opt("", "Sin casa") + worlds.filter((w) => w.role === "house").map((w) => opt(w.id, `${w.id} · ${w.name}`)).join("");
+  for (const k of ["a", "b", "house"]) if ([...$(k).options].some((o) => o.value === keep[k])) $(k).value = keep[k];
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+function lines(text) { return text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith("#")); }
+function posInt(v) { const n = Number(v); return v !== "" && Number.isInteger(n) && n > 0 ? n : undefined; }
+function favId(name) { return normalize(name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "x"; }
+
+function readOpts() {
+  const house = $("house").value || undefined;
+  return {
+    seed: $("seed").value.trim() || "1",
+    count: Math.min(posInt($("n").value) ?? 30, 500),
+    a: $("a").value === "any" ? undefined : $("a").value,
+    b: $("b").value === "any" ? undefined : $("b").value,
+    house,
+    maxChars: posInt($("maxChars").value) ?? (house ? 26 : 16),
+    maxWords: posInt($("maxWords").value),
+    order,
+    excluded: lines($("excluded").value),
+    rank: rankOn
+      ? { worn: lines($("worn").value), alliteration: $("alliteration").value, maxRepeat: posInt($("maxRepeat").value) ?? 2, favorites: $("useFavs").checked ? favs.map((f) => f.name) : [] }
+      : undefined,
+  };
+}
+
+function saveForm() {
+  store.set("form", { a: $("a").value, b: $("b").value, house: $("house").value, n: $("n").value, seed: $("seed").value, maxChars: $("maxChars").value, maxWords: $("maxWords").value, excluded: $("excluded").value, worn: $("worn").value, alliteration: $("alliteration").value, maxRepeat: $("maxRepeat").value, explain: $("explain").checked, useFavs: $("useFavs").checked, order, rankOn });
+}
+
+function run() {
+  const opts = readOpts();
+  saveForm();
+  let result;
+  try { result = generateNames(worlds, opts); }
+  catch (e) { $("warn").textContent = e.message; $("warn").hidden = false; $("list").innerHTML = ""; $("meta").textContent = ""; current = { names: [], opts }; return; }
+  current = { names: result.names, opts };
+  const favNote = opts.rank && opts.rank.favorites.length ? ` · ${opts.rank.favorites.length} favoritos pesan` : "";
+  $("meta").textContent = `${result.names.length} nombres · semilla ${opts.seed} · máx. ${opts.maxChars} car. · ${result.attempts} sorteos${opts.rank ? " · por puntaje" : ""}${favNote}`;
+  $("warn").hidden = !result.exhausted;
+  if (result.exhausted) $("warn").textContent = `Salieron ${result.names.length} de ${opts.count} después de ${result.attempts} sorteos. Aflojá los filtros (más caracteres, menos excluidos) o sumá palabras a los mundos.`;
+  renderList();
+}
+
+function renderList() {
+  const favSet = new Set(favs.map((f) => f.name));
+  $("list").innerHTML = current.names.map((n, i) => {
+    const on = favSet.has(n.name);
+    return `<li class="plate${on ? " is-fav" : ""}">
+      <span class="gate">${i + 1}</span>
+      <div class="body">${n.house ? `<div class="house">${esc(n.house)}</div>` : ""}
+        <div class="name">${esc(n.house ? `${n.first} ${n.second}` : n.name)}</div>
+        <div class="src"><span>${esc(n.firstWorld)} + ${esc(n.secondWorld)}</span>${n.score === undefined ? "" : `<span class="pts${n.score < 3 ? " low" : ""}">${n.score > 0 ? "+" : ""}${n.score} pts</span>`}</div>
+        ${$("explain").checked && n.reasons ? `<div class="why">${n.reasons.map((r) => `${esc(r.rule)} ${r.points > 0 ? "+" : ""}${r.points}`).join(" · ")}</div>` : ""}</div>
+      <button type="button" class="star" data-i="${i}" aria-pressed="${on}" ${readOnly ? "disabled" : ""} aria-label="${on ? "Quitar de" : "Agregar a"} favoritos: ${esc(n.name)}">★</button>
+    </li>`;
+  }).join("");
+}
+
+function renderFavs() {
+  $("fav-count").textContent = favs.length ? `· ${favs.length}` : "";
+  $("fav-empty").hidden = favs.length > 0;
+  $("favs").innerHTML = favs.map((f) => `<li>${esc(f.name)} ${readOnly ? "" : `<button type="button" data-del="${esc(f.name)}" aria-label="Quitar ${esc(f.name)}">quitar</button>`}</li>`).join("");
+  const local = store.get("favs", []);
+  const canMigrate = db && dbLive && !readOnly && favs.length === 0 && local.length > 0;
+  $("migrate-favs").hidden = !canMigrate;
+  if (canMigrate) $("migrate-favs").textContent = `Subir ${local.length} favoritos guardados en este navegador`;
+}
+
+/* ---------- escrituras: una por documento, solo cuando algo cambió ---------- */
+function writeFailed(e) {
+  if (e && e.code === "invalid_argument") {
+    readOnly = true;
+    setStatus("ro", "Solo lectura: podés generar nombres, pero no guardar cambios en la base.");
+    renderList(); renderFavs(); renderEditor();
+  } else if (e && e.code === "quota_exceeded") {
+    toast("La base está llena: borrá favoritos o mundos que no uses.");
+  } else {
+    toast("No se pudo guardar. Probá de nuevo en un momento.");
+  }
+}
+function worldDoc(w) {
+  const out = { name: w.name, lang: w.lang, role: w.role, position: w.position ?? "any", provisional: !!w.provisional, words: w.words };
+  if (w.source) out.source = w.source;
+  const stats = Object.fromEntries(Object.entries(w.stats ?? {}).filter(([k]) => w.words.includes(k)));
+  if (Object.keys(stats).length) out.stats = stats;
+  return out;
+}
+async function saveWorld(w) {
+  if (db && dbLive) { try { await db.doc("worlds/" + w.id).set(worldDoc(w)); } catch (e) { writeFailed(e); } }
+  else store.set("worlds", worlds);
+}
+async function removeWorld(id) {
+  if (db && dbLive) { try { await db.doc("worlds/" + id).delete(); } catch (e) { writeFailed(e); } }
+  else store.set("worlds", worlds);
+}
+async function saveLists() {
+  if (db && dbLive && !readOnly) { try { await db.doc("config/lists").set({ excluded: $("excluded").value, worn: $("worn").value }); } catch (e) { writeFailed(e); } }
+}
+async function toggleFav(n) {
+  if (readOnly) return;
+  const on = favs.some((f) => f.name === n.name);
+  const doc = { name: n.name, first: n.first, second: n.second, house: n.house ?? "", firstWorld: n.firstWorld, secondWorld: n.secondWorld, score: n.score ?? null, at: Date.now() };
+  if (db && dbLive) {
+    try { if (on) await db.doc("favorites/" + favId(n.name)).delete(); else await db.doc("favorites/" + favId(n.name)).set(doc); }
+    catch (e) { writeFailed(e); }
+    return; // la suscripción trae el cambio
+  }
+  favs = on ? favs.filter((f) => f.name !== n.name) : [...favs, doc];
+  store.set("favs", favs);
+  renderList(); renderFavs();
+}
+async function removeFav(name) {
+  if (db && dbLive) { try { await db.doc("favorites/" + favId(name)).delete(); } catch (e) { writeFailed(e); } return; }
+  favs = favs.filter((f) => f.name !== name); store.set("favs", favs); renderFavs(); renderList();
+}
+
+function csvCell(v) { return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }
+function toCsv(list, fav) {
+  const head = "favorite,name,house,first,second,first_world,second_world,score";
+  const favSet = new Set(favs.map((f) => f.name));
+  return [head, ...list.map((n) => [fav || favSet.has(n.name) ? "x" : "", n.name, n.house ?? "", n.first, n.second, n.firstWorld, n.secondWorld, n.score === undefined || n.score === null ? "" : String(n.score)].map(csvCell).join(","))].join("\n") + "\n";
+}
+function toMd(list, title) {
+  const favSet = new Set(favs.map((f) => f.name));
+  return `# ${title}\n\n` + list.map((n) => `- [${favSet.has(n.name) ? "x" : " "}] ${n.name} _(${n.firstWorld} + ${n.secondWorld})_`).join("\n") + "\n";
+}
+function favoritesTxt() {
+  return "# Favorite names, one per line. Each word in them earns +1 when it shows up again in a ranked list.\n# Exported from the Gatera de nombres page (its shared favorites); edit by hand if you like.\n" + favs.map((f) => f.name).join("\n") + (favs.length ? "\n" : "");
+}
+function cliCommand(o) {
+  const q = (s) => (/^[\w.:-]+$/.test(s) ? s : `'${s.replace(/'/g, "'\\''")}'`);
+  const parts = ["pnpm names --", "--a", o.a ?? "any", "--b", o.b ?? "any"];
+  if (o.house) parts.push("--house", o.house);
+  parts.push("--n", String(o.count), "--seed", q(o.seed));
+  if ($("maxChars").value) parts.push("--max-chars", String(o.maxChars));
+  if (o.maxWords) parts.push("--max-words", String(o.maxWords));
+  if (o.order === "free") parts.push("--order", "free");
+  if (!o.rank) parts.push("--rank", "off");
+  else {
+    if (o.rank.alliteration !== "neutral") parts.push("--alliteration", o.rank.alliteration);
+    if ($("maxRepeat").value) parts.push("--max-repeat", String(o.rank.maxRepeat));
+    if (!o.rank.favorites.length) parts.push("--favorites", "none");
+  }
+  return parts.join(" ");
+}
+
+let toastTimer;
+function toast(msg) { $("toast").textContent = msg; $("toast").hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $("toast").hidden = true; }, 2200); }
+function copy(text, what) {
+  const done = () => toast(`${what} copiado`);
+  const fallback = () => {
+    const ta = document.createElement("textarea"); ta.value = text; ta.className = "copybox"; ta.readOnly = true;
+    $("warn").hidden = false; $("warn").textContent = "No pude copiar solo. Seleccioná el texto de abajo y copialo:"; $("warn").appendChild(ta); ta.select();
+  };
+  try { navigator.clipboard.writeText(text).then(done, fallback); } catch { fallback(); }
+}
+
+/* ---------- editor de mundos ---------- */
+function renderTabs() {
+  $("tabs").innerHTML = worlds.map((w) => `<button type="button" role="tab" data-w="${esc(w.id)}" aria-selected="${w.id === activeWorld}">${esc(w.id)}${w.role === "house" ? " ⌂" : w.position === "first" ? " ¹" : w.position === "second" ? " ²" : ""}</button>`).join("");
+  renderEditor();
+}
+function worldErrors(w) {
+  const errs = [], seen = new Set();
+  for (const word of w.words) { const k = normalize(word); if (seen.has(k)) errs.push(`«${word}» está repetida.`); seen.add(k); }
+  if (w.words.length === 0) errs.push("Necesita al menos una palabra.");
+  return errs;
+}
+function worldJson(w) {
+  const d = worldDoc(w); const out = { name: d.name, lang: d.lang };
+  if (d.role === "house") out.role = "house";
+  if (d.position !== "any") out.position = d.position;
+  if (d.provisional) out.provisional = true;
+  if (d.source) out.source = d.source;
+  out.words = d.words;
+  if (d.stats) out.stats = d.stats;
+  return JSON.stringify(out, null, 2) + "\n";
+}
+function renderEditor() {
+  if (editorDirty) return;
+  const w = worlds.find((x) => x.id === activeWorld);
+  if (!w) { $("editor").innerHTML = '<p class="empty wide">No hay mundos. Creá uno con «Nuevo mundo».</p>'; return; }
+  const errs = worldErrors(w);
+  const dis = readOnly ? "disabled" : "";
+  $("editor").innerHTML = `
+    <div class="field"><label for="w-name">Nombre</label><input id="w-name" value="${esc(w.name)}" ${dis}></div>
+    <div class="field"><label for="w-lang">Idioma</label><input id="w-lang" class="mono" value="${esc(w.lang)}" ${dis}></div>
+    <div class="field"><label for="w-role">Tipo</label><select id="w-role" ${dis}><option value="word">Palabras</option><option value="house">Casa (prefijo)</option></select></div>
+    <div class="field"><label for="w-pos">Lugar en el nombre</label><select id="w-pos" ${dis}><option value="any">Cualquiera</option><option value="first">Primera palabra</option><option value="second">Segunda palabra</option></select></div>
+    <div class="field wide"><label for="w-words">Palabras (${w.words.length}) · una por línea${w.source ? ` · fuente ${esc(w.source)}` : ""} ${w.provisional ? '<span class="chip">provisorio</span>' : ""}</label><textarea id="w-words" rows="8" ${dis}>${esc(w.words.join("\n"))}</textarea></div>
+    ${errs.length ? `<p class="err wide">${errs.map(esc).join(" ")}</p>` : ""}
+    <div class="actions wide">
+      <button type="button" id="w-copy">Copiar JSON (${esc(w.id)}.json)</button>
+      <label class="lbl" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="w-prov" style="width:auto" ${w.provisional ? "checked" : ""} ${dis}> Provisorio</label>
+      ${readOnly ? "" : '<button type="button" id="w-del">Borrar mundo</button>'}
+    </div>`;
+  $("w-role").value = w.role;
+  $("w-pos").value = w.position ?? "any";
+  const commit = () => {
+    editorDirty = false;
+    w.name = $("w-name").value.trim() || w.id;
+    w.lang = $("w-lang").value.trim() || "en";
+    w.role = $("w-role").value;
+    w.position = $("w-pos").value;
+    w.provisional = $("w-prov").checked;
+    w.words = $("w-words").value.split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean);
+    fillSelects();
+    saveWorld(w);
+  };
+  for (const id of ["w-name", "w-lang", "w-words"]) $(id).addEventListener("input", () => { editorDirty = true; });
+  for (const id of ["w-name", "w-lang"]) $(id).addEventListener("change", commit);
+  $("w-role").addEventListener("change", () => { commit(); renderTabs(); });
+  $("w-pos").addEventListener("change", () => { commit(); run(); });
+  $("w-prov").addEventListener("change", () => { commit(); renderEditor(); });
+  $("w-words").addEventListener("change", () => { commit(); renderEditor(); });
+  $("w-copy").addEventListener("click", () => copy(worldJson(w), "JSON"));
+  $("w-del")?.addEventListener("click", (ev) => {
+    const btn = ev.currentTarget;
+    if (btn.dataset.confirm !== "1") { btn.dataset.confirm = "1"; btn.textContent = `¿Borrar ${w.id}? Tocá de nuevo`; return; }
+    worlds = worlds.filter((x) => x !== w); activeWorld = worlds[0]?.id;
+    fillSelects(); renderTabs(); removeWorld(w.id);
+  });
+}
+
+/* ---------- eventos ---------- */
+$("form").addEventListener("submit", (e) => { e.preventDefault(); run(); });
+$("next-seed").addEventListener("click", () => {
+  const s = $("seed").value.trim(); const n = Number(s);
+  $("seed").value = /^\d+$/.test(s) ? String(n + 1) : `${s}1`; run();
+});
+for (const [id, val] of [["order-fixed", "fixed"], ["order-free", "free"]]) {
+  $(id).addEventListener("click", () => { order = val; $("order-fixed").setAttribute("aria-pressed", val === "fixed"); $("order-free").setAttribute("aria-pressed", val === "free"); run(); });
+}
+for (const id of ["a", "b", "house", "alliteration", "explain", "useFavs"]) $(id).addEventListener("change", run);
+for (const id of ["excluded", "worn"]) $(id).addEventListener("change", () => { saveLists(); run(); });
+for (const [id, val] of [["rank-on", true], ["rank-off", false]]) {
+  $(id).addEventListener("click", () => { rankOn = val; $("rank-on").setAttribute("aria-pressed", val); $("rank-off").setAttribute("aria-pressed", !val); run(); });
+}
+$("list").addEventListener("click", (e) => { const b = e.target.closest(".star"); if (b) toggleFav(current.names[Number(b.dataset.i)]); });
+$("favs").addEventListener("click", (e) => { const b = e.target.closest("[data-del]"); if (b) removeFav(b.dataset.del); });
+$("copy-md").addEventListener("click", () => copy(toMd(current.names, `Names (seed ${current.opts?.seed ?? ""})`), "Markdown"));
+$("copy-csv").addEventListener("click", () => copy(toCsv(current.names, false), "CSV"));
+$("copy-cli").addEventListener("click", () => current.opts && copy(cliCommand(current.opts), "Comando"));
+$("copy-favs").addEventListener("click", () => copy(toCsv(favs, true), "CSV de favoritos"));
+$("copy-favs-txt").addEventListener("click", () => copy(favoritesTxt(), "favorites.txt"));
+$("migrate-favs").addEventListener("click", async (ev) => {
+  const btn = ev.currentTarget; btn.disabled = true;
+  for (const f of store.get("favs", [])) {
+    try { await db.doc("favorites/" + favId(f.name)).set({ ...f, at: f.at ?? Date.now() }); } catch (e) { writeFailed(e); break; }
+  }
+  btn.disabled = false;
+});
+$("clear-favs").addEventListener("click", async (ev) => {
+  const btn = ev.currentTarget;
+  if (!favs.length || readOnly) return;
+  if (btn.dataset.confirm !== "1") { btn.dataset.confirm = "1"; btn.textContent = "¿Seguro? Tocá de nuevo"; setTimeout(() => { btn.dataset.confirm = ""; btn.textContent = "Vaciar"; }, 3000); return; }
+  btn.dataset.confirm = ""; btn.textContent = "Vaciar";
+  if (db && dbLive) { for (const f of [...favs]) { try { await db.doc("favorites/" + favId(f.name)).delete(); } catch (e) { writeFailed(e); break; } } }
+  else { favs = []; store.set("favs", favs); renderFavs(); renderList(); }
+});
+$("tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-w]"); if (b) { editorDirty = false; activeWorld = b.dataset.w; renderTabs(); } });
+$("new-world").addEventListener("click", () => {
+  if (readOnly) return;
+  let i = 1; while (worlds.some((w) => w.id === `mundo-${i}`)) i++;
+  const id = `mundo-${i}`;
+  const w = { id, name: `Nuevo mundo ${i}`, lang: "en", role: "word", provisional: true, words: ["Alpha", "Beta"] };
+  worlds.push(w); sortWorlds(); activeWorld = id; editorDirty = false; fillSelects(); renderTabs(); saveWorld(w);
+  toast(`Creado ${id}: cambiale las palabras`);
+});
+$("reset-worlds").addEventListener("click", async (ev) => {
+  if (readOnly) return;
+  const btn = ev.currentTarget;
+  if (btn.dataset.confirm !== "1") { btn.dataset.confirm = "1"; btn.textContent = "¿Pisar los mundos guardados? Tocá de nuevo"; setTimeout(() => { btn.dataset.confirm = ""; btn.textContent = "Restaurar mundos del repo"; }, 3000); return; }
+  btn.dataset.confirm = ""; btn.textContent = "Restaurar mundos del repo";
+  const stale = worlds.filter((w) => !DEFAULT_WORLDS.some((d) => d.id === w.id)).map((w) => w.id);
+  worlds = clone(DEFAULT_WORLDS); activeWorld = worlds[0].id; editorDirty = false; fillSelects(); renderTabs(); run();
+  if (db && dbLive) {
+    for (const w of worlds) { try { await db.doc("worlds/" + w.id).set(worldDoc(w)); } catch (e) { writeFailed(e); return; } }
+    for (const id of stale) { try { await db.doc("worlds/" + id).delete(); } catch (e) { writeFailed(e); return; } }
+  } else store.set("worlds", worlds);
+});
+
+/* ---------- conexión con la base del artefacto ---------- */
+async function connect() {
+  setStatus("wait", "Conectando con la base del artefacto…");
+  db = (await window.claude?.use?.("db")) ?? null;
+  if (!db) { setStatus("local", "Sin base: los cambios quedan solo en este navegador."); return; }
+  const user = await window.claude?.use?.("user");
+  if (user && (await user.can("data.write")) === false) readOnly = true;
+
+  let answered = false;
+  const timer = setTimeout(() => { if (!answered) setStatus("wait", "No puedo llegar a la base todavía. Mientras tanto ves los mundos del repo."); }, 10000);
+  const live = () => {
+    if (answered) return;
+    answered = true; dbLive = true; clearTimeout(timer);
+    setStatus(readOnly ? "ro" : "live", readOnly ? "Solo lectura: podés generar nombres, pero no guardar cambios." : "Guardado en la base del artefacto: mundos y favoritos se comparten entre tus dispositivos.");
+    renderList(); renderFavs(); renderEditor();
+  };
+  const dead = (e) => { clearTimeout(timer); if (e && e.code !== "revoked") setStatus("local", "Se cortó la conexión con la base. Recargá la página para volver a intentar."); };
+
+  db.collection("worlds").onSnapshot((snap) => {
+    if (snap.metadata.fromCache && snap.empty) return;
+    if (!snap.metadata.fromCache) live();
+    if (snap.empty) { worlds = clone(DEFAULT_WORLDS); $("worlds-note").hidden = false; }
+    else { worlds = snap.docs.map((d) => ({ id: d.id, ...d.data() })); $("worlds-note").hidden = true; }
+    sortWorlds();
+    if (!worlds.some((w) => w.id === activeWorld)) activeWorld = worlds[0]?.id;
+    fillSelects(); renderTabs(); run();
+  }, dead);
+  db.collection("favorites").onSnapshot((snap) => {
+    if (!snap.metadata.fromCache) live();
+    favs = snap.docs.map((d) => d.data()); sortFavs();
+    renderFavs(); renderList();   // no regenera la lista: la estrella no se mueve al tocarla
+  }, dead);
+  db.doc("config/lists").onSnapshot((snap) => {
+    if (!snap.metadata.fromCache) live();
+    if (!snap.exists) return;
+    const d = snap.data();
+    let changed = false;
+    for (const k of ["excluded", "worn"]) if (typeof d[k] === "string" && document.activeElement !== $(k) && $(k).value !== d[k]) { $(k).value = d[k]; changed = true; }
+    if (changed) run();
+  }, dead);
+}
+
+/* ---------- arranque: winds + alloys, semilla 1, como el ejemplo de docs/commands.md ---------- */
+sortWorlds();
+fillSelects();
+const f = store.get("form", null);
+$("excluded").value = DEFAULT_EXCLUDED;
+$("worn").value = DEFAULT_WORN;
+if (f) {
+  for (const k of ["a", "b", "house", "n", "seed", "maxChars", "maxWords", "excluded", "worn", "alliteration", "maxRepeat"]) if (f[k] !== undefined && $(k)) { $(k).value = f[k]; }
+  $("explain").checked = !!f.explain;
+  if (f.useFavs === false) $("useFavs").checked = false;
+  if (f.rankOn === false) { rankOn = false; $("rank-on").setAttribute("aria-pressed", "false"); $("rank-off").setAttribute("aria-pressed", "true"); }
+  if (f.order === "free") { order = "free"; $("order-fixed").setAttribute("aria-pressed", "false"); $("order-free").setAttribute("aria-pressed", "true"); }
+  if ($("a").value === "") $("a").value = "any";
+  if ($("b").value === "") $("b").value = "any";
+} else { $("a").value = "winds"; $("b").value = "alloys"; }
+renderFavs();
+renderTabs();
+run();
+connect();
+</script>

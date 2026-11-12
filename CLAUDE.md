@@ -43,6 +43,7 @@ docs/ROADMAP.md. Leer ambos antes de cualquier tarea de diseño o de balance.
 
 pnpm typecheck · pnpm test · pnpm test:golden · pnpm content:validate · pnpm sim -- --seed 42
 pnpm play -- --seed 42 · pnpm sim:batch -- --runs 10000 · pnpm lint
+pnpm names -- --a winds --b alloys --n 30 --seed 1 · pnpm names:import -- --all (herramienta de nombres; ver docs/commands.md)
 
 ## Lecciones aprendidas
 
@@ -52,3 +53,9 @@ pnpm play -- --seed 42 · pnpm sim:batch -- --runs 10000 · pnpm lint
 - `structuredClone` no está en `lib: ES2022`; `packages/sim` clona el estado con JSON porque el estado es el formato de guardado.
 - Las ganancias de entrenamiento 8–14 del brief dejan la temporada en ~135 por stat con 48 turnos; la base inicial recalibrada es 44–76 (ver docs/formulas.md).
 - El RNG por input se deriva de `seed/inputsApplied`: el estado no carga RNG y la reproducción es trivial.
+- Las herramientas de desarrollo que necesitan azar usan `new Rng("<herramienta>:<semilla>")` con un stream existente; no se agregan streams del juego a `packages/rng` por ellas.
+- Datamuse (`rel_gen`) mezcla sentidos de la palabra consultada: toda receta de nombres se revisa con `--dry-run --show-dropped` y se poda con `deny` antes de escribir el mundo.
+- WordNet se cita por sentido (`wind.n.01`), no por palabra: `pnpm names:import -- --senses <palabra>` antes de elegir la raíz de una receta; los términos raros de WordNet no figuran en SUBTLEX y llegan con frecuencia desconocida.
+- La página de nombres guarda mundos y favoritos en la base del artefacto, no en el repo: sincronizar a mano con Claude (ver docs/commands.md) y republicar la página cuando cambian los mundos del repo.
+- Adjetivos y colores van primero en un nombre: los mundos que los traen llevan `position: "first"`; las recetas de adjetivos y verbos necesitan `includeRoots` para no perder la palabra raíz.
+- La fuente de la página de nombres es `apps/cli/names/page/gatera.html`; `page.test.ts` falla si su copia del generador o de los mundos se separa del repo. Se republica pasando la URL del artefacto.

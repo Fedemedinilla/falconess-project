@@ -1,0 +1,39 @@
+{
+  "name": "Clouds and constellations",
+  "lang": "en",
+  "queries": ["rel_gen=cloud", "rel_gen=star", "rel_gen=constellation"],
+  "wordnet": {
+    "roots": ["cloud.n.02", "star.n.03", "constellation.n.02"],
+    "depth": 2
+  },
+  "maxFreq": 3,
+  "deny": [
+    "Aerosol",
+    "Argo",
+    "Aries",
+    "Capricorn",
+    "Centaur",
+    "Crater",
+    "Gemini",
+    "Harlequin",
+    "Hercules",
+    "Hexagram",
+    "Idol",
+    "Indus",
+    "Libra",
+    "Lupus",
+    "Mushroom",
+    "Nebule",
+    "Pentacle",
+    "Pentagram",
+    "Pisces",
+    "Scorpio",
+    "Scorpius",
+    "Sculptor",
+    "Speckle",
+    "Starlet",
+    "Stipple",
+    "Taurus",
+    "Virgo"
+  ]
+}

@@ -43,6 +43,16 @@ importers:
       "@falconess/sim":
         specifier: workspace:*
         version: link:../../packages/sim
+    devDependencies:
+      cmu-pronouncing-dictionary:
+        specifier: 3.0.0
+        version: 3.0.0
+      subtlex-word-frequencies:
+        specifier: 2.0.0
+        version: 2.0.0
+      wordnet-db:
+        specifier: 3.1.14
+        version: 3.1.14
 
   packages/content:
     dependencies:
@@ -628,6 +638,12 @@ packages:
       }
     engines: { node: ">=18" }
 
+  cmu-pronouncing-dictionary@3.0.0:
+    resolution:
+      {
+        integrity: sha512-6y5X4OxsYFnHERo6WSVPnLrk53G07MOQ8aUb2z555JgwynpbZsHR0a//WdN6DUcmE1j2auTF2TtL4PpoKze8QQ==,
+      }
+
   detect-libc@2.1.2:
     resolution:
       {
@@ -863,6 +879,12 @@ packages:
         integrity: sha512-OtU/EgQ1kIm5KwqQpBC6ZEMXrZRui11w8zgfTWp8cdO9B8OaPsbA8bTHO2P+HNo1VlUTGMVBwPhydu6poeXiag==,
       }
 
+  subtlex-word-frequencies@2.0.0:
+    resolution:
+      {
+        integrity: sha512-N/8uDDV4zD+PZNOCKvhBfOfSQo2CAKb/icKRsWQpRBNw9nh0Pt+Pt/fQIRaEpaawVIPSlyTekf9zHX/zQi0+Yg==,
+      }
+
   tinybench@6.2.2:
     resolution:
       {
@@ -1003,6 +1025,13 @@ packages:
       }
     engines: { node: ">=20.11" }
     hasBin: true
+
+  wordnet-db@3.1.14:
+    resolution:
+      {
+        integrity: sha512-zVyFsvE+mq9MCmwXUWHIcpfbrHHClZWZiVOzKSxNJruIcFn2RbY55zkhiAMMxM8zCVSmtNiViq8FsAZSFpMYag==,
+      }
+    engines: { node: ">=0.6.0" }
 
   zod@4.6.7:
     resolution:
@@ -1218,6 +1247,8 @@ snapshots:
 
   chai@6.3.0: {}
 
+  cmu-pronouncing-dictionary@3.0.0: {}
+
   detect-libc@2.1.2: {}
 
   es-module-lexer@2.3.2: {}
@@ -1362,6 +1393,8 @@ snapshots:
 
   std-env@4.3.0: {}
 
+  subtlex-word-frequencies@2.0.0: {}
+
   tinybench@6.2.2: {}
 
   tinyexec@1.3.1: {}
@@ -1416,5 +1449,7 @@ snapshots:
       - msw
 
   why-is-node-running@3.2.1: {}
+
+  wordnet-db@3.1.14: {}
 
   zod@4.6.7: {}

@@ -1,0 +1,265 @@
+{
+  "name": "Clouds and constellations",
+  "lang": "en",
+  "provisional": true,
+  "source": "datamuse+wordnet:recipes/clouds.json",
+  "words": [
+    "Antlia",
+    "Apus",
+    "Aquila",
+    "Ara",
+    "Auriga",
+    "Bootes",
+    "Caelum",
+    "Carina",
+    "Centaurus",
+    "Cepheus",
+    "Cetus",
+    "Chamaeleon",
+    "Charioteer",
+    "Circinus",
+    "Cirrus",
+    "Columba",
+    "Contrail",
+    "Corvus",
+    "Crux",
+    "Cumulus",
+    "Cygnus",
+    "Delphinus",
+    "Dorado",
+    "Draco",
+    "Fornax",
+    "Grus",
+    "Hydra",
+    "Lepus",
+    "Lodestar",
+    "Lyra",
+    "Mensa",
+    "Musca",
+    "Nimbus",
+    "Octans",
+    "Ophiuchus",
+    "Orion",
+    "Pavo",
+    "Pegasus",
+    "Perseus",
+    "Pictor",
+    "Pollux",
+    "Puppis",
+    "Pyxis",
+    "Regulus",
+    "Sagitta",
+    "Serpens",
+    "Spica",
+    "Stratus",
+    "Triangulum",
+    "Vela",
+    "Volans"
+  ],
+  "stats": {
+    "Antlia": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Apus": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Aquila": {
+      "freq": 0.353,
+      "syllables": 3
+    },
+    "Ara": {
+      "freq": 0.196,
+      "syllables": 2
+    },
+    "Auriga": {
+      "freq": 0.033813,
+      "syllables": 3
+    },
+    "Bootes": {
+      "freq": 0.042414,
+      "syllables": 1
+    },
+    "Caelum": {
+      "freq": 0.02,
+      "syllables": 2
+    },
+    "Carina": {
+      "freq": 0.216,
+      "syllables": 3
+    },
+    "Centaurus": {
+      "freq": 0.067201,
+      "syllables": 3
+    },
+    "Cepheus": {
+      "freq": 0.034042,
+      "syllables": 3
+    },
+    "Cetus": {
+      "freq": 0.059,
+      "syllables": 2
+    },
+    "Chamaeleon": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Charioteer": {
+      "freq": 0.039,
+      "syllables": 3
+    },
+    "Circinus": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Cirrus": {
+      "freq": 0.340369,
+      "syllables": 2
+    },
+    "Columba": {
+      "freq": 0.059,
+      "syllables": 3
+    },
+    "Contrail": {
+      "freq": 0.027399,
+      "syllables": 2
+    },
+    "Corvus": {
+      "freq": 0.097862,
+      "syllables": 2
+    },
+    "Crux": {
+      "freq": 1.184011,
+      "syllables": 1
+    },
+    "Cumulus": {
+      "freq": 0.477839,
+      "syllables": 3
+    },
+    "Cygnus": {
+      "freq": 0.142278,
+      "syllables": 2
+    },
+    "Delphinus": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Dorado": {
+      "freq": 0.784,
+      "syllables": 3
+    },
+    "Draco": {
+      "freq": 0.155019,
+      "syllables": 2
+    },
+    "Fornax": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Grus": {
+      "freq": 0,
+      "syllables": 1
+    },
+    "Hydra": {
+      "freq": 0.57827,
+      "syllables": 2
+    },
+    "Lepus": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Lodestar": {
+      "freq": 0.077733,
+      "syllables": 2
+    },
+    "Lyra": {
+      "freq": 0.229941,
+      "syllables": 2
+    },
+    "Mensa": {
+      "freq": 0.294,
+      "syllables": 2
+    },
+    "Musca": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Nimbus": {
+      "freq": 0.306105,
+      "syllables": 2
+    },
+    "Octans": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Ophiuchus": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Orion": {
+      "freq": 1.015376,
+      "syllables": 3
+    },
+    "Pavo": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Pegasus": {
+      "freq": 0.475818,
+      "syllables": 3
+    },
+    "Perseus": {
+      "freq": 0.602169,
+      "syllables": 3
+    },
+    "Pictor": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Pollux": {
+      "freq": 0.203086,
+      "syllables": 2
+    },
+    "Puppis": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Pyxis": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Regulus": {
+      "freq": 0.165016,
+      "syllables": 3
+    },
+    "Sagitta": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Serpens": {
+      "freq": 0,
+      "syllables": 2
+    },
+    "Spica": {
+      "freq": 0.145945,
+      "syllables": 2
+    },
+    "Stratus": {
+      "freq": 0.146524,
+      "syllables": 2
+    },
+    "Triangulum": {
+      "freq": 0,
+      "syllables": 3
+    },
+    "Vela": {
+      "freq": 0.02,
+      "syllables": 2
+    },
+    "Volans": {
+      "freq": 0,
+      "syllables": 2
+    }
+  }
+}

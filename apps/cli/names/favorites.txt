@@ -1,0 +1,5 @@
+# Favorite names, one per line. Each word in them earns +1 when it shows up again in a ranked list.
+# Exported from the Gatera de nombres page (its shared favorites); edit by hand if you like.
+Nichrome Cygnus
+Bronze Contrail
+Babbitt Cetus

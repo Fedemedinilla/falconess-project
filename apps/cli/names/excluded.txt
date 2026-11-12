@@ -1,0 +1,8 @@
+# Names the generator must never propose. One per line; case and accents are ignored.
+# Current species names used in the game:
+Peregrina
+Cernícala
+Caracara
+Gerifalte
+Esmerejona
+Aguilucha
