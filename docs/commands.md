@@ -168,9 +168,19 @@ lo que no corresponde y recién después escribir.
 
 ## Página «Gatera de nombres» y su base de datos
 
-La interfaz es un artefacto de claude.ai (privado del dueño): genera con el mismo código que
-`pnpm names` (misma semilla, mismas opciones y mismos favoritos dan la misma lista) y guarda en la
-base del artefacto:
+La interfaz es un artefacto de claude.ai (privado del dueño), publicado en
+https://claude.ai/artifact/FSPiDn4amt7gNg399bphSS. Su código fuente es
+`apps/cli/names/page/gatera.html`: un solo archivo, sin `<!doctype>` ni `<head>` porque claude.ai
+los agrega al publicar. Para cambiarla, se edita ese archivo y se le pide a Claude que lo republique
+en la misma dirección.
+
+Trae una copia del generador (entre `// GEN-START` y `// GEN-END`) y de los mundos del repo
+(`DEFAULT_WORLDS`, los que se ven sin base). `apps/cli/src/names/page.test.ts` corre ese generador
+contra el de `apps/cli/src/names/` con cinco combinaciones de opciones y compara los mundos: si se
+toca uno sin el otro, o se reimportan mundos sin actualizar la página, `pnpm test` falla.
+
+Genera con el mismo código que `pnpm names` (misma semilla, mismas opciones y mismos favoritos dan
+la misma lista) y guarda en la base del artefacto:
 
 | Documento | Qué tiene |
 | --- | --- |
