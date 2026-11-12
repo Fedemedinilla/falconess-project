@@ -52,6 +52,36 @@ accidente como única motivación, el romance con el entrenador, la burla del cu
 7. ¿Qué piensa de Gerifalte?
 8. ¿Qué nunca haría?
 
+## 1b. Ficha de Peregrina (construida con el dueño, 2026-11-12)
+
+Borrador de trabajo: pasa a `docs/characters/peregrina.md` cuando el dueño la apruebe.
+
+- **Quién es para el mundo:** ya es la Falconess modelo. La gente que va a las carreras, los fans,
+  los afiches de Kōryū: todos la ven como la cara del deporte. No tiene que demostrarlo.
+- **Deseo visible:** seguir en el tope. No busca llegar, busca no bajarse nunca. Por eso elige sin
+  pensar la gran carrera Larga del final: es la más importante, y ella va a donde está lo más alto.
+- **Lo que cree (su valor y su grieta, que son lo mismo):** que la velocidad y su talento nato pueden
+  con todo. No es así, y no lo sabe.
+- **Cómo se nota:** hace todo rápido, es torpe y apurada, va corriendo a todos lados. Paciencia cero.
+- **Su comedia:** intentar ir lento o esperar algo. No le sale.
+- **Voz:**
+  - Al principio, relajada y despreocupada («mientras sea rápida, todo va a estar bien»), formal y
+    con jerga de piloto con el entrenador.
+  - Cuando empieza a valorar el entrenamiento y las decisiones del entrenador, pasa al vos y se
+    anima a probar entrenamientos distintos.
+- **El arte que ya tiene encaja con ella:** Técnica, aburrida en el banco con el cerebro humeando;
+  Simulador, «¿WTF?» mirándose las manos; Vuelo de riesgo, cara de pánico; Resistencia, decidida
+  en la pileta (el entrenamiento que menos le gusta y el que le habría salvado la Larga).
+- **Final:** pierde la Larga y no llora, no se enfurece, no lo entiende.
+
+### Milana (la rival de la Larga)
+
+- **Especie:** milano real, la rapaz que planea horas sin aletear.
+- **Opuesta a Peregrina:** súper relajada, nunca se apura, aparenta pereza y despreocupación.
+  Referencia de tono: Seiun Sky (como inspiración de carácter, no como copia).
+- **En carrera:** administra cada inhalación y exhalación. Al final pasa a Peregrina como si ella
+  fuera una piedra quieta: Peregrina completamente gastada, Milana con la resistencia casi entera.
+
 ## 2. Estructura decidida (dueño, 2026-11-11)
 
 **Premisa: Ícaro, sin culpa.** Peregrina sube tan alto y tan rápido que se choca con una pista que
