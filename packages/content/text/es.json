@@ -1408,7 +1408,6 @@
   "ui.m.close": "Cerrar",
   "ui.m.continue": "Continuar",
   "ui.m.crew.bond": "Vínculo {n} de {max}",
-  "ui.m.crew.more": "+{n} cuadrilla más",
   "ui.m.end.detail": "Ver el detalle en la vista de pruebas",
   "ui.m.end.new": "Nueva temporada",
   "ui.m.end.race": "Sem. {turn} · {course} · {place}.º o mejor",

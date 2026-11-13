@@ -1408,7 +1408,6 @@
   "ui.m.close": "Close",
   "ui.m.continue": "Continue",
   "ui.m.crew.bond": "Bond {n} of {max}",
-  "ui.m.crew.more": "+{n} more crew",
   "ui.m.end.detail": "See details in the test view",
   "ui.m.end.new": "New season",
   "ui.m.end.race": "W{turn} · {course} · top {place}",

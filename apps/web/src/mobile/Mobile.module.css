@@ -1216,14 +1216,6 @@
   line-height: 24px;
   color: var(--ink);
 }
-.crewp {
-  position: absolute;
-  right: 0;
-  top: 8px;
-  width: 92px;
-  text-align: center;
-  z-index: 1;
-}
 .portrait {
   position: relative;
   width: 60px;
@@ -1281,12 +1273,6 @@
 }
 .seg .segOn {
   background: var(--yel);
-}
-.more {
-  margin-top: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--tx2);
 }
 .stageWarn {
   position: absolute;
@@ -2743,73 +2729,38 @@
 .btnCrews > span + span {
   margin-right: -9px;
 }
-/* 3: a strip of crews over the stats */
-.crewStrip {
-  flex: none;
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 0 2px 6px;
-  scrollbar-width: none;
+/* the result (owner 2026-11-13, option 5): the buttons fade, the stats slide down to the bottom
+   (a transform: the stage and the scene stay put), the crews' cards come into the room left */
+.trainScreen {
+  position: relative;
 }
-.crewChip {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 9px 4px 4px;
-  border-radius: 22px;
-  background: rgb(255 255 255 / 0.92);
-  box-shadow: 0 2px 8px rgb(20 32 43 / 0.18);
+.resultLow .body {
+  overflow: visible;
 }
-.crewChip > span:last-child {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.stripWrap {
+  position: relative;
+  z-index: 2;
 }
-.crewChip b {
-  font-size: 12px;
-  line-height: 14px;
-  white-space: nowrap;
-}
-.crewChip .seg {
-  margin-top: 0;
-  justify-content: flex-start;
-}
-.crewChipSync {
-  background: linear-gradient(180deg, #fff8cf, #ffd36b);
-  box-shadow:
-    0 0 0 2px #ff9a00,
-    0 0 12px 2px rgb(255 170 0 / 0.6);
-}
-/* 4 and 5: the result plays with the stats at the bottom, the stage takes the rest */
-.resultLow .rounds,
-.resultLow .foot {
-  display: none;
-}
-.resultLow .strip {
-  animation: stripDown 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
-}
-@keyframes stripDown {
-  from {
-    transform: translateY(-150px);
-  }
+.stripDown {
+  transform: translateY(var(--drop, 0px));
 }
 .resultLow .stamp {
-  bottom: 58%;
+  bottom: 30%;
 }
 .resultLow .syncStamp {
-  bottom: calc(58% - 46px);
-  font-size: min(34px, 8vw);
+  bottom: calc(30% - 44px);
+  font-size: min(32px, 7.6vw);
   white-space: nowrap;
 }
 /* 5: the crews that trained with her come in, with their bond */
 .crewIn {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 9%;
-  z-index: 2;
+  left: 0;
+  right: 0;
+  /* just over the stats at the bottom and their rising «+N» */
+  bottom: calc(var(--striph, 90px) + 46px);
+  z-index: 3;
+  pointer-events: none;
   display: flex;
   justify-content: center;
   gap: 10px;
@@ -2819,7 +2770,8 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 104px;
+  flex: 0 1 112px;
+  min-width: 0;
   padding: 8px 6px 9px;
   border-radius: 16px;
   background: rgb(255 255 255 / 0.92);

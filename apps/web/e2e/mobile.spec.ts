@@ -975,3 +975,43 @@ test("outing (ADR-0016): she picks the crew, its bond bar shows the sintonía ma
   await settle(page);
   expect(await week(page)).toBe(2);
 });
+
+test("training result (owner 2026-11-13): the stats slide to the bottom, the crews' cards come in", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await startMobile(page, "cernicala");
+  for (let w = 0; w < 12; w++) {
+    await page.click("#m-entrenar");
+    // a training with a crew shows its faces on the button
+    const withCrew = page.locator('[id^="m-entrenar-"]:has(span[aria-hidden="true"] > span)');
+    const ids = await withCrew.evaluateAll((els) =>
+      els.map((e) => e.id).filter((id) => !id.includes("risk")),
+    );
+    if (ids.length === 0) {
+      await page.click("#m-volver");
+      await page.click("#m-descansar");
+      await settle(page);
+      continue;
+    }
+    const id = ids[0] ?? "";
+    await page.click(`#${id}`);
+    await expect(page.locator("#m-cuadrillas")).toBeVisible();
+    const before = await page.locator("#m-stats").boundingBox();
+    await page.click(`#${id}`);
+    const cards = page.locator("#m-resultado-cuadrillas [data-crew]");
+    await expect(cards.first()).toBeVisible();
+    await page.waitForTimeout(700);
+    const after = await page.locator("#m-stats").boundingBox();
+    const view = page.viewportSize();
+    expect(after && before && after.y > before.y + 60).toBe(true);
+    // nothing of the result leaves the screen
+    for (const sel of ["#m-resultado", "#m-resultado-cuadrillas", "#m-stats"]) {
+      const b = await page.locator(sel).boundingBox();
+      expect(b && view && b.x >= 0 && b.x + b.width <= view.width + 1).toBe(true);
+      expect(b && view && b.y + b.height <= view.height + 1).toBe(true);
+    }
+    return;
+  }
+  throw new Error("no crew in twelve weeks");
+});

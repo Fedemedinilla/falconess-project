@@ -7,10 +7,9 @@ import { type RunnerArt, runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type CrewBadge, crewInitials, statCells, type TrainingCard } from "./model";
-import { Pop, StatStrip } from "./Parts";
+import { StatStrip } from "./Parts";
 import { placeScene } from "./sceneLayout";
 import { playPing } from "./sfx";
-import { crewsVariant, resultVariant } from "./uiVariant";
 
 const GLYPH: Readonly<Record<TrainingKind, GlyphName>> = {
   "train:agility": "wind",
@@ -68,17 +67,22 @@ export function resultTimeline(result: TrainResult): {
   const points = result.points > 0 ? next() : undefined;
   const vigor = result.vigor !== 0 ? next() : undefined;
   const bonds = Object.fromEntries(result.bonds.map((b) => [b.manufacturer, next()]));
+  const crewsIn = CREW_IN_MS + CREW_STEP_MS * Math.max(0, result.crews.length - 1) + 450;
   return {
     stats,
     points,
     vigor,
     bonds,
-    end: FIRST_POP_MS + POP_STEP_MS * Math.max(0, i - 1) + HOLD_MS,
+    end: Math.max(FIRST_POP_MS + POP_STEP_MS * Math.max(0, i - 1), crewsIn) + HOLD_MS,
   };
 }
 
 /** When the stamp lands and each «+N» after it, ms. */
 const STAMP_MS = 120;
+/** The stats slide down in `DROP_MS` (Mobile.module.css `.stripDown`); then the crews come in. */
+const DROP_MS = 460;
+const CREW_IN_MS = 80 + DROP_MS;
+const CREW_STEP_MS = 150;
 const FIRST_POP_MS = 520;
 const POP_STEP_MS = 300;
 /** The result stays this long after its last «+N», then the week goes on (a tap goes sooner). */
@@ -109,8 +113,6 @@ export function TrainScreen({
   onResultDone?: () => void;
 }) {
   const art = runnerArt(state.falconessId);
-  const [crewsUi] = useState(crewsVariant);
-  const [resultUi] = useState(resultVariant);
   // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
   const timeline = result ? resultTimeline(result) : undefined;
   const pops = result &&
@@ -143,13 +145,45 @@ export function TrainScreen({
     };
   }, [result]);
   const card = result ? undefined : cards.find((c) => c.kind === selected);
-  const crew = card?.crews[0];
-  const maker = crew && ctx.content.getManufacturer(crew.manufacturer);
   const gains: Partial<Record<StatName, number>> | undefined = card
     ? Object.fromEntries(card.gains.map((g) => [g.stat, g.gain]))
     : undefined;
   const name = (kind: TrainingKind) => ui(`ui.m.train.name.${kind}`);
   const stageRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const footRef = useRef<HTMLDivElement>(null);
+  const roundsRef = useRef<HTMLDivElement>(null);
+  // the result (owner 2026-11-13): the stats slide down to the bottom (a transform: nothing else
+  // moves, the scene stays put) and leave the room above them to the crews' cards
+  const [drop, setDrop] = useState<{ y: number; h: number }>();
+  useLayoutEffect(() => {
+    if (!result) {
+      setDrop(undefined);
+      return;
+    }
+    const strip = stripRef.current?.getBoundingClientRect();
+    const foot = footRef.current?.getBoundingClientRect();
+    const screen = screenRef.current?.getBoundingClientRect();
+    if (!strip || !foot || !screen) return;
+    const y = Math.max(0, Math.round(foot.bottom - strip.bottom));
+    setDrop({ y, h: Math.round(strip.height) });
+    // explicit animations: the result may mount a fresh screen, where a CSS transition has no
+    // «before» to start from
+    if (reducedMotion()) return;
+    stripRef.current?.animate(
+      [{ transform: "translateY(0)" }, { transform: `translateY(${y}px)` }],
+      { duration: DROP_MS, delay: 80, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" },
+    );
+    for (const el of [roundsRef.current, footRef.current])
+      el?.animate(
+        [
+          { opacity: 1, transform: "none" },
+          { opacity: 0, transform: "translateY(18px)" },
+        ],
+        { duration: 240, easing: "ease-in", fill: "both" },
+      );
+  }, [result]);
   const showing = result ? result.kind : selected;
   const active = showing !== undefined && art?.training?.[showing] ? showing : undefined;
   // which way the scene slides in: from the right when the player moved right
@@ -163,7 +197,15 @@ export function TrainScreen({
   }, [selected]);
 
   return (
-    <div className={cx(s.screen, result && resultUi >= 4 && s.resultLow)}>
+    <div
+      className={cx(s.screen, s.trainScreen, result && s.resultLow)}
+      ref={screenRef}
+      style={
+        drop
+          ? ({ "--drop": `${drop.y}px`, "--striph": `${drop.h}px` } as React.CSSProperties)
+          : undefined
+      }
+    >
       <TrainingBackdrop art={art} active={active} dir={dir} stage={stageRef} />
       <div className={s.body}>
         <div className={s.stage} ref={stageRef}>
@@ -211,7 +253,7 @@ export function TrainScreen({
               </div>
             </div>
           )}
-          {card && crewsUi !== 0 && crewsUi !== 3 && card.crews.length > 0 && (
+          {card && card.crews.length > 0 && (
             <div className={s.crewCol} id="m-cuadrillas">
               {card.crews.map((c) => (
                 <div key={c.manufacturer} className={s.crewColRow} data-crew={c.manufacturer}>
@@ -222,103 +264,6 @@ export function TrainScreen({
               ))}
             </div>
           )}
-          {crewsUi === 0 && crew && maker && (
-            <div
-              className={s.crewp}
-              id="m-cuadrilla"
-              data-crew={crew.manufacturer}
-              data-sync={crew.sync}
-            >
-              <div
-                className={cx(s.portrait, crew.sync && s.portraitSync)}
-                style={{ "--bc": maker.palette.primary, "--bc2": maker.palette.secondary }}
-                aria-hidden="true"
-              >
-                {crewInitials(gameText(maker.textKey))}
-                <span className={s.pbolt}>
-                  <Glyph name="bolt" size={13} color="#1d1704" weight={2.8} />
-                </span>
-              </div>
-              <div className={s.nm}>{gameText(maker.crew.textKey)}</div>
-              {crew.sync && (
-                <div className={s.syncTag} id="m-cuadrilla-sintonia">
-                  {ui("ui.m.crew.sync")}
-                </div>
-              )}
-              <div
-                className={s.seg}
-                role="img"
-                aria-label={
-                  crew.syncLevel !== undefined && !crew.sync
-                    ? ui("ui.m.crew.bond.toSync", {
-                        n: crew.bond,
-                        max: crew.bondMax,
-                        sync: crew.syncLevel,
-                      })
-                    : ui("ui.m.crew.bond", { n: crew.bond, max: crew.bondMax })
-                }
-              >
-                {Array.from({ length: crew.bondMax }, (_, i) => (
-                  <i
-                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed segments of a bar
-                    key={i}
-                    className={cx(
-                      i < crew.bond && (crew.sync ? s.segSync : s.segOn),
-                      // ADR-0016: the segment that reaches sintonía is marked
-                      crew.syncLevel !== undefined && i === crew.syncLevel - 1 && s.segGoal,
-                    )}
-                  />
-                ))}
-              </div>
-              {card && card.crews.length > 1 && (
-                <div className={s.more}>{ui("ui.m.crew.more", { n: card.crews.length - 1 })}</div>
-              )}
-            </div>
-          )}
-          {result && resultUi === 5 && result.crews.length > 0 && (
-            <div className={s.crewIn} id="m-resultado-cuadrillas">
-              {result.crews.map((m, k) => {
-                const bond = result.bonds.find((b) => b.manufacturer === m);
-                const sync = result.sync.includes(m);
-                return (
-                  <div
-                    key={m}
-                    className={cx(s.crewInCard, sync && s.crewInSync)}
-                    style={{ animationDelay: `${STAMP_MS + 380 + k * 160}ms` }}
-                    data-crew={m}
-                  >
-                    <CrewFace ctx={ctx} id={m} sync={sync} size={58} />
-                    <b>{gameText(ctx.content.getManufacturer(m).crew.textKey)}</b>
-                    {bond ? (
-                      <span className={s.crewInBond}>
-                        {ui("ui.m.crew.bondUp", { n: bond.delta })}
-                      </span>
-                    ) : null}
-                    {sync && <span className={s.syncTag}>{ui("ui.m.crew.sync")}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {result && resultUi !== 5 && timeline && result.bonds.length > 0 && (
-            <div className={s.bondPops} id="m-resultado-vinculo">
-              {result.bonds.map((b) => {
-                const m = ctx.content.getManufacturer(b.manufacturer);
-                return (
-                  <div key={b.manufacturer} className={s.bondPop} data-crew={b.manufacturer}>
-                    <Pop delta={b.delta} delay={timeline.bonds[b.manufacturer] ?? 0} small />
-                    <div
-                      className={cx(s.portrait, s.portraitSmall)}
-                      style={{ "--bc": m.palette.primary, "--bc2": m.palette.secondary }}
-                      aria-hidden="true"
-                    >
-                      {crewInitials(gameText(m.textKey))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
           {injured && (
             <p className={s.stageWarn} id="m-entrenar-lesion">
               <Glyph name="warn" size={18} />
@@ -326,31 +271,16 @@ export function TrainScreen({
             </p>
           )}
         </div>
-        {card && crewsUi === 3 && card.crews.length > 0 && (
-          <div className={s.crewStrip} id="m-cuadrillas">
-            {card.crews.map((c) => (
-              <div
-                key={c.manufacturer}
-                className={cx(s.crewChip, c.sync && s.crewChipSync)}
-                data-crew={c.manufacturer}
-              >
-                <CrewFace ctx={ctx} id={c.manufacturer} sync={c.sync} size={34} />
-                <span>
-                  <b>{gameText(ctx.content.getManufacturer(c.manufacturer).crew.textKey)}</b>
-                  <BondSeg badge={c} />
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-        <StatStrip
-          stats={statCells(state, statCap(ctx.ruleset, state))}
-          skillPoints={state.skillPoints}
-          gains={gains ?? {}}
-          pointsGain={card?.skillPoints}
-          long
-          {...(pops ? { pops } : {})}
-        />
+        <div className={cx(s.stripWrap, drop && s.stripDown)} ref={stripRef}>
+          <StatStrip
+            stats={statCells(state, statCap(ctx.ruleset, state))}
+            skillPoints={state.skillPoints}
+            gains={gains ?? {}}
+            pointsGain={card?.skillPoints}
+            long
+            {...(pops ? { pops } : {})}
+          />
+        </div>
         <p className="visually-hidden" aria-live="polite">
           {card
             ? ui("ui.m.train.live", {
@@ -360,7 +290,11 @@ export function TrainScreen({
               })
             : ""}
         </p>
-        <div className={cx(s.rounds, result && s.leaving)} inert={result ? true : undefined}>
+        <div
+          className={cx(s.rounds, result && s.leaving)}
+          inert={result ? true : undefined}
+          ref={roundsRef}
+        >
           {cards.map((c) => {
             const sel = c.kind === selected;
             return (
@@ -397,7 +331,7 @@ export function TrainScreen({
                 >
                   <Glyph name={GLYPH[c.kind]} size={26} color={sel ? "#ffffff" : "#14202b"} />
                   <span className={s.lv}>{ui("ui.m.train.lv", { n: c.level })}</span>
-                  {crewsUi === 2 && c.crews.length > 0 && (
+                  {c.crews.length > 0 && (
                     <span className={s.btnCrews} aria-hidden="true">
                       {c.crews.slice(0, 3).map((k) => (
                         <CrewFace
@@ -408,16 +342,6 @@ export function TrainScreen({
                           size={24}
                         />
                       ))}
-                    </span>
-                  )}
-                  {crewsUi !== 2 && c.boosted && (
-                    <span className={cx(s.gdot, c.sync && s.gdotSync)} aria-hidden="true">
-                      <Glyph
-                        name={c.sync ? "heart" : "bolt"}
-                        size={12}
-                        color={c.sync ? "#ffffff" : "#1d1704"}
-                        weight={3}
-                      />
                     </span>
                   )}
                   {sel && (
@@ -437,6 +361,29 @@ export function TrainScreen({
           })}
         </div>
       </div>
+      {result && result.crews.length > 0 && (
+        <div className={s.crewIn} id="m-resultado-cuadrillas">
+          {result.crews.map((m, k) => {
+            const bond = result.bonds.find((b) => b.manufacturer === m);
+            const sync = result.sync.includes(m);
+            return (
+              <div
+                key={m}
+                className={cx(s.crewInCard, sync && s.crewInSync)}
+                style={{ animationDelay: `${CREW_IN_MS + k * CREW_STEP_MS}ms` }}
+                data-crew={m}
+              >
+                <CrewFace ctx={ctx} id={m} sync={sync} size={58} />
+                <b>{gameText(ctx.content.getManufacturer(m).crew.textKey)}</b>
+                {bond ? (
+                  <span className={s.crewInBond}>{ui("ui.m.crew.bondUp", { n: bond.delta })}</span>
+                ) : null}
+                {sync && <span className={s.syncTag}>{ui("ui.m.crew.sync")}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
       {result && (
         // a tap anywhere goes on sooner
         <button
@@ -447,7 +394,11 @@ export function TrainScreen({
           onClick={() => onResultDone?.()}
         />
       )}
-      <div className={cx(s.foot, result && s.leaving)} inert={result ? true : undefined}>
+      <div
+        className={cx(s.foot, result && s.leaving)}
+        inert={result ? true : undefined}
+        ref={footRef}
+      >
         <button type="button" className={cx(s.btn, s.back)} id="m-volver" onClick={onBack}>
           <Glyph name="back" size={20} weight={2.4} />
           <span>{ui("ui.m.back")}</span>
@@ -593,4 +544,8 @@ function BondSeg({ badge }: { badge: CrewBadge }) {
       ))}
     </span>
   );
+}
+
+function reducedMotion(): boolean {
+  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
