@@ -1,5 +1,5 @@
 import type { ContentIndex } from "@falconess/schema";
-import { type CSSProperties, useEffect } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { gameBrief } from "../text/brief";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
@@ -12,17 +12,56 @@ import type { WeekFx, WeekFxKind } from "./weekFx";
 
 /**
  * Each effect's time on screen (owner 2026-11-13: long enough to read, never a blink); learned
- * skills stay longer the more there are, and the last effect stays more when more happened.
+ * skills stay longer the more there are. All the week's effects show together (owner 2026-11-13:
+ * one after another took too long), each a moment after the one before.
  */
 export const FX_MS = 1800;
 const PER_SKILL_MS = 450;
+const STAGGER_MS = 160;
 export function fxMs(e: WeekFx): number {
   return e.kind === "skills"
     ? FX_MS + PER_SKILL_MS * Math.max(0, (e.skills?.length ?? 1) - 1)
     : FX_MS;
 }
 export function fxTotalMs(fx: readonly WeekFx[]): number {
-  return fx.reduce((t, e) => t + fxMs(e), 0) + 800 + 400 * fx.length;
+  return Math.max(0, ...fx.map((e, i) => STAGGER_MS * i + fxMs(e))) + 500;
+}
+
+/** A spot of the screen, in percent of its width and height (the effect's center). */
+type Spot = { readonly x: number; readonly y: number };
+
+/**
+ * Where each effect shows (owner 2026-11-13): somewhere new each week, never on top of another
+ * and well inside the screen. The screen is cut in two columns and three rows; each effect takes
+ * a cell of its own at random and moves a little inside it. Learned skills (a wide list) take a
+ * whole row, centered.
+ */
+export function fxSpots(fx: readonly WeekFx[], random: () => number = Math.random): Spot[] {
+  const rows = shuffle([30, 50, 70], random);
+  const skillsRow = fx.some((e) => e.kind === "skills") ? rows.pop() : undefined;
+  const cells = shuffle(
+    rows.flatMap((y) => [27, 73].map((x) => ({ x, y }))),
+    random,
+  );
+  const jitter = (n: number) => (random() * 2 - 1) * n;
+  return fx.map((e, i) => {
+    if (e.kind === "skills") return { x: 50, y: (skillsRow ?? 50) + jitter(4) };
+    // more effects than cells (never with today's six kinds): the center
+    const c = cells[i % Math.max(1, cells.length)] ?? { x: 50, y: 50 };
+    // sideways only a little: two in a row never touch (each is 40 % of the width)
+    return { x: c.x + jitter(3), y: c.y + jitter(5) };
+  });
+}
+
+function shuffle<T>(xs: readonly T[], random: () => number): T[] {
+  const out = [...xs];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    const a = out[i] as T;
+    out[i] = out[j] as T;
+    out[j] = a;
+  }
+  return out;
 }
 
 const GLYPH: Partial<Record<WeekFxKind, GlyphName>> = {
@@ -120,9 +159,9 @@ function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentInd
 }
 
 /**
- * The week's effects shown, not told (owner 2026-11-13): one after the other, a stamp like a
- * training's «¡ÉXITO!» with chevrons, gold and rising for good news, blue and falling for bad.
- * A tap ends them; «Lo que pasó» waits for them.
+ * The week's effects shown, not told (owner 2026-11-13): all together, each in a random spot of
+ * the screen, a stamp like a training's «¡ÉXITO!» with chevrons, gold and rising for good news,
+ * blue and falling for bad. A tap ends them.
  */
 export function WeekFxOverlay({
   fx,
@@ -133,8 +172,9 @@ export function WeekFxOverlay({
   content: ContentIndex;
   onDone: () => void;
 }) {
-  const starts = fx.map((_, i) => fx.slice(0, i).reduce((t, e) => t + fxMs(e), 0));
+  const starts = fx.map((_, i) => STAGGER_MS * i);
   const total = fxTotalMs(fx);
+  const [spots] = useState(() => fxSpots(fx));
   // biome-ignore lint/correctness/useExhaustiveDependencies: once per mount (keyed by the step)
   useEffect(() => {
     const timers = fx.map((e, i) =>
@@ -164,16 +204,20 @@ export function WeekFxOverlay({
     >
       {fx.map((e, i) => {
         const at = starts[i] ?? 0;
-        const last = i === fx.length - 1;
+        const spot = spots[i] ?? { x: 50, y: 50 };
         return (
           <span
             key={e.kind}
-            className={cx(f.fx, e.good ? f.good : f.bad, last && f.last)}
+            className={cx(f.fx, e.good ? f.good : f.bad, e.kind === "skills" && f.wide)}
             data-fx={e.kind}
-            style={{
-              animationDelay: `${at}ms`,
-              animationDuration: `${last ? total - at : fxMs(e)}ms`,
-            }}
+            style={
+              {
+                animationDelay: `${at}ms`,
+                animationDuration: `${total - at}ms`,
+                "--x": `${spot.x}%`,
+                "--y": `${spot.y}%`,
+              } as CSSProperties
+            }
           >
             {e.kind !== "skills" && <Badge e={e} at={at} content={content} />}
             <span

@@ -31,8 +31,22 @@ export type WeekFx = {
   readonly skills?: readonly string[];
 };
 
+/**
+ * Which effects of a race week (owner 2026-11-13): `action` before the race mode (sleep, injury,
+ * bonds, skills: what the action did), `race` back on the menu after it (the mood and the points);
+ * `all` on any other week.
+ */
+export type WeekFxPart = "all" | "action" | "race";
+
 /** The week's effects, in the order they play. */
-export function weekFx(step: WeekStep, ruleset?: Ruleset): WeekFx[] {
+export function weekFx(step: WeekStep, ruleset?: Ruleset, part: WeekFxPart = "all"): WeekFx[] {
+  const all = weekFxAll(step, ruleset);
+  if (part === "all") return all;
+  const raceKind = (e: WeekFx) => e.kind === "points" || e.kind.startsWith("mood-");
+  return all.filter((e) => raceKind(e) === (part === "race"));
+}
+
+function weekFxAll(step: WeekStep, ruleset?: Ruleset): WeekFx[] {
   const { before, after } = step;
   const out: WeekFx[] = [];
   const keys = new Set(stepLog(before, after).notes);

@@ -117,6 +117,11 @@ async function settle(page: Page): Promise<void> {
 async function toPosition(page: Page): Promise<void> {
   for (let i = 0; i < 80; i++) {
     if (await skipScene(page)) continue;
+    // the action's effects play before the race mode
+    if ((await page.locator("#m-efectos").count()) > 0) {
+      await page.click("#m-efectos");
+      continue;
+    }
     const free =
       (await page.locator("#m-precarrera-accion").count()) > 0 &&
       (await page.locator("#m-transicion").count()) === 0;
@@ -773,8 +778,12 @@ test("screen transition: the emblem opens the race mode, then the scene, then th
   await page.click("#m-carrera");
   await page.click("#m-correr");
   await page.click("#m-descansar");
-  // the race mode (owner 2026-11-13): the emblem as soon as the week's action is decided
+  // what the rest did plays first, over the menu, before the race mode (owner 2026-11-13)
   const cover = page.locator("#m-transicion");
+  await expect(page.locator('#m-efectos [data-fx^="sleep-"]')).toBeVisible();
+  await expect(cover).toHaveCount(0);
+  await page.click("#m-efectos");
+  // then the race mode: the emblem
   await expect(cover).toBeVisible();
   // Kōryū's red first, its yellow line opening in the middle
   await expect(cover).toHaveCSS("background-color", "rgb(192, 57, 43)");
@@ -895,6 +904,20 @@ test("the week's effects: a rest shows how she slept, and no dialog after them",
   const fx = page.locator("#m-efectos");
   await expect(fx).toBeVisible();
   await expect(fx.locator('[data-fx^="sleep-"]')).toHaveCount(1);
+  // all of them at once (owner 2026-11-13), each in its own spot
+  await page.waitForTimeout(700);
+  const boxes = await fx.locator("[data-fx]").evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { ...r.toJSON(), opacity: Number(getComputedStyle(el).opacity) };
+    }),
+  );
+  for (const b of boxes) expect(b.opacity).toBeGreaterThan(0.5);
+  for (const [i, a] of boxes.entries())
+    for (const b of boxes.slice(i + 1))
+      expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(
+        true,
+      );
   await fx.click();
   await expect(fx).toHaveCount(0);
   await expect(page.locator("#m-entrenar")).toBeEnabled();

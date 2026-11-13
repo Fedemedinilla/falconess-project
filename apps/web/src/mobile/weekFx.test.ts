@@ -69,3 +69,18 @@ describe("weekFx (owner 2026-11-13)", () => {
     expect(fx.find((e) => e.kind === "skills")?.skills).toEqual(["last-gasp", "hill-lungs"]);
   });
 });
+
+describe("weekFx parts of a race week (owner 2026-11-13)", () => {
+  it("the action's part has no race effects, the race's only the mood and the points", () => {
+    const before: SeasonState = startSeason(ctx, "fx-part", start);
+    const after: SeasonState = {
+      ...before,
+      mood: before.mood + 1,
+      learnedSkills: [...before.learnedSkills, "second-wind"],
+    };
+    const step = { before, input: { kind: "workshop", ops: [] } as RunInput, after };
+    expect(weekFx(step, undefined, "action").map((e) => e.kind)).toEqual(["skills"]);
+    expect(weekFx(step, undefined, "race").map((e) => e.kind)).toEqual(["mood-up"]);
+    expect(weekFx(step).map((e) => e.kind)).toEqual(["mood-up", "skills"]);
+  });
+});

@@ -65,7 +65,7 @@ import { resultTimeline, type TrainResult, TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
-import { weekFx } from "./weekFx";
+import { type WeekFx, type WeekFxPart, weekFx } from "./weekFx";
 
 type View =
   | { readonly screen: "menu" }
@@ -78,6 +78,8 @@ type View =
       readonly decided?: boolean;
     }
   | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
+  /** A race week's action played its effects over the menu (skills bought…), then the race mode. */
+  | { readonly screen: "actionfx"; readonly input: WeekActionInput; readonly fx: readonly WeekFx[] }
   | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
 
 const MENU: View = { screen: "menu" };
@@ -93,6 +95,7 @@ function previewKind(view: View): ActionKind | undefined {
   if (view.screen === "train") return view.selected;
   if (view.screen === "workshop") return "workshop";
   if (view.screen === "prerace" && view.input) return view.input.kind;
+  if (view.screen === "actionfx") return view.input.kind;
   return undefined;
 }
 
@@ -149,9 +152,11 @@ export function MobileGame() {
       ? "end"
       : view.screen === "trained"
         ? "train"
-        : view.screen === "prerace" && view.decided
-          ? "race"
-          : view.screen;
+        : view.screen === "actionfx"
+          ? "menu"
+          : view.screen === "prerace" && view.decided
+            ? "race"
+            : view.screen;
   const [title, setTitle] = useState(() => !titleDone);
   // story scenes and the chat (owner 2026-11-12)
   const [, setStoryTick] = useState(0);
@@ -254,7 +259,6 @@ export function MobileGame() {
     if (replay) return replay;
     const idle =
       where !== undefined &&
-      (where !== "menu" || snap.lastStep === undefined || snap.lastStepSeen) &&
       !title &&
       cover === undefined &&
       !menuOpen &&
@@ -317,7 +321,7 @@ export function MobileGame() {
   const pending = state.pendingEvent !== undefined;
   // the week's step is read once its effects played (none: at once); no dialog waits on the menu
   const unreadNoFx = (stepOnMenu: Step | undefined) =>
-    stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset).length === 0;
+    stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset, fxPart(stepOnMenu)).length === 0;
 
   /** The result of a training, for the result on the training screen. */
   const trainResult = (
@@ -388,7 +392,10 @@ export function MobileGame() {
     const step: Step = { before: state, input: withPosition(input, chosen), after };
     const cue = trainingCue(input, state.turn, after, cards);
     playSound(cue);
-    const next: View = { screen: "prerace", input, decided: true };
+    // what the action did (a bought skill, how she slept…) plays before the race mode
+    const actionFx = weekFx(step, ctx.ruleset, "action");
+    const race: View = { screen: "prerace", input, decided: true };
+    const next: View = actionFx.length > 0 ? { screen: "actionfx", input, fx: actionFx } : race;
     const kind = cards.find((c) => c.kind === input.kind)?.kind;
     if (kind && (cue === "success" || cue === "boost" || cue === "fail")) {
       // the race's skill points are not hers yet: only the Simulator's own
@@ -529,6 +536,24 @@ export function MobileGame() {
       );
       break;
     }
+    case "actionfx":
+      screen = (
+        <>
+          <MenuScreen
+            ctx={ctx}
+            state={state}
+            menu={menu}
+            pendingEvent={false}
+            onAction={() => undefined}
+          />
+          <WeekFxOverlay
+            fx={view.fx}
+            content={ctx.content}
+            onDone={() => setView({ screen: "prerace", input: view.input, decided: true })}
+          />
+        </>
+      );
+      break;
     case "race":
       screen = (
         <RaceScreen
@@ -555,7 +580,7 @@ export function MobileGame() {
     : undefined;
   const showScene = scene !== undefined && scene.key !== sceneDone;
   const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
-  const fx = fxStep ? weekFx(fxStep, ctx.ruleset) : [];
+  const fx = fxStep ? weekFx(fxStep, ctx.ruleset, fxPart(fxStep)) : [];
   const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
   const mode: SceneMode | undefined =
     view.screen === "prerace" && view.decided
@@ -588,6 +613,10 @@ export function MobileGame() {
             game.acknowledgeStep();
           }}
         />
+      )}
+      {/* the race mode's transition opens on black when a scene comes next: no card shows between */}
+      {mode === "prerace" && cover !== undefined && dueIn("prerace") && (
+        <div className={st.black} aria-hidden="true" />
       )}
       {storyLayer(storyScene(mode))}
       {!showScene && unreadNoFx(fxStep) && <Acknowledge onMount={() => game.acknowledgeStep()} />}
@@ -659,6 +688,11 @@ export function MobileGame() {
       />
     </div>
   );
+}
+
+/** A race week's step played its action's effects before the race: the menu shows the race's. */
+function fxPart(step: Step): WeekFxPart {
+  return step.after.raceResults.length > step.before.raceResults.length ? "race" : "all";
 }
 
 /** Where a story scene can play (owner 2026-11-13). */

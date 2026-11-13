@@ -11,8 +11,12 @@
   cursor: pointer;
   animation: layerIn 0.25s ease-out both;
 }
+/* each effect at its own spot (--x, --y: its center), kept inside the screen */
 .fx {
-  grid-area: 1 / 1;
+  position: absolute;
+  left: clamp(22vw, var(--x), 78vw);
+  top: clamp(100px, var(--y), calc(100% - 110px));
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -20,15 +24,15 @@
   opacity: 0;
   animation: fxShow 1.3s ease-out both;
 }
-.last {
-  animation-name: fxStay;
+.wide {
+  left: 50%;
 }
 .icon {
   position: relative;
   display: grid;
   place-items: center;
-  width: 92px;
-  height: 92px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
@@ -92,19 +96,24 @@
   font-family: var(--cn);
   font-weight: 800;
   font-style: italic;
-  font-size: min(40px, 8.6vw);
-  line-height: 1;
+  font-size: min(34px, 7.6vw);
+  line-height: 1.05;
   letter-spacing: 1px;
-  white-space: nowrap;
+  text-align: center;
+  text-wrap: balance;
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
   animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 .stampLong {
-  font-size: min(32px, 6.8vw);
+  font-size: min(28px, 6.4vw);
 }
 .fx {
+  width: 40vw;
+}
+.wide {
+  width: auto;
   max-width: 100vw;
 }
 .good .stamp {
@@ -126,21 +135,12 @@
   0% {
     opacity: 0;
   }
-  6%,
-  88% {
+  8%,
+  86% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-  }
-}
-@keyframes fxStay {
-  0% {
-    opacity: 0;
-  }
-  6%,
-  100% {
-    opacity: 1;
   }
 }
 @keyframes iconPop {
@@ -207,14 +207,16 @@
 .crews {
   position: relative;
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
   animation: iconPop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 .crew {
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: #fff;
   border: 5px solid var(--bc);
@@ -223,7 +225,7 @@
     0 6px 18px rgb(0 0 0 / 0.25);
   font-family: var(--cn);
   font-weight: 800;
-  font-size: 28px;
+  font-size: 22px;
   color: var(--bc2);
 }
 /* points: the number itself, like a stat's «+N» */

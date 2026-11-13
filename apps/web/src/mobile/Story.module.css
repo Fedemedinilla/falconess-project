@@ -7,24 +7,22 @@
   font-family: Barlow, system-ui, sans-serif;
 }
 /* The way in, in steps (owner 2026-11-12: half a second from the menus to a scene was a jolt):
-   the game blurs and dims (0-0.8 s), the scene's ground and backdrop fade in (0.5-1.8 s), the
-   black bars and the chapter's card arrive (1.1-1.8 s), then the first line (2.8 s). The way out
-   fades the whole scene over 0.8 s. */
+   black at once (owner 2026-11-13: the menu behind must not show, the scene must not feel like it
+   interrupts it), the scene's ground and its backdrop come out of the black and out of focus
+   (0.5-1.8 s), the black bars and the chapter's card arrive (1.1-1.8 s), then the first line
+   (2.8 s). The way out fades the whole scene over 0.8 s. */
+/* black under the race mode's transition when the scene before the race comes next */
+.black {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: #0b0b0f;
+}
 .veil {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: rgb(10 14 22 / 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: veilIn 0.8s ease both;
-}
-@keyframes veilIn {
-  from {
-    background: rgb(10 14 22 / 0);
-    backdrop-filter: blur(0);
-    -webkit-backdrop-filter: blur(0);
-  }
+  background: #0b0b0f;
 }
 .base {
   position: absolute;
@@ -75,8 +73,23 @@
     transform: scale(1.06);
   }
 }
+/* the backdrop comes into focus (same filter list as at rest, so it blends) */
+@keyframes bgFocusBox {
+  from {
+    filter: blur(14px) saturate(1.05);
+  }
+}
+@keyframes bgFocusCine {
+  from {
+    filter: blur(14px) brightness(0.55) saturate(0.9);
+  }
+}
 .box .backdrop {
-  filter: saturate(1.05);
+  filter: blur(0) saturate(1.05);
+  animation:
+    bgIn 1.3s ease 0.5s both,
+    bgFocusBox 1.3s ease 0.5s both,
+    drift 24s ease-in-out 1.8s infinite alternate;
   mask-image: none;
 }
 /* the shade over the backdrop (an element, so it stays under the dialogue) */
@@ -91,7 +104,11 @@
   background: radial-gradient(120% 80% at 50% 45%, transparent 30%, rgb(5 6 10 / 0.7) 100%);
 }
 .cine .backdrop {
-  filter: brightness(0.55) saturate(0.9);
+  filter: blur(0) brightness(0.55) saturate(0.9);
+  animation:
+    bgIn 1.3s ease 0.5s both,
+    bgFocusCine 1.3s ease 0.5s both,
+    drift 24s ease-in-out 1.8s infinite alternate;
 }
 @keyframes drift {
   from {
