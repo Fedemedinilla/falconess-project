@@ -3,7 +3,8 @@
 Reglas de dirección, arte, escritura e implementación de las escenas de historia. Valen para todas
 las Falconess. Decididas con el dueño el 2026-11-12, probadas en el juego con Peregrina. Antes de
 escribir, leer también `docs/design/investigacion-personajes.md` (por qué un personaje se siente
-vivo) y la guía de la Falconess (por ejemplo, `docs/design/historia-peregrina.md`).
+vivo), `docs/design/canon.md` (canon, temporada y «¿y si…?») y el canon y la guía de la Falconess
+(por ejemplo, `docs/design/canon-peregrina.md` y `docs/design/historia-peregrina.md`).
 
 ## 1. Los tres formatos
 
@@ -150,13 +151,15 @@ sale una por vez.
 
 1. ¿La escribí con la biblia de personajes a mano (`docs/design/investigacion-personajes.md`):
    mostrar y no contar, con personalidad, nunca aburrido?
-2. ¿Es el formato correcto (común, clave u opcional)?
-3. ¿Tiene fondo, tarjeta (rótulo y título) y su disparador?
-4. ¿Cada línea de un personaje marca su expresión?
-5. ¿Tiene 6-12 líneas (cinemático hasta 14) y, si es cinemático, una sola frase clave?
-6. ¿Se reconoce quién habla sin leer el nombre?
-7. ¿El jugador habla con su voz: pregunta, se sorprende, firme en lo de entrenar, siempre amable?
-8. ¿Algo de lo que dice o hace la muestra, en vez de describirla?
-9. ¿Siembra algo de lo que viene?
-10. ¿Está en castellano y en inglés, y pasan los tests?
-11. ¿La viste en el teléfono, entera y saltándola?
+2. ¿Está marcada su capa en el canon de la Falconess (canon, «¿y si…?» o final temprano), y si es
+   canon, coincide con la crónica?
+3. ¿Es el formato correcto (común, clave u opcional)?
+4. ¿Tiene fondo, tarjeta (rótulo y título) y su disparador?
+5. ¿Cada línea de un personaje marca su expresión?
+6. ¿Tiene 6-12 líneas (cinemático hasta 14) y, si es cinemático, una sola frase clave?
+7. ¿Se reconoce quién habla sin leer el nombre?
+8. ¿El jugador habla con su voz: pregunta, se sorprende, firme en lo de entrenar, siempre amable?
+9. ¿Algo de lo que dice o hace la muestra, en vez de describirla?
+10. ¿Siembra algo de lo que viene?
+11. ¿Está en castellano y en inglés, y pasan los tests?
+12. ¿La viste en el teléfono, entera y saltándola?

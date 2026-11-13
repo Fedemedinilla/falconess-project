@@ -192,7 +192,7 @@ capítulo y dónde volver a verlo (Menú → Historia).
 
 ## 2c. Escenas en el juego (2026-11-13)
 
-Canon y «¿y si…?»: `docs/design/canon.md`. Sus metas nuevas ya están en el juego (ADR-0014): ganar en las semanas 10, 20, 30 y 40 (G3, G3, G2,
+Canon y «¿y si…?»: `docs/design/canon.md` y `docs/design/canon-peregrina.md` (la crónica, la bisagra y la capa de cada escena). Sus metas nuevas ya están en el juego (ADR-0014): ganar en las semanas 10, 20, 30 y 40 (G3, G3, G2,
 G2) y correr la Larga en la 48 (G1). En Exigente, cuatro victorias G2 y la final de la Copa contra
 Gerifalte en la Larga.
 

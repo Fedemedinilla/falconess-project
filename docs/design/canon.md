@@ -1,99 +1,63 @@
-# Canon y «¿y si…?» en Falconess
+# Canon, temporada y «¿y si…?»: cómo se escriben las historias de Falconess
 
-Borrador para ordenar ideas con el dueño (2026-11-13). Lo que está marcado como **decidido** salió
-de conversaciones anteriores; lo marcado como **propuesta** espera su visto bueno.
+Decidido con el dueño el 2026-11-13. Vale para todas las Falconess. Antes de escribir la historia de
+una Falconess, leer esto, `docs/design/escenas.md` (cómo se hace una escena) y
+`docs/design/investigacion-personajes.md` (por qué un personaje se siente vivo).
 
-## 1. El problema
+## 1. La idea
 
-Lo canónico es que Peregrina pierda la Larga. Pero un juego de crianza le pide al jugador que gane:
-si el final verdadero es una derrota, entrenar bien parece no servir de nada, y si el juego deja
-ganar, la historia pierde su sentido.
+Lo que pasó en el mundo de Falconess (el canon) y lo que vive el jugador en una partida (la
+temporada) son cosas distintas. La temporada tiene **la espina dorsal del canon**, con cambios
+pequeños que el jugador hace con su gameplay. A veces, en un punto elegido, el jugador puede torcer
+el destino: eso es un «¿y si…?».
 
-## 2. Cómo lo resuelve Umamusume
+Es lo que hace Umamusume con caballos reales: la historia real es el punto de partida, la que todos
+sienten que «debería» pasar, y la temporada del jugador es la versión en la que el cariño y el
+entrenamiento alcanzan para cambiarla. El final feliz pesa porque se sabe cuál era el otro.
 
-Las corredoras de Umamusume son caballos reales, con historias reales que a veces terminan mal.
-Silence Suzuka se fracturó en el Tenno Sho de otoño de 1998 y tuvo que ser sacrificada; Rice Shower
-murió igual en el Takarazuka Kinen de 1995; Tokai Teio se lesionó una y otra vez. El juego no borra
-esa historia: la pone en el centro, como el miedo que la corredora y el jugador tienen que vencer.
+## 2. Las cuatro capas
 
-- **La historia de verdad es el punto de partida.** Todos (la corredora, el entrenador, el público)
-  saben, o sienten, lo que «debería» pasar.
-- **La temporada del jugador es un «¿y si…?».** Entrenándola bien, el jugador puede cambiar el
-  destino: Suzuka cruza la meta de ese Tenno Sho. No es trampa: es el premio emocional del juego, la
-  versión en la que el cariño y el trabajo alcanzan.
-- **El final feliz pesa porque se sabe cuál era el otro.** Sin la historia real, ganar sería una
-  carrera más.
+| Capa          | Qué es                                                                                        | Quién la escribe                                  | Dónde vive                                                  |
+| ------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------- |
+| **Canon**     | Lo que pasó en el mundo. Una sola versión.                                                    | Solo el dueño                                     | `docs/design/canon-<falconess>.md`; quizás un Modo Historia |
+| **Temporada** | Una partida: la versión que vive el jugador. Sigue al canon salvo donde el jugador lo cambia. | El dueño escribe el camino; el jugador lo recorre | El juego: escenas, metas, rivales, chats                    |
+| **«¿Y si…?»** | Un final o momento que contradice el canon y se gana jugando muy bien.                        | El dueño lo escribe; el jugador lo alcanza        | Escenas propias en la temporada                             |
+| **Resto**     | Lo que colorea una partida sin contar la historia: eventos de suerte, entrenamientos, nota.   | El juego                                          | Eventos, entrenamientos, «Lo que pasó»                      |
 
-## 3. Lo que propongo para Falconess
+## 3. Las reglas
 
-Falconess no tiene caballos reales: el canon lo escribimos nosotros. Pero sirve la misma idea, en
-tres capas.
+1. **El canon fluye hacia la temporada, nunca al revés.** Lo que pasa en una partida no reescribe el
+   mundo.
+2. **Las otras historias recuerdan solo el canon.** Si en la historia de Cernícala aparece Peregrina,
+   aparece la que perdió la Larga.
+3. **Pocas bisagras, elegidas por el dueño.** Una bisagra es el punto donde el jugador puede cambiar
+   el canon. Todo lo demás es canon fijo o resto. Si todo se puede cambiar, nada importa.
+4. **El canon es lo más probable, no lo obligatorio.** Las metas y las rivales se arman para que la
+   temporada caiga casi siempre en el canon (Milana gana la Larga casi siempre); el «¿y si…?» existe
+   y se gana.
+5. **El jugador nunca falla por el canon.** Si el canon es una derrota, la temporada igual se completa
+   con buena nota (la Larga de Peregrina es «Correr»). Fallar es otra cosa: no llegar.
+6. **Un final temprano no es canon ni «¿y si…?».** Es la temporada que se cortó antes (falla una meta
+   anterior a la bisagra). Su escena cuenta la misma herida, que llega antes.
+7. **El resto colorea, pero no decide.** Un evento de suerte puede pasar en cualquier partida; nunca
+   contradice el canon ni lo crea.
 
-| Capa                                     | Qué es                                                                                            | Quién decide                      |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------- |
-| **Canon** (lo que pasó)                  | La historia «de verdad» de cada Falconess en este mundo. Es lo que las otras historias recuerdan. | El dueño, por escrito, en su guía |
-| **Temporada del jugador** (lo que juega) | Una versión que el jugador vive y puede cambiar. El canon es su camino más probable.              | Las metas y el balance            |
-| **«¿Y si…?»** (lo que el jugador logró)  | El final distinto que se gana jugando muy bien. Vale porque contradice el canon.                  | El jugador                        |
+## 4. Cómo se escribe la historia de una Falconess
 
-### Reglas (propuesta)
+1. **El canon primero**, como una crónica: qué pasó, en qué orden, quién estuvo, qué le quedó.
+2. **Las bisagras:** una o dos, donde el jugador puede cambiar el destino, y cuál es el «¿y si…?» de
+   cada una.
+3. **Las metas y las rivales**, para que el canon sea lo más probable y el «¿y si…?» sea difícil pero
+   posible (medido con el lote, como en ADR-0014 y ADR-0015).
+4. **Las escenas**, cada una marcada con su capa en el documento de canon de esa Falconess:
+   - **canon:** cuenta algo que pasó en el mundo; la ve todo jugador que llega ahí;
+   - **¿y si…?:** solo existe porque el jugador cambió una bisagra;
+   - **final temprano:** la temporada se cortó antes de la bisagra.
+5. **Los chats:** canon (es quien es antes de la bisagra), salvo que digan lo contrario.
 
-1. **El canon es el final más probable, no el obligatorio.** En la Larga, la jugadora atenta pierde
-   el 99 % de las veces y el dueño el 75 %: el canon se vive casi siempre, y el «¿y si…?» existe.
-2. **Perder el canon nunca es un fracaso del jugador.** Por eso la meta de la Larga es «Correr» en
-   Normal: la temporada se completa, la nota no baja, y la derrota es de ella, no del jugador.
-3. **Las otras historias recuerdan el canon, nunca el «¿y si…?».** En la historia de Cernícala,
-   Peregrina perdió la Larga contra Milana. Así el mundo es uno solo.
-4. **El «¿y si…?» se reconoce como tal**, sin decirlo con letras: el final soñado tiene que sentirse
-   distinto (más luz, otra música, una frase que haga eco del canon). Ver la pregunta abierta 2.
-5. **Un final temprano (falla una de las cuatro victorias) no es canon ni «¿y si…?».** Es la misma
-   herida, que llega antes: la temporada termina ahí, sin la Larga.
+## 5. Más adelante: un Modo Historia
 
-## 4. El canon de Peregrina (para revisar)
-
-**Decidido:**
-
-- Peregrina ya era la Falconess modelo. Gana cuatro veces seguidas en sus distancias (G3 y G2) y se
-  cree, sincera e inocentemente, la protagonista invencible.
-- La invitan a la gran Larga y se anota sin dudar. El entrenador sabe que le falta resistencia y no
-  quiere romperle la ilusión.
-- **En la Larga la pasa Milana**, una Falconess hecha para resistir, como si Peregrina fuera una
-  piedra quieta. Todo el campo es de fondistas: ella es la única velocista.
-- No llora, no se enoja, no lo entiende. «¿Y ahora… qué se hace?»
-
-**Propuesta (lo que viene después en el canon):**
-
-- Peregrina no se retira ni cambia de golpe. Al año siguiente vuelve a sus carreras cortas y sigue
-  ganando, pero algo cambió: pregunta, escucha, entrena la pileta sin quejarse… casi.
-- Milana y Peregrina no son enemigas. Milana la vuelve a ver dormida en una tribuna (su lugar de
-  siempre) y le dice «la próxima, respirá».
-- La Novata borra la página «Nunca me pasó». Escribe otra: «¿Y ahora qué se hace?».
-
-## 5. Qué hay hoy en el juego
-
-| Final                      | Cuándo                                  | Capa                      | Escena                             |
-| -------------------------- | --------------------------------------- | ------------------------- | ---------------------------------- |
-| Pierde la Larga            | Normal: corre la Larga y no gana        | Canon                     | «¿Y ahora qué se hace?» (la Larga) |
-| Gana la Larga              | Normal o Exigente: le gana a Milana     | «¿Y si…?»                 | «Cansada»                          |
-| Falla una victoria         | Cualquiera de las cuatro primeras metas | Final temprano            | «¿Y ahora qué se hace?»            |
-| Pierde la final de la Copa | Exigente: la Larga hay que ganarla      | Canon (temporada fallada) | «¿Y ahora qué se hace?»            |
-
-En Exigente perder la Larga es canon pero también termina la temporada como fallada: es el precio
-de jugar en Exigente, donde el «¿y si…?» es la meta.
-
-## 6. Preguntas abiertas para el dueño
-
-1. **¿El canon sigue después de la Larga?** (la propuesta de la sección 4: ¿vuelve a ganar en lo
-   suyo, cambiada?) Esto define lo que las historias de Cernícala y Caracara pueden recordar.
-2. **¿Cómo se nota el «¿y si…?»?** Opciones:
-   - nada explícito, solo una escena distinta (como Umamusume);
-   - en «Historia», el final soñado con una marca discreta («¿Y si…?»);
-   - una escena extra corta después del final soñado, con la Novata dudando antes de borrar la
-     página («¿la borro o no?»).
-3. **¿Cuánto debe costar el «¿y si…?»?** Hoy: 1 % para la jugadora atenta, 26 % para el dueño en
-   Normal. ¿Está bien que una jugadora común casi nunca lo vea, o el «¿y si…?» debería ser una meta
-   alcanzable con un plan (por ejemplo, entrenar Resistencia en serio desde la semana 40)?
-4. **¿Exigente es «el modo del ¿y si…?»?** Allí ganar la Larga es obligatorio: tiene sentido decir
-   que Exigente es la temporada en la que el jugador intenta cambiar el destino.
-5. **¿El canon de cada Falconess tiene siempre una herida?** Peregrina: la primera derrota. Si todas
-   la tienen, el juego tiene un tono propio (agridulce con esperanza); si no, Peregrina es la
-   excepción.
+Las temporadas son del jugador. El canon, entero y en orden, podría vivir en un **Modo Historia**
+aparte: los capítulos tal como pasaron, sin entrenar, para quien quiere conocer el mundo (como la
+historia principal de Umamusume, separada de sus temporadas). Las escenas marcadas como canon son su
+materia prima. Queda anotado en `docs/ROADMAP.md` (después del MVP).

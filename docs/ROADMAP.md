@@ -495,6 +495,10 @@ El hito de decisión (D37) no forma parte de "terminado": es lo que se hace con 
 
 ## 9. Después del MVP (orden tentativo, sin fechas)
 
+- **Modo Historia** (dueño, 2026-11-13): el canon de cada Falconess entero y en orden, aparte de las
+  temporadas, sin entrenar (como la historia principal de Umamusume). Sale de las escenas marcadas
+  como canon (`docs/design/canon.md`).
+
 1. Pantalla de gacha sobre `rollGacha` y moneda ganada.
 2. Falconess 4–6, con biblias de voz y evaluación para cada una. Biomas solo si hacen falta
    (ADR-0007).
