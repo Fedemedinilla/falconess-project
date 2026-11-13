@@ -39,9 +39,10 @@ sin apuro.
 | La Larga (semana 48) | Se queda sin fuerzas y la pasan todas, Milana primero; el entrenador la calma. | Gana, agotada. Dice que las largas no son lo suyo, vuelve a las Sprint sabiendo que no todo se gana con velocidad, y la Falconess modelo tiene su propia Falconess modelo: Milana y su resistencia. | Meta 5. Normal: «Correr» (cualquier puesto). Exigente: hay que ganarla. Milana gana casi siempre (ADR-0015). |
 
 **La temporada sigue la espina dorsal del canon con cambios chicos.** En el canon llega última; en
-el juego el puesto sale del entrenamiento (la jugadora atenta suele terminar 4.ª-6.ª, el dueño 2.ª).
-Por eso la escena canónica de la Larga no nombra el puesto: cuenta que se quedó sin fuerzas, que
-Milana la pasó y que el entrenador la calma, y la carrera muestra el resto.
+la temporada el resultado sale del entrenamiento, y ganarle a Milana es posible pero no fácil (37 %
+al nivel del dueño en Normal, ADR-0015). La escena canónica no nombra el puesto: cuenta que se quedó
+sin fuerzas, que Milana la pasó y que el entrenador la calma. El canon tal como pasó se muestra en el
+Modo Historia.
 
 No hay otras bisagras: las cuatro victorias son canon. Perder una de ellas en una partida no es un «¿y si…?»,
 es un final temprano.

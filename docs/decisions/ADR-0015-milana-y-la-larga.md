@@ -59,3 +59,16 @@ dos Falconess siguen midiéndose como antes.
 - Una Falconess de la historia puede correr en la carrera de verdad sin ser jugable: el mismo
   mecanismo sirve para las rivales de las historias de Cernícala y Caracara.
 - Un campo de especialistas hace que una carrera fuera del terreno de una Falconess se sienta así.
+
+## Ajuste del dueño (2026-11-13): posible, no fácil
+
+La temporada es para jugar y sacar cajas negras, no para mostrar el canon (eso será el Modo
+Historia): la Larga tiene que ser posible, no imposible ni fácil. Se probó un campo de 1050 ‰ para
+que Peregrina terminara atrás, pero dejaba el «¿y si…?» fuera de alcance (1 % al nivel del dueño) y
+se descartó. En Normal queda el campo al 900 ‰ y Milana baja a un piso de 1050 ‰; Exigente no cambia
+(campo 900, piso 1150).
+
+| Normal (campo 900, Milana 1050), dos bases | Le gana a Milana | Milana gana | Puesto al perder |
+| ------------------------------------------ | ---------------- | ----------- | ---------------- |
+| Jugadora atenta (no entrena para la Larga) | 2 %              | 48-51 %     | 4,6-4,7.º        |
+| Nivel del dueño (× 1,2)                    | 37 %             | 40-43 %     | 2,8-2,9.º        |

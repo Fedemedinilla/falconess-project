@@ -26,6 +26,10 @@ entrenamiento alcanzan para cambiarla. El final feliz pesa porque se sabe cuál 
 
 ## 3. Las reglas
 
+0. **La temporada es para jugar; el canon se muestra en el Modo Historia** (dueño, 2026-11-13). La
+   temporada es el modo para sacar cajas negras y divertirse: su historia acompaña, no obliga. Una
+   bisagra tiene que ser posible, ni imposible ni fácil.
+
 1. **El canon fluye hacia la temporada, nunca al revés.** Lo que pasa en una partida no reescribe el
    mundo.
 2. **Las otras historias recuerdan solo el canon.** Si en la historia de Cernícala aparece Peregrina,
@@ -33,8 +37,8 @@ entrenamiento alcanzan para cambiarla. El final feliz pesa porque se sabe cuál 
 3. **Pocas bisagras, elegidas por el dueño.** Una bisagra es el punto donde el jugador puede cambiar
    el canon. Todo lo demás es canon fijo o resto. Si todo se puede cambiar, nada importa.
 4. **El canon es lo más probable, no lo obligatorio.** Las metas y las rivales se arman para que la
-   temporada caiga casi siempre en el canon (Milana gana la Larga casi siempre); el «¿y si…?» existe
-   y se gana.
+   temporada caiga más seguido en el canon, pero el «¿y si…?» tiene que estar al alcance de quien
+   entrena bien (la Larga: 37 % al nivel del dueño).
 5. **El jugador nunca falla por el canon.** Si el canon es una derrota, la temporada igual se completa
    con buena nota (la Larga de Peregrina es «Correr»). Fallar es otra cosa: no llegar.
 6. **Un final temprano no es canon ni «¿y si…?».** Es la temporada que se cortó antes (falla una meta

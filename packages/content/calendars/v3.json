@@ -72,7 +72,7 @@
         },
         "namedRival": {
           "id": "milana",
-          "floorPm": 1150,
+          "floorPm": 1050,
           "excessPm": 800,
           "sharesPm": [250, 340, 130, 110, 170],
           "position": "stalk",
