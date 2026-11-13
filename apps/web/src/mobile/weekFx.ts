@@ -1,33 +1,59 @@
 /**
- * What the week did, shown instead of told (owner 2026-11-13): the mood that moved, a new injury
- * and how she slept, as stamps with chevrons like a training's result. Pure: read from the step's
- * log notes (`stepLog`, as «Lo que pasó» reads them) and its two states.
+ * What the week did, shown instead of told (owner 2026-11-13): how she slept, a new injury, the
+ * mood that moved, the crews she bonded with, the skill points a race paid and the skills she
+ * learned, as stamps with chevrons like a training's result. Pure: read from the step's log notes
+ * (`stepLog`, as «Lo que pasó» reads them) and its two states.
  */
 import { stepLog } from "@falconess/race-view";
+import type { Ruleset } from "@falconess/sim";
 import type { WeekStep } from "../screens/model/week";
 
 export type WeekFxKind =
-  | "mood-up"
-  | "mood-down"
-  | "injury"
   | "sleep-great"
   | "sleep-normal"
-  | "sleep-poor";
+  | "sleep-poor"
+  | "injury"
+  | "mood-up"
+  | "mood-down"
+  | "bond"
+  | "points"
+  | "skills";
 
-/** One effect: its stamp and whether it is good news (gold, rising) or bad (blue, falling). */
-export type WeekFx = { readonly kind: WeekFxKind; readonly good: boolean };
+/**
+ * One effect: whether it is good news (gold, rising) or bad (blue, falling); the crews of a bond
+ * (manufacturer ids), the points a race paid, the skills learned.
+ */
+export type WeekFx = {
+  readonly kind: WeekFxKind;
+  readonly good: boolean;
+  readonly crews?: readonly string[];
+  readonly amount?: number;
+  readonly skills?: readonly string[];
+};
 
-/** The week's effects, in the order they play: how she slept, the injury, then the mood. */
-export function weekFx(step: WeekStep): WeekFx[] {
+/** The week's effects, in the order they play. */
+export function weekFx(step: WeekStep, ruleset?: Ruleset): WeekFx[] {
+  const { before, after } = step;
   const out: WeekFx[] = [];
-  const keys = new Set(stepLog(step.before, step.after).notes);
+  const keys = new Set(stepLog(before, after).notes);
   if (keys.has("log.vigor.rest.great")) out.push({ kind: "sleep-great", good: true });
   else if (keys.has("log.vigor.rest.normal")) out.push({ kind: "sleep-normal", good: true });
   else if (keys.has("log.vigor.rest.poor")) out.push({ kind: "sleep-poor", good: false });
   if (keys.has("log.train.injury") || keys.has("log.vigor.exhausted"))
     out.push({ kind: "injury", good: false });
-  const mood = step.after.mood - step.before.mood;
+  const mood = after.mood - before.mood;
   if (mood > 0) out.push({ kind: "mood-up", good: true });
   else if (mood < 0) out.push({ kind: "mood-down", good: false });
+  const crews = Object.keys(after.bond)
+    .filter((id) => (after.bond[id] ?? 0) > (before.bond[id] ?? 0))
+    .sort();
+  if (crews.length > 0) out.push({ kind: "bond", good: true, crews });
+  // a goal race pays points by place (the Simulator's show on the training screen already)
+  const race =
+    after.raceResults.length > before.raceResults.length ? after.raceResults.at(-1) : undefined;
+  const paid = race ? (ruleset?.season.skillPointsByPlace?.[race.place - 1] ?? 0) : 0;
+  if (paid > 0) out.push({ kind: "points", good: true, amount: paid });
+  const learned = after.learnedSkills.filter((id) => !before.learnedSkills.includes(id));
+  if (learned.length > 0) out.push({ kind: "skills", good: true, skills: learned });
   return out;
 }

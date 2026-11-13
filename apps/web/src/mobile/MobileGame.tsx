@@ -596,7 +596,7 @@ export function MobileGame() {
     : undefined;
   const showScene = scene !== undefined && scene.key !== sceneDone;
   const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
-  const fx = fxStep ? weekFx(fxStep) : [];
+  const fx = fxStep ? weekFx(fxStep, ctx.ruleset) : [];
   const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
   return (
     <div className={cx(s.app, view.screen === "race" && s.appWide)} style={style}>
@@ -611,7 +611,14 @@ export function MobileGame() {
           onDone={() => setSceneDone(scene.key)}
         />
       )}
-      {showFx && <WeekFxOverlay key={inputs} fx={fx} onDone={() => setFxDone(inputs)} />}
+      {showFx && (
+        <WeekFxOverlay
+          key={inputs}
+          fx={fx}
+          content={ctx.content}
+          onDone={() => setFxDone(inputs)}
+        />
+      )}
       {storyLayer(storyScene(onMenuScreen && !showScene && !showFx && !pending))}
       {onMenuScreen && !showScene && !showFx && (
         <>

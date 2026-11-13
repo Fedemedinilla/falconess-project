@@ -42,4 +42,30 @@ describe("weekFx (owner 2026-11-13)", () => {
     }
     expect(found).toBe(true);
   });
+  it("a race shows the skill points it paid; a bond and a learned skill show too", () => {
+    const before: SeasonState = startSeason(ctx, "fx-misc", start);
+    const raced: SeasonState = {
+      ...before,
+      raceResults: [
+        {
+          courseId: "sprint",
+          turn: 1,
+          place: 2,
+          fieldSize: 8,
+          timeTicks: 900,
+          frameId: before.equippedFrame,
+          position: "closer",
+          engine: "v1",
+        },
+      ],
+      bond: { ...before.bond, koryu: (before.bond.koryu ?? 0) + 5 },
+      learnedSkills: [...before.learnedSkills, "last-gasp", "hill-lungs"],
+    };
+    const fx = weekFx({ before, input: { kind: "rest" }, after: raced }, ctx.ruleset);
+    expect(fx.find((e) => e.kind === "points")?.amount).toBe(
+      ctx.ruleset.season.skillPointsByPlace?.[1],
+    );
+    expect(fx.find((e) => e.kind === "bond")?.crews).toEqual(["koryu"]);
+    expect(fx.find((e) => e.kind === "skills")?.skills).toEqual(["last-gasp", "hill-lungs"]);
+  });
 });

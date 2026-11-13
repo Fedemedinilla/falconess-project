@@ -1868,5 +1868,9 @@
   "ui.m.fx.injury": "¡LESIÓN!",
   "ui.m.fx.sleep-great": "¡DESCANSO PERFECTO!",
   "ui.m.fx.sleep-normal": "¡BUEN DESCANSO!",
-  "ui.m.fx.sleep-poor": "MAL DESCANSO"
+  "ui.m.fx.sleep-poor": "MAL DESCANSO",
+  "ui.m.fx.bond": "¡VÍNCULO!",
+  "ui.m.fx.points": "¡PUNTOS DE HABILIDAD!",
+  "ui.m.fx.skills": "¡HABILIDAD NUEVA!",
+  "ui.m.fx.skills.many": "¡{n} HABILIDADES NUEVAS!"
 }

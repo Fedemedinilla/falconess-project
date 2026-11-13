@@ -1868,5 +1868,9 @@
   "ui.m.fx.injury": "INJURED!",
   "ui.m.fx.sleep-great": "PERFECT REST!",
   "ui.m.fx.sleep-normal": "GOOD REST!",
-  "ui.m.fx.sleep-poor": "POOR REST"
+  "ui.m.fx.sleep-poor": "POOR REST",
+  "ui.m.fx.bond": "BOND UP!",
+  "ui.m.fx.points": "SKILL POINTS!",
+  "ui.m.fx.skills": "NEW SKILL!",
+  "ui.m.fx.skills.many": "{n} NEW SKILLS!"
 }
