@@ -2731,9 +2731,6 @@
 }
 /* the result (owner 2026-11-13, option 5): the buttons fade, the stats slide down to the bottom
    (a transform: the stage and the scene stay put), the crews' cards come into the room left */
-.trainScreen {
-  position: relative;
-}
 .resultLow .body {
   overflow: visible;
 }
@@ -2757,8 +2754,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  /* just over the stats at the bottom and their rising «+N» */
-  bottom: calc(var(--striph, 90px) + 46px);
+  /* just over the stats at the bottom and their rising «+N» (from the app's bottom: the screen
+     has no position of its own, so the training's scene keeps covering the whole app) */
+  bottom: var(--crewsb, 140px);
   z-index: 3;
   pointer-events: none;
   display: flex;

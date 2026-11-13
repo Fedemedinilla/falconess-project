@@ -156,7 +156,7 @@ export function TrainScreen({
   const roundsRef = useRef<HTMLDivElement>(null);
   // the result (owner 2026-11-13): the stats slide down to the bottom (a transform: nothing else
   // moves, the scene stays put) and leave the room above them to the crews' cards
-  const [drop, setDrop] = useState<{ y: number; h: number }>();
+  const [drop, setDrop] = useState<{ y: number; b: number }>();
   useLayoutEffect(() => {
     if (!result) {
       setDrop(undefined);
@@ -167,7 +167,10 @@ export function TrainScreen({
     const screen = screenRef.current?.getBoundingClientRect();
     if (!strip || !foot || !screen) return;
     const y = Math.max(0, Math.round(foot.bottom - strip.bottom));
-    setDrop({ y, h: Math.round(strip.height) });
+    // the crews' cards sit over the landed stats and their «+N», measured from the box they are
+    // placed in (the app: the nearest positioned ancestor)
+    const box = (screenRef.current?.offsetParent ?? document.body).getBoundingClientRect();
+    setDrop({ y, b: Math.round(box.bottom - foot.bottom + strip.height + 46) });
     // explicit animations: the result may mount a fresh screen, where a CSS transition has no
     // «before» to start from
     if (reducedMotion()) return;
@@ -198,11 +201,11 @@ export function TrainScreen({
 
   return (
     <div
-      className={cx(s.screen, s.trainScreen, result && s.resultLow)}
+      className={cx(s.screen, result && s.resultLow)}
       ref={screenRef}
       style={
         drop
-          ? ({ "--drop": `${drop.y}px`, "--striph": `${drop.h}px` } as React.CSSProperties)
+          ? ({ "--drop": `${drop.y}px`, "--crewsb": `${drop.b}px` } as React.CSSProperties)
           : undefined
       }
     >
