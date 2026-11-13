@@ -1,6 +1,6 @@
 {
   "id": "peregrina-long-lost",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "cine",
   "background": "finish",
@@ -39,27 +39,35 @@
       "expression": "blank"
     },
     {
-      "speaker": "milana",
+      "speaker": "peregrina",
       "textKey": "story.peregrina-long-lost.7",
-      "expression": "calm"
+      "expression": "blank"
     },
     {
-      "speaker": "narrator",
+      "speaker": "trainer",
       "textKey": "story.peregrina-long-lost.8"
     },
     {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-long-lost.9"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-long-lost.10"
+    },
+    {
       "speaker": "peregrina",
-      "textKey": "story.peregrina-long-lost.9",
+      "textKey": "story.peregrina-long-lost.11",
       "expression": "blank",
       "key": true
     },
     {
       "speaker": "trainer",
-      "textKey": "story.peregrina-long-lost.10"
+      "textKey": "story.peregrina-long-lost.12"
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-long-lost.11"
+      "textKey": "story.peregrina-long-lost.13"
     }
   ]
 }

@@ -213,7 +213,7 @@ Gerifalte en la Larga.
 | Qué cansador                       | cuadro  | pista  | semana 44               | Milana tirada en el pasto: «¿Vos sos la rápida?».           |
 | La Larga                           | cine    | pista  | antes de la meta 5      | «Aire para el final.» «Va a ser corta. Ya vas a ver.»       |
 | ¿Y ahora qué se hace? (la Larga)   | cine    | meta   | corre la Larga y pierde | Milana la pasa respirando; ella se queda quieta.            |
-| Cansada                            | cine    | meta   | gana la Larga           | El final soñado: no sabe qué hacer con el cansancio.        |
+| Mi Falconess modelo                | cine    | meta   | gana la Larga           | «¿Y si…?»: las largas no son lo suyo; Milana, su modelo.    |
 | ¿Y ahora qué se hace?              | cine    | meta   | falla una victoria      | Su primera derrota llega antes: en blanco, quieta.          |
 
 Chat: 9 temas (por qué corre, su día libre, la Jefa, si alguna vez perdió, su pista favorita, por

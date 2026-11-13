@@ -1,6 +1,6 @@
 {
   "id": "peregrina-long-won",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "style": "cine",
   "background": "finish",
@@ -35,8 +35,9 @@
       "expression": "surprised"
     },
     {
-      "speaker": "trainer",
-      "textKey": "story.peregrina-long-won.6"
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-long-won.6",
+      "expression": "tired"
     },
     {
       "speaker": "milana",
@@ -50,12 +51,31 @@
     {
       "speaker": "peregrina",
       "textKey": "story.peregrina-long-won.9",
+      "expression": "eager"
+    },
+    {
+      "speaker": "milana",
+      "textKey": "story.peregrina-long-won.10",
+      "expression": "calm"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-long-won.11",
+      "expression": "focused"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-long-won.12"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-long-won.13",
       "expression": "happy",
       "key": true
     },
     {
       "speaker": "narrator",
-      "textKey": "story.peregrina-long-won.10"
+      "textKey": "story.peregrina-long-won.14"
     }
   ]
 }

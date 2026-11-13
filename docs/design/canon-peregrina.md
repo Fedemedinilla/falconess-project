@@ -21,20 +21,29 @@ anotó antes de que nadie pudiera hablar. Su entrenador sabía que le faltaba re
 romperle la ilusión. En la semana 44 conoció a Milana, tirada en el pasto: «¿Vos sos la rápida? Qué
 cansador».
 
-En la Larga, todas las demás eran fondistas. Faltando 400 metros se le terminó el aire y Milana la
-pasó respirando tranquila, como si Peregrina fuera una piedra quieta. Peregrina no lloró, no se
-enojó, no lo entendió. «¿Y ahora… qué se hace?»
+En la Larga, todas las demás eran fondistas. Faltando 400 metros se quedó literalmente sin fuerzas:
+las alas seguían abiertas y ella ya no tenía con qué empujarlas. Primero la pasó Milana, respirando
+tranquila, como si Peregrina fuera una piedra quieta; después, una por una, todas las demás. Llegó
+última.
 
-**Después (por decidir con el dueño):** propuesta en el borrador anterior: vuelve a sus carreras
-cortas y sigue ganando, cambiada; Milana y ella no son enemigas; la Novata borra «Nunca me pasó».
+Al terminar no supo cómo actuar ni qué sentir: no lloró, no se enojó, no le salía nada. «¿Y
+ahora… qué se hace?» Su entrenador se sentó con ella en la recta y la calmó: respirar, despacio,
+sin apuro.
+
+**Después:** se escribe más adelante con el dueño (2026-11-13: «en grandes rasgos es así»).
 
 ## 2. Bisagras
 
-| Bisagra              | Canon                    | «¿Y si…?»                                           | En el juego                                                                                                  |
-| -------------------- | ------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| La Larga (semana 48) | Milana la pasa al final. | Peregrina gana, agotada por primera vez en su vida. | Meta 5. Normal: «Correr» (cualquier puesto). Exigente: hay que ganarla. Milana gana casi siempre (ADR-0015). |
+| Bisagra              | Canon                                                                          | «¿Y si…?»                                                                                                                                                                                           | En el juego                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| La Larga (semana 48) | Se queda sin fuerzas y la pasan todas, Milana primero; el entrenador la calma. | Gana, agotada. Dice que las largas no son lo suyo, vuelve a las Sprint sabiendo que no todo se gana con velocidad, y la Falconess modelo tiene su propia Falconess modelo: Milana y su resistencia. | Meta 5. Normal: «Correr» (cualquier puesto). Exigente: hay que ganarla. Milana gana casi siempre (ADR-0015). |
 
-No hay otras: las cuatro victorias son canon. Perder una de ellas en una partida no es un «¿y si…?»,
+**La temporada sigue la espina dorsal del canon con cambios chicos.** En el canon llega última; en
+el juego el puesto sale del entrenamiento (la jugadora atenta suele terminar 4.ª-6.ª, el dueño 2.ª).
+Por eso la escena canónica de la Larga no nombra el puesto: cuenta que se quedó sin fuerzas, que
+Milana la pasó y que el entrenador la calma, y la carrera muestra el resto.
+
+No hay otras bisagras: las cuatro victorias son canon. Perder una de ellas en una partida no es un «¿y si…?»,
 es un final temprano.
 
 ## 3. Escenas
@@ -56,7 +65,7 @@ es un final temprano.
 | Cap. 8 · Qué cansador                       | semana 44                     | canon          |
 | Cap. 9 · La Larga                           | antes de la meta 5            | canon          |
 | Final · ¿Y ahora qué se hace? (la Larga)    | corre la Larga y no la gana   | **canon**      |
-| Final · Cansada                             | gana la Larga                 | **«¿y si…?»**  |
+| Final · Mi Falconess modelo                 | gana la Larga                 | **«¿y si…?»**  |
 | Final · ¿Y ahora qué se hace?               | falla una de las cuatro metas | final temprano |
 
 Los nueve temas de chat son canon (es quien es antes de la Larga).
@@ -67,7 +76,7 @@ la meta.
 
 ## 4. Lo que las otras historias pueden recordar
 
-- Peregrina perdió la gran Larga contra Milana, después de cuatro victorias.
+- Peregrina perdió la gran Larga, última, sin fuerzas, después de cuatro victorias; Milana la ganó.
 - Cernícala lloró después de perder contra ella, y Peregrina no lo entendió.
 - Milana duerme en las tribunas y dice «qué cansador».
-- Nunca: que Peregrina ganó la Larga.
+- Nunca: que Peregrina ganó la Larga, ni que Milana es su Falconess modelo (eso es del «¿y si…?»).
