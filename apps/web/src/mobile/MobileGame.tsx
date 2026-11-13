@@ -64,7 +64,9 @@ import {
 import { TitleScreen } from "./TitleScreen";
 import { type TrainResult, TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
+import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
+import { weekFx } from "./weekFx";
 
 type View =
   | { readonly screen: "menu" }
@@ -110,6 +112,8 @@ export function MobileGame() {
   const [weekPosition, setWeekPosition] = useState<WeekPosition>();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sceneDone, setSceneDone] = useState<string>();
+  // owner 2026-11-13: the week's mood, injury and sleep play as effects, once per step
+  const [fxDone, setFxDone] = useState<number>();
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
   const run = snap.run;
@@ -534,6 +538,7 @@ export function MobileGame() {
           <WeekDialog
             className={s.weekDialog}
             advice={false}
+            hideShown
             part="action"
             actionOpen
             preview={view.step}
@@ -558,6 +563,7 @@ export function MobileGame() {
           <WeekDialog
             className={s.weekDialog}
             advice={false}
+            hideShown
             part="action"
             actionOpen
             onActionDone={() => setView({ screen: "race", turn: view.turn, result: false })}
@@ -589,6 +595,9 @@ export function MobileGame() {
     ? inspirationScene(run.seed, state, inputs, snap.lastStep, snap.lastStepSeen)
     : undefined;
   const showScene = scene !== undefined && scene.key !== sceneDone;
+  const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
+  const fx = fxStep ? weekFx(fxStep) : [];
+  const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
   return (
     <div className={cx(s.app, view.screen === "race" && s.appWide)} style={style}>
       {view.screen !== "race" && hud}
@@ -602,12 +611,14 @@ export function MobileGame() {
           onDone={() => setSceneDone(scene.key)}
         />
       )}
-      {storyLayer(storyScene(onMenuScreen && !showScene && !pending))}
-      {onMenuScreen && !showScene && (
+      {showFx && <WeekFxOverlay key={inputs} fx={fx} onDone={() => setFxDone(inputs)} />}
+      {storyLayer(storyScene(onMenuScreen && !showScene && !showFx && !pending))}
+      {onMenuScreen && !showScene && !showFx && (
         <>
           <WeekDialog
             className={s.weekDialog}
             advice={false}
+            hideShown
             part="race"
             onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
           />

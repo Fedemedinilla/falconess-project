@@ -1862,5 +1862,11 @@
   "story.peregrina-long-won.11": "Vuelvo a las Sprint. Pero ahora sé que no todo se gana con velocidad.",
   "story.peregrina-long-won.12": "¿Y la pileta?",
   "story.peregrina-long-won.13": "La pileta también. …Mi Falconess modelo dice que sí.",
-  "story.peregrina-long-won.14": "En la tribuna, Milana bosteza. Peregrina le hace señas con las dos manos."
+  "story.peregrina-long-won.14": "En la tribuna, Milana bosteza. Peregrina le hace señas con las dos manos.",
+  "ui.m.fx.mood-up": "¡MOTIVADA!",
+  "ui.m.fx.mood-down": "DESANIMADA",
+  "ui.m.fx.injury": "¡LESIÓN!",
+  "ui.m.fx.sleep-great": "¡DESCANSO PERFECTO!",
+  "ui.m.fx.sleep-normal": "¡BUEN DESCANSO!",
+  "ui.m.fx.sleep-poor": "MAL DESCANSO"
 }

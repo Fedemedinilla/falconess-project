@@ -77,6 +77,11 @@ async function settle(page: Page): Promise<void> {
   const weekOpen = page.locator("#semana-dialogo[open]");
   const event = page.locator("#evento-dialogo[open]");
   for (let i = 0; i < 40; i++) {
+    // the week's effects (owner 2026-11-13) play first; a tap ends them
+    if ((await page.locator("#m-efectos").count()) > 0) {
+      await page.click("#m-efectos");
+      continue;
+    }
     if ((await weekOpen.count()) > 0) {
       await page.click("#semana-continuar");
       await expect(weekOpen).toHaveCount(0);
@@ -95,7 +100,8 @@ async function settle(page: Page): Promise<void> {
       if (
         (await weekOpen.count()) === 0 &&
         (await event.count()) === 0 &&
-        (await page.locator("#m-capitulo").count()) === 0
+        (await page.locator("#m-capitulo").count()) === 0 &&
+        (await page.locator("#m-efectos").count()) === 0
       )
         return;
       continue;
@@ -836,4 +842,22 @@ test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays 
   );
   await page.click("#m-chat-cerrar");
   await expect(page.locator("#m-chat")).toHaveCount(0);
+});
+
+test("the week's effects: a rest shows how she slept, then «Lo que pasó» without saying it", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-descansar");
+  // owner 2026-11-13: shown, not told — a stamp with chevrons before the dialog
+  const fx = page.locator("#m-efectos");
+  await expect(fx).toBeVisible();
+  await expect(fx.locator('[data-fx^="sleep-"]')).toHaveCount(1);
+  await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
+  await fx.click();
+  await expect(fx).toHaveCount(0);
+  const week = page.locator("#semana-dialogo[open]");
+  await expect(week).toBeVisible();
+  for (const key of ["log.vigor.rest.great", "log.vigor.rest.normal", "log.vigor.rest.poor"])
+    await expect(week).not.toContainText(t(key));
 });

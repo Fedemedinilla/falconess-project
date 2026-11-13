@@ -12,7 +12,7 @@ import { Icon } from "../ui/Icon";
 import { statIcon } from "../ui/icons";
 import { Pill } from "../ui/Pill";
 import { PositionMark } from "../ui/PositionMark";
-import { type WeekNote, weekSummary } from "./model/week";
+import { FX_NOTE, FX_ROWS, type WeekNote, weekSummary } from "./model/week";
 import { useGoalRaceLog } from "./shared/useGoalRaceLog";
 import { actionButtonId } from "./TurnActions";
 import { describeInput } from "./TurnSide";
@@ -71,6 +71,11 @@ export type WeekDialogProps = {
    * shows before the race position is chosen. Only with `part="action"`.
    */
   preview?: Step | undefined;
+  /**
+   * The phone game shows the mood, a new injury and how she slept as effects (owner 2026-11-13):
+   * the dialog leaves those rows and notes out.
+   */
+  hideShown?: boolean;
 };
 
 /**
@@ -90,6 +95,7 @@ export function WeekDialog({
   actionOpen = false,
   onActionDone,
   preview,
+  hideShown = false,
 }: WeekDialogProps) {
   const { game, snap } = useGame();
   const step = preview ?? snap.lastStep;
@@ -151,12 +157,14 @@ export function WeekDialog({
   // the action's part leads with the action's own line; the race's with the race
   const headline = part === "action" ? (summary.actionLine ?? summary.headline) : summary.headline;
   const showAction = part !== "race";
-  const notes =
+  const partNotes =
     part === "action"
       ? summary.notes.filter((n) => !RACE_NOTE.test(n.key))
       : part === "race"
         ? summary.notes.filter((n) => RACE_NOTE.test(n.key))
         : summary.notes;
+  const notes = hideShown ? partNotes.filter((n) => !FX_NOTE.test(n.key)) : partNotes;
+  const rows = hideShown ? summary.rows.filter((r) => !FX_ROWS.has(r.id)) : summary.rows;
 
   const onBackdrop = (e: MouseEvent<HTMLDialogElement>) => {
     // the dialog box fills the element: a click on the element itself is on the backdrop; the
@@ -286,9 +294,9 @@ export function WeekDialog({
                 ))}
               </ul>
             )}
-            {showAction && summary.rows.length > 0 && (
+            {showAction && rows.length > 0 && (
               <ul className={s.rows} aria-label={ui("ui.week.changes")}>
-                {summary.rows.map((row) => (
+                {rows.map((row) => (
                   <li key={`${row.id}-${row.value}-${row.cause ?? ""}`} className={s.row}>
                     <span className={s.rowLabel}>
                       <Icon name={row.icon} />
@@ -316,7 +324,7 @@ export function WeekDialog({
                 ))}
               </ul>
             )}
-            {showAction && summary.stats.length === 0 && summary.rows.length === 0 && (
+            {showAction && summary.stats.length === 0 && rows.length === 0 && (
               <p className={s.none}>{ui("ui.week.none")}</p>
             )}
             {keyedNotes(notes).map(({ id, note }) => (

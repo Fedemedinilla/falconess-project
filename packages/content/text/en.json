@@ -1862,5 +1862,11 @@
   "story.peregrina-long-won.11": "I'm going back to Sprints. But now I know you can't win everything with speed.",
   "story.peregrina-long-won.12": "And the pool?",
   "story.peregrina-long-won.13": "The pool too. …My model Falconess says so.",
-  "story.peregrina-long-won.14": "In the stands, Milana yawns. Peregrina waves at her with both hands."
+  "story.peregrina-long-won.14": "In the stands, Milana yawns. Peregrina waves at her with both hands.",
+  "ui.m.fx.mood-up": "FIRED UP!",
+  "ui.m.fx.mood-down": "DOWNCAST",
+  "ui.m.fx.injury": "INJURED!",
+  "ui.m.fx.sleep-great": "PERFECT REST!",
+  "ui.m.fx.sleep-normal": "GOOD REST!",
+  "ui.m.fx.sleep-poor": "POOR REST"
 }

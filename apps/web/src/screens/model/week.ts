@@ -137,6 +137,13 @@ export type WeekEvent = {
   readonly tone: WeekTone;
 };
 
+/**
+ * The notes and rows the phone game shows as effects instead (owner 2026-11-13: the mood, a new
+ * injury, how she slept; `mobile/weekFx.ts`): «Lo que pasó» leaves them out there.
+ */
+export const FX_NOTE = /^log\.(mood\.|vigor\.rest\.|train\.injury$|vigor\.exhausted$)/;
+export const FX_ROWS: ReadonlySet<string> = new Set(["mood", "injury"]);
+
 export type WeekSummary = {
   /** The week the input belongs to. */
   readonly turn: number;

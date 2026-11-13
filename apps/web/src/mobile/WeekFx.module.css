@@ -1,0 +1,198 @@
+/* The week's effects (owner 2026-11-13): stamps and chevrons like a training's result. */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: rgb(10 18 30 / 0.35);
+  cursor: pointer;
+  animation: layerIn 0.25s ease-out both;
+}
+.fx {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  animation: fxShow 1.3s ease-out both;
+}
+.last {
+  animation-name: fxStay;
+}
+.icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
+  animation: iconPop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.good .icon {
+  color: #b34f00;
+  border: 4px solid #ffd23f;
+}
+.bad .icon {
+  color: #1e4f8f;
+  border: 4px solid #6aa7e8;
+}
+.arrows {
+  position: absolute;
+  left: 50%;
+  bottom: 60%;
+  width: 40px;
+  height: 60px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.bad .arrows {
+  bottom: auto;
+  top: 60%;
+}
+.chev {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 20px;
+  overflow: visible;
+  opacity: 0;
+  animation: chevUp 0.8s ease-out both;
+}
+.bad .chev {
+  top: 0;
+  bottom: auto;
+  transform: rotate(180deg);
+  animation-name: chevDown;
+}
+.chev polyline {
+  fill: none;
+  stroke: #ffd23f;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.chev .edge {
+  stroke: #b34f00;
+  stroke-width: 7;
+}
+.bad .chev polyline {
+  stroke: #8cc4ff;
+}
+.bad .chev .edge {
+  stroke: #1e4f8f;
+}
+.stamp {
+  font-family: var(--cn);
+  font-weight: 800;
+  font-style: italic;
+  font-size: min(40px, 8.6vw);
+  line-height: 1;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.good .stamp {
+  background-image: linear-gradient(180deg, #fff6c2 0%, #ffd23f 45%, #ff8a00 100%);
+  -webkit-text-stroke: 1.5px #7a2a00;
+  filter: drop-shadow(0 3px 0 #fff) drop-shadow(0 6px 10px rgb(122 42 0 / 0.45));
+}
+.bad .stamp {
+  background-image: linear-gradient(180deg, #e3f0ff 0%, #6aa7e8 50%, #1e4f8f 100%);
+  -webkit-text-stroke: 1.5px #0d2a52;
+  filter: drop-shadow(0 3px 0 #fff) drop-shadow(0 6px 10px rgb(13 42 82 / 0.45));
+}
+@keyframes layerIn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fxShow {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fxStay {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes iconPop {
+  0% {
+    transform: scale(0.4);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes stampIn {
+  0% {
+    opacity: 0;
+    transform: scale(2) rotate(-6deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-3deg);
+  }
+}
+@keyframes chevUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+}
+@keyframes chevDown {
+  0% {
+    opacity: 0;
+    transform: rotate(180deg) translateY(12px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(180deg) translateY(-30px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx,
+  .icon,
+  .stamp,
+  .layer {
+    animation-duration: 0.01s;
+  }
+  .arrows {
+    display: none;
+  }
+}
