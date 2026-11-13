@@ -19,7 +19,7 @@ desviación requiere un ADR en `docs/decisions/` antes de aplicarse.
 El plan de 30 días se siguió hasta la fase 2. Desde ahí el trabajo se guió por las pruebas del
 dueño en un iPhone: la carrera pasó a ser de vuelo (ruleset v3), la interfaz se hizo para el
 celular en React (sin Phaser) y se agregaron sistemas que el plan no tenía. Cada desvío tiene su
-ADR (0006-0013). Juego publicado para pruebas, siempre en la última versión:
+ADR (0006-0015). Juego publicado para pruebas, siempre en la última versión:
 https://fedemedinilla.github.io/falconess-project/ (GitHub Pages, `.github/workflows/demo.yml`, se
 publica solo en cada push a `playtest-ui` o `main`), además del artifact de claude.ai «Prueba
 jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build:demo`).
@@ -62,9 +62,11 @@ jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build
   se moldean a su historia; Peregrina tendrá cuatro «salir primera» y una Larga de «correr», con una
   Falconess nueva de resistencia como rival. Base teórica en
   `docs/design/investigacion-personajes.md`.
-- Temporada completa de Peregrina (2026-11-13): 16 escenas (cuadro y cinemático, con fondos) y 9
+- Temporada completa de Peregrina (2026-11-13): 17 escenas (cuadro y cinemático, con fondos) y 9
   temas de chat; metas a su medida con categorías de carrera G3/G2/G1 (ADR-0014): cuatro victorias
-  y la Larga contra Milana, con dos finales. La temporada de cada Falconess es suya: sus metas no
+  y la Larga, donde Milana corre de verdad contra un campo de fondistas (ADR-0015), con dos finales.
+- Canon, temporada y «¿y si…?» (`docs/design/canon.md`): el método para escribir todas las
+  historias; la temporada es para jugar y sacar cajas, el canon se muestra en el Modo Historia. La temporada de cada Falconess es suya: sus metas no
   tocan el calendario compartido ni a las otras. Reglas de escenas en `docs/design/escenas.md`.
 - Nombres compuestos para las Falconess (estilo Special Week): generador en preparación en otra
   sesión (`docs/handoff/generador-de-nombres.md`).
