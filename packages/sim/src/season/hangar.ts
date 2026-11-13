@@ -1,6 +1,7 @@
-import type { Rng } from "@falconess/rng";
+import { Rng } from "@falconess/rng";
 import type { TrainingKind } from "@falconess/schema";
 import type { Draft, SimContext } from "./context.js";
+import { crewSyncOf } from "./crew-sync.js";
 
 const TRAINING_KINDS: readonly TrainingKind[] = [
   "train:agility",
@@ -36,9 +37,19 @@ export function rollCrewPresence(ctx: SimContext, d: Draft, rng: Rng): void {
       ctx.ruleset.season.crewPresenceBase +
       ctx.ruleset.season.crewPresencePerBondLevel * bondLevel(ctx, d.bond[mfrId] ?? 0);
     if (!rng.chancePermille("training", p)) continue;
-    for (const kind of TRAINING_KINDS) {
-      if (m.crew.stats.includes(ctx.ruleset.trainingStat[kind])) presence[kind]?.push(mfrId);
+    const kinds = TRAINING_KINDS.filter((kind) =>
+      m.crew.stats.includes(ctx.ruleset.trainingStat[kind]),
+    );
+    if (crewSyncOf(ctx) && kinds.length > 1) {
+      // prototype «3 + 1»: one of her trainings, from a stream of its own (no old draw moves)
+      const pick = new Rng(`${d.seed}/crew/${d.turn}/${mfrId}`).pickWeighted(
+        "training",
+        kinds.map(() => 1),
+      );
+      presence[kinds[pick] ?? kinds[0] ?? "train:agility"]?.push(mfrId);
+      continue;
     }
+    for (const kind of kinds) presence[kind]?.push(mfrId);
   }
   d.crewPresence = presence;
 }

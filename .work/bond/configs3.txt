@@ -1,0 +1,4 @@
+{"name": "hoy"}
+{"name": "cand-s200", "sync": {"basePm": 100, "minBond": 80, "syncPm": 200}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "cand-s250", "sync": {"basePm": 100, "minBond": 80, "syncPm": 250}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "cand-s300", "sync": {"basePm": 100, "minBond": 80, "syncPm": 300}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}

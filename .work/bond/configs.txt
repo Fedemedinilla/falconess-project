@@ -1,0 +1,17 @@
+{"name": "hoy"}
+{"name": "b50-m60-s200", "sync": {"basePm": 50, "minBond": 60, "syncPm": 200}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m60-s250", "sync": {"basePm": 50, "minBond": 60, "syncPm": 250}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m60-s300", "sync": {"basePm": 50, "minBond": 60, "syncPm": 300}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m60-s400", "sync": {"basePm": 50, "minBond": 60, "syncPm": 400}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m80-s200", "sync": {"basePm": 50, "minBond": 80, "syncPm": 200}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m80-s250", "sync": {"basePm": 50, "minBond": 80, "syncPm": 250}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m80-s300", "sync": {"basePm": 50, "minBond": 80, "syncPm": 300}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b50-m80-s400", "sync": {"basePm": 50, "minBond": 80, "syncPm": 400}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m60-s200", "sync": {"basePm": 100, "minBond": 60, "syncPm": 200}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m60-s250", "sync": {"basePm": 100, "minBond": 60, "syncPm": 250}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m60-s300", "sync": {"basePm": 100, "minBond": 60, "syncPm": 300}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m60-s400", "sync": {"basePm": 100, "minBond": 60, "syncPm": 400}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m80-s200", "sync": {"basePm": 100, "minBond": 80, "syncPm": 200}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m80-s250", "sync": {"basePm": 100, "minBond": 80, "syncPm": 250}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m80-s300", "sync": {"basePm": 100, "minBond": 80, "syncPm": 300}, "bondPerTraining": 7, "bondPerOuting": 10}
+{"name": "b100-m80-s400", "sync": {"basePm": 100, "minBond": 80, "syncPm": 400}, "bondPerTraining": 7, "bondPerOuting": 10}

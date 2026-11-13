@@ -1,0 +1,17 @@
+{"name": "hoy"}
+{"name": "p350-t10-m60-s200", "sync": {"basePm": 100, "minBond": 60, "syncPm": 200}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t10-m60-s300", "sync": {"basePm": 100, "minBond": 60, "syncPm": 300}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t10-m80-s200", "sync": {"basePm": 100, "minBond": 80, "syncPm": 200}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t10-m80-s300", "sync": {"basePm": 100, "minBond": 80, "syncPm": 300}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t14-m60-s200", "sync": {"basePm": 100, "minBond": 60, "syncPm": 200}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t14-m60-s300", "sync": {"basePm": 100, "minBond": 60, "syncPm": 300}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t14-m80-s200", "sync": {"basePm": 100, "minBond": 80, "syncPm": 200}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p350-t14-m80-s300", "sync": {"basePm": 100, "minBond": 80, "syncPm": 300}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 350}
+{"name": "p500-t10-m60-s200", "sync": {"basePm": 100, "minBond": 60, "syncPm": 200}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t10-m60-s300", "sync": {"basePm": 100, "minBond": 60, "syncPm": 300}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t10-m80-s200", "sync": {"basePm": 100, "minBond": 80, "syncPm": 200}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t10-m80-s300", "sync": {"basePm": 100, "minBond": 80, "syncPm": 300}, "bondPerTraining": 10, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t14-m60-s200", "sync": {"basePm": 100, "minBond": 60, "syncPm": 200}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t14-m60-s300", "sync": {"basePm": 100, "minBond": 60, "syncPm": 300}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t14-m80-s200", "sync": {"basePm": 100, "minBond": 80, "syncPm": 200}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}
+{"name": "p500-t14-m80-s300", "sync": {"basePm": 100, "minBond": 80, "syncPm": 300}, "bondPerTraining": 14, "bondPerOuting": 10, "presenceBase": 500}
