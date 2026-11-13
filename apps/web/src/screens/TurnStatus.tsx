@@ -185,13 +185,6 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
             </div>
             <div>
               <dt>
-                <Icon name="scrap" />
-                {ui("ui.turn.scrap")}
-              </dt>
-              <dd>{formatInt(state.wallet.scrap)}</dd>
-            </div>
-            <div>
-              <dt>
                 <Icon name="feathers" />
                 {ui("ui.turn.feathers")}
               </dt>

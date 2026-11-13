@@ -25,11 +25,9 @@ import {
   emptyPlan,
   learnableSkills,
   MAX_WORKSHOP_OPS,
-  nextRerollCost,
   PART_TYPE_ORDER,
   partOfType,
   planReport,
-  rerollableFrames,
   type WorkshopPlan,
   withPart,
 } from "./model/workshop";
@@ -71,7 +69,6 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
   const inputs = run?.inputs.length;
   const bodyRef = useRef<HTMLDivElement>(null);
   const [partsDetail, setPartsDetail] = useDetail("taller-piezas-explicacion");
-  const [quirksDetail, setQuirksDetail] = useDetail("taller-peculiaridades-explicacion");
   const [skillsDetail, setSkillsDetail] = useDetail("taller-habilidades-explicacion");
 
   // the panel replaces the button that opened it: the page goes to its top and focus moves in
@@ -107,11 +104,9 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
   // the position of the race after the order: the one chosen, else the wings' it leaves her on
   const racePosition =
     race && (race.position ?? wingsPosition(content, raceFrame(ctx.ruleset, state, report.ops)));
-  const rerollable = rerollableFrames(ctx, state);
   // v3 (ADR-0011): one neutral frame profile and no wear; the workshop is skills and the wings'
   // look (each style its gesture)
   const neutral = flightOf(ctx.ruleset)?.neutralFrames === true;
-  const nextReroll = nextRerollCost(ctx, state, plan);
   const skills = learnableSkills(ctx, state);
   const builds: {
     key: string;
@@ -362,94 +357,6 @@ export function Workshop({ onClose, onDone, race, className }: WorkshopProps) {
                 </span>
               </label>
             </div>
-
-            {/* quirks ----------------------------------------------------------------------------- */}
-            {rerollable.length > 0 && (
-              <div className={cx(s.section, s.switched)}>
-                <p className={s.legend}>
-                  <Icon name="quirk" />
-                  {ui("ui.workshop.quirks")}
-                </p>
-                <ExplainSwitch
-                  id="taller-peculiaridades-explicacion"
-                  detail={quirksDetail}
-                  onChange={setQuirksDetail}
-                  name={ui("ui.workshop.quirks")}
-                  className={s.sectionSwitch}
-                />
-                <p className={s.hint}>
-                  {uiAt(quirksDetail, "ui.workshop.quirks.hint", {
-                    scrap: state.wallet.scrap,
-                    left: report.scrapLeft,
-                  })}
-                </p>
-                <ul className={s.rerolls}>
-                  {rerollable.map((id) => {
-                    const frame = content.getFrame(id);
-                    const planned = plan.rerolls.filter((f) => f === id).length;
-                    const quirks = state.frameQuirks[id] ?? [];
-                    const affordable = report.scrapLeft >= nextReroll;
-                    return (
-                      <li key={id} className={s.reroll}>
-                        <div className={s.rerollHead}>
-                          <span className={s.frameName}>{gameText(frame.textKey)}</span>
-                          {planned > 0 && (
-                            <Pill tone="accent">
-                              {ui("ui.workshop.quirks.planned", { n: planned })}
-                            </Pill>
-                          )}
-                        </div>
-                        <ul className={s.quirkList}>
-                          {quirks.map((q) => {
-                            const quirk = content.getQuirk(q);
-                            return (
-                              <li key={q}>
-                                <strong>{gameText(quirk.textKey)}</strong>
-                                <span>
-                                  {(quirksDetail === "brief" && gameBrief(quirk.textKey)) ||
-                                    describeSource(quirk).join(" · ")}
-                                </span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                        <div className={s.rerollActions}>
-                          <Button
-                            id={`taller-resortear-${id}`}
-                            size="sm"
-                            disabled={!affordable || full}
-                            onClick={() => update({ ...plan, rerolls: [...plan.rerolls, id] })}
-                          >
-                            {ui("ui.workshop.quirks.reroll", { cost: nextReroll })}
-                          </Button>
-                          {planned > 0 && (
-                            <Button
-                              id={`taller-resortear-quitar-${id}`}
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                const at = plan.rerolls.lastIndexOf(id);
-                                update({
-                                  ...plan,
-                                  rerolls: plan.rerolls.filter((_, i) => i !== at),
-                                });
-                              }}
-                            >
-                              {ui("ui.workshop.quirks.undo")}
-                            </Button>
-                          )}
-                        </div>
-                        {!affordable && (
-                          <p className={s.hint}>
-                            {ui("ui.workshop.quirks.noScrap", { cost: nextReroll })}
-                          </p>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
           </>
         )}
 

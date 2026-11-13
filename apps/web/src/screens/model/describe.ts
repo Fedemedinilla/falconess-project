@@ -229,7 +229,6 @@ export function describeEffects(
       add("bond", ui("ui.fx.bond", { crew: crewName(mfr), delta: formatSigned(delta) }));
   if (fx.skillPoints !== 0)
     add("skillPoints", ui("ui.fx.skillPoints", { delta: formatSigned(fx.skillPoints) }));
-  if (fx.scrap !== 0) add("scrap", ui("ui.fx.scrap", { delta: formatSigned(fx.scrap) }));
   if (fx.feathers !== 0)
     add("feathers", ui("ui.fx.feathers", { delta: formatSigned(fx.feathers) }));
   if (fx.durability !== 0)

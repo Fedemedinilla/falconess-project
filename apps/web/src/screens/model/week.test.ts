@@ -215,7 +215,8 @@ describe("«Lo que pasó»: one step of the run, read from the states and the lo
     expect(w.headline.tone).toBe("good");
     expect(w.actionLine).toBeDefined();
     expect(w.context).toContain(gameText(content.getCourse(result.courseId).textKey));
-    expect(w.rows.find((r) => r.id === "scrap")?.cause).toContain(ui("ui.week.cause.race"));
+    // scrap is out of the game (owner 2026-11-13): «Lo que pasó» never lists it
+    expect(w.rows.find((r) => r.id === "scrap")).toBeUndefined();
     expect(w.notes.map((n) => n.key)).not.toContain("log.race");
   });
 

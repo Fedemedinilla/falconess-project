@@ -598,16 +598,11 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
         cause: causeOf(sources, outcome, can),
       });
   };
-  // skill points: a simulator training, the workshop, an event; scrap: the workshop, the race
+  // skill points: a simulator training, the workshop, an event (scrap is out of the game, owner 2026-11-13)
   counter("skillPoints", ui("ui.turn.skillPoints"), after.skillPoints - before.skillPoints, [
     "train-ok",
     "workshop",
     ...ev("skillPoints"),
-  ]);
-  counter("scrap", ui("ui.turn.scrap"), after.wallet.scrap - before.wallet.scrap, [
-    "workshop",
-    "race",
-    ...ev("scrap"),
   ]);
   counter("feathers", ui("ui.turn.feathers"), after.wallet.feathers - before.wallet.feathers, [
     ...ev("feathers"),
