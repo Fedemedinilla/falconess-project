@@ -173,7 +173,8 @@ test("a v3 race week: the card names the distance, her letter and her passive; t
   page,
 }) => {
   await startSeason(page, "peregrina", "pt-e2e-v3-taller");
-  await playUntil(page, (v) => v.week !== undefined && v.week >= 12 && !v.eventOpen);
+  // her first goal race is in week 10 (ADR-0014)
+  await playUntil(page, (v) => v.week !== undefined && v.week >= 10 && !v.eventOpen);
   await expect(page.locator("#turno-posicion")).toBeVisible();
   const distance = page.locator("#turno-distancia");
   await expect(distance).toHaveAttribute("data-distance", /^(sprint|mile|medium|long)$/);

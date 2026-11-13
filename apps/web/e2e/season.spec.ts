@@ -22,6 +22,8 @@ import {
 
 const SEED = "pt-e2e-1";
 const FALCONESS = ["peregrina", "caracara", "cernicala"] as const;
+/** Each one's first goal race: Peregrina's is T10 (ADR-0014), the others' T12. */
+const FIRST = { peregrina: 10, caracara: 12, cernicala: 12 } as const;
 const TIMING_DIR = fileURLToPath(new URL("../../../.work/ui/timing/", import.meta.url));
 
 for (const falconessId of FALCONESS) {
@@ -30,21 +32,22 @@ for (const falconessId of FALCONESS) {
   }) => {
     test.setTimeout(240_000);
     await startSeason(page, falconessId, SEED);
+    const first = FIRST[falconessId];
 
     // weeks 1–11, then week 12's action, which runs the T12 race
     const times: number[] = [];
     const t0 = Date.now();
     const toRace =
-      (await playUntil(page, (v) => v.week === 12 && !v.eventOpen, times)) +
+      (await playUntil(page, (v) => v.week === first && !v.eventOpen, times)) +
       (await playStep(page).then(() => 1));
     const toRaceMs = Date.now() - t0;
     const afterRace = await readTurn(page);
-    expect(afterRace.hash, "the season must pass the T12 goal race").toBe("#temporada");
+    expect(afterRace.hash, "the season must pass its first goal race").toBe("#temporada");
 
     // «Lo que pasó» opens over the page with the result the season recorded; an event waits
     const week = page.getByRole("dialog", { name: textPattern("ui.week.title.race.met") });
     await expect(week).toBeVisible();
-    await expect(week).toContainText(t("ui.week.eyebrow", { turn: 12, action: "" }).trim());
+    await expect(week).toContainText(t("ui.week.eyebrow", { turn: first, action: "" }).trim());
     const recorded = parsePlace((await week.locator("h2").textContent()) ?? "");
     expect(afterRace.weekOpen).toBe(true);
     expect(afterRace.eventOpen).toBe(false);
@@ -52,7 +55,7 @@ for (const falconessId of FALCONESS) {
     // "Ver carrera" → the replay of that very race, rebuilt with detail "full"
     await page.click("#semana-ver-carrera");
     await expect(page).toHaveURL(/#carrera$/);
-    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: 12 }))).toBeVisible();
+    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: first }))).toBeVisible();
     // the recorded place would give the race away: it waits for the finish
     const recordedText = t("ui.goalRace.recorded", { place: recorded.place, n: recorded.field })
       .replace(/[.*+?^$()|[\]\\]/g, "\\$&")
@@ -101,8 +104,8 @@ for (const falconessId of FALCONESS) {
       await closeWeek(page);
       answered = 1;
     }
-    await page.click("#metas-ver-12");
-    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: 12 }))).toBeVisible();
+    await page.click(`#metas-ver-${first}`);
+    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: first }))).toBeVisible();
     await page.click("#carrera-meta");
     expect(await playerPlace(page)).toBe(recorded.place);
     await page.click("#carrera-temporada");
@@ -119,9 +122,9 @@ for (const falconessId of FALCONESS) {
     if (completed === 0) await expect(page.getByText(textPattern("ui.end.failed"))).toBeVisible();
 
     // SeasonEnd opens the T12 race again: same place
-    await page.click("#fin-ver-12");
+    await page.click(`#fin-ver-${first}`);
     await expect(page).toHaveURL(/#carrera$/);
-    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: 12 }))).toBeVisible();
+    await expect(page.getByText(t("ui.goalRace.eyebrow", { turn: first }))).toBeVisible();
     await page.click("#carrera-meta");
     expect(await playerPlace(page)).toBe(recorded.place);
     await page.click("#carrera-temporada");

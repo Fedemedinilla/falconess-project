@@ -27,6 +27,11 @@ export type GenerateFieldArgs = {
   readonly turn: number;
   readonly raceSeed: string;
   readonly player: EntryInput;
+  /**
+   * ADR-0014: the goal's grade, the rival curve's mean × this ‰. Absent = the field as before
+   * (no draw moves either way).
+   */
+  readonly fieldPm?: number;
 };
 
 /** What a goal race needs (21.2): the course, its seed and the frozen field in lane order. */
@@ -109,7 +114,8 @@ export function generateField(
     .filter((s) => s.kind === "active" && s.uniqueTo === undefined)
     .map((s) => s.id)
     .sort(compareIds);
-  const mu = F.rivalBase + F.rivalPerTurn * turn;
+  const curve = F.rivalBase + F.rivalPerTurn * turn;
+  const mu = args.fieldPm === undefined ? curve : Math.floor((curve * args.fieldPm) / 1000);
   const skillCount = Math.min(F.rivalMaxSkills, Math.floor(turn / F.rivalTurnsPerSkill));
 
   const playerLane = frng.nextInt("race", n);
@@ -208,6 +214,7 @@ export function goalRaceSetup(
     turn: goal.turn,
     raceSeed,
     player,
+    ...(goal.fieldPm === undefined ? {} : { fieldPm: goal.fieldPm }),
   });
   const M = ctx.ruleset.season.mirrorRival;
   if (goal.mirrorRival !== true || M === undefined) return { course, raceSeed, entries };

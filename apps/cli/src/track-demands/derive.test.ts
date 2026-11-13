@@ -41,10 +41,10 @@ describe("track demands (docs/formulas.md «Lo que pide una pista»)", () => {
   });
 
   it("reads a track at its latest goal, else at its latest month as track of the month", () => {
-    expect(referenceWeek(cal, "overlook")).toBe(46); // Cernícala T12, Peregrina T46
+    expect(referenceWeek(cal, "overlook")).toBe(40); // Cernícala T12, Peregrina T40
     expect(referenceWeek(cal, "breakaway")).toBe(24);
-    expect(referenceWeek(cal, "steps")).toBe(30); // month 8: weeks 29-32
-    expect(referenceWeek(cal, "crossing")).toBe(46); // month 12
+    expect(referenceWeek(cal, "steps")).toBe(20); // Peregrina T20 (ADR-0014), before month 8
+    expect(referenceWeek(cal, "crossing")).toBe(48); // Peregrina's Larga, T48
   });
 
   it("follows the rival curve: higher letters later in the season", () => {

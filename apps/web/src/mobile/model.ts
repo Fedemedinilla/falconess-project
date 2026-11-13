@@ -5,7 +5,14 @@
  * here only the presentation choices live: the risk colors of a failure chance, the medal tiers of
  * a stat, which trainings the delta button calls boosted, the crews' badges.
  */
-import type { CupRound, Mood, SeasonState, StatName, TrainingKind } from "@falconess/schema";
+import type {
+  CupRound,
+  Mood,
+  SeasonGoal,
+  SeasonState,
+  StatName,
+  TrainingKind,
+} from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER, statCap } from "@falconess/sim";
 import {
   type ActionKind,
@@ -159,6 +166,8 @@ export type GoalCard = {
   readonly cup: CupRound | undefined;
   /** ADR-0012: Gerifalte, the rival built on her, runs in it. */
   readonly mirror: boolean;
+  /** ADR-0014: the race's grade (G3 to G1), when the goal has one. */
+  readonly grade: SeasonGoal["grade"];
 };
 
 export type StatCell = {
@@ -212,6 +221,7 @@ export function weekMenu(ctx: SimContext, state: SeasonState): WeekMenu {
       distance: raceDistance(ctx, state, next.goal.courseId),
       cup: next.goal.cup,
       mirror: next.goal.mirrorRival === true,
+      grade: next.goal.grade,
     },
     mood: state.mood,
     stats: statCells(state, statCap(ctx.ruleset, state)),

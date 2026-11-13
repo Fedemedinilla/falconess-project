@@ -27,9 +27,23 @@ const MOOD_GLYPH: Readonly<Record<number, GlyphName>> = {
   2: "dup",
 };
 
-/** «3.º o mejor», or «Ganar» when only first place passes. */
+/**
+ * «3.º o mejor», «Ganar» when only first place passes, or «Correr» when any place does (a full
+ * field is 8: Peregrina's Larga, ADR-0014).
+ */
 export function placeText(minPlace: number): string {
-  return minPlace === 1 ? ui("ui.m.goal.win") : ui("ui.m.goal.place", { place: minPlace });
+  if (minPlace === 1) return ui("ui.m.goal.win");
+  return minPlace >= 8 ? ui("ui.m.goal.run") : ui("ui.m.goal.place", { place: minPlace });
+}
+
+/** ADR-0014: the race's grade as a small chip («G3»), nothing when the goal has none. */
+export function GradeChip({ grade }: { grade: GoalCard["grade"] }) {
+  if (!grade) return null;
+  return (
+    <span className={s.raceGrade} data-grade={grade}>
+      {ui(`ui.m.grade.${grade}`)}
+    </span>
+  );
 }
 
 function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: ContentIndex }) {
@@ -59,6 +73,7 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
       </span>
       <div className={s.goalT}>
         <div className={s.goalN} data-cup={goal.cup}>
+          <GradeChip grade={goal.grade} />
           {goal.cup
             ? ui("ui.m.cup.pill", { round: ui(`ui.m.cup.short.${goal.cup}`), course })
             : course}

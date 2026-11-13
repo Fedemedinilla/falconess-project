@@ -192,7 +192,8 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   test.setTimeout(120_000);
   await startMobile(page, "peregrina");
   let k = 0;
-  while ((await week(page)) < 12) {
+  // her first goal race is in week 10 (ADR-0014)
+  while ((await week(page)) < 10) {
     if (k++ % 2) await page.click("#m-descansar");
     else {
       await page.click("#m-entrenar");

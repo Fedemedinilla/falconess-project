@@ -22,6 +22,13 @@ export const SeasonGoal = z.strictObject({
   cup: CupRound.optional(),
   /** ADR-0012: the rival built on the player's own Falconess runs in this race. */
   mirrorRival: z.boolean().optional(),
+  /**
+   * ADR-0014: the race's grade on screen. Like Umamusume's G3 to G1, a lesser race has a weaker
+   * field, so a sprinter can win most of her season (Sakura Bakushin O, Nishino Flower).
+   */
+  grade: z.enum(["g3", "g2", "g1"]).optional(),
+  /** ADR-0014: that grade's field, the rival curve's mean × this ‰ (absent = 1000, as before). */
+  fieldPm: z.number().int().min(500).max(1500).optional(),
 });
 export type SeasonGoal = z.infer<typeof SeasonGoal>;
 

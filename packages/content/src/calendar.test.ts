@@ -18,7 +18,9 @@ describe("v3 calendar (ADR-0011 §6)", () => {
     expect(sum).toBeCloseTo(cal.optionalRunsPerSeason, 9);
     // design7 criterios.json calendarV3.offerSlots: 6.6667 per track, 8.6667 with two months
     expect((w.canyon ?? 0) * (66 / 8)).toBeCloseTo(8.6667, 3);
-    expect((w.steps ?? 0) * (66 / 8)).toBeCloseTo(6.6667, 3);
+    expect((w.ridge ?? 0) * (66 / 8)).toBeCloseTo(6.6667, 3);
+    // ADR-0014: month 8 went from the Escalera to the Sprint (B3), so the Sprint has two months
+    expect((w.sprint ?? 0) * (66 / 8)).toBeCloseTo(8.6667, 3);
   });
 });
 
@@ -30,20 +32,30 @@ describe("v3 goals (balance lever «calendario/metas», ADR-0010)", () => {
     const m = courseLength(v3.getCourse(id));
     return m <= 1400 ? "sprint" : m <= 1800 ? "mile" : m <= 2400 ? "medium" : "long";
   };
-  it("gives each Falconess her own four goals on catalogue tracks, at her B letters or better", () => {
+  it("gives each Falconess her own goals on catalogue tracks, at her B letters or better", () => {
     for (const f of v3.falconess.values()) {
       const goals = cal.goals?.[f.id];
-      expect(goals, f.id).toHaveLength(4);
+      // ADR-0014: Peregrina's story adds a fifth goal, the Larga she only has to run
+      expect(goals, f.id).toHaveLength(f.id === "peregrina" ? 5 : 4);
       expect(f.seasonGoals).toEqual(goals);
       for (const g of f.seasonGoals) {
         expect(cal.catalogue).toContain(g.courseId);
-        expect(["S", "A", "B"]).toContain(f.distanceAptitude?.[distance(g.courseId)]);
+        if (g.minPlace < 8)
+          expect(["S", "A", "B"]).toContain(f.distanceAptitude?.[distance(g.courseId)]);
       }
     }
   });
   it("puts her goals where her identity is: Peregrina short, Cernícala Media, Caracara Larga", () => {
     const dist = (f: string) => v3.getFalconess(f).seasonGoals.map((g) => distance(g.courseId));
-    expect(dist("peregrina").every((d) => d === "sprint" || d === "mile")).toBe(true);
+    // ADR-0014: four wins in her distances, then the Larga «Correr» (any place passes)
+    const pg = v3.getFalconess("peregrina").seasonGoals;
+    expect(
+      dist("peregrina")
+        .slice(0, 4)
+        .every((d) => d === "sprint" || d === "mile"),
+    ).toBe(true);
+    expect(pg.slice(0, 4).every((g) => g.minPlace === 1)).toBe(true);
+    expect([dist("peregrina")[4], pg[4]?.minPlace]).toEqual(["long", 8]);
     expect(dist("cernicala").filter((d) => d === "medium")).toHaveLength(3);
     expect(dist("caracara").filter((d) => d === "long")).toHaveLength(3);
   });

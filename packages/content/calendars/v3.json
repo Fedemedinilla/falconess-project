@@ -23,7 +23,7 @@
     "sprint",
     "canyon",
     "open-sky",
-    "steps",
+    "sprint",
     "overlook",
     "circuit",
     "ridge",
@@ -33,24 +33,39 @@
   "goals": {
     "peregrina": [
       {
-        "turn": 12,
+        "turn": 10,
         "courseId": "sprint",
-        "minPlace": 6
+        "minPlace": 1,
+        "grade": "g3",
+        "fieldPm": 650
       },
       {
-        "turn": 24,
-        "courseId": "overlook",
-        "minPlace": 6
+        "turn": 20,
+        "courseId": "steps",
+        "minPlace": 1,
+        "grade": "g3",
+        "fieldPm": 650
       },
       {
-        "turn": 36,
+        "turn": 30,
         "courseId": "sprint",
-        "minPlace": 5
+        "minPlace": 1,
+        "grade": "g2",
+        "fieldPm": 800
       },
       {
-        "turn": 46,
+        "turn": 40,
         "courseId": "overlook",
-        "minPlace": 4
+        "minPlace": 1,
+        "grade": "g2",
+        "fieldPm": 800
+      },
+      {
+        "turn": 48,
+        "courseId": "crossing",
+        "minPlace": 8,
+        "grade": "g1",
+        "fieldPm": 1100
       }
     ],
     "cernicala": [
@@ -101,39 +116,41 @@
   "exigenteGoals": {
     "peregrina": [
       {
-        "turn": 12,
+        "turn": 10,
         "courseId": "sprint",
-        "minPlace": 5
+        "minPlace": 1,
+        "grade": "g2",
+        "fieldPm": 850
       },
       {
-        "turn": 24,
+        "turn": 20,
         "courseId": "steps",
-        "minPlace": 4
+        "minPlace": 1,
+        "grade": "g2",
+        "fieldPm": 850
       },
       {
-        "turn": 36,
+        "turn": 30,
         "courseId": "sprint",
-        "minPlace": 3
+        "minPlace": 1,
+        "grade": "g2",
+        "fieldPm": 850
       },
       {
-        "turn": 44,
-        "courseId": "steps",
-        "minPlace": 4,
-        "cup": "qualifier"
-      },
-      {
-        "turn": 46,
-        "courseId": "steps",
-        "minPlace": 3,
-        "cup": "semifinal",
-        "mirrorRival": true
+        "turn": 40,
+        "courseId": "overlook",
+        "minPlace": 1,
+        "grade": "g2",
+        "fieldPm": 850
       },
       {
         "turn": 48,
-        "courseId": "sprint",
+        "courseId": "crossing",
         "minPlace": 1,
         "cup": "final",
-        "mirrorRival": true
+        "mirrorRival": true,
+        "grade": "g1",
+        "fieldPm": 1000
       }
     ],
     "cernicala": [
@@ -225,7 +242,7 @@
     "steps": [
       {
         "stat": "agility",
-        "letter": "C"
+        "letter": "D"
       },
       {
         "stat": "technique",
@@ -235,11 +252,11 @@
     "overlook": [
       {
         "stat": "agility",
-        "letter": "B"
+        "letter": "C"
       },
       {
         "stat": "technique",
-        "letter": "E"
+        "letter": "F"
       }
     ],
     "ridge": [
