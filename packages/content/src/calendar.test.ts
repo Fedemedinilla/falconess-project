@@ -18,9 +18,7 @@ describe("v3 calendar (ADR-0011 §6)", () => {
     expect(sum).toBeCloseTo(cal.optionalRunsPerSeason, 9);
     // design7 criterios.json calendarV3.offerSlots: 6.6667 per track, 8.6667 with two months
     expect((w.canyon ?? 0) * (66 / 8)).toBeCloseTo(8.6667, 3);
-    expect((w.ridge ?? 0) * (66 / 8)).toBeCloseTo(6.6667, 3);
-    // ADR-0014: month 8 went from the Escalera to the Sprint (B3), so the Sprint has two months
-    expect((w.sprint ?? 0) * (66 / 8)).toBeCloseTo(8.6667, 3);
+    expect((w.steps ?? 0) * (66 / 8)).toBeCloseTo(6.6667, 3);
   });
 });
 
@@ -44,6 +42,11 @@ describe("v3 goals (balance lever «calendario/metas», ADR-0010)", () => {
           expect(["S", "A", "B"]).toContain(f.distanceAptitude?.[distance(g.courseId)]);
       }
     }
+  });
+  it("keeps each Falconess's season her own: only Peregrina's goals carry grades (ADR-0014)", () => {
+    for (const [id, goals] of Object.entries({ ...cal.goals, ...cal.exigenteGoals }))
+      if (id !== "peregrina")
+        for (const g of goals) expect([g.grade, g.fieldPm], id).toEqual([undefined, undefined]);
   });
   it("puts her goals where her identity is: Peregrina short, Cernícala Media, Caracara Larga", () => {
     const dist = (f: string) => v3.getFalconess(f).seasonGoals.map((g) => distance(g.courseId));

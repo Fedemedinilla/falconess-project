@@ -29,13 +29,13 @@ lo que ellas son, y por eso ganan casi todo y se sienten invencibles.
    «Correr».
 3. **Metas de Peregrina.**
 
-| Semana | Pista            | Normal             | Exigente                                 |
-| ------ | ---------------- | ------------------ | ---------------------------------------- |
-| 10     | Sprint           | Ganar · G3 (650)   | Ganar · G2 (850)                         |
-| 20     | Escalera (Milla) | Ganar · G3 (650)   | Ganar · G2 (850)                         |
-| 30     | Sprint           | Ganar · G2 (800)   | Ganar · G2 (850)                         |
-| 40     | Mirador (Milla)  | Ganar · G2 (800)   | Ganar · G2 (850)                         |
-| 48     | Cruce (Larga)    | Correr · G1 (1100) | Copa, final contra Gerifalte · G1 (1000) |
+| Semana | Pista           | Normal             | Exigente                                 |
+| ------ | --------------- | ------------------ | ---------------------------------------- |
+| 10     | Sprint          | Ganar · G3 (650)   | Ganar · G2 (850)                         |
+| 20     | Mirador (Milla) | Ganar · G3 (650)   | Ganar · G2 (850)                         |
+| 30     | Sprint          | Ganar · G2 (800)   | Ganar · G2 (850)                         |
+| 40     | Mirador (Milla) | Ganar · G2 (800)   | Ganar · G2 (850)                         |
+| 48     | Cruce (Larga)   | Correr · G1 (1100) | Copa, final contra Gerifalte · G1 (1000) |
 4. **Escenas.** El disparador `goal-after` suma `placed` (la cumplió sin ganar). La invitación pasa a
    la meta 4; la Larga tiene su escena previa y dos finales (pierde o gana).
 
@@ -55,16 +55,20 @@ Exigente (método de ADR-0012, `.work/grades/tune.ts`, 200 temporadas, dos bases
 metas el 66 % · 66 % al nivel del dueño (× 1,2; baranda E1: 55-85 %) y el 6 % · 12 % la jugadora
 atenta (antes 10 %).
 
-Las letras de pista (`trackDemands`) se leen en la semana de referencia de cada pista, que ahora
-sale de las metas nuevas (Escalera 20, Mirador 40, Cruce 48); regeneradas con
-`pnpm content:track-demands`: la Escalera pasa de Agi C a D y el Mirador de Agi B · Téc E a
-Agi C · Téc F (sus carreras son más tempranas); el resto queda igual.
+**La temporada de cada Falconess es suya (dueño, 2026-11-13).** Este cambio no toca nada que vean
+las otras: las metas de Cernícala y Caracara no cambian (su lote da lo mismo que antes: 68 % y 63 %),
+el calendario compartido tampoco (pistas del mes y ofertas), y las letras de cada pista quedan como
+estaban. Una meta con categoría es una carrera de la historia de una sola Falconess, así que
+`content:track-demands` no la usa como semana de referencia; el Sprint y el Mirador conservan la
+semana que les daban las metas viejas de Peregrina (36 y 46). Un test lo vigila: solo las metas de
+Peregrina llevan categoría.
 
-**Barandas (ADR-0010, `pnpm balance:barandas`, bases v3a y v3b):** con las metas nuevas falló B3 por
-0,1 punto (Acecho a 750: 28,1 %), porque la Larga y la Escalera, dos casas del Acecho, ganaron peso
-en el calendario. Con la palanca que indica la guía (la pista del mes), el mes 8 pasa de la Escalera
-al Sprint: B3 vuelve a 27,9 % (frágil, como antes con 27,7 %) y el veredicto es **PASA** (frágiles B2,
-B3 y B4, como antes; B8 sin mover un byte).
+**Barandas (ADR-0010, `pnpm balance:barandas`, bases v3a y v3b):** con la segunda victoria en la
+Escalera, B3 fallaba por 0,1 punto (Acecho a 750: 28,1 %), porque sumaba peso a dos casas del Acecho.
+Se corrigió con las metas de Peregrina, sin tocar el calendario compartido: su segunda victoria es en
+el Mirador (también Milla), así sus metas pesan como antes y solo se suma la Larga. B3 queda en 27,9 %
+(frágil, como antes con 27,7 %) y el veredicto es **PASA** (frágiles B2, B3 y B4, como antes; B8 sin
+mover un byte).
 
 ## Consecuencias
 

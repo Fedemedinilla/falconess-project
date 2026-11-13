@@ -23,7 +23,7 @@
     "sprint",
     "canyon",
     "open-sky",
-    "sprint",
+    "steps",
     "overlook",
     "circuit",
     "ridge",
@@ -41,7 +41,7 @@
       },
       {
         "turn": 20,
-        "courseId": "steps",
+        "courseId": "overlook",
         "minPlace": 1,
         "grade": "g3",
         "fieldPm": 650
@@ -124,7 +124,7 @@
       },
       {
         "turn": 20,
-        "courseId": "steps",
+        "courseId": "overlook",
         "minPlace": 1,
         "grade": "g2",
         "fieldPm": 850
@@ -242,7 +242,7 @@
     "steps": [
       {
         "stat": "agility",
-        "letter": "D"
+        "letter": "C"
       },
       {
         "stat": "technique",
@@ -252,11 +252,11 @@
     "overlook": [
       {
         "stat": "agility",
-        "letter": "C"
+        "letter": "B"
       },
       {
         "stat": "technique",
-        "letter": "F"
+        "letter": "E"
       }
     ],
     "ridge": [

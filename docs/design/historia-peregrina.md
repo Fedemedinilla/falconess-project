@@ -20,8 +20,9 @@ Lo que ya está fijado en el juego:
 - **Cómo corre:** Remate (A) y Punta (B); Sprint A, Milla A, Media B, Larga C. La picada es su arma.
 - **Su arte:** casco bajo el brazo, sonrisa competitiva; entrenando: pista, paracaídas con cara de
   pánico, natación decidida, clase con el cerebro humeando, simulador «¿WTF?».
-- **Su temporada:** metas en la semana 12 (Sprint), 24 (Mirador; en Exigente, Escalera),
-  36 (Sprint) y 46 (Mirador). En Exigente, la Copa en 44, 46 y 48 contra Gerifalte.
+- **Su temporada (ADR-0014):** ganar en las semanas 10 (Sprint, G3), 20 (Mirador, G3), 30 (Sprint,
+  G2) y 40 (Mirador, G2), y correr la Larga en la 48 (Cruce, G1). En Exigente, cuatro victorias G2 y
+  la final de la Copa contra Gerifalte en la Larga.
 - **El jugador** es su entrenador o entrenadora; el texto le habla de vos, como el resto del juego, y no le da género.
 
 ### Ideas para la premisa (sin estereotipos)

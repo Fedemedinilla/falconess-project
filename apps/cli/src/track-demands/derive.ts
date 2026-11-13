@@ -71,10 +71,20 @@ export function demandedStats(w: Readonly<Record<StatName, number>>): StatName[]
  * is a goal in), else the middle week of the latest month it is the track of the month (month i of
  * 12 is weeks 4i+1 … 4i+4), else mid-season.
  */
+/**
+ * ADR-0014: the weeks Peregrina's goals gave the Sprint and the Mirador before her story races got
+ * their grades. A graded goal is one Falconess's own season (its field is not the rival curve), so
+ * it never moves what a track shows to the others: these two keep the week they had.
+ */
+const PINNED_REFERENCE_WEEK: Readonly<Record<string, number>> = { sprint: 36, overlook: 46 };
+
 export function referenceWeek(cal: Calendar, track: string, turns = 48): number {
+  const pinned = PINNED_REFERENCE_WEEK[track];
+  if (pinned !== undefined) return pinned;
   let week = 0;
   for (const goals of Object.values(cal.goals ?? {}))
-    for (const g of goals) if (g.courseId === track) week = Math.max(week, g.turn);
+    for (const g of goals)
+      if (g.courseId === track && g.grade === undefined) week = Math.max(week, g.turn);
   if (week > 0) return week;
   const perMonth = turns / cal.monthTrack.length;
   cal.monthTrack.forEach((t, i) => {
