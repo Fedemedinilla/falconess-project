@@ -2799,3 +2799,56 @@
     transform: translateX(80px) scale(0.85);
   }
 }
+
+/* ---- the wide screen (owner 2026-11-13): the game in a taller, wider column, the panel beside it.
+   The column has a transform, so the game's fixed layers (effects, scenes, the transition, the
+   notices) stay inside it. ---- */
+.deskRoot {
+  display: contents;
+  --colw: clamp(470px, 34vw, 580px);
+  --gap: 24px;
+  --railw: 104px;
+  --pw: min(640px, calc(100vw - var(--colw) - var(--gap) - var(--railw) - 40px));
+  --deskl: max(16px, calc((100vw - var(--colw) - var(--gap) - var(--pw) - var(--railw)) / 2));
+}
+.deskBg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      90% 70% at 25% 10%,
+      color-mix(in srgb, var(--acc, #c0392b) 14%, #f4f9fd),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #eef5fb, #d7e7f4);
+}
+.app.appDesk,
+.app.appDesk.appWide {
+  top: 0;
+  bottom: 0;
+  left: var(--deskl);
+  right: auto;
+  width: var(--colw);
+  max-width: none;
+  height: auto;
+  margin: 0;
+  border-radius: 0;
+  box-shadow:
+    0 0 0 1px rgb(20 32 43 / 0.1),
+    0 18px 40px rgb(20 32 43 / 0.18);
+  transform: translateZ(0);
+}
+.app.appDeskSolo,
+.app.appDeskSolo.appWide {
+  left: calc(50% - var(--colw) / 2);
+}
+/* the panel is the menu on a wide screen */
+.appDesk :global(#m-menu) {
+  display: none;
+}
+/* a box-less wrapper that gives the game's look (variables, buttons, sheets) to what sits outside
+   the game's column: the wide screen's panel, the panels' sheets */
+.app.appContents {
+  display: contents;
+}

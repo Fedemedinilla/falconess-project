@@ -1,6 +1,10 @@
 /** Stroke icons of the phone game (the approved prototype's set). Decorative: always aria-hidden. */
 const PATHS = {
   flag: "M5 21V4M5 4h12l-2.5 4 2.5 4H5",
+  users:
+    "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c0-3 2.2-5 5-5s5 2 5 5M11 20c0-3 2.2-5 5-5s5 2 5 5",
+  help: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01",
+  log: "M6 3h9l3 3v15H6zM9 9h6M9 13h6M9 17h4",
   up: "M7 17 17 7M9 7h8v8",
   right: "M5 12h14M13 6l6 6-6 6",
   down: "M7 7l10 10M17 9v8H9",

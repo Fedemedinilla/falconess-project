@@ -24,6 +24,7 @@ import {
 import { weekSummary } from "../screens/model/week";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useMedia } from "../ui/useMedia";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
@@ -36,6 +37,20 @@ import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
 import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
 import { OutingSheet } from "./OutingSheet";
+import {
+  CrewsPanel,
+  DeskPanel,
+  GoalsPanel,
+  GuidePanel,
+  guideSeen,
+  LogPanel,
+  markGuideSeen,
+  PANEL_GLYPH,
+  PanelSheet,
+  type PanelTab,
+  panelTitle,
+} from "./Panels";
+import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
@@ -62,8 +77,10 @@ import {
   seenInRun,
 } from "./storyModel";
 import { TitleScreen } from "./TitleScreen";
+import { TrackSheet } from "./TrackCard";
 import { resultTimeline, type TrainResult, TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
+import { trackCard } from "./track";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
 import { type WeekFx, type WeekFxPart, weekFx } from "./weekFx";
@@ -84,6 +101,9 @@ type View =
   | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
 
 const MENU: View = { screen: "menu" };
+
+/** A wide screen (owner 2026-11-13): the game's column with the panel beside it. */
+export const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
 
 /**
  * The title screen shows once per visit, when the page opens on the game (owner 2026-11-12); a
@@ -120,6 +140,21 @@ export function MobileGame() {
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [outingOpen, setOutingOpen] = useState(false);
+  // owner 2026-11-13: on a wide screen the game sits in a taller, wider column with the menu open
+  // beside it as a panel; on a phone the panels open from «Menú»
+  const desk = useMedia(DESK_QUERY);
+  const [tab, setTab] = useState<PanelTab>("menu");
+  const [sheet, setSheet] = useState<PanelTab>();
+  const [trackFor, setTrackFor] = useState<string>();
+  const [guideNew, setGuideNew] = useState(() => !guideSeen());
+  const openPanel = (t: PanelTab) => {
+    if (t === "guide") {
+      markGuideSeen();
+      setGuideNew(false);
+    }
+    if (desk) setTab(t);
+    else setSheet(t);
+  };
   const run = snap.run;
   const inputs = run?.inputs.length ?? 0;
 
@@ -233,14 +268,24 @@ export function MobileGame() {
   }, [inputs]);
 
   const toTests = () => navigate("inicio");
+  /** A screen without the panel (the selection, the season's end): centered on a wide screen. */
+  const solo = (node: React.ReactNode) =>
+    desk ? (
+      <div className={s.deskRoot}>
+        <div className={s.deskBg} aria-hidden="true" />
+        {node}
+      </div>
+    ) : (
+      node
+    );
 
   if (!run)
-    return (
-      <div className={s.app}>
+    return solo(
+      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)}>
         <SelectScreen onTests={toTests} />
         {transition}
         {titleScreen}
-      </div>
+      </div>,
     );
 
   const ctx = game.context();
@@ -302,8 +347,8 @@ export function MobileGame() {
   );
 
   if (state.status === "ended" && view.screen !== "race")
-    return (
-      <div className={s.app} style={style}>
+    return solo(
+      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} style={style}>
         <EndScreen
           run={run}
           onRace={(t) => setView({ screen: "race", turn: t, result: false })}
@@ -313,7 +358,7 @@ export function MobileGame() {
         {storyLayer(storyScene("race"))}
         {transition}
         {titleScreen}
-      </div>
+      </div>,
     );
 
   const menu = weekMenu(ctx, state);
@@ -598,8 +643,44 @@ export function MobileGame() {
         : onMenuScreen && !showScene && !showFx && !pending
           ? "menu"
           : undefined;
-  return (
-    <div className={cx(s.app, view.screen === "race" && s.appWide)} style={style}>
+  const menuItems = (
+    <MenuItems
+      key={run.seed}
+      onExport={() => {
+        const entry = game.history().find((e) => e.seed === run.seed);
+        if (entry) setExporting(entryItem(entry));
+      }}
+      onHistory={() => setHistoryOpen(true)}
+      onTests={toTests}
+      chatName={gameText(`falconess.${state.falconessId}`)}
+      chatNew={openTopics(allTopics(), state).some((tp) => !readTopics().has(tp.id))}
+      onChat={() => setChatOpen(true)}
+      onStory={() => setStoryListOpen(true)}
+      onNew={() => game.newSeason()}
+    />
+  );
+  const panel = (t: PanelTab) =>
+    t === "menu" ? (
+      <div className={pm.menuGrid}>{menuItems}</div>
+    ) : t === "log" ? (
+      <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} />
+    ) : t === "goals" ? (
+      <GoalsPanel ctx={ctx} state={state} onTrack={setTrackFor} />
+    ) : t === "crews" ? (
+      <CrewsPanel ctx={ctx} state={state} />
+    ) : (
+      <GuidePanel
+        onDone={() => {
+          if (desk) setTab("menu");
+          else setSheet(undefined);
+        }}
+      />
+    );
+  const game_ = (
+    <div
+      className={cx(s.app, view.screen === "race" && s.appWide, desk && s.appDesk)}
+      style={style}
+    >
       {view.screen !== "race" && hud}
       {screen}
       {/* the week's effects and the event wait until the race and its result were seen */}
@@ -703,8 +784,42 @@ export function MobileGame() {
           setMenuOpen(false);
           game.newSeason();
         }}
+        onPanel={(t) => {
+          setMenuOpen(false);
+          openPanel(t);
+        }}
+        guideNew={guideNew}
       />
     </div>
+  );
+  return (
+    <>
+      {desk ? (
+        <div className={s.deskRoot} style={style}>
+          <div className={s.deskBg} aria-hidden="true" />
+          {game_}
+          <div className={cx(s.app, s.appContents)}>
+            <DeskPanel tab={tab} onTab={openPanel} dot={guideNew ? "guide" : undefined}>
+              {panel(tab)}
+            </DeskPanel>
+          </div>
+        </div>
+      ) : (
+        game_
+      )}
+      <div className={cx(s.app, s.appContents)} style={style}>
+        <PanelSheet
+          open={!desk && sheet !== undefined}
+          title={sheet ? panelTitle(sheet) : ""}
+          onClose={() => setSheet(undefined)}
+        >
+          {sheet && panel(sheet)}
+        </PanelSheet>
+        {trackFor && (
+          <TrackSheet view={trackCard(ctx, trackFor)} open onClose={() => setTrackFor(undefined)} />
+        )}
+      </div>
+    </>
   );
 }
 
@@ -776,9 +891,8 @@ function trainingCue(
 }
 
 /** The «Menú» sheet: the test view, a new season. */
-function MobileMenu({
-  open,
-  onClose,
+/** The menu's own buttons: in the phone's sheet and in the wide screen's panel. */
+function MenuItems({
   onExport,
   onHistory,
   onTests,
@@ -788,8 +902,6 @@ function MobileMenu({
   onChat,
   onStory,
 }: {
-  open: boolean;
-  onClose: () => void;
   onExport: () => void;
   onHistory: () => void;
   onTests: () => void;
@@ -799,7 +911,6 @@ function MobileMenu({
   onChat: () => void;
   onStory: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
   const [confirm, setConfirm] = useState(false);
   const [sound, setSound] = useState<SoundStyle>(getSoundStyle);
   const [music, setMusicState] = useState(getMusicOn);
@@ -810,11 +921,96 @@ function MobileMenu({
     // the new style says itself: its success
     playSound("success");
   };
+  return (
+    <>
+      <button type="button" className={s.btn} id="m-chat-abrir" data-new={chatNew} onClick={onChat}>
+        <Glyph name="chat" size={20} />
+        {ui("ui.m.chat.with", { name: chatName })}
+        {chatNew && <span className={st.newTag}>{ui("ui.m.chat.new")}</span>}
+      </button>
+      <button type="button" className={s.btn} id="m-historia-abrir" onClick={onStory}>
+        <Glyph name="book" size={20} />
+        {ui("ui.m.story.title")}
+      </button>
+      <button type="button" className={s.btn} id="m-exportar-partida" onClick={onExport}>
+        <Glyph name="down" size={20} />
+        {ui("ui.m.export.run")}
+      </button>
+      <button type="button" className={s.btn} id="m-temporadas" onClick={onHistory}>
+        <Glyph name="book" size={20} />
+        {ui("ui.m.history.title")}
+      </button>
+      <button type="button" className={s.btn} id="m-pruebas" onClick={onTests}>
+        <Glyph name="screen" size={20} />
+        {ui("ui.m.tests")}
+      </button>
+      <button
+        type="button"
+        className={s.btn}
+        id="m-sonido"
+        data-style={sound}
+        aria-label={ui("ui.m.sound.label", { style: ui(`ui.m.sound.${sound}`) })}
+        onClick={onSound}
+      >
+        <Glyph name={sound === "off" ? "mute" : "speaker"} size={20} />
+        {ui("ui.m.sound", { style: ui(`ui.m.sound.${sound}`) })}
+      </button>
+      <button
+        type="button"
+        className={s.btn}
+        id="m-musica"
+        data-on={music}
+        onClick={() => {
+          setMusicOn(!music);
+          setMusicState(!music);
+        }}
+      >
+        <Glyph name={music ? "note" : "mute"} size={20} />
+        {ui("ui.m.music", { state: ui(music ? "ui.m.music.on" : "ui.m.music.off") })}
+      </button>
+      <LangButton className={s.btn} id="m-idioma" />
+      {confirm ? (
+        <button type="button" className={cx(s.btn, s.btnMain)} id="m-nueva-si" onClick={onNew}>
+          {ui("ui.m.new.confirm")}
+        </button>
+      ) : (
+        <button type="button" className={s.btn} id="m-nueva" onClick={() => setConfirm(true)}>
+          <Glyph name="flag" size={20} />
+          {ui("ui.m.new")}
+        </button>
+      )}
+    </>
+  );
+}
+
+/** «Menú» on a phone: the panels first (owner 2026-11-13), then the menu's buttons. */
+function MobileMenu({
+  open,
+  onClose,
+  onPanel,
+  guideNew,
+  ...items
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPanel: (tab: PanelTab) => void;
+  guideNew: boolean;
+  onExport: () => void;
+  onHistory: () => void;
+  onTests: () => void;
+  onNew: () => void;
+  chatName: string;
+  chatNew: boolean;
+  onChat: () => void;
+  onStory: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const [round, setRound] = useState(0);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (open && !d.open) {
-      setConfirm(false);
+      setRound((n) => n + 1);
       if (typeof d.showModal === "function") d.showModal();
       else d.setAttribute("open", "");
     } else if (!open && d.open) d.close();
@@ -831,68 +1027,20 @@ function MobileMenu({
         <h2 className={s.dlTitle} id="m-menu-titulo">
           {ui("ui.m.menu")}
         </h2>
-        <button
-          type="button"
-          className={s.btn}
-          id="m-chat-abrir"
-          data-new={chatNew}
-          onClick={onChat}
-        >
-          <Glyph name="chat" size={20} />
-          {ui("ui.m.chat.with", { name: chatName })}
-          {chatNew && <span className={st.newTag}>{ui("ui.m.chat.new")}</span>}
-        </button>
-        <button type="button" className={s.btn} id="m-historia-abrir" onClick={onStory}>
-          <Glyph name="book" size={20} />
-          {ui("ui.m.story.title")}
-        </button>
-        <button type="button" className={s.btn} id="m-exportar-partida" onClick={onExport}>
-          <Glyph name="down" size={20} />
-          {ui("ui.m.export.run")}
-        </button>
-        <button type="button" className={s.btn} id="m-temporadas" onClick={onHistory}>
-          <Glyph name="book" size={20} />
-          {ui("ui.m.history.title")}
-        </button>
-        <button type="button" className={s.btn} id="m-pruebas" onClick={onTests}>
-          <Glyph name="screen" size={20} />
-          {ui("ui.m.tests")}
-        </button>
-        <button
-          type="button"
-          className={s.btn}
-          id="m-sonido"
-          data-style={sound}
-          aria-label={ui("ui.m.sound.label", { style: ui(`ui.m.sound.${sound}`) })}
-          onClick={onSound}
-        >
-          <Glyph name={sound === "off" ? "mute" : "speaker"} size={20} />
-          {ui("ui.m.sound", { style: ui(`ui.m.sound.${sound}`) })}
-        </button>
-        <button
-          type="button"
-          className={s.btn}
-          id="m-musica"
-          data-on={music}
-          onClick={() => {
-            setMusicOn(!music);
-            setMusicState(!music);
-          }}
-        >
-          <Glyph name={music ? "note" : "mute"} size={20} />
-          {ui("ui.m.music", { state: ui(music ? "ui.m.music.on" : "ui.m.music.off") })}
-        </button>
-        <LangButton className={s.btn} id="m-idioma" />
-        {confirm ? (
-          <button type="button" className={cx(s.btn, s.btnMain)} id="m-nueva-si" onClick={onNew}>
-            {ui("ui.m.new.confirm")}
+        {(["guide", "goals", "crews", "log"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={s.btn}
+            id={`m-panel-abrir-${t}`}
+            onClick={() => onPanel(t)}
+          >
+            <Glyph name={PANEL_GLYPH[t]} size={20} />
+            {panelTitle(t)}
+            {t === "guide" && guideNew && <span className={st.newTag}>{ui("ui.m.guide.new")}</span>}
           </button>
-        ) : (
-          <button type="button" className={s.btn} id="m-nueva" onClick={() => setConfirm(true)}>
-            <Glyph name="flag" size={20} />
-            {ui("ui.m.new")}
-          </button>
-        )}
+        ))}
+        <MenuItems key={round} {...items} />
         <button type="button" className={cx(s.btn, s.btnDark)} id="m-menu-cerrar" onClick={onClose}>
           {ui("ui.m.close")}
         </button>

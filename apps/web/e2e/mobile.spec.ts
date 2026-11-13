@@ -1015,3 +1015,49 @@ test("training result (owner 2026-11-13): the stats slide to the bottom, the cre
   }
   throw new Error("no crew in twelve weeks");
 });
+
+test("wide screen (owner 2026-11-13): the game's column with the panel beside it, and its tabs", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startMobile(page, "peregrina");
+  const panel = page.locator("#m-panel");
+  await expect(panel).toBeVisible();
+  // the panel is the menu here: the game's own «Menú» button hides
+  await expect(page.locator("#m-menu")).toBeHidden();
+  const col = await page.locator("#m-semana").boundingBox();
+  expect(col && col.x < 700).toBe(true);
+  for (const tab of ["log", "goals", "crews", "guide", "menu"]) {
+    await page.click(`#m-panel-${tab}`);
+    await expect(page.locator(`#m-panel-${tab}`)).toHaveAttribute("aria-pressed", "true");
+  }
+  await page.click("#m-panel-goals");
+  await expect(page.locator("#m-metas [data-turn]")).toHaveCount(5);
+  // a training plays inside the column; the log gets its week
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-agility");
+  await settle(page);
+  await page.click("#m-panel-log");
+  await expect(page.locator('#m-registro [data-turn="1"]')).toBeVisible();
+  // narrow again: the phone's layout, the panel gone, the menu back
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator("#m-menu")).toBeVisible();
+  expect(await week(page)).toBe(2);
+});
+
+test("phone menu: the guide, goals, crews and log open as sheets", async ({ page }) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-menu");
+  await expect(page.locator("#m-panel-abrir-guide")).toContainText(t("ui.m.guide.new"));
+  await page.click("#m-panel-abrir-crews");
+  await expect(page.locator("#m-panel-hoja[open] #m-cuadrillas-panel")).toBeVisible();
+  await page.click("#m-panel-hoja-cerrar");
+  await page.click("#m-menu");
+  await page.click("#m-panel-abrir-guide");
+  await expect(page.locator("#m-guia li")).toHaveCount(7);
+  await page.click("#m-guia-ok");
+  await expect(page.locator("#m-panel-hoja[open]")).toHaveCount(0);
+  await page.click("#m-menu");
+  await expect(page.locator("#m-panel-abrir-guide")).not.toContainText(t("ui.m.guide.new"));
+});

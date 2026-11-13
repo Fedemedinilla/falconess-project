@@ -1,0 +1,387 @@
+/* The side panels (Panels.tsx): Registro, Metas, Cuadrillas, Guía, in the desk panel or a sheet. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.note {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff8de;
+  box-shadow: 0 0 0 1px #f3dd8a;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #2d3b48;
+}
+.h {
+  margin: 0;
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.15;
+  color: var(--tx, #14202b);
+}
+.sub {
+  font-size: 14px;
+  font-weight: 700;
+  color: #5b6d7d;
+}
+.bad {
+  font-size: 15px;
+  color: #c0392b;
+}
+.wk {
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  color: #5b6d7d;
+  line-height: 1;
+}
+.wk b {
+  display: block;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--tx, #14202b);
+  font-variant-numeric: tabular-nums;
+}
+/* Registro */
+.entry {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d9e3ec;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+.chip {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #e6f2fb;
+  color: #14202b;
+}
+.up {
+  background: #fff1c2;
+  color: #8a4b00;
+}
+.down {
+  background: #e5eefb;
+  color: #1e4f8f;
+}
+.vig {
+  background: #e3f5ea;
+  color: #1e7b46;
+}
+.vigDown {
+  background: #e5eefb;
+  color: #1e4f8f;
+}
+.bond {
+  background: #ffe4ec;
+  color: #a01842;
+}
+.win {
+  background: #f1c40f;
+  color: #1d1704;
+}
+/* Metas */
+.goal {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d9e3ec;
+  text-align: left;
+  cursor: pointer;
+}
+.goal:focus-visible {
+  outline: 3px solid var(--acc, #c0392b);
+  outline-offset: 2px;
+}
+.goalDone {
+  background: linear-gradient(90deg, #fff7d2, #fff 60%);
+}
+.goalFailed {
+  background: linear-gradient(90deg, #e9eef5, #fff 60%);
+}
+.goalNext {
+  box-shadow: 0 0 0 2.5px var(--acc, #c0392b);
+}
+.gmain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gmain small {
+  color: #5b6d7d;
+  font-size: 13.5px;
+}
+.state {
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 17px;
+  text-align: right;
+  color: #5b6d7d;
+  white-space: nowrap;
+}
+.ok {
+  color: #1e7b46;
+}
+.nx {
+  color: var(--acc, #c0392b);
+}
+.bar {
+  display: block;
+  height: 9px;
+  margin-top: 8px;
+  border-radius: 6px;
+  background: #e6dcb0;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f1c40f, #ff9a00);
+}
+/* Cuadrillas */
+.crew {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d9e3ec;
+}
+.crewSync {
+  background: linear-gradient(90deg, #fff7d2, #fff 70%);
+  box-shadow:
+    0 0 0 2px #ff9a00,
+    0 0 12px rgb(255 170 0 / 0.35);
+}
+.crew small {
+  color: #5b6d7d;
+  font-size: 13.5px;
+}
+.crew small b {
+  color: #8a4b00;
+}
+.face {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 4px solid var(--bc);
+  box-shadow:
+    0 0 0 1.5px #f1c40f,
+    0 0 0 3px rgb(20 32 43 / 0.55);
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 19px;
+  color: #14202b;
+}
+.here {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: #fff1c2;
+  color: #8a4b00;
+  font-family: Barlow, system-ui, sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.segs {
+  display: flex;
+  gap: 3px;
+  margin: 5px 0 3px;
+}
+.segs i {
+  flex: 0 1 44px;
+  height: 9px;
+  border-radius: 3px;
+  background: #d9e3ec;
+  box-shadow: inset 0 0 0 1px #c3cfdb;
+}
+.segs .segOn {
+  background: #f1c40f;
+}
+.segs .segSync {
+  background: linear-gradient(180deg, #ffe680, #ff9a00);
+}
+.segs .segGoal {
+  box-shadow:
+    inset 0 0 0 1px #c3cfdb,
+    0 0 0 2px #ff9a00;
+}
+/* Guía */
+.step {
+  margin: 0;
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 15px;
+  color: #5b6d7d;
+}
+.tip {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d9e3ec;
+}
+.tip p {
+  margin: 3px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: #2d3b48;
+}
+.tipIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #f1c40f;
+}
+.ok2 {
+  align-self: flex-end;
+  padding: 10px 22px;
+  border-radius: 14px;
+  background: #14202b;
+  color: #fff;
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 19px;
+}
+
+/* ---- the wide screen (owner 2026-11-13): the game's column, the panel and its tabs ---- */
+.desk {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--deskl) + var(--colw) + var(--gap));
+  width: calc(var(--pw) + var(--railw));
+  z-index: 2;
+  display: flex;
+  font-family: Barlow, system-ui, sans-serif;
+  color: #14202b;
+  --cn: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+}
+.deskMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 0 0;
+}
+.deskTitle {
+  flex: none;
+  margin: 0 0 14px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #1f2f3e, #14202b);
+  color: #fff;
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 -4px 0 rgb(0 0 0 / 0.25),
+    0 6px 14px rgb(20 32 43 / 0.2);
+}
+.deskBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 4px 18px 2px;
+  overscroll-behavior: contain;
+}
+.rail {
+  flex: none;
+  width: var(--railw);
+  display: flex;
+  flex-direction: column;
+  background: #e9eef3;
+  border-left: 1px solid #d9e3ec;
+}
+.tab {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-bottom: 1px solid #d9e3ec;
+  background: transparent;
+  color: #14202b;
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+}
+.tab:hover {
+  background: #f4f7fa;
+}
+.tab:focus-visible {
+  outline: 3px solid var(--acc, #c0392b);
+  outline-offset: -3px;
+}
+.tabOn,
+.tabOn:hover {
+  background: #f1c40f;
+  color: #1d1704;
+  box-shadow: inset 5px 0 0 var(--acc, #c0392b);
+}
+.dot {
+  position: absolute;
+  top: calc(50% - 30px);
+  right: calc(50% - 24px);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #e0305a;
+  box-shadow: 0 0 0 3px #e9eef3;
+}
+.menuGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.menuGrid > button {
+  justify-content: flex-start;
+  min-height: 58px;
+  font-size: 18px;
+}
