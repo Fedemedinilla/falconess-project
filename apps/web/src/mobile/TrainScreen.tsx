@@ -7,7 +7,7 @@ import { type RunnerArt, runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { crewInitials, statCells, type TrainingCard } from "./model";
-import { StatStrip } from "./Parts";
+import { Pop, StatStrip } from "./Parts";
 import { placeScene } from "./sceneLayout";
 import { playPing } from "./sfx";
 
@@ -41,7 +41,36 @@ export type TrainResult = {
   readonly points: number;
   readonly from: Readonly<Record<StatName, number>>;
   readonly fromPoints: number;
+  /** owner 2026-11-13: the vigor it cost (or gave) and the crews it bonded with, with the rest. */
+  readonly vigor: number;
+  readonly bonds: readonly { readonly manufacturer: string; readonly delta: number }[];
 };
+
+/**
+ * When each «+N» of a result lands (ms): the stats, the skill points, the vigor, then each crew's
+ * bond, one after the other; and when the result ends. The HUD's vigor bar reads its own.
+ */
+export function resultTimeline(result: TrainResult): {
+  readonly stats: Partial<Record<StatName, number>>;
+  readonly points: number | undefined;
+  readonly vigor: number | undefined;
+  readonly bonds: Readonly<Record<string, number>>;
+  readonly end: number;
+} {
+  let i = 0;
+  const next = () => FIRST_POP_MS + POP_STEP_MS * i++;
+  const stats = Object.fromEntries(result.gains.map((g) => [g.stat, next()]));
+  const points = result.points > 0 ? next() : undefined;
+  const vigor = result.vigor !== 0 ? next() : undefined;
+  const bonds = Object.fromEntries(result.bonds.map((b) => [b.manufacturer, next()]));
+  return {
+    stats,
+    points,
+    vigor,
+    bonds,
+    end: FIRST_POP_MS + POP_STEP_MS * Math.max(0, i - 1) + HOLD_MS,
+  };
+}
 
 /** When the stamp lands and each «+N» after it, ms. */
 const STAMP_MS = 120;
@@ -75,36 +104,33 @@ export function TrainScreen({
   onResultDone?: () => void;
 }) {
   const art = runnerArt(state.falconessId);
-  // the result's «+N», one after the other: the stats it moved, then the skill points
-  const popOrder = result
-    ? [
-        ...result.gains.map((g) => ({ key: g.stat, delta: g.delta })),
-        ...(result.points > 0 ? [{ key: "points", delta: result.points }] : []),
-      ]
-    : [];
-  const delayOf = (i: number) => FIRST_POP_MS + i * POP_STEP_MS;
-  const pops = result && {
-    stats: Object.fromEntries(
-      popOrder.flatMap((p, i) =>
-        p.key === "points" ? [] : [[p.key, { delta: p.delta, delay: delayOf(i) }]],
+  // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
+  const timeline = result ? resultTimeline(result) : undefined;
+  const pops = result &&
+    timeline && {
+      stats: Object.fromEntries(
+        result.gains.map((g) => [g.stat, { delta: g.delta, delay: timeline.stats[g.stat] ?? 0 }]),
       ),
-    ),
-    points:
-      result.points > 0 ? { delta: result.points, delay: delayOf(popOrder.length - 1) } : undefined,
-    from: result.from,
-    fromPoints: result.fromPoints,
-  };
-  const resultEnd = delayOf(Math.max(0, popOrder.length - 1)) + HOLD_MS;
+      points:
+        timeline.points !== undefined
+          ? { delta: result.points, delay: timeline.points }
+          : undefined,
+      from: result.from,
+      fromPoints: result.fromPoints,
+    };
   // the pings climb with the «+N» (a failure has none)
   // biome-ignore lint/correctness/useExhaustiveDependencies: once per result
   useEffect(() => {
-    if (!result) return;
+    if (!result || !timeline) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
+    const ups = [...Object.values(timeline.stats), timeline.points].filter(
+      (d): d is number => d !== undefined,
+    );
     if (result.outcome !== "fail")
-      popOrder.forEach((_, i) => {
-        timers.push(setTimeout(() => playPing(i, popOrder.length), delayOf(i)));
+      ups.forEach((d, i) => {
+        timers.push(setTimeout(() => playPing(i, ups.length), d));
       });
-    timers.push(setTimeout(() => onResultDone?.(), resultEnd));
+    timers.push(setTimeout(() => onResultDone?.(), timeline.end));
     return () => {
       for (const t of timers) clearTimeout(t);
     };
@@ -195,6 +221,25 @@ export function TrainScreen({
               {card && card.crews.length > 1 && (
                 <div className={s.more}>{ui("ui.m.crew.more", { n: card.crews.length - 1 })}</div>
               )}
+            </div>
+          )}
+          {result && timeline && result.bonds.length > 0 && (
+            <div className={s.bondPops} id="m-resultado-vinculo">
+              {result.bonds.map((b) => {
+                const m = ctx.content.getManufacturer(b.manufacturer);
+                return (
+                  <div key={b.manufacturer} className={s.bondPop} data-crew={b.manufacturer}>
+                    <Pop delta={b.delta} delay={timeline.bonds[b.manufacturer] ?? 0} small />
+                    <div
+                      className={cx(s.portrait, s.portraitSmall)}
+                      style={{ "--bc": m.palette.primary, "--bc2": m.palette.secondary }}
+                      aria-hidden="true"
+                    >
+                      {crewInitials(gameText(m.textKey))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
           {injured && (

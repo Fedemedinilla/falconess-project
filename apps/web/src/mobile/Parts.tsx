@@ -104,7 +104,7 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
   );
 }
 
-function VigorBar({ vigor }: { vigor: VigorView }) {
+function VigorBar({ vigor, pop }: { vigor: VigorView; pop?: VigorPop | undefined }) {
   const pct = (v: number) => `${(100 * v) / vigor.max}%`;
   const after = vigor.after;
   let cost: CSSProperties | undefined;
@@ -126,21 +126,33 @@ function VigorBar({ vigor }: { vigor: VigorView }) {
           after: after.min === after.max ? after.min : `${after.min}–${after.max}`,
         });
   return (
-    <div className={s.vbar} role="img" aria-label={label} id="m-vigor" data-vigor={vigor.value}>
-      <div className={s.vfill} style={{ width: pct(vigor.value) }} />
-      {cost && (
-        <div
-          className={cx(s.vcost, plus && s.vcostPlus)}
-          style={cost}
-          id="m-vigor-costo"
-          data-after={after?.min}
-        />
+    <div className={s.vwrap}>
+      <div className={s.vbar} role="img" aria-label={label} id="m-vigor" data-vigor={vigor.value}>
+        <div className={s.vfill} style={{ width: pct(vigor.value) }} />
+        {cost && (
+          <div
+            className={cx(s.vcost, plus && s.vcostPlus)}
+            style={cost}
+            id="m-vigor-costo"
+            data-after={after?.min}
+          />
+        )}
+      </div>
+      {pop && (
+        <span className={s.vpop} id="m-vigor-cambio" data-delta={pop.delta}>
+          <Pop delta={pop.delta} delay={pop.delay} small />
+        </span>
       )}
     </div>
   );
 }
 
+/** owner 2026-11-13: a training's vigor change, on the bar itself, in the result's timeline. */
+export type VigorPop = { readonly delta: number; readonly delay: number };
+
 export type HudProps = {
+  /** A training's result is playing: its vigor change on the bar. */
+  vigorPop?: VigorPop | undefined;
   /** ADR-0012: Exigente shows a chip under the calendar. */
   hard?: boolean;
   turn: number;
@@ -152,7 +164,7 @@ export type HudProps = {
 };
 
 /** The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood. */
-export function Hud({ hard = false, turn, turns, goal, vigor, mood, content }: HudProps) {
+export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, content }: HudProps) {
   const tone = moodTone(mood);
   return (
     <header className={s.hud}>
@@ -183,7 +195,7 @@ export function Hud({ hard = false, turn, turns, goal, vigor, mood, content }: H
           <span className={s.lbl} aria-hidden="true">
             {ui("ui.m.vigor")}
           </span>
-          <VigorBar vigor={vigor} />
+          <VigorBar vigor={vigor} pop={vigorPop} />
           <div
             className={cx(s.mood, s[`mood-${tone}`])}
             id="m-animo"
@@ -242,8 +254,16 @@ function CountUp({ from, to, delay }: { from: number; to: number; delay: number 
   return <>{v}</>;
 }
 
-/** The «+N» of a result over its cell: chevrons rising behind the number. */
-function Pop({ delta, delay, small = false }: { delta: number; delay: number; small?: boolean }) {
+/** The «+N» of a result: gold chevrons rising behind it; a drop is blue, its chevrons falling. */
+export function Pop({
+  delta,
+  delay,
+  small = false,
+}: {
+  delta: number;
+  delay: number;
+  small?: boolean;
+}) {
   const up = delta >= 0;
   return (
     <span

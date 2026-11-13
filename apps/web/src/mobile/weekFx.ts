@@ -47,7 +47,9 @@ export function weekFx(step: WeekStep, ruleset?: Ruleset): WeekFx[] {
   const crews = Object.keys(after.bond)
     .filter((id) => (after.bond[id] ?? 0) > (before.bond[id] ?? 0))
     .sort();
-  if (crews.length > 0) out.push({ kind: "bond", good: true, crews });
+  // a training's bonds show on its own result (the training screen), with its other «+N»
+  const trained = step.input.kind.startsWith("train:");
+  if (crews.length > 0 && !trained) out.push({ kind: "bond", good: true, crews });
   // a goal race pays points by place (the Simulator's show on the training screen already)
   const race =
     after.raceResults.length > before.raceResults.length ? after.raceResults.at(-1) : undefined;

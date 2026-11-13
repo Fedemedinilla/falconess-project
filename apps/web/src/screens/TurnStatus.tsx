@@ -183,13 +183,6 @@ export function TurnStatus({ ctx, state, preview, className }: TurnStatusProps) 
               </dt>
               <dd>{formatInt(state.skillPoints)}</dd>
             </div>
-            <div>
-              <dt>
-                <Icon name="feathers" />
-                {ui("ui.turn.feathers")}
-              </dt>
-              <dd>{formatInt(state.wallet.feathers)}</dd>
-            </div>
           </dl>
           {state.injuryTurns > 0 && (
             <p className={s.injured} role="status">

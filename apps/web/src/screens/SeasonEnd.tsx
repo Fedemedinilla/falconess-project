@@ -146,13 +146,7 @@ export function SeasonEnd() {
             <dt>{ui("ui.end.score")}</dt>
             <dd>{formatInt(summary.score)}</dd>
           </div>
-          <div>
-            <dt>
-              <Icon name="feathers" />
-              {ui("ui.end.feathers")}
-            </dt>
-            <dd>{formatSigned(summary.feathers)}</dd>
-          </div>
+
           <div>
             <dt>{ui("ui.end.weeks")}</dt>
             <dd>

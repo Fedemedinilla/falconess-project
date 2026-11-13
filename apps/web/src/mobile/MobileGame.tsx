@@ -5,7 +5,7 @@ import type {
   TrainingKind,
   WorkshopOp,
 } from "@falconess/schema";
-import { advanceSeason, difficultyOf, type SimContext } from "@falconess/sim";
+import { advanceSeason, difficultyOf, type SimContext, vigor } from "@falconess/sim";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
@@ -62,7 +62,7 @@ import {
   seenInRun,
 } from "./storyModel";
 import { TitleScreen } from "./TitleScreen";
-import { type TrainResult, TrainScreen } from "./TrainScreen";
+import { resultTimeline, type TrainResult, TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
@@ -313,35 +313,6 @@ export function MobileGame() {
   const chosen = menu.raceWeek ? chosenFor(weekPosition, state) : undefined;
   const pending = state.pendingEvent !== undefined;
 
-  /** Apply the week's input (with the race position on a race week); a race opens its view. */
-  const commit = (input: WeekActionInput) => {
-    const raceTurn = menu.raceWeek ? state.turn : undefined;
-    if (!game.act(withPosition(input, chosen), inputs)) return;
-    const step = game.getSnapshot().lastStep;
-    const cue = trainingCue(input, state.turn, step?.after, cards);
-    playSound(cue);
-    // a race week shows what the action did before the race (testers 2026-11-11)
-    const next: View = raceTurn !== undefined ? { screen: "before", turn: raceTurn } : MENU;
-    // a training plays its result on the training screen first (owner 2026-11-11)
-    const kind = cards.find((c) => c.kind === input.kind)?.kind;
-    if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
-      const summary = weekSummary(ctx, step);
-      setView({
-        screen: "trained",
-        next,
-        result: {
-          kind,
-          outcome: cue,
-          gains: summary.stats,
-          points: Math.max(0, step.after.skillPoints - step.before.skillPoints),
-          from: step.before.stats,
-          fromPoints: step.before.skillPoints,
-        },
-      });
-      return;
-    }
-    setView(next);
-  };
   /** The result of a training, for the result on the training screen. */
   const trainResult = (
     kind: TrainingKind,
@@ -355,7 +326,41 @@ export function MobileGame() {
     points,
     from: step.before.stats,
     fromPoints: step.before.skillPoints,
+    vigor: vigor(ctx.ruleset, step.after.fatigue) - vigor(ctx.ruleset, step.before.fatigue),
+    bonds: Object.keys(step.after.bond)
+      .sort()
+      .map((m) => ({
+        manufacturer: m,
+        delta: (step.after.bond[m] ?? 0) - (step.before.bond[m] ?? 0),
+      }))
+      .filter((b) => b.delta > 0),
   });
+  /** Apply the week's input (with the race position on a race week); a race opens its view. */
+  const commit = (input: WeekActionInput) => {
+    const raceTurn = menu.raceWeek ? state.turn : undefined;
+    if (!game.act(withPosition(input, chosen), inputs)) return;
+    const step = game.getSnapshot().lastStep;
+    const cue = trainingCue(input, state.turn, step?.after, cards);
+    playSound(cue);
+    // a race week shows what the action did before the race (testers 2026-11-11)
+    const next: View = raceTurn !== undefined ? { screen: "before", turn: raceTurn } : MENU;
+    // a training plays its result on the training screen first (owner 2026-11-11)
+    const kind = cards.find((c) => c.kind === input.kind)?.kind;
+    if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
+      setView({
+        screen: "trained",
+        next,
+        result: trainResult(
+          kind,
+          cue,
+          step,
+          Math.max(0, step.after.skillPoints - step.before.skillPoints),
+        ),
+      });
+      return;
+    }
+    setView(next);
+  };
   /**
    * A week's action. On a race week (owner 2026-11-12) its result comes first, then the race
    * position: the week is previewed with the season's own pure step (the action does not depend
@@ -431,6 +436,11 @@ export function MobileGame() {
       turns={menu.turns}
       goal={menu.goal}
       vigor={vigorView(ctx, state, previewKind(view))}
+      vigorPop={
+        view.screen === "trained" && view.result.vigor !== 0
+          ? { delta: view.result.vigor, delay: resultTimeline(view.result).vigor ?? 0 }
+          : undefined
+      }
       mood={menu.mood}
       content={ctx.content}
     />

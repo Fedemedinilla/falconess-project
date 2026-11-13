@@ -149,6 +149,7 @@ export const FX_ROWS: ReadonlySet<string> = new Set([
   "bond",
   "skillPoints",
   "skill",
+  "vigor",
 ]);
 
 export type WeekSummary = {
@@ -617,9 +618,6 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
     "train-ok",
     "workshop",
     ...ev("skillPoints"),
-  ]);
-  counter("feathers", ui("ui.turn.feathers"), after.wallet.feathers - before.wallet.feathers, [
-    ...ev("feathers"),
   ]);
 
   // bond: one row per change, the crews that got it as its cause
