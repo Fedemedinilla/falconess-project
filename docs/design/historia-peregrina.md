@@ -109,6 +109,8 @@ Borrador de trabajo: pasa a `docs/characters/peregrina.md` cuando el dueño la a
 - **Especie:** milano real, la rapaz que planea horas sin aletear.
 - **Opuesta a Peregrina:** súper relajada, nunca se apura, aparenta pereza y despreocupación.
   Referencia de tono: Seiun Sky (como inspiración de carácter, no como copia).
+- **En el juego (ADR-0015):** corre de verdad la Larga de la semana 48, en Acecho y con Larga A,
+  armada sobre el nivel del jugador; todo el campo de esa carrera es de fondistas.
 - **En carrera:** administra cada inhalación y exhalación. Al final pasa a Peregrina como si ella
   fuera una piedra quieta: Peregrina completamente gastada, Milana con la resistencia casi entera.
 
@@ -190,7 +192,7 @@ capítulo y dónde volver a verlo (Menú → Historia).
 
 ## 2c. Escenas en el juego (2026-11-13)
 
-Sus metas nuevas ya están en el juego (ADR-0014): ganar en las semanas 10, 20, 30 y 40 (G3, G3, G2,
+Canon y «¿y si…?»: `docs/design/canon.md`. Sus metas nuevas ya están en el juego (ADR-0014): ganar en las semanas 10, 20, 30 y 40 (G3, G3, G2,
 G2) y correr la Larga en la 48 (G1). En Exigente, cuatro victorias G2 y la final de la Copa contra
 Gerifalte en la Larga.
 

@@ -8,6 +8,8 @@ export {
   goalRaceSetup,
   MIRROR_RUNNER_ID,
   mirrorRivalInput,
+  NAMED_RUNNER_PREFIX,
+  namedRivalInput,
   PLAYER_RUNNER_ID,
   rivalPool,
 } from "./field.js";

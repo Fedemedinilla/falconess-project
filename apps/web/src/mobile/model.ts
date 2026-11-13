@@ -168,6 +168,8 @@ export type GoalCard = {
   readonly mirror: boolean;
   /** ADR-0014: the race's grade (G3 to G1), when the goal has one. */
   readonly grade: SeasonGoal["grade"];
+  /** ADR-0015: a named rival who runs in it (her id: Milana). */
+  readonly named: string | undefined;
 };
 
 export type StatCell = {
@@ -222,6 +224,7 @@ export function weekMenu(ctx: SimContext, state: SeasonState): WeekMenu {
       cup: next.goal.cup,
       mirror: next.goal.mirrorRival === true,
       grade: next.goal.grade,
+      named: next.goal.namedRival?.id,
     },
     mood: state.mood,
     stats: statCells(state, statCap(ctx.ruleset, state)),

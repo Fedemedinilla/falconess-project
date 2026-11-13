@@ -15,7 +15,7 @@ import {
   type WhyTerm,
 } from "@falconess/race-view";
 import type { RaceEntry, RaceLog, RaceResult } from "@falconess/schema";
-import { MIRROR_RUNNER_ID } from "@falconess/sim";
+import { MIRROR_RUNNER_ID, NAMED_RUNNER_PREFIX } from "@falconess/sim";
 import { formatFixed, formatInt } from "../text/format";
 import { locale, perLang } from "../text/lang";
 import { type TextVars, ui } from "../text/ui";
@@ -60,6 +60,9 @@ export function uiPlural(key: string, n: number, vars: TextVars = {}): string {
 export function runnerName(entry: RaceEntry, labels: RaceLabels): string {
   if (entry.falconessId !== null) return labels.runnerName(entry);
   if (entry.runnerId === MIRROR_RUNNER_ID) return ui("ui.race.runner.mirror");
+  // ADR-0015: a named rival (Milana) by her name in the story
+  if (entry.runnerId.startsWith(NAMED_RUNNER_PREFIX))
+    return ui(`speaker.${entry.runnerId.slice(NAMED_RUNNER_PREFIX.length)}`);
   const rival = /^rival-(\d+)$/.exec(entry.runnerId);
   if (rival) return ui("ui.race.runner.rival", { n: rival[1] ?? "" });
   const neutral = /^neutral-([a-z]+)-(\d+)$/.exec(entry.runnerId);

@@ -65,7 +65,20 @@
         "courseId": "crossing",
         "minPlace": 8,
         "grade": "g1",
-        "fieldPm": 1100
+        "fieldPm": 900,
+        "field": {
+          "sharesPm": [250, 300, 150, 140, 160],
+          "distanceLetter": "A"
+        },
+        "namedRival": {
+          "id": "milana",
+          "floorPm": 1150,
+          "excessPm": 800,
+          "sharesPm": [250, 340, 130, 110, 170],
+          "position": "stalk",
+          "distanceLetter": "A",
+          "skills": ["second-wind", "hill-lungs", "last-gasp"]
+        }
       }
     ],
     "cernicala": [
@@ -148,9 +161,21 @@
         "courseId": "crossing",
         "minPlace": 1,
         "cup": "final",
-        "mirrorRival": true,
         "grade": "g1",
-        "fieldPm": 1000
+        "fieldPm": 900,
+        "field": {
+          "sharesPm": [250, 300, 150, 140, 160],
+          "distanceLetter": "A"
+        },
+        "namedRival": {
+          "id": "milana",
+          "floorPm": 1150,
+          "excessPm": 800,
+          "sharesPm": [250, 340, 130, 110, 170],
+          "position": "stalk",
+          "distanceLetter": "A",
+          "skills": ["second-wind", "hill-lungs", "last-gasp"]
+        }
       }
     ],
     "cernicala": [

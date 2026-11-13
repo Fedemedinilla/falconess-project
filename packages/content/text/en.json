@@ -1862,5 +1862,7 @@
   "ui.m.goal.run": "Run",
   "ui.m.grade.g3": "G3",
   "ui.m.grade.g2": "G2",
-  "ui.m.grade.g1": "G1"
+  "ui.m.grade.g1": "G1",
+  "ui.m.race.goal.run": "Goal: run it. Any place will do.",
+  "ui.m.race.named.milana": "Milana races: a Falconess built for the Long race, who saves her air for the end. The whole field is built for stamina."
 }

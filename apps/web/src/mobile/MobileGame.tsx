@@ -504,6 +504,7 @@ export function MobileGame() {
           minPlace={goal.minPlace}
           cup={goal.cup}
           mirror={goal.mirror}
+          named={goal.named}
           wings={wings}
           position={chosen}
           input={input}

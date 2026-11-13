@@ -30,6 +30,7 @@ export function PreRaceScreen({
   minPlace,
   cup,
   mirror = false,
+  named,
   wings,
   position,
   input,
@@ -44,6 +45,8 @@ export function PreRaceScreen({
   /** ADR-0012: a round of the Copa, and whether Gerifalte runs in it. */
   cup?: CupRound | undefined;
   mirror?: boolean;
+  /** ADR-0015: the id of a named rival who runs in it (Milana). */
+  named?: string | undefined;
   wings: Position;
   position: Position | undefined;
   /** The week's action waiting for the race, if one was chosen. */
@@ -72,12 +75,22 @@ export function PreRaceScreen({
           )}
           <h1 className={s.title}>{course}</h1>
           <p className={s.sub}>
-            {minPlace === 1 ? ui("ui.m.race.goal.win") : ui("ui.m.race.goal", { place: minPlace })}
+            {minPlace === 1
+              ? ui("ui.m.race.goal.win")
+              : minPlace >= 8
+                ? ui("ui.m.race.goal.run")
+                : ui("ui.m.race.goal", { place: minPlace })}
           </p>
           {mirror && (
             <p className={s.mirrorNote} id="m-gerifalte">
               <Glyph name="eye" size={16} />
               {ui("ui.m.race.mirror")}
+            </p>
+          )}
+          {named && (
+            <p className={s.mirrorNote} id="m-rival-nombrada" data-rival={named}>
+              <Glyph name="eye" size={16} />
+              {ui(`ui.m.race.named.${named}`)}
             </p>
           )}
           {d && (

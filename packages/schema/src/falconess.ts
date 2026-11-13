@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  Aptitude,
   DistanceAptitudes,
   FalconessStats,
   Position,
@@ -13,6 +14,40 @@ import {
 /** The rounds of the Copa (ADR-0012), the end of an Exigente season. */
 export const CupRound = z.enum(["qualifier", "semifinal", "final"]);
 export type CupRound = z.infer<typeof CupRound>;
+
+/** Five stat shares in ‰ (agility, stamina, technique, courage, intelligence), summing to 1000. */
+const StatSharesPm = z
+  .array(z.number().int().min(0).max(1000))
+  .length(5)
+  .refine((a) => a.reduce((s, v) => s + v, 0) === 1000, "shares must sum to 1000");
+
+/**
+ * ADR-0015: a goal's field of specialists (Peregrina's Larga: every rival is built for it). The
+ * rivals' stats follow these shares instead of their wings' row, and their letter at every distance
+ * is `distanceLetter`. No draw moves.
+ */
+export const SpecialistField = z.strictObject({
+  sharesPm: StatSharesPm,
+  distanceLetter: Aptitude,
+});
+export type SpecialistField = z.infer<typeof SpecialistField>;
+
+/**
+ * ADR-0015: a named rival in a goal race (Milana in Peregrina's Larga), built like the Copa's
+ * mirror on the player's level: her stat total is the field's mean total at the goal's week ×
+ * `floorPm` ‰ plus `excessPm` ‰ of the player's total above that, spread in her own shares. Her
+ * name on screen is `speaker.<id>`.
+ */
+export const NamedRival = z.strictObject({
+  id: Slug,
+  floorPm: z.number().int().min(500).max(2000),
+  excessPm: z.number().int().min(0).max(1500),
+  sharesPm: StatSharesPm,
+  position: Position,
+  distanceLetter: Aptitude,
+  skills: z.array(Slug).max(8),
+});
+export type NamedRival = z.infer<typeof NamedRival>;
 
 export const SeasonGoal = z.strictObject({
   turn: z.number().int().min(1).max(48),
@@ -29,6 +64,10 @@ export const SeasonGoal = z.strictObject({
   grade: z.enum(["g3", "g2", "g1"]).optional(),
   /** ADR-0014: that grade's field, the rival curve's mean × this ‰ (absent = 1000, as before). */
   fieldPm: z.number().int().min(500).max(1500).optional(),
+  /** ADR-0015: every rival of this race is a specialist of its distance. */
+  field: SpecialistField.optional(),
+  /** ADR-0015: a named rival runs in this race. */
+  namedRival: NamedRival.optional(),
 });
 export type SeasonGoal = z.infer<typeof SeasonGoal>;
 

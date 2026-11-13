@@ -1862,5 +1862,7 @@
   "ui.m.goal.run": "Correr",
   "ui.m.grade.g3": "G3",
   "ui.m.grade.g2": "G2",
-  "ui.m.grade.g1": "G1"
+  "ui.m.grade.g1": "G1",
+  "ui.m.race.goal.run": "Objetivo: correrla. Cualquier puesto sirve.",
+  "ui.m.race.named.milana": "Corre Milana: una Falconess hecha para la Larga, que guarda aire para el final. Todo el campo es de resistencia."
 }

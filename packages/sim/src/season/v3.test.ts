@@ -334,3 +334,32 @@ describe("inheritance with luck (ADR-0013)", () => {
     expect(rollBoxStat({ ...ctx, ruleset: RULESET_V2 }, stats, "v2", "h")).toBeUndefined();
   });
 });
+
+describe("ADR-0015: Milana and the field of specialists in Peregrina's Larga", () => {
+  const ctx: SimContext = { ruleset: RULESET_V3, content: loadSeasonContent("v3") };
+  const s0 = startSeason(ctx, "larga", START("peregrina"));
+  const state = { ...s0, turn: 48 };
+  const larga = ctx.content.getFalconess("peregrina").seasonGoals.find((g) => g.turn === 48);
+  it("runs Milana by name, in her shares, position and letter; every other rival is a specialist", () => {
+    expect(larga?.namedRival?.id).toBe("milana");
+    if (!larga?.namedRival || !larga.field) return;
+    const { entries } = goalRaceSetup(ctx, state, larga);
+    const milana = entries.find((e) => e.runnerId === "named-milana");
+    expect(milana?.position).toBe("stalk");
+    expect(milana?.distanceAptitude).toBe("A");
+    expect(milana?.stats.stamina).toBeGreaterThan(milana?.stats.agility ?? 0);
+    const rivals = entries.filter((e) => e.kind === "rival" && e.runnerId !== "named-milana");
+    expect(rivals).toHaveLength(6);
+    for (const r of rivals) expect(r.distanceAptitude).toBe("A");
+    // same draws as without them: the lanes and the frames of the field do not move
+    const plain = goalRaceSetup(ctx, state, { ...larga, field: undefined, namedRival: undefined });
+    expect(entries.map((e) => [e.laneIndex, e.frameId])).toEqual(
+      plain.entries.map((e) => [e.laneIndex, e.frameId]),
+    );
+  });
+  it("leaves the other Falconess's goals without a named rival or a specialist field", () => {
+    for (const id of ["cernicala", "caracara"])
+      for (const g of ctx.content.getFalconess(id).seasonGoals)
+        expect([g.namedRival, g.field]).toEqual([undefined, undefined]);
+  });
+});

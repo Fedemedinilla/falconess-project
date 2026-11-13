@@ -6,11 +6,13 @@ import type {
   EntryInput,
   FalconessStats,
   Frame,
+  NamedRival,
   Position,
   PositionAptitudes,
   RaceEntry,
   SeasonGoal,
   SeasonState,
+  SpecialistField,
   Style,
 } from "@falconess/schema";
 import { DEFAULT_POSITION } from "@falconess/schema";
@@ -32,6 +34,8 @@ export type GenerateFieldArgs = {
    * (no draw moves either way).
    */
   readonly fieldPm?: number;
+  /** ADR-0015: every rival a specialist of this race (her stat shares and distance letter). */
+  readonly specialists?: SpecialistField;
 };
 
 /** What a goal race needs (21.2): the course, its seed and the frozen field in lane order. */
@@ -88,6 +92,16 @@ function rivalAptitudes(
   };
 }
 
+/** ADR-0015: a specialist field's letter at every distance (v3; v1/v2 have no distance letters). */
+function specialize<T extends { distanceAptitude?: DistanceAptitudes }>(
+  apt: T,
+  specialists: SpecialistField | undefined,
+): T {
+  if (specialists === undefined || apt.distanceAptitude === undefined) return apt;
+  const l = specialists.distanceLetter;
+  return { ...apt, distanceAptitude: { sprint: l, mile: l, medium: l, long: l } };
+}
+
 /**
  * Field of a goal race (docs/race-engine.md 21.1): the player plus `course.entries − 1` rivals on
  * generic frames of her PW class, with stats on the rival curve `5 × (rivalBase + rivalPerTurn ×
@@ -126,7 +140,7 @@ export function generateField(
     k += 1;
     const frame = pool[frng.nextInt("race", pool.length)];
     if (frame === undefined) throw new Error("rival pool draw out of range");
-    const weights = F.rivalWeights[frame.style];
+    const weights = args.specialists?.sharesPm ?? F.rivalWeights[frame.style];
     const total = Math.floor(
       (STAT_ORDER.length * mu * (1000 + frng.nextRange("race", -F.rivalNoise, F.rivalNoise))) /
         1000,
@@ -153,7 +167,7 @@ export function generateField(
       falconessId: null,
       baseStats,
       mood: 0,
-      ...rivalAptitudes(ruleset, frame.style),
+      ...specialize(rivalAptitudes(ruleset, frame.style), args.specialists),
       frameId: frame.id,
       parts: [],
       quirks: [],
@@ -215,7 +229,18 @@ export function goalRaceSetup(
     raceSeed,
     player,
     ...(goal.fieldPm === undefined ? {} : { fieldPm: goal.fieldPm }),
+    ...(goal.field === undefined ? {} : { specialists: goal.field }),
   });
+  // ADR-0015: a named rival takes the lane and wings of the first rival the mirror does not use
+  const named = goal.namedRival;
+  if (named !== undefined) {
+    const slotId = goal.mirrorRival === true ? "rival-2" : "rival-1";
+    const i = entries.findIndex((e) => e.runnerId === slotId);
+    const slot = entries[i];
+    if (slot === undefined) throw new Error(`goal race ${raceSeed}: no lane for ${named.id}`);
+    const input = namedRivalInput(ctx, player, goal.turn, slot.frameId, named);
+    entries[i] = freezeEntry(ctx.ruleset, ctx.content, input, course, slot.laneIndex);
+  }
   const M = ctx.ruleset.season.mirrorRival;
   if (goal.mirrorRival !== true || M === undefined) return { course, raceSeed, entries };
   // ADR-0012: the Copa's rival takes the lane and wings of «rival-1» (the field's draws stay as
@@ -226,6 +251,58 @@ export function goalRaceSetup(
   const input = mirrorRivalInput(ctx, player, goal.turn, slot.frameId);
   entries[i] = freezeEntry(ctx.ruleset, ctx.content, input, course, slot.laneIndex);
   return { course, raceSeed, entries };
+}
+
+/** ADR-0015: a named rival's runner id is this prefix and her id («named-milana»). */
+export const NAMED_RUNNER_PREFIX = "named-";
+
+/**
+ * ADR-0015: a named rival's entry, on the player's level like the mirror (`mirrorRivalInput`) but
+ * in her own shares, position, distance letter and skills. No draw.
+ */
+export function namedRivalInput(
+  ctx: SimContext,
+  player: EntryInput,
+  turn: number,
+  frameId: string,
+  named: NamedRival,
+): EntryInput {
+  const S = ctx.ruleset.season;
+  const F = ctx.ruleset.field;
+  const floor = Math.floor(
+    (STAT_ORDER.length * (F.rivalBase + F.rivalPerTurn * turn) * named.floorPm) / 1000,
+  );
+  let total = 0;
+  for (const stat of STAT_ORDER) total += player.baseStats[stat];
+  const target = floor + Math.floor((Math.max(0, total - floor) * named.excessPm) / 1000);
+  const baseStats: FalconessStats = { ...player.baseStats };
+  STAT_ORDER.forEach((stat, i) => {
+    baseStats[stat] = clamp(
+      Math.floor((target * (named.sharesPm[i] ?? 0)) / 1000),
+      S.statMin,
+      S.statMax,
+    );
+  });
+  const positionAptitude: PositionAptitudes = { lead: "B", pack: "B", stalk: "B", closer: "B" };
+  positionAptitude[named.position] = "A";
+  const l = named.distanceLetter;
+  return {
+    runnerId: `${NAMED_RUNNER_PREFIX}${named.id}`,
+    kind: "rival",
+    falconessId: null,
+    baseStats,
+    mood: 0,
+    positionAptitude,
+    ...(player.distanceAptitude === undefined
+      ? {}
+      : { distanceAptitude: { sprint: l, mile: l, medium: l, long: l } }),
+    position: named.position,
+    frameId,
+    parts: [],
+    quirks: [],
+    learnedSkills: [...named.skills],
+    durability: null,
+  };
 }
 
 /** The runner id of the Copa's rival (ADR-0012): the race view names her. */

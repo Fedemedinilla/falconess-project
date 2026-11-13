@@ -32,6 +32,8 @@ export {
   goalRaceSetup,
   MIRROR_RUNNER_ID,
   mirrorRivalInput,
+  NAMED_RUNNER_PREFIX,
+  namedRivalInput,
   neutralFixtureEntry,
   PLAYER_RUNNER_ID,
   type RaceArena,
