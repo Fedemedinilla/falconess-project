@@ -14,7 +14,7 @@ desviación requiere un ADR en `docs/decisions/` antes de aplicarse.
 
 ---
 
-## 0. Estado al 2026-11-12
+## 0. Estado al 2026-11-13
 
 El plan de 30 días se siguió hasta la fase 2. Desde ahí el trabajo se guió por las pruebas del
 dueño en un iPhone: la carrera pasó a ser de vuelo (ruleset v3), la interfaz se hizo para el
@@ -24,14 +24,14 @@ https://fedemedinilla.github.io/falconess-project/ (GitHub Pages, `.github/workf
 publica solo en cada push a `playtest-ui` o `main`), además del artifact de claude.ai «Prueba
 jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build:demo`).
 
-| Fase                               | Estado                                                                                                                            | Qué falta                                                                                                                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0 · Bootstrap                      | Hecha                                                                                                                             | —                                                                                                                                                                            |
-| 1 · Núcleo de temporada            | Hecha                                                                                                                             | —                                                                                                                                                                            |
-| 2 · Motor de carrera y lote        | Hecha, y reemplazada en el juego por la carrera v3 de vuelo (ADR-0011), con el motor congelado y 8 barandas de balance (ADR-0010) | —                                                                                                                                                                            |
-| 3 · Herencia, economía y contenido | Mitad                                                                                                                             | La historia de Peregrina (en curso con el dueño), biblias de voz, eventos de 31 a 40, generadores y evaluación de voz; los factores de habilidad y afinidad de la caja negra |
-| 4 · Interfaz web                   | Hecha salvo los gráficos post-carrera (uPlot)                                                                                     | Gráficos post-carrera, si todavía se quieren                                                                                                                                 |
-| 5 · Publicación y prueba externa   | Empezada: demo pública en GitHub Pages, exportar partida, juego en castellano e inglés                                            | Cuestionario PT3 (dentro del juego), página de itch.io, 10 testers, observación y hito D37                                                                                   |
+| Fase                               | Estado                                                                                                                            | Qué falta                                                                                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 · Bootstrap                      | Hecha                                                                                                                             | —                                                                                                                                                             |
+| 1 · Núcleo de temporada            | Hecha                                                                                                                             | —                                                                                                                                                             |
+| 2 · Motor de carrera y lote        | Hecha, y reemplazada en el juego por la carrera v3 de vuelo (ADR-0011), con el motor congelado y 8 barandas de balance (ADR-0010) | —                                                                                                                                                             |
+| 3 · Herencia, economía y contenido | Mitad                                                                                                                             | Historias de Cernícala y Caracara, biblias de voz, eventos de 31 a 40, generadores y evaluación de voz; los factores de habilidad y afinidad de la caja negra |
+| 4 · Interfaz web                   | Hecha salvo los gráficos post-carrera (uPlot)                                                                                     | Gráficos post-carrera, si todavía se quieren                                                                                                                  |
+| 5 · Publicación y prueba externa   | Empezada: demo pública en GitHub Pages, exportar partida, juego en castellano e inglés                                            | Cuestionario PT3 (dentro del juego), página de itch.io, 10 testers, observación y hito D37                                                                    |
 
 **Agregado fuera del plan** (cada uno con su ADR o su nota en `docs/design/temporada-v3.md`):
 
@@ -62,6 +62,10 @@ jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build
   se moldean a su historia; Peregrina tendrá cuatro «salir primera» y una Larga de «correr», con una
   Falconess nueva de resistencia como rival. Base teórica en
   `docs/design/investigacion-personajes.md`.
+- Temporada completa de Peregrina (2026-11-13): 16 escenas (cuadro y cinemático, con fondos) y 9
+  temas de chat; metas a su medida con categorías de carrera G3/G2/G1 (ADR-0014): cuatro victorias
+  y la Larga contra Milana, con dos finales. La temporada de cada Falconess es suya: sus metas no
+  tocan el calendario compartido ni a las otras. Reglas de escenas en `docs/design/escenas.md`.
 - Nombres compuestos para las Falconess (estilo Special Week): generador en preparación en otra
   sesión (`docs/handoff/generador-de-nombres.md`).
 
@@ -69,9 +73,16 @@ jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build
 no están en el juego; el Sprint, la Escalera y el Circuito piden las mismas letras; la baranda de
 Exigente (E1) se mide a mano y no entra en `pnpm balance:barandas`.
 
-**Siguiente paso:** la historia de Peregrina con el dueño (biblia, escenas y sus metas nuevas, con el
-sistema de escenas en la web), y después la fase 5: el cuestionario PT3 dentro del juego y la
-página de itch.io.
+**Pendiente del dueño, para más adelante:**
+
+- Pasar el repo a privado (con GitHub Pro, para que Pages siga publicando la demo; la página
+  publicada sigue siendo pública). Decidido el 2026-11-13: todavía no. Al hacerlo, verificar que
+  `demo.yml` siga publicando.
+- Los retratos de Peregrina (prompts listos en `docs/design/prompts-arte-provisional.md`).
+- Los nombres definitivos de la Jefa, la Novata y Milana (del generador de nombres).
+
+**Siguiente paso:** la fase 5. El cuestionario PT3 dentro del juego, la página de itch.io y la
+primera ronda de testers con la temporada de Peregrina completa.
 
 ---
 
