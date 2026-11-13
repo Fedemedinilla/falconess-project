@@ -290,13 +290,13 @@ export function MobileGame() {
         />
       )}
       {storyToast && (
-        <div key={storyToast.n} className={st.toast} id="m-capitulo-aviso" role="status">
+        <StoryToast key={storyToast.n}>
           <b>
             {storyToast.kicker} · {storyToast.title}
           </b>
           <br />
           {ui(storyToast.skipped ? "ui.m.story.skipped" : "ui.m.story.seen")}
-        </div>
+        </StoryToast>
       )}
     </>
   );
@@ -711,6 +711,29 @@ export function MobileGame() {
 /** A race week's step played its action's effects before the race: the menu shows the race's. */
 function fxPart(step: Step): WeekFxPart {
   return step.after.raceResults.length > step.before.raceResults.length ? "race" : "all";
+}
+
+/**
+ * The notice after a story scene (owner 2026-11-13): just over the goal's track card, never over
+ * the menu's buttons; without that card on screen, under the top bar.
+ */
+function StoryToast({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [spot, setSpot] = useState<React.CSSProperties>({ visibility: "hidden" });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // the notice is fixed: viewport coordinates
+    const track = document.getElementById("m-pista")?.getBoundingClientRect();
+    const height = el.getBoundingClientRect().height;
+    const top = track && track.height > 0 ? track.top - height - 10 : 124;
+    setSpot({ top: Math.max(8, Math.round(top)), bottom: "auto" });
+  }, []);
+  return (
+    <div ref={ref} className={st.toast} id="m-capitulo-aviso" role="status" style={spot}>
+      {children}
+    </div>
+  );
 }
 
 /** Where a story scene can play (owner 2026-11-13). */
