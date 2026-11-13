@@ -42,3 +42,12 @@ describe("goal-after triggers (ADR-0014)", () => {
     expect(triggerHolds(ctx, won, { ...larga, result: "win" })).toBe(true);
   });
 });
+
+describe("week triggers (owner 2026-11-13)", () => {
+  it("a week's scene holds after that week's decision, not when the week starts", () => {
+    const s = startSeason(ctx, "story-1", start);
+    const t = { kind: "turn", turn: 16 } as const;
+    expect(triggerHolds(ctx, { ...s, turn: 16 }, t)).toBe(false);
+    expect(triggerHolds(ctx, { ...s, turn: 17 }, t)).toBe(true);
+  });
+});

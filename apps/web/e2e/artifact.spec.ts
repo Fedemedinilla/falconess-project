@@ -159,7 +159,11 @@ test("the phone game is the default view: art inlined, a week trained, only font
   await page.click("#m-capitulo-saltar");
   await page.click("#m-entrenar");
   await page.dblclick("#m-entrenar-agility");
-  await closeWeek(page);
+  // the week's effects, then the menu of week 2 (no dialog since 2026-11-13)
+  const fx = page.locator("#m-efectos");
+  await expect(fx.or(page.locator("#m-semana[aria-label*='2']"))).toBeVisible({ timeout: 10_000 });
+  if ((await fx.count()) > 0) await fx.click();
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
   await noSideScroll(page);
   expect(blocked, "requests outside Google Fonts").toEqual([]);
   expect(errors).toEqual([]);

@@ -40,6 +40,12 @@ async function pastTitle(page: Page): Promise<void> {
   await expect(page.locator("#m-titulo")).toHaveCount(0);
 }
 
+/** Peregrina's prologue: after its transition, skipped. */
+async function skipPrologue(page: Page): Promise<void> {
+  await expect(page.locator("#m-capitulo")).toBeVisible();
+  await skipScene(page);
+}
+
 /** A story scene in the way (owner 2026-11-12): skip it and let its notice go. */
 async function skipScene(page: Page): Promise<boolean> {
   if ((await page.locator("#m-capitulo").count()) === 0) return false;
@@ -72,19 +78,18 @@ async function week(page: Page): Promise<number> {
   return Number(/\d+/.exec(label)?.[0] ?? "0");
 }
 
-/** Close «Lo que pasó» and answer any event, until the menu (or the season's end) is free. */
+/** Play the week's effects, any scene and any event, until the menu (or the season's end) is free. */
 async function settle(page: Page): Promise<void> {
-  const weekOpen = page.locator("#semana-dialogo[open]");
   const event = page.locator("#evento-dialogo[open]");
-  for (let i = 0; i < 40; i++) {
+  const busy = async () =>
+    (await event.count()) > 0 ||
+    (await page.locator("#m-capitulo").count()) > 0 ||
+    (await page.locator("#m-efectos").count()) > 0 ||
+    (await page.locator("#m-transicion").count()) > 0;
+  for (let i = 0; i < 80; i++) {
     // the week's effects (owner 2026-11-13) play first; a tap ends them
     if ((await page.locator("#m-efectos").count()) > 0) {
       await page.click("#m-efectos");
-      continue;
-    }
-    if ((await weekOpen.count()) > 0) {
-      await page.click("#semana-continuar");
-      await expect(weekOpen).toHaveCount(0);
       continue;
     }
     if ((await event.count()) > 0) {
@@ -95,15 +100,9 @@ async function settle(page: Page): Promise<void> {
     if ((await page.locator("#m-fin").count()) > 0) return;
     const menu = page.locator("#m-entrenar");
     if ((await menu.count()) > 0 && (await menu.isEnabled())) {
-      // the dialog opens right after the input: give it a moment before calling the menu free
-      await page.waitForTimeout(100);
-      if (
-        (await weekOpen.count()) === 0 &&
-        (await event.count()) === 0 &&
-        (await page.locator("#m-capitulo").count()) === 0 &&
-        (await page.locator("#m-efectos").count()) === 0
-      )
-        return;
+      // a scene comes after the effects and its transition: give it a moment
+      await page.waitForTimeout(150);
+      if (!(await busy())) return;
       continue;
     }
     await page.waitForTimeout(100);
@@ -111,11 +110,41 @@ async function settle(page: Page): Promise<void> {
   throw new Error("the week did not settle");
 }
 
+/**
+ * The race mode of a race week, once its action ran (owner 2026-11-13): the emblem transition,
+ * the scene before the race (skipped), until the position card is free.
+ */
+async function toPosition(page: Page): Promise<void> {
+  for (let i = 0; i < 80; i++) {
+    if (await skipScene(page)) continue;
+    const free =
+      (await page.locator("#m-precarrera-accion").count()) > 0 &&
+      (await page.locator("#m-transicion").count()) === 0;
+    if (free) {
+      await page.waitForTimeout(150);
+      if ((await page.locator("#m-capitulo").count()) === 0) return;
+      continue;
+    }
+    await page.waitForTimeout(100);
+  }
+  throw new Error("the position card did not come");
+}
+
+/** After «Saltar»: the scene after the race (skipped), until its result shows. */
+async function toResult(page: Page): Promise<void> {
+  for (let i = 0; i < 80; i++) {
+    if (await skipScene(page)) continue;
+    if ((await page.locator("#m-resultado").count()) > 0) return;
+    await page.waitForTimeout(100);
+  }
+  throw new Error("the race's result did not come");
+}
+
 /** The week's race, once its action ran: the flight view, «Saltar», the result, «Continuar». */
 async function runRace(page: Page): Promise<void> {
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
   await page.click("#m-saltar");
-  await expect(page.locator("#m-resultado")).toBeVisible();
+  await toResult(page);
   await page.click("#m-carrera-seguir");
 }
 
@@ -144,10 +173,11 @@ test("pick a Falconess, train with a double tap, the failure badge in its risk c
 
   // a fast double tap on another trains it
   await page.dblclick("#m-entrenar-agility");
-  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
-  await page.click("#semana-continuar");
   await settle(page);
   expect(await week(page)).toBe(2);
+  // no «Lo que pasó» and no recap button (owner 2026-11-13)
+  await expect(page.locator("#semana-dialogo")).toHaveCount(0);
+  await expect(page.locator("#m-resumen")).toHaveCount(0);
 });
 
 test("the goal card: the track's profile, its distance class and letters; tap for the sheet", async ({
@@ -221,20 +251,25 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   // the week's action, then the card again with «Correr»
   await page.click("#m-entrenar");
   await page.dblclick("#m-entrenar-technique");
-  // the training's result first (owner 2026-11-12): on the training screen, then in «Lo que
-  // pasó» as on any week, without the race; then the position, then the race
+  // the training's result first (owner 2026-11-12), on the training screen; then the race mode
+  // (owner 2026-11-13): the emblem transition, the scene before the race, the position
   await expect(page.locator("#m-resultado")).toBeVisible();
-  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
-  await expect(page.locator("#semana-ver-carrera")).toHaveCount(0);
-  await expect(page.locator("#semana-posicion")).toHaveCount(0);
-  await page.click("#semana-continuar");
-  await expect(page.locator("#m-precarrera-accion")).toBeVisible();
+  await expect(page.locator("#m-transicion")).toBeVisible({ timeout: 8000 });
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut", {
+    timeout: 5000,
+  });
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  await skipScene(page);
+  await toPosition(page);
+  await expect(page.locator("#semana-dialogo")).toHaveCount(0);
   await expect(page.locator("#m-posicion-lead")).toBeChecked();
   // the action is decided once its result was seen: no way back
   await expect(page.locator("#m-volver")).toHaveCount(0);
   await page.click("#m-correr");
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
   await page.click("#m-saltar");
+  // the scene after the race (a win) comes before its result (owner 2026-11-13)
+  await toResult(page);
   // the race's summary is its result screen (owner 2026-11-13): place, goal, position, advice
   await expect(page.locator("#m-resultado")).toBeVisible();
   await expect(page.locator("#m-resultado-posicion")).toHaveAttribute("data-position", "lead");
@@ -259,8 +294,6 @@ test("the workshop: wings and skills, as one order that takes the week", async (
   await page.click("#m-taller-skills");
   await expect(page.locator('[id^="m-habilidad-"]').first()).toBeVisible();
   await page.click("#m-taller-confirmar");
-  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
-  await page.click("#semana-continuar");
   await settle(page);
   expect(await week(page)).toBe(2);
 });
@@ -275,7 +308,7 @@ test("a short season to its end, then a new one; the test view is one tap away",
     const raceWeek = (await page.locator("#m-carrera").count()) > 0;
     await page.click("#m-descansar");
     if (raceWeek) {
-      await page.click("#semana-continuar");
+      await toPosition(page);
       await page.click("#m-correr");
       await runRace(page);
     }
@@ -373,7 +406,7 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
   await page.click("#m-carrera");
   await page.click("#m-volver");
   await page.click("#m-descansar");
-  await page.click("#semana-continuar");
+  await toPosition(page);
   await page.click("#m-correr");
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
   // the side view is the default
@@ -408,7 +441,7 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
   await page.click("#m-carrera-vista-side");
   await expect(visor).toHaveCount(0);
   await page.click("#m-saltar");
-  await expect(page.locator("#m-resultado")).toBeVisible();
+  await toResult(page);
 });
 
 /** A finger drag across the page (CDP touch events): from (x, y) by (dx, dy), in twelve moves. */
@@ -440,7 +473,7 @@ test("first person: a finger turns her head sideways, up to her neck's reach, an
   await page.click("#m-carrera");
   await page.click("#m-volver");
   await page.click("#m-descansar");
-  await page.click("#semana-continuar");
+  await toPosition(page);
   await page.click("#m-correr");
   await page.click("#m-carrera-vista-fpv");
   await page.click("#m-carrera-vuelo-salida");
@@ -620,7 +653,7 @@ test("export: the run in play, and every season this browser played", async ({ p
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
   await expect(page.locator("#m-semana")).toBeVisible();
-  await skipScene(page);
+  await skipPrologue(page);
   await page.click("#m-menu");
   await page.click("#m-temporadas");
   const rows = page.locator("#m-historial li[data-seed]");
@@ -685,14 +718,13 @@ test("language: the menu switches to English and a whole short season reads in E
     await page.click("#m-descansar");
     await look();
     if (raceWeek) {
-      await look();
-      await page.click("#semana-continuar");
+      await toPosition(page);
       await look();
       await page.click("#m-correr");
       await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
       await look();
       await page.click("#m-saltar");
-      await expect(page.locator("#m-resultado")).toBeVisible();
+      await toResult(page);
       await look();
       await page.click("#m-carrera-seguir");
     }
@@ -724,7 +756,7 @@ test("language: the switch in «Menú» keeps the run in play", async ({ page })
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
-test("screen transition: the sponsor's emblem covers the way into a race, and only that", async ({
+test("screen transition: the emblem opens the race mode, then the scene, then the position", async ({
   page,
 }) => {
   test.setTimeout(120_000);
@@ -741,14 +773,21 @@ test("screen transition: the sponsor's emblem covers the way into a race, and on
   await page.click("#m-carrera");
   await page.click("#m-correr");
   await page.click("#m-descansar");
-  await page.click("#semana-continuar");
-  await page.click("#m-correr");
+  // the race mode (owner 2026-11-13): the emblem as soon as the week's action is decided
   const cover = page.locator("#m-transicion");
   await expect(cover).toBeVisible();
   // Kōryū's red first, its yellow line opening in the middle
   await expect(cover).toHaveCSS("background-color", "rgb(192, 57, 43)");
+  // the scene before the race only once the transition ended, never under it
+  await expect(page.locator("#m-capitulo")).toHaveCount(0);
   await expect(cover).toHaveCount(0, { timeout: 3000 });
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut");
+  await skipScene(page);
+  await toPosition(page);
+  await page.click("#m-correr");
+  // one transition into the race mode: none again before the race
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await expect(cover).toHaveCount(0);
   // and the race's own music
   expect(await page.evaluate(() => document.documentElement.dataset.music)).toBe("race");
 });
@@ -792,7 +831,7 @@ test("music: the title theme from the title's tap, the menu theme in the season,
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
   await expect.poll(music).toBe("menu");
-  await skipScene(page);
+  await skipPrologue(page);
   // the switch, kept on reload
   await page.click("#m-menu");
   await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "true");
@@ -847,20 +886,55 @@ test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays 
   await expect(page.locator("#m-chat")).toHaveCount(0);
 });
 
-test("the week's effects: a rest shows how she slept, then «Lo que pasó» without saying it", async ({
+test("the week's effects: a rest shows how she slept, and no dialog after them", async ({
   page,
 }) => {
   await startMobile(page, "peregrina");
   await page.click("#m-descansar");
-  // owner 2026-11-13: shown, not told — a stamp with chevrons before the dialog
+  // owner 2026-11-13: shown, not told — a stamp with chevrons, and «Lo que pasó» is gone
   const fx = page.locator("#m-efectos");
   await expect(fx).toBeVisible();
   await expect(fx.locator('[data-fx^="sleep-"]')).toHaveCount(1);
-  await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
   await fx.click();
   await expect(fx).toHaveCount(0);
-  const week = page.locator("#semana-dialogo[open]");
-  await expect(week).toBeVisible();
-  for (const key of ["log.vigor.rest.great", "log.vigor.rest.normal", "log.vigor.rest.poor"])
-    await expect(week).not.toContainText(t(key));
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
+  await page.waitForTimeout(300);
+  await expect(page.locator("#semana-dialogo")).toHaveCount(0);
+  expect(await week(page)).toBe(2);
+});
+
+test("story order: a week's scene plays after that week's decision and its transition", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await startMobile(page, "peregrina");
+  // to week 16, where her chapter 2 is due (week 10 is her first race, to win)
+  let k = 0;
+  while ((await week(page)) < 16) {
+    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    if (k++ % 2) await page.click("#m-descansar");
+    else {
+      await page.click("#m-entrenar");
+      await page.dblclick(raceWeek ? "#m-entrenar-technique" : "#m-entrenar-agility");
+    }
+    if (raceWeek) {
+      await toPosition(page);
+      await page.click("#m-correr");
+      await runRace(page);
+    }
+    await settle(page);
+  }
+  // the week starts without it (owner 2026-11-13)
+  await page.waitForTimeout(1500);
+  await expect(page.locator("#m-capitulo")).toHaveCount(0);
+  // the decision, its effects, the transition, then the scene
+  await page.click("#m-descansar");
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-transicion")).toBeVisible();
+  await expect(page.locator("#m-capitulo")).toHaveCount(0);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tears", {
+    timeout: 4000,
+  });
+  await skipScene(page);
+  expect(await week(page)).toBe(17);
 });

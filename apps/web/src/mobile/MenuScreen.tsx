@@ -13,15 +13,7 @@ import { GradeChip, placeText, StatStrip } from "./Parts";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { trackCard } from "./track";
 
-export type MenuAction =
-  | "train"
-  | "rest"
-  | "outing"
-  | "workshop"
-  | "skills"
-  | "race"
-  | "recap"
-  | "menu";
+export type MenuAction = "train" | "rest" | "outing" | "workshop" | "skills" | "race" | "menu";
 
 function RoundButton({
   id,
@@ -70,14 +62,12 @@ export function MenuScreen({
   state,
   menu,
   pendingEvent,
-  canRecap,
   onAction,
 }: {
   ctx: SimContext;
   state: SeasonState;
   menu: WeekMenu;
   pendingEvent: boolean;
-  canRecap: boolean;
   onAction: (action: MenuAction) => void;
 }) {
   const f = ctx.content.getFalconess(state.falconessId);
@@ -198,15 +188,6 @@ export function MenuScreen({
             className={s.o4}
             disabled={off}
             onClick={() => onAction("workshop")}
-          />
-          <RoundButton
-            id="m-resumen"
-            glyph="check"
-            label={ui("ui.m.recap")}
-            className={cx(s.sm, s.e1)}
-            size={20}
-            disabled={!canRecap}
-            onClick={() => onAction("recap")}
           />
           <RoundButton
             id="m-menu"

@@ -160,6 +160,7 @@ export function RaceScreen({
   state,
   turn,
   showResult,
+  hold = false,
   onSkip,
   onReplay,
   onDone,
@@ -168,6 +169,8 @@ export function RaceScreen({
   state: SeasonState;
   turn: number;
   showResult: boolean;
+  /** A story scene plays over the finished race: its result waits (owner 2026-11-13). */
+  hold?: boolean;
   onSkip: () => void;
   onReplay: () => void;
   onDone: () => void;
@@ -191,7 +194,7 @@ export function RaceScreen({
       </div>
       <div className={s.body}>
         {showResult ? (
-          result && log ? (
+          result && log && !hold ? (
             <ResultCard
               met={goalStatuses(ctx, state).find((g) => g.goal.turn === turn)?.met !== false}
               place={result.place}
@@ -207,7 +210,7 @@ export function RaceScreen({
           </div>
         ) : null}
       </div>
-      {showResult && (
+      {showResult && !hold && (
         <div className={s.foot}>
           <button
             type="button"

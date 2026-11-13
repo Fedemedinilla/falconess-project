@@ -22,7 +22,6 @@ import {
   withPosition,
 } from "../screens/model/position";
 import { weekSummary } from "../screens/model/week";
-import { WeekDialog } from "../screens/WeekDialog";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { ChatSheet } from "./ChatSheet";
@@ -78,10 +77,7 @@ type View =
       /** The action's result was already shown (a race week's preview): no way back, no repeat. */
       readonly decided?: boolean;
     }
-  /** A race week's action previewed: «Lo que pasó» of the action, before the position. */
-  | { readonly screen: "preview"; readonly input: WeekActionInput; readonly step: Step }
   | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
-  | { readonly screen: "before"; readonly turn: number }
   | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
 
 const MENU: View = { screen: "menu" };
@@ -103,8 +99,11 @@ function previewKind(view: View): ActionKind | undefined {
 /**
  * #juego: the phone game (the approved prototype wired to the real season). One run, the same
  * controller as the test view: character select without a run, the week menu while it is active
- * (training, workshop, pre-race card, flight race and its result as screens; «Lo que pasó» and the
- * event dialog over the menu), the season's end once it ends.
+ * (training, workshop, pre-race card, flight race and its result as screens; the week's effects and
+ * the event dialog over the menu), the season's end once it ends. Three modes (owner 2026-11-13):
+ * training (its screen and result), the menu (the week's decision; a story scene due after it plays
+ * once the decision's effects end, after the emblem transition), and the race (the transition, the
+ * scene before the race, the position, the race, the scene after it, its result; then the menu).
  */
 export function MobileGame() {
   const { game, snap } = useGame();
@@ -142,15 +141,16 @@ export function MobileGame() {
 
   // the emblem transition (owner 2026-11-12) covers the way into a race: the race page starts
   // fully covered by it
-  const ended = run?.state.status === "ended" && view.screen !== "race" && view.screen !== "before";
+  const ended = run?.state.status === "ended" && view.screen !== "race";
+  // the race mode starts at the position card of a decided race week
   const page = !run
     ? "select"
     : ended
       ? "end"
       : view.screen === "trained"
         ? "train"
-        : view.screen === "before" || view.screen === "preview"
-          ? "menu"
+        : view.screen === "prerace" && view.decided
+          ? "race"
           : view.screen;
   const [title, setTitle] = useState(() => !titleDone);
   // story scenes and the chat (owner 2026-11-12)
@@ -240,39 +240,55 @@ export function MobileGame() {
   const state = run.state;
   const style = accentStyle(ctx.content, state.falconessId);
 
-  /** The story scene due now (or one asked from «Historia»), once nothing else is on screen. */
-  const storyScene = (free: boolean): StoryScene | undefined => {
+  /**
+   * The story scene due now in a mode (owner 2026-11-13): the scene before a race only in the race
+   * mode, before the position; the others after the week's decision (on the menu, once its
+   * effects ended) or after the race, before its result.
+   */
+  const dueIn = (where: SceneMode): StoryScene | undefined => {
+    const fits = (sc: StoryScene) => (sc.trigger.kind === "goal-before") === (where === "prerace");
+    return dueScene(allScenes().filter(fits), ctx, state, seenInRun(run.seed));
+  };
+  /** The scene to play now (or one asked from «Historia»), once nothing else is on screen. */
+  const storyScene = (where: SceneMode | undefined): StoryScene | undefined => {
     if (replay) return replay;
     const idle =
-      free &&
-      (snap.lastStep === undefined || snap.lastStepSeen) &&
+      where !== undefined &&
+      (where !== "menu" || snap.lastStep === undefined || snap.lastStepSeen) &&
       !title &&
       cover === undefined &&
       !menuOpen &&
       !chatOpen &&
       !storyListOpen;
-    return idle ? dueScene(allScenes(), ctx, state, seenInRun(run.seed)) : undefined;
+    return idle ? dueIn(where) : undefined;
   };
-  const storyLayer = (sc: StoryScene | undefined) => (
+  const storyLayer = (sc: StoryScene | undefined, covered = true) => (
     <>
       {sc && (
-        <StoryOverlay
+        <CoveredScene
           key={`${sc.id}/${replay ? "again" : "first"}`}
-          scene={sc}
+          // a replay from «Historia» and the race mode's own transition need no other
+          cover={covered && !replay}
           primary={colors.primary}
           secondary={colors.secondary}
-          onDone={(skipped) => {
-            if (!replay) markSeen(run.seed, sc.id);
-            setReplay(undefined);
-            setStoryTick((n) => n + 1);
-            setStoryToast({
-              n: Date.now(),
-              kicker: gameText(sc.kickerKey),
-              title: gameText(sc.titleKey),
-              skipped,
-            });
-          }}
-        />
+        >
+          <StoryOverlay
+            scene={sc}
+            primary={colors.primary}
+            secondary={colors.secondary}
+            onDone={(skipped) => {
+              if (!replay) markSeen(run.seed, sc.id);
+              setReplay(undefined);
+              setStoryTick((n) => n + 1);
+              setStoryToast({
+                n: Date.now(),
+                kicker: gameText(sc.kickerKey),
+                title: gameText(sc.titleKey),
+                skipped,
+              });
+            }}
+          />
+        </CoveredScene>
       )}
       {storyToast && (
         <div key={storyToast.n} className={st.toast} id="m-capitulo-aviso" role="status">
@@ -286,7 +302,7 @@ export function MobileGame() {
     </>
   );
 
-  if (state.status === "ended" && view.screen !== "race" && view.screen !== "before")
+  if (state.status === "ended" && view.screen !== "race")
     return (
       <div className={s.app} style={style}>
         <EndScreen
@@ -295,13 +311,7 @@ export function MobileGame() {
           onNew={() => game.newSeason()}
           onTests={() => navigate("fin")}
         />
-        <WeekDialog
-          className={s.weekDialog}
-          advice={false}
-          part="race"
-          onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
-        />
-        {storyLayer(storyScene(true))}
+        {storyLayer(storyScene("race"))}
         {transition}
         {titleScreen}
       </div>
@@ -312,12 +322,9 @@ export function MobileGame() {
   const wings = wingsPosition(ctx.content, state.equippedFrame);
   const chosen = menu.raceWeek ? chosenFor(weekPosition, state) : undefined;
   const pending = state.pendingEvent !== undefined;
-  // the unread step ran a goal race: its summary was the race's result screen (owner 2026-11-13)
-  const unread = snap.lastStepSeen ? undefined : snap.lastStep;
-  const raceStep =
-    unread && unread.after.raceResults.length > unread.before.raceResults.length
-      ? unread
-      : undefined;
+  // the week's step is read once its effects played (none: at once); no dialog waits on the menu
+  const unreadNoFx = (stepOnMenu: Step | undefined) =>
+    stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset).length === 0;
 
   /** The result of a training, for the result on the training screen. */
   const trainResult = (
@@ -348,8 +355,8 @@ export function MobileGame() {
     const step = game.getSnapshot().lastStep;
     const cue = trainingCue(input, state.turn, step?.after, cards);
     playSound(cue);
-    // a race week shows what the action did before the race (testers 2026-11-11)
-    const next: View = raceTurn !== undefined ? { screen: "before", turn: raceTurn } : MENU;
+    const next: View =
+      raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: false } : MENU;
     // a training plays its result on the training screen first (owner 2026-11-11)
     const kind = cards.find((c) => c.kind === input.kind)?.kind;
     if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
@@ -369,9 +376,9 @@ export function MobileGame() {
   };
   /**
    * A week's action. On a race week (owner 2026-11-12) its result comes first, then the race
-   * position: the week is previewed with the season's own pure step (the action does not depend
-   * on the position; only the race does), its result shows as on any week, then the pre-race card
-   * runs the real input. After the preview the action is decided: the card has no «Volver».
+   * mode: the week is previewed with the season's own pure step (the action does not depend on
+   * the position; only the race does), a training's result shows on its screen, then the pre-race
+   * card runs the real input. After the preview the action is decided: the card has no «Volver».
    */
   const act = (input: WeekActionInput) => {
     if (!menu.raceWeek) {
@@ -388,7 +395,7 @@ export function MobileGame() {
     const step: Step = { before: state, input: withPosition(input, chosen), after };
     const cue = trainingCue(input, state.turn, after, cards);
     playSound(cue);
-    const next: View = { screen: "preview", input, step };
+    const next: View = { screen: "prerace", input, decided: true };
     const kind = cards.find((c) => c.kind === input.kind)?.kind;
     if (kind && (cue === "success" || cue === "boost" || cue === "fail")) {
       // the race's skill points are not hers yet: only the Simulator's own
@@ -426,9 +433,6 @@ export function MobileGame() {
       case "race":
         setView({ screen: "prerace" });
         return;
-      case "recap":
-        game.showStepAgain();
-        return;
       case "menu":
         setMenuOpen(true);
         return;
@@ -456,14 +460,7 @@ export function MobileGame() {
   switch (view.screen) {
     case "menu":
       screen = (
-        <MenuScreen
-          ctx={ctx}
-          state={state}
-          menu={menu}
-          pendingEvent={pending}
-          canRecap={snap.lastStep !== undefined && snap.lastStepSeen}
-          onAction={onMenu}
-        />
+        <MenuScreen ctx={ctx} state={state} menu={menu} pendingEvent={pending} onAction={onMenu} />
       );
       break;
     case "trained":
@@ -539,55 +536,6 @@ export function MobileGame() {
       );
       break;
     }
-    case "preview":
-      // the menu behind «Lo que pasó» of the previewed action; the position card comes next
-      screen = (
-        <>
-          <MenuScreen
-            ctx={ctx}
-            state={state}
-            menu={menu}
-            pendingEvent={false}
-            canRecap={false}
-            onAction={() => undefined}
-          />
-          <WeekDialog
-            className={s.weekDialog}
-            advice={false}
-            hideShown
-            part="action"
-            actionOpen
-            preview={view.step}
-            onActionDone={() => setView({ screen: "prerace", input: view.input, decided: true })}
-            onViewRace={() => undefined}
-          />
-        </>
-      );
-      break;
-    case "before":
-      // the menu stays behind «Lo que pasó» of the action; the race starts when it closes
-      screen = (
-        <>
-          <MenuScreen
-            ctx={ctx}
-            state={state}
-            menu={menu}
-            pendingEvent={false}
-            canRecap={false}
-            onAction={() => undefined}
-          />
-          <WeekDialog
-            className={s.weekDialog}
-            advice={false}
-            hideShown
-            part="action"
-            actionOpen
-            onActionDone={() => setView({ screen: "race", turn: view.turn, result: false })}
-            onViewRace={() => undefined}
-          />
-        </>
-      );
-      break;
     case "race":
       screen = (
         <RaceScreen
@@ -595,13 +543,11 @@ export function MobileGame() {
           state={state}
           turn={view.turn}
           showResult={view.result}
+          // the scene after the race comes before its result
+          hold={dueIn("race") !== undefined}
           onSkip={() => setView({ screen: "race", turn: view.turn, result: true })}
           onReplay={() => setView({ screen: "race", turn: view.turn, result: false })}
-          onDone={() => {
-            // owner 2026-11-13: the race's summary was this screen; no dialog waits on the menu
-            if (raceStep && weekFx(raceStep, ctx.ruleset).length === 0) game.acknowledgeStep();
-            setView(MENU);
-          }}
+          onDone={() => setView(MENU)}
         />
       );
       break;
@@ -618,11 +564,19 @@ export function MobileGame() {
   const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
   const fx = fxStep ? weekFx(fxStep, ctx.ruleset) : [];
   const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
+  const mode: SceneMode | undefined =
+    view.screen === "prerace" && view.decided
+      ? "prerace"
+      : view.screen === "race" && view.result
+        ? "race"
+        : onMenuScreen && !showScene && !showFx && !pending
+          ? "menu"
+          : undefined;
   return (
     <div className={cx(s.app, view.screen === "race" && s.appWide)} style={style}>
       {view.screen !== "race" && hud}
       {screen}
-      {/* «Lo que pasó» and the event wait until the race and its result were seen */}
+      {/* the week's effects and the event wait until the race and its result were seen */}
       {showScene && scene && (
         <InspirationOverlay
           scene={scene}
@@ -638,23 +592,13 @@ export function MobileGame() {
           content={ctx.content}
           onDone={() => {
             setFxDone(inputs);
-            if (raceStep) game.acknowledgeStep();
+            game.acknowledgeStep();
           }}
         />
       )}
-      {storyLayer(storyScene(onMenuScreen && !showScene && !showFx && !pending))}
-      {onMenuScreen && !showScene && !showFx && (
-        <>
-          <WeekDialog
-            className={s.weekDialog}
-            advice={false}
-            hideShown
-            part="race"
-            onViewRace={(t) => setView({ screen: "race", turn: t, result: false })}
-          />
-          {pending && <EventDialog />}
-        </>
-      )}
+      {storyLayer(storyScene(mode), mode !== "prerace")}
+      {!showScene && unreadNoFx(fxStep) && <Acknowledge onMount={() => game.acknowledgeStep()} />}
+      {onMenuScreen && !showScene && !showFx && pending && <EventDialog />}
       {chatOpen && (
         <ChatSheet
           name={gameText(`falconess.${state.falconessId}`)}
@@ -722,6 +666,40 @@ export function MobileGame() {
       />
     </div>
   );
+}
+
+/** Where a story scene can play (owner 2026-11-13). */
+type SceneMode = "menu" | "prerace" | "race";
+
+/**
+ * A story scene after the emblem transition (owner 2026-11-13): the scene shows once the
+ * transition ended, never under it. Reduced motion (or a transition already played) shows it now.
+ */
+function CoveredScene({
+  cover,
+  primary,
+  secondary,
+  children,
+}: {
+  cover: boolean;
+  primary: string;
+  secondary: string;
+  children: React.ReactNode;
+}) {
+  const [covering, setCovering] = useState(() => cover && !reducedMotion());
+  const uncover = useCallback(() => setCovering(false), []);
+  return covering ? (
+    <ScreenTransition primary={primary} secondary={secondary} onDone={uncover} />
+  ) : (
+    children
+  );
+}
+
+/** Marks the week's step read once mounted (a week whose decision left no effects to play). */
+function Acknowledge({ onMount }: { onMount: () => void }) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once
+  useEffect(onMount, []);
+  return null;
 }
 
 /** The sponsor's two colors of the Falconess in play (Kōryū's red and yellow before one is picked). */

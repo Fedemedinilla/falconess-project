@@ -12,7 +12,8 @@ export function triggerHolds(ctx: SimContext, state: SeasonState, t: StoryTrigge
     case "start":
       return state.turn <= 1 && state.status === "active";
     case "turn":
-      return state.turn >= t.turn && state.status === "active";
+      // after that week's decision (owner 2026-11-13), not when the week starts
+      return state.turn > t.turn && state.status === "active";
     case "goal-before": {
       const g = goalStatuses(ctx, state)[t.goal];
       return (

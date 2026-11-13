@@ -120,13 +120,25 @@ El jugador habla seguido en las escenas: no es un testigo mudo.
 
 ## 5. Cuándo sale cada escena (`trigger`)
 
-| Disparador    | Cuándo                                                                      |
-| ------------- | --------------------------------------------------------------------------- |
-| `start`       | La primera semana, antes de todo (el prólogo).                              |
-| `turn`        | El menú de esa semana (o la primera vez que se llega después).              |
-| `goal-before` | El menú de la semana de la meta N (0 = la primera), antes de la carrera.    |
-| `goal-after`  | De vuelta al menú después de la meta N: `win` (primera) o `pass` (la pasó). |
-| `end`         | La pantalla del final: `completed` (todas las metas) o `goal-failed`.       |
+| Disparador    | Cuándo                                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| `start`       | La primera semana, antes de todo (el prólogo).                                                           |
+| `turn`        | Después de la decisión de esa semana (o la primera vez que se llega después).                            |
+| `goal-before` | En el modo carrera de la meta N (0 = la primera): después de la transición, antes de elegir la posición. |
+| `goal-after`  | Después de la carrera de la meta N, antes de su resultado: `win` (primera), `placed` o `pass` (la pasó). |
+| `end`         | Después de la última carrera, antes de su resultado: `completed` (todas las metas) o `goal-failed`.      |
+
+**El orden (dueño, 2026-11-13).** Tres modos, que no se mezclan:
+
+1. **Entrenamiento:** la pantalla donde se elige qué entrenar y su resultado.
+2. **Menú de la temporada:** la decisión de la semana. Después de la decisión (y de sus efectos),
+   la transición del emblema y la escena de la semana, si la hay; después, el menú de la semana
+   siguiente. No hay ventana «Lo que pasó».
+3. **Carrera:** la transición del emblema, la escena antes de la carrera, la elección de la
+   posición, la carrera, la escena después de la carrera, el resultado (puesto, meta, tiempo,
+   consejo) y de vuelta al menú.
+
+Toda escena sale después de una transición, nunca antes ni debajo.
 
 Una escena por disparador y Falconess (lo exige el test). Si dos escenas caen en la misma semana,
 sale una por vez.
