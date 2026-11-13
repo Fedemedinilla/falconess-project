@@ -1869,5 +1869,6 @@
   "ui.m.fx.bond": "BOND UP!",
   "ui.m.fx.points": "SKILL POINTS!",
   "ui.m.fx.skills": "NEW SKILL!",
-  "ui.m.fx.skills.many": "{n} NEW SKILLS!"
+  "ui.m.fx.skills.many": "{n} NEW SKILLS!",
+  "ui.m.race.ranAs": "Ran as {position}"
 }

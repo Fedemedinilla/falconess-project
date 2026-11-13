@@ -1869,5 +1869,6 @@
   "ui.m.fx.bond": "¡VÍNCULO!",
   "ui.m.fx.points": "¡PUNTOS DE HABILIDAD!",
   "ui.m.fx.skills": "¡HABILIDAD NUEVA!",
-  "ui.m.fx.skills.many": "¡{n} HABILIDADES NUEVAS!"
+  "ui.m.fx.skills.many": "¡{n} HABILIDADES NUEVAS!",
+  "ui.m.race.ranAs": "Corrió de {position}"
 }

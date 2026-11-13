@@ -2594,3 +2594,11 @@
     display: none;
   }
 }
+/* owner 2026-11-13: the position she ran, on the race's result */
+.resultPos {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+}

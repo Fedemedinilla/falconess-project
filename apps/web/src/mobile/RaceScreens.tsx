@@ -197,6 +197,7 @@ export function RaceScreen({
               place={result.place}
               field={result.fieldSize}
               time={result.timeTicks}
+              position={result.position}
               advice={<PlayerAdviceNote log={log} labels={pageLabels()} id="m-consejo" />}
             />
           ) : null
@@ -239,12 +240,15 @@ function ResultCard({
   place,
   field,
   time,
+  position,
   advice,
 }: {
   met: boolean;
   place: number;
   field: number;
   time: number;
+  /** owner 2026-11-13: the position she ran, here instead of a dialog back on the menu */
+  position: Position | undefined;
   advice: ReactNode;
 }) {
   const failed = !met;
@@ -260,6 +264,11 @@ function ResultCard({
         <div className={s.resultT}>
           <b>{ui(failed ? "ui.m.race.failed" : "ui.m.race.met")}</b>
           <span>{ui("ui.m.race.of", { n: field, time: formatSeconds(time) })}</span>
+          {position && (
+            <span className={s.resultPos} id="m-resultado-posicion" data-position={position}>
+              {ui("ui.m.race.ranAs", { position: gameText(`position.${position}`) })}
+            </span>
+          )}
         </div>
       </div>
       {advice}

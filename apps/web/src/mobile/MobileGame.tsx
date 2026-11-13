@@ -312,6 +312,12 @@ export function MobileGame() {
   const wings = wingsPosition(ctx.content, state.equippedFrame);
   const chosen = menu.raceWeek ? chosenFor(weekPosition, state) : undefined;
   const pending = state.pendingEvent !== undefined;
+  // the unread step ran a goal race: its summary was the race's result screen (owner 2026-11-13)
+  const unread = snap.lastStepSeen ? undefined : snap.lastStep;
+  const raceStep =
+    unread && unread.after.raceResults.length > unread.before.raceResults.length
+      ? unread
+      : undefined;
 
   /** The result of a training, for the result on the training screen. */
   const trainResult = (
@@ -591,7 +597,11 @@ export function MobileGame() {
           showResult={view.result}
           onSkip={() => setView({ screen: "race", turn: view.turn, result: true })}
           onReplay={() => setView({ screen: "race", turn: view.turn, result: false })}
-          onDone={() => setView(MENU)}
+          onDone={() => {
+            // owner 2026-11-13: the race's summary was this screen; no dialog waits on the menu
+            if (raceStep && weekFx(raceStep, ctx.ruleset).length === 0) game.acknowledgeStep();
+            setView(MENU);
+          }}
         />
       );
       break;
@@ -626,7 +636,10 @@ export function MobileGame() {
           key={inputs}
           fx={fx}
           content={ctx.content}
-          onDone={() => setFxDone(inputs)}
+          onDone={() => {
+            setFxDone(inputs);
+            if (raceStep) game.acknowledgeStep();
+          }}
         />
       )}
       {storyLayer(storyScene(onMenuScreen && !showScene && !showFx && !pending))}

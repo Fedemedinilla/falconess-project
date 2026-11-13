@@ -233,12 +233,15 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   // the action is decided once its result was seen: no way back
   await expect(page.locator("#m-volver")).toHaveCount(0);
   await page.click("#m-correr");
-  await runRace(page);
-  // «Lo que pasó» says the race and the position she ran in
-  await expect(page.locator("#semana-dialogo[open]")).toBeVisible();
-  await expect(page.locator("#semana-posicion")).toHaveAttribute("data-position", "lead");
-  await page.click("#semana-continuar");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await page.click("#m-saltar");
+  // the race's summary is its result screen (owner 2026-11-13): place, goal, position, advice
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  await expect(page.locator("#m-resultado-posicion")).toHaveAttribute("data-position", "lead");
+  await page.click("#m-carrera-seguir");
   await settle(page);
+  // and no dialog waits on the menu
+  await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
 });
 
 test("the workshop: wings and skills, as one order that takes the week", async ({ page }) => {
