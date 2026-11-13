@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { cx } from "../ui/cx";
 import s from "./Mobile.module.css";
 
 /**
@@ -75,7 +76,12 @@ function Emblem({ school }: { school: string }) {
   );
 }
 
-export type DeltaChip = { readonly key: string; readonly label: string };
+export type DeltaChip = {
+  readonly key: string;
+  readonly label: string;
+  /** ADR-0016: a crew in sintonía stands at this training. */
+  readonly sync?: boolean;
+};
 
 export type DeltaButtonProps = {
   id: string;
@@ -200,7 +206,11 @@ export function DeltaButton({
       {boosted && (
         <span className={s.deltaChips} aria-hidden="true">
           {chips.slice(0, 3).map((c) => (
-            <span key={c.key} className={s.boostChip}>
+            <span
+              key={c.key}
+              className={cx(s.boostChip, c.sync && s.boostChipSync)}
+              data-sync={c.sync ? "true" : undefined}
+            >
               {c.label}
             </span>
           ))}

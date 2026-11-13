@@ -95,7 +95,7 @@ function Chevrons({ at }: { at: number }) {
 
 /** What sits in the effect's circle: a glyph, the crews' portraits, or the points. */
 function Badge({ e, at, content }: { e: WeekFx; at: number; content: ContentIndex }) {
-  if (e.kind === "bond")
+  if (e.kind === "bond" || e.kind === "sync")
     return (
       <span className={f.crews} style={{ animationDelay: `${at}ms` }}>
         {(e.crews ?? []).map((id) => {

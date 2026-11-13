@@ -349,6 +349,7 @@ export function NewSeason() {
                     headingId={`${id}-nombre`}
                     explainId={`${id}-explicacion`}
                     foldId={`${id}-detalle`}
+                    crewSync={ctx.ruleset.season.crewSync}
                     tag={
                       checked ? (
                         <Pill tone="accent" solid>

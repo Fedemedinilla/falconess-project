@@ -2599,3 +2599,90 @@
   font-weight: 700;
   opacity: 0.85;
 }
+
+/* ADR-0016: a crew in sintonía (bond 80+): gold, warm, a little alive */
+.portraitSync {
+  box-shadow:
+    0 0 0 3px #ffd23f,
+    0 0 14px 4px rgb(255 190 40 / 0.85);
+  animation: syncGlow 1.6s ease-in-out infinite alternate;
+}
+@keyframes syncGlow {
+  to {
+    box-shadow:
+      0 0 0 3px #ffe680,
+      0 0 22px 8px rgb(255 160 20 / 0.9);
+  }
+}
+.syncTag {
+  display: inline-block;
+  align-self: flex-start;
+  width: max-content;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff3a8, #ffb300);
+  box-shadow: 0 0 0 1.5px #7a2a00;
+  font-family: var(--cn);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #5a1f00;
+}
+.seg .segSync {
+  background: linear-gradient(180deg, #ffe680, #ff9a00);
+}
+.seg .segGoal {
+  box-shadow:
+    inset 0 0 0 1px var(--ui),
+    0 0 0 1.5px #ff9a00;
+}
+.app .syncBtn {
+  box-shadow:
+    0 4px 0 #b8c4cf,
+    0 0 0 3px #ff9a00,
+    0 0 12px 3px rgb(255 170 0 / 0.75);
+}
+.app .sel.syncBtn {
+  box-shadow:
+    0 4px 0 rgb(20 32 43 / 0.3),
+    inset 0 0 0 3px var(--yel),
+    0 0 0 3px #ff9a00,
+    0 0 14px 4px rgb(255 170 0 / 0.8);
+}
+.gdotSync {
+  background: linear-gradient(180deg, #ff8a3d, #e0305a);
+}
+@media (prefers-reduced-motion: reduce) {
+  .portraitSync {
+    animation: none;
+  }
+}
+.boostChipSync {
+  background: linear-gradient(180deg, #fff3a8, #ffb300);
+  border-color: #ff8a00;
+  color: #5a1f00;
+}
+/* ADR-0016: «¡SINTONÍA!» under the training's stamp, warmer and smaller */
+.syncStamp {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(10% - 34px);
+  z-index: 2;
+  margin: 0;
+  text-align: center;
+  font-family: var(--cn);
+  font-weight: 800;
+  font-style: italic;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #ffe0f0 0%, #ff8a3d 50%, #e0305a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1.2px #5a0f20;
+  filter: drop-shadow(0 2px 0 #fff) drop-shadow(0 4px 8px rgb(90 15 32 / 0.45));
+  animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}

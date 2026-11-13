@@ -637,7 +637,7 @@
   "ui.new.hangar": "Hangar",
   "ui.new.hangar.count": "{n} de {max}",
   "ui.new.hangar.full": "Hangar lleno: sacá uno para sumar otro.",
-  "ui.new.hangar.hint": "Hasta {max} bastidores. La cuadrilla de cada fabricante del hangar aparece en los entrenamientos de sus stats: varias marcas cubren más stats, una sola concentra el vínculo y sus eventos. Durante la temporada se cambia de bastidor en el taller.",
+  "ui.new.hangar.hint": "Hasta {max} bastidores. La cuadrilla de cada fabricante del hangar viene a entrenar sus stats: varias marcas cubren más stats, una sola concentra el vínculo. Durante la temporada se cambia de bastidor en el taller.",
   "ui.new.hangar.hint.brief": "Hasta {max}. Más marcas cubren más stats.",
   "ui.new.inHangar": "En el hangar",
   "ui.new.lead": "Elegí la corredora, hasta {size} bastidores para el hangar y la semilla. La misma semilla con las mismas decisiones da la misma temporada.",
@@ -1869,5 +1869,15 @@
   "ui.m.fx.points": "¡PUNTOS DE HABILIDAD!",
   "ui.m.fx.skills": "¡HABILIDAD NUEVA!",
   "ui.m.fx.skills.many": "¡{n} HABILIDADES NUEVAS!",
-  "ui.m.race.ranAs": "Corrió de {position}"
+  "ui.m.race.ranAs": "Corrió de {position}",
+  "ui.m.crew.sync": "SINTONÍA",
+  "ui.m.crew.bond.toSync": "Vínculo {n} de {max}: sintonía en {sync}",
+  "ui.m.fx.sync": "¡SINTONÍA!",
+  "ui.m.outing.title": "¿Con qué cuadrilla salís?",
+  "ui.m.outing.hint": "Salir sube el ánimo y suma +{n} de vínculo con la cuadrilla que elijas. En sintonía, su entrenamiento rinde mucho más.",
+  "ui.m.outing.go": "Salir",
+  "ui.frame.crew.text.sync": "{crew}: aparece en uno de sus entrenamientos ({stats}) y la ganancia sube {bonus}; con vínculo {min} o más entra en sintonía y sube {sync}.",
+  "ui.frame.crew.text.sync.brief": "Ayuda a entrenar {stats}; en sintonía, mucho más",
+  "ui.hangar.crews.note.sync": "Cada cuadrilla viene con {base} de probabilidad, más {per} por nivel de vínculo (un nivel cada {step}), y se para en uno de sus entrenamientos. Con vínculo {min} o más entra en sintonía: su entrenamiento rinde mucho más.",
+  "ui.hangar.crews.note.sync.brief": "Vienen el {base} de las semanas; con vínculo {min}, sintonía."
 }

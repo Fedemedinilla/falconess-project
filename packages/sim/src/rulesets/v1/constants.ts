@@ -170,6 +170,20 @@ export type SeasonConstants = Omit<
    * box (best stat, stars by thresholds) and the start bonus only.
    */
   readonly inheritance?: InheritanceConstants;
+  /**
+   * ADR-0016 (owner 2026-11-13, «3 + 1»): crews like Umamusume's support cards. A crew that shows
+   * up stands at ONE of its trainings (drawn from its own Rng), adds `basePm` ‰ there below
+   * `minBond`, and `syncPm` ‰ from `minBond` on («sintonía», the friendship training). Absent =
+   * v1/v2: every matching training, the maker's flat `trainingBonus`.
+   */
+  readonly crewSync?: CrewSyncConstants;
+};
+
+/** ADR-0016: a crew's bonus by its bond. */
+export type CrewSyncConstants = {
+  readonly basePm: number;
+  readonly minBond: number;
+  readonly syncPm: number;
 };
 
 /** ADR-0013: how a black box is rolled at season end and how it inspires a child. */

@@ -1,5 +1,5 @@
 import { FrameStats } from "@falconess/schema";
-import { resolveFrameBuild } from "@falconess/sim";
+import { type CrewSyncConstants, resolveFrameBuild } from "@falconess/sim";
 import type { ReactNode } from "react";
 import { useDetail, useGlobalDetail } from "../../app/explain";
 import { getContent } from "../../content/load";
@@ -54,6 +54,8 @@ export type FrameCardProps = {
    */
   foldId?: string | undefined;
   className?: string | undefined;
+  /** ADR-0016: the season's sintonía, when it has one (the crew's bonus then depends on the bond). */
+  crewSync?: CrewSyncConstants | undefined;
 };
 
 /** Its children, or with an id, the same children folded under "Ver detalle". */
@@ -109,6 +111,7 @@ export function FrameCard({
   explainId,
   foldId,
   className,
+  crewSync,
 }: FrameCardProps) {
   const narrow = useNarrow();
   const [detail, setDetail] = useCardDetail(explainId);
@@ -259,11 +262,19 @@ export function FrameCard({
               <div className={s.trait}>
                 <Term icon="crew">{ui("ui.frame.crew")}</Term>
                 <dd>
-                  {uiAt(detail, "ui.frame.crew.text", {
-                    crew: gameText(maker.crew.textKey),
-                    stats: maker.crew.stats.map((st) => ui(`ui.stat.abbr.${st}`)).join(" · "),
-                    bonus: formatFraction(maker.crew.trainingBonus),
-                  })}
+                  {crewSync
+                    ? uiAt(detail, "ui.frame.crew.text.sync", {
+                        crew: gameText(maker.crew.textKey),
+                        stats: maker.crew.stats.map((st) => ui(`ui.stat.abbr.${st}`)).join(" · "),
+                        bonus: formatFraction(crewSync.basePm / 1000),
+                        sync: formatFraction(crewSync.syncPm / 1000),
+                        min: crewSync.minBond,
+                      })
+                    : uiAt(detail, "ui.frame.crew.text", {
+                        crew: gameText(maker.crew.textKey),
+                        stats: maker.crew.stats.map((st) => ui(`ui.stat.abbr.${st}`)).join(" · "),
+                        bonus: formatFraction(maker.crew.trainingBonus),
+                      })}
                 </dd>
               </div>
             </>

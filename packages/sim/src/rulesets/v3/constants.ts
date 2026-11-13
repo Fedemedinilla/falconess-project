@@ -826,6 +826,17 @@ export const SEASON: SeasonConstants = {
    * attentive player ends with Agility ≈ 790-890 and one stat her goals ask for; the owner's two
    * seasons replay to Agility 1003 instead of 1200.
    */
+  /**
+   * ADR-0016 (owner 2026-11-13): the bond is what reaches the crews' «sintonía», like Umamusume's
+   * friendship training, instead of their bonus being there from week 1. Crews come more often
+   * (50 % + 5 per bond level) to ONE of their trainings; +10 % below bond 80, +25 % from 80. The
+   * bond grows +14 per training with the crew and +10 per outing (`.work/bond`: sintonía from week
+   * 25-28, 11-17 % of the trainings of a player who follows her crews).
+   */
+  crewPresenceBase: 500,
+  bondPerTraining: 14,
+  bondPerOuting: 10,
+  crewSync: { basePm: 100, minBond: 80, syncPm: 250 },
   secondaryGain: 200,
   growthBands: [
     [600, 750],

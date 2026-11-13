@@ -13,7 +13,9 @@
 import type { SeasonState, StatName, TrainingKind } from "@falconess/schema";
 import {
   type ActionBlock,
+  crewBonusPm,
   facilityLevel,
+  inSync,
   moodDriftPm,
   moodMultiplier,
   nextTrainingDriftPm,
@@ -49,8 +51,10 @@ export type StatGain = { readonly stat: StatName; readonly gain: number };
 export type CrewBonus = {
   /** Manufacturer id (its crew, palette and name come from content). */
   readonly manufacturer: string;
-  /** Training bonus of this crew, per-mille. */
+  /** Training bonus of this crew, per-mille (ADR-0016: by her bond on v3). */
   readonly bonusPm: number;
+  /** ADR-0016: her bond reached sintonía (always false before v3). */
+  readonly sync: boolean;
 };
 
 /**
@@ -95,10 +99,14 @@ export function actionBlock(
 }
 
 export function crewsAt(ctx: SimContext, state: SeasonState, kind: TrainingKind): CrewBonus[] {
-  return (state.crewPresence[kind] ?? []).map((manufacturer) => ({
-    manufacturer,
-    bonusPm: Math.round(ctx.content.getManufacturer(manufacturer).crew.trainingBonus * 1000),
-  }));
+  return (state.crewPresence[kind] ?? []).map((manufacturer) => {
+    const bond = state.bond[manufacturer] ?? 0;
+    return {
+      manufacturer,
+      bonusPm: crewBonusPm(ctx, manufacturer, bond),
+      sync: inSync(ctx, bond),
+    };
+  });
 }
 
 export function riskLevel(failPm: number, injuryPm: number, exhausted: boolean): RiskLevel {

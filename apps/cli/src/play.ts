@@ -14,6 +14,7 @@ import {
   advanceSeason,
   blackBoxFor,
   goalForTurn,
+  hangarManufacturers,
   rerollCost,
   restOptions,
   type SimContext,
@@ -123,11 +124,31 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
     if (a === "4") return { kind: "train:risk-flight" };
     if (a === "5") return { kind: "train:simulator" };
     if (a === "7") return { kind: "rest" };
-    if (a === "8") return { kind: "outing" };
+    if (a === "8") return outingCrew(s);
     if (a === "6") {
       const ops = await workshopMenu(s);
       if (ops) return { kind: "workshop", ops };
     }
+  }
+}
+
+/** ADR-0016: with sintonía the outing goes with a crew of the hangar, picked here (Enter: the frame's). */
+async function outingCrew(s: SeasonState): Promise<RunInput> {
+  const sync = ctx.ruleset.season.crewSync;
+  if (!sync) return { kind: "outing" };
+  const crews = hangarManufacturers(ctx, s);
+  crews.forEach((m, i) => {
+    const bond = s.bond[m] ?? 0;
+    const mark = bond >= sync.minBond ? " · sintonía" : ` · sintonía en ${sync.minBond}`;
+    console.log(
+      `  ${i + 1}. ${ctx.content.t(ctx.content.getManufacturer(m).crew.textKey)} · vínculo ${bond}${mark}`,
+    );
+  });
+  for (;;) {
+    const a = await ask("  cuadrilla> ");
+    if (a === "") return { kind: "outing" };
+    const m = crews[Number.parseInt(a, 10) - 1];
+    if (m) return { kind: "outing", manufacturer: m };
   }
 }
 

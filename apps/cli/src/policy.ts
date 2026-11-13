@@ -10,8 +10,11 @@ import type {
 } from "@falconess/schema";
 import {
   actionBlock,
+  crewSyncOf,
   distanceOfLength,
   flightOf,
+  hangarManufacturers,
+  inSync,
   learnCap,
   lowestStat,
   RULESET_V1,
@@ -20,6 +23,8 @@ import {
   resolveFrameBuild,
   type SimContext,
   seasonGoalsOf,
+  statCap,
+  trainingGain,
   trainingRisk,
 } from "@falconess/sim";
 
@@ -348,14 +353,77 @@ export function attentivePolicy(
   const risk = trainingRisk(R, state.fatigue, target).failPm - trainingRisk(R, 0, target).failPm;
   if (risk >= opts.restAtFailPm || actionBlock(R, state, target) === "forced-rest")
     return withPosition({ kind: "rest" });
-  if (state.mood < opts.moodFloor) return withPosition({ kind: "outing" });
+  if (state.mood < opts.moodFloor) return withPosition(outingInput(ctx, state));
   if (state.fatigue >= opts.simulatorFromFatigue && lastWeekKind(state) !== "train:simulator") {
     // a visit costs the week: she learns on a light week, once she can pay `learnAtOnce` skills
     const visit =
       skillsToLearn(ctx, state).length >= opts.learnAtOnce ? workshopVisit(ctx, state) : undefined;
     return withPosition(visit ?? { kind: "train:simulator" });
   }
-  return withPosition({ kind: target });
+  return withPosition({ kind: crewTraining(ctx, state, build, target) });
+}
+
+/** The stat each crew-chosen training raises (the Simulator stays a vigor decision). */
+const CREW_STAT: Partial<Record<TrainingKind, keyof FalconessStats>> = {
+  "train:agility": "agility",
+  "train:stamina": "stamina",
+  "train:technique": "technique",
+};
+
+/** Whether a stat is still below its share of the build (Agility always, under her cap). */
+function stillNeeded(
+  ctx: SimContext,
+  state: SeasonState,
+  build: BuildTargets,
+  kind: TrainingKind,
+): boolean {
+  const stat = CREW_STAT[kind];
+  if (!stat || state.stats[stat] >= statCap(ctx.ruleset, state)) return false;
+  if (stat === "agility") return true;
+  const share = stat === "stamina" ? build.stamina : build.technique;
+  return state.stats[stat] * 1000 < Math.max(1, state.stats.agility) * share;
+}
+
+/**
+ * ADR-0016: with sintonía (`crewSync`) the attentive player follows her crews like a support-card
+ * player: she leaves her plan for a crew's training when that stat is still needed and it pays
+ * clearly more (her plan counts 10 % extra; a crew still below sintonía counts 12 % extra, the
+ * bond being an investment). The risk flight keeps its own fixed risk and is never followed.
+ * Without `crewSync` she trains her plan, as the v3 measures before ADR-0016.
+ */
+export function crewTraining(
+  ctx: SimContext,
+  state: SeasonState,
+  build: BuildTargets,
+  target: TrainingKind,
+): TrainingKind {
+  if (!crewSyncOf(ctx)) return target;
+  const value = (k: TrainingKind): number => {
+    const stat = CREW_STAT[k] ?? (k === "train:risk-flight" ? "courage" : undefined);
+    return stat ? trainingGain(ctx, state, k, stat) : 0;
+  };
+  let best = target;
+  let bestValue = value(target) * 1.1;
+  for (const k of Object.keys(CREW_STAT) as TrainingKind[]) {
+    const crews = state.crewPresence[k] ?? [];
+    if (k === target || crews.length === 0 || !stillNeeded(ctx, state, build, k)) continue;
+    const building = crews.some((m) => !inSync(ctx, state.bond[m] ?? 0));
+    const v = value(k) * (building ? 1.12 : 1);
+    if (v > bestValue) {
+      best = k;
+      bestValue = v;
+    }
+  }
+  return best;
+}
+
+/** An outing; with sintonía, with the crew of her hangar closest to it (still under it). */
+export function outingInput(ctx: SimContext, state: SeasonState): RunInput {
+  if (!crewSyncOf(ctx)) return { kind: "outing" };
+  const crew = hangarManufacturers(ctx, state)
+    .filter((m) => !inSync(ctx, state.bond[m] ?? 0))
+    .sort((a, b) => (state.bond[b] ?? 0) - (state.bond[a] ?? 0) || a.localeCompare(b))[0];
+  return crew ? { kind: "outing", manufacturer: crew } : { kind: "outing" };
 }
 
 /** The off-build attentive player: same habits, all Agility and no Stamina. */

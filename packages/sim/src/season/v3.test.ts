@@ -1,5 +1,5 @@
 import { loadContent, loadSeasonContent } from "@falconess/content";
-import type { RunInput, SeasonState } from "@falconess/schema";
+import type { RunInput, SeasonState, TrainingKind } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import {
   goalRaceSetup,
@@ -384,5 +384,68 @@ describe("no scrap in v3 (owner 2026-11-13)", () => {
       );
       expect(touches, e.id).toBe(false);
     }
+  });
+});
+
+describe("crews and sintonía (ADR-0016)", () => {
+  const S = RULESET_V3.season;
+  const sync = S.crewSync;
+  it("v3 has sintonía; v1 and v2 keep the flat crew bonus", () => {
+    expect(sync).toEqual({ basePm: 100, minBond: 80, syncPm: 250 });
+    expect(RULESET_V2.season.crewSync).toBeUndefined();
+  });
+  it("a crew that shows up stands at one training only, one of its own stats", () => {
+    let seen = 0;
+    for (let i = 0; i < 40; i++) {
+      let s: SeasonState = startSeason(V3, `crew-${i}`, START("peregrina"));
+      for (let w = 0; w < 6 && s.status === "active"; w++) {
+        const count: Record<string, number> = {};
+        for (const [kind, crews] of Object.entries(s.crewPresence))
+          for (const m of crews) {
+            count[m] = (count[m] ?? 0) + 1;
+            const stat = V3.ruleset.trainingStat[kind as keyof typeof V3.ruleset.trainingStat];
+            expect(content.getManufacturer(m).crew.stats).toContain(stat);
+          }
+        for (const n of Object.values(count)) expect(n).toBe(1);
+        seen += Object.keys(count).length;
+        s = advanceSeason(V3, s, { kind: "rest" });
+      }
+    }
+    expect(seen).toBeGreaterThan(100);
+  });
+  it("a crew pays +10 % below bond 80 and +25 % from 80", () => {
+    const s: SeasonState = startSeason(V3, "crew-gain", START("peregrina"));
+    const kind = "train:agility" as const;
+    const gain = (bond: number) =>
+      trainingGains(
+        V3,
+        { ...s, crewPresence: { ...s.crewPresence, [kind]: ["koryu"] }, bond: { koryu: bond } },
+        kind,
+      )[0]?.gain ?? 0;
+    const none = trainingGains(
+      V3,
+      { ...s, crewPresence: { ...s.crewPresence, [kind]: [] } },
+      kind,
+    )[0]?.gain;
+    expect(gain(0)).toBeGreaterThan(none ?? 0);
+    expect(gain(79)).toBe(gain(0));
+    expect(gain(80)).toBeGreaterThan(gain(79));
+    expect(gain(100)).toBe(gain(80));
+  });
+  it("training with a crew adds 14 bond, an outing 10 to the crew she picks", () => {
+    for (let i = 0; i < 60; i++) {
+      const s: SeasonState = startSeason(V3, `crew-bond-${i}`, START("peregrina"));
+      const kind = (Object.keys(s.crewPresence) as TrainingKind[]).find(
+        (k) => k !== "train:risk-flight" && (s.crewPresence[k]?.length ?? 0) > 0,
+      );
+      if (!kind) continue;
+      const m = s.crewPresence[kind]?.[0] ?? "";
+      const after = advanceSeason(V3, s, { kind });
+      expect(after.bond[m]).toBe(14);
+      const out = advanceSeason(V3, s, { kind: "outing", manufacturer: m });
+      expect(out.bond[m]).toBe(10);
+      return;
+    }
+    throw new Error("no crew in 60 seasons");
   });
 });

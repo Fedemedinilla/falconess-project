@@ -1,8 +1,7 @@
 # Vínculo y sintonía con las cuadrillas (plan «3 + 1», dueño 2026-11-13)
 
-Estado: **plan, sin aplicar al juego.** El prototipo vive en la rama `bond-proto`
-(`packages/sim/src/season/crew-sync.ts`, `apps/cli/src/proto/bond.ts`); sin el interruptor
-`crewSync` el juego queda igual byte a byte (tests de la sim y golden en verde).
+Estado: **aplicado** con sintonía +25 % (ADR-0016, dueño 2026-11-13). Las grillas del prototipo
+quedaron en la rama `bond-proto` (`.work/bond/`).
 
 ## 1. El problema
 

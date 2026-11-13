@@ -16,6 +16,7 @@ export type WeekFxKind =
   | "mood-up"
   | "mood-down"
   | "bond"
+  | "sync"
   | "points"
   | "skills";
 
@@ -64,6 +65,14 @@ function weekFxAll(step: WeekStep, ruleset?: Ruleset): WeekFx[] {
   // a training's bonds show on its own result (the training screen), with its other «+N»
   const trained = step.input.kind.startsWith("train:");
   if (crews.length > 0 && !trained) out.push({ kind: "bond", good: true, crews });
+  // ADR-0016: a crew reached sintonía this week (after a training too: it is a milestone)
+  const minBond = ruleset?.season.crewSync?.minBond;
+  if (minBond !== undefined) {
+    const synced = crews.filter(
+      (id) => (before.bond[id] ?? 0) < minBond && (after.bond[id] ?? 0) >= minBond,
+    );
+    if (synced.length > 0) out.push({ kind: "sync", good: true, crews: synced });
+  }
   // a goal race pays points by place (the Simulator's show on the training screen already)
   const race =
     after.raceResults.length > before.raceResults.length ? after.raceResults.at(-1) : undefined;

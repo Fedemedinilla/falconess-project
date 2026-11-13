@@ -49,6 +49,19 @@ Costos: entrenamientos simples +20, `risk-flight` +30, `simulator` +10, `worksho
 Cada turno, cada fabricante del hangar aparece en los entrenamientos de sus stats con probabilidad
 `350 + 50 × bondLevel` per-mille, `bondLevel = floor(bond / 20)`, bond 0–100.
 
+**Sintonía (ADR-0016, ruleset v3).** Intención: el vínculo sirve para llegar a la sintonía (el
+entrenamiento de amistad de Umamusume), en vez de que el bono de la cuadrilla esté desde la semana 1.
+
+- Presencia: `crewPresenceBase` 500 + 50 × `bondLevel` ‰; la cuadrilla que viene se para en **uno**
+  de sus entrenamientos, sorteado con su propio `Rng(${seed}/crew/${turn}/${cuadrilla})` (ningún
+  sorteo viejo se mueve).
+- Bono en `Σ crewBonus`: `crewSync.basePm` 100 si `bond < crewSync.minBond` (80), `crewSync.syncPm`
+  250 desde 80; el `trainingBonus` del fabricante solo vale en v1/v2.
+- Vínculo: +14 por entrenar con ella (`bondPerTraining`), +10 por la Salida con la cuadrilla elegida
+  (`bondPerOuting`), tope 100.
+- Rango esperado (jugadora que sigue a sus cuadrillas, Normal): primera sintonía en la semana 25-28,
+  11-17 % de sus entrenamientos en sintonía (`.work/bond`).
+
 ### Temporada v2 (ADR-0006)
 
 Decisión del dueño tras el playtest 1: el vigor se vacía al entrenar y se llena al descansar, no hay

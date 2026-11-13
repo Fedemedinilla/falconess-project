@@ -9,6 +9,7 @@ import {
   note,
   type SimContext,
 } from "./context.js";
+import { crewBonusPm } from "./crew-sync.js";
 import { statCap } from "./difficulty.js";
 import { addBond } from "./hangar.js";
 import {
@@ -28,7 +29,8 @@ export function facilityLevel(ctx: SimContext, uses: number): number {
 type GainState = Pick<
   SeasonState,
   "facilityUses" | "crewPresence" | "falconessId" | "mood" | "stats"
->;
+> &
+  Partial<Pick<SeasonState, "bond">>;
 
 /**
  * gain = floor(base[level] × (1 + Σ crewBonus) × m_train_mood × (1 + growth)): one floor at the
@@ -46,8 +48,7 @@ export function trainingGain(
   const base = ctx.ruleset.season.trainBase[level - 1] ?? 8;
   const crews = d.crewPresence[kind] ?? [];
   let crewBonus = 0;
-  for (const m of crews)
-    crewBonus += Math.round(ctx.content.getManufacturer(m).crew.trainingBonus * 1000);
+  for (const m of crews) crewBonus += crewBonusPm(ctx, m, d.bond?.[m] ?? 0);
   const growth = Math.round(ctx.content.getFalconess(d.falconessId).growth[stat] * 1000);
   const product =
     base * (1000 + crewBonus) * trainingMoodMultiplier(ctx.ruleset, d.mood) * (1000 + growth);

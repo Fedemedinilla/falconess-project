@@ -37,28 +37,28 @@
         "courseId": "sprint",
         "minPlace": 1,
         "grade": "g3",
-        "fieldPm": 650
+        "fieldPm": 700
       },
       {
         "turn": 20,
         "courseId": "overlook",
         "minPlace": 1,
         "grade": "g3",
-        "fieldPm": 650
+        "fieldPm": 700
       },
       {
         "turn": 30,
         "courseId": "sprint",
         "minPlace": 1,
         "grade": "g2",
-        "fieldPm": 800
+        "fieldPm": 850
       },
       {
         "turn": 40,
         "courseId": "overlook",
         "minPlace": 1,
         "grade": "g2",
-        "fieldPm": 800
+        "fieldPm": 850
       },
       {
         "turn": 48,

@@ -959,3 +959,19 @@ test("story order: a week's scene plays after that week's decision, without a tr
   await skipScene(page);
   expect(await week(page)).toBe(17);
 });
+
+test("outing (ADR-0016): she picks the crew, its bond bar shows the sintonía mark", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-salida");
+  const sheet = page.locator("#m-salida-cuadrilla[open]");
+  await expect(sheet).toBeVisible();
+  const rows = sheet.locator("li[data-crew]");
+  expect(await rows.count()).toBeGreaterThan(0);
+  const crew = (await rows.first().getAttribute("data-crew")) ?? "";
+  await page.click(`#m-salida-con-${crew}`);
+  await expect(sheet).toHaveCount(0);
+  await settle(page);
+  expect(await week(page)).toBe(2);
+});

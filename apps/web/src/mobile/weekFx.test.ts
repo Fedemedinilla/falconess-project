@@ -84,3 +84,18 @@ describe("weekFx parts of a race week (owner 2026-11-13)", () => {
     expect(weekFx(step).map((e) => e.kind)).toEqual(["mood-up", "skills"]);
   });
 });
+
+describe("weekFx sintonía (ADR-0016)", () => {
+  it("a crew that reaches bond 80 this week shows «¡SINTONÍA!», once", () => {
+    const before: SeasonState = { ...startSeason(ctx, "fx-sync", start), bond: { koryu: 70 } };
+    const after: SeasonState = { ...before, bond: { koryu: 84 } };
+    const input = { kind: "outing", manufacturer: "koryu" } as RunInput;
+    const fx = weekFx({ before, input, after }, ctx.ruleset);
+    expect(fx.find((e) => e.kind === "sync")?.crews).toEqual(["koryu"]);
+    const again = weekFx(
+      { before: after, input, after: { ...after, bond: { koryu: 94 } } },
+      ctx.ruleset,
+    );
+    expect(again.some((e) => e.kind === "sync")).toBe(false);
+  });
+});

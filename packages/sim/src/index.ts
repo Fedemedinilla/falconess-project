@@ -43,6 +43,7 @@ export {
   simulateRace,
 } from "./race/index.js";
 export {
+  type CrewSyncConstants,
   CURRENT_RULESET,
   type FlightConstants,
   getRuleset,
@@ -76,6 +77,7 @@ export {
 } from "./rulesets/v3/switches.js";
 export { advanceSeason, goalRaceState, InvalidInputError } from "./season/advance.js";
 export { type MoodCause, rngForInput, type SimContext, seasonContext } from "./season/context.js";
+export { crewBonusPm, crewSyncOf, inSync } from "./season/crew-sync.js";
 export { difficultyOf, seasonGoalsOf, statCap } from "./season/difficulty.js";
 export { eligibleEvents } from "./season/events.js";
 export { goalForTurn, inputPosition } from "./season/goals.js";

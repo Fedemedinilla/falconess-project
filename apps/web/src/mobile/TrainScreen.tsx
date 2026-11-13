@@ -44,6 +44,8 @@ export type TrainResult = {
   /** owner 2026-11-13: the vigor it cost (or gave) and the crews it bonded with, with the rest. */
   readonly vigor: number;
   readonly bonds: readonly { readonly manufacturer: string; readonly delta: number }[];
+  /** ADR-0016: the crews in sintonía she trained with (their +25 %). */
+  readonly sync: readonly string[];
 };
 
 /**
@@ -186,6 +188,15 @@ export function TrainScreen({
               {ui(`ui.m.result.${result.outcome}`)}
             </p>
           )}
+          {result && result.sync.length > 0 && result.outcome !== "fail" && (
+            <p
+              className={s.syncStamp}
+              id="m-resultado-sintonia"
+              style={{ animationDelay: `${STAMP_MS + 250}ms` }}
+            >
+              {ui("ui.m.fx.sync")}
+            </p>
+          )}
           {card && (
             <div className={s.ribbon} id="m-cinta">
               <Glyph name={GLYPH[card.kind]} size={26} color="#1d1704" weight={2.4} />
@@ -196,9 +207,14 @@ export function TrainScreen({
             </div>
           )}
           {crew && maker && (
-            <div className={s.crewp} id="m-cuadrilla" data-crew={crew.manufacturer}>
+            <div
+              className={s.crewp}
+              id="m-cuadrilla"
+              data-crew={crew.manufacturer}
+              data-sync={crew.sync}
+            >
               <div
-                className={s.portrait}
+                className={cx(s.portrait, crew.sync && s.portraitSync)}
                 style={{ "--bc": maker.palette.primary, "--bc2": maker.palette.secondary }}
                 aria-hidden="true"
               >
@@ -208,14 +224,34 @@ export function TrainScreen({
                 </span>
               </div>
               <div className={s.nm}>{gameText(maker.crew.textKey)}</div>
+              {crew.sync && (
+                <div className={s.syncTag} id="m-cuadrilla-sintonia">
+                  {ui("ui.m.crew.sync")}
+                </div>
+              )}
               <div
                 className={s.seg}
                 role="img"
-                aria-label={ui("ui.m.crew.bond", { n: crew.bond, max: crew.bondMax })}
+                aria-label={
+                  crew.syncLevel !== undefined && !crew.sync
+                    ? ui("ui.m.crew.bond.toSync", {
+                        n: crew.bond,
+                        max: crew.bondMax,
+                        sync: crew.syncLevel,
+                      })
+                    : ui("ui.m.crew.bond", { n: crew.bond, max: crew.bondMax })
+                }
               >
                 {Array.from({ length: crew.bondMax }, (_, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed segments of a bar
-                  <i key={i} className={i < crew.bond ? s.segOn : undefined} />
+                  <i
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed segments of a bar
+                    key={i}
+                    className={cx(
+                      i < crew.bond && (crew.sync ? s.segSync : s.segOn),
+                      // ADR-0016: the segment that reaches sintonía is marked
+                      crew.syncLevel !== undefined && i === crew.syncLevel - 1 && s.segGoal,
+                    )}
+                  />
                 ))}
               </div>
               {card && card.crews.length > 1 && (
@@ -279,8 +315,10 @@ export function TrainScreen({
                     c.risk === "high" && s.risky,
                     sel && s.sel,
                     c.boosted && s.boost,
+                    c.sync && s.syncBtn,
                   )}
                   aria-pressed={sel}
+                  data-sync={c.sync}
                   data-risk={c.risk}
                   data-fail={c.failPm}
                   aria-label={ui(sel ? "ui.m.train.aria.sel" : "ui.m.train.aria", {
@@ -302,8 +340,13 @@ export function TrainScreen({
                   <Glyph name={GLYPH[c.kind]} size={26} color={sel ? "#ffffff" : "#14202b"} />
                   <span className={s.lv}>{ui("ui.m.train.lv", { n: c.level })}</span>
                   {c.boosted && (
-                    <span className={s.gdot} aria-hidden="true">
-                      <Glyph name="bolt" size={12} color="#1d1704" weight={3} />
+                    <span className={cx(s.gdot, c.sync && s.gdotSync)} aria-hidden="true">
+                      <Glyph
+                        name={c.sync ? "heart" : "bolt"}
+                        size={12}
+                        color={c.sync ? "#ffffff" : "#1d1704"}
+                        weight={3}
+                      />
                     </span>
                   )}
                   {sel && (

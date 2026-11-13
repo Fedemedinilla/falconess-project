@@ -87,5 +87,6 @@ export function getRuleset(version: string): Ruleset {
   return r;
 }
 
+export type { CrewSyncConstants } from "./v1/constants.js";
 export type { FieldConstants, FlightConstants, RaceConstants, SeasonConstants };
 export { moodMult };

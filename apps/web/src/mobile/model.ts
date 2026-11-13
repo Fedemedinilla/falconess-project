@@ -73,6 +73,10 @@ export type CrewBadge = {
   readonly bondMax: number;
   /** Training bonus of this crew, per-mille. */
   readonly bonusPm: number;
+  /** ADR-0016: in sintonía (her bond reached `crewSync.minBond`). */
+  readonly sync: boolean;
+  /** ADR-0016: the bond level where sintonía starts (a mark on the bar); absent before v3. */
+  readonly syncLevel?: number;
 };
 
 export type TrainingCard = {
@@ -90,22 +94,27 @@ export type TrainingCard = {
   readonly crews: readonly CrewBadge[];
   /** At least one crew showed up: the training is boosted. */
   readonly boosted: boolean;
+  /** ADR-0016: a crew in sintonía is there. */
+  readonly sync: boolean;
 };
 
 function crewBadges(
   ctx: SimContext,
   state: SeasonState,
-  crews: readonly { manufacturer: string; bonusPm: number }[],
+  crews: readonly { manufacturer: string; bonusPm: number; sync: boolean }[],
 ): CrewBadge[] {
   const bondMax = Math.floor(100 / ctx.ruleset.season.bondLevelStep);
+  const sync = ctx.ruleset.season.crewSync;
   return crews
     .map((c) => ({
       manufacturer: c.manufacturer,
       bonusPm: c.bonusPm,
+      sync: c.sync,
       bond: Math.min(bondMax, bondLevel(ctx, state.bond[c.manufacturer] ?? 0)),
       bondMax,
+      ...(sync ? { syncLevel: bondLevel(ctx, sync.minBond) } : {}),
     }))
-    .sort((a, b) => b.bond - a.bond || b.bonusPm - a.bonusPm);
+    .sort((a, b) => Number(b.sync) - Number(a.sync) || b.bond - a.bond || b.bonusPm - a.bonusPm);
 }
 
 /** The five trainings of the week with what the sim says each would do. */
@@ -124,6 +133,7 @@ export function trainingCards(ctx: SimContext, state: SeasonState): TrainingCard
       vigor: t.vigor,
       crews,
       boosted: crews.length > 0,
+      sync: crews.some((c) => c.sync),
     };
   });
 }
@@ -196,6 +206,8 @@ export type WeekMenu = {
   readonly injuryTurns: number;
   /** Trainings with a crew this week (the delta button's chips). */
   readonly boosted: readonly TrainingKind[];
+  /** ADR-0016: of those, the ones with a crew in sintonía. */
+  readonly synced: readonly TrainingKind[];
 };
 
 /** Her stats as cells; `cap` is the season's stat cap (`statCap`), none when absent. */
@@ -233,6 +245,9 @@ export function weekMenu(ctx: SimContext, state: SeasonState): WeekMenu {
     injured: actionBlock(ctx, state, "rest") === "injured",
     injuryTurns: state.injuryTurns,
     boosted: boostedTrainings(trainingCards(ctx, state)).map((c) => c.kind),
+    synced: trainingCards(ctx, state)
+      .filter((c) => c.sync)
+      .map((c) => c.kind),
   };
 }
 

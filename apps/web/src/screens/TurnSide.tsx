@@ -145,6 +145,7 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
         durability={durabilityOf(ctx, state, state.equippedFrame)}
         variant="compact"
         explainId="hangar-explicacion"
+        crewSync={ctx.ruleset.season.crewSync}
         tag={<Pill tone="accent">{ui("ui.hangar.equipped")}</Pill>}
       />
       {others.length > 0 && (
@@ -197,10 +198,11 @@ export function HangarPanel({ ctx, state, className }: HangarPanelProps) {
           })}
         </ul>
         <p className={s.bondNote}>
-          {uiAt(crewDetail, "ui.hangar.crews.note", {
+          {uiAt(crewDetail, S.crewSync ? "ui.hangar.crews.note.sync" : "ui.hangar.crews.note", {
             base: formatChance(S.crewPresenceBase),
             per: formatChance(S.crewPresencePerBondLevel),
             step: S.bondLevelStep,
+            min: S.crewSync?.minBond ?? 0,
           })}
         </p>
       </div>

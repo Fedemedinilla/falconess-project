@@ -5,7 +5,7 @@ import type {
   TrainingKind,
   WorkshopOp,
 } from "@falconess/schema";
-import { advanceSeason, difficultyOf, type SimContext, vigor } from "@falconess/sim";
+import { advanceSeason, difficultyOf, inSync, type SimContext, vigor } from "@falconess/sim";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
@@ -35,6 +35,7 @@ import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
 import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
+import { OutingSheet } from "./OutingSheet";
 import { accentStyle, Hud } from "./Parts";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
@@ -118,6 +119,7 @@ export function MobileGame() {
   const [fxDone, setFxDone] = useState<number>();
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [outingOpen, setOutingOpen] = useState(false);
   const run = snap.run;
   const inputs = run?.inputs.length ?? 0;
 
@@ -344,6 +346,9 @@ export function MobileGame() {
         delta: (step.after.bond[m] ?? 0) - (step.before.bond[m] ?? 0),
       }))
       .filter((b) => b.delta > 0),
+    sync: (step.before.crewPresence[kind] ?? []).filter((m) =>
+      inSync(ctx, step.before.bond[m] ?? 0),
+    ),
   });
   /** Apply the week's input (with the race position on a race week); a race opens its view. */
   const commit = (input: WeekActionInput) => {
@@ -422,7 +427,9 @@ export function MobileGame() {
         act({ kind: "rest" });
         return;
       case "outing":
-        act({ kind: "outing" });
+        // ADR-0016: with sintonía the player picks the crew she goes out with
+        if (ctx.ruleset.season.crewSync) setOutingOpen(true);
+        else act({ kind: "outing" });
         return;
       case "workshop":
         setView({ screen: "workshop", tab: "wings" });
@@ -635,6 +642,16 @@ export function MobileGame() {
           onClose={() => setChatOpen(false)}
         />
       )}
+      <OutingSheet
+        ctx={ctx}
+        state={state}
+        open={outingOpen}
+        onPick={(manufacturer) => {
+          setOutingOpen(false);
+          act({ kind: "outing", manufacturer });
+        }}
+        onClose={() => setOutingOpen(false)}
+      />
       <StoryListSheet
         open={storyListOpen}
         scenes={allScenes().filter(

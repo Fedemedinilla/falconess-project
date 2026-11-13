@@ -76,7 +76,14 @@ export function MenuScreen({
   const art = runnerArt(f.id);
   const name = gameText(f.textKey);
   const learnable = learnableSkills(ctx, state).filter((k) => k.cost <= state.skillPoints).length;
-  const chips = menu.boosted.map((kind) => ({ key: kind, label: ui(`ui.m.train.abbr.${kind}`) }));
+  // ADR-0016: the trainings with a crew in sintonía first, in gold
+  const chips = [...menu.boosted]
+    .sort((a, b) => Number(menu.synced.includes(b)) - Number(menu.synced.includes(a)))
+    .map((kind) => ({
+      key: kind,
+      label: ui(`ui.m.train.abbr.${kind}`),
+      sync: menu.synced.includes(kind),
+    }));
   const off = pendingEvent;
   const goal = menu.goal;
   const [trackOpen, setTrackOpen] = useState(false);
