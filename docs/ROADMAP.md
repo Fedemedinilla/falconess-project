@@ -71,6 +71,9 @@ jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build
 - Nombres compuestos para las Falconess (estilo Special Week): generador en preparación en otra
   sesión (`docs/handoff/generador-de-nombres.md`).
 
+**En pausa (dueño, 2026-11-13):** la chatarra salió del juego y los eventos de la temporada están en
+pausa en la v3, para reformularlos (`docs/design/eventos-en-pausa.md`).
+
 **Decisiones abiertas:** el taller cuesta una semana (T4 decía que no); las carreras opcionales (T3)
 no están en el juego; el Sprint, la Escalera y el Circuito piden las mismas letras; la baranda de
 Exigente (E1) se mide a mano y no entra en `pnpm balance:barandas`.

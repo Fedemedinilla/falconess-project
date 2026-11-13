@@ -4,9 +4,9 @@
   "source": {
     "kind": "random"
   },
-  "rulesets": ["v2", "v3"],
   "auto": true,
   "weight": 3,
+  "rulesets": ["v2"],
   "textKey": "ev.luck-fan-letter",
   "options": [
     {

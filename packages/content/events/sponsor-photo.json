@@ -5,6 +5,7 @@
     "kind": "random"
   },
   "weight": 5,
+  "rulesets": ["v1", "v2"],
   "textKey": "ev.sponsor-photo",
   "options": [
     {

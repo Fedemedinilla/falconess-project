@@ -188,6 +188,8 @@ test("an unread week opens again after a reload; once read, it does not", async 
 test("a luck event the week brought by itself: its text, what it did, good or bad news", async ({
   page,
 }) => {
+  // owner 2026-11-13: every event is paused in v3 (new seasons) until they are reworked
+  test.skip(true, "events paused in v3 (owner 2026-11-13)");
   // v2's luck events apply on their own (no dialog): «Lo que pasó» is where the player reads them
   await startSeason(page, "peregrina", "pt-e2e-suerte");
   const block = page.locator("#semana-dialogo[open] #semana-evento");

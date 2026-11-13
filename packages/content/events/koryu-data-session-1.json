@@ -7,6 +7,7 @@
     "minBond": 20
   },
   "weight": 10,
+  "rulesets": ["v1", "v2"],
   "textKey": "ev.koryu-data-session-1",
   "options": [
     {

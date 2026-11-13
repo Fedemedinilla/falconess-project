@@ -363,3 +363,23 @@ describe("ADR-0015: Milana and the field of specialists in Peregrina's Larga", (
         expect([g.namedRival, g.field]).toEqual([undefined, undefined]);
   });
 });
+
+describe("no scrap in v3 (owner 2026-11-13)", () => {
+  const ctx: SimContext = { ruleset: RULESET_V3, content: loadSeasonContent("v3") };
+  it("a whole season ends with no scrap, races included", () => {
+    let s = startSeason(ctx, "no-scrap", START("peregrina"));
+    while (s.status === "active") s = advanceSeason(ctx, s, step(s));
+    expect(s.raceResults.length).toBeGreaterThan(0);
+    expect(s.wallet.scrap).toBe(0);
+  });
+  it("no event that pays or costs scrap exists in v3", () => {
+    for (const e of ctx.content.events.values()) {
+      if (e.rulesets !== undefined && !e.rulesets.includes("v3")) continue;
+      const touches = e.options.some(
+        (o) => o.effects.scrap !== 0 || (o.chance ?? []).some((b) => b.effects.scrap !== 0),
+      );
+      // the handwritten story events wait for the owner's approval to be paused
+      if (!e.handwritten) expect(touches, e.id).toBe(false);
+    }
+  });
+});

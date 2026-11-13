@@ -67,7 +67,9 @@ export function runGoalRace(
   // not the frame's and the season keeps the frame's own
   if (flightOf(ctx.ruleset)?.noWear !== true)
     d.frameDurability[d.equippedFrame] = Math.floor(me.durabilityEnd / 1000);
-  d.wallet.scrap += ctx.ruleset.season.scrapByPlace[place - 1] ?? 10;
+  // owner 2026-11-13: v3 has no scrap (nothing in its season spends it)
+  if (flightOf(ctx.ruleset) === null)
+    d.wallet.scrap += ctx.ruleset.season.scrapByPlace[place - 1] ?? 10;
   d.skillPoints += ctx.ruleset.season.skillPointsByPlace?.[place - 1] ?? 0;
   note(d, "log.race");
 

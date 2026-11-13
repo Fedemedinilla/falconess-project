@@ -5,9 +5,9 @@
     "kind": "falconess",
     "falconess": "peregrina"
   },
-  "rulesets": ["v2", "v3"],
   "auto": true,
   "weight": 16,
+  "rulesets": ["v2"],
   "textKey": "ev.luck-peregrina-thermal",
   "options": [
     {

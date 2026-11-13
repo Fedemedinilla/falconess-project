@@ -20,7 +20,8 @@ import {
  * the clicks took to .work/ui/timing/.
  */
 
-const SEED = "pt-e2e-1";
+/** A seed per Falconess whose first goal the e2e policy passes (Peregrina's T10 asks for a win). */
+const SEEDS = { peregrina: "pt-e2e-4", caracara: "pt-e2e-1", cernicala: "pt-e2e-1" } as const;
 const FALCONESS = ["peregrina", "caracara", "cernicala"] as const;
 /** Each one's first goal race: Peregrina's is T10 (ADR-0014), the others' T12. */
 const FIRST = { peregrina: 10, caracara: 12, cernicala: 12 } as const;
@@ -31,7 +32,7 @@ for (const falconessId of FALCONESS) {
     page,
   }) => {
     test.setTimeout(240_000);
-    await startSeason(page, falconessId, SEED);
+    await startSeason(page, falconessId, SEEDS[falconessId]);
     const first = FIRST[falconessId];
 
     // weeks 1–11, then week 12's action, which runs the T12 race
@@ -134,7 +135,7 @@ for (const falconessId of FALCONESS) {
     const seasonMs = toRaceMs + toEndMs;
     const timing = {
       falconessId,
-      seed: SEED,
+      seed: SEEDS[falconessId],
       ended: completed > 0 ? "completed" : "goal-failed",
       inputs: end.inputs,
       decisions,

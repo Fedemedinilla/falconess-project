@@ -140,13 +140,13 @@ describe("MVP content", () => {
       return "other";
     };
 
-    it("are 12-16, only in v2 (and v3, which keeps v2's season), one option, and good or bad within the owner's ranges", () => {
+    it("are 12-16, only in v2 (paused in v3 by the owner, 2026-11-13), one option, and good or bad within the owner's ranges", () => {
       expect(luck.length).toBeGreaterThanOrEqual(12);
       expect(luck.length).toBeLessThanOrEqual(16);
       let good = 0;
       let bad = 0;
       for (const e of luck) {
-        expect(e.rulesets, e.id).toEqual(["v2", "v3"]);
+        expect(e.rulesets, e.id).toEqual(["v2"]);
         expect(e.weight, e.id).not.toBeNull();
         expect(e.options, e.id).toHaveLength(1);
         const opt = e.options[0];
