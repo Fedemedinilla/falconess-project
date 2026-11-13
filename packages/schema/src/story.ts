@@ -43,11 +43,14 @@ export const StoryTrigger = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("turn"), turn: z.number().int().min(1).max(48) }),
   /** The menu of the goal's race week, before the race. */
   z.strictObject({ kind: z.literal("goal-before"), goal: z.number().int().min(0).max(9) }),
-  /** Back on the menu after the goal race: `win` (first), `pass` (any passing place). */
+  /**
+   * Back on the menu after the goal race: `win` (first), `pass` (any passing place), `placed`
+   * (passed without winning: a «run» goal such as Peregrina's Larga, ADR-0014).
+   */
   z.strictObject({
     kind: z.literal("goal-after"),
     goal: z.number().int().min(0).max(9),
-    result: z.enum(["win", "pass"]),
+    result: z.enum(["win", "pass", "placed"]),
   }),
   /** The season's end screen: every goal passed, or one failed. */
   z.strictObject({ kind: z.literal("end"), result: z.enum(["completed", "goal-failed"]) }),

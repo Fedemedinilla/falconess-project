@@ -1,0 +1,65 @@
+{
+  "id": "peregrina-long-lost",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "cine",
+  "background": "finish",
+  "titleKey": "story.peregrina-long-lost.title",
+  "kickerKey": "story.peregrina-long-lost.kicker",
+  "trigger": {
+    "kind": "goal-after",
+    "goal": 4,
+    "result": "placed"
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-long-lost.1"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-long-lost.2"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-long-lost.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-long-lost.4",
+      "expression": "blank"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-long-lost.5"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-long-lost.6",
+      "expression": "blank"
+    },
+    {
+      "speaker": "milana",
+      "textKey": "story.peregrina-long-lost.7",
+      "expression": "calm"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-long-lost.8"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-long-lost.9",
+      "expression": "blank",
+      "key": true
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-long-lost.10"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-long-lost.11"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "id": "peregrina-tiresome",
+  "version": 1,
+  "falconess": "peregrina",
+  "style": "box",
+  "background": "track",
+  "titleKey": "story.peregrina-tiresome.title",
+  "kickerKey": "story.peregrina-tiresome.kicker",
+  "trigger": {
+    "kind": "turn",
+    "turn": 44
+  },
+  "lines": [
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-tiresome.1"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-tiresome.2",
+      "expression": "tired"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-tiresome.3"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-tiresome.4",
+      "expression": "calm"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-tiresome.5"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-tiresome.6",
+      "expression": "calm"
+    },
+    {
+      "speaker": "narrator",
+      "textKey": "story.peregrina-tiresome.7"
+    },
+    {
+      "speaker": "milana",
+      "textKey": "story.peregrina-tiresome.8",
+      "expression": "bored"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-tiresome.9",
+      "expression": "surprised"
+    },
+    {
+      "speaker": "milana",
+      "textKey": "story.peregrina-tiresome.10",
+      "expression": "calm"
+    },
+    {
+      "speaker": "trainer",
+      "textKey": "story.peregrina-tiresome.11"
+    },
+    {
+      "speaker": "peregrina",
+      "textKey": "story.peregrina-tiresome.12",
+      "expression": "annoyed"
+    }
+  ]
+}

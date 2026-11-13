@@ -25,7 +25,8 @@ export function triggerHolds(ctx: SimContext, state: SeasonState, t: StoryTrigge
     case "goal-after": {
       const g = goalStatuses(ctx, state)[t.goal];
       if (!g?.result || g.met !== true) return false;
-      return t.result === "win" ? g.result.place === 1 : true;
+      if (t.result === "win") return g.result.place === 1;
+      return t.result === "placed" ? g.result.place !== 1 : true;
     }
     case "end":
       return state.status === "ended" && state.endReason === t.result;

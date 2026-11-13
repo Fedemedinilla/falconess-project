@@ -1,6 +1,6 @@
 {
   "id": "peregrina-nap",
-  "version": 2,
+  "version": 3,
   "falconess": "peregrina",
   "style": "box",
   "background": "finish",
@@ -25,7 +25,7 @@
       "textKey": "story.peregrina-nap.3"
     },
     {
-      "speaker": "milana",
+      "speaker": "dormida",
       "textKey": "story.peregrina-nap.4"
     },
     {
