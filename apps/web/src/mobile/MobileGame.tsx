@@ -346,6 +346,7 @@ export function MobileGame() {
         delta: (step.after.bond[m] ?? 0) - (step.before.bond[m] ?? 0),
       }))
       .filter((b) => b.delta > 0),
+    crews: step.before.crewPresence[kind] ?? [],
     sync: (step.before.crewPresence[kind] ?? []).filter((m) =>
       inSync(ctx, step.before.bond[m] ?? 0),
     ),

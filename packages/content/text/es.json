@@ -1879,5 +1879,6 @@
   "ui.frame.crew.text.sync": "{crew}: aparece en uno de sus entrenamientos ({stats}) y la ganancia sube {bonus}; con vínculo {min} o más entra en sintonía y sube {sync}.",
   "ui.frame.crew.text.sync.brief": "Ayuda a entrenar {stats}; en sintonía, mucho más",
   "ui.hangar.crews.note.sync": "Cada cuadrilla viene con {base} de probabilidad, más {per} por nivel de vínculo (un nivel cada {step}), y se para en uno de sus entrenamientos. Con vínculo {min} o más entra en sintonía: su entrenamiento rinde mucho más.",
-  "ui.hangar.crews.note.sync.brief": "Vienen el {base} de las semanas; con vínculo {min}, sintonía."
+  "ui.hangar.crews.note.sync.brief": "Vienen el {base} de las semanas; con vínculo {min}, sintonía.",
+  "ui.m.crew.bondUp": "+{n} vínculo"
 }

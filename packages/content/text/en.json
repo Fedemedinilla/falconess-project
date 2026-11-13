@@ -1879,5 +1879,6 @@
   "ui.frame.crew.text.sync": "{crew}: shows up at one of its trainings ({stats}) and the gain goes up {bonus}; at bond {min} or more it is in sync and goes up {sync}.",
   "ui.frame.crew.text.sync.brief": "Helps train {stats}; much more in sync",
   "ui.hangar.crews.note.sync": "Each crew comes with {base} chance, plus {per} per bond level (one level every {step}), and stands at one of its trainings. At bond {min} or more it is in sync: its training pays much more.",
-  "ui.hangar.crews.note.sync.brief": "They come {base} of the weeks; at bond {min}, in sync."
+  "ui.hangar.crews.note.sync.brief": "They come {base} of the weeks; at bond {min}, in sync.",
+  "ui.m.crew.bondUp": "+{n} bond"
 }

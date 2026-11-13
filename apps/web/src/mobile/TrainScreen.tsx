@@ -6,10 +6,11 @@ import { cx } from "../ui/cx";
 import { type RunnerArt, runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
-import { crewInitials, statCells, type TrainingCard } from "./model";
+import { type CrewBadge, crewInitials, statCells, type TrainingCard } from "./model";
 import { Pop, StatStrip } from "./Parts";
 import { placeScene } from "./sceneLayout";
 import { playPing } from "./sfx";
+import { crewsVariant, resultVariant } from "./uiVariant";
 
 const GLYPH: Readonly<Record<TrainingKind, GlyphName>> = {
   "train:agility": "wind",
@@ -46,6 +47,8 @@ export type TrainResult = {
   readonly bonds: readonly { readonly manufacturer: string; readonly delta: number }[];
   /** ADR-0016: the crews in sintonía she trained with (their +25 %). */
   readonly sync: readonly string[];
+  /** Every crew that stood at this training (mockup 5: they come in with their bond). */
+  readonly crews: readonly string[];
 };
 
 /**
@@ -106,6 +109,8 @@ export function TrainScreen({
   onResultDone?: () => void;
 }) {
   const art = runnerArt(state.falconessId);
+  const [crewsUi] = useState(crewsVariant);
+  const [resultUi] = useState(resultVariant);
   // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
   const timeline = result ? resultTimeline(result) : undefined;
   const pops = result &&
@@ -158,7 +163,7 @@ export function TrainScreen({
   }, [selected]);
 
   return (
-    <div className={s.screen}>
+    <div className={cx(s.screen, result && resultUi >= 4 && s.resultLow)}>
       <TrainingBackdrop art={art} active={active} dir={dir} stage={stageRef} />
       <div className={s.body}>
         <div className={s.stage} ref={stageRef}>
@@ -206,7 +211,18 @@ export function TrainScreen({
               </div>
             </div>
           )}
-          {crew && maker && (
+          {card && crewsUi !== 0 && crewsUi !== 3 && card.crews.length > 0 && (
+            <div className={s.crewCol} id="m-cuadrillas">
+              {card.crews.map((c) => (
+                <div key={c.manufacturer} className={s.crewColRow} data-crew={c.manufacturer}>
+                  <CrewFace ctx={ctx} id={c.manufacturer} sync={c.sync} size={46} />
+                  <BondSeg badge={c} />
+                  {c.sync && <div className={s.syncTag}>{ui("ui.m.crew.sync")}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+          {crewsUi === 0 && crew && maker && (
             <div
               className={s.crewp}
               id="m-cuadrilla"
@@ -259,7 +275,32 @@ export function TrainScreen({
               )}
             </div>
           )}
-          {result && timeline && result.bonds.length > 0 && (
+          {result && resultUi === 5 && result.crews.length > 0 && (
+            <div className={s.crewIn} id="m-resultado-cuadrillas">
+              {result.crews.map((m, k) => {
+                const bond = result.bonds.find((b) => b.manufacturer === m);
+                const sync = result.sync.includes(m);
+                return (
+                  <div
+                    key={m}
+                    className={cx(s.crewInCard, sync && s.crewInSync)}
+                    style={{ animationDelay: `${STAMP_MS + 380 + k * 160}ms` }}
+                    data-crew={m}
+                  >
+                    <CrewFace ctx={ctx} id={m} sync={sync} size={58} />
+                    <b>{gameText(ctx.content.getManufacturer(m).crew.textKey)}</b>
+                    {bond ? (
+                      <span className={s.crewInBond}>
+                        {ui("ui.m.crew.bondUp", { n: bond.delta })}
+                      </span>
+                    ) : null}
+                    {sync && <span className={s.syncTag}>{ui("ui.m.crew.sync")}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {result && resultUi !== 5 && timeline && result.bonds.length > 0 && (
             <div className={s.bondPops} id="m-resultado-vinculo">
               {result.bonds.map((b) => {
                 const m = ctx.content.getManufacturer(b.manufacturer);
@@ -285,6 +326,23 @@ export function TrainScreen({
             </p>
           )}
         </div>
+        {card && crewsUi === 3 && card.crews.length > 0 && (
+          <div className={s.crewStrip} id="m-cuadrillas">
+            {card.crews.map((c) => (
+              <div
+                key={c.manufacturer}
+                className={cx(s.crewChip, c.sync && s.crewChipSync)}
+                data-crew={c.manufacturer}
+              >
+                <CrewFace ctx={ctx} id={c.manufacturer} sync={c.sync} size={34} />
+                <span>
+                  <b>{gameText(ctx.content.getManufacturer(c.manufacturer).crew.textKey)}</b>
+                  <BondSeg badge={c} />
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         <StatStrip
           stats={statCells(state, statCap(ctx.ruleset, state))}
           skillPoints={state.skillPoints}
@@ -339,7 +397,20 @@ export function TrainScreen({
                 >
                   <Glyph name={GLYPH[c.kind]} size={26} color={sel ? "#ffffff" : "#14202b"} />
                   <span className={s.lv}>{ui("ui.m.train.lv", { n: c.level })}</span>
-                  {c.boosted && (
+                  {crewsUi === 2 && c.crews.length > 0 && (
+                    <span className={s.btnCrews} aria-hidden="true">
+                      {c.crews.slice(0, 3).map((k) => (
+                        <CrewFace
+                          key={k.manufacturer}
+                          ctx={ctx}
+                          id={k.manufacturer}
+                          sync={k.sync}
+                          size={24}
+                        />
+                      ))}
+                    </span>
+                  )}
+                  {crewsUi !== 2 && c.boosted && (
                     <span className={cx(s.gdot, c.sync && s.gdotSync)} aria-hidden="true">
                       <Glyph
                         name={c.sync ? "heart" : "bolt"}
@@ -469,5 +540,57 @@ function TrainingBackdrop({
       })}
       <div className={s.veil} />
     </div>
+  );
+}
+
+/** A crew's portrait at any size (its maker's colors and initials), gold in sintonía. */
+function CrewFace({
+  ctx,
+  id,
+  sync,
+  size,
+}: {
+  ctx: SimContext;
+  id: string;
+  sync: boolean;
+  size: number;
+}) {
+  const m = ctx.content.getManufacturer(id);
+  return (
+    <span
+      className={cx(s.face, sync && s.portraitSync)}
+      style={
+        {
+          "--bc": m.palette.primary,
+          "--bc2": m.palette.secondary,
+          "--fs": `${size}px`,
+        } as React.CSSProperties
+      }
+      aria-hidden="true"
+    >
+      {crewInitials(gameText(m.textKey))}
+    </span>
+  );
+}
+
+/** A crew's bond bar: one segment per level, gold in sintonía, the sintonía level marked. */
+function BondSeg({ badge }: { badge: CrewBadge }) {
+  return (
+    <span
+      className={s.seg}
+      role="img"
+      aria-label={ui("ui.m.crew.bond", { n: badge.bond, max: badge.bondMax })}
+    >
+      {Array.from({ length: badge.bondMax }, (_, i) => (
+        <i
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed segments of a bar
+          key={i}
+          className={cx(
+            i < badge.bond && (badge.sync ? s.segSync : s.segOn),
+            badge.syncLevel !== undefined && i === badge.syncLevel - 1 && s.segGoal,
+          )}
+        />
+      ))}
+    </span>
   );
 }

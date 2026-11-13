@@ -2686,3 +2686,166 @@
   filter: drop-shadow(0 2px 0 #fff) drop-shadow(0 4px 8px rgb(90 15 32 / 0.45));
   animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
+
+/* ---- mockups of the training screen (owner 2026-11-13, `uiVariant.ts`) ---- */
+.face {
+  flex: none;
+  width: var(--fs);
+  height: var(--fs);
+  border-radius: 50%;
+  background: var(--white);
+  border: calc(var(--fs) / 14) solid var(--bc);
+  box-shadow:
+    0 0 0 1.5px #f1c40f,
+    0 0 0 2.5px rgb(20 32 43 / 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: calc(var(--fs) * 0.36);
+  line-height: 1;
+  color: #14202b;
+}
+/* 1 (and the detail of 2): every crew of the chosen training, a column at the top right */
+.crewCol {
+  position: absolute;
+  right: 2px;
+  top: 6px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.crewColRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 6px 6px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow: 0 2px 8px rgb(20 32 43 / 0.18);
+}
+.crewColRow .syncTag {
+  margin-top: 0;
+  font-size: 10px;
+}
+/* 2: the crews' faces on each training button */
+.btnCrews {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  display: flex;
+  flex-direction: row-reverse;
+}
+.btnCrews > span + span {
+  margin-right: -9px;
+}
+/* 3: a strip of crews over the stats */
+.crewStrip {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 2px 6px;
+  scrollbar-width: none;
+}
+.crewChip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 4px;
+  border-radius: 22px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 2px 8px rgb(20 32 43 / 0.18);
+}
+.crewChip > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.crewChip b {
+  font-size: 12px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+.crewChip .seg {
+  margin-top: 0;
+  justify-content: flex-start;
+}
+.crewChipSync {
+  background: linear-gradient(180deg, #fff8cf, #ffd36b);
+  box-shadow:
+    0 0 0 2px #ff9a00,
+    0 0 12px 2px rgb(255 170 0 / 0.6);
+}
+/* 4 and 5: the result plays with the stats at the bottom, the stage takes the rest */
+.resultLow .rounds,
+.resultLow .foot {
+  display: none;
+}
+.resultLow .strip {
+  animation: stripDown 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes stripDown {
+  from {
+    transform: translateY(-150px);
+  }
+}
+.resultLow .stamp {
+  bottom: 58%;
+}
+.resultLow .syncStamp {
+  bottom: calc(58% - 46px);
+  font-size: min(34px, 8vw);
+  white-space: nowrap;
+}
+/* 5: the crews that trained with her come in, with their bond */
+.crewIn {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 9%;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.crewInCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 104px;
+  padding: 8px 6px 9px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 4px 14px rgb(20 32 43 / 0.25);
+  animation: crewIn 0.45s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+.crewInCard b {
+  font-size: 12px;
+  line-height: 14px;
+  text-align: center;
+}
+.crewInSync {
+  background: linear-gradient(180deg, #fff8cf, #ffd36b);
+  box-shadow:
+    0 0 0 2.5px #ff9a00,
+    0 0 18px 4px rgb(255 170 0 / 0.7);
+}
+.crewInBond {
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 18px;
+  color: #b34f00;
+}
+@keyframes crewIn {
+  from {
+    opacity: 0;
+    transform: translateX(80px) scale(0.85);
+  }
+}
