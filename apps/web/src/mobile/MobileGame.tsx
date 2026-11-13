@@ -102,7 +102,7 @@ function previewKind(view: View): ActionKind | undefined {
  * (training, workshop, pre-race card, flight race and its result as screens; the week's effects and
  * the event dialog over the menu), the season's end once it ends. Three modes (owner 2026-11-13):
  * training (its screen and result), the menu (the week's decision; a story scene due after it plays
- * once the decision's effects end, after the emblem transition), and the race (the transition, the
+ * once the decision's effects end), and the race (the emblem transition, only here, then the
  * scene before the race, the position, the race, the scene after it, its result; then the menu).
  */
 export function MobileGame() {
@@ -262,33 +262,26 @@ export function MobileGame() {
       !storyListOpen;
     return idle ? dueIn(where) : undefined;
   };
-  const storyLayer = (sc: StoryScene | undefined, covered = true) => (
+  const storyLayer = (sc: StoryScene | undefined) => (
     <>
       {sc && (
-        <CoveredScene
+        <StoryOverlay
           key={`${sc.id}/${replay ? "again" : "first"}`}
-          // a replay from «Historia» and the race mode's own transition need no other
-          cover={covered && !replay}
+          scene={sc}
           primary={colors.primary}
           secondary={colors.secondary}
-        >
-          <StoryOverlay
-            scene={sc}
-            primary={colors.primary}
-            secondary={colors.secondary}
-            onDone={(skipped) => {
-              if (!replay) markSeen(run.seed, sc.id);
-              setReplay(undefined);
-              setStoryTick((n) => n + 1);
-              setStoryToast({
-                n: Date.now(),
-                kicker: gameText(sc.kickerKey),
-                title: gameText(sc.titleKey),
-                skipped,
-              });
-            }}
-          />
-        </CoveredScene>
+          onDone={(skipped) => {
+            if (!replay) markSeen(run.seed, sc.id);
+            setReplay(undefined);
+            setStoryTick((n) => n + 1);
+            setStoryToast({
+              n: Date.now(),
+              kicker: gameText(sc.kickerKey),
+              title: gameText(sc.titleKey),
+              skipped,
+            });
+          }}
+        />
       )}
       {storyToast && (
         <div key={storyToast.n} className={st.toast} id="m-capitulo-aviso" role="status">
@@ -596,7 +589,7 @@ export function MobileGame() {
           }}
         />
       )}
-      {storyLayer(storyScene(mode), mode !== "prerace")}
+      {storyLayer(storyScene(mode))}
       {!showScene && unreadNoFx(fxStep) && <Acknowledge onMount={() => game.acknowledgeStep()} />}
       {onMenuScreen && !showScene && !showFx && pending && <EventDialog />}
       {chatOpen && (
@@ -670,30 +663,6 @@ export function MobileGame() {
 
 /** Where a story scene can play (owner 2026-11-13). */
 type SceneMode = "menu" | "prerace" | "race";
-
-/**
- * A story scene after the emblem transition (owner 2026-11-13): the scene shows once the
- * transition ended, never under it. Reduced motion (or a transition already played) shows it now.
- */
-function CoveredScene({
-  cover,
-  primary,
-  secondary,
-  children,
-}: {
-  cover: boolean;
-  primary: string;
-  secondary: string;
-  children: React.ReactNode;
-}) {
-  const [covering, setCovering] = useState(() => cover && !reducedMotion());
-  const uncover = useCallback(() => setCovering(false), []);
-  return covering ? (
-    <ScreenTransition primary={primary} secondary={secondary} onDone={uncover} />
-  ) : (
-    children
-  );
-}
 
 /** Marks the week's step read once mounted (a week whose decision left no effects to play). */
 function Acknowledge({ onMount }: { onMount: () => void }) {

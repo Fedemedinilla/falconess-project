@@ -132,13 +132,14 @@ El jugador habla seguido en las escenas: no es un testigo mudo.
 
 1. **Entrenamiento:** la pantalla donde se elige qué entrenar y su resultado.
 2. **Menú de la temporada:** la decisión de la semana. Después de la decisión (y de sus efectos),
-   la transición del emblema y la escena de la semana, si la hay; después, el menú de la semana
-   siguiente. No hay ventana «Lo que pasó».
+   la escena de la semana, si la hay; después, el menú de la semana siguiente. No hay ventana «Lo
+   que pasó».
 3. **Carrera:** la transición del emblema, la escena antes de la carrera, la elección de la
    posición, la carrera, la escena después de la carrera, el resultado (puesto, meta, tiempo,
    consejo) y de vuelta al menú.
 
-Toda escena sale después de una transición, nunca antes ni debajo.
+La transición del emblema va solo del fin de la semana al modo carrera; la escena de antes de la
+carrera sale cuando termina, nunca debajo.
 
 Una escena por disparador y Falconess (lo exige el test). Si dos escenas caen en la misma semana,
 sale una por vez.

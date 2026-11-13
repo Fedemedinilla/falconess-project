@@ -40,7 +40,7 @@ async function pastTitle(page: Page): Promise<void> {
   await expect(page.locator("#m-titulo")).toHaveCount(0);
 }
 
-/** Peregrina's prologue: after its transition, skipped. */
+/** Peregrina's prologue: once it shows, skipped. */
 async function skipPrologue(page: Page): Promise<void> {
   await expect(page.locator("#m-capitulo")).toBeVisible();
   await skipScene(page);
@@ -100,7 +100,7 @@ async function settle(page: Page): Promise<void> {
     if ((await page.locator("#m-fin").count()) > 0) return;
     const menu = page.locator("#m-entrenar");
     if ((await menu.count()) > 0 && (await menu.isEnabled())) {
-      // a scene comes after the effects and its transition: give it a moment
+      // a scene comes right after the effects: give it a moment
       await page.waitForTimeout(150);
       if (!(await busy())) return;
       continue;
@@ -903,7 +903,7 @@ test("the week's effects: a rest shows how she slept, and no dialog after them",
   expect(await week(page)).toBe(2);
 });
 
-test("story order: a week's scene plays after that week's decision and its transition", async ({
+test("story order: a week's scene plays after that week's decision, without a transition", async ({
   page,
 }) => {
   test.setTimeout(180_000);
@@ -927,14 +927,12 @@ test("story order: a week's scene plays after that week's decision and its trans
   // the week starts without it (owner 2026-11-13)
   await page.waitForTimeout(1500);
   await expect(page.locator("#m-capitulo")).toHaveCount(0);
-  // the decision, its effects, the transition, then the scene
+  // the decision, its effects, then the scene: no transition outside the race mode
   await page.click("#m-descansar");
-  await page.click("#m-efectos");
-  await expect(page.locator("#m-transicion")).toBeVisible();
   await expect(page.locator("#m-capitulo")).toHaveCount(0);
-  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tears", {
-    timeout: 4000,
-  });
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tears");
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
   await skipScene(page);
   expect(await week(page)).toBe(17);
 });
