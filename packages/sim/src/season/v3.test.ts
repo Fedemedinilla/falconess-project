@@ -372,14 +372,17 @@ describe("no scrap in v3 (owner 2026-11-13)", () => {
     expect(s.raceResults.length).toBeGreaterThan(0);
     expect(s.wallet.scrap).toBe(0);
   });
-  it("no event that pays or costs scrap exists in v3", () => {
+  it("no event exists in v3 (all paused, owner 2026-11-13), so none pays or costs scrap", () => {
+    const inV3 = [...ctx.content.events.values()].filter(
+      (e) => e.rulesets === undefined || e.rulesets.includes("v3"),
+    );
+    expect(inV3.map((e) => e.id)).toEqual([]);
     for (const e of ctx.content.events.values()) {
       if (e.rulesets !== undefined && !e.rulesets.includes("v3")) continue;
       const touches = e.options.some(
         (o) => o.effects.scrap !== 0 || (o.chance ?? []).some((b) => b.effects.scrap !== 0),
       );
-      // the handwritten story events wait for the owner's approval to be paused
-      if (!e.handwritten) expect(touches, e.id).toBe(false);
+      expect(touches, e.id).toBe(false);
     }
   });
 });

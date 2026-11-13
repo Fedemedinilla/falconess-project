@@ -28,5 +28,6 @@
     }
   ],
   "fixedTurn": 3,
-  "handwritten": true
+  "handwritten": true,
+  "rulesets": ["v1", "v2"]
 }

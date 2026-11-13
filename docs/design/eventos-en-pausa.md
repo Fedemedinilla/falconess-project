@@ -19,7 +19,7 @@ Ningún evento sale en la v3 (cada archivo lleva `rulesets` sin `v3`).
 
 - `boneyard-botch-1` (cuadrilla Boneyard)
 - `sponsor-photo` (al azar)
-- `caracara-scrap-run` (historia de Caracara, escrito a mano: **espera la aprobación del dueño**)
+- `caracara-scrap-run` (historia de Caracara, escrito a mano; quitado con la aprobación del dueño)
 
 **En pausa** (para reformular):
 
@@ -32,7 +32,7 @@ Ningún evento sale en la v3 (cada archivo lleva `rulesets` sin `v3`).
   `luck-stormy-night`, `luck-tailwind`, `luck-veteran-visit`, `luck-caracara-finger`,
   `luck-caracara-hammock`, `luck-cernicala-feather`, `luck-cernicala-notebook`,
   `luck-peregrina-late-replay`, `luck-peregrina-thermal`.
-- De historia, escritos a mano (**esperan la aprobación del dueño** para tocar sus archivos):
+- De historia, escritos a mano (pausados con la aprobación del dueño, sin tocar su texto):
   `caracara-ground-truth`, `cernicala-chart`, `cernicala-stillness`, `peregrina-first-dive`,
   `peregrina-speed-doubt`.
 
@@ -43,8 +43,10 @@ temporada es más fácil:
 
 | Falconess | Completa (antes → ahora) | B o mejor (antes → ahora) |
 | --------- | ------------------------ | ------------------------- |
-| Caracara  | 63 % → 75 %              | 63 % → 74 %               |
-| Cernícala | 68 % → 77 %              | 68 % → 77 %               |
-| Peregrina | 72 % → 84 %              | 72 % → 84 %               |
+| Caracara  | 63 % → 74 %              | 63 % → 74 %               |
+| Cernícala | 68 % → 76 %              | 68 % → 76 %               |
+| Peregrina | 72 % → 82 %              | 72 % → 82 %               |
+
+Barandas: PASA (B8 sin mover un byte de v1/v2; B4 frágil, brecha 10,7 / 9,4).
 
 Al volver los eventos reformulados, medir de nuevo con el lote y las barandas.

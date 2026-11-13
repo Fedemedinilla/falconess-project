@@ -129,6 +129,8 @@ test("a failed training says so in red, with the mood it cost and why; the focus
 test("the week's result first, then its event; Esc and a click outside close them", async ({
   page,
 }) => {
+  // owner 2026-11-13: every event is paused in v3 (new seasons) until they are reworked
+  test.skip(true, "events paused in v3 (owner 2026-11-13)");
   await startSeason(page, "peregrina", "pt-e2e-semana-1");
   // train until a week leaves an event waiting (rest when vigor runs low)
   const week = page.locator(`${DIALOG}[open]`);

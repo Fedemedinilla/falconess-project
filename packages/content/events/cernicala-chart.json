@@ -29,5 +29,6 @@
   "conditions": {
     "turnRange": [10, 40]
   },
-  "handwritten": true
+  "handwritten": true,
+  "rulesets": ["v1", "v2"]
 }
