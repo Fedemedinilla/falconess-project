@@ -2881,16 +2881,25 @@
   left: 26px;
   right: 0;
   bottom: 6px;
-  transform: translateX(calc(-100% - 60px));
+  /* owner 2026-11-14: a short, soft fade-and-grow out of the tab instead of a long slide */
+  transform-origin: left center;
+  transform: translateX(-10px) scale(0.96);
   opacity: 0;
+  visibility: hidden;
   transition:
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.2s ease;
+    opacity 0.18s ease,
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 0.22s;
   pointer-events: none;
 }
 .drawerCardOn {
   transform: none;
   opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.2s ease,
+    transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s;
   pointer-events: auto;
 }
 @media (prefers-reduced-motion: reduce) {
