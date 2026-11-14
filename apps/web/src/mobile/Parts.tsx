@@ -97,7 +97,7 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
             <br />
             {ui("ui.m.meters", { m: Math.round(d.lengthMm / 1000) })}
           </span>
-          <Letter letter={d.letter} />
+          <Letter letter={d.letter} className={s.goalL} />
         </span>
       )}
     </div>

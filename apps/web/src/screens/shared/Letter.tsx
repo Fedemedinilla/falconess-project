@@ -14,6 +14,6 @@ const TONE: Readonly<Record<Aptitude, string | undefined>> = {
 };
 
 /** An aptitude letter (S … G) in a square, tinted from strong to weak. */
-export function Letter({ letter }: { letter: Aptitude }) {
-  return <span className={cx(s.letter, TONE[letter])}>{letter}</span>;
+export function Letter({ letter, className }: { letter: Aptitude; className?: string | undefined }) {
+  return <span className={cx(s.letter, TONE[letter], className)}>{letter}</span>;
 }

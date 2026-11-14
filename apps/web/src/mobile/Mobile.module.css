@@ -215,6 +215,10 @@
   align-items: center;
   gap: 4px;
 }
+/* the distance letter inside the rounded goal pill: rounded too (owner 2026-11-14) */
+.goalL {
+  border-radius: 7px;
+}
 .goalDk {
   font-size: 11px;
   font-weight: 600;
