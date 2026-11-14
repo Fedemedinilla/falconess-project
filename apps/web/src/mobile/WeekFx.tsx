@@ -6,6 +6,7 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { Glyph, type GlyphName } from "./Glyph";
 import { crewInitials } from "./model";
+import { paceScale } from "./pace";
 import { playSound } from "./sfx";
 import f from "./WeekFx.module.css";
 import type { WeekFx, WeekFxKind } from "./weekFx";
@@ -173,7 +174,8 @@ export function WeekFxOverlay({
   onDone: () => void;
 }) {
   const starts = fx.map((_, i) => STAGGER_MS * i);
-  const total = fxTotalMs(fx);
+  // «Ritmo» (owner 2026-11-14): the effects leave sooner, after they popped in
+  const total = Math.max(900, Math.round(fxTotalMs(fx) * paceScale()));
   const [spots] = useState(() => fxSpots(fx));
   // biome-ignore lint/correctness/useExhaustiveDependencies: once per mount (keyed by the step)
   useEffect(() => {

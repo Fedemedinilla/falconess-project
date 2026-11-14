@@ -411,6 +411,27 @@
   pointer-events: none;
   animation: toast 4s ease both;
 }
+/* a scene passed by (owner 2026-11-14): longer, with a button to watch it */
+.toastLong {
+  animation-duration: 6s;
+}
+.toastRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.toastBtn {
+  flex: none;
+  pointer-events: auto;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: #f1c40f;
+  color: #14202b;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+}
 .toast b {
   color: #f1c40f;
   font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
@@ -611,4 +632,19 @@
     animation-duration: 0.01ms;
     animation-delay: 0s;
   }
+}
+
+/* «Ritmo» (owner 2026-11-14): the scene passes as a fast digest */
+.digest {
+  align-self: center;
+  margin-right: auto;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgb(241 196 15 / 0.92);
+  color: #14202b;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }

@@ -8,6 +8,7 @@ import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type CrewBadge, crewInitials, statCells, type TrainingCard } from "./model";
 import { StatStrip } from "./Parts";
+import { paceScale } from "./pace";
 import { placeScene } from "./sceneLayout";
 import { playPing } from "./sfx";
 
@@ -54,7 +55,10 @@ export type TrainResult = {
  * When each «+N» of a result lands (ms): the stats, the skill points, the vigor, then each crew's
  * bond, one after the other; and when the result ends. The HUD's vigor bar reads its own.
  */
-export function resultTimeline(result: TrainResult): {
+export function resultTimeline(
+  result: TrainResult,
+  k: number = paceScale(),
+): {
   readonly stats: Partial<Record<StatName, number>>;
   readonly points: number | undefined;
   readonly vigor: number | undefined;
@@ -62,18 +66,20 @@ export function resultTimeline(result: TrainResult): {
   readonly end: number;
 } {
   let i = 0;
-  const next = () => FIRST_POP_MS + POP_STEP_MS * i++;
+  // «Ritmo» (owner 2026-11-14) shortens the steps and the hold, not the stats' slide
+  const step = POP_STEP_MS * k;
+  const next = () => FIRST_POP_MS + step * i++;
   const stats = Object.fromEntries(result.gains.map((g) => [g.stat, next()]));
   const points = result.points > 0 ? next() : undefined;
   const vigor = result.vigor !== 0 ? next() : undefined;
   const bonds = Object.fromEntries(result.bonds.map((b) => [b.manufacturer, next()]));
-  const crewsIn = CREW_IN_MS + CREW_STEP_MS * Math.max(0, result.crews.length - 1) + 450;
+  const crewsIn = CREW_IN_MS + CREW_STEP_MS * k * Math.max(0, result.crews.length - 1) + 450 * k;
   return {
     stats,
     points,
     vigor,
     bonds,
-    end: Math.max(FIRST_POP_MS + POP_STEP_MS * Math.max(0, i - 1), crewsIn) + HOLD_MS,
+    end: Math.max(FIRST_POP_MS + step * Math.max(0, i - 1), crewsIn) + HOLD_MS * k,
   };
 }
 
@@ -373,7 +379,7 @@ export function TrainScreen({
               <div
                 key={m}
                 className={cx(s.crewInCard, sync && s.crewInSync)}
-                style={{ animationDelay: `${CREW_IN_MS + k * CREW_STEP_MS}ms` }}
+                style={{ animationDelay: `${CREW_IN_MS + k * CREW_STEP_MS * paceScale()}ms` }}
                 data-crew={m}
               >
                 <CrewFace ctx={ctx} id={m} sync={sync} size={58} />

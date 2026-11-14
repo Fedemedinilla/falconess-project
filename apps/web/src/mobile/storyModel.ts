@@ -115,3 +115,13 @@ export function markRead(topicId: string): void {
   readCache = [...r];
   write(READ_KEY, readCache);
 }
+
+/** The lines a digest keeps: evenly spread, at least three, the first and the last. */
+export function digestLines<T>(lines: readonly T[]): T[] {
+  const n = lines.length;
+  const keep = Math.min(n, Math.max(3, Math.ceil(n / 3)));
+  if (keep >= n) return [...lines];
+  const picks = new Set<number>();
+  for (let k = 0; k < keep; k++) picks.add(Math.round((k * (n - 1)) / (keep - 1)));
+  return lines.filter((_, i) => picks.has(i));
+}

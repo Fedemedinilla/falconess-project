@@ -1,11 +1,12 @@
 import type { StoryBackground, StoryLine, StoryScene } from "@falconess/schema";
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
 import s from "./Story.module.css";
+import { digestLines } from "./storyModel";
 
 /** The painted backdrops of the scenes (owner 2026-11-12, made with Gemini). */
 const BACKDROP: Readonly<Record<StoryBackground, string>> = {
@@ -25,6 +26,13 @@ const CARD_MS = 1500;
 const AUTO_MS = 4500;
 const LEAVE_MS = 800;
 
+/**
+ * «Ritmo» Rápido / Directo (owner 2026-11-14, as Umamusume skips): not the whole scene but a
+ * digest, about a third of its lines (the first and the last always) passing by on their own,
+ * whole at once, `ms` each. Seen in full from «Historia» or «Ver».
+ */
+export type Digest = { readonly ms: number };
+
 function reduced(): boolean {
   return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
@@ -43,19 +51,26 @@ export function StoryOverlay({
   scene,
   primary,
   secondary,
+  digest,
   onDone,
 }: {
   scene: StoryScene;
   primary: string;
   secondary: string;
+  /** Play a fast digest instead of every line. */
+  digest?: Digest | undefined;
   onDone: (skipped: boolean) => void;
 }) {
+  const lines = useMemo(
+    () => (digest ? digestLines(scene.lines) : scene.lines),
+    [digest, scene.lines],
+  );
   const [index, setIndex] = useState(-1);
   const [shown, setShown] = useState(0);
   const [auto, setAuto] = useState(false);
   const [log, setLog] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const line = index >= 0 ? scene.lines[index] : undefined;
+  const line = index >= 0 ? lines[index] : undefined;
   const text = line ? gameText(line.textKey) : "";
   const cine = scene.style === "cine";
   // how far the line has appeared: letters in the box, words in the cinematic
@@ -74,8 +89,12 @@ export function StoryOverlay({
   );
 
   // the chapter's card, then the first line
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, at the scene's start
   useEffect(() => {
-    const t = setTimeout(() => setIndex(0), reduced() ? 300 : INTRO_MS + CARD_MS);
+    const t = setTimeout(
+      () => setIndex(0),
+      reduced() ? 300 : digest ? INTRO_MS + CARD_MS / 3 : INTRO_MS + CARD_MS,
+    );
     return () => clearTimeout(t);
   }, []);
 
@@ -83,7 +102,7 @@ export function StoryOverlay({
   // biome-ignore lint/correctness/useExhaustiveDependencies: restart on each new line
   useEffect(() => {
     if (index < 0) return;
-    if (reduced()) {
+    if (reduced() || digest) {
       setShown(Number.MAX_SAFE_INTEGER);
       return;
     }
@@ -99,15 +118,15 @@ export function StoryOverlay({
       setShown(Number.MAX_SAFE_INTEGER);
       return;
     }
-    if (index + 1 >= scene.lines.length) finish(false);
+    if (index + 1 >= lines.length) finish(false);
     else setIndex(index + 1);
-  }, [log, index, complete, scene.lines.length, finish]);
+  }, [log, index, complete, lines.length, finish]);
 
   useEffect(() => {
-    if (!auto || !complete || log) return;
-    const t = setTimeout(next, AUTO_MS);
+    if (!(auto || digest) || !complete || log) return;
+    const t = setTimeout(next, digest ? digest.ms : AUTO_MS);
     return () => clearTimeout(t);
-  }, [auto, complete, log, next]);
+  }, [auto, digest, complete, log, next]);
 
   const style = { "--s1": primary, "--s2": secondary } as CSSProperties;
   const name = line && speakerName(line);
@@ -120,6 +139,7 @@ export function StoryOverlay({
       id="m-capitulo"
       data-scene={scene.id}
       data-style={scene.style}
+      data-digest={digest ? "true" : undefined}
       data-background={scene.background}
       role="dialog"
       aria-modal="true"
@@ -148,6 +168,11 @@ export function StoryOverlay({
         </>
       )}
       <div className={s.chrome}>
+        {digest && (
+          <span className={s.digest} id="m-capitulo-resumen">
+            {ui("ui.m.story.digest")}
+          </span>
+        )}
         <button
           type="button"
           aria-pressed={auto}
@@ -217,7 +242,7 @@ export function StoryOverlay({
       {log && (
         <div className={s.log} id="m-capitulo-log">
           <div className={s.logList}>
-            {scene.lines.slice(0, index + 1).map((l, k) => {
+            {lines.slice(0, index + 1).map((l, k) => {
               const n = speakerName(l);
               return (
                 // biome-ignore lint/suspicious/noArrayIndexKey: lines are fixed and in order

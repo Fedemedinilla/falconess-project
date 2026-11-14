@@ -31,6 +31,7 @@ import {
 import type { RaceLog } from "@falconess/schema";
 import { distanceOfLength, flightOf, getRuleset } from "@falconess/sim";
 import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { rememberSpeed, startSpeed } from "../../mobile/pace";
 import { formatFixed, formatSeconds } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
 import { cx } from "../../ui/cx";
@@ -374,7 +375,8 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
   const [focus, setFocus] = useState(() => view.player?.lane ?? log.results[0]?.lane ?? 0);
   const [playing, setPlaying] = useState(false);
   const [preOpen, setPreOpen] = useState(true);
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
+  // «Ritmo» (owner 2026-11-14): the speed chosen last time, at least ×2 with «Rápido»
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(() => startSpeed(SPEEDS) ?? 1);
   const [slowOn, setSlowOn] = useState(!reduced);
   const [cat, setCat] = useState<MomentCat>("all");
   const [row, setRow] = useState(0);
@@ -390,7 +392,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
   const live = useRef({
     row: 0,
     playing: false,
-    speed: 1 as number,
+    speed: speed as number,
     slow: !reduced,
     slowBudget: 0,
     hitstop: 0,
@@ -857,6 +859,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
               onClick={() => {
                 setSpeed(v);
                 live.current.speed = v;
+                rememberSpeed(v);
               }}
             >
               {ui("ui.flight.speed.n", { n: formatFixed(v * 10, 10, v < 1 ? 1 : 0) })}

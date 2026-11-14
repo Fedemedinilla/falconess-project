@@ -1940,5 +1940,12 @@
   "ui.m.guide.7.text": "La temporada te da una nota y una caja negra. La próxima Falconess puede heredarla y arrancar con ventaja.",
   "ui.m.track.tab": "Pista",
   "ui.m.track.tab.open": "Ver la pista de la próxima meta",
-  "ui.m.track.tab.close": "Esconder la pista"
+  "ui.m.track.tab.close": "Esconder la pista",
+  "ui.m.pace": "Ritmo: {pace}",
+  "ui.m.pace.label": "Ritmo de las animaciones: {pace}. Tocá para cambiarlo.",
+  "ui.m.pace.normal": "Normal",
+  "ui.m.pace.fast": "Rápido",
+  "ui.m.pace.direct": "Directo",
+  "ui.m.story.passed": "Ya la viste en otra temporada.",
+  "ui.m.story.digest": "Resumen"
 }

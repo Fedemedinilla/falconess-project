@@ -1940,5 +1940,12 @@
   "ui.m.guide.7.text": "The season gives you a grade and a black box. Your next Falconess can inherit it and start ahead.",
   "ui.m.track.tab": "Track",
   "ui.m.track.tab.open": "Show the next goal's track",
-  "ui.m.track.tab.close": "Hide the track"
+  "ui.m.track.tab.close": "Hide the track",
+  "ui.m.pace": "Pace: {pace}",
+  "ui.m.pace.label": "Animation pace: {pace}. Tap to change it.",
+  "ui.m.pace.normal": "Normal",
+  "ui.m.pace.fast": "Fast",
+  "ui.m.pace.direct": "Direct",
+  "ui.m.story.passed": "You saw it in another season.",
+  "ui.m.story.digest": "Digest"
 }

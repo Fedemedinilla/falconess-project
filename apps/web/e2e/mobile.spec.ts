@@ -1066,3 +1066,91 @@ test("phone menu: the guide, goals, crews and log open as sheets", async ({ page
   await page.click("#m-menu");
   await expect(page.locator("#m-panel-abrir-guide")).not.toContainText(t("ui.m.guide.new"));
 });
+
+test("Ritmo in the menu: Normal, Rápido, Directo, kept after a reload (owner 2026-11-14)", async ({
+  page,
+}) => {
+  await startMobile(page, "cernicala");
+  await page.click("#m-menu");
+  const pace = page.locator("#m-ritmo");
+  await expect(pace).toHaveAttribute("data-pace", "normal");
+  await expect(pace).toContainText(t("ui.m.pace", { pace: t("ui.m.pace.normal") }));
+  await pace.click();
+  await expect(pace).toHaveAttribute("data-pace", "fast");
+  await pace.click();
+  await expect(pace).toHaveAttribute("data-pace", "direct");
+  await page.reload();
+  await pastTitle(page);
+  await page.click("#m-continuar");
+  await page.click("#m-menu");
+  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-pace", "direct");
+  await page.locator("#m-ritmo").click();
+  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-pace", "normal");
+});
+
+test("Directo: no transition, the race opens on its result and «Ver otra vez» plays it", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.addInitScript(() => localStorage.setItem("falconess.juego.ritmo", "direct"));
+  await startMobile(page, "peregrina");
+  let k = 0;
+  while ((await week(page)) < 10) {
+    if (k++ % 2) await page.click("#m-descansar");
+    else {
+      await page.click("#m-entrenar");
+      await page.dblclick("#m-entrenar-agility");
+    }
+    await settle(page);
+  }
+  await page.click("#m-carrera");
+  await page.click("#m-correr");
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await toResult(page);
+  await expect(page.locator("#m-carrera-vuelo")).toHaveCount(0);
+  await page.click("#m-ver-otra-vez");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+});
+
+test("a scene seen in an earlier season is passed by, with a button to watch it (owner 2026-11-14)", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("falconess.juego.historia"))
+      localStorage.setItem(
+        "falconess.juego.historia",
+        JSON.stringify({ runs: {}, ever: ["peregrina-prologue"] }),
+      );
+  });
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  const toast = page.locator("#m-capitulo-aviso");
+  await expect(toast).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-capitulo")).toHaveCount(0);
+  await page.click("#m-escena-ver");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
+});
+
+test("Rápido: a first scene passes by itself as a digest; «Historia» plays it whole", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("falconess.juego.ritmo", "fast"));
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-digest", "true");
+  await expect(page.locator("#m-capitulo-resumen")).toBeVisible();
+  // nobody taps: it ends on its own
+  await expect(scene).toHaveCount(0, { timeout: 30_000 });
+  await page.click("#m-menu");
+  await page.click("#m-historia-abrir");
+  await page.locator("#m-historia li button").first().click();
+  await expect(scene).toBeVisible();
+  await expect(scene).not.toHaveAttribute("data-digest", "true");
+});

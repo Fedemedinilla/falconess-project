@@ -160,6 +160,19 @@ sale una por vez.
   idiomas, un disparador por escena; `text-lang.test.ts`: mismas claves y `{placeholders}`), y el e2e
   «story» de `apps/web/e2e/mobile.spec.ts`.
 
+## 6b. Ritmo y escenas ya vistas (dueño, 2026-11-14)
+
+- **Ritmo** (Menú → «Ritmo: Normal / Rápido / Directo», guardado en el navegador, `mobile/pace.ts`).
+  En Normal la escena sale entera. En Rápido y Directo sale un **resumen**, como el «skip» de
+  Umamusume: más o menos un tercio de las líneas (siempre la primera y la última, al menos tres,
+  `digestLines`), cada una entera de una vez y pasando sola (1,1 s en Rápido, 0,65 s en Directo),
+  con la etiqueta «Resumen». Tocar adelanta y «Saltar» la termina, como siempre.
+- **Ya vista en otra temporada**: no se repite. Sale un aviso de una línea («Ya la viste en otra
+  temporada.») con el botón «Ver», que la pasa entera.
+- Desde Menú → Historia o desde «Ver», la escena siempre sale entera, sin importar el Ritmo.
+- Al escribir una escena, la primera y la última línea tienen que contar solas lo esencial: son las
+  que quedan en todos los resúmenes.
+
 ## 7. Lista antes de dar una escena por terminada
 
 1. ¿La escribí con la biblia de personajes a mano (`docs/design/investigacion-personajes.md`):

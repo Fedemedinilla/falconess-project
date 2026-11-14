@@ -52,6 +52,7 @@ import {
 } from "./Panels";
 import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
+import { getPace, nextPace, type Pace, setPace } from "./pace";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
 import st from "./Story.module.css";
@@ -203,12 +204,14 @@ export function MobileGame() {
     kicker: string;
     title: string;
     skipped: boolean;
+    /** Seen in an earlier season, so it was passed by (owner 2026-11-14): a tap plays it. */
+    again?: StoryScene | undefined;
   }>();
   const [chatOpen, setChatOpen] = useState(false);
   const [storyListOpen, setStoryListOpen] = useState(false);
   useEffect(() => {
     if (!storyToast) return;
-    const id = setTimeout(() => setStoryToast(undefined), 4000);
+    const id = setTimeout(() => setStoryToast(undefined), storyToast.again ? 6000 : 4000);
     return () => clearTimeout(id);
   }, [storyToast]);
   const titleScreen = title && (
@@ -231,7 +234,9 @@ export function MobileGame() {
   useLayoutEffect(() => {
     if (firstPage.current) firstPage.current = false;
     // only on the way to a race (owner 2026-11-12: on every screen it got in the way)
-    else if (page === "race" && !reducedMotion()) setCover((c) => (c ?? 0) + 1);
+    // «Directo» (owner 2026-11-14) goes into the race mode without it
+    else if (page === "race" && !reducedMotion() && getPace() !== "direct")
+      setCover((c) => (c ?? 0) + 1);
   }, [page]);
   const colors = transitionColors(game, run?.state.falconessId);
   const transition = cover !== undefined && (
@@ -315,12 +320,31 @@ export function MobileGame() {
   };
   const storyLayer = (sc: StoryScene | undefined) => (
     <>
-      {sc && (
+      {/* owner 2026-11-14: a scene seen in an earlier season is passed by, with a line to watch it */}
+      {sc && !replay && seenEver().has(sc.id) && (
+        <Acknowledge
+          key={sc.id}
+          onMount={() => {
+            markSeen(run.seed, sc.id);
+            setStoryTick((n) => n + 1);
+            setStoryToast({
+              n: Date.now(),
+              kicker: gameText(sc.kickerKey),
+              title: gameText(sc.titleKey),
+              skipped: true,
+              again: sc,
+            });
+          }}
+        />
+      )}
+      {sc && (replay || !seenEver().has(sc.id)) && (
         <StoryOverlay
           key={`${sc.id}/${replay ? "again" : "first"}`}
           scene={sc}
           primary={colors.primary}
           secondary={colors.secondary}
+          // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
+          digest={replay ? undefined : sceneDigest()}
           onDone={(skipped) => {
             if (!replay) markSeen(run.seed, sc.id);
             setReplay(undefined);
@@ -335,12 +359,30 @@ export function MobileGame() {
         />
       )}
       {storyToast && (
-        <StoryToast key={storyToast.n}>
+        <StoryToast key={storyToast.n} long={storyToast.again !== undefined}>
           <b>
             {storyToast.kicker} · {storyToast.title}
           </b>
           <br />
-          {ui(storyToast.skipped ? "ui.m.story.skipped" : "ui.m.story.seen")}
+          {storyToast.again ? (
+            <span className={st.toastRow}>
+              {ui("ui.m.story.passed")}
+              <button
+                type="button"
+                className={st.toastBtn}
+                id="m-escena-ver"
+                onClick={() => {
+                  const again = storyToast.again;
+                  setStoryToast(undefined);
+                  setReplay(again);
+                }}
+              >
+                {ui("ui.m.story.watch")}
+              </button>
+            </span>
+          ) : (
+            ui(storyToast.skipped ? "ui.m.story.skipped" : "ui.m.story.seen")
+          )}
         </StoryToast>
       )}
     </>
@@ -404,7 +446,7 @@ export function MobileGame() {
     const cue = trainingCue(input, state.turn, step?.after, cards);
     playSound(cue);
     const next: View =
-      raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: false } : MENU;
+      raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: raceStraight() } : MENU;
     // a training plays its result on the training screen first (owner 2026-11-11)
     const kind = cards.find((c) => c.kind === input.kind)?.kind;
     if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
@@ -461,7 +503,7 @@ export function MobileGame() {
   const runRaceWeek = (input: WeekActionInput) => {
     const turn = state.turn;
     if (!game.act(withPosition(input, chosen), inputs)) return;
-    setView({ screen: "race", turn, result: false });
+    setView({ screen: "race", turn, result: raceStraight() });
   };
 
   const onMenu = (action: MenuAction) => {
@@ -832,7 +874,7 @@ function fxPart(step: Step): WeekFxPart {
  * The notice after a story scene (owner 2026-11-13): just over the goal's track tab, never over
  * the menu's buttons; without that card on screen, under the top bar.
  */
-function StoryToast({ children }: { children: React.ReactNode }) {
+function StoryToast({ children, long = false }: { children: React.ReactNode; long?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState<React.CSSProperties>({ visibility: "hidden" });
   useLayoutEffect(() => {
@@ -846,10 +888,27 @@ function StoryToast({ children }: { children: React.ReactNode }) {
     setSpot({ top: Math.max(8, Math.round(top)), bottom: "auto" });
   }, []);
   return (
-    <div ref={ref} className={st.toast} id="m-capitulo-aviso" role="status" style={spot}>
+    <div
+      ref={ref}
+      className={cx(st.toast, long && st.toastLong)}
+      id="m-capitulo-aviso"
+      role="status"
+      style={spot}
+    >
       {children}
     </div>
   );
+}
+
+/** «Ritmo» (owner 2026-11-14): Rápido and Directo pass a scene as a digest. */
+function sceneDigest(): { ms: number } | undefined {
+  const p = getPace();
+  return p === "normal" ? undefined : { ms: p === "fast" ? 1100 : 650 };
+}
+
+/** «Directo» (owner 2026-11-14): a goal race opens on its result; «Ver otra vez» plays it. */
+function raceStraight(): boolean {
+  return getPace() === "direct";
 }
 
 /** Where a story scene can play (owner 2026-11-13). */
@@ -915,6 +974,7 @@ function MenuItems({
   const [confirm, setConfirm] = useState(false);
   const [sound, setSound] = useState<SoundStyle>(getSoundStyle);
   const [music, setMusicState] = useState(getMusicOn);
+  const [pace, setPaceState] = useState<Pace>(getPace);
   const onSound = () => {
     const next = nextSoundStyle(sound);
     setSoundStyle(next);
@@ -968,6 +1028,21 @@ function MenuItems({
       >
         <Glyph name={music ? "note" : "mute"} size={20} />
         {ui("ui.m.music", { state: ui(music ? "ui.m.music.on" : "ui.m.music.off") })}
+      </button>
+      <button
+        type="button"
+        className={s.btn}
+        id="m-ritmo"
+        data-pace={pace}
+        aria-label={ui("ui.m.pace.label", { pace: ui(`ui.m.pace.${pace}`) })}
+        onClick={() => {
+          const p = nextPace(pace);
+          setPace(p);
+          setPaceState(p);
+        }}
+      >
+        <Glyph name="skip" size={20} />
+        {ui("ui.m.pace", { pace: ui(`ui.m.pace.${pace}`) })}
       </button>
       <LangButton className={s.btn} id="m-idioma" />
       {confirm ? (
