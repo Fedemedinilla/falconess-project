@@ -2898,3 +2898,168 @@
     transition: none;
   }
 }
+
+/* ---- the week's actions (owner 2026-11-14): «Entrenar» as a wide bar, four pills under it,
+   a light enamel (a soft gradient, a thin darker lip, a soft shadow) ---- */
+.acts {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 0 6px;
+}
+.app .tbar {
+  position: relative;
+  height: 66px;
+  border-radius: 33px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  overflow: hidden;
+  color: #fff;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--acc) 72%, #fff) 0%,
+    var(--acc) 45%,
+    color-mix(in srgb, var(--acc) 84%, #000) 100%
+  );
+  box-shadow:
+    0 0 0 2px var(--sec),
+    0 3px 0 2px color-mix(in srgb, var(--acc) 55%, #000),
+    0 8px 16px rgb(20 32 43 / 0.2),
+    inset 0 2px 0 rgb(255 255 255 / 0.35);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+.app .tbar:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow:
+    0 0 0 2px var(--sec),
+    0 1px 0 2px color-mix(in srgb, var(--acc) 55%, #000),
+    0 4px 10px rgb(20 32 43 / 0.2),
+    inset 0 2px 0 rgb(255 255 255 / 0.35);
+}
+.app .tbar:disabled {
+  filter: grayscale(0.7);
+  opacity: 0.6;
+}
+.app .tbar:focus-visible {
+  outline: 3px solid var(--yel);
+  outline-offset: 4px;
+}
+.tbarWm {
+  position: absolute;
+  right: 6px;
+  top: -14px;
+  height: 96px;
+  width: 112px;
+  opacity: 0.14;
+  pointer-events: none;
+}
+.tbarText {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.tbarLabel {
+  font-family: var(--cn);
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1;
+}
+.tbarChips {
+  display: flex;
+  gap: 4px;
+  text-shadow: none;
+}
+.pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+.app .pill {
+  --c: #6b8093;
+  position: relative;
+  height: 46px;
+  border-radius: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #fff;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.18);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c) 78%, #fff) 0%,
+    var(--c) 50%,
+    color-mix(in srgb, var(--c) 90%, #000) 100%
+  );
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--c) 62%, #000),
+    0 5px 10px rgb(20 32 43 / 0.14),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.3);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+.app .pill .rbLb {
+  font-size: 19px;
+  line-height: 1;
+}
+.app .pill:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow:
+    0 0 0 color-mix(in srgb, var(--c) 62%, #000),
+    0 2px 6px rgb(20 32 43 / 0.14),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.3);
+}
+.app .pill:disabled {
+  opacity: 0.5;
+}
+.app .pill:focus-visible {
+  outline: 3px solid var(--yel);
+  outline-offset: 3px;
+}
+.app .pill .bdg {
+  top: -8px;
+  right: -4px;
+  text-shadow: none;
+}
+.app .pRest {
+  --c: #34b06f;
+}
+.app .pOuting {
+  --c: #f09a24;
+}
+.app .pSkills {
+  --c: #25a3c0;
+}
+.app .pWorkshop {
+  --c: #6d8397;
+}
+/* the menu, round and small, at the top right under the mood */
+.app .menuTop {
+  position: relative;
+  margin-left: auto;
+  width: 52px;
+  height: 52px;
+}
+@media (max-height: 700px) {
+  .app .tbar {
+    height: 58px;
+  }
+  .tbarLabel {
+    font-size: 25px;
+  }
+  .app .pill {
+    height: 42px;
+  }
+  .acts {
+    gap: 10px;
+  }
+}

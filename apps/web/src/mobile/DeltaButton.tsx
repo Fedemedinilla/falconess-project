@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { cx } from "../ui/cx";
+import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
 /**
@@ -29,7 +30,7 @@ function deltaPath(): { d: string; top: string } {
 const DELTA = deltaPath();
 
 /** The school's emblem, as a watermark: Altair's star, Boneyard's gear and wrench, Kōryū's falcon. */
-function Emblem({ school }: { school: string }) {
+export function Emblem({ school }: { school: string }) {
   if (school === "altair")
     return (
       <>
@@ -216,6 +217,64 @@ export function DeltaButton({
           ))}
         </span>
       )}
+    </button>
+  );
+}
+
+/**
+ * «Entrenar» as a wide enamelled bar (owner 2026-11-14, «Esmalte» but light): the school's color,
+ * its emblem as a watermark at the right, and the week's boosted trainings as chips under the label.
+ */
+export function TrainBar({
+  id,
+  label,
+  ariaLabel,
+  school,
+  chips,
+  disabled = false,
+  onClick,
+}: Omit<DeltaButtonProps, "icon">) {
+  const boosted = chips.length > 0;
+  return (
+    <button
+      type="button"
+      id={id}
+      className={cx(s.tbar, boosted && s.tbarBoost)}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={(e) => {
+        // the second click of a double click lands on the next week's button: ignore it
+        if (e.detail > 1) return;
+        onClick();
+      }}
+    >
+      <svg
+        className={s.tbarWm}
+        viewBox="-70 20 140 120"
+        aria-hidden="true"
+        style={{ color: school === "altair" ? "#ffffff" : "#000000" }}
+      >
+        <g fill="currentColor" stroke="currentColor" strokeWidth="0">
+          <Emblem school={school} />
+        </g>
+      </svg>
+      <Glyph name="dumbbell" size={32} color="#ffffff" weight={2.6} />
+      <span className={s.tbarText}>
+        <span className={s.tbarLabel}>{label}</span>
+        {boosted && (
+          <span className={s.tbarChips} aria-hidden="true">
+            {chips.slice(0, 3).map((c) => (
+              <span
+                key={c.key}
+                className={cx(s.boostChip, c.sync && s.boostChipSync)}
+                data-sync={c.sync ? "true" : undefined}
+              >
+                {c.label}
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
     </button>
   );
 }

@@ -5,7 +5,7 @@ import { learnableSkills } from "../screens/model/workshop";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
-import { DeltaButton } from "./DeltaButton";
+import { TrainBar } from "./DeltaButton";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { WeekMenu } from "./model";
@@ -20,6 +20,7 @@ function RoundButton({
   glyph,
   label,
   className,
+  base = s.rb,
   badge,
   disabled = false,
   onClick,
@@ -29,6 +30,8 @@ function RoundButton({
   glyph: GlyphName;
   label: string;
   className: string | undefined;
+  /** The button's shape: the round one (the menu) or a pill (the week's actions). */
+  base?: string | undefined;
   badge?: ReactNode;
   disabled?: boolean;
   onClick: () => void;
@@ -38,7 +41,7 @@ function RoundButton({
     <button
       type="button"
       id={id}
-      className={cx(s.rb, className)}
+      className={cx(base, className)}
       disabled={disabled}
       onClick={(e) => {
         // the second click of a double click lands on the next week's button: ignore it
@@ -102,14 +105,23 @@ export function MenuScreen({
         </div>
       )}
       <div className={s.lay}>
-        {menu.injured && (
-          <div className={s.topline}>
+        {/* owner 2026-11-14: the menu at the top right, where the name card was */}
+        <div className={s.topline}>
+          {menu.injured && (
             <span className={s.injured} id="m-lesion">
               <Glyph name="warn" size={18} />
               {ui("ui.m.injured", { n: menu.injuryTurns })}
             </span>
-          </div>
-        )}
+          )}
+          <RoundButton
+            id="m-menu"
+            glyph="menu"
+            label={ui("ui.m.menu")}
+            className={cx(s.sm, s.menuTop)}
+            size={20}
+            onClick={() => onAction("menu")}
+          />
+        </div>
         <div className={s.grow} />
         {menu.raceWeek && goal && (
           <button
@@ -155,8 +167,9 @@ export function MenuScreen({
           </div>
         )}
         <StatStrip stats={menu.stats} skillPoints={menu.skillPoints} />
-        <div className={s.arc}>
-          <DeltaButton
+        {/* owner 2026-11-14: «Entrenar» as a wide bar, the four actions as pills under it */}
+        <div className={s.acts}>
+          <TrainBar
             id="m-entrenar"
             label={ui("ui.m.train")}
             ariaLabel={
@@ -168,57 +181,54 @@ export function MenuScreen({
             }
             school={sponsor.id}
             chips={chips}
-            icon={<Glyph name="dumbbell" size={32} color="#ffffff" weight={2.6} />}
             disabled={off}
             onClick={() => onAction("train")}
           />
-          <RoundButton
-            id="m-descansar"
-            glyph="bed"
-            label={ui("ui.m.rest")}
-            className={s.o1}
-            disabled={off}
-            onClick={() => onAction("rest")}
-          />
-          <RoundButton
-            id="m-salida"
-            glyph="map"
-            label={ui("ui.m.outing")}
-            className={s.o2}
-            disabled={off}
-            onClick={() => onAction("outing")}
-          />
-          <RoundButton
-            id="m-habilidades"
-            glyph="book"
-            label={ui("ui.m.skills")}
-            className={s.o3}
-            disabled={off}
-            onClick={() => onAction("skills")}
-            badge={
-              learnable > 0 ? (
-                <span className={s.bdg} title={ui("ui.m.skills.badge", { n: learnable })}>
-                  {learnable}
-                </span>
-              ) : undefined
-            }
-          />
-          <RoundButton
-            id="m-taller"
-            glyph="wrench"
-            label={ui("ui.m.workshop")}
-            className={s.o4}
-            disabled={off}
-            onClick={() => onAction("workshop")}
-          />
-          <RoundButton
-            id="m-menu"
-            glyph="menu"
-            label={ui("ui.m.menu")}
-            className={cx(s.sm, s.e2)}
-            size={20}
-            onClick={() => onAction("menu")}
-          />
+          <div className={s.pills}>
+            <RoundButton
+              id="m-descansar"
+              glyph="bed"
+              label={ui("ui.m.rest")}
+              base={s.pill}
+              className={s.pRest}
+              disabled={off}
+              onClick={() => onAction("rest")}
+            />
+            <RoundButton
+              id="m-habilidades"
+              glyph="book"
+              label={ui("ui.m.skills")}
+              base={s.pill}
+              className={s.pSkills}
+              disabled={off}
+              onClick={() => onAction("skills")}
+              badge={
+                learnable > 0 ? (
+                  <span className={s.bdg} title={ui("ui.m.skills.badge", { n: learnable })}>
+                    {learnable}
+                  </span>
+                ) : undefined
+              }
+            />
+            <RoundButton
+              id="m-salida"
+              glyph="map"
+              label={ui("ui.m.outing")}
+              base={s.pill}
+              className={s.pOuting}
+              disabled={off}
+              onClick={() => onAction("outing")}
+            />
+            <RoundButton
+              id="m-taller"
+              glyph="wrench"
+              label={ui("ui.m.workshop")}
+              base={s.pill}
+              className={s.pWorkshop}
+              disabled={off}
+              onClick={() => onAction("workshop")}
+            />
+          </div>
         </div>
       </div>
       {track && <TrackSheet view={track} open={trackOpen} onClose={() => setTrackOpen(false)} />}
