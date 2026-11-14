@@ -1937,5 +1937,8 @@
   "ui.m.guide.6.title": "Skills",
   "ui.m.guide.6.text": "The Simulator and races give points. In Skills you trade them for tricks that kick in by themselves during the race.",
   "ui.m.guide.7.title": "When it ends",
-  "ui.m.guide.7.text": "The season gives you a grade and a black box. Your next Falconess can inherit it and start ahead."
+  "ui.m.guide.7.text": "The season gives you a grade and a black box. Your next Falconess can inherit it and start ahead.",
+  "ui.m.track.tab": "Track",
+  "ui.m.track.tab.open": "Show the next goal's track",
+  "ui.m.track.tab.close": "Hide the track"
 }

@@ -1937,5 +1937,8 @@
   "ui.m.guide.6.title": "Habilidades",
   "ui.m.guide.6.text": "El Simulador y las carreras dan puntos. En Habilidades los cambiás por trucos que se activan solos durante la carrera.",
   "ui.m.guide.7.title": "Al terminar",
-  "ui.m.guide.7.text": "La temporada te da una nota y una caja negra. La próxima Falconess puede heredarla y arrancar con ventaja."
+  "ui.m.guide.7.text": "La temporada te da una nota y una caja negra. La próxima Falconess puede heredarla y arrancar con ventaja.",
+  "ui.m.track.tab": "Pista",
+  "ui.m.track.tab.open": "Ver la pista de la próxima meta",
+  "ui.m.track.tab.close": "Esconder la pista"
 }

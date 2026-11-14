@@ -228,14 +228,6 @@
   align-items: center;
   gap: 8px;
 }
-.lbl {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--tx);
-  background: rgb(255 255 255 / 0.92);
-  border-radius: 10px;
-  padding: 2px 7px;
-}
 .vwrap {
   position: relative;
   flex: 1;
@@ -245,7 +237,7 @@
 .vbar {
   flex: 1;
   min-width: 0;
-  height: 20px;
+  height: 28px;
   border: 2px solid var(--ui);
   border-radius: 10px;
   background: var(--white);
@@ -291,19 +283,20 @@
     opacity: 0.55;
   }
 }
+/* owner 2026-11-14: smaller, and one width for every mood so the vigor bar never moves */
 .mood {
   flex: none;
-  min-width: 76px;
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 18px;
+  width: 92px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   font-family: var(--cn);
   font-weight: 700;
-  font-size: 19px;
+  font-size: 16px;
   white-space: nowrap;
 }
 .mood-hi {
@@ -634,30 +627,6 @@
   justify-content: space-between;
   gap: 8px;
   min-height: 44px;
-}
-.who2 {
-  background: rgb(255 255 255 / 0.86);
-  border-radius: 12px;
-  padding: 4px 10px 5px;
-  box-shadow: var(--shadow);
-  max-width: 60%;
-}
-.who2 b {
-  display: block;
-  font-family: var(--cn);
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 24px;
-}
-.who2 span {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 15px;
-  color: var(--tx2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .injured {
   display: inline-flex;
@@ -2851,4 +2820,77 @@
    the game's column: the wide screen's panel, the panels' sheets */
 .app.appContents {
   display: contents;
+}
+
+/* the word «Vigor» inside the bar, readable over any fill */
+.vword {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--tx);
+  text-shadow:
+    0 0 3px #fff,
+    0 0 6px #fff;
+  pointer-events: none;
+}
+/* the track's tab at the screen's left edge and its card sliding out (owner 2026-11-14) */
+.drawer {
+  position: relative;
+  height: 0;
+  flex: none;
+  z-index: 3;
+}
+.drawerTab {
+  position: absolute;
+  left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  bottom: 10px;
+  width: 34px;
+  padding: 10px 0;
+  border-radius: 0 12px 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--tx);
+  color: #fff;
+  box-shadow: 0 4px 12px rgb(20 32 43 / 0.25);
+}
+.drawerTab span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+}
+.drawerTabOn {
+  background: var(--acc);
+}
+.drawerCard {
+  position: absolute;
+  left: 26px;
+  right: 0;
+  bottom: 6px;
+  transform: translateX(calc(-100% - 60px));
+  opacity: 0;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
+  pointer-events: none;
+}
+.drawerCardOn {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawerCard {
+    transition: none;
+  }
 }

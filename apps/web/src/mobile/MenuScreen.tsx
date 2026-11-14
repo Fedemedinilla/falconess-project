@@ -72,9 +72,7 @@ export function MenuScreen({
 }) {
   const f = ctx.content.getFalconess(state.falconessId);
   const sponsor = ctx.content.getManufacturer(f.sponsor);
-  const frame = ctx.content.getFrame(state.equippedFrame);
   const art = runnerArt(f.id);
-  const name = gameText(f.textKey);
   const learnable = learnableSkills(ctx, state).filter((k) => k.cost <= state.skillPoints).length;
   // ADR-0016: the trainings with a crew in sintonía first, in gold
   const chips = [...menu.boosted]
@@ -87,6 +85,7 @@ export function MenuScreen({
   const off = pendingEvent;
   const goal = menu.goal;
   const [trackOpen, setTrackOpen] = useState(false);
+  const [drawer, setDrawer] = useState(false);
   const track = goal && trackCard(ctx, goal.courseId);
 
   return (
@@ -103,20 +102,14 @@ export function MenuScreen({
         </div>
       )}
       <div className={s.lay}>
-        <div className={s.topline}>
-          <div className={s.who2}>
-            <b>{name}</b>
-            <span>
-              {gameText(sponsor.textKey)} · {gameText(`style.${frame.style}`)}
-            </span>
-          </div>
-          {menu.injured && (
+        {menu.injured && (
+          <div className={s.topline}>
             <span className={s.injured} id="m-lesion">
               <Glyph name="warn" size={18} />
               {ui("ui.m.injured", { n: menu.injuryTurns })}
             </span>
-          )}
-        </div>
+          </div>
+        )}
         <div className={s.grow} />
         {menu.raceWeek && goal && (
           <button
@@ -138,7 +131,29 @@ export function MenuScreen({
             <span className={s.raceBarGo}>{ui("ui.m.race.open")}</span>
           </button>
         )}
-        {track && <TrackCardButton view={track} id="m-pista" onOpen={() => setTrackOpen(true)} />}
+        {/* owner 2026-11-14: the track hides in a tab at the screen's edge; a tap slides it out */}
+        {track && (
+          <div className={s.drawer}>
+            <button
+              type="button"
+              className={cx(s.drawerTab, drawer && s.drawerTabOn)}
+              id="m-pista-tab"
+              aria-expanded={drawer}
+              aria-controls="m-pista"
+              aria-label={ui(drawer ? "ui.m.track.tab.close" : "ui.m.track.tab.open")}
+              onClick={() => setDrawer((d) => !d)}
+            >
+              <Glyph name="flag" size={18} weight={2.6} />
+              <span>{ui("ui.m.track.tab")}</span>
+            </button>
+            <div
+              className={cx(s.drawerCard, drawer && s.drawerCardOn)}
+              inert={drawer ? undefined : true}
+            >
+              <TrackCardButton view={track} id="m-pista" onOpen={() => setTrackOpen(true)} />
+            </div>
+          </div>
+        )}
         <StatStrip stats={menu.stats} skillPoints={menu.skillPoints} />
         <div className={s.arc}>
           <DeltaButton

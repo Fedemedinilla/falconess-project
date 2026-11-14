@@ -829,7 +829,7 @@ function fxPart(step: Step): WeekFxPart {
 }
 
 /**
- * The notice after a story scene (owner 2026-11-13): just over the goal's track card, never over
+ * The notice after a story scene (owner 2026-11-13): just over the goal's track tab, never over
  * the menu's buttons; without that card on screen, under the top bar.
  */
 function StoryToast({ children }: { children: React.ReactNode }) {
@@ -839,7 +839,8 @@ function StoryToast({ children }: { children: React.ReactNode }) {
     const el = ref.current;
     if (!el) return;
     // the notice is fixed: viewport coordinates
-    const track = document.getElementById("m-pista")?.getBoundingClientRect();
+    // the track hides in its edge tab (owner 2026-11-14): just over the tab
+    const track = document.getElementById("m-pista-tab")?.getBoundingClientRect();
     const height = el.getBoundingClientRect().height;
     const top = track && track.height > 0 ? track.top - height - 10 : 124;
     setSpot({ top: Math.max(8, Math.round(top)), bottom: "auto" });

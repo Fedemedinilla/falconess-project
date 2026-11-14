@@ -190,8 +190,13 @@ test("the goal card: the track's profile, its distance class and letters; tap fo
 }) => {
   await startMobile(page, "peregrina");
   // Peregrina's first goal is the Sprint: two Curvas, a home straight, Agility and Technique
+  // the card hides in a tab at the screen's edge (owner 2026-11-14)
   const card = page.locator("#m-pista");
+  await expect(card).not.toBeInViewport();
+  await page.locator("#m-pista-tab").click();
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
   await expect(card).toBeVisible();
+  await expect(card).toBeInViewport();
   await expect(card).toHaveAttribute("data-course", "sprint");
   await expect(page.locator("#m-pista-perfil")).toHaveAttribute(
     "data-pieces",

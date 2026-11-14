@@ -31,6 +31,8 @@ for (const f of ["peregrina", "cernicala", "caracara"]) {
     await page.screenshot({ path: `${OUT}${f}-menu.png` });
     const card = page.locator("#m-pista");
     if ((await card.count()) > 0) {
+      await page.locator("#m-pista-tab").click();
+      await page.waitForTimeout(400);
       await card.click();
       await expect(page.locator("#m-pista-dialogo[open]")).toBeVisible();
       await page.waitForTimeout(300);

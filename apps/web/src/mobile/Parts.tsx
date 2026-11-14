@@ -129,6 +129,10 @@ function VigorBar({ vigor, pop }: { vigor: VigorView; pop?: VigorPop | undefined
     <div className={s.vwrap}>
       <div className={s.vbar} role="img" aria-label={label} id="m-vigor" data-vigor={vigor.value}>
         <div className={s.vfill} style={{ width: pct(vigor.value) }} />
+        {/* owner 2026-11-14: the word inside the bar, no label beside it */}
+        <span className={s.vword} aria-hidden="true">
+          {ui("ui.m.vigor")}
+        </span>
         {cost && (
           <div
             className={cx(s.vcost, plus && s.vcostPlus)}
@@ -192,9 +196,6 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
       <div className={s.hudR}>
         <GoalPill goal={goal} content={content} />
         <div className={s.vrow}>
-          <span className={s.lbl} aria-hidden="true">
-            {ui("ui.m.vigor")}
-          </span>
           <VigorBar vigor={vigor} pop={vigorPop} />
           <div
             className={cx(s.mood, s[`mood-${tone}`])}
@@ -203,7 +204,7 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
             aria-label={ui("ui.m.mood.aria", { mood: gameText(`mood.${mood}`) })}
             role="img"
           >
-            <Glyph name={MOOD_GLYPH[mood] ?? "right"} size={18} weight={2.6} />
+            <Glyph name={MOOD_GLYPH[mood] ?? "right"} size={15} weight={2.6} />
             <span aria-hidden="true">{gameText(`mood.${mood}`)}</span>
           </div>
         </div>
