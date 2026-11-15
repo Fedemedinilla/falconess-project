@@ -14,6 +14,7 @@ import {
 import { gameBrief } from "../text/brief";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import type { WorkshopTab } from "./flow/types";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
@@ -24,8 +25,6 @@ const GESTURE: Record<Style, TakeoffStyle> = {
   glide: "ramp",
   ground: "turbine",
 };
-
-export type WorkshopTab = "skills" | "wings";
 
 /**
  * The v3 workshop on the phone: learn skills with her points, and swap the wings (on v3 a look and

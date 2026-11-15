@@ -10,7 +10,7 @@
     "types": ["vite/client"]
   },
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/testing/**"],
   "references": [
     { "path": "../../packages/race-view" },
     { "path": "../../packages/rng" },

@@ -4,7 +4,7 @@
  */
 import type { ChatTopic, SeasonState, StoryScene, StoryTrigger } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
-import { goalStatuses } from "../screens/model/season";
+import { goalStatuses } from "../screens/model/goals";
 
 /** Whether a trigger holds for the season now. */
 export function triggerHolds(ctx: SimContext, state: SeasonState, t: StoryTrigger): boolean {

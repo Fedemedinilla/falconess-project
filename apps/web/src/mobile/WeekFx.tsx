@@ -4,66 +4,13 @@ import { gameBrief } from "../text/brief";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { FX, fxSpots, fxTotalMs } from "./flow/fxTimeline";
 import { Glyph, type GlyphName } from "./Glyph";
 import { crewInitials } from "./model";
 import { paceScale } from "./pace";
 import { playSound } from "./sfx";
 import f from "./WeekFx.module.css";
 import type { WeekFx, WeekFxKind } from "./weekFx";
-
-/**
- * Each effect's time on screen (owner 2026-11-13: long enough to read, never a blink); learned
- * skills stay longer the more there are. All the week's effects show together (owner 2026-11-13:
- * one after another took too long), each a moment after the one before.
- */
-export const FX_MS = 1800;
-const PER_SKILL_MS = 450;
-const STAGGER_MS = 160;
-export function fxMs(e: WeekFx): number {
-  return e.kind === "skills"
-    ? FX_MS + PER_SKILL_MS * Math.max(0, (e.skills?.length ?? 1) - 1)
-    : FX_MS;
-}
-export function fxTotalMs(fx: readonly WeekFx[]): number {
-  return Math.max(0, ...fx.map((e, i) => STAGGER_MS * i + fxMs(e))) + 500;
-}
-
-/** A spot of the screen, in percent of its width and height (the effect's center). */
-type Spot = { readonly x: number; readonly y: number };
-
-/**
- * Where each effect shows (owner 2026-11-13): somewhere new each week, never on top of another
- * and well inside the screen. The screen is cut in two columns and three rows; each effect takes
- * a cell of its own at random and moves a little inside it. Learned skills (a wide list) take a
- * whole row, centered.
- */
-export function fxSpots(fx: readonly WeekFx[], random: () => number = Math.random): Spot[] {
-  const rows = shuffle([30, 50, 70], random);
-  const skillsRow = fx.some((e) => e.kind === "skills") ? rows.pop() : undefined;
-  const cells = shuffle(
-    rows.flatMap((y) => [27, 73].map((x) => ({ x, y }))),
-    random,
-  );
-  const jitter = (n: number) => (random() * 2 - 1) * n;
-  return fx.map((e, i) => {
-    if (e.kind === "skills") return { x: 50, y: (skillsRow ?? 50) + jitter(4) };
-    // more effects than cells (never with today's six kinds): the center
-    const c = cells[i % Math.max(1, cells.length)] ?? { x: 50, y: 50 };
-    // sideways only a little: two in a row never touch (each is 40 % of the width)
-    return { x: c.x + jitter(3), y: c.y + jitter(5) };
-  });
-}
-
-function shuffle<T>(xs: readonly T[], random: () => number): T[] {
-  const out = [...xs];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    const a = out[i] as T;
-    out[i] = out[j] as T;
-    out[j] = a;
-  }
-  return out;
-}
 
 const GLYPH: Partial<Record<WeekFxKind, GlyphName>> = {
   "mood-up": "heart",
@@ -144,14 +91,14 @@ function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentInd
             key={id}
             className={f.skill}
             data-skill={id}
-            style={{ animationDelay: `${at + 250 + k * PER_SKILL_MS}ms` }}
+            style={{ animationDelay: `${at + 250 + k * FX.perSkill}ms` }}
           >
             <Glyph name="book" size={20} weight={2.4} />
             <span>
               <b>{gameText(skill.textKey)}</b>
               {gameBrief(skill.textKey) && <small>{gameBrief(skill.textKey)}</small>}
             </span>
-            <i className={f.shine} style={{ animationDelay: `${at + 450 + k * PER_SKILL_MS}ms` }} />
+            <i className={f.shine} style={{ animationDelay: `${at + 450 + k * FX.perSkill}ms` }} />
           </li>
         );
       })}
@@ -173,7 +120,7 @@ export function WeekFxOverlay({
   content: ContentIndex;
   onDone: () => void;
 }) {
-  const starts = fx.map((_, i) => STAGGER_MS * i);
+  const starts = fx.map((_, i) => FX.stagger * i);
   // «Ritmo» (owner 2026-11-14): the effects leave sooner, after they popped in
   const total = Math.max(900, Math.round(fxTotalMs(fx) * paceScale()));
   const [spots] = useState(() => fxSpots(fx));

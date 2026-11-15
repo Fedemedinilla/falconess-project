@@ -32,6 +32,16 @@ describe("the inheritance card's scene (ADR-0013)", () => {
     expect(inspirationScene("x", s, 1, undefined, true)?.kind).toBe("start");
     expect(inspirationScene("x", withLog([entry(1)]), 1, undefined, true)).toBeUndefined();
   });
+  it("shows the start's card on every call while the run is only its start, read or not", () => {
+    const s = withLog([entry(1, { inspirations: [rec(true)] })]);
+    const step = { before: base, after: s, input: { kind: "rest" as const } };
+    // F19: changes in 5.3 (a card once shown is kept as shown, across reloads)
+    for (const seen of [false, true, true])
+      expect(inspirationScene("x", s, 1, step, seen)).toMatchObject({
+        kind: "start",
+        key: "x:start",
+      });
+  });
   it("shows a new week's inspirations once, and not when none inspired her", () => {
     const before = withLog([entry(23)]);
     const after = withLog([entry(23), entry(24, { inspirations: [rec(true), rec(false, 1)] })]);

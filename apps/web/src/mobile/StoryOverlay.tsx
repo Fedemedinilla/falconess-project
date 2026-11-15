@@ -5,6 +5,7 @@ import { cx } from "../ui/cx";
 import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
+import type { Digest } from "./flow/types";
 import s from "./Story.module.css";
 import { digestLines } from "./storyModel";
 
@@ -25,13 +26,6 @@ const CARD_MS = 1500;
 /** Auto: how long a finished line stays before the next one (owner 2026-11-12: 1.5 s was too fast). */
 const AUTO_MS = 4500;
 const LEAVE_MS = 800;
-
-/**
- * «Ritmo» Rápido / Directo (owner 2026-11-14, as Umamusume skips): not the whole scene but a
- * digest, about a third of its lines (the first and the last always) passing by on their own,
- * whole at once, `ms` each. Seen in full from «Historia» or «Ver».
- */
-export type Digest = { readonly ms: number };
 
 function reduced(): boolean {
   return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;

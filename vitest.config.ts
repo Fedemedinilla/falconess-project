@@ -1,4 +1,7 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
+
+/** The web tests that run natively (`web-flow`): text-free, no `import.meta.glob`. */
+const WEB_FLOW = ["src/mobile/flow/**/*.test.ts", "scripts/e2e-saves.test.ts"];
 
 export default defineConfig({
   test: {
@@ -26,7 +29,20 @@ export default defineConfig({
           name: "web",
           root: "apps/web",
           include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
+          exclude: [...configDefaults.exclude, ...WEB_FLOW],
           benchmark: { include: [] },
+        },
+      },
+      {
+        // the phone's flow model, text-free, in native ES modules (tsx loader) like `sim`: its
+        // season walks play whole seasons, which the module runner makes about 15 times slower
+        test: {
+          name: "web-flow",
+          root: "apps/web",
+          include: WEB_FLOW,
+          benchmark: { include: [] },
+          experimental: { viteModuleRunner: false },
+          execArgv: ["--import", "tsx"],
         },
       },
       {

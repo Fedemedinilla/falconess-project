@@ -4,11 +4,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { type RunnerArt, runnerArt } from "./art";
+import { RESULT, resultTimeline, type TrainResult } from "./flow/trainResult";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type CrewBadge, crewInitials, statCells, type TrainingCard } from "./model";
 import { StatStrip } from "./Parts";
-import { paceScale } from "./pace";
+import { getPace, paceScale } from "./pace";
 import { placeScene } from "./sceneLayout";
 import { playPing } from "./sfx";
 
@@ -24,69 +25,6 @@ const GLYPH: Readonly<Record<TrainingKind, GlyphName>> = {
 function trainButtonId(kind: TrainingKind): string {
   return `m-entrenar-${kind.slice("train:".length)}`;
 }
-
-/**
- * A training's result on the training screen (owner 2026-11-11, like Umamusume's): what it came
- * to, the stats it moved and the skill points, and where the numbers count up from.
- */
-export type TrainResult = {
-  readonly kind: TrainingKind;
-  readonly outcome: "success" | "boost" | "fail";
-  readonly gains: readonly { readonly stat: StatName; readonly delta: number }[];
-  readonly points: number;
-  readonly from: Readonly<Record<StatName, number>>;
-  readonly fromPoints: number;
-  /** owner 2026-11-13: the vigor it cost (or gave) and the crews it bonded with, with the rest. */
-  readonly vigor: number;
-  readonly bonds: readonly { readonly manufacturer: string; readonly delta: number }[];
-  /** ADR-0016: the crews in sintonía she trained with (their +25 %). */
-  readonly sync: readonly string[];
-  /** Every crew that stood at this training (they come in with their bond). */
-  readonly crews: readonly string[];
-};
-
-/**
- * When each «+N» of a result lands (ms): the stats, the skill points, the vigor, then each crew's
- * bond, one after the other; and when the result ends. The HUD's vigor bar reads its own.
- */
-export function resultTimeline(
-  result: TrainResult,
-  k: number = paceScale(),
-): {
-  readonly stats: Partial<Record<StatName, number>>;
-  readonly points: number | undefined;
-  readonly vigor: number | undefined;
-  readonly bonds: Readonly<Record<string, number>>;
-  readonly end: number;
-} {
-  let i = 0;
-  // «Ritmo» (owner 2026-11-14) shortens the steps and the hold, not the stats' slide
-  const step = POP_STEP_MS * k;
-  const next = () => FIRST_POP_MS + step * i++;
-  const stats = Object.fromEntries(result.gains.map((g) => [g.stat, next()]));
-  const points = result.points > 0 ? next() : undefined;
-  const vigor = result.vigor !== 0 ? next() : undefined;
-  const bonds = Object.fromEntries(result.bonds.map((b) => [b.manufacturer, next()]));
-  const crewsIn = CREW_IN_MS + CREW_STEP_MS * k * Math.max(0, result.crews.length - 1) + 450 * k;
-  return {
-    stats,
-    points,
-    vigor,
-    bonds,
-    end: Math.max(FIRST_POP_MS + step * Math.max(0, i - 1), crewsIn) + HOLD_MS * k,
-  };
-}
-
-/** When the stamp lands and each «+N» after it, ms. */
-const STAMP_MS = 120;
-/** The stats slide down in `DROP_MS` (Mobile.module.css `.stripDown`); then the crews come in. */
-const DROP_MS = 460;
-const CREW_IN_MS = 80 + DROP_MS;
-const CREW_STEP_MS = 150;
-const FIRST_POP_MS = 520;
-const POP_STEP_MS = 300;
-/** The result stays this long after its last «+N», then the week goes on (a tap goes sooner). */
-const HOLD_MS = 1100;
 
 /**
  * The training screen: her chibi on stage with the chosen training's ribbon and its crews (a
@@ -120,7 +58,7 @@ export function TrainScreen({
 }) {
   const art = runnerArt(state.falconessId);
   // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
-  const timeline = result ? resultTimeline(result) : undefined;
+  const timeline = result ? resultTimeline(result, paceScale(getPace())) : undefined;
   const pops = result &&
     timeline && {
       stats: Object.fromEntries(
@@ -182,7 +120,12 @@ export function TrainScreen({
     if (reducedMotion()) return;
     stripRef.current?.animate(
       [{ transform: "translateY(0)" }, { transform: `translateY(${y}px)` }],
-      { duration: DROP_MS, delay: 80, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" },
+      {
+        duration: RESULT.drop,
+        delay: 80,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        fill: "backwards",
+      },
     );
     for (const el of [roundsRef.current, footRef.current])
       el?.animate(
@@ -239,7 +182,7 @@ export function TrainScreen({
               className={cx(s.stamp, result.outcome === "fail" && s.stampFail)}
               id="m-resultado"
               data-outcome={result.outcome}
-              style={{ animationDelay: `${STAMP_MS}ms` }}
+              style={{ animationDelay: `${RESULT.stamp}ms` }}
             >
               {ui(`ui.m.result.${result.outcome}`)}
             </p>
@@ -248,7 +191,7 @@ export function TrainScreen({
             <p
               className={s.syncStamp}
               id="m-resultado-sintonia"
-              style={{ animationDelay: `${STAMP_MS + 250}ms` }}
+              style={{ animationDelay: `${RESULT.stamp + 250}ms` }}
             >
               {ui("ui.m.fx.sync")}
             </p>
@@ -379,7 +322,7 @@ export function TrainScreen({
               <div
                 key={m}
                 className={cx(s.crewInCard, sync && s.crewInSync)}
-                style={{ animationDelay: `${CREW_IN_MS + k * CREW_STEP_MS * paceScale()}ms` }}
+                style={{ animationDelay: `${RESULT.crewIn + k * RESULT.crewStep * paceScale()}ms` }}
                 data-crew={m}
               >
                 <CrewFace ctx={ctx} id={m} sync={sync} size={58} />

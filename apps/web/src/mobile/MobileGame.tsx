@@ -5,7 +5,7 @@ import type {
   TrainingKind,
   WorkshopOp,
 } from "@falconess/schema";
-import { advanceSeason, difficultyOf, inSync, type SimContext, vigor } from "@falconess/sim";
+import { advanceSeason, difficultyOf, type SimContext } from "@falconess/sim";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
@@ -21,20 +21,22 @@ import {
   wingsPosition,
   withPosition,
 } from "../screens/model/position";
-import { weekSummary } from "../screens/model/week";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useMedia } from "../ui/useMedia";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
+import { fxPart } from "./flow/steps";
+import { resultTimeline, type TrainResult, trainingCue, trainResultOf } from "./flow/trainResult";
+import type { WorkshopTab } from "./flow/types";
 import { Glyph } from "./Glyph";
 import { InspirationOverlay } from "./Inspiration";
 import { inspirationScene } from "./inspirationScene";
 import { LangButton } from "./LangButton";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
-import { type TrainingCard, trainingCards, vigorView, weekMenu } from "./model";
+import { trainingCards, vigorView, weekMenu } from "./model";
 import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
 import { OutingSheet } from "./OutingSheet";
 import {
@@ -52,7 +54,7 @@ import {
 } from "./Panels";
 import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
-import { getPace, nextPace, type Pace, setPace } from "./pace";
+import { getPace, nextPace, type Pace, paceScale, setPace } from "./pace";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
 import st from "./Story.module.css";
@@ -64,7 +66,6 @@ import {
   playNav,
   playSound,
   queueTap,
-  type SoundCue,
   type SoundStyle,
   setSoundStyle,
 } from "./sfx";
@@ -79,12 +80,12 @@ import {
 } from "./storyModel";
 import { TitleScreen } from "./TitleScreen";
 import { TrackSheet } from "./TrackCard";
-import { resultTimeline, type TrainResult, TrainScreen } from "./TrainScreen";
+import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { trackCard } from "./track";
 import { WeekFxOverlay } from "./WeekFx";
-import { WorkshopScreen, type WorkshopTab } from "./WorkshopScreen";
-import { type WeekFx, type WeekFxPart, weekFx } from "./weekFx";
+import { WorkshopScreen } from "./WorkshopScreen";
+import { type WeekFx, weekFx } from "./weekFx";
 
 type View =
   | { readonly screen: "menu" }
@@ -412,32 +413,6 @@ export function MobileGame() {
   const unreadNoFx = (stepOnMenu: Step | undefined) =>
     stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset, fxPart(stepOnMenu)).length === 0;
 
-  /** The result of a training, for the result on the training screen. */
-  const trainResult = (
-    kind: TrainingKind,
-    outcome: "success" | "boost" | "fail",
-    step: Step,
-    points: number,
-  ): TrainResult => ({
-    kind,
-    outcome,
-    gains: weekSummary(ctx, step).stats,
-    points,
-    from: step.before.stats,
-    fromPoints: step.before.skillPoints,
-    vigor: vigor(ctx.ruleset, step.after.fatigue) - vigor(ctx.ruleset, step.before.fatigue),
-    bonds: Object.keys(step.after.bond)
-      .sort()
-      .map((m) => ({
-        manufacturer: m,
-        delta: (step.after.bond[m] ?? 0) - (step.before.bond[m] ?? 0),
-      }))
-      .filter((b) => b.delta > 0),
-    crews: step.before.crewPresence[kind] ?? [],
-    sync: (step.before.crewPresence[kind] ?? []).filter((m) =>
-      inSync(ctx, step.before.bond[m] ?? 0),
-    ),
-  });
   /** Apply the week's input (with the race position on a race week); a race opens its view. */
   const commit = (input: WeekActionInput) => {
     const raceTurn = menu.raceWeek ? state.turn : undefined;
@@ -453,7 +428,8 @@ export function MobileGame() {
       setView({
         screen: "trained",
         next,
-        result: trainResult(
+        result: trainResultOf(
+          ctx,
           kind,
           cue,
           step,
@@ -494,7 +470,7 @@ export function MobileGame() {
       // the race's skill points are not hers yet: only the Simulator's own
       const points =
         kind === "train:simulator" && cue !== "fail" ? ctx.ruleset.season.simulatorSkillPoints : 0;
-      setView({ screen: "trained", next, result: trainResult(kind, cue, step, points) });
+      setView({ screen: "trained", next, result: trainResultOf(ctx, kind, cue, step, points) });
       return;
     }
     setView(next);
@@ -543,7 +519,10 @@ export function MobileGame() {
       vigor={vigorView(ctx, state, previewKind(view))}
       vigorPop={
         view.screen === "trained" && view.result.vigor !== 0
-          ? { delta: view.result.vigor, delay: resultTimeline(view.result).vigor ?? 0 }
+          ? {
+              delta: view.result.vigor,
+              delay: resultTimeline(view.result, paceScale(getPace())).vigor ?? 0,
+            }
           : undefined
       }
       mood={menu.mood}
@@ -869,11 +848,6 @@ export function MobileGame() {
   );
 }
 
-/** A race week's step played its action's effects before the race: the menu shows the race's. */
-function fxPart(step: Step): WeekFxPart {
-  return step.after.raceResults.length > step.before.raceResults.length ? "race" : "all";
-}
-
 /**
  * The notice after a story scene (owner 2026-11-13): just over the goal's track tab, never over
  * the menu's buttons; without that card on screen, under the top bar.
@@ -938,20 +912,6 @@ function transitionColors(
 
 function reducedMotion(): boolean {
   return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
-
-/** A week's sound: a training's result (a crew there makes it a boost), else a confirm. */
-function trainingCue(
-  input: WeekActionInput,
-  turn: number,
-  after: SeasonState | undefined,
-  cards: readonly TrainingCard[],
-): SoundCue {
-  const card = cards.find((c) => c.kind === input.kind);
-  if (!card) return "confirm";
-  const entry = after?.log.find((e) => e.turn === turn && e.input?.kind === input.kind);
-  if (!entry?.notes.includes("log.train.ok")) return entry ? "fail" : "confirm";
-  return card.boosted ? "boost" : "success";
 }
 
 /** The menu's own buttons: in the phone's sheet and in the wide screen's panel. */
