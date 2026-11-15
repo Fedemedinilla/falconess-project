@@ -878,12 +878,13 @@
   }
 }
 
-/* the round «Menú» button (its size and place: .menuTop) */
-.app .rb {
-  position: absolute;
+/* «Menú», round and small, at the top right under the mood (owner 2026-11-14) */
+.app .menuBtn {
+  position: relative;
   z-index: 1;
-  width: 74px;
-  height: 74px;
+  margin-left: auto;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: rgb(255 255 255 / 0.94);
   box-shadow:
@@ -895,7 +896,7 @@
   justify-content: center;
   gap: 1px;
 }
-.app .rb:not(:disabled):active {
+.app .menuBtn:active {
   transform: translateY(1px);
 }
 .rbLb {
@@ -904,6 +905,9 @@
   font-size: 13px;
   line-height: 15px;
   white-space: nowrap;
+}
+.app .menuBtn .rbLb {
+  font-size: 12px;
 }
 .bdg {
   position: absolute;
@@ -921,9 +925,6 @@
   line-height: 24px;
   text-align: center;
   box-shadow: 0 0 0 2px #fff;
-}
-.app .sm .rbLb {
-  font-size: 12px;
 }
 
 /* the week's boosted trainings, as chips on «Entrenar» */
@@ -2830,13 +2831,6 @@
 }
 .app .pWorkshop {
   --c: #6d8397;
-}
-/* the menu, round and small, at the top right under the mood */
-.app .menuTop {
-  position: relative;
-  margin-left: auto;
-  width: 52px;
-  height: 52px;
 }
 @media (max-height: 700px) {
   .app .tbar {

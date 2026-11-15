@@ -19,8 +19,8 @@ function RoundButton({
   id,
   glyph,
   label,
+  base,
   className,
-  base = s.rb,
   badge,
   disabled = false,
   onClick,
@@ -29,9 +29,9 @@ function RoundButton({
   id: string;
   glyph: GlyphName;
   label: string;
-  className: string | undefined;
-  /** The button's shape: the round one (the menu) or a pill (the week's actions). */
-  base?: string | undefined;
+  /** The button's shape: the round «Menú» or a pill (the week's actions). */
+  base: string | undefined;
+  className?: string | undefined;
   badge?: ReactNode;
   disabled?: boolean;
   onClick: () => void;
@@ -118,7 +118,7 @@ export function MenuScreen({
             id="m-menu"
             glyph="menu"
             label={ui("ui.m.menu")}
-            className={cx(s.sm, s.menuTop)}
+            base={s.menuBtn}
             size={20}
             onClick={() => onAction("menu")}
           />
