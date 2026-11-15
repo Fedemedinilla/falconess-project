@@ -885,7 +885,7 @@ function StoryToast({ children, long = false }: { children: React.ReactNode; lon
     const track = document.getElementById("m-pista-tab")?.getBoundingClientRect();
     const height = el.getBoundingClientRect().height;
     const top = track && track.height > 0 ? track.top - height - 10 : 124;
-    setSpot({ top: Math.max(8, Math.round(top)), bottom: "auto" });
+    setSpot({ top: Math.max(8, Math.round(top)) });
   }, []);
   return (
     <div

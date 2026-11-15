@@ -92,7 +92,7 @@ export function MenuScreen({
   const track = goal && trackCard(ctx, goal.courseId);
 
   return (
-    <div className={cx(s.screen, s.menu)}>
+    <div className={s.screen}>
       {art && (
         <div
           className={s.hero}

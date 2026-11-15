@@ -878,12 +878,7 @@
   }
 }
 
-/* the floating actions */
-.arc {
-  flex: none;
-  position: relative;
-  height: 232px;
-}
+/* the round «Menú» button (its size and place: .menuTop) */
 .app .rb {
   position: absolute;
   z-index: 1;
@@ -899,9 +894,6 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-}
-.app .rb:disabled {
-  opacity: 0.5;
 }
 .app .rb:not(:disabled):active {
   transform: translateY(1px);
@@ -930,138 +922,11 @@
   text-align: center;
   box-shadow: 0 0 0 2px #fff;
 }
-.app .o1 {
-  left: 0;
-  top: 0;
-}
-.app .o2 {
-  left: calc(50% - 140px);
-  top: 80px;
-}
-.app .o3 {
-  right: calc(50% - 140px);
-  top: 80px;
-}
-.app .o4 {
-  right: 0;
-  top: 0;
-}
-.app .sm {
-  width: 56px;
-  height: 56px;
-  bottom: 0;
-}
 .app .sm .rbLb {
   font-size: 12px;
 }
-.app .e2 {
-  right: 0;
-}
-@media (max-height: 700px) {
-  .arc {
-    height: 206px;
-  }
-  .app .rb {
-    width: 68px;
-    height: 68px;
-  }
-  .app .o2 {
-    left: calc(50% - 126px);
-    top: 70px;
-  }
-  .app .o3 {
-    right: calc(50% - 126px);
-    top: 70px;
-  }
-  .app .sm {
-    width: 52px;
-    height: 52px;
-  }
-}
-@media (max-width: 370px) {
-  .app .o2 {
-    left: 0;
-  }
-  .app .o3 {
-    right: 0;
-  }
-}
 
-/* the delta «Entrenar» (3B) */
-.app .delta {
-  position: absolute;
-  left: calc(50% - 110px);
-  top: 0;
-  width: 220px;
-  height: 210px;
-  z-index: 0;
-  display: block;
-  pointer-events: none;
-  transform-origin: 50% 0;
-  outline: none;
-}
-.deltaArt {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 220px;
-  height: 210px;
-  overflow: visible;
-  pointer-events: none;
-  filter: drop-shadow(0 3px 0 rgb(20 32 43 / 0.3)) drop-shadow(0 6px 10px rgb(20 32 43 / 0.3));
-  transition: transform 0.08s ease-out;
-}
-.deltaHit {
-  pointer-events: visiblePainted;
-}
-.deltaOutline {
-  fill: none;
-  stroke: none;
-  pointer-events: none;
-}
-.delta:focus-visible .deltaOutline {
-  stroke: var(--yel);
-  stroke-width: 4;
-  stroke-linejoin: round;
-}
-.delta:not(:disabled):active .deltaArt {
-  transform: translateY(3px);
-  filter: drop-shadow(0 1px 0 rgb(20 32 43 / 0.3)) brightness(0.88);
-}
-.app .delta:disabled .deltaArt {
-  filter: grayscale(0.7) opacity(0.6);
-}
-.deltaLabel {
-  position: absolute;
-  left: 50%;
-  top: var(--cy);
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  pointer-events: none;
-  color: #fff;
-  font-family: var(--cn);
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 24px;
-  white-space: nowrap;
-  text-shadow:
-    0 1px 0 rgb(0 0 0 / 0.45),
-    0 0 6px rgb(0 0 0 / 0.25);
-}
-.deltaChips {
-  position: absolute;
-  left: 50%;
-  top: 94px;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none;
-}
+/* the week's boosted trainings, as chips on «Entrenar» */
 .boostChip {
   display: inline-flex;
   align-items: center;
@@ -1093,29 +958,6 @@
     box-shadow:
       0 0 0 1px rgb(20 32 43 / 0.35),
       0 0 9px 3px rgb(255 214 90 / 0.75);
-  }
-}
-.deltaGlow {
-  opacity: 0;
-  animation: bshim 2.8s ease-in-out infinite;
-}
-@keyframes bshim {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-@media (max-width: 379px) {
-  .app .delta {
-    transform: scale(0.94);
-  }
-}
-@media (max-height: 700px) {
-  .app .delta {
-    transform: scale(0.9);
   }
 }
 
@@ -1207,29 +1049,6 @@
   font-weight: 700;
   font-size: 22px;
   color: #14202b;
-}
-.pbolt {
-  position: absolute;
-  right: -6px;
-  bottom: -4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #f1c40f;
-  box-shadow: 0 0 0 1.5px #14202b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.nm {
-  display: inline-block;
-  margin-top: 4px;
-  padding: 0 6px;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 0.9);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 15px;
 }
 .seg {
   display: flex;
@@ -1349,19 +1168,6 @@
 }
 .sel .lv {
   color: #fff;
-}
-.gdot {
-  position: absolute;
-  right: -7px;
-  bottom: 8px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #f1c40f;
-  box-shadow: 0 0 0 1.5px #14202b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .ftag {
   position: absolute;
@@ -1669,12 +1475,12 @@
   font-size: 20px;
   line-height: 22px;
 }
-.hcard > span:not(.livery):not(.pill) {
+.hcard > span:not(.livery):not(.equipTag) {
   font-size: 13px;
   line-height: 17px;
   color: var(--tx2);
 }
-.pill {
+.equipTag {
   align-self: flex-start;
   margin-top: 4px;
   height: 20px;
@@ -2024,24 +1830,10 @@
   .app .gn,
   .app .boostChip,
   .app .hero img,
-  .app .sel::before,
-  .app .deltaArt {
+  .app .sel::before {
     animation: none;
     transition: none;
   }
-  .app .deltaGlow {
-    animation: none;
-    opacity: 0.35;
-  }
-}
-
-/* «Lo que pasó» over the phone game: rounded like the prototype's popups */
-.app .weekDialog {
-  width: min(358px, calc(100% - 24px));
-  border-radius: 20px;
-  border-width: 0;
-  border-top-width: 6px;
-  overflow: auto;
 }
 
 @media (max-width: 380px) {
@@ -2481,7 +2273,7 @@
     transform: rotate(180deg) translateY(-26px);
   }
 }
-/* a training's vigor change on the HUD bar, and its crews' bonds on the stage */
+/* a training's vigor change on the HUD bar */
 .vpop {
   position: absolute;
   right: 4px;
@@ -2492,19 +2284,6 @@
 }
 .vpop .popN {
   font-size: 20px;
-}
-.bondPops {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-  display: flex;
-  gap: 6px;
-}
-.bondPop {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 .portraitSmall {
   width: 44px;
@@ -2608,9 +2387,6 @@
     inset 0 0 0 3px var(--yel),
     0 0 0 3px #ff9a00,
     0 0 14px 4px rgb(255 170 0 / 0.8);
-}
-.gdotSync {
-  background: linear-gradient(180deg, #ff8a3d, #e0305a);
 }
 @media (prefers-reduced-motion: reduce) {
   .portraitSync {
@@ -2991,9 +2767,13 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px 12px;
 }
+/* the pills' 4px top margin and 8px side padding were borrowed from the workshop tag while both
+   classes were named `.pill` (map-dead X1); kept so the approved menu does not move */
 .app .pill {
   --c: #6b8093;
   position: relative;
+  margin-top: 4px;
+  padding: 0 8px;
   height: 46px;
   border-radius: 23px;
   display: flex;

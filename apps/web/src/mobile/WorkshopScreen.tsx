@@ -167,7 +167,7 @@ export function WorkshopScreen({
                         : gameText(`style.${frame.style}`)}
                     </span>
                     {id === state.equippedFrame && (
-                      <span className={s.pill}>{ui("ui.hangar.equipped")}</span>
+                      <span className={s.equipTag}>{ui("ui.hangar.equipped")}</span>
                     )}
                   </button>
                 );

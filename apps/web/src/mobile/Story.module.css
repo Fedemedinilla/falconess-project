@@ -400,7 +400,6 @@
   position: fixed;
   left: max(12px, env(safe-area-inset-left, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   z-index: 56;
   background: #172235;
   color: #fff;
