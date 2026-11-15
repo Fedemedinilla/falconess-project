@@ -41,7 +41,12 @@
       }
     },
     {
-      "includes": ["docs/race-engine.md"],
+      "includes": [
+        "docs/race-engine.md",
+        "docs/design/distancias-y-posiciones-umamusume.md",
+        "docs/design/investigacion-personajes.md",
+        "docs/design/research-balance-umamusume.md"
+      ],
       "formatter": { "enabled": false }
     }
   ]
