@@ -13,9 +13,11 @@ import type {
   FrameMods,
   RaceModifier,
   RacePhase,
+  RunInput,
   SkillTrigger,
+  WorkshopOp,
 } from "@falconess/schema";
-import { STAT_ORDER } from "@falconess/sim";
+import { type SimContext, STAT_ORDER } from "@falconess/sim";
 import { getContent } from "../../content/load";
 import { formatFixed, formatInt, formatPermille, formatSigned } from "../../text/format";
 import { locale, perLang } from "../../text/lang";
@@ -263,4 +265,43 @@ export function describeOption(
       effects: describeEffects(b.effects, crewName),
     })),
   };
+}
+
+/** A week's action in words: "Entrenar agilidad", "Taller: equipar Shiden, reparar". */
+export function describeInput(ctx: SimContext, input: RunInput): string {
+  const c = ctx.content;
+  switch (input.kind) {
+    case "start":
+      return ui("ui.log.start");
+    case "event:choose":
+      return ui("ui.log.event");
+    case "outing":
+      return input.manufacturer === undefined
+        ? gameText("action.outing")
+        : ui("ui.log.outingWith", {
+            crew: gameText(c.getManufacturer(input.manufacturer).crew.textKey),
+          });
+    case "workshop":
+      return ui("ui.log.workshop", { ops: input.ops.map((op) => describeOp(ctx, op)).join(", ") });
+    default:
+      return gameText(`action.${input.kind}`);
+  }
+}
+
+export function describeOp(ctx: SimContext, op: WorkshopOp): string {
+  const c = ctx.content;
+  switch (op.op) {
+    case "equip-frame":
+      return ui("ui.op.equip", { frame: gameText(c.getFrame(op.frameId).textKey) });
+    case "install-part":
+      return ui("ui.op.install", { part: gameText(c.getPart(op.partId).textKey) });
+    case "remove-part":
+      return ui("ui.op.remove", { part: gameText(c.getPart(op.partId).textKey) });
+    case "repair":
+      return ui("ui.op.repair");
+    case "reroll-quirks":
+      return ui("ui.op.reroll", { frame: gameText(c.getFrame(op.frameId).textKey) });
+    case "learn-skill":
+      return ui("ui.op.learn", { skill: gameText(c.getSkill(op.skillId).textKey) });
+  }
 }

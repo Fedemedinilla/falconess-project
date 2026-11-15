@@ -1,8 +1,10 @@
 import { type ActiveSkill, PART_TYPES } from "@falconess/schema";
+import { RULESET_V1 } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { getContent } from "../../content/load";
 import {
   describeActiveSkill,
+  describeInput,
   describeModifier,
   describeOption,
   describeSource,
@@ -81,6 +83,33 @@ describe("content in plain words", () => {
         { chance: "30\u00a0%", effects: [{ icon: "vigor", text: "Vigor −15" }] },
       ],
     });
+  });
+});
+
+describe("a week's action in words", () => {
+  const ctx = { ruleset: RULESET_V1, content };
+
+  it("names a rest, a training, an outing and an event's answer", () => {
+    expect(describeInput(ctx, { kind: "rest" })).toBe("Descansar");
+    expect(describeInput(ctx, { kind: "train:agility" })).toBe("Entrenar agilidad");
+    expect(describeInput(ctx, { kind: "outing" })).toBe("Salida");
+    expect(describeInput(ctx, { kind: "outing", manufacturer: "koryu" })).toBe(
+      "Salida con Box Kōryū",
+    );
+    expect(describeInput(ctx, { kind: "event:choose", option: 0 })).toBe("Respuesta al evento");
+  });
+
+  it("lists a workshop's operations in order", () => {
+    expect(
+      describeInput(ctx, {
+        kind: "workshop",
+        ops: [
+          { op: "equip-frame", frameId: "shiden" },
+          { op: "learn-skill", skillId: "second-wind" },
+          { op: "repair" },
+        ],
+      }),
+    ).toBe("Taller: equipar Shiden, aprender Segundo aliento, reparar");
   });
 });
 

@@ -18,7 +18,7 @@ import { Pill } from "../ui/Pill";
 import { PositionMark } from "../ui/PositionMark";
 import { scrollBehavior } from "../ui/useMedia";
 import { workshopVigor } from "./model/actions";
-import { describeActiveSkill, describeSource } from "./model/describe";
+import { describeActiveSkill, describeOp, describeSource } from "./model/describe";
 import { raceFrame, wingsPosition, withPosition } from "./model/position";
 import {
   durabilityOf,
@@ -31,7 +31,6 @@ import {
   type WorkshopPlan,
   withPart,
 } from "./model/workshop";
-import { describeOp } from "./TurnSide";
 import s from "./Workshop.module.css";
 
 /** The takeoff gesture of each wing style on v3 (WINGS_V3N). */

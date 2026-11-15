@@ -7,13 +7,14 @@ import { Icon } from "../ui/Icon";
 import { Livery } from "../ui/Livery";
 import s from "./EventDialog.module.css";
 import { describeOption } from "./model/describe";
-import { weekDialogWaiting } from "./WeekDialog";
+import { stepUnread } from "./model/stepRead";
 
 /**
  * The event waiting for an answer, as a modal built into the page. Each option says what it does,
  * with its chance branches. The event must be answered before the next action: closing the dialog
- * only hides it behind a bar that brings it back. It waits for «Lo que pasó» (WeekDialog): the
- * week's result is read first, then the event opens.
+ * only hides it behind a bar that brings it back. It waits while the week's step is unread
+ * (`stepUnread`: «Lo que pasó» in the test view, the effects in the phone game): the week's result
+ * is read first, then the event opens.
  */
 export function EventDialog() {
   const { game, snap } = useGame();
@@ -21,7 +22,7 @@ export function EventDialog() {
   const key = pending ? `${pending.eventId}/${pending.turn}` : "";
   const [hiddenFor, setHiddenFor] = useState<string | undefined>();
   const options = pending ? game.context().content.getEvent(pending.eventId).options.length : 0;
-  const after = weekDialogWaiting(snap);
+  const after = stepUnread(snap);
   const open = pending !== undefined && hiddenFor !== key && !after;
 
   // keys 1–3 answer while the dialog is open; the answer is for the run this dialog showed

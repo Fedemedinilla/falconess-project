@@ -27,7 +27,7 @@ import {
   trainingPreview,
   workshopVigor,
 } from "./model/actions";
-import { formatChance } from "./model/describe";
+import { describeInput, formatChance } from "./model/describe";
 import { raceDistance, type WeekActionInput } from "./model/position";
 import { type NextGoal, type WeekLog, weekOutcome } from "./model/season";
 import { vigorScale } from "./model/vigor";
@@ -35,7 +35,7 @@ import { durabilityOf } from "./model/workshop";
 import { Letter } from "./shared/Letter";
 import { PositionPicker } from "./shared/PositionPicker";
 import s from "./TurnActions.module.css";
-import { describeInput, InputMark } from "./TurnSide";
+import { InputMark } from "./TurnSide";
 
 export type TurnActionsProps = {
   ctx: SimContext;

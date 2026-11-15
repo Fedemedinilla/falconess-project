@@ -1,4 +1,4 @@
-import type { RunInput, SeasonState, WorkshopOp } from "@falconess/schema";
+import type { RunInput, SeasonState } from "@falconess/schema";
 import { bondLevel, type SimContext, STAT_ORDER } from "@falconess/sim";
 import { useGlobalDetail } from "../app/explain";
 import { uiAt } from "../text/brief";
@@ -11,7 +11,7 @@ import { actionIcon, type IconName, placeIcon, styleIcon } from "../ui/icons";
 import { Livery } from "../ui/Livery";
 import { Panel } from "../ui/Panel";
 import { Pill } from "../ui/Pill";
-import { formatChance } from "./model/describe";
+import { describeInput, formatChance } from "./model/describe";
 import {
   type GoalStatus,
   isEventNote,
@@ -228,45 +228,6 @@ export function inputIcon(input: RunInput): IconName | undefined {
 export function InputMark({ input }: { input: RunInput | undefined }) {
   const icon = input && inputIcon(input);
   return icon ? <Icon name={icon} /> : null;
-}
-
-/** A week's action in words: "Entrenar agilidad", "Taller: equipar Shiden, reparar". */
-export function describeInput(ctx: SimContext, input: RunInput): string {
-  const c = ctx.content;
-  switch (input.kind) {
-    case "start":
-      return ui("ui.log.start");
-    case "event:choose":
-      return ui("ui.log.event");
-    case "outing":
-      return input.manufacturer === undefined
-        ? gameText("action.outing")
-        : ui("ui.log.outingWith", {
-            crew: gameText(c.getManufacturer(input.manufacturer).crew.textKey),
-          });
-    case "workshop":
-      return ui("ui.log.workshop", { ops: input.ops.map((op) => describeOp(ctx, op)).join(", ") });
-    default:
-      return gameText(`action.${input.kind}`);
-  }
-}
-
-export function describeOp(ctx: SimContext, op: WorkshopOp): string {
-  const c = ctx.content;
-  switch (op.op) {
-    case "equip-frame":
-      return ui("ui.op.equip", { frame: gameText(c.getFrame(op.frameId).textKey) });
-    case "install-part":
-      return ui("ui.op.install", { part: gameText(c.getPart(op.partId).textKey) });
-    case "remove-part":
-      return ui("ui.op.remove", { part: gameText(c.getPart(op.partId).textKey) });
-    case "repair":
-      return ui("ui.op.repair");
-    case "reroll-quirks":
-      return ui("ui.op.reroll", { frame: gameText(c.getFrame(op.frameId).textKey) });
-    case "learn-skill":
-      return ui("ui.op.learn", { skill: gameText(c.getSkill(op.skillId).textKey) });
-  }
 }
 
 export type LogPanelProps = {
