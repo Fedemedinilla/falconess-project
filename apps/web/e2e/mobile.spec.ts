@@ -1,7 +1,21 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { t, test } from "./fixtures";
+import { t } from "./fixtures";
+import {
+  fingerDrag,
+  pastTitle,
+  runRace,
+  settle,
+  skipPrologue,
+  skipScene,
+  startMobile,
+  swipeUp,
+  test,
+  toPosition,
+  toResult,
+  week,
+} from "./mobile-helpers";
 
 /** What each v3 track asks for, as the calendar stores it (`pnpm content:track-demands`). */
 const DEMANDS: Readonly<Record<string, readonly { stat: string; letter: string }[]>> = JSON.parse(
@@ -33,125 +47,6 @@ const TONE_BG: Readonly<Record<string, string>> = {
   mid: "rgb(242, 194, 48)",
   high: "rgb(179, 38, 30)",
 };
-
-/** The title screen (owner 2026-11-12): a tap anywhere starts. */
-async function pastTitle(page: Page): Promise<void> {
-  await page.click("#m-titulo");
-  await expect(page.locator("#m-titulo")).toHaveCount(0);
-}
-
-/** Peregrina's prologue: once it shows, skipped. */
-async function skipPrologue(page: Page): Promise<void> {
-  await expect(page.locator("#m-capitulo")).toBeVisible();
-  await skipScene(page);
-}
-
-/** A story scene in the way (owner 2026-11-12): skip it and let its notice go. */
-async function skipScene(page: Page): Promise<boolean> {
-  if ((await page.locator("#m-capitulo").count()) === 0) return false;
-  await page.click("#m-capitulo-saltar");
-  await expect(page.locator("#m-capitulo")).toHaveCount(0);
-  return true;
-}
-
-async function startMobile(page: Page, falconessId = "peregrina"): Promise<void> {
-  await page.goto("./");
-  await pastTitle(page);
-  await expect(page.getByRole("heading", { name: t("ui.m.pick.title") })).toBeVisible();
-  await expect(page.locator("#m-empezar")).toBeDisabled();
-  await page.click(`#m-elegir-${falconessId}`);
-  await expect(page.locator(`#m-elegir-${falconessId}`)).toHaveAttribute("aria-pressed", "true");
-  await page.click("#m-empezar");
-  await expect(page.locator("#m-semana")).toHaveAttribute(
-    "aria-label",
-    t("ui.m.week.aria", { turn: 1, turns: 48, left: 47 }),
-  );
-  // Peregrina's prologue opens her season
-  if (falconessId === "peregrina") {
-    await expect(page.locator("#m-capitulo")).toBeVisible();
-    await skipScene(page);
-  }
-}
-
-async function week(page: Page): Promise<number> {
-  const label = (await page.locator("#m-semana").getAttribute("aria-label")) ?? "";
-  return Number(/\d+/.exec(label)?.[0] ?? "0");
-}
-
-/** Play the week's effects, any scene and any event, until the menu (or the season's end) is free. */
-async function settle(page: Page): Promise<void> {
-  const event = page.locator("#evento-dialogo[open]");
-  const busy = async () =>
-    (await event.count()) > 0 ||
-    (await page.locator("#m-capitulo").count()) > 0 ||
-    (await page.locator("#m-efectos").count()) > 0 ||
-    (await page.locator("#m-transicion").count()) > 0;
-  for (let i = 0; i < 80; i++) {
-    // the week's effects (owner 2026-11-13) play first; a tap ends them
-    if ((await page.locator("#m-efectos").count()) > 0) {
-      await page.click("#m-efectos");
-      continue;
-    }
-    if ((await event.count()) > 0) {
-      await page.click("#evento-opcion-0");
-      continue;
-    }
-    if (await skipScene(page)) continue;
-    if ((await page.locator("#m-fin").count()) > 0) return;
-    const menu = page.locator("#m-entrenar");
-    if ((await menu.count()) > 0 && (await menu.isEnabled())) {
-      // a scene comes right after the effects: give it a moment
-      await page.waitForTimeout(150);
-      if (!(await busy())) return;
-      continue;
-    }
-    await page.waitForTimeout(100);
-  }
-  throw new Error("the week did not settle");
-}
-
-/**
- * The race mode of a race week, once its action ran (owner 2026-11-13): the emblem transition,
- * the scene before the race (skipped), until the position card is free.
- */
-async function toPosition(page: Page): Promise<void> {
-  for (let i = 0; i < 80; i++) {
-    if (await skipScene(page)) continue;
-    // the action's effects play before the race mode
-    if ((await page.locator("#m-efectos").count()) > 0) {
-      await page.click("#m-efectos");
-      continue;
-    }
-    const free =
-      (await page.locator("#m-precarrera-accion").count()) > 0 &&
-      (await page.locator("#m-transicion").count()) === 0;
-    if (free) {
-      await page.waitForTimeout(150);
-      if ((await page.locator("#m-capitulo").count()) === 0) return;
-      continue;
-    }
-    await page.waitForTimeout(100);
-  }
-  throw new Error("the position card did not come");
-}
-
-/** After «Saltar»: the scene after the race (skipped), until its result shows. */
-async function toResult(page: Page): Promise<void> {
-  for (let i = 0; i < 80; i++) {
-    if (await skipScene(page)) continue;
-    if ((await page.locator("#m-resultado").count()) > 0) return;
-    await page.waitForTimeout(100);
-  }
-  throw new Error("the race's result did not come");
-}
-
-/** The week's race, once its action ran: the flight view, «Saltar», the result, «Continuar». */
-async function runRace(page: Page): Promise<void> {
-  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
-  await page.click("#m-saltar");
-  await toResult(page);
-  await page.click("#m-carrera-seguir");
-}
 
 test("pick a Falconess, train with a double tap, the failure badge in its risk color", async ({
   page,
@@ -356,23 +251,6 @@ test("at 360 px no horizontal scroll on the menu and the training screen", async
   }
 });
 
-/**
- * A finger swipe on the page (CDP touch events, which Chromium turns into a touch scroll the way a
- * phone does): from (x, y), dy pixels up, in ten moves.
- */
-async function swipeUp(page: Page, x: number, y: number, dy: number): Promise<void> {
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
-  for (let i = 1; i <= 10; i++)
-    await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchMove",
-      touchPoints: [{ x, y: y - (dy * i) / 10 }],
-    });
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await cdp.detach();
-  await page.waitForTimeout(150);
-}
-
 test("the workshop's skills list scrolls by touch to its last skill, which takes a tap", async ({
   page,
 }) => {
@@ -453,21 +331,6 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
   await page.click("#m-saltar");
   await toResult(page);
 });
-
-/** A finger drag across the page (CDP touch events): from (x, y) by (dx, dy), in twelve moves. */
-async function fingerDrag(page: Page, x: number, y: number, dx: number, dy: number): Promise<void> {
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
-  for (let i = 1; i <= 12; i++)
-    await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchMove",
-      touchPoints: [{ x: x + (dx * i) / 12, y: y + (dy * i) / 12 }],
-    });
-  // the finger rests before it lifts: no flick
-  await page.waitForTimeout(150);
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await cdp.detach();
-}
 
 test("first person: a finger turns her head sideways, up to her neck's reach, and it comes back alone", async ({
   page,

@@ -146,7 +146,8 @@ export function PreRaceScreen({
           {input ? ui("ui.m.race.run") : ui("ui.m.race.ready")}
         </button>
       </div>
-      <TrackSheet view={track} open={trackOpen} onClose={() => setTrackOpen(false)} />
+      {/* mounted only while open: the goals' sheet opens its own (no id twice on the page) */}
+      {trackOpen && <TrackSheet view={track} open onClose={() => setTrackOpen(false)} />}
     </div>
   );
 }

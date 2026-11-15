@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
+import { settle, startMobile, shotTest as test, toPosition } from "./mobile-helpers";
 
 /**
  * Screenshots of the first-person view turned by a drag (`E2E_SHOTS=1 playwright test --project
@@ -19,37 +20,9 @@ test.beforeAll(() => {
   mkdirSync(OUT, { recursive: true });
 });
 
-/** Close «Lo que pasó» and answer any event, until the menu (or the season's end) is free. */
-async function settle(page: Page): Promise<void> {
-  const weekOpen = page.locator("#semana-dialogo[open]");
-  const event = page.locator("#evento-dialogo[open]");
-  for (let i = 0; i < 40; i++) {
-    if ((await weekOpen.count()) > 0) {
-      await page.click("#semana-continuar");
-      await expect(weekOpen).toHaveCount(0);
-      continue;
-    }
-    if ((await event.count()) > 0) {
-      await page.click("#evento-opcion-0");
-      continue;
-    }
-    if ((await page.locator("#m-fin").count()) > 0) return;
-    const menu = page.locator("#m-entrenar");
-    if ((await menu.count()) > 0 && (await menu.isEnabled())) {
-      // the dialog opens right after the input: give it a moment before calling the menu free
-      await page.waitForTimeout(100);
-      if ((await weekOpen.count()) === 0 && (await event.count()) === 0) return;
-      continue;
-    }
-    await page.waitForTimeout(100);
-  }
-  throw new Error("the week did not settle");
-}
-
+/** Peregrina's first race week, run in first person from its start, playing. */
 async function toRace(page: Page): Promise<void> {
-  await page.goto("./");
-  await page.click("#m-elegir-peregrina");
-  await page.click("#m-empezar");
+  await startMobile(page, "peregrina");
   while ((await page.locator("#m-carrera").count()) === 0) {
     await page.click("#m-descansar");
     await settle(page);
@@ -57,7 +30,7 @@ async function toRace(page: Page): Promise<void> {
   await page.click("#m-carrera");
   await page.click("#m-volver");
   await page.click("#m-descansar");
-  await page.click("#semana-continuar");
+  await toPosition(page);
   await page.click("#m-correr");
   await page.click("#m-carrera-vista-fpv");
   await page.click("#m-carrera-vuelo-salida");

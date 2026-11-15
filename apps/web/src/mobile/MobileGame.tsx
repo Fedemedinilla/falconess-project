@@ -286,7 +286,7 @@ export function MobileGame() {
 
   if (!run)
     return solo(
-      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)}>
+      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} data-app>
         <SelectScreen onTests={toTests} />
         {transition}
         {titleScreen}
@@ -390,7 +390,7 @@ export function MobileGame() {
 
   if (state.status === "ended" && view.screen !== "race")
     return solo(
-      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} style={style}>
+      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} style={style} data-app>
         <EndScreen
           run={run}
           onRace={(t) => setView({ screen: "race", turn: t, result: false })}
@@ -722,6 +722,7 @@ export function MobileGame() {
     <div
       className={cx(s.app, view.screen === "race" && s.appWide, desk && s.appDesk)}
       style={style}
+      data-app
     >
       {view.screen !== "race" && hud}
       {screen}
@@ -799,39 +800,42 @@ export function MobileGame() {
       />
       {transition}
       {titleScreen}
-      <MobileMenu
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onExport={() => {
-          setMenuOpen(false);
-          const entry = game.history().find((e) => e.seed === run.seed);
-          if (entry) setExporting(entryItem(entry));
-        }}
-        onHistory={() => {
-          setMenuOpen(false);
-          setHistoryOpen(true);
-        }}
-        onTests={toTests}
-        chatName={gameText(`falconess.${state.falconessId}`)}
-        chatNew={openTopics(allTopics(), state).some((tp) => !readTopics().has(tp.id))}
-        onChat={() => {
-          setMenuOpen(false);
-          setChatOpen(true);
-        }}
-        onStory={() => {
-          setMenuOpen(false);
-          setStoryListOpen(true);
-        }}
-        onNew={() => {
-          setMenuOpen(false);
-          game.newSeason();
-        }}
-        onPanel={(t) => {
-          setMenuOpen(false);
-          openPanel(t);
-        }}
-        guideNew={guideNew}
-      />
+      {/* the wide screen's panel is its menu: one set of the menu's buttons on the page */}
+      {!desk && (
+        <MobileMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          onExport={() => {
+            setMenuOpen(false);
+            const entry = game.history().find((e) => e.seed === run.seed);
+            if (entry) setExporting(entryItem(entry));
+          }}
+          onHistory={() => {
+            setMenuOpen(false);
+            setHistoryOpen(true);
+          }}
+          onTests={toTests}
+          chatName={gameText(`falconess.${state.falconessId}`)}
+          chatNew={openTopics(allTopics(), state).some((tp) => !readTopics().has(tp.id))}
+          onChat={() => {
+            setMenuOpen(false);
+            setChatOpen(true);
+          }}
+          onStory={() => {
+            setMenuOpen(false);
+            setStoryListOpen(true);
+          }}
+          onNew={() => {
+            setMenuOpen(false);
+            game.newSeason();
+          }}
+          onPanel={(t) => {
+            setMenuOpen(false);
+            openPanel(t);
+          }}
+          guideNew={guideNew}
+        />
+      )}
     </div>
   );
   return (

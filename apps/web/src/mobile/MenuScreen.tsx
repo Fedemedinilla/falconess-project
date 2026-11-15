@@ -232,7 +232,8 @@ export function MenuScreen({
           </div>
         </div>
       </div>
-      {track && <TrackSheet view={track} open={trackOpen} onClose={() => setTrackOpen(false)} />}
+      {/* mounted only while open: the goals' sheet opens its own (no id twice on the page) */}
+      {track && trackOpen && <TrackSheet view={track} open onClose={() => setTrackOpen(false)} />}
     </div>
   );
 }

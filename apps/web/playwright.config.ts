@@ -17,7 +17,8 @@ import { chromium, defineConfig, devices } from "@playwright/test";
  * (HTTPS_PROXY), the browser goes through it.
  */
 
-const PORT = 4317;
+/** `E2E_PORT` moves the server, so parallel worktrees can each run their own e2e. */
+const PORT = Number(process.env.E2E_PORT ?? 4317);
 const dev = process.env.E2E_DEV === "1";
 const shots = process.env.E2E_SHOTS === "1";
 
@@ -59,7 +60,7 @@ export default defineConfig({
     {
       name: "app",
       testMatch:
-        /(season|run|free-race|explain|advice|week|vigor|ruleset|position|mobile)\.spec\.ts$/,
+        /(season|run|free-race|explain|advice|week|vigor|ruleset|position|mobile(-[a-z]+)?)\.spec\.ts$/,
     },
     { name: "artifact", testMatch: /artifact\.spec\.ts$/ },
     ...(shots ? [{ name: "shots", testMatch: /shots\.spec\.ts$/ }] : []),
