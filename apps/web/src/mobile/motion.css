@@ -1,0 +1,54 @@
+/*
+ * The phone game's motion in one place (plan §2.1): every duration and easing a screen, layer,
+ * sheet or notice uses. Global, imported once by MobileGame; `--m-` never collides with the test
+ * view's `--dur-*` (styles/tokens.css). Timers read the same values from motion.ts, and
+ * motion.test.ts checks that the two agree.
+ */
+:root {
+  --m-dur-fast: 120ms; /* press feedback, selection ring, scene chrome fade */
+  --m-dur-screen: 200ms; /* D1: a screen fades in on mount */
+  --m-dur-screen-major: 320ms; /* the season's first menu, the End */
+  --m-dur-layer-in: 240ms; /* fx scrim, inheritance card */
+  --m-dur-layer-out: 240ms; /* fx scrim (H2), inheritance card (L1) */
+  --m-dur-emblem-in: 160ms; /* M2 */
+  --m-dur-emblem-out: 280ms;
+  --m-dur-scene-out: 800ms; /* owner */
+  --m-dur-card-out: 250ms; /* the chapter card leaves (M5) */
+  --m-dur-line-in: 220ms; /* dialogue box in (M5) */
+  --m-dur-result-in: 320ms; /* race result panel (H1) */
+  --m-dur-result-delay: 400ms; /* the result's entrance after a scene's exit starts */
+  --m-dur-toast-in: 300ms;
+  --m-dur-toast-out: 400ms;
+  --m-dur-sheet-in: 220ms;
+  --m-dur-sheet-out: 180ms; /* M9 */
+  --m-dur-desk-dim: 200ms;
+  --m-dur-layout: 280ms; /* tablet width (L5), desk column (L8) */
+  --m-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --m-ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --m-ease-std: cubic-bezier(0.2, 0, 0, 1);
+  --m-ease-pop: cubic-bezier(0.2, 1.6, 0.4, 1);
+  --m-ease-fade: ease; /* the scene's exit (owner) */
+}
+
+/* reduced motion: every fade and leave is instant; press feedback stays */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --m-dur-screen: 0ms;
+    --m-dur-screen-major: 0ms;
+    --m-dur-layer-in: 0ms;
+    --m-dur-layer-out: 0ms;
+    --m-dur-emblem-in: 0ms;
+    --m-dur-emblem-out: 0ms;
+    --m-dur-scene-out: 0ms;
+    --m-dur-card-out: 0ms;
+    --m-dur-line-in: 0ms;
+    --m-dur-result-in: 0ms;
+    --m-dur-result-delay: 0ms;
+    --m-dur-toast-in: 0ms;
+    --m-dur-toast-out: 0ms;
+    --m-dur-sheet-in: 0ms;
+    --m-dur-sheet-out: 0ms;
+    --m-dur-desk-dim: 0ms;
+    --m-dur-layout: 0ms;
+  }
+}

@@ -37,6 +37,7 @@ import { LangButton } from "./LangButton";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import s from "./Mobile.module.css";
 import { trainingCards, vigorView, weekMenu } from "./model";
+import "./motion.css";
 import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
 import { OutingSheet } from "./OutingSheet";
 import {
