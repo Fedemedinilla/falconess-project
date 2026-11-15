@@ -1,0 +1,95 @@
+{
+  "save": {
+    "schemaVersion": 1,
+    "rulesetVersion": "v3",
+    "seed": "1",
+    "inputs": [
+      {
+        "kind": "start",
+        "falconessId": "cernicala",
+        "hangar": ["shiden", "mule", "nimbus", "falke"],
+        "parents": [],
+        "difficulty": "exigente"
+      },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" }
+    ]
+  },
+  "vista": "v3|1|44|3fea6d35",
+  "historia": [],
+  "expect": {
+    "turn": 44,
+    "status": "active",
+    "difficulty": "exigente",
+    "goal": {
+      "courseId": "overlook",
+      "minPlace": 4,
+      "cup": "qualifier"
+    },
+    "injured": false,
+    "races": [
+      {
+        "turn": 12,
+        "place": 1
+      },
+      {
+        "turn": 24,
+        "place": 1
+      },
+      {
+        "turn": 36,
+        "place": 2
+      }
+    ],
+    "next": {
+      "rest": {
+        "turn": 45,
+        "status": "active",
+        "place": 1,
+        "met": true
+      }
+    },
+    "due": []
+  }
+}

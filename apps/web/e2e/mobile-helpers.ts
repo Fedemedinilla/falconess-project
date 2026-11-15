@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { test as base, expect, type Locator, type Page } from "@playwright/test";
 import { test as appTest, t } from "./fixtures";
 import { describeIssue, expectUniqueIds, type FrameIssue, frameIssues } from "./motion";
@@ -309,6 +311,45 @@ export async function startMobile(page: Page, falconessId = "peregrina"): Promis
     await expect(page.locator("#m-capitulo")).toBeVisible();
     await skipScene(page);
   }
+}
+
+/**
+ * A seeded save (`e2e/saves/<name>.json`): the run, its fingerprint and the scenes its player has
+ * seen, as `scripts/e2e-saves.test.ts` writes and checks them, and the facts it checked.
+ */
+export type SeededSave = {
+  readonly save: { readonly seed: string };
+  readonly vista: string;
+  readonly historia: readonly string[];
+  readonly expect: {
+    /** The week «Continuar» opens on (the last one, once the season ended). */
+    readonly turn: number;
+    readonly status: "active" | "ended";
+    /** The scenes due at load: the menu (or the End) plays them at once. */
+    readonly due: readonly string[];
+  };
+};
+
+/**
+ * Put a seeded save in this browser before the page loads: the run (`falconess.pruebas.partida`),
+ * its last week as read (`falconess.pruebas.vista`) and the scenes already seen in it and ever
+ * (`falconess.juego.historia`). Only when no run is stored yet, so a reload keeps the progress a
+ * test made. Then «Continuar» (`continueRun`) opens it.
+ */
+export async function seedRun(page: Page, name: string): Promise<SeededSave> {
+  const seeded: SeededSave = JSON.parse(
+    readFileSync(fileURLToPath(new URL(`./saves/${name}.json`, import.meta.url)), "utf8"),
+  );
+  await page.addInitScript((fixture: SeededSave) => {
+    if (localStorage.getItem("falconess.pruebas.partida") !== null) return;
+    localStorage.setItem("falconess.pruebas.partida", JSON.stringify(fixture.save));
+    localStorage.setItem("falconess.pruebas.vista", fixture.vista);
+    localStorage.setItem(
+      "falconess.juego.historia",
+      JSON.stringify({ runs: { [fixture.save.seed]: fixture.historia }, ever: fixture.historia }),
+    );
+  }, seeded);
+  return seeded;
 }
 
 /** After a load or a reload: the title, then «Continuar» with the run in play. */

@@ -1,0 +1,117 @@
+{
+  "save": {
+    "schemaVersion": 1,
+    "rulesetVersion": "v3",
+    "seed": "1",
+    "inputs": [
+      {
+        "kind": "start",
+        "falconessId": "peregrina",
+        "hangar": ["shiden", "mule", "nimbus", "falke"],
+        "parents": [],
+        "difficulty": "normal"
+      },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" }
+    ]
+  },
+  "vista": "v3|1|48|dfc0ce05",
+  "historia": [
+    "peregrina-prologue",
+    "peregrina-debut",
+    "peregrina-debut-win",
+    "peregrina-tears",
+    "peregrina-warmup",
+    "peregrina-press",
+    "peregrina-rookie",
+    "peregrina-chief-warning",
+    "peregrina-nap",
+    "peregrina-first-vos",
+    "peregrina-summit",
+    "peregrina-invitation",
+    "peregrina-tiresome"
+  ],
+  "expect": {
+    "turn": 48,
+    "status": "active",
+    "difficulty": "normal",
+    "goal": {
+      "courseId": "crossing",
+      "minPlace": 8
+    },
+    "injured": false,
+    "races": [
+      {
+        "turn": 10,
+        "place": 1
+      },
+      {
+        "turn": 20,
+        "place": 1
+      },
+      {
+        "turn": 30,
+        "place": 1
+      },
+      {
+        "turn": 40,
+        "place": 1
+      }
+    ],
+    "next": {
+      "rest": {
+        "turn": 48,
+        "status": "ended",
+        "endReason": "completed",
+        "place": 2,
+        "met": true
+      }
+    },
+    "due": []
+  }
+}

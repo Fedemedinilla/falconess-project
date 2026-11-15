@@ -1,0 +1,98 @@
+{
+  "save": {
+    "schemaVersion": 1,
+    "rulesetVersion": "v3",
+    "seed": "1",
+    "inputs": [
+      {
+        "kind": "start",
+        "falconessId": "caracara",
+        "hangar": ["shiden", "mule", "nimbus", "falke"],
+        "parents": [],
+        "difficulty": "normal"
+      },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" }
+    ]
+  },
+  "vista": "v3|1|48|3f33e84a",
+  "historia": [],
+  "expect": {
+    "turn": 48,
+    "status": "active",
+    "difficulty": "normal",
+    "injured": false,
+    "races": [
+      {
+        "turn": 12,
+        "place": 3
+      },
+      {
+        "turn": 24,
+        "place": 1
+      },
+      {
+        "turn": 36,
+        "place": 2
+      },
+      {
+        "turn": 46,
+        "place": 1
+      }
+    ],
+    "next": {
+      "train:technique": {
+        "turn": 48,
+        "status": "ended",
+        "endReason": "completed",
+        "training": "ok"
+      }
+    },
+    "due": []
+  }
+}

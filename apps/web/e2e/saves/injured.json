@@ -1,0 +1,40 @@
+{
+  "save": {
+    "schemaVersion": 1,
+    "rulesetVersion": "v3",
+    "seed": "1",
+    "inputs": [
+      {
+        "kind": "start",
+        "falconessId": "caracara",
+        "hangar": ["shiden", "mule", "nimbus", "falke"],
+        "parents": [],
+        "difficulty": "normal"
+      },
+      { "kind": "train:risk-flight" },
+      { "kind": "train:risk-flight" },
+      { "kind": "train:risk-flight" },
+      { "kind": "train:risk-flight" },
+      { "kind": "train:risk-flight" },
+      { "kind": "train:risk-flight" },
+      { "kind": "train:risk-flight" }
+    ]
+  },
+  "vista": "v3|1|8|cb9a8415",
+  "historia": [],
+  "expect": {
+    "turn": 8,
+    "status": "active",
+    "difficulty": "normal",
+    "injured": true,
+    "races": [],
+    "next": {
+      "train:agility": {
+        "turn": 9,
+        "status": "active",
+        "training": "injured"
+      }
+    },
+    "due": []
+  }
+}

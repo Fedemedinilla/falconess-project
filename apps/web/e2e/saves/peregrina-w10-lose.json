@@ -1,0 +1,48 @@
+{
+  "save": {
+    "schemaVersion": 1,
+    "rulesetVersion": "v3",
+    "seed": "6",
+    "inputs": [
+      {
+        "kind": "start",
+        "falconessId": "peregrina",
+        "hangar": ["shiden", "mule", "nimbus", "falke"],
+        "parents": [],
+        "difficulty": "normal"
+      },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" }
+    ]
+  },
+  "vista": "v3|6|10|cf1f4fe3",
+  "historia": ["peregrina-prologue"],
+  "expect": {
+    "turn": 10,
+    "status": "active",
+    "difficulty": "normal",
+    "goal": {
+      "courseId": "sprint",
+      "minPlace": 1
+    },
+    "injured": false,
+    "races": [],
+    "next": {
+      "rest": {
+        "turn": 10,
+        "status": "ended",
+        "endReason": "goal-failed",
+        "place": 2,
+        "met": false
+      }
+    },
+    "due": []
+  }
+}
