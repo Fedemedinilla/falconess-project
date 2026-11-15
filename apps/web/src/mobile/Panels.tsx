@@ -24,7 +24,7 @@ import { GradeChip, placeText } from "./Parts";
 import { trackCard } from "./track";
 
 export type PanelTab = "menu" | "log" | "goals" | "crews" | "guide";
-export const PANEL_TABS: readonly PanelTab[] = ["menu", "log", "goals", "crews", "guide"];
+const PANEL_TABS: readonly PanelTab[] = ["menu", "log", "goals", "crews", "guide"];
 export const PANEL_GLYPH: Readonly<Record<PanelTab, GlyphName>> = {
   menu: "menu",
   log: "log",
@@ -54,7 +54,7 @@ type LogWeek = {
 };
 
 /** Every week of the run, replayed from its inputs (the season keeps no per-week snapshot). */
-export function logWeeks(ctx: SimContext, seed: string, inputs: readonly RunInput[]): LogWeek[] {
+function logWeeks(ctx: SimContext, seed: string, inputs: readonly RunInput[]): LogWeek[] {
   const start = inputs[0];
   if (start?.kind !== "start") return [];
   let s: SeasonState = startSeason(ctx, seed, start);

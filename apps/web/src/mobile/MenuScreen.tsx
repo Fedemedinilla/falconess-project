@@ -57,8 +57,9 @@ function RoundButton({
 }
 
 /**
- * The week menu, layout D of the prototype: the runner large in the middle, her stats on a strip
- * over her legs and the actions floating around the raised delta «Entrenar» (3B).
+ * The week menu: the runner large in the middle, «Menú» at the top right, the goal's track in a tab
+ * at the left edge, her stats on a strip over her legs, «Entrenar» as a wide bar and the other four
+ * actions as pills under it (owner 2026-11-14).
  */
 export function MenuScreen({
   ctx,

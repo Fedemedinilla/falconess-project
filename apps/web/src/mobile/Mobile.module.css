@@ -562,7 +562,7 @@
   text-align: center;
 }
 
-/* ---- week menu (layout D) ---- */
+/* ---- week menu ---- */
 .hero {
   position: absolute;
   inset: 0;
@@ -2422,7 +2422,7 @@
   animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 
-/* ---- mockups of the training screen (owner 2026-11-13, `uiVariant.ts`) ---- */
+/* ---- the training screen's crews (owner 2026-11-13): a crew's face at any size ---- */
 .face {
   flex: none;
   width: var(--fs);
@@ -2442,7 +2442,7 @@
   line-height: 1;
   color: #14202b;
 }
-/* 1 (and the detail of 2): every crew of the chosen training, a column at the top right */
+/* every crew of the chosen training, a column at the top right */
 .crewCol {
   position: absolute;
   right: 2px;
@@ -2467,7 +2467,7 @@
   margin-top: 0;
   font-size: 10px;
 }
-/* 2: the crews' faces on each training button */
+/* the crews' faces on each training button */
 .btnCrews {
   position: absolute;
   right: -8px;
@@ -2478,8 +2478,8 @@
 .btnCrews > span + span {
   margin-right: -9px;
 }
-/* the result (owner 2026-11-13, option 5): the buttons fade, the stats slide down to the bottom
-   (a transform: the stage and the scene stay put), the crews' cards come into the room left */
+/* the result (owner 2026-11-13): the buttons fade, the stats slide down to the bottom (a
+   transform: the stage and the scene stay put), the crews' cards come into the room left */
 .resultLow .body {
   overflow: visible;
 }
@@ -2498,7 +2498,7 @@
   font-size: min(32px, 7.6vw);
   white-space: nowrap;
 }
-/* 5: the crews that trained with her come in, with their bond */
+/* the crews that trained with her come in, with their bond */
 .crewIn {
   position: absolute;
   left: 0;

@@ -1,7 +1,7 @@
 import type { SeasonState, TurnLogEntry } from "@falconess/schema";
 import type { Step } from "../game/controller";
 
-export type InspirationRecord = NonNullable<TurnLogEntry["inspirations"]>[number];
+type InspirationRecord = NonNullable<TurnLogEntry["inspirations"]>[number];
 
 /** What the inheritance card shows: the season's start, or an inspiration week. */
 export type InspirationScene = {

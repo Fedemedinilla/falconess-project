@@ -31,7 +31,7 @@ import { locale } from "../text/lang";
  * The color of a failure chance (owner, 2026-10-30): light blue at 0 %, green from 1 to 19 %,
  * yellow from 20 to 39 %, red from 40 %. Separate from the stats' medal colors.
  */
-export type RiskTone = "zero" | "low" | "mid" | "high";
+type RiskTone = "zero" | "low" | "mid" | "high";
 
 export function riskTone(failPm: number): RiskTone {
   if (failPm <= 0) return "zero";
@@ -50,7 +50,7 @@ export function failPercent(failPm: number): number {
  * The medal tier of a stat value (owner, 2026-10-30): stone (< 150), jade (150-299), sapphire
  * (300-449), bronze (450-649), ruby (650-849), gold (850-1199), platinum (1200).
  */
-export type StatTier = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+type StatTier = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 const TIER_FROM = [150, 300, 450, 650, 850, 1200] as const;
 
 export function statTier(value: number): StatTier {
@@ -59,7 +59,7 @@ export function statTier(value: number): StatTier {
   return tier as StatTier;
 }
 
-export type MoodTone = "hi" | "mid" | "lo";
+type MoodTone = "hi" | "mid" | "lo";
 
 export function moodTone(mood: Mood | number): MoodTone {
   if (mood > 0) return "hi";
@@ -139,7 +139,7 @@ export function trainingCards(ctx: SimContext, state: SeasonState): TrainingCard
 }
 
 /** The main stat of each training (the first of its gains), for the delta button's chips. */
-export function boostedTrainings(cards: readonly TrainingCard[]): TrainingCard[] {
+function boostedTrainings(cards: readonly TrainingCard[]): TrainingCard[] {
   return cards.filter((c) => c.boosted);
 }
 

@@ -152,9 +152,9 @@ function VigorBar({ vigor, pop }: { vigor: VigorView; pop?: VigorPop | undefined
 }
 
 /** owner 2026-11-13: a training's vigor change, on the bar itself, in the result's timeline. */
-export type VigorPop = { readonly delta: number; readonly delay: number };
+type VigorPop = { readonly delta: number; readonly delay: number };
 
-export type HudProps = {
+type HudProps = {
   /** A training's result is playing: its vigor change on the bar. */
   vigorPop?: VigorPop | undefined;
   /** ADR-0012: Exigente shows a chip under the calendar. */
@@ -213,7 +213,7 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
   );
 }
 
-export type StatStripProps = {
+type StatStripProps = {
   stats: readonly StatCell[];
   skillPoints: number;
   /** The stats the selected training raises, highlighted, with their gain above. */
@@ -256,15 +256,7 @@ function CountUp({ from, to, delay }: { from: number; to: number; delay: number 
 }
 
 /** The «+N» of a result: gold chevrons rising behind it; a drop is blue, its chevrons falling. */
-export function Pop({
-  delta,
-  delay,
-  small = false,
-}: {
-  delta: number;
-  delay: number;
-  small?: boolean;
-}) {
+function Pop({ delta, delay, small = false }: { delta: number; delay: number; small?: boolean }) {
   const up = delta >= 0;
   return (
     <span

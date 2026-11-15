@@ -30,7 +30,7 @@ const FADE_OUT = 1.6;
 const FADE_IN = 2.2;
 const LOOP_XFADE = 4;
 
-export const MUSIC_KEY = "falconess.juego.musica";
+const MUSIC_KEY = "falconess.juego.musica";
 
 type Voice = { readonly el: HTMLAudioElement; readonly gain: GainNode };
 type Playing = { readonly track: Track; voice: Voice; slot: 0 | 1 };

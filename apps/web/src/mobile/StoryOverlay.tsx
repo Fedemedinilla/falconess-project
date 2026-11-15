@@ -19,7 +19,7 @@ const BACKDROP: Readonly<Record<StoryBackground, string>> = {
 const UNNAMED = new Set(["narrator", "sfx"]);
 const TYPE_MS = 26;
 const WORD_MS = 110;
-/** The steps of the way in (Story.module.css): the game dims, the scene arrives, then the card. */
+/** The steps of the way in (Story.module.css): black at once, the scene arrives, then the card. */
 const INTRO_MS = 1300;
 const CARD_MS = 1500;
 /** Auto: how long a finished line stays before the next one (owner 2026-11-12: 1.5 s was too fast). */
@@ -42,10 +42,11 @@ function speakerName(line: StoryLine): string | undefined {
 }
 
 /**
- * A story scene over the game (owner 2026-11-12): the interface fades under it, the chapter's card
- * shows, then its lines one tap at a time. `box` is the dialogue box of a common scene, `cine` the
- * cinematic of a key scene (black bars, words appearing one by one, key lines large). Skip ends it
- * at once; Auto moves on by itself; the log rereads what was said.
+ * A story scene over the game (owner 2026-11-12): black at once (owner 2026-11-13: the menu behind
+ * never shows), the scene comes out of the black, the chapter's card shows, then its lines one tap
+ * at a time. `box` is the dialogue box of a common scene, `cine` the cinematic of a key scene
+ * (black bars, words appearing one by one, key lines large). Skip ends it at once; Auto moves on
+ * by itself; the log rereads what was said.
  */
 export function StoryOverlay({
   scene,

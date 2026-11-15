@@ -9,14 +9,14 @@
  */
 import { browserStore, readKey, writeKey } from "../game/storage";
 
-export const SOUND_STYLES = ["hangar", "propulsor", "visor", "off"] as const;
+const SOUND_STYLES = ["hangar", "propulsor", "visor", "off"] as const;
 export type SoundStyle = (typeof SOUND_STYLES)[number];
 export type SoundCue = "tap" | "confirm" | "nav" | "success" | "boost" | "fail";
 
-export const SOUND_KEY = "falconess.juego.sonido";
+const SOUND_KEY = "falconess.juego.sonido";
 
 /** The stored style; Propulsor when none was chosen yet. */
-export function readSoundStyle(): SoundStyle {
+function readSoundStyle(): SoundStyle {
   const v = readKey(browserStore(), SOUND_KEY);
   return SOUND_STYLES.find((s) => s === v) ?? "propulsor";
 }

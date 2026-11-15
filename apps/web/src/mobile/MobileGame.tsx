@@ -950,7 +950,6 @@ function trainingCue(
   return card.boosted ? "boost" : "success";
 }
 
-/** The «Menú» sheet: the test view, a new season. */
 /** The menu's own buttons: in the phone's sheet and in the wide screen's panel. */
 function MenuItems({
   onExport,

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ui } from "../text/ui";
+import { FalconEmblem } from "./Emblem";
 import { unlockMusic } from "./music";
 import { playSound } from "./sfx";
 import s from "./TitleScreen.module.css";
-import { FalconEmblem } from "./Transition";
 
 /** How long the title takes to clear after the tap. */
 const LEAVE_MS = 450;

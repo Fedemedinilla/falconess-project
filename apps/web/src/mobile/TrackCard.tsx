@@ -77,7 +77,7 @@ function Piece({ p }: { p: StripPiece }) {
 }
 
 /** The track drawn along its length: Saltos, Colinas, Bajadas, Terreno líquido, Curvas, Pasillo. */
-export function TrackStrip({
+function TrackStrip({
   view,
   large = false,
   id,
@@ -114,7 +114,7 @@ export function TrackStrip({
 }
 
 /** «Pide: AGI B · RES C» with stat icons: the stats a track asks for, each with its letter, nothing else. */
-export function TrackDemands({
+function TrackDemands({
   demands,
   long = false,
   id,

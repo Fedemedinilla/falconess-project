@@ -21,16 +21,10 @@ const GLYPH: Readonly<Record<TrainingKind, GlyphName>> = {
 };
 
 /** `train:risk-flight` → `m-entrenar-risk-flight`. */
-export function trainButtonId(kind: TrainingKind): string {
+function trainButtonId(kind: TrainingKind): string {
   return `m-entrenar-${kind.slice("train:".length)}`;
 }
 
-/**
- * The training screen of the prototype: her chibi on stage with the chosen training's ribbon and
- * the crew's portrait (option 3: top right, its bond bar under it), the gains over her stats, and
- * the five round trainings. A tap chooses (nothing moves), a second tap on the chosen one trains;
- * «Fallo N %» hangs on the chosen button's top edge in its risk color (option 3).
- */
 /**
  * A training's result on the training screen (owner 2026-11-11, like Umamusume's): what it came
  * to, the stats it moved and the skill points, and where the numbers count up from.
@@ -47,7 +41,7 @@ export type TrainResult = {
   readonly bonds: readonly { readonly manufacturer: string; readonly delta: number }[];
   /** ADR-0016: the crews in sintonía she trained with (their +25 %). */
   readonly sync: readonly string[];
-  /** Every crew that stood at this training (mockup 5: they come in with their bond). */
+  /** Every crew that stood at this training (they come in with their bond). */
   readonly crews: readonly string[];
 };
 
@@ -94,6 +88,12 @@ const POP_STEP_MS = 300;
 /** The result stays this long after its last «+N», then the week goes on (a tap goes sooner). */
 const HOLD_MS = 1100;
 
+/**
+ * The training screen: her chibi on stage with the chosen training's ribbon and its crews (a
+ * column at the top right, each with its bond bar), the gains over her stats, and the five round
+ * trainings with their crews' faces. A tap chooses (nothing moves), a second tap on the chosen one
+ * trains; «Fallo N %» hangs on the chosen button's top edge in its risk color.
+ */
 export function TrainScreen({
   ctx,
   state,

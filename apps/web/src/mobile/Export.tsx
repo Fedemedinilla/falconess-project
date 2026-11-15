@@ -213,7 +213,7 @@ export function ExportSheet({
 }
 
 /** One season of the history as a line: «Peregrina · Exigente», «Nota B · completa». */
-export function entryLine(entry: SeasonEntry): { name: string; detail: string } {
+function entryLine(entry: SeasonEntry): { name: string; detail: string } {
   const name = `${gameText(`falconess.${entry.falconessId}`)} · ${ui(`ui.m.difficulty.${entry.difficulty}`)}`;
   const detail =
     entry.status === "active"
