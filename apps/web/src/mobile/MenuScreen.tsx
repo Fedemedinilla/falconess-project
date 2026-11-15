@@ -5,12 +5,12 @@ import { learnableSkills } from "../screens/model/workshop";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
-import { TrainBar } from "./DeltaButton";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { WeekMenu } from "./model";
 import { GradeChip, placeText, StatStrip } from "./Parts";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
+import { TrainBar } from "./TrainBar";
 import { trackCard } from "./track";
 
 export type MenuAction = "train" | "rest" | "outing" | "workshop" | "skills" | "race" | "menu";
