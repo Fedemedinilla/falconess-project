@@ -338,5 +338,33 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Decidido (dueño, 2026-11-16): el entrenador de la historia principal es un personaje oficial,
   masculino, con historia propia.** «Ambos son súper naive al inicio, ella es mala corriendo pero
   quiere mejorar, y él es malo entrenando, pero quiere mejorar. La Main Story va de eso.»
-- Abierto: cómo convive con la regla de que en las temporadas la voz del jugador no tiene género
-  (`docs/design/escenas.md` §4b); y si el entrenador de Peregrina en su canon es otra persona.
+- **Decidido (dueño, 2026-11-16): son personas distintas.** El entrenador de las temporadas es «faceless»:
+  «tiene que cumplir el rol de ser la cara del Player y listo, por eso su diálogo es tan neutro y sin
+  tanta personalidad» (sigue la regla de `docs/design/escenas.md` §4b). El de la historia principal
+  solo existe ahí.
+- **Decidido (dueño, 2026-11-16): ella arranca trabajando en el hangar de una escudería chica**
+  (limpia, carga piezas, mira correr a las demás). Propuesta, sin confirmar: el entrenador es alguien
+  igual de chico en esa misma escudería.
+
+### I14 · Cada estrella tiene su entrenador canon (2026-11-16)
+
+> «En la historia de cada Falconess, ellas TIENEN a su entrenador o entrenadora oficial canon. Eso va
+> a generar buenos diálogos y escenas entre Falconess estrella y su trainer.»
+- Estado: **decidida** (2026-11-16). Va a: biblias de personaje (una por entrenador), relaciones,
+  Modo Historia de cada Falconess.
+- En la temporada, el entrenador es el jugador, sin cara (I13). En el Modo Historia de cada estrella
+  está su entrenador canon, con personalidad.
+- Ejemplos del dueño («imaginá…»), **propuesta** hasta que los confirme:
+  - **Peregrina:** un entrenador al que le encanta dormir y hacer las cosas lento.
+  - **Caracara:** «ella siendo tan compinche y amigable», su entrenador corre y entrena con ella, y
+    después se toman unas cervezas juntos en el hangar o el taller.
+  - **Cernícala:** «bien independiente e intelectual»; con su entrenador pelean por quién domina a
+    quién, una dinámica constante de quién tiene el poder y quién da las órdenes.
+- Rasgos de personalidad dichos de paso y tomados como **decididos**: Caracara es compinche y
+  amigable; Cernícala es independiente e intelectual. Coinciden con sus líneas de presentación
+  (`ui.m.pick.line.caracara`: «Aventurera. Si hay un atajo, lo prueba»;
+  `ui.m.pick.line.cernicala`: «Calma y analítica. Mide antes de moverse»).
+- A revisar: el entrenador dormilón de Peregrina comparte rasgo con Milana, que duerme en las
+  tribunas y dice «qué cansador» (`docs/design/canon-peregrina.md` §4).
+- Abierto: las 17 escenas de Peregrina de hoy son de temporada, con el jugador como entrenador
+  neutro; el Modo Historia con su entrenador canon pediría escenas propias.

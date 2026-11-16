@@ -16,8 +16,10 @@ Borrador con las palabras del dueño. Id provisorio: `protagonista`. Sin nombre 
 - Tiene el «algo» de toda Falconess. Es nieta de una mensajera de la carrera de la paz, y no lo sabe
   al principio (`../secretos.md` S2).
 - Su entrenador es un personaje oficial, tan nuevo como ella (`entrenador.md`).
+- Arranca trabajando en el hangar de una escudería chica: limpia, carga piezas y mira correr a las
+  demás.
 
 ## Abierto
 
-Nombre; edad; de dónde viene; dónde empieza; con qué escudería corre; cómo habla; qué quiere más allá
+Nombre; edad; de dónde viene; cuál es esa escudería chica; cómo habla; qué quiere más allá
 de mejorar.
