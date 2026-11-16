@@ -38,6 +38,36 @@ export function isInstant(beat: Beat): beat is InstantBeat {
   return beat.kind === "ack" || beat.kind === "enter" || beat.kind === "pass";
 }
 
+/**
+ * Whether a new «Ritmo» or reduced motion applies with this beat in front (the run's view latches
+ * them, 5.5). It applies at once wherever it cannot change what plays: idle, a training's result
+ * (on a race week the phone's setting turned on there already skips the emblem), the week's
+ * effects, an inheritance card, the event and the decided card (where «Correr» reads it, as the
+ * old game did). It waits over what it shaped and is still playing: the emblem (reduced motion
+ * would cut it), a scene (its digest), the race's replay, finish and result (Directo drops them,
+ * and leaving Directo at a result would put its replay back), and an instant beat.
+ */
+export function followsMotion(beat: Beat): boolean {
+  switch (beat.kind) {
+    case "idle":
+    case "train-result":
+    case "fx":
+    case "inspiration":
+    case "event":
+    case "position":
+      return true;
+    case "emblem":
+    case "scene":
+    case "replay":
+    case "finish":
+    case "race-result":
+    case "ack":
+    case "enter":
+    case "pass":
+      return false;
+  }
+}
+
 function cardBeat(card: InspirationScene): Beat {
   return { kind: "inspiration", key: `insp:${card.key}`, card };
 }

@@ -13,7 +13,7 @@ import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { useAnyModalOpen } from "../ui/modals";
 import { useReducedMotion } from "../ui/useMedia";
-import { isInstant } from "./flow/beats";
+import { followsMotion, isInstant } from "./flow/beats";
 import { type Commands, type FlowPorts, flowCommands } from "./flow/commands";
 import { WeekStore } from "./flow/decidedWeek";
 import { deriveFlow } from "./flow/derive";
@@ -62,9 +62,11 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * The cards shown are Boot's (`FlowStoresContext`). While the legacy policy is active, the week's
  * record lives in a memory store of this mount (today's "lost on reload"; 5.6 moves it to Boot).
  *
- * «Ritmo» and reduced motion are latched while the week is under way (a beat in front): today the
- * game reads them only when a page changes or «Correr» runs, so a change in the wide screen's panel
- * takes effect at the next idle moment (5.5 locks the panel instead).
+ * «Ritmo» and reduced motion are latched (`followsMotion`): a change applies at once at idle, over
+ * a training's result, the week's effects, a card, the event and the decided card, and waits over
+ * the emblem, a scene and the race, which it would cut short or change as they play. The panel of
+ * the wide screen is locked during the week's beats, so there only the phone's own reduced-motion
+ * setting can change mid-week.
  */
 export function useFlow({
   run,
@@ -123,8 +125,8 @@ export function useFlow({
     () => deriveFlow(ctx, facts, ui, ACTIVE_POLICY, lastRef.current),
     [ctx, facts, ui],
   );
-  // the week is settled (nothing in front): «Ritmo» and reduced motion apply
-  if (flow.top.kind === "idle" && (motion.pace !== livePace || motion.reduced !== liveReduced))
+  // «Ritmo» and reduced motion apply where they cannot change what is playing
+  if (followsMotion(flow.top) && (motion.pace !== livePace || motion.reduced !== liveReduced))
     setMotion({ pace: livePace, reduced: liveReduced });
 
   const [{ cmd, now, dispatch }] = useState(() => {

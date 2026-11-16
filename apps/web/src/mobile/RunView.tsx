@@ -259,17 +259,18 @@ export function RunView({
     onStory: () => setStoryListOpen(true),
     onNew: () => game.newSeason(),
   };
+  // while her race plays, Metas and Registro show the week before it (no spoiler: critic b)
   const panel = (t: PanelTab): ReactNode =>
     t === "menu" ? (
       <div className={pm.menuGrid}>
         <MenuItems {...items} />
       </div>
     ) : t === "log" ? (
-      <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} />
+      <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} hideLast={flow.desk.hideLast} />
     ) : t === "goals" ? (
       <GoalsPanel
         ctx={ctx}
-        state={state}
+        state={flow.desk.of}
         onTrack={(courseId) => setTrackSheet({ view: trackCard(ctx, courseId), open: true })}
       />
     ) : t === "crews" ? (
@@ -575,7 +576,13 @@ export function RunView({
     </div>,
     desk && !flow.solo ? (
       <div className={cx(s.app, s.appContents)}>
-        <DeskPanel tab={tab} onTab={openPanel} dot={guideNew ? "guide" : undefined}>
+        <DeskPanel
+          tab={tab}
+          onTab={openPanel}
+          dot={guideNew ? "guide" : undefined}
+          // D4: asleep while the week plays in the column (a layer, the race mode, a result)
+          locked={flow.desk.locked}
+        >
           {panel(tab)}
         </DeskPanel>
       </div>

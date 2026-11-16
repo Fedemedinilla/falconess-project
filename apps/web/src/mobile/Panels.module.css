@@ -296,6 +296,14 @@
   font-family: Barlow, system-ui, sans-serif;
   color: #14202b;
   --cn: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  transition:
+    opacity var(--m-dur-desk-dim) var(--m-ease-std),
+    filter var(--m-dur-desk-dim) var(--m-ease-std);
+}
+/* D4: locked while the week plays in the column (inert): dimmed, so it reads as asleep */
+.deskLocked {
+  opacity: 0.45;
+  filter: saturate(0.6);
 }
 .deskMain {
   flex: 1;

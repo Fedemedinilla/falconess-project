@@ -115,10 +115,17 @@ test("a scene keeps the «Ritmo» it started with: Normal chosen mid-digest, the
   const scene = page.locator("#m-capitulo");
   await expect(scene).toHaveAttribute("data-digest", "true");
   await scene.evaluate((el) => el.setAttribute("data-probe", "kept"));
-  // the wide screen's panel is live under the scene: Rápido → Directo → Normal
+  // the wide screen's panel is locked under the scene (D4, 5.5): a tap on «Ritmo» changes nothing
   const pace = page.locator("#m-ritmo");
-  await pace.click();
-  await pace.click();
+  await expect(page.locator("#m-panel")).toHaveAttribute("inert", "");
+  const box = await pace.boundingBox();
+  if (!box) throw new Error("no «Ritmo» on the panel");
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(pace).toHaveAttribute("data-pace", "fast");
+  // «Ritmo» changed all the same (its button's own handler, which no tap reaches now): Rápido →
+  // Directo → Normal
+  await pace.dispatchEvent("click");
+  await pace.dispatchEvent("click");
   await expect(pace).toHaveAttribute("data-pace", "normal");
   // the game renders again (the panel goes): the same scene, still its digest (2.1, F11)
   await page.setViewportSize({ width: 1000, height: 800 });

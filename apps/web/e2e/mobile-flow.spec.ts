@@ -282,3 +282,28 @@ test("the cards an earlier build showed are not shown again: week 24, read, no c
   await page.waitForTimeout(600);
   expect(await card()).toBe(false);
 });
+
+test("reduced motion turned on during a race week's training result: the race mode opens with no emblem (5.5)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-entrenar");
+  await page.click("#m-entrenar-technique");
+  await page.click("#m-entrenar-confirmar");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  // the phone's own setting changes while her result plays: the game reads it before the race mode
+  await page.evaluate(() => {
+    Reflect.set(window, "__emblem", false);
+    new MutationObserver(() => {
+      if (document.getElementById("m-transicion")) Reflect.set(window, "__emblem", true);
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator('#m-capitulo[data-scene="peregrina-debut"]')).toBeVisible({
+    timeout: 20_000,
+  });
+  expect(await page.evaluate(() => Reflect.get(window, "__emblem"))).toBe(false);
+});
