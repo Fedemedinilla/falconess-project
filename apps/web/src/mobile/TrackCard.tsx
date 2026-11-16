@@ -258,7 +258,13 @@ export function TrackSheet({
           type="button"
           className={cx(s.btn, s.btnDark)}
           id="m-pista-cerrar"
-          onClick={onClose}
+          onClick={() => {
+            // its callers mount it only while open: close natively first, so the focus goes back
+            // to what opened it (the dialog's close event then calls onClose, which unmounts it)
+            const d = ref.current;
+            if (d?.open && typeof d.close === "function") d.close();
+            else onClose();
+          }}
         >
           {ui("ui.m.close")}
         </button>

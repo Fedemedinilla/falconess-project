@@ -179,3 +179,19 @@ test("«Menú» open on the phone, then the window goes wide: it closes, and sce
     timeout: 20_000,
   });
 });
+
+test("the track sheet, mounted only while open, still gives the focus back on «Cerrar»", async ({
+  page,
+}) => {
+  await startMobile(page, "cernicala");
+  await page.focus("#m-pista-tab");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
+  await page.focus("#m-pista");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-pista-dialogo[open]")).toBeVisible();
+  await page.focus("#m-pista-cerrar");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-pista-dialogo")).toHaveCount(0);
+  await expect(page.locator("#m-pista")).toBeFocused();
+});
