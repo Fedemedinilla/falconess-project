@@ -68,7 +68,7 @@ export function beatsOf(
       ? { kind: "pass", key, scene: sc }
       : { kind: "scene", key, scene: sc, where };
   };
-  const due = (where: SceneMode) => dueScenes(ctx, f.scenes, run.state, where, f.seenInRun, p);
+  const due = (where: SceneMode) => dueScenes(ctx, f.scenes, run.state, where, f.seenInRun);
 
   // C. A decided race week (D5): the action's part, then the race mode up to «Correr».
   const w = f.record?.phase === "decided" ? f.record : undefined;

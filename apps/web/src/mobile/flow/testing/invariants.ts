@@ -152,10 +152,7 @@ const I1 = invariant(
           const early = at === undefined ? kind === "goal-before" : at <= PRE;
           next = early ? PRE : POST;
           const fits =
-            next === PRE
-              ? kind === "goal-before"
-              : kind !== "goal-before" &&
-                (!w.policy.sceneFilters || kind === "goal-after" || kind === "end");
+            next === PRE ? kind === "goal-before" : kind === "goal-after" || kind === "end";
           if (!fits) out.push(`${where(e)}: ${label(e.beat)} (${kind}) inside a race week`);
         } else {
           if (at !== undefined) out.push(`${where(e)}: ${label(e.beat)} inside a race week`);
@@ -392,7 +389,7 @@ function sceneMode(d: Done): string {
 const I8 = invariant(
   "I8",
   "each due scene completes (plays or passes) exactly once per season, in its mode",
-  (p) => p.sceneFilters,
+  always,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -409,9 +406,10 @@ const I8 = invariant(
           .map((sc) => sc.id),
       );
       const count = new Map<string, number>();
-      for (const d of of(season, "done")) {
+      const dones = of(season, "done");
+      dones.forEach((d, i) => {
         const sc = sceneOf(d.beat);
-        if (!sc) continue;
+        if (!sc) return;
         count.set(sc.id, (count.get(sc.id) ?? 0) + 1);
         if (!due.has(sc.id)) out.push(`${where(d)}: ${sc.id} played, never due`);
         const kind = sc.trigger.kind;
@@ -422,9 +420,18 @@ const I8 = invariant(
               ? "race"
               : "menu";
         const mode = sceneMode(d);
-        if (mode !== want)
+        // legacy (until 5.6): a reload after «Correr» loses that race's mode (F1, O1), so its
+        // scenes come as the menu's or the End's leftovers (§1.4 B.4), before any race's result
+        // in that mount
+        const lost =
+          !w.policy.resume &&
+          want === "race" &&
+          !dones.some(
+            (x, j) => j < i && x.at.mount === d.at.mount && x.beat.kind === "race-result",
+          );
+        if (mode !== want && !lost)
           out.push(`${where(d)}: ${sc.id} (${kind}) played in ${mode}, not ${want}`);
-      }
+      });
       for (const id of due)
         if ((count.get(id) ?? 0) !== 1)
           out.push(`season ${first.at.season}: ${id} completed ${count.get(id) ?? 0} times`);

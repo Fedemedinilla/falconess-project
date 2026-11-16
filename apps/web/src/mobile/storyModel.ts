@@ -2,7 +2,7 @@
  * When a story scene shows, and which chat topics are open (owner 2026-11-12). Pure: read from the
  * season state and the goals' results, plus what this browser has already seen.
  */
-import type { ChatTopic, SeasonState, StoryScene, StoryTrigger } from "@falconess/schema";
+import type { ChatTopic, SeasonState, StoryTrigger } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import { browserStore, type KeyValueStore, readKey, writeKey } from "../game/storage";
 import { goalStatuses } from "../screens/model/goals";
@@ -33,23 +33,6 @@ export function triggerHolds(ctx: SimContext, state: SeasonState, t: StoryTrigge
     case "end":
       return state.status === "ended" && state.endReason === t.result;
   }
-}
-
-/**
- * The first scene of her story due now and not seen in this season yet, in file order: the order
- * the game shipped, pinned (F13) until 5.2. The game asks `dueScenes` (flow/scenes.ts), whose
- * legacy policy gives this order.
- */
-export function dueScene(
-  scenes: readonly StoryScene[],
-  ctx: SimContext,
-  state: SeasonState,
-  seen: ReadonlySet<string>,
-): StoryScene | undefined {
-  return scenes.find(
-    (s) =>
-      s.falconess === state.falconessId && !seen.has(s.id) && triggerHolds(ctx, state, s.trigger),
-  );
 }
 
 /** Her chat topics open this week, in order. */

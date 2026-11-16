@@ -6,11 +6,6 @@
  */
 export type FlowPolicy = {
   /**
-   * The scenes of each mode by kind (`SCENE_KINDS`) and in `SCENE_ORDER`; legacy: any scene but a
-   * goal's «before» in the race, the menu and the end, in file order (F13, F14). Removed in 5.2.
-   */
-  readonly sceneFilters: boolean;
-  /**
    * `d2`: the week's effects, then the event, then the inheritance card and the scenes in D2's
    * order; legacy: the card first, then the effects, the event and the scenes, and at the start
    * the card before the prologue (C9, C10). Removed in 5.3.
@@ -38,7 +33,6 @@ export type FlowPolicy = {
 
 /** Today's game, flag by flag. */
 export const LEGACY_POLICY: FlowPolicy = Object.freeze({
-  sceneFilters: false,
   order: "legacy",
   endSequence: false,
   resume: false,
@@ -50,7 +44,6 @@ export const LEGACY_POLICY: FlowPolicy = Object.freeze({
 
 /** The designed flow (plan §1.4), which the season walks check. */
 export const TARGET_POLICY: FlowPolicy = Object.freeze({
-  sceneFilters: true,
   order: "d2",
   endSequence: true,
   resume: true,

@@ -78,9 +78,8 @@ function byPriority(a: StoryScene, b: StoryScene): number {
 }
 
 /**
- * Every scene of hers due now in a mode and not seen in this season, in the order they play.
- * Legacy (`sceneFilters` off, F13, F14): a goal's «before» only before the position and any other
- * kind anywhere else, in the order given (file order), as the game plays them today.
+ * Every scene of hers due now in a mode (of the mode's kinds) and not seen in this season, in the
+ * order they play: by kind, then by goal or week, then by id, whatever order they came in (F13).
  */
 export function dueScenes(
   ctx: SimContext,
@@ -88,19 +87,16 @@ export function dueScenes(
   state: SeasonState,
   where: SceneMode,
   seen: ReadonlySet<string>,
-  p: Pick<FlowPolicy, "sceneFilters">,
 ): StoryScene[] {
-  const fits = p.sceneFilters
-    ? (sc: StoryScene) => SCENE_KINDS[where].includes(sc.trigger.kind)
-    : (sc: StoryScene) => (sc.trigger.kind === "goal-before") === (where === "prerace");
-  const due = scenes.filter(
-    (sc) =>
-      sc.falconess === state.falconessId &&
-      !seen.has(sc.id) &&
-      fits(sc) &&
-      triggerHolds(ctx, state, sc.trigger),
-  );
-  return p.sceneFilters ? due.sort(byPriority) : due;
+  return scenes
+    .filter(
+      (sc) =>
+        sc.falconess === state.falconessId &&
+        !seen.has(sc.id) &&
+        SCENE_KINDS[where].includes(sc.trigger.kind) &&
+        triggerHolds(ctx, state, sc.trigger),
+    )
+    .sort(byPriority);
 }
 
 /** One thing the menu shows after a week: a story scene or the inheritance card. */

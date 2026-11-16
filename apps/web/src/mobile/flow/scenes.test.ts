@@ -99,10 +99,9 @@ const ids = (list: readonly StoryScene[]) => list.map((sc) => sc.id);
 const due = (
   state: SeasonState,
   where: SceneMode,
-  policy = TARGET_POLICY,
   seen: ReadonlySet<string> = new Set(),
   scenes = SCENES,
-) => ids(dueScenes(ctx, scenes, state, where, seen, policy));
+) => ids(dueScenes(ctx, scenes, state, where, seen));
 
 describe("the scene kinds and their priority (F13, F14)", () => {
   it("names each mode's kinds and orders the kinds as the season plays them", () => {
@@ -120,65 +119,62 @@ describe("dueScenes: the scenes due now in a mode", () => {
   // week 20, the second goal's race week: she won the first one
   const raceWeek = after([1]);
 
-  it("only a goal's «before» scene before the position, under both policies", () => {
-    for (const policy of [LEGACY_POLICY, TARGET_POLICY])
-      expect(due(raceWeek, "prerace", policy)).toEqual(["x-before-1"]);
+  it("only a goal's «before» scene before the position", () => {
+    expect(due(raceWeek, "prerace")).toEqual(["x-before-1"]);
   });
 
-  it("target: the race mode and the end play goal-after and end scenes, the menu also the weeks'", () => {
+  it("the race mode and the end play goal-after and end scenes, the menu also the weeks'", () => {
     expect(due(raceWeek, "race")).toEqual(["x-after-0"]);
     expect(due(raceWeek, "end")).toEqual(["x-after-0"]);
     expect(due(raceWeek, "menu")).toEqual(["x-after-0", "x-turn-5", "x-turn-16"]);
   });
 
-  it("legacy: any scene but a goal's «before» in the race, the menu and the end, in file order", () => {
-    for (const where of ["race", "menu", "end"] as const)
-      expect(due(raceWeek, where, LEGACY_POLICY)).toEqual(["x-turn-16", "x-after-0", "x-turn-5"]);
-  });
-
-  it("target: by kind, then by goal or week, then by id", () => {
-    // she won the first two goals and failed the third, which ended her season
-    const ended = after([1, 1, 8], true);
-    for (const where of ["race", "menu", "end"] as const)
-      expect(due(ended, where)).toEqual(["x-after-0", "x-after-1", "x-after-1-any", "x-end"]);
-    expect(due(ended, "prerace")).toEqual([]);
-    expect(due(ended, "end", LEGACY_POLICY)).toEqual([
-      "x-after-1",
-      "x-end",
+  it("no week's scene in the race mode or at the end, and the files' order decides nothing (F13, F14)", () => {
+    const reversed = [...SCENES].reverse();
+    for (const where of ["race", "end"] as const) {
+      expect(due(raceWeek, where)).toEqual(["x-after-0"]);
+      expect(due(raceWeek, where, new Set(), reversed)).toEqual(["x-after-0"]);
+    }
+    expect(due(raceWeek, "menu", new Set(), reversed)).toEqual([
       "x-after-0",
-      "x-after-1-any",
+      "x-turn-5",
+      "x-turn-16",
     ]);
   });
 
-  it("the season's start: its scene on the menu only (target), or anywhere but before a race (legacy)", () => {
+  it("by kind, then by goal or week, then by id", () => {
+    // she won the first two goals and failed the third, which ended her season
+    const ended = after([1, 1, 8], true);
+    for (const where of ["race", "menu", "end"] as const) {
+      expect(due(ended, where)).toEqual(["x-after-0", "x-after-1", "x-after-1-any", "x-end"]);
+      expect(due(ended, where, new Set(), [...SCENES].reverse())).toEqual(due(ended, where));
+    }
+    expect(due(ended, "prerace")).toEqual([]);
+  });
+
+  it("the season's start: its scene on the menu only, never before or after a race", () => {
     expect(due(s0, "menu")).toEqual(["x-start"]);
     expect(due(s0, "race")).toEqual([]);
-    expect(due(s0, "race", LEGACY_POLICY)).toEqual(["x-start"]);
+    expect(due(s0, "prerace")).toEqual([]);
   });
 
   it("leaves out what was seen in this season, another Falconess's scenes and triggers that do not hold", () => {
-    expect(due(raceWeek, "menu", TARGET_POLICY, new Set(["x-after-0", "x-turn-16"]))).toEqual([
-      "x-turn-5",
-    ]);
+    expect(due(raceWeek, "menu", new Set(["x-after-0", "x-turn-16"]))).toEqual(["x-turn-5"]);
     const others = SCENES.filter((sc) => sc.falconess !== "peregrina");
-    expect(due(raceWeek, "menu", TARGET_POLICY, new Set(), others)).toEqual([]);
+    expect(due(raceWeek, "menu", new Set(), others)).toEqual([]);
     expect(due(after([2]), "menu")).toEqual(["x-turn-5", "x-turn-16"]);
   });
 
   it("her season ended at the third goal (the content): the goal-afters first, then the end (F13)", () => {
     const ended = after([1, 1, 8], true);
     const real = testScenes();
-    // F13: the legacy order is by file name, whatever the kind (changes in 5.2)
-    expect(due(ended, "race", LEGACY_POLICY, new Set(), real)).toEqual([
-      "peregrina-debut-win",
-      "peregrina-end-failed",
-      "peregrina-press",
-    ]);
-    expect(due(ended, "race", TARGET_POLICY, new Set(), real)).toEqual([
-      "peregrina-debut-win",
-      "peregrina-press",
-      "peregrina-end-failed",
-    ]);
+    // by kind, not by file name: the press after her second win comes before the ending
+    for (const where of ["race", "end"] as const)
+      expect(due(ended, where, new Set(), real)).toEqual([
+        "peregrina-debut-win",
+        "peregrina-press",
+        "peregrina-end-failed",
+      ]);
   });
 });
 

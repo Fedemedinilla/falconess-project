@@ -40,8 +40,9 @@ import { z } from "zod";
 import { GameController } from "../src/game/controller";
 import { parseSavedRun, runFingerprint, type SavedRun, serializeRun } from "../src/game/run";
 import { type KeyValueStore, RUN_KEY, SEEN_KEY } from "../src/game/storage";
+import { dueScenes } from "../src/mobile/flow/scenes";
 import { testContext, testScenes } from "../src/mobile/flow/testing/content";
-import { dueScene, triggerHolds } from "../src/mobile/storyModel";
+import { triggerHolds } from "../src/mobile/storyModel";
 import { goalStatuses } from "../src/screens/model/goals";
 import { defaultHangar } from "../src/screens/model/new-season";
 
@@ -283,8 +284,8 @@ function heldScenes(
 }
 
 /**
- * The scenes due when «Continuar» opens the run (MobileGame's `dueIn`): the menu, or the End,
- * plays any due scene of hers but a goal-before one, the first in file order, then the next.
+ * The scenes due when «Continuar» opens the run (its step already read): the menu's, or the End's
+ * once the season ended, in the order they play (flow/scenes.ts).
  */
 function dueAtLoad(
   ctx: SimContext,
@@ -292,15 +293,8 @@ function dueAtLoad(
   state: SeasonState,
   historia: readonly string[],
 ): string[] {
-  const menuScenes = scenes.filter((sc) => sc.trigger.kind !== "goal-before");
-  const seen = new Set(historia);
-  const due: string[] = [];
-  for (let sc = dueScene(menuScenes, ctx, state, seen); sc; ) {
-    due.push(sc.id);
-    seen.add(sc.id);
-    sc = dueScene(menuScenes, ctx, state, seen);
-  }
-  return due;
+  const where = state.status === "ended" ? "end" : "menu";
+  return dueScenes(ctx, scenes, state, where, new Set(historia)).map((sc) => sc.id);
 }
 
 function outcome(ctx: SimContext, before: SeasonState, input: WeekInput): Outcome {

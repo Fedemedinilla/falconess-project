@@ -182,22 +182,18 @@ describe("a normal week", () => {
     ]);
   });
 
-  it("two unseen weeks' scenes: one at a time, legacy in file order, target by week (F13)", () => {
+  it("two unseen weeks' scenes: one at a time, by week, not by file name (F13)", () => {
     const full = loadSave("peregrina-w39-insp");
     const historia = [...full.story.seenEver()].filter(
       (id) => id !== "peregrina-tears" && id !== "peregrina-rookie",
     );
     const t = loadSave("peregrina-w39-insp", historia);
-    expect(queue(t, INITIAL_UI, LEGACY_POLICY)).toEqual([
-      "scene:peregrina-rookie@menu",
-      "scene:peregrina-tears@menu",
-      "idle",
-    ]);
-    expect(queue(t, INITIAL_UI, TARGET_POLICY)).toEqual([
-      "scene:peregrina-tears@menu",
-      "scene:peregrina-rookie@menu",
-      "idle",
-    ]);
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual([
+        "scene:peregrina-tears@menu",
+        "scene:peregrina-rookie@menu",
+        "idle",
+      ]);
     t.story.markSeen("1", "peregrina-tears");
     for (const p of [LEGACY_POLICY, TARGET_POLICY])
       expect(queue(t, INITIAL_UI, p)).toEqual(["scene:peregrina-rookie@menu", "idle"]);
