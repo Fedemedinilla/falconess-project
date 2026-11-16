@@ -16,6 +16,7 @@ import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { trackCard } from "./track";
+import { usePace } from "./usePace";
 
 /**
  * The pre-race card of a goal race week: her four positions with her letter in each (her wings'
@@ -177,6 +178,8 @@ export function RaceScreen({
   onDone: () => void;
 }) {
   const log = useGoalRaceLog(turn);
+  // «Ritmo» Rápido (owner 2026-11-14) starts the race at ×2 at least
+  const pace = usePace();
   const result = state.raceResults.find((r) => r.turn === turn);
   const ctxCourse = log ? pageLabels().courseName(log.courseId) : "";
   return (
@@ -207,7 +210,13 @@ export function RaceScreen({
           ) : null
         ) : log ? (
           <div className={s.flightWrap}>
-            <Replay log={log} labels={pageLabels()} idPrefix="m-carrera" onReveal={onSkip} />
+            <Replay
+              log={log}
+              labels={pageLabels()}
+              idPrefix="m-carrera"
+              onReveal={onSkip}
+              minSpeed={pace === "fast" ? 2 : undefined}
+            />
           </div>
         ) : null}
       </div>

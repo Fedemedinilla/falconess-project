@@ -252,12 +252,24 @@ function RaceReplay({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
 }
 
 /** A v3 race: her position over the side view of the flight. */
-function FlightFrame({ log, labels, idPrefix, onReveal }: RaceReplayProps) {
+function FlightFrame({
+  log,
+  labels,
+  idPrefix,
+  onReveal,
+  minSpeed,
+}: RaceReplayProps & { minSpeed?: number | undefined }) {
   const view = useMemo(() => raceView(log, labels), [log, labels]);
   return (
     <div className={s.flightFrame}>
       {view.player && <PlayerPosition player={view.player} labels={labels} idPrefix={idPrefix} />}
-      <FlightReplay log={log} labels={labels} idPrefix={idPrefix} onReveal={onReveal} />
+      <FlightReplay
+        log={log}
+        labels={labels}
+        idPrefix={idPrefix}
+        onReveal={onReveal}
+        minSpeed={minSpeed}
+      />
     </div>
   );
 }
@@ -282,10 +294,15 @@ export type ReplayProps = {
   idPrefix: string;
   /** Told once the result shows, so the screen can show what it would have given away. */
   onReveal?: (() => void) | undefined;
+  /**
+   * The slowest speed the flight view (v3) starts at, when the one chosen last is slower (the
+   * phone's «Rápido»: ×2). The lane chart (v1, v2) always starts at ×1.
+   */
+  minSpeed?: number | undefined;
 };
 
 /** The replay of `log`, started afresh for every new log. */
-export function Replay({ log, labels, idPrefix, onReveal }: ReplayProps) {
+export function Replay({ log, labels, idPrefix, onReveal, minSpeed }: ReplayProps) {
   // ruleset v3: the side view of the flight; v1 and v2 keep the lane chart
   if (isFlightLog(log) && log.frames !== undefined)
     return (
@@ -295,6 +312,7 @@ export function Replay({ log, labels, idPrefix, onReveal }: ReplayProps) {
         labels={labels ?? pageLabels()}
         idPrefix={idPrefix}
         onReveal={onReveal}
+        minSpeed={minSpeed}
       />
     );
   return (

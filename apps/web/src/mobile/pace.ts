@@ -50,19 +50,3 @@ export function nextPace(p: Pace): Pace {
 export function paceScale(p: Pace = getPace()): number {
   return p === "normal" ? 1 : p === "fast" ? 0.6 : 0.35;
 }
-
-// --- the race's playback speed, kept between races ---------------------------------------------
-
-const SPEED_KEY = "falconess.juego.velocidad";
-
-/** The replay's speed to start at: the last one chosen, at least ×2 with «Rápido». */
-export function startSpeed<T extends number>(allowed: readonly T[]): T | undefined {
-  const raw = readKey(browserStore(), SPEED_KEY);
-  const last = raw ? Number(raw) : undefined;
-  const want = Math.max(last ?? 1, getPace() === "fast" ? 2 : 0);
-  return allowed.find((v) => v === want);
-}
-
-export function rememberSpeed(v: number): void {
-  writeKey(browserStore(), SPEED_KEY, String(v));
-}

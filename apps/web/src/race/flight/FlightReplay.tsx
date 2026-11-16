@@ -31,7 +31,6 @@ import {
 import type { RaceLog } from "@falconess/schema";
 import { distanceOfLength, flightOf, getRuleset } from "@falconess/sim";
 import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { rememberSpeed, startSpeed } from "../../mobile/pace";
 import { formatFixed, formatSeconds } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
 import { cx } from "../../ui/cx";
@@ -39,6 +38,7 @@ import { useReducedMotion } from "../../ui/useMedia";
 import { ReplayClock } from "../clock";
 import s from "../RaceViewer.module.css";
 import { Results } from "../Results";
+import { rememberSpeed, startSpeed } from "../speed";
 import { raceView } from "../view";
 import f from "./FlightReplay.module.css";
 import { FirstPersonStage } from "./first-person";
@@ -355,6 +355,8 @@ export type FlightReplayProps = {
   labels: RaceLabels;
   idPrefix: string;
   onReveal?: (() => void) | undefined;
+  /** The slowest speed to start at (the phone's «Rápido»: ×2); the last one chosen if faster. */
+  minSpeed?: number | undefined;
 };
 
 /**
@@ -363,7 +365,7 @@ export type FlightReplayProps = {
  * her HUD (speed, band, energy, air, body and kick), whom to follow and the moments list. Once
  * the replay reaches the finish (or «Ir a la meta»), the classification and the «por qué».
  */
-export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayProps) {
+export function FlightReplay({ log, labels, idPrefix, onReveal, minSpeed }: FlightReplayProps) {
   const model = useMemo(() => flightModel(log), [log]);
   const view = useMemo(() => raceView(log, labels), [log, labels]);
   const [resultsClock] = useState(() => new ReplayClock(view.end));
@@ -372,8 +374,10 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
   const [focus, setFocus] = useState(() => view.player?.lane ?? log.results[0]?.lane ?? 0);
   const [playing, setPlaying] = useState(false);
   const [preOpen, setPreOpen] = useState(true);
-  // «Ritmo» (owner 2026-11-14): the speed chosen last time, at least ×2 with «Rápido»
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(() => startSpeed(SPEEDS) ?? 1);
+  // the speed chosen last time, at least `minSpeed` («Ritmo» Rápido on the phone, owner 2026-11-14)
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(
+    () => startSpeed(SPEEDS, minSpeed) ?? 1,
+  );
   const [slowOn, setSlowOn] = useState(!reduced);
   const [cat, setCat] = useState<MomentCat>("all");
   const [row, setRow] = useState(0);
