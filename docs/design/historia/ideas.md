@@ -87,15 +87,30 @@ historia principal; después, el resto de las preguntas del traspaso.
   que significa ser un entrenador de Falconess» (el dueño lo compara con la historia de Oguri Cap).
 - Decidido (2026-11-16): **arranca el mismo año en que las tres originales ya son las estrellas** «en
   sus propios sectores, representando a sus cuadrillas».
-- Abierto: qué es un «sector» (¿las distancias de cada una?) y si «cuadrilla» aquí es la escudería
-  (Kōryū Racing, etc.) o el equipo de mecánicos, que es lo que hoy significa en el juego.
+- Decidido (2026-11-16): «sector» es la distancia: **Peregrina, la estrella de las cortas; Cernícala,
+  de las medias; Caracara, de las largas.** Coincide con sus letras de distancia (`docs/BRIEF.md:265`:
+  Peregrina A-A-B-C, Cernícala C-B-A-B, Caracara C-C-B-A).
+- Decidido (2026-11-16): lo que tiene «banner» es la **escudería** (Kōryū Racing, etc.); la cuadrilla
+  sigue siendo su equipo de mecánicos.
+- Abierto: si Caracara es la estrella de las largas ese mismo año, ¿dónde estaba en la gran Larga
+  de Peregrina? La crónica dice que «todas las demás eran fondistas» y que ganó Milana
+  (`docs/design/canon-peregrina.md`, §1).
 
-### I6 · Las cuadrillas tienen varias Falconess (2026-11-16)
+### I6 · Las escuderías tienen varias Falconess (2026-11-16)
 
-> «Las cuadrillas tienen a varias Falconess bajo su banner. Por el momento solo estas 3 son las que
+> «Las cuadrillas [escuderías, aclarado el mismo día] tienen a varias Falconess bajo su banner. Por el momento solo estas 3 son las que
 > se pueden jugar, pero a futuro vamos a crear más cuadrillas, más Falconess.»
 - Estado: **decidida** (2026-11-16).
 - Va a: biblia del mundo (escuelas y cuadrillas) y relaciones.
+- Aclarado (2026-11-16): «Dentro de Kōryū Racing hay más Falconess aparte de Peregrina, con los
+  mismos colores. Mi idea es ir sacando Falconess como saca Umamusume sus corredoras. Tienen los
+  colores de su escudería, pero tienen sus propias personalidades. También tienen los mismos valores
+  que la escudería, pero pueden afrontarlos y mostrarlos de un modo diferente dependiendo de sus
+  personalidades, ejemplo, Kōryū Racing es claramente como Ferrari, lujo y deportista al mismo
+  tiempo, y hay diferentes formas de representar eso, sin ir totalmente en contra y no encajando
+  coherentemente.»
+- Regla para las biblias: cada Falconess lleva los colores y los valores de su escudería, mostrados
+  a su manera, nunca en contra. Kōryū Racing: lujo y deporte a la vez (como Ferrari).
 - Consecuencia para la cronología: las tres originales son estrellas a la vez, el mismo año. Falta
   confirmar con el dueño que eso responde «¿corren el mismo año del mundo?» del traspaso.
 
@@ -114,6 +129,19 @@ historia principal; después, el resto de las preguntas del traspaso.
   (`docs/handoff/generador-de-nombres.md`, `pnpm names`).
 - Abierto para más adelante: cuántas veces se puede tirar el dado; si estas Falconess tienen
   historia propia o solo la que arma la temporada; cómo convive con el gacha sin pago para ganar.
+
+#### I5 y el multijugador (dueño, 2026-11-16; resumen a confirmar)
+
+> «La idea es que el juego llegue a ser Multiplayer. Es decir, mi Falconess random, corriendo vs las
+> Falconesses random de otros más. Lo que sí no se hará, es mi Peregrina vs la Peregrina de otros.
+> Lo que podemos hacer es que el modo actual, el de Temporada, funcione para crear a la Peregrina (o
+> Caracara o Cernícala) para que inspire a la Falconess Random. Y esa Falconess Random será la que el
+> player grindee y levee, para ponerla en contra a las Falconess de otros en multiplayer.»
+- Estado: **en discusión** (falta que el dueño confirme el resumen).
+- En el multijugador corren solo Falconess al azar; nunca las Falconess con nombre.
+- La temporada con Peregrina, Cernícala o Caracara sirve para criar su herencia (la caja negra,
+  `docs/BRIEF.md:417`), que inspira a la Falconess al azar.
+- La Falconess al azar es la que el jugador hace crecer de verdad y lleva al multijugador.
 
 #### Opciones para I5 (propuesta, 2026-11-16, para que elija el dueño)
 
