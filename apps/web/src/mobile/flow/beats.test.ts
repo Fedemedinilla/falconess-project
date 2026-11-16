@@ -442,8 +442,8 @@ describe("a committed race (C after «Correr»)", () => {
   });
 });
 
-describe("the season's end (D)", () => {
-  it("a goal failed in a race: its ending scene in the race mode, once; target adds the race's effects over the end", () => {
+describe("the season's end (D, F3)", () => {
+  it("a goal failed in a race: its ending scene in the race mode, once, then the race's effects over the end", () => {
     const t = loadSave("peregrina-w10-lose");
     decide(t, { kind: "rest" });
     const mine = race(t, { kind: "rest" });
@@ -452,6 +452,7 @@ describe("the season's end (D)", () => {
       "replay",
       "scene:peregrina-end-failed@race",
       "race-result",
+      "fx:race:points",
       "idle",
     ]);
     expect(queue(t, mine, TARGET_POLICY)).toEqual([
@@ -464,15 +465,15 @@ describe("the season's end (D)", () => {
     ]);
   });
 
-  it("a finale that is no race (Caracara's week 48): legacy the end swallows it (F3), target its result first", () => {
+  it("a finale that is no race (Caracara's week 48): its training's result first, then the end (no effects: read at once)", () => {
     const t = loadSave("caracara-w48");
     const mine = commit(t, { kind: "train:technique" });
     expect(stateOf(t).status).toBe("ended");
-    expect(queue(t, mine, LEGACY_POLICY)).toEqual(["idle"]);
-    expect(queue(t, mine, TARGET_POLICY)).toEqual(["result:success", "ack", "idle"]);
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, mine, p)).toEqual(["result:success", "ack", "idle"]);
   });
 
-  it("the race finale (Peregrina's week 48): the race mode plays out, then the end", () => {
+  it("the race finale (Peregrina's week 48): the race mode plays out, its effects over the end, then the end", () => {
     const t = loadSave("peregrina-w48");
     decide(t, { kind: "rest" });
     const mine = race(t, { kind: "rest" });
@@ -481,6 +482,7 @@ describe("the season's end (D)", () => {
       "replay",
       "scene:peregrina-long-lost@race",
       "race-result",
+      "fx:race:mood-up+points",
       "idle",
     ]);
     expect(queue(t, mine, TARGET_POLICY)).toEqual([
@@ -491,6 +493,16 @@ describe("the season's end (D)", () => {
       "fx:race:mood-up+points",
       "idle",
     ]);
+  });
+
+  it("the end's effects seen (the step read): the end, with nothing left to play", () => {
+    const t = loadSave("peregrina-w48");
+    decide(t, { kind: "rest" });
+    const mine = race(t, { kind: "rest" });
+    t.story.markSeen("1", "peregrina-long-lost");
+    t.weeks.markRaceSeen(fpOf(t));
+    t.game.acknowledgeStep();
+    for (const p of [LEGACY_POLICY, TARGET_POLICY]) expect(queue(t, mine, p)).toEqual(["idle"]);
   });
 });
 

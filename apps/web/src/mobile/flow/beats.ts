@@ -104,14 +104,13 @@ export function beatsOf(
   const ended = run.state.status === "ended";
   const unread = step && !stepSeen && run.state === step.after ? step : undefined;
   const own = p.resume || ui.mine.has(fp); // legacy: only what this mount committed
-  const tail = p.endSequence || !ended; // legacy: the season's end swallows the rest (F3)
   if (unread) {
     const k = (b: string) => `${fp}/${b}`;
     const race = addedRace(unread);
     // the race part's vigor already showed before «Correr»
     let landed = race !== undefined;
     if (!race) {
-      if (own && tail) {
+      if (own) {
         const tb = trainBeat(ctx, unread, "step", k("result"), p);
         landed = tb !== undefined;
         push(tb);
@@ -124,15 +123,14 @@ export function beatsOf(
       for (const sc of due("race")) push(scene(sc, "race"));
       push({ kind: "race-result", key: k("race:result"), turn: race.turn });
     }
-    if (tail) {
-      const part = fxPart(unread);
-      const fx = stepFx(ctx, unread, part);
-      push(
-        fx.length > 0
-          ? { kind: "fx", key: k("fx"), part, fx, landed }
-          : { kind: "ack", key: k("ack") },
-      );
-    }
+    // the week's effects, over the season's end too: the step that ended it is read (F3, O5)
+    const part = fxPart(unread);
+    const fx = stepFx(ctx, unread, part);
+    push(
+      fx.length > 0
+        ? { kind: "fx", key: k("fx"), part, fx, landed }
+        : { kind: "ack", key: k("ack") },
+    );
   }
   // Once the step is read: the event, or the scenes and the inheritance card in D2's order (the
   // card comes from the latest step, read or not, until this browser showed it: F19, C9, C10).

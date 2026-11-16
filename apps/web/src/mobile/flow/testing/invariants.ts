@@ -285,7 +285,7 @@ const fxOf = (d: Done | undefined): string[] =>
 const I5 = invariant(
   "I5",
   "a race week's effects: the action's part (last shown) plus the race's are the week's, and no kind twice in a mount (rule 36)",
-  (p) => p.endSequence,
+  always,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -317,7 +317,7 @@ const I5 = invariant(
 const I6 = invariant(
   "I6",
   "every committed step is acknowledged exactly once (across reloads), before the next decision",
-  (p) => p.endSequence,
+  always,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -445,7 +445,7 @@ const I8 = invariant(
 const I9 = invariant(
   "I9",
   "at the end the last step's result or race and its effects complete, and its black box is kept",
-  (p) => p.endSequence,
+  always,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -458,7 +458,13 @@ const I9 = invariant(
         need.push(`${fp}/race:result`);
         if (w.pace !== "direct") need.push(`${fp}/race:replay`);
       } else if (trainingOutcome(last.step, w.policy.restedCue)) need.push(`${fp}/result`);
-      for (const k of need) if (!done.has(k)) out.push(`${where(last)}: ${k} never completed`);
+      // legacy (until 5.6): a reload after the commit that ended the season loses what it still
+      // had to play, its training's result or its race (F1, O1: only what a mount committed
+      // plays); its effects and its box come all the same
+      const at = season.indexOf(last);
+      const lost = !w.policy.resume && season.some((e, j) => j > at && e.type === "reload");
+      for (const k of need)
+        if (!done.has(k) && !lost) out.push(`${where(last)}: ${k} never completed`);
       if (!done.has(`${fp}/fx`) && !done.has(`${fp}/ack`))
         out.push(`${where(last)}: the last week's effects never completed`);
       const box = of(season, "box").find((b) => b.fp === fp);
@@ -904,6 +910,13 @@ export function coverage(w: Walk): Readonly<Record<string, number>> {
   }
   for (const from of watches.values()) add(`watch:${from}`);
   add("end", w.ends.filter((e) => e.ended).length);
+  // what the step that ended a season played before the End: its race's result or its training's
+  const done = new Set(w.trace.flatMap((e) => (e.type === "done" ? [e.beat.key] : [])));
+  for (const e of w.trace)
+    if (e.type === "act" && e.step.after.status === "ended") {
+      if (done.has(`${e.fp}/race:result`)) add("end:race");
+      if (done.has(`${e.fp}/result`)) add("end:result");
+    }
   return out;
 }
 

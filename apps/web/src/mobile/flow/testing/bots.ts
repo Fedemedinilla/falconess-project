@@ -79,8 +79,9 @@ function cheapestSkill(ctx: SimContext, s: SeasonState): string | undefined {
 
 /**
  * Rests below 45 vigor, else trains the lowest of Agility, Stamina and Technique; every sixth week
- * learns a skill (a rest if the workshop refuses). Race weeks cycle a training, a rest, an outing
- * and a workshop that equips another frame.
+ * but the season's last (a skill learned then is never used: a season can end on a training's
+ * result, I9) learns a skill (a rest if the workshop refuses). Race weeks cycle a training, a rest,
+ * an outing and a workshop that equips another frame.
  */
 export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
   let low: (typeof LOWEST)[number] = "agility";
@@ -105,7 +106,7 @@ export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
           : { kind: "rest" };
     }
   }
-  if (s.turn % 6 === 0) {
+  if (s.turn % 6 === 0 && s.turn < ctx.ruleset.season.turns) {
     const skill = cheapestSkill(ctx, s);
     if (skill)
       return {

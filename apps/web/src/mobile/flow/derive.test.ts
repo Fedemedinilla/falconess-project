@@ -165,7 +165,7 @@ describe("the week's effects", () => {
     }
   });
 
-  it("over the end once the season ended (target, O5): no HUD", () => {
+  it("over the end once the season ended (O5, F3): the end inert under them, no HUD, the lone column", () => {
     const t = loadSave("peregrina-w48");
     decide(t, { kind: "rest" });
     const mine = race(t, { kind: "rest" });
@@ -175,11 +175,27 @@ describe("the week's effects", () => {
       type: "done",
       keys: ["race:replay", "race:finish", "race:result"].map((k) => `${fp}/${k}`),
     });
-    const flow = flowOf(t, done, TARGET_POLICY);
-    expect(flow.top.kind).toBe("fx");
-    expect(flow.screen).toEqual({ kind: "end", inert: true });
-    expect([flow.mode, flow.hud, flow.solo]).toEqual(["end", undefined, true]);
-    expect(flowOf(t, done, LEGACY_POLICY).screen).toEqual({ kind: "end", inert: false });
+    for (const p of BOTH) {
+      const flow = flowOf(t, done, p);
+      expect(flow.top.kind).toBe("fx");
+      expect(flow.layer?.kind).toBe("fx");
+      expect(flow.screen).toEqual({ kind: "end", inert: true });
+      expect([flow.mode, flow.hud, flow.solo, flow.desk.locked]).toEqual([
+        "end",
+        undefined,
+        true,
+        true,
+      ]);
+      expect([flow.canAct, flow.canReplay]).toEqual([false, false]);
+    }
+    // a tap on them reads the week: the end, awake
+    t.game.acknowledgeStep();
+    for (const p of BOTH) {
+      const flow = flowOf(t, done, p);
+      expect(flow.top.kind).toBe("idle");
+      expect(flow.screen).toEqual({ kind: "end", inert: false });
+      expect([flow.layer, flow.desk.locked, flow.solo]).toEqual([undefined, false, true]);
+    }
   });
 });
 
@@ -516,6 +532,23 @@ describe("idle", () => {
       const flow = flowOf(t, mine, p);
       expect(flow.top.kind).toBe("replay");
       expect([flow.solo, flow.desk.locked, flow.screen.kind]).toEqual([false, true, "race"]);
+    }
+  });
+
+  it("the season's last training (Caracara's week 48): its result on the training screen before the end (F3)", () => {
+    const t = loadSave("caracara-w48");
+    const mine = commit(t, { kind: "train:technique" });
+    expect(stateOf(t).status).toBe("ended");
+    for (const p of BOTH) {
+      const flow = flowOf(t, mine, p);
+      expect(flow.top.kind).toBe("train-result");
+      expect([flow.screen.kind, flow.mode, flow.solo, flow.desk.locked]).toEqual([
+        "train",
+        "training",
+        false,
+        true,
+      ]);
+      expect(flow.hud?.of.turn).toBe(48);
     }
   });
 

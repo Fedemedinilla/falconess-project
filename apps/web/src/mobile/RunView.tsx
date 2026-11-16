@@ -1,5 +1,5 @@
 import type { ContentIndex, Position, StoryScene, WorkshopOp } from "@falconess/schema";
-import { difficultyOf } from "@falconess/sim";
+import { difficultyOf, type SimContext } from "@falconess/sim";
 import {
   type ReactElement,
   type ReactNode,
@@ -10,6 +10,7 @@ import {
 } from "react";
 import { navigate } from "../app/useRoute";
 import { allScenes, allTopics } from "../content/story";
+import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
@@ -19,6 +20,7 @@ import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { ErrorNotice } from "./ErrorNotice";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
+import { boxToKeep } from "./flow/box";
 import type { Flow, Layer } from "./flow/types";
 import type { Toast } from "./flow/ui";
 import { raceWings } from "./flow/week";
@@ -150,6 +152,7 @@ export function RunView({
   }, [screenName]);
 
   const ctx = game.context();
+  useSeasonBox(ctx, run);
   const state = run.state;
   const inputs = run.inputs.length;
   const colors = transitionColors(ctx.content, state.falconessId);
@@ -317,9 +320,12 @@ export function RunView({
       {sheets}
     </>
   );
-  /** The one screen: what the probe counts (`data-screen`), with no box of its own. */
-  const slot = (body: ReactNode) => (
-    <div style={{ display: "contents" }} data-screen={screen.kind}>
+  /**
+   * The one screen: what the probe counts (`data-screen`), with no box of its own. The End is
+   * inert while a layer is over it (the week's effects, a scene: the flow says so).
+   */
+  const slot = (body: ReactNode, inert?: boolean) => (
+    <div style={{ display: "contents" }} data-screen={screen.kind} inert={inert || undefined}>
       {body}
     </div>
   );
@@ -343,6 +349,7 @@ export function RunView({
             onTests={() => navigate("fin")}
             onExport={exportRun}
           />,
+          screen.inert,
         )}
         {exportSheet}
         {layers}
@@ -656,6 +663,19 @@ function legacyScreen(flow: Flow): string | undefined {
           return "menu";
       }
   }
+}
+
+/**
+ * The season's black box (ADR-0013, plan §1.11, critic (c)9): kept as soon as the run in play has
+ * ended, in the commit of the tap that ended it («Correr», the last action), so before its race,
+ * its scenes and the End, and whatever the player does then. A run loaded ended keeps it too; a
+ * box already kept stays once (`addBox` goes by its id).
+ */
+function useSeasonBox(ctx: SimContext, run: ActiveRun): void {
+  useEffect(() => {
+    const box = boxToKeep(ctx, run);
+    if (box) addBox(box);
+  }, [ctx, run]);
 }
 
 /** The sponsor's two colors of the Falconess in play (Kōryū's red and yellow without a palette). */

@@ -31,6 +31,8 @@ describe("Caracara's season walks", () => {
     "reload:race",
     "box",
     "end",
+    "end:race",
+    "end:result",
     ...(ALL ? ["enter"] : []),
   ]);
 });

@@ -33,6 +33,7 @@ describe("Peregrina's season walks", () => {
     "reload:race",
     "box",
     "end",
+    "end:race",
     ...(ALL ? ["enter"] : []),
   ]);
 });
