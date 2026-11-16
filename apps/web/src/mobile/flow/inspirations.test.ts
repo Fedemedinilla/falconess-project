@@ -108,6 +108,36 @@ describe("the inheritance cards shown", () => {
     expect(stored.seeds.at(-1)[0]).toBe("x");
   });
 
+  it("two tabs: a mark one of them stored is kept when the other marks later (no card shows again)", () => {
+    const kv = memoryStore();
+    const a = new InspirationStore(kv);
+    // both tabs read the storage before either marked a card
+    const b = new InspirationStore(kv);
+    a.markShown("s", "s:24");
+    b.markShown("s", "s:40");
+    b.markShown("t", "t:start");
+    a.markShown("u", "u:start");
+    const later = new InspirationStore(kv);
+    expect([...later.shown("s")]).toEqual(["s:24", "s:40"]);
+    expect([...later.shown("t")]).toEqual(["t:start"]);
+    expect([...later.shown("u")]).toEqual(["u:start"]);
+    // the season marked last is still the newest kept
+    expect(JSON.parse(kv.data.get(CARDS_KEY) ?? "").seeds.at(-1)[0]).toBe("u");
+    // a tab that writes reads the other's marks too
+    expect(a.shown("s").has("s:40")).toBe(true);
+    // one that marks a card the other already stored writes it once
+    b.markShown("u", "u:start");
+    expect(JSON.parse(kv.data.get(CARDS_KEY) ?? "").seeds.at(-1)).toEqual(["u", ["u:start"]]);
+  });
+
+  it("a mark over a corrupt value stores this tab's cards", () => {
+    const kv = memoryStore({ [CARDS_KEY]: '{"v":1,"seeds":[["s",["s:start"]]]}' });
+    const store = new InspirationStore(kv);
+    kv.data.set(CARDS_KEY, "{");
+    store.markShown("s", "s:24");
+    expect([...new InspirationStore(kv).shown("s")]).toEqual(["s:start", "s:24"]);
+  });
+
   it("reads nothing from a corrupt or foreign value", () => {
     for (const raw of ["{", "[]", '{"v":2,"seeds":[]}', '{"v":1,"seeds":{"s":["s:start"]}}'])
       expect(new InspirationStore(memoryStore({ [CARDS_KEY]: raw })).shown("s").size).toBe(0);

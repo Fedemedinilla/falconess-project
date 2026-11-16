@@ -67,8 +67,9 @@ function decode(raw: string): Map<string, readonly string[]> {
  * The cards shown. On the first load with no key stored (an earlier build kept nothing), it marks
  * the saved run's cards that build already showed: the start's (shown at «Empezar») and every
  * week's whose step was read (it showed before its step was read); an unread step's card plays in
- * D2's order. Then the key exists, so no later season is migrated. Every access to the storage is
- * guarded; without it the cards last the visit.
+ * D2's order. Then the key exists, so no later season is migrated. A mark reads the storage again
+ * and keeps what another tab marked meanwhile. Every access to the storage is guarded; without it
+ * the cards last the visit.
  */
 export class InspirationStore {
   readonly #kv: KeyValueStore | undefined;
@@ -111,17 +112,27 @@ export class InspirationStore {
     return set;
   }
 
-  /** Mark a card shown: its season becomes the newest kept. */
+  /**
+   * Mark a card shown: its season becomes the newest kept. The write keeps what another tab
+   * stored since this one read the storage (each card a tab marked stays marked: the union).
+   */
   markShown(seed: string, key: string): void {
-    const keys = this.#seeds.get(seed) ?? [];
-    if (keys.includes(key)) return;
-    this.#seeds.delete(seed);
-    this.#seeds.set(seed, [...keys, key]);
-    for (const old of [...this.#seeds.keys()].slice(0, Math.max(0, this.#seeds.size - MAX_SEEDS))) {
-      this.#seeds.delete(old);
-      this.#sets.delete(old);
+    if (this.#seeds.get(seed)?.includes(key)) return;
+    const raw = readKey(this.#kv, CARDS_KEY);
+    const stored = raw === undefined ? new Map<string, readonly string[]>() : decode(raw);
+    // this tab's seasons the storage no longer has go first: the oldest, the first to go
+    const merged = new Map([...this.#seeds].filter(([s]) => !stored.has(s)));
+    for (const [s, theirs] of stored) {
+      const mine = this.#seeds.get(s) ?? [];
+      merged.set(s, [...theirs, ...mine.filter((k) => !theirs.includes(k))]);
     }
-    this.#sets.delete(seed);
+    const keys = merged.get(seed) ?? [];
+    merged.delete(seed);
+    merged.set(seed, keys.includes(key) ? keys : [...keys, key]);
+    this.#seeds.clear();
+    for (const [s, k] of [...merged].slice(Math.max(0, merged.size - MAX_SEEDS)))
+      this.#seeds.set(s, k);
+    this.#sets.clear();
     this.#write();
     this.#version += 1;
     for (const listener of [...this.#listeners]) listener();
