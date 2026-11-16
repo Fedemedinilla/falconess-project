@@ -3,6 +3,7 @@
  * (motion.test.ts checks every one), plus the holds that only timers know. Components keep no
  * private duration constants; they read these.
  */
+import type { Layer } from "./flow/types";
 import { type Pace, paceScale } from "./pace";
 
 /** Durations, ms. */
@@ -48,18 +49,18 @@ export const STORY = {
   rmCardMs: 900,
 } as const;
 
-/** How long each full-screen layer takes to leave (plan §1.9). */
-const OUT = {
+/** How long each full-screen layer takes to leave (plan §1.9): one entry per kind of layer. */
+const OUT: Readonly<Record<Layer["kind"], number>> = {
   fx: MOTION.layerOut,
   inspiration: MOTION.layerOut,
   scene: MOTION.sceneOut,
   emblem: MOTION.emblemOut,
   // a native dialog: it closes at once
   event: 0,
-} as const;
+};
 
 /** A layer's leave: 0 under reduced motion. */
-export function outMs(kind: keyof typeof OUT, reduced: boolean): number {
+export function outMs(kind: Layer["kind"], reduced: boolean): number {
   return reduced ? 0 : OUT[kind];
 }
 
