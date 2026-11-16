@@ -132,7 +132,8 @@ export function PreRaceScreen({
           </p>
         )}
       </div>
-      <div className={s.foot}>
+      {/* a notice sits just over the card's foot */}
+      <div className={s.foot} data-toast-anchor>
         {onBack && (
           <button type="button" className={cx(s.btn, s.back)} id="m-volver" onClick={onBack}>
             <Glyph name="back" size={20} weight={2.4} />
@@ -235,7 +236,8 @@ export function RaceScreen({
         ) : null}
       </div>
       {showResult && !hold && (
-        <div className={s.foot}>
+        // a notice (the scene after the race) sits just over the result's foot
+        <div className={s.foot} data-toast-anchor>
           <button type="button" className={cx(s.btn, s.back)} id="m-ver-otra-vez" onClick={onAgain}>
             <Glyph name="play" size={18} weight={2.4} />
             <span>{ui("ui.m.race.again")}</span>

@@ -83,9 +83,7 @@ export function useFlow({
   readonly flow: Flow;
   readonly ui: UiState;
   readonly cmd: Commands;
-  /** The flow as a handler finds it, read again from the stores. */
-  readonly now: () => FlowNow;
-  /** A UI-only event (a notice gone): never one that acts on the game. */
+  /** A UI-only event (a notice shown or gone): never one that acts on the game. */
   readonly dispatch: (e: UiEvent) => void;
   /** «Ritmo» as the flow reads it (latched): what a beat's own timeline scales by. */
   readonly pace: Pace;
@@ -134,7 +132,7 @@ export function useFlow({
   if (followsMotion(flow.top) && (motion.pace !== livePace || motion.reduced !== liveReduced))
     setMotion({ pace: livePace, reduced: liveReduced });
 
-  const [{ cmd, now, dispatch }] = useState(() => {
+  const [{ cmd, dispatch }] = useState(() => {
     const dispatch = (e: UiEvent): void => {
       const next = reduceUi(uiRef.current, e);
       if (next === uiRef.current) return;
@@ -184,7 +182,7 @@ export function useFlow({
       dispatch,
       now,
     };
-    return { cmd: flowCommands(ports), now, dispatch };
+    return { cmd: flowCommands(ports), dispatch };
   });
 
   useLayoutEffect(() => {
@@ -203,5 +201,5 @@ export function useFlow({
     if (week !== undefined && record === undefined) weeks.clear();
   }, [week, record, weeks]);
 
-  return { flow, ui, cmd, now, dispatch, pace: facts.pace };
+  return { flow, ui, cmd, dispatch, pace: facts.pace };
 }

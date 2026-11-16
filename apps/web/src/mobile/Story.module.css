@@ -396,23 +396,32 @@
 }
 
 /* the notice after a scene */
-.toast {
+/*
+ * The notices (plan §1.9): fixed in the game's column, just over the screen's anchor; the error's
+ * over the story's. Their time is NoticeHost's timers; the CSS only brings them in, and fades the
+ * id-less copy of one that leaves.
+ */
+.notices {
   position: fixed;
   left: max(12px, env(safe-area-inset-left, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
   z-index: 56;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
   background: #172235;
   color: #fff;
   padding: 11px 14px;
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.35;
-  pointer-events: none;
-  animation: toast 4s ease both;
+  animation: toastIn var(--m-dur-toast-in) var(--m-ease-out) backwards;
 }
-/* a scene passed by (owner 2026-11-14): longer, with a button to watch it */
-.toastLong {
-  animation-duration: 6s;
+.toastOut {
+  animation: toastOut var(--m-dur-toast-out) var(--m-ease-std) forwards;
 }
 .toastRow {
   display: flex;
@@ -437,17 +446,14 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-@keyframes toast {
-  0% {
+@keyframes toastIn {
+  from {
     opacity: 0;
     transform: translateY(10px);
   }
-  10%,
-  85% {
-    opacity: 1;
-    transform: none;
-  }
-  100% {
+}
+@keyframes toastOut {
+  to {
     opacity: 0;
   }
 }
@@ -626,10 +632,18 @@
   .backdrop,
   .more,
   .bubble,
-  .chat,
-  .toast {
+  .chat {
     animation-duration: 0.01ms;
     animation-delay: 0s;
+  }
+  /* the notice stands still and whole (H5); one that leaves goes at once */
+  .toast {
+    animation: none;
+    opacity: 1;
+  }
+  .toastOut {
+    animation: none;
+    opacity: 0;
   }
 }
 

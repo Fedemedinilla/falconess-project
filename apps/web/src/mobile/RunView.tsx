@@ -1,4 +1,4 @@
-import type { ContentIndex, Position, StoryScene, WorkshopOp } from "@falconess/schema";
+import type { ContentIndex, Position, WorkshopOp } from "@falconess/schema";
 import { difficultyOf, type SimContext } from "@falconess/sim";
 import {
   type ReactElement,
@@ -14,15 +14,13 @@ import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
-import { gameText, ui } from "../text/ui";
+import { gameText } from "../text/ui";
 import { cx } from "../ui/cx";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
-import { ErrorNotice } from "./ErrorNotice";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { boxToKeep } from "./flow/box";
 import type { Flow, Layer } from "./flow/types";
-import type { Toast } from "./flow/ui";
 import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
 import { LayerHost } from "./LayerHost";
@@ -31,6 +29,7 @@ import { MenuItems, type MenuItemsProps, MobileMenu } from "./MenuSheet";
 import s from "./Mobile.module.css";
 import { trainingCards, vigorView, weekMenu } from "./model";
 import type { Track } from "./music";
+import { NoticeHost } from "./NoticeHost";
 import { OutingSheet } from "./OutingSheet";
 import {
   CrewsPanel,
@@ -49,7 +48,6 @@ import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import st from "./Story.module.css";
 import { StoryListSheet } from "./StoryListSheet";
 import { StoryOverlay } from "./StoryOverlay";
-import { StoryToast } from "./StoryToast";
 import { playNav } from "./sfx";
 import { openTopics } from "./storyModel";
 import { TrackSheet } from "./TrackCard";
@@ -64,10 +62,6 @@ import { WorkshopScreen } from "./WorkshopScreen";
 
 /** The music a run's page wants: the race's own in a race, the menu theme everywhere else. */
 export type RunMusic = Exclude<Track, "title">;
-
-/** How long a story notice stays: a scene passed by, with its «Ver», a little longer. */
-const NOTICE_MS = 4000;
-const PASSED_MS = 6000;
 
 /**
  * One run of the phone game, keyed by the shell per run: everything here starts fresh with a new
@@ -109,14 +103,7 @@ export function RunView({
   const { game } = useGame();
   // the scenes seen and the chat read: a mark re-renders the game
   const story = useStory();
-  const {
-    flow,
-    ui: flowUi,
-    cmd,
-    now,
-    dispatch,
-    pace,
-  } = useFlow({ run, title: title !== undefined });
+  const { flow, ui: flowUi, cmd, dispatch, pace } = useFlow({ run, title: title !== undefined });
   const [menuOpen, setMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -174,40 +161,15 @@ export function RunView({
   const startInput = run.inputs[0];
   const parents = startInput?.kind === "start" ? startInput.parents : [];
 
-  // the story notice: the newest one shows (a new one takes its place), for its time
-  const toast = flowUi.toasts.at(-1);
-  const toastId = toast?.id;
-  const toastMs = toast?.kind === "passed" ? PASSED_MS : NOTICE_MS;
-  useEffect(() => {
-    if (toastId === undefined) return;
-    const t = setTimeout(() => {
-      for (const gone of now().ui.toasts) dispatch({ type: "toastGone", id: gone.id });
-    }, toastMs);
-    return () => clearTimeout(t);
-  }, [toastId, toastMs, now, dispatch]);
+  // the notices: a scene's (the queue's first) and a refused act's, while nothing plays in front
   const notices = (
-    <>
-      {toast && (
-        <StoryNotice
-          // placed once, over the track tab: placed again when the wide screen comes or goes (the
-          // column stays, the tab moves; 5.9's NoticeHost re-measures on any resize)
-          key={`${toast.id}/${desk}`}
-          toast={toast}
-          onWatch={(sc) => {
-            // «Ver» plays the scene only where a scene may play now (the menu, a card, a result)
-            if (!now().flow.canReplay) return;
-            for (const gone of now().ui.toasts) dispatch({ type: "toastGone", id: gone.id });
-            cmd.watchScene(sc);
-          }}
-        />
-      )}
-      {flowUi.notice && (
-        <ErrorNotice
-          kind={flowUi.notice}
-          onClose={() => dispatch({ type: "notice", notice: undefined })}
-        />
-      )}
-    </>
+    <NoticeHost
+      flow={flow}
+      toasts={flowUi.toasts}
+      notice={flowUi.notice}
+      dispatch={dispatch}
+      onWatch={cmd.watchScene}
+    />
   );
 
   /** The layer in front of the screen, from the flow's layer. */
@@ -610,44 +572,6 @@ export function RunView({
         </DeskPanel>
       </div>
     ) : null,
-  );
-}
-
-/**
- * The notice after a story scene (owner 2026-11-13): played («seen», «skipped») or passed by
- * because she saw it in an earlier season (owner 2026-11-14), with «Ver» to play it whole.
- */
-function StoryNotice({
-  toast,
-  onWatch,
-}: {
-  readonly toast: Toast;
-  readonly onWatch: (scene: StoryScene) => void;
-}) {
-  const scene = allScenes().find((sc) => sc.id === toast.sceneId);
-  if (!scene) return null;
-  return (
-    <StoryToast long={toast.kind === "passed"}>
-      <b>
-        {gameText(scene.kickerKey)} · {gameText(scene.titleKey)}
-      </b>
-      <br />
-      {toast.kind === "passed" ? (
-        <span className={st.toastRow}>
-          {ui("ui.m.story.passed")}
-          <button
-            type="button"
-            className={st.toastBtn}
-            id="m-escena-ver"
-            onClick={() => onWatch(scene)}
-          >
-            {ui("ui.m.story.watch")}
-          </button>
-        </span>
-      ) : (
-        ui(toast.kind === "skipped" ? "ui.m.story.skipped" : "ui.m.story.seen")
-      )}
-    </StoryToast>
   );
 }
 

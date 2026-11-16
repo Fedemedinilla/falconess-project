@@ -121,7 +121,8 @@ export function EndScreen({
           {ui("ui.m.end.detail")}
         </button>
       </div>
-      <div className={s.foot}>
+      {/* a notice (a scene at the season's end) sits just over the foot */}
+      <div className={s.foot} data-toast-anchor>
         <button
           type="button"
           className={cx(s.btn, s.btnMain)}

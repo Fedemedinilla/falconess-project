@@ -18,9 +18,18 @@ export type Toast = {
   readonly shown: boolean;
 };
 
+/** A refused act or preview, named as `ui.error.<kind>` names it. */
+export type Notice = {
+  readonly kind: GameErrorKind;
+  /** Tells one refusal from the next, the same kind again too: each is a notice of its own. */
+  readonly n: number;
+  /** Set on its first display, as a toast's. */
+  readonly shown: boolean;
+};
+
 export type UiState = {
   readonly nav: Nav;
-  /** Makes the keys of a watch and of a replayed scene unique: a key that comes back is a new one. */
+  /** Makes the keys of a watch, a replayed scene and a notice unique: a key that comes back is a new one. */
   readonly seq: number;
   /** The beats finished in this mount, by key. */
   readonly done: ReadonlySet<string>;
@@ -32,8 +41,8 @@ export type UiState = {
   readonly replay: { readonly scene: StoryScene; readonly n: number } | undefined;
   /** First in, first out, two at most: a newer one replaces the second, never the first. */
   readonly toasts: readonly Toast[];
-  /** A refused act or preview, named as `ui.error.<kind>` names it. */
-  readonly notice: GameErrorKind | undefined;
+  /** A refused act or preview, until it is closed or its time is up. */
+  readonly notice: Notice | undefined;
 };
 
 export type UiEvent =
@@ -55,7 +64,10 @@ export type UiEvent =
   | { readonly type: "toast"; readonly toast: Toast }
   | { readonly type: "toastShown"; readonly id: string }
   | { readonly type: "toastGone"; readonly id: string }
-  | { readonly type: "notice"; readonly notice: GameErrorKind | undefined };
+  /** A refused act or preview (a new notice each time), or none. */
+  | { readonly type: "notice"; readonly notice: GameErrorKind | undefined }
+  | { readonly type: "noticeShown"; readonly n: number }
+  | { readonly type: "noticeGone"; readonly n: number };
 
 const MENU: Nav = Object.freeze({ at: "menu" });
 
@@ -94,8 +106,8 @@ function navOf(to: Extract<UiEvent, { type: "open" }>["to"]): Nav {
 
 /**
  * The state after `e`. Ignored, returning `ui` itself: a pick or a tab off its screen, a watch's
- * stage or end for another watch (a stale `n`) or with none, a toast already queued, a toast
- * shown or gone that is not there, and anything that would change nothing.
+ * stage or end for another watch (a stale `n`) or with none, a toast already queued, a toast or
+ * a notice shown or gone that is not there, and anything that would change nothing.
  */
 export function reduceUi(ui: UiState, e: UiEvent): UiState {
   switch (e.type) {
@@ -162,7 +174,15 @@ export function reduceUi(ui: UiState, e: UiEvent): UiState {
     case "toastGone":
       if (!ui.toasts.some((t) => t.id === e.id)) return ui;
       return { ...ui, toasts: ui.toasts.filter((t) => t.id !== e.id) };
-    case "notice":
-      return ui.notice === e.notice ? ui : { ...ui, notice: e.notice };
+    case "notice": {
+      if (e.notice === undefined) return ui.notice ? { ...ui, notice: undefined } : ui;
+      const n = ui.seq + 1;
+      return { ...ui, seq: n, notice: { kind: e.notice, n, shown: false } };
+    }
+    case "noticeShown":
+      if (ui.notice?.n !== e.n || ui.notice.shown) return ui;
+      return { ...ui, notice: { ...ui.notice, shown: true } };
+    case "noticeGone":
+      return ui.notice?.n === e.n ? { ...ui, notice: undefined } : ui;
   }
 }

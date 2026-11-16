@@ -12,15 +12,16 @@ import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export"
 import { Glyph } from "./Glyph";
 import { LangButton } from "./LangButton";
 import s from "./Mobile.module.css";
+import { ErrorNotice } from "./NoticeHost";
 
 /**
  * Character select: the three Falconess with their art, her school and wings' style and one line
  * of who she is. «Empezar» starts a season on the current ruleset with the default hangar and a
  * random seed (the test view keeps the full setup: seed and hangar). A run in storage can be
- * continued.
+ * continued; one that no longer loads says so (`snap.error`, critic b).
  */
 export function SelectScreen({ onTests }: { onTests: () => void }) {
-  const { game } = useGame();
+  const { game, snap } = useGame();
   const ctx = game.newRunContext();
   const content = ctx.content;
   const roster = [...content.falconess.values()];
@@ -197,6 +198,7 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
             : ui("ui.m.pick.none")}
         </button>
       </div>
+      <ErrorNotice error={snap.error} onClose={() => game.clearError()} />
     </div>
   );
 }

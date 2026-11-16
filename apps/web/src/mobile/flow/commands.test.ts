@@ -178,7 +178,7 @@ describe("commands act and move the flow in the same call (critic (c)3)", () => 
     // no skill points yet: the workshop refuses
     h.cmd.choose({ kind: "workshop", ops: [{ op: "learn-skill", skillId: "clean-start" }] });
     expect(t.weeks.getSnapshot()).toBeUndefined();
-    expect(h.ui().notice).toBe("workshop");
+    expect(h.ui().notice?.kind).toBe("workshop");
     expect(h.inputs()).toBe(before);
     expect(h.cues).toEqual(["nav"]);
     expect(h.now().flow.top.kind).toBe("idle");

@@ -160,10 +160,20 @@ describe("reduceUi", () => {
     expect(reduceUi(gone, { type: "toastGone", id: "a" })).toBe(gone);
   });
 
-  it("notice: a refused act or preview, until cleared", () => {
+  it("notice: a refused act or preview, each one a notice of its own, until cleared or gone", () => {
     const refused = after({ type: "notice", notice: "workshop" });
-    expect(refused.notice).toBe("workshop");
-    expect(reduceUi(refused, { type: "notice", notice: "workshop" })).toBe(refused);
-    expect(reduceUi(refused, { type: "notice", notice: undefined }).notice).toBeUndefined();
+    expect(refused.notice).toEqual({ kind: "workshop", n: 1, shown: false });
+    // the same kind again is another notice (its own time), not the one on screen
+    const again = reduceUi(refused, { type: "notice", notice: "workshop" });
+    expect(again.notice).toEqual({ kind: "workshop", n: 2, shown: false });
+    const shown = reduceUi(again, { type: "noticeShown", n: 2 });
+    expect(shown.notice?.shown).toBe(true);
+    expect(reduceUi(shown, { type: "noticeShown", n: 2 })).toBe(shown);
+    // a stale one (the notice before it) shows or goes nothing
+    expect(reduceUi(shown, { type: "noticeShown", n: 1 })).toBe(shown);
+    expect(reduceUi(shown, { type: "noticeGone", n: 1 })).toBe(shown);
+    expect(reduceUi(shown, { type: "noticeGone", n: 2 }).notice).toBeUndefined();
+    expect(reduceUi(shown, { type: "notice", notice: undefined }).notice).toBeUndefined();
+    expect(reduceUi(INITIAL_UI, { type: "notice", notice: undefined })).toBe(INITIAL_UI);
   });
 });

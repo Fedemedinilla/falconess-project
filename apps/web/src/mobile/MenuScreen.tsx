@@ -151,6 +151,8 @@ export function MenuScreen({
               type="button"
               className={cx(s.drawerTab, drawer && s.drawerTabOn)}
               id="m-pista-tab"
+              // the scene's notice sits just over the tab, never over the menu's buttons (rule 17)
+              data-toast-anchor
               aria-expanded={drawer}
               aria-controls="m-pista"
               aria-label={ui(drawer ? "ui.m.track.tab.close" : "ui.m.track.tab.open")}

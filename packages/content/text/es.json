@@ -1412,6 +1412,7 @@
   "ui.m.end.new": "Nueva temporada",
   "ui.m.end.race": "Sem. {turn} · {course} · {place}.º o mejor",
   "ui.m.end.score": "Puntaje {score}",
+  "ui.m.error.unexpected": "La simulación falló. Abrí «Menú» → «Exportar partida», copiala y mandala con el detalle técnico.",
   "ui.m.fail": "Fallo {n} %",
   "ui.m.goal.in": "en {n} sem.",
   "ui.m.goal.none": "Cierre de temporada",

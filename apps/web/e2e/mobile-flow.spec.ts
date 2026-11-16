@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { textPattern } from "./fixtures";
+import { t, textPattern } from "./fixtures";
 import {
   continueRun,
   pastTitle,
@@ -12,6 +14,7 @@ import {
   toResult,
   week,
 } from "./mobile-helpers";
+import { coverage, freezeAt } from "./motion";
 
 /**
  * The phone game's flow, now that the flow model drives it (plan-final 4.1): a sheet holds the
@@ -20,6 +23,9 @@ import {
  * its time whatever renders the game meanwhile (no identity churn). The inheritance card in D2's
  * order (5.3): after what the week did and before the next week's scenes, after the prologue at the
  * season's start, and once per card in this browser (a reload or a language switch keeps it shown).
+ * The notices (5.9): a scene's notice waits while anything plays in front, then shows its whole
+ * time just over the screen's anchor (the track tab, a card's foot), fades out when the screen
+ * changes, and is gone from the first frame of a scene; a run that no longer replays says so.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -412,4 +418,255 @@ test("a race week's training result counts her stats up and keeps the week being
     .toBeGreaterThan(before);
   expect(await present(page, "#m-resultado")).toBe(true);
   expect(await week(page)).toBe(10);
+});
+
+// ---- the notices (5.9) ----
+
+/** A scene this browser saw in an earlier season: passed by, its notice with «Ver». After seedRun. */
+async function seenEver(page: Page, id: string): Promise<void> {
+  await page.addInitScript((scene) => {
+    const key = "falconess.juego.historia";
+    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
+      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
+    );
+    if (story.ever.includes(scene)) return;
+    story.ever.push(scene);
+    localStorage.setItem(key, JSON.stringify(story));
+  }, id);
+}
+
+type Box = {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+};
+
+/** The story notice where it rests (its way-in rise taken out). */
+function noticeBox(page: Page): Promise<Box> {
+  return page.locator("#m-capitulo-aviso").evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const shift = getComputedStyle(el).transform;
+    const dy = shift === "none" ? 0 : new DOMMatrixReadOnly(shift).m42;
+    return { left: r.left, right: r.right, top: r.top - dy, bottom: r.bottom - dy };
+  });
+}
+
+async function boxOf(page: Page, selector: string): Promise<Box> {
+  const b = await page.locator(selector).boundingBox();
+  if (!b) throw new Error(`${selector} has no box`);
+  return { left: b.x, right: b.x + b.width, top: b.y, bottom: b.y + b.height };
+}
+
+const overlaps = (a: Box, b: Box): boolean =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+/** Starts watching whether the notice was ever in the page together with `selector`. */
+async function watchNoticeWith(page: Page, selector: string): Promise<() => Promise<boolean>> {
+  await page.evaluate((sel) => {
+    const both = () =>
+      document.querySelector(sel) !== null && document.getElementById("m-capitulo-aviso") !== null;
+    Reflect.set(window, "__noticeWith", both());
+    new MutationObserver(() => {
+      if (both()) Reflect.set(window, "__noticeWith", true);
+    }).observe(document.body, { childList: true, subtree: true });
+  }, selector);
+  return () => page.evaluate(() => Reflect.get(window, "__noticeWith") === true);
+}
+
+test("the scene's notice sits just over the track tab, clear of the menu's buttons, and fades out as Entrenar opens (rule 17)", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
+  const notice = await noticeBox(page);
+  const tab = await boxOf(page, "#m-pista-tab");
+  expect(tab.top - notice.bottom).toBeGreaterThanOrEqual(0);
+  expect(tab.top - notice.bottom).toBeLessThan(40);
+  for (const id of ["#m-entrenar", "#m-descansar", "#m-habilidades", "#m-salida", "#m-taller"])
+    expect(overlaps(notice, await boxOf(page, id)), id).toBe(false);
+  // another screen: the notice goes at once, an id-less copy of it fades out
+  await page.click("#m-entrenar");
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  expect(await present(page, "[data-notice-leaving]")).toBe(true);
+  await expect.poll(() => present(page, "[data-notice-leaving]"), { timeout: 600 }).toBe(false);
+});
+
+test("a goal's scene passed by: its notice waits out the emblem, then sits just over the decided card's foot", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await seedRun(page, "peregrina-w10");
+  await seenEver(page, "peregrina-debut");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  const together = await watchNoticeWith(page, "#m-transicion");
+  await page.click("#m-efectos");
+  expect(await present(page, "#m-transicion")).toBe(true);
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  expect(await together()).toBe(false);
+  // the card's foot is its anchor: just over it, clear of «Correr»
+  const notice = await noticeBox(page);
+  const run = await boxOf(page, "#m-correr");
+  expect(run.top - notice.bottom).toBeGreaterThanOrEqual(0);
+  expect(run.top - notice.bottom).toBeLessThan(40);
+  await expect(page.locator("#m-escena-ver")).toBeVisible();
+});
+
+test("«Ver» on a passed scene's notice plays it, and the notice is gone from the scene's first frame", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("falconess.juego.historia"))
+      localStorage.setItem(
+        "falconess.juego.historia",
+        JSON.stringify({ runs: {}, ever: ["peregrina-prologue"] }),
+      );
+  });
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
+  await page.click("#m-escena-ver");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
+  await freezeAt(page, 0);
+  const cover = await coverage(page, "#m-capitulo");
+  expect(cover.misses.filter((m) => /aviso|toast|notice/i.test(m))).toEqual([]);
+  expect(await present(page, "#m-capitulo-aviso, [data-notice-leaving]")).toBe(false);
+});
+
+test("a passed scene's notice that waited behind another shows after it, with no «Ver» where no scene may play: the training picker (R1)", async ({
+  page,
+}) => {
+  await seedRun(page, "peregrina-w39-insp");
+  // week 16's scene unseen anywhere, week 28's seen only in an earlier season: both come at once
+  await page.addInitScript((seed) => {
+    const key = "falconess.juego.historia";
+    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
+      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
+    );
+    const run = story.runs[seed] ?? [];
+    story.runs[seed] = run.filter((id) => id !== "peregrina-tears" && id !== "peregrina-rookie");
+    story.ever = story.ever.filter((id) => id !== "peregrina-tears");
+    localStorage.setItem(key, JSON.stringify(story));
+  }, "1");
+  await page.goto("./");
+  await continueRun(page);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tears");
+  await skipScene(page);
+  // the first notice first (first in, first out); the passed one waits for it
+  const notice = page.locator("#m-capitulo-aviso");
+  await expect(notice).toContainText(t("ui.m.story.skipped"));
+  // the first one fades out as Entrenar opens; the next comes after it, never over it
+  const together = await watchNoticeWith(page, "[data-notice-leaving]");
+  await page.click("#m-entrenar");
+  // the training picker: no scene may play here, so the passed one comes without «Ver»
+  await expect(notice).toContainText(t("ui.m.story.passed"));
+  expect(await present(page, "#m-escena-ver")).toBe(false);
+  expect(await together()).toBe(false);
+  // shown and left behind: gone for good (F23)
+  await page.click("#m-volver");
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.waitForTimeout(600);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+});
+
+test("a saved run that no longer replays: «Continuar» says so on the selection", async ({
+  page,
+}) => {
+  const { save } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-w10.json", import.meta.url)), "utf8"),
+  );
+  // it parses, but the season has no event to answer at its last input
+  const broken = JSON.stringify({
+    ...save,
+    inputs: [...save.inputs, { kind: "event:choose", option: 0 }],
+  });
+  await page.addInitScript((text) => {
+    localStorage.setItem("falconess.pruebas.partida", text);
+  }, broken);
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-continuar");
+  const alert = page.locator("#m-aviso-error");
+  await expect(alert).toHaveAttribute("role", "alert");
+  await expect(alert).toContainText(t("ui.error.load-replay"));
+  await expect(page.locator("#m-continuar")).toBeVisible();
+  await alert.getByRole("button", { name: t("ui.error.dismiss") }).click();
+  await expect(alert).toHaveCount(0);
+});
+
+test("the season's start with a parent: the passed prologue's notice waits for the card, then shows its whole time (A.5.4)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("falconess.juego.historia"))
+      localStorage.setItem(
+        "falconess.juego.historia",
+        JSON.stringify({ runs: {}, ever: ["peregrina-prologue"] }),
+      );
+  });
+  await startWithParent(page);
+  await expect(page.locator("#m-inspiracion")).toHaveAttribute("data-kind", "start");
+  // the clock stands still from here: the card is read for longer than a notice lives
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.clock.runFor(7000);
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.click("#m-inspiracion-seguir");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-escena-ver")).toBeVisible();
+  // its six seconds count from here
+  await settleUpdates(page);
+  await page.clock.runFor(5900);
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(true);
+  await page.clock.runFor(200);
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+});
+
+test("the season's start with a parent: the skipped prologue's notice waits for the card, then shows", async ({
+  page,
+}) => {
+  await startWithParent(page);
+  await skipScene(page);
+  await expect(page.locator("#m-inspiracion")).toHaveAttribute("data-kind", "start");
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.click("#m-inspiracion-seguir");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
+});
+
+test("the last race's scene: its notice shows over the result's foot, and not over the End's effects", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w48");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await page.click("#m-saltar");
+  // her scene after the race, skipped: its notice on the result
+  await toResult(page);
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
+  const notice = await noticeBox(page);
+  const go = await boxOf(page, "#m-carrera-seguir");
+  expect(go.top - notice.bottom).toBeGreaterThanOrEqual(0);
+  expect(go.top - notice.bottom).toBeLessThan(40);
+  await page.click("#m-carrera-seguir");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await expect.poll(() => present(page, "[data-notice-leaving]"), { timeout: 600 }).toBe(false);
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-fin")).toBeVisible();
+  await page.waitForTimeout(300);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
 });

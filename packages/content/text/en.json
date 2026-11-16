@@ -1412,6 +1412,7 @@
   "ui.m.end.new": "New season",
   "ui.m.end.race": "W{turn} · {course} · top {place}",
   "ui.m.end.score": "Score {score}",
+  "ui.m.error.unexpected": "The simulation failed. Open \"Menu\" → \"Export run\", copy it and send it with the technical detail.",
   "ui.m.fail": "Fail {n} %",
   "ui.m.goal.in": "in {n} wk",
   "ui.m.goal.none": "Season finale",

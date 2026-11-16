@@ -1,0 +1,362 @@
+import type { StoryScene } from "@falconess/schema";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { allScenes } from "../content/story";
+import type { GameError, GameErrorKind } from "../game/controller";
+import { gameText, ui } from "../text/ui";
+import { cx } from "../ui/cx";
+import { useLatest } from "../ui/useLatest";
+import { useReducedMotion } from "../ui/useMedia";
+import type { Flow } from "./flow/types";
+import type { Notice, Toast, UiEvent } from "./flow/ui";
+import { useLayersIdle } from "./LayerHost";
+import { MOTION } from "./motion";
+import { cutsNotice, noticeTop, type Shown, slotView } from "./noticeSlot";
+import st from "./Story.module.css";
+
+/** One notice: its words, its element, how long it stays once shown, and whom it tells. */
+type Note = {
+  readonly id: string;
+  readonly shown: boolean;
+  /** Its time on screen, from its first display. */
+  readonly ms: number;
+  /** The live notice's id and role (the copy that fades out has none). */
+  readonly elementId: string;
+  readonly role: "status" | "alert";
+  /** Its words; `close` (its button) only while it shows. */
+  readonly body: (close: (() => void) | undefined, live: boolean) => ReactNode;
+  readonly onShown: () => void;
+  readonly onGone: () => void;
+};
+
+/** A notice on its way out: an id-less copy where it stood, until its timer removes it. */
+type Leaving = {
+  readonly key: number;
+  readonly top: number;
+  readonly note: Note;
+  readonly until: number;
+};
+
+type SlotOptions = {
+  readonly visible: boolean;
+  readonly screen: string;
+  readonly cut: boolean;
+  readonly fades: boolean;
+  readonly fading: boolean;
+};
+
+/**
+ * One channel's notice (`slotView`): shown when nothing plays in front, for its time from its
+ * first display; then, or when its screen changes or something comes in front of it, it leaves
+ * (`leave`: faded as a copy, or cut) and is gone.
+ */
+function useSlot(
+  note: Note | undefined,
+  o: SlotOptions,
+  leave: (note: Note, fade: boolean) => void,
+): { readonly live: boolean; readonly close: () => void } {
+  const [at, setAt] = useState<Shown>();
+  const view = slotView(note, at, o);
+  const latest = useLatest({ note, leave });
+  const id = note?.id;
+  const { screen } = o;
+  // before paint: a notice never shows a frame over what came in front of it
+  useLayoutEffect(() => {
+    const { note: n, leave: go } = latest.current;
+    if (!n || n.id !== id) return;
+    if (view === "live") {
+      if (at?.id === n.id) return;
+      setAt({ id: n.id, screen, ms: n.ms });
+      n.onShown();
+    } else if (view === "fade" || view === "cut") {
+      setAt(undefined);
+      go(n, view === "fade");
+    } else if (view === "gone") go(n, false);
+  }, [view, id, at, screen, latest]);
+  const shownId = at?.id;
+  const shownMs = at?.ms;
+  useEffect(() => {
+    if (shownId === undefined || shownMs === undefined) return;
+    const t = setTimeout(() => {
+      const { note: n, leave: go } = latest.current;
+      if (n?.id !== shownId) return;
+      setAt(undefined);
+      go(n, true);
+    }, shownMs);
+    return () => clearTimeout(t);
+  }, [shownId, shownMs, latest]);
+  const close = () => {
+    const { note: n, leave: go } = latest.current;
+    if (!n) return;
+    setAt(undefined);
+    go(n, true);
+  };
+  return { live: view === "live", close };
+}
+
+/**
+ * The notices of a column (plan §1.9): the error's (`role="alert"`) over the story's
+ * (`role="status"`), both just over the screen's `[data-toast-anchor]`, placed again when the
+ * screen changes or the column is resized. A notice that leaves while it could still be read
+ * fades out as an id-less, inert copy (no «Ver», no close) that a timer removes; under an opaque
+ * layer, or under reduced motion, it goes at once.
+ */
+function Notices({
+  error,
+  story,
+  visible,
+  screen,
+  cut,
+}: {
+  readonly error: Note | undefined;
+  readonly story: Note | undefined;
+  /** Nothing plays in front of the game. */
+  readonly visible: boolean;
+  readonly screen: string;
+  /** An opaque layer is in front (a scene, the emblem, a card). */
+  readonly cut: boolean;
+}) {
+  const reduced = useReducedMotion();
+  const outMs = reduced ? 0 : MOTION.toastOut;
+  const [leaving, setLeaving] = useState<readonly Leaving[]>([]);
+  // where each live notice stands, for the copy that fades from there
+  const tops = useRef(new Map<string, number>());
+  const seq = useRef(0);
+  const leave = (note: Note, fade: boolean): void => {
+    const top = tops.current.get(note.id);
+    tops.current.delete(note.id);
+    if (fade && outMs > 0 && top !== undefined) {
+      seq.current += 1;
+      const copy: Leaving = { key: seq.current, top, note, until: performance.now() + outMs };
+      setLeaving((l) => [...l, copy]);
+    }
+    note.onGone();
+  };
+  // a notice waits for the one before it to fade out: one after the other, never one over another
+  const o: SlotOptions = { visible, screen, cut, fades: outMs > 0, fading: leaving.length > 0 };
+  const err = useSlot(error, o, leave);
+  const sto = useSlot(story, o, leave);
+  const live = `${err.live ? error?.id : ""}|${sto.live ? story?.id : ""}`;
+
+  const box = useRef<HTMLDivElement>(null);
+  const [top, setTop] = useState<number>();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when the notices on screen or the screen under them change
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const app = el.closest("[data-app]");
+    const place = () => {
+      const anchor = app?.querySelector("[data-toast-anchor]")?.getBoundingClientRect();
+      // fixed inside the column: its containing block is the column when it carries a transform
+      const cbTop =
+        app && getComputedStyle(app).transform !== "none" ? app.getBoundingClientRect().top : 0;
+      const t = noticeTop({
+        anchorTop: anchor && anchor.height > 0 ? anchor.top : undefined,
+        cbTop,
+        height: el.getBoundingClientRect().height,
+      });
+      setTop(t);
+      for (const child of Array.from(el.children))
+        if (child instanceof HTMLElement && child.dataset.notice)
+          tops.current.set(child.dataset.notice, t + child.offsetTop);
+    };
+    place();
+    if (!app) return;
+    const resized = new ResizeObserver(place);
+    resized.observe(app);
+    return () => resized.disconnect();
+  }, [live, screen]);
+
+  // a copy is removed by its timer, never by its animation's end
+  useEffect(() => {
+    if (leaving.length === 0) return;
+    const now = performance.now();
+    const timers = leaving.map((c) =>
+      setTimeout(
+        () => setLeaving((l) => l.filter((x) => x.key !== c.key)),
+        Math.max(0, c.until - now),
+      ),
+    );
+    return () => {
+      for (const t of timers) clearTimeout(t);
+    };
+  }, [leaving]);
+
+  const shown = (note: Note, close: () => void) => (
+    <div className={st.toast} id={note.elementId} role={note.role} data-notice={note.id}>
+      {note.body(close, true)}
+    </div>
+  );
+  return (
+    <>
+      {(err.live || sto.live) && (
+        <div
+          ref={box}
+          className={st.notices}
+          style={top === undefined ? { visibility: "hidden" } : { top }}
+        >
+          {err.live && error && shown(error, err.close)}
+          {sto.live && story && shown(story, sto.close)}
+        </div>
+      )}
+      {leaving.map((c) => (
+        <div
+          key={c.key}
+          className={st.notices}
+          style={{ top: c.top }}
+          aria-hidden="true"
+          inert
+          data-notice-leaving
+        >
+          <div className={cx(st.toast, st.toastOut)}>{c.note.body(undefined, false)}</div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** What went wrong, in the phone's words: #juego has no «Partida» to copy the run from. */
+function errorWords(kind: GameErrorKind, close: (() => void) | undefined): ReactNode {
+  return (
+    <span className={st.toastRow}>
+      {kind === "unexpected" ? ui("ui.m.error.unexpected") : ui(`ui.error.${kind}`)}
+      {close && (
+        <button type="button" className={st.toastBtn} onClick={close}>
+          {ui("ui.error.dismiss")}
+        </button>
+      )}
+    </span>
+  );
+}
+
+/**
+ * A story scene's notice (owner 2026-11-13): played («seen», «skipped») or passed by because she
+ * saw it in an earlier season (owner 2026-11-14), with «Ver» to play it whole where a scene may
+ * play now.
+ */
+function storyWords(
+  toast: Toast,
+  scene: StoryScene | undefined,
+  watch: (() => void) | undefined,
+): ReactNode {
+  return (
+    <>
+      {scene && (
+        <>
+          <b>
+            {gameText(scene.kickerKey)} · {gameText(scene.titleKey)}
+          </b>
+          <br />
+        </>
+      )}
+      {toast.kind === "passed" ? (
+        <span className={st.toastRow}>
+          {ui("ui.m.story.passed")}
+          {watch && (
+            <button type="button" className={st.toastBtn} id="m-escena-ver" onClick={watch}>
+              {ui("ui.m.story.watch")}
+            </button>
+          )}
+        </span>
+      ) : (
+        ui(toast.kind === "skipped" ? "ui.m.story.skipped" : "ui.m.story.seen")
+      )}
+    </>
+  );
+}
+
+/**
+ * A run's notices (plan §1.9; replaces the story toast and the first error notice): the first
+ * story notice of the flow's queue (`toasts`) and a refused act (`notice`). They show only while
+ * the flow allows one (`flow.toast`: no layer, no race replay, no training's result) and no layer
+ * is in front or leaving (LayerHost's child), so a notice set under a scene, the emblem, the
+ * inheritance card or the week's effects waits for them and then shows its whole time. «Ver» is
+ * there only while a scene may play (`flow.canReplay`, critic b). Never in `ui/modals`: the back
+ * gesture and the sheet hold ignore it.
+ */
+export function NoticeHost({
+  flow,
+  toasts,
+  notice,
+  dispatch,
+  onWatch,
+}: {
+  readonly flow: Flow;
+  readonly toasts: readonly Toast[];
+  readonly notice: Notice | undefined;
+  readonly dispatch: (e: UiEvent) => void;
+  readonly onWatch: (scene: StoryScene) => void;
+}) {
+  const idle = useLayersIdle();
+  const toast = toasts[0];
+  const scene = toast && allScenes().find((sc) => sc.id === toast.sceneId);
+  const canWatch = flow.canReplay;
+  const story: Note | undefined = toast && {
+    id: toast.id,
+    shown: toast.shown,
+    ms: toast.kind === "passed" ? MOTION.toastLong : MOTION.toastShort,
+    elementId: "m-capitulo-aviso",
+    role: "status",
+    body: (_close, live) =>
+      storyWords(toast, scene, live && canWatch && scene ? () => onWatch(scene) : undefined),
+    onShown: () => dispatch({ type: "toastShown", id: toast.id }),
+    onGone: () => dispatch({ type: "toastGone", id: toast.id }),
+  };
+  const error: Note | undefined = notice && {
+    id: `error:${notice.n}`,
+    shown: notice.shown,
+    ms: MOTION.toastLong,
+    elementId: "m-aviso-error",
+    role: "alert",
+    body: (close) => errorWords(notice.kind, close),
+    onShown: () => dispatch({ type: "noticeShown", n: notice.n }),
+    onGone: () => dispatch({ type: "noticeGone", n: notice.n }),
+  };
+  return (
+    <Notices
+      error={error}
+      story={story}
+      visible={flow.toast && idle}
+      screen={flow.screenKey}
+      cut={cutsNotice(flow.layer?.kind)}
+    />
+  );
+}
+
+const errorIds = new WeakMap<GameError, string>();
+let errorSeq = 0;
+
+/** Each failure the controller reports is its own notice. */
+function errorId(e: GameError): string {
+  let id = errorIds.get(e);
+  if (id === undefined) {
+    errorSeq += 1;
+    id = `error:select:${errorSeq}`;
+    errorIds.set(e, id);
+  }
+  return id;
+}
+
+/**
+ * The selection's notice (plan §1.9, critic b: errors were swallowed there): a «Continuar» whose
+ * save no longer loads, or a season that could not start, in `ui.error.<kind>`'s words, until it
+ * is closed or its time is up (`onClose` clears it).
+ */
+export function ErrorNotice({
+  error,
+  onClose,
+}: {
+  readonly error: GameError | undefined;
+  readonly onClose: () => void;
+}) {
+  const note: Note | undefined = error && {
+    id: errorId(error),
+    shown: false,
+    ms: MOTION.toastLong,
+    elementId: "m-aviso-error",
+    role: "alert",
+    body: (close) => errorWords(error.kind, close),
+    onShown: () => undefined,
+    onGone: onClose,
+  };
+  return <Notices error={note} story={undefined} visible screen="select" cut={false} />;
+}
