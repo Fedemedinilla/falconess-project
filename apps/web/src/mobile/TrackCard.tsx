@@ -1,7 +1,7 @@
 import type { StatName, TrackDemand } from "@falconess/schema";
-import { useEffect, useRef } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useModalDialog } from "../ui/useModalDialog";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { StripPiece, TrackCardView, TrackFeature } from "./track";
@@ -209,15 +209,8 @@ export function TrackSheet({
   open: boolean;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      if (typeof d.showModal === "function") d.showModal();
-      else d.setAttribute("open", "");
-    } else if (!open && d.open) d.close();
-  }, [open]);
+  const { ref, mounted } = useModalDialog(open, onClose);
+  if (!mounted) return null;
   return (
     <dialog
       ref={ref}
@@ -258,13 +251,7 @@ export function TrackSheet({
           type="button"
           className={cx(s.btn, s.btnDark)}
           id="m-pista-cerrar"
-          onClick={() => {
-            // its callers mount it only while open: close natively first, so the focus goes back
-            // to what opened it (the dialog's close event then calls onClose, which unmounts it)
-            const d = ref.current;
-            if (d?.open && typeof d.close === "function") d.close();
-            else onClose();
-          }}
+          onClick={onClose}
         >
           {ui("ui.m.close")}
         </button>

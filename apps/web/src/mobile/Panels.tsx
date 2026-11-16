@@ -12,10 +12,11 @@ import {
   startSeason,
   vigor,
 } from "@falconess/sim";
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef } from "react";
+import { type CSSProperties, type ReactNode, useMemo } from "react";
 import { goalStatuses } from "../screens/model/season";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useModalDialog } from "../ui/useModalDialog";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { crewInitials } from "./model";
@@ -470,15 +471,8 @@ export function PanelSheet({
   onClose: () => void;
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      if (typeof d.showModal === "function") d.showModal();
-      else d.setAttribute("open", "");
-    } else if (!open && d.open) d.close();
-  }, [open]);
+  const { ref, mounted } = useModalDialog(open, onClose);
+  if (!mounted) return null;
   return (
     <dialog
       ref={ref}

@@ -1,9 +1,10 @@
 import type { SeasonState } from "@falconess/schema";
 import { bondLevel, inSync, type SimContext } from "@falconess/sim";
-import { type CSSProperties, useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 import { outingPreview } from "../screens/model/actions";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useModalDialog } from "../ui/useModalDialog";
 import s from "./Mobile.module.css";
 import { crewInitials } from "./model";
 
@@ -24,15 +25,8 @@ export function OutingSheet({
   onPick: (manufacturer: string) => void;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      if (typeof d.showModal === "function") d.showModal();
-      else d.setAttribute("open", "");
-    } else if (!open && d.open) d.close();
-  }, [open]);
+  const { ref, mounted } = useModalDialog(open, onClose);
+  if (!mounted) return null;
   const S = ctx.ruleset.season;
   const bondMax = Math.floor(100 / S.bondLevelStep);
   const syncLevel = S.crewSync ? bondLevel(ctx, S.crewSync.minBond) : undefined;

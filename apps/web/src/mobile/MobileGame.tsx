@@ -24,6 +24,7 @@ import {
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { reducedMotion, useMedia } from "../ui/useMedia";
+import { useModalDialog } from "../ui/useModalDialog";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
@@ -76,7 +77,7 @@ import { TitleScreen } from "./TitleScreen";
 import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
-import { trackCard } from "./track";
+import { type TrackCardView, trackCard } from "./track";
 import { usePace } from "./usePace";
 import { useStory } from "./useStory";
 import { WeekFxOverlay } from "./WeekFx";
@@ -150,7 +151,11 @@ export function MobileGame() {
   }, [desk]);
   const [tab, setTab] = useState<PanelTab>("menu");
   const [sheet, setSheet] = useState<PanelTab>();
-  const [trackFor, setTrackFor] = useState<string>();
+  // the goals' track sheet keeps its card while it closes
+  const [trackSheet, setTrackSheet] = useState<{
+    readonly view: TrackCardView;
+    readonly open: boolean;
+  }>();
   const [guideNew, setGuideNew] = useState(() => !guideSeen());
   const openPanel = (t: PanelTab) => {
     if (t === "guide") {
@@ -686,7 +691,11 @@ export function MobileGame() {
     ) : t === "log" ? (
       <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} />
     ) : t === "goals" ? (
-      <GoalsPanel ctx={ctx} state={state} onTrack={setTrackFor} />
+      <GoalsPanel
+        ctx={ctx}
+        state={state}
+        onTrack={(courseId) => setTrackSheet({ view: trackCard(ctx, courseId), open: true })}
+      />
     ) : t === "crews" ? (
       <CrewsPanel ctx={ctx} state={state} />
     ) : (
@@ -837,8 +846,12 @@ export function MobileGame() {
         >
           {sheet && panel(sheet)}
         </PanelSheet>
-        {trackFor && (
-          <TrackSheet view={trackCard(ctx, trackFor)} open onClose={() => setTrackFor(undefined)} />
+        {trackSheet && (
+          <TrackSheet
+            view={trackSheet.view}
+            open={trackSheet.open}
+            onClose={() => setTrackSheet((t) => (t?.open ? { ...t, open: false } : t))}
+          />
         )}
       </div>
     </>
@@ -1026,17 +1039,9 @@ function MobileMenu({
   onChat: () => void;
   onStory: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const [round, setRound] = useState(0);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      setRound((n) => n + 1);
-      if (typeof d.showModal === "function") d.showModal();
-      else d.setAttribute("open", "");
-    } else if (!open && d.open) d.close();
-  }, [open]);
+  // mounted on open: its buttons start fresh each time («Nueva temporada» unconfirmed)
+  const { ref, mounted } = useModalDialog(open, onClose);
+  if (!mounted) return null;
   return (
     <dialog
       ref={ref}
@@ -1062,7 +1067,7 @@ function MobileMenu({
             {t === "guide" && guideNew && <span className={st.newTag}>{ui("ui.m.guide.new")}</span>}
           </button>
         ))}
-        <MenuItems key={round} {...items} />
+        <MenuItems {...items} />
         <button type="button" className={cx(s.btn, s.btnDark)} id="m-menu-cerrar" onClick={onClose}>
           {ui("ui.m.close")}
         </button>

@@ -1,7 +1,7 @@
 import type { StoryScene } from "@falconess/schema";
-import { useEffect, useRef } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useModalDialog } from "../ui/useModalDialog";
 import s from "./Mobile.module.css";
 
 /** «Historia» in the menu: every scene of this Falconess already seen in this browser, to watch again. */
@@ -16,15 +16,8 @@ export function StoryListSheet({
   onWatch: (scene: StoryScene) => void;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      if (typeof d.showModal === "function") d.showModal();
-      else d.setAttribute("open", "");
-    } else if (!open && d.open) d.close();
-  }, [open]);
+  const { ref, mounted } = useModalDialog(open, onClose);
+  if (!mounted) return null;
   return (
     <dialog
       ref={ref}

@@ -1,6 +1,7 @@
 import type { ChatTopic } from "@falconess/schema";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
+import { useModalOpen } from "../ui/modals";
 import { reducedMotion } from "../ui/useMedia";
 import s from "./Story.module.css";
 
@@ -31,6 +32,8 @@ export function ChatSheet({
   onRead: (topicId: string) => void;
   onClose: () => void;
 }) {
+  // mounted only while open: it counts as an open sheet for as long as it is in the page
+  useModalOpen(true);
   const [bubbles, setBubbles] = useState<readonly Bubble[]>([]);
   const [typing, setTyping] = useState(false);
   const feed = useRef<HTMLDivElement>(null);

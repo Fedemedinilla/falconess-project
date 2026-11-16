@@ -3,6 +3,7 @@ import { exportFileName, type SeasonEntry } from "../game/history";
 import { locale } from "../text/lang";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useModalDialog } from "../ui/useModalDialog";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
@@ -12,20 +13,6 @@ export type ExportItem = {
   readonly fileName: string;
   readonly title: string;
 };
-
-/** A `<dialog>` that follows `open` (the same pattern as the «Menú» sheet). */
-function useSheet(open: boolean) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      if (typeof d.showModal === "function") d.showModal();
-      else d.setAttribute("open", "");
-    } else if (!open && d.open) d.close();
-  }, [open]);
-  return ref;
-}
 
 type Status = "idle" | "copied" | "downloaded" | "shared" | "failed";
 
@@ -94,7 +81,7 @@ export function ExportSheet({
   item: ExportItem | undefined;
   onClose: () => void;
 }) {
-  const ref = useSheet(item !== undefined);
+  const { ref, mounted } = useModalDialog(item !== undefined, onClose);
   const field = useRef<HTMLTextAreaElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new item starts clean
@@ -149,6 +136,7 @@ export function ExportSheet({
     setStatus((await copyText(item.text, field.current)) ? "copied" : "failed");
   };
 
+  if (!mounted) return null;
   return (
     <dialog
       ref={ref}
@@ -249,13 +237,14 @@ export function HistorySheet({
   onExport: (entry: SeasonEntry) => void;
   onClose: () => void;
 }) {
-  const ref = useSheet(open);
+  const { ref, mounted } = useModalDialog(open, onClose);
   const date = new Intl.DateTimeFormat(locale(), {
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
   });
+  if (!mounted) return null;
   return (
     <dialog
       ref={ref}
