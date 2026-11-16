@@ -161,12 +161,25 @@ Confirmado y ampliado por el dueño el mismo día:
   Peregrina hasta sacar dos cajas buenas (Agilidad 3★, habilidades de Sprint) → se las ponés a tu
   Falconess al azar (cada una pierde un uso) → si la temporada sale mal, probás otra vez → cuando se
   gastan, volvés a Peregrina por más.
-- Abierto: hoy las cajas también se usan en las temporadas de las Falconess con nombre (sacar una
-  caja en Normal para pasar Exigente, `docs/decisions/ADR-0013-herencia-con-suerte.md`, contexto y
-  decisión 1). ¿Eso sigue, y ahí también gasta usos?
-- Abierto: ¿una sola Falconess al azar por cuenta o varias? ¿A qué escudería pertenece? ¿Qué
-  historia tiene su temporada, si no tiene personalidad escrita a mano?
-- Nota para las opciones de abajo: gastar usos de cajas ya es un riesgo (lo que se arriesga en cada
+- Decidido (2026-11-16): **las cajas también gastan usos en las temporadas de las estrellas.** «Así
+  que está en el player decidir si usa una black box perfecta para entrenar a una Peregrina e
+  intentar sacar una black box perfecta++, o usarla para su Falconess random.» (Cambia
+  `docs/decisions/ADR-0013-herencia-con-suerte.md`, que hoy no tiene usos: va con su ADR cuando se
+  lleve al juego.)
+- Decidido (2026-11-16): **la Falconess al azar no pertenece a ninguna escudería.** En el
+  multijugador, los grupos de jugadores (guilds, clanes) se llaman **Escuderías**, con colores que
+  elige quien la funda («Guild Master o Chief»).
+- Decidido (2026-11-16): **su temporada no tiene historia.** «Hay que ver cómo rellenar esos
+  espacios, pero la idea es que sea una temporada más compleja y larga que la de las 3 estrellas
+  […] ya que la temporada de la Falconess random es más de y para competición que de historia y
+  singleplayer.» Abierto: con qué se rellena.
+- Decidido (2026-11-16): **cada cuenta tiene un equipo de tres Falconess al azar, con una principal**
+  que es la cara de la cuenta. «Le damos la chance de nunca terminar de grindear su "perfecta" […]
+  le quedan aún 2 Falconess más para levear y mejorar, si es que quiere correr en pvp en las
+  carreras que su perfecta actual no entra.»
+- Abierto: las escuderías del mundo (Kōryū Racing…) y las de los jugadores comparten nombre. ¿Las de
+  los jugadores son escuderías nuevas dentro del mundo (el deporte es joven y crece) o algo aparte?
+- Nota para las opciones de abajo (superadas el 2026-11-16): gastar usos de cajas ya es un riesgo (lo que se arriesga en cada
   intento), y «elegir entre tres» ya está decidido.
 
 #### Opciones para I5 (propuesta, 2026-11-16, para que elija el dueño)
@@ -192,3 +205,14 @@ Cuántas veces se tira el dado:
    rechazadas no vuelven.
 5. **Las rechazadas siguen en el mundo:** aparecen después como rivales en tus carreras (enlaza
    con el Modo Némesis, T20 de `docs/design/temporada-v3.md`).
+
+### I7 · El trío pionero (2026-11-16)
+
+> «[Caracara] no corrió esa Larga. Lo agregaremos a su historia/temporada. Pero sí vio a Peregrina
+> correr y perder. Hay que pensar en incluir más a las otras 2 estrellas en las historias de
+> Peregrina. Así entre las 3 forman el trío pionero.»
+- Estado: **decidida** (2026-11-16).
+- Va a: cronología (ya anotado), relaciones, canon de Peregrina y de Caracara, mapa de escenas.
+- Canon: Caracara no corrió la gran Larga; la vio desde afuera y vio perder a Peregrina. Por qué no
+  corrió se escribe en su historia.
+- Abierto: en qué escenas de Peregrina aparecen más Cernícala y Caracara.
