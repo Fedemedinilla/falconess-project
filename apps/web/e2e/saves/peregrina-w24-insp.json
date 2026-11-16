@@ -1,0 +1,96 @@
+{
+  "save": {
+    "schemaVersion": 1,
+    "rulesetVersion": "v3",
+    "seed": "1",
+    "inputs": [
+      {
+        "kind": "start",
+        "falconessId": "peregrina",
+        "hangar": ["shiden", "mule", "nimbus", "falke"],
+        "parents": [
+          {
+            "id": "caja-agilidad",
+            "rulesetVersion": "v3",
+            "falconessId": "peregrina",
+            "grade": "A",
+            "factors": {
+              "stat": { "stat": "agility", "stars": 3 },
+              "aptitude": { "kind": "position", "key": "closer", "letter": "A", "stars": 3 },
+              "skills": [],
+              "frameAffinity": "koryu"
+            },
+            "seed": "caja-agilidad",
+            "inputsHash": "0"
+          },
+          {
+            "id": "caja-tecnica",
+            "rulesetVersion": "v3",
+            "falconessId": "peregrina",
+            "grade": "A",
+            "factors": {
+              "stat": { "stat": "technique", "stars": 3 },
+              "aptitude": { "kind": "position", "key": "closer", "letter": "A", "stars": 3 },
+              "skills": [],
+              "frameAffinity": "koryu"
+            },
+            "seed": "caja-tecnica",
+            "inputsHash": "0"
+          }
+        ],
+        "difficulty": "normal"
+      },
+      { "kind": "train:stamina" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "train:stamina" },
+      { "kind": "rest" },
+      { "kind": "train:technique" },
+      { "kind": "train:agility" },
+      { "kind": "rest" },
+      { "kind": "train:stamina" },
+      { "kind": "train:technique" },
+      { "kind": "train:stamina" }
+    ]
+  },
+  "vista": "v3|1|24|17311d87",
+  "historia": [
+    "peregrina-prologue",
+    "peregrina-debut",
+    "peregrina-debut-win",
+    "peregrina-tears",
+    "peregrina-warmup",
+    "peregrina-press"
+  ],
+  "expect": {
+    "turn": 24,
+    "status": "active",
+    "difficulty": "normal",
+    "injured": false,
+    "races": [
+      {
+        "turn": 10,
+        "place": 1
+      },
+      {
+        "turn": 20,
+        "place": 1
+      }
+    ],
+    "next": {},
+    "due": [],
+    "inspired": 1
+  }
+}

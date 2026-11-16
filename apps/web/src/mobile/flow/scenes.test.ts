@@ -2,7 +2,6 @@ import type { RunInput, SeasonState, StoryScene, StoryTrigger } from "@falconess
 import { seasonGoalsOf, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import type { InspirationScene } from "../inspirationScene";
-import { LEGACY_POLICY, TARGET_POLICY } from "./policy";
 import {
   DIGEST,
   digestFor,
@@ -194,16 +193,13 @@ describe("menuOrder: the menu's scenes and the inheritance card (D2)", () => {
       return sc;
     });
 
-  it("target, at the season's start: the prologue, then the start's card", () => {
-    expect(names(menuOrder(of("x-start"), card("start"), TARGET_POLICY))).toEqual([
-      "x-start",
-      "card:start",
-    ]);
+  it("at the season's start: the prologue, then the start's card (no longer the card first: C9)", () => {
+    expect(names(menuOrder(of("x-start"), card("start")))).toEqual(["x-start", "card:start"]);
   });
 
-  it("target, any other week: the goal's scenes and the end, the week's card, the weeks' scenes, a start left over", () => {
+  it("any other week: the goal's scenes and the end, the week's card, the weeks' scenes, a start left over (C10)", () => {
     const scenes = of("x-after-0", "x-end", "x-turn-5", "x-turn-16", "x-start");
-    expect(names(menuOrder(scenes, card("inspiration"), TARGET_POLICY))).toEqual([
+    expect(names(menuOrder(scenes, card("inspiration")))).toEqual([
       "x-after-0",
       "x-end",
       "card:inspiration",
@@ -211,18 +207,6 @@ describe("menuOrder: the menu's scenes and the inheritance card (D2)", () => {
       "x-turn-16",
       "x-start",
     ]);
-    expect(names(menuOrder(scenes, undefined, TARGET_POLICY))).toEqual(ids(scenes));
-  });
-
-  it("legacy: the card first, then the scenes (C9, C10)", () => {
-    expect(names(menuOrder(of("x-start"), card("start"), LEGACY_POLICY))).toEqual([
-      "card:start",
-      "x-start",
-    ]);
-    expect(names(menuOrder(of("x-turn-5"), card("inspiration"), LEGACY_POLICY))).toEqual([
-      "card:inspiration",
-      "x-turn-5",
-    ]);
-    expect(names(menuOrder(of("x-turn-5"), undefined, LEGACY_POLICY))).toEqual(["x-turn-5"]);
+    expect(names(menuOrder(scenes, undefined))).toEqual(ids(scenes));
   });
 });

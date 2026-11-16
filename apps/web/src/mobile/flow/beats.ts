@@ -105,15 +105,6 @@ export function beatsOf(
   const unread = step && !stepSeen && run.state === step.after ? step : undefined;
   const own = p.resume || ui.mine.has(fp); // legacy: only what this mount committed
   const tail = p.endSequence || !ended; // legacy: the season's end swallows the rest (F3)
-  const card = ended
-    ? undefined
-    : inspirationCard(
-        run.seed,
-        run.state,
-        run.inputs.length,
-        p.order === "legacy" ? unread : step,
-        f.cardsShown,
-      );
   if (unread) {
     const k = (b: string) => `${fp}/${b}`;
     const race = addedRace(unread);
@@ -133,7 +124,6 @@ export function beatsOf(
       for (const sc of due("race")) push(scene(sc, "race"));
       push({ kind: "race-result", key: k("race:result"), turn: race.turn });
     }
-    if (p.order === "legacy" && card) push(cardBeat(card)); // C10 as the game plays it today
     if (tail) {
       const part = fxPart(unread);
       const fx = stepFx(ctx, unread, part);
@@ -144,13 +134,16 @@ export function beatsOf(
       );
     }
   }
-  // Once the step is read: the event, or the scenes and the inheritance card in D2's order.
+  // Once the step is read: the event, or the scenes and the inheritance card in D2's order (the
+  // card comes from the latest step, read or not, until this browser showed it: F19, C9, C10).
   const event = ended ? undefined : run.state.pendingEvent;
   if (event) push({ kind: "event", key: `event:${event.eventId}/${event.turn}` });
   else {
     const where: SceneMode = ended ? "end" : "menu";
-    const later = p.order === "legacy" && unread ? undefined : card; // legacy pushed it already
-    for (const it of menuOrder(due(where), later, p))
+    const card = ended
+      ? undefined
+      : inspirationCard(run.seed, run.state, run.inputs.length, step, f.cardsShown);
+    for (const it of menuOrder(due(where), card))
       push(it.kind === "card" ? cardBeat(it.card) : scene(it.scene, where));
   }
   out.push({ kind: "idle", key: `idle:${fp}` });

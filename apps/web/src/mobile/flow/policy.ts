@@ -5,12 +5,6 @@
  * that commit brings it back), and the last one deletes this file. Pure and text-free.
  */
 export type FlowPolicy = {
-  /**
-   * `d2`: the week's effects, then the event, then the inheritance card and the scenes in D2's
-   * order; legacy: the card first, then the effects, the event and the scenes, and at the start
-   * the card before the prologue (C9, C10). Removed in 5.3.
-   */
-  readonly order: "legacy" | "d2";
   /** The last step's result and effects play over the season's end; legacy: the end swallows them (F3). Removed in 5.4. */
   readonly endSequence: boolean;
   /**
@@ -33,7 +27,6 @@ export type FlowPolicy = {
 
 /** Today's game, flag by flag. */
 export const LEGACY_POLICY: FlowPolicy = Object.freeze({
-  order: "legacy",
   endSequence: false,
   resume: false,
   restedCue: true,
@@ -44,7 +37,6 @@ export const LEGACY_POLICY: FlowPolicy = Object.freeze({
 
 /** The designed flow (plan §1.4), which the season walks check. */
 export const TARGET_POLICY: FlowPolicy = Object.freeze({
-  order: "d2",
   endSequence: true,
   resume: true,
   restedCue: false,

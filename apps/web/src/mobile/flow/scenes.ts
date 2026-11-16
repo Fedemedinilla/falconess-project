@@ -9,7 +9,6 @@ import type { SimContext } from "@falconess/sim";
 import type { InspirationScene } from "../inspirationScene";
 import type { Pace } from "../pace";
 import { triggerHolds } from "../storyModel";
-import type { FlowPolicy } from "./policy";
 import type { Digest, SceneMode } from "./types";
 
 /**
@@ -107,17 +106,15 @@ export type MenuItem =
 /**
  * The menu's scenes and the inheritance card in D2's order: at the season's start the prologue,
  * then the start's card; on any other week the goal's scenes and the end, then the week's card,
- * then the weeks' scenes (and a start scene left over). Legacy (C9, C10): the card first.
+ * then the weeks' scenes (and a start scene left over).
  */
 export function menuOrder(
   scenes: readonly StoryScene[],
   card: InspirationScene | undefined,
-  p: Pick<FlowPolicy, "order">,
 ): MenuItem[] {
   const items = (list: readonly StoryScene[]): MenuItem[] =>
     list.map((scene) => ({ kind: "scene", scene }));
   const cards: MenuItem[] = card ? [{ kind: "card", card }] : [];
-  if (p.order === "legacy") return [...cards, ...items(scenes)];
   const of = (kind: SceneKind) => items(scenes.filter((sc) => sc.trigger.kind === kind));
   const goals = [...of("goal-after"), ...of("end")];
   if (card?.kind === "start") return [...of("start"), ...cards, ...goals, ...of("turn")];

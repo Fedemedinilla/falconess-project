@@ -69,19 +69,15 @@ describe("the season's start", () => {
     expect(beats(t, INITIAL_UI, TARGET_POLICY)[0]?.key).toBe("scene:s1:peregrina-prologue");
   });
 
-  it("with parents: legacy the card first (C9), target the prologue first (D2)", () => {
+  it("with parents: the prologue, then the start's card (D2; it used to come first, C9)", () => {
     const t = testGame();
     t.game.start("peregrina", HANGAR, "s2", undefined, parents());
-    expect(queue(t, INITIAL_UI, LEGACY_POLICY)).toEqual([
-      "card:s2:start",
-      "scene:peregrina-prologue@menu",
-      "idle",
-    ]);
-    expect(queue(t, INITIAL_UI, TARGET_POLICY)).toEqual([
-      "scene:peregrina-prologue@menu",
-      "card:s2:start",
-      "idle",
-    ]);
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual([
+        "scene:peregrina-prologue@menu",
+        "card:s2:start",
+        "idle",
+      ]);
     expect(beats(t, INITIAL_UI, TARGET_POLICY)[1]?.key).toBe("insp:s2:start");
     // shown once: the inheritance store remembers it
     t.cards.markShown("s2", "s2:start");
@@ -93,16 +89,8 @@ describe("the season's start", () => {
     const t = testGame();
     t.story.markSeen("earlier", "peregrina-prologue");
     t.game.start("peregrina", HANGAR, "s3", undefined, parents());
-    expect(queue(t, INITIAL_UI, LEGACY_POLICY)).toEqual([
-      "card:s3:start",
-      "pass:peregrina-prologue",
-      "idle",
-    ]);
-    expect(queue(t, INITIAL_UI, TARGET_POLICY)).toEqual([
-      "pass:peregrina-prologue",
-      "card:s3:start",
-      "idle",
-    ]);
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(["pass:peregrina-prologue", "card:s3:start", "idle"]);
     const plain = testGame();
     plain.story.markSeen("earlier", "peregrina-prologue");
     plain.game.start("peregrina", HANGAR, "s4");
@@ -157,29 +145,24 @@ describe("a normal week", () => {
     expect(queue(t, mine, TARGET_POLICY)).toEqual(["ack", "idle"]);
   });
 
-  it("the week before an inspiration (39 → 40): legacy card → effects → scene (C10), target effects → card → scene (D2)", () => {
+  it("the week before an inspiration (39 → 40): effects → card → scene (D2; the card came first, C10)", () => {
     const t = loadSave("peregrina-w39-insp");
     const mine = commit(t, { kind: "rest" });
-    expect(queue(t, mine, LEGACY_POLICY)).toEqual([
-      "card:1:40",
-      "fx:all:sleep-normal",
-      "scene:peregrina-first-vos@menu",
-      "idle",
-    ]);
-    expect(queue(t, mine, TARGET_POLICY)).toEqual([
-      "fx:all:sleep-normal",
-      "card:1:40",
-      "scene:peregrina-first-vos@menu",
-      "idle",
-    ]);
-    // once the step is read: legacy loses the week's card, target keeps it until it is shown (F19)
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, mine, p)).toEqual([
+        "fx:all:sleep-normal",
+        "card:1:40",
+        "scene:peregrina-first-vos@menu",
+        "idle",
+      ]);
+    // once the step is read the card stays until it is shown (it was lost then, F19), and a mount
+    // that did not commit the step (a reload) shows it too
     t.game.acknowledgeStep();
-    expect(queue(t, mine, LEGACY_POLICY)).toEqual(["scene:peregrina-first-vos@menu", "idle"]);
-    expect(queue(t, mine, TARGET_POLICY)).toEqual([
-      "card:1:40",
-      "scene:peregrina-first-vos@menu",
-      "idle",
-    ]);
+    for (const ui of [mine, INITIAL_UI])
+      for (const p of [LEGACY_POLICY, TARGET_POLICY])
+        expect(queue(t, ui, p)).toEqual(["card:1:40", "scene:peregrina-first-vos@menu", "idle"]);
+    t.cards.markShown("1", "1:40");
+    expect(queue(t, mine, TARGET_POLICY)).toEqual(["scene:peregrina-first-vos@menu", "idle"]);
   });
 
   it("two unseen weeks' scenes: one at a time, by week, not by file name (F13)", () => {

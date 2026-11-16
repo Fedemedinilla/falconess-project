@@ -491,7 +491,8 @@ test("inheritance: up to two of this browser's black boxes go into the new seaso
   await page.click('[data-box="b3"]');
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
-  // the inheritance card: what each box gave at the start
+  // her prologue first (D2), then the inheritance card: what each box gave at the start
+  await skipPrologue(page);
   const card = page.locator("#m-inspiracion");
   await expect(card).toHaveAttribute("data-kind", "start");
   await expect(card.locator("li[data-parent]")).toHaveCount(2);

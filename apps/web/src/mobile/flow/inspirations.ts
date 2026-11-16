@@ -3,9 +3,9 @@
  * (`${seed}:start`, `${seed}:24`, `${seed}:40`), across reloads and the language's remount.
  * Framework-free and subscribable, like the story store; pure and text-free (flow/imports.test.ts).
  */
-import type { SeasonState } from "@falconess/schema";
+import type { ContentIndex, SeasonState } from "@falconess/schema";
 import { z } from "zod";
-import type { Step } from "../../game/controller";
+import { GameController, type Step } from "../../game/controller";
 import { type KeyValueStore, readKey, writeKey } from "../../game/storage";
 import { cardKeys, stepCardKey } from "../inspirationScene";
 
@@ -29,6 +29,28 @@ export type LoadedRun = {
   readonly step: Step | undefined;
   readonly stepSeen: boolean;
 };
+
+/**
+ * The run «Continuar» would load from `kv`, with its last step and whether that step was read:
+ * replayed by a controller of its own on a read-only view of the storage, so nothing is written
+ * (not the save, not the history). What Boot gives the store as `saved`; the store asks only on a
+ * load with no key stored.
+ */
+export function savedRun(
+  content: ContentIndex | ((rulesetVersion: string) => ContentIndex),
+  kv: KeyValueStore | undefined,
+): LoadedRun | undefined {
+  if (!kv) return undefined;
+  const readOnly: KeyValueStore = {
+    getItem: (key) => kv.getItem(key),
+    setItem: () => undefined,
+    removeItem: () => undefined,
+  };
+  const game = new GameController(content, readOnly);
+  if (!game.continueSaved()) return undefined;
+  const { run, lastStep, lastStepSeen } = game.getSnapshot();
+  return run && { seed: run.seed, state: run.state, step: lastStep, stepSeen: lastStepSeen };
+}
 
 function decode(raw: string): Map<string, readonly string[]> {
   let data: unknown;

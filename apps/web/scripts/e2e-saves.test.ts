@@ -87,6 +87,11 @@ type Expect = {
   readonly next: Readonly<Record<string, Outcome>>;
   /** The scenes due at load: the menu (or the End) plays them at once. */
   readonly due: readonly string[];
+  /**
+   * Parents who inspired her as this week began (ADR-0013): the inheritance card the save's last
+   * step left. Left out when it left none.
+   */
+  readonly inspired?: number;
 };
 
 type Fixture = {
@@ -166,6 +171,12 @@ function parent(id: string, stat: StatName): BlackBox {
   };
 }
 
+/** Two 3★ parents: each inspires her often on the inspiration weeks (24 and 40). */
+const PARENTS: readonly BlackBox[] = [
+  parent("caja-agilidad", "agility"),
+  parent("caja-tecnica", "technique"),
+];
+
 const atWeek = (turn: number) => (s: SeasonState) => s.turn === turn;
 const REST: WeekInput = { kind: "rest" };
 const TECHNIQUE: WeekInput = { kind: "train:technique" };
@@ -192,11 +203,23 @@ const RECIPES: Readonly<Record<string, Recipe>> = {
     next: [REST],
     wants: (e) => e.goal !== undefined && e.next.rest?.endReason === "goal-failed",
   },
+  /**
+   * Week 24 with the same parents, its week already read: a parent inspired her as the week began,
+   * so the step that led here left the week's inheritance card (an earlier build showed it then).
+   */
+  "peregrina-w24-insp": {
+    falconessId: "peregrina",
+    difficulty: "normal",
+    parents: PARENTS,
+    until: atWeek(24),
+    next: [],
+    wants: (e) => e.goal === undefined && (e.inspired ?? 0) > 0,
+  },
   /** Week 39 with two 3★ parents: both inspire her as week 40 begins, whatever the action. */
   "peregrina-w39-insp": {
     falconessId: "peregrina",
     difficulty: "normal",
-    parents: [parent("caja-agilidad", "agility"), parent("caja-tecnica", "technique")],
+    parents: PARENTS,
     until: atWeek(39),
     next: [REST],
     wants: (e) => e.goal === undefined && e.next.rest?.inspired === 2,
@@ -341,6 +364,10 @@ function fixtureOf(
   if (!state) throw new Error("no state");
   const goal = state.status === "active" ? goalForTurn(ctx, state) : undefined;
   const historia = heldScenes(ctx, scenes, states);
+  // the inheritance card of the last step: its records, new to the step (inspirationScene.ts)
+  const fresh = state.log.slice(states.at(-2)?.log.length ?? state.log.length);
+  const records = fresh.find((e) => e.inspirations !== undefined)?.inspirations;
+  const inspired = records?.filter((r) => r.inspired).length ?? 0;
   const next: Record<string, Outcome> = {};
   if (state.status === "active")
     for (const input of recipe.next) next[input.kind] = outcome(ctx, state, input);
@@ -366,6 +393,7 @@ function fixtureOf(
       races: state.raceResults.map((r) => ({ turn: r.turn, place: r.place })),
       next,
       due: dueAtLoad(ctx, scenes, state, historia),
+      ...(inspired === 0 ? {} : { inspired }),
     },
   };
 }

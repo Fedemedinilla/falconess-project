@@ -340,7 +340,7 @@ const I6 = invariant(
 const I7 = invariant(
   "I7",
   "D2 per mount: a step's effects, then its inheritance card, then the turn scenes; at the start the prologue, then the card",
-  (p) => p.order === "d2",
+  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {

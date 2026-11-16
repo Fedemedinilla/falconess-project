@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { allScenes } from "../content/story";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
@@ -9,7 +18,7 @@ import { type Commands, type FlowPorts, flowCommands } from "./flow/commands";
 import { WeekStore } from "./flow/decidedWeek";
 import { deriveFlow } from "./flow/derive";
 import { factsOf } from "./flow/facts";
-import { InspirationStore } from "./flow/inspirations";
+import type { InspirationStore } from "./flow/inspirations";
 import { ACTIVE_POLICY } from "./flow/policy";
 import type { Flow, FlowFacts } from "./flow/types";
 import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./flow/ui";
@@ -22,6 +31,24 @@ import { useStory } from "./useStory";
 /** The flow, the facts and the UI state as a tap or a timer finds them. */
 export type FlowNow = { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
 
+/**
+ * The flow's stores of the page (plan §1.8): made once in Boot next to the controller, on the
+ * browser's storage, so they outlive the language's remount and every run's view.
+ */
+export type FlowStores = {
+  /** The inheritance cards this browser showed (F19). */
+  readonly cards: InspirationStore;
+};
+
+/** Boot's flow stores (`<FlowStoresContext value={stores}>`). */
+export const FlowStoresContext = createContext<FlowStores | undefined>(undefined);
+
+function useFlowStores(): FlowStores {
+  const stores = useContext(FlowStoresContext);
+  if (!stores) throw new Error("useFlow outside <FlowStoresContext>");
+  return stores;
+}
+
 /** «Ritmo» and reduced motion as the flow reads them. */
 type Motion = { readonly pace: Pace; readonly reduced: boolean };
 
@@ -32,8 +59,8 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * `layer` keep their identity while they say the same), and the commands on their ports, which act
  * on the game. Instant beats resolve before paint.
  *
- * While the legacy policy is active, the week's record and the cards shown live in memory stores
- * of this mount (today's "lost on reload"; 5.3 and 5.6 move each to a stored one).
+ * The cards shown are Boot's (`FlowStoresContext`). While the legacy policy is active, the week's
+ * record lives in a memory store of this mount (today's "lost on reload"; 5.6 moves it to Boot).
  *
  * «Ritmo» and reduced motion are latched while the week is under way (a beat in front): today the
  * game reads them only when a page changes or «Correr» runs, so a change in the wide screen's panel
@@ -60,8 +87,8 @@ export function useFlow({
   const livePace = usePace();
   const liveReduced = useReducedMotion();
   const sheetOpen = useAnyModalOpen() || title;
+  const { cards } = useFlowStores();
   const [weeks] = useState(() => new WeekStore(undefined));
-  const [cards] = useState(() => new InspirationStore(undefined));
   const week = useSyncExternalStore(weeks.subscribe, weeks.getSnapshot, weeks.getSnapshot);
   useSyncExternalStore(cards.subscribe, cards.version, cards.version);
   const [motion, setMotion] = useState<Motion>(() => ({ pace: livePace, reduced: liveReduced }));

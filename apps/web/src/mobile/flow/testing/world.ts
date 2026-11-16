@@ -5,8 +5,8 @@
  * Every command goes through a recorder that writes what happened to `trace`: each flow after a
  * command (a "render"), each beat a command ended, each act, decision, acknowledgement, reload and
  * black box. `reload()` is the browser's: a new controller continues the saved run, new stores read
- * the same storage (the legacy flags keep the week and the cards in memory, as today) and the UI
- * state starts again.
+ * the same storage (the legacy `resume` keeps the week in memory, as today) and the UI state
+ * starts again.
  */
 import { loadSeasonContent } from "@falconess/content";
 import type { BlackBox, Difficulty, RunInput, StoryScene } from "@falconess/schema";
@@ -147,9 +147,8 @@ export type World = {
   probe(name: string, fn: (cmd: Commands) => void): void;
 };
 
-/** Whether a reload keeps the week's record and the cards shown (legacy: memory per mount, F1, F19). */
+/** Whether a reload keeps the week's record (legacy: memory per mount, F1). */
 const keepsWeek = (p: FlowPolicy) => p.resume;
-const keepsCards = (p: FlowPolicy) => p.order === "d2";
 
 export function createWorld(o: WorldOptions): World {
   const policy = o.policy;
@@ -161,7 +160,7 @@ export function createWorld(o: WorldOptions): World {
   let game = new GameController(loadSeasonContent, kv);
   let weeks = new WeekStore(keepsWeek(policy) ? kv : undefined);
   let story = createStoryStore(kv);
-  let cards = new InspirationStore(keepsCards(policy) ? kv : undefined);
+  let cards = new InspirationStore(kv);
   let ui: UiState = INITIAL_UI;
   let last: Flow | undefined;
   let season = 0;
@@ -344,14 +343,14 @@ export function createWorld(o: WorldOptions): World {
   };
 
   /**
-   * A new mount of the run's view: its stores read the storage again (legacy keeps the week and the
-   * cards in memory, so they start empty), the UI state anew.
+   * A new mount of the run's view: its stores read the storage again (legacy keeps the week in
+   * memory, so it starts empty), the UI state anew.
    */
   const remount = (): void => {
     mount += 1;
     weeks = new WeekStore(keepsWeek(policy) ? kv : undefined);
     story = createStoryStore(kv);
-    cards = new InspirationStore(keepsCards(policy) ? kv : undefined);
+    cards = new InspirationStore(kv);
     ui = INITIAL_UI;
     last = undefined;
     boxed = new Set();

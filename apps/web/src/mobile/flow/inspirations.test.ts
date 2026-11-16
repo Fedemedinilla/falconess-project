@@ -1,10 +1,13 @@
+import { loadSeasonContent } from "@falconess/content";
 import type { RunInput, SeasonState, TurnLogEntry } from "@falconess/schema";
 import { startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import type { Step } from "../../game/controller";
+import { RUN_KEY, SEEN_KEY } from "../../game/storage";
 import { inspirationCard } from "../inspirationScene";
-import { CARDS_KEY, InspirationStore, type LoadedRun, MAX_SEEDS } from "./inspirations";
+import { CARDS_KEY, InspirationStore, type LoadedRun, MAX_SEEDS, savedRun } from "./inspirations";
 import { testContext } from "./testing/content";
+import { saveSeed } from "./testing/game";
 import { blockedStore, memoryStore } from "./testing/memory";
 
 const ctx = testContext("v3");
@@ -180,5 +183,47 @@ describe("the one-time migration (plan §1.8): the cards an earlier build alread
       return loaded(true);
     });
     expect(asked).toBe(0);
+  });
+});
+
+describe("the migration's run (Boot): the saved run as «Continuar» would load it, nothing written", () => {
+  /** `peregrina-w24-insp`: seed 1 with two parents, at week 24, whose last step left its card. */
+  const w24 = (read: boolean) => {
+    const seed = saveSeed("peregrina-w24-insp");
+    if (!read) delete seed[SEEN_KEY];
+    return memoryStore(seed);
+  };
+
+  it("replays the stored run with its last step and whether it was read; writes nothing", () => {
+    const kv = w24(true);
+    const before = new Map(kv.data);
+    const run = savedRun(loadSeasonContent, kv);
+    expect(run?.seed).toBe("1");
+    expect(run?.state.turn).toBe(24);
+    expect(run?.step?.after).toBe(run?.state);
+    expect(run?.stepSeen).toBe(true);
+    expect(savedRun(loadSeasonContent, w24(false))?.stepSeen).toBe(false);
+    // the save, its history and its verdict stay as they were (a real «Continuar» writes them)
+    expect(kv.data).toEqual(before);
+  });
+
+  it("the cards the earlier build showed: the start's, and week 24's once its step was read", () => {
+    const read = w24(true);
+    const store = new InspirationStore(read, () => savedRun(loadSeasonContent, read));
+    expect([...store.shown("1")].sort()).toEqual(["1:24", "1:start"]);
+    // unread: week 24's card plays in D2's order
+    const unread = w24(false);
+    const fresh = new InspirationStore(unread, () => savedRun(loadSeasonContent, unread));
+    expect([...fresh.shown("1")]).toEqual(["1:start"]);
+    const run = savedRun(loadSeasonContent, unread);
+    if (!run) throw new Error("no run");
+    expect(inspirationCard(run.seed, run.state, 24, run.step, fresh.shown("1"))?.key).toBe("1:24");
+  });
+
+  it("no run stored, one that does not load, or no storage: none", () => {
+    expect(savedRun(loadSeasonContent, memoryStore())).toBeUndefined();
+    expect(savedRun(loadSeasonContent, memoryStore({ [RUN_KEY]: "{not json" }))).toBeUndefined();
+    expect(savedRun(loadSeasonContent, blockedStore())).toBeUndefined();
+    expect(savedRun(loadSeasonContent, undefined)).toBeUndefined();
   });
 });
