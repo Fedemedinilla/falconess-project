@@ -6,8 +6,8 @@ import { continueRun, pastTitle, seedRun, settle, startMobile, test, week } from
  * The phone game's seams (plan-final 2.6): each run gets its own view, so nothing of one season
  * leaks into the next (F2: the week's effects); the game's tree is the same on a phone and on a
  * wide screen, so crossing the wide-screen size never restarts what is playing (F12); a scene
- * keeps the digest it started with (2.1); and the season's end shares the run's one «Exportar»
- * sheet.
+ * keeps the digest it started with (2.1); a mark in the story store reaches the game at once
+ * (2.4); and the season's end shares the run's one «Exportar» sheet.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -126,6 +126,22 @@ test("a scene keeps the «Ritmo» it started with: Normal chosen mid-digest, the
   await expect(scene).toHaveAttribute("data-probe", "kept");
   await expect(scene).toHaveAttribute("data-digest", "true");
   await expect(page.locator("#m-capitulo-resumen")).toBeVisible();
+});
+
+test("a chat topic shows as read at once: the story store tells the game (2.4)", async ({
+  page,
+}) => {
+  // a week with no scene due and no notice waiting: nothing else renders the game meanwhile
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
+  await page.click("#m-menu");
+  await page.click("#m-chat-abrir");
+  const topic = page.locator('[data-topic="peregrina-why-race"]');
+  await expect(topic).toHaveAttribute("data-read", "false");
+  await topic.click();
+  await expect(topic).toHaveAttribute("data-read", "true");
 });
 
 test("the season's end opens the run's one «Exportar» sheet, and closing it gives the focus back", async ({
