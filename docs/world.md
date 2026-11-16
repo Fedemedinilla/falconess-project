@@ -26,8 +26,16 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
 - **Decidido (dueño, 2026-11-16):** «chicas y mujeres que tienen un don para la velocidad y las
   alturas, que tienen un "algo" (como las Umas) que las hace querer volar y ser libres, y a grandes
   velocidades».
-- Abierto: si el don se nace con él o se descubre; cómo se reconoce; si todas las que lo tienen
-  vuelan.
+- **Decidido (dueño, 2026-11-16):** se nace con él, y se siente. «Las Falconess son chicas que sienten
+  ganas de volar, de tocar el cielo azul.» Tienen **los sentidos levemente aumentados**, para aguantar
+  tanta velocidad y gravedad.
+- **Decidido (dueño, 2026-11-16):** es herencia de la guerra. Para ser mensajera hacían falta esos
+  sentidos aumentados, «la necesidad pasó a la genética. Y ahora este es el resultado».
+- Puerta abierta (dueño): el fandom del mundo y de los jugadores, creando sus propias Falconess y
+  sus historias (encaja con la Falconess al azar, `ideas.md` I5).
+- Abierto: cuánto duró la guerra (para que el rasgo pase de madres a hijas hace falta más de una
+  generación, o que el rasgo existiera antes y la guerra lo volviera común); si todas las que lo
+  tienen vuelan.
 
 ## 4. Historia del mundo
 
@@ -43,8 +51,9 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
    deciden correr entre ellas: «quisieron un momento de paz, deporte y competición sana». Esa escena
    queda en la historia «y obviamente encuadrada en muchos hogares en la pared»: Falconess de
    distintos colores, por distintos países, corriendo. Y empieza la paz.
-5. **El deporte.** Años o décadas después, una ex Falconess mensajera funda el deporte que se ve en
-   el juego.
+5. **El deporte.** Una ex Falconess mensajera funda el deporte que se ve en el juego.
+   **Decidido (dueño, 2026-11-16): la guerra terminó hace 30 años y el deporte empezó hace 10.**
+   Peregrina, Cernícala y Caracara son las tres ganadoras de la primera liga.
 6. **Hoy.** El deporte es joven y todavía cambia sus reglas y sus modos (`ideas.md` I2, I3). Es el
    año del trío pionero (`docs/design/historia/cronologia.md`).
 
@@ -66,8 +75,8 @@ como side note de que el mundo tiene pasado.» Sirve para fondos de escenas y pa
 
 Abierto:
 
-- ¿Cuánto tiempo pasó entre la carrera de la paz y la fundación del deporte, y entre la fundación y
-  hoy?
+- ¿La primera liga fue hace 10 años o es la de este año? (Si fue hace 10, el trío lleva una década
+  de estrellas.)
 - ¿Quién fue la fundadora? ¿Vive? ¿Aparece en la historia principal?
 - ¿Cómo se llama esa primera carrera y cómo se la recuerda?
 

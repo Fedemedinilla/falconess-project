@@ -7,7 +7,8 @@ El canon de todas las Falconess en una sola línea de tiempo. Cada dato lleva su
 Decidido (dueño, 2026-11-16): **el mismo año** Peregrina, Cernícala y Caracara son las estrellas del
 deporte, cada una en su distancia (cortas, medias y largas), y ese año arranca la historia
 principal, con una protagonista y un entrenador recién llegados (`ideas.md`, I4, I6, I7). El deporte
-es joven (I2): no está decidido cuántos años lleva.
+es joven: **la guerra terminó hace 30 años y el deporte empezó hace 10** (dueño, 2026-11-16). El
+trío son las tres ganadoras de la primera liga (`docs/world.md` §4).
 
 | Semana | Qué pasa                                                                          | Estado              | Fuente                                            |
 | ------ | --------------------------------------------------------------------------------- | ------------------- | ------------------------------------------------- |
@@ -19,4 +20,4 @@ es joven (I2): no está decidido cuántos años lleva.
 | S48    | Caracara no corre la Larga, pero la ve y ve perder a Peregrina (por qué, abierto) | decidido 2026-11-16 | `ideas.md` I7                                     |
 
 Abierto: en qué semana empieza la historia principal respecto de este año (se puso S1 como lugar,
-no está decidido); cuántos años lleva el deporte; qué pasa los años siguientes.
+no está decidido); si la primera liga es la de este año; qué pasa los años siguientes.
