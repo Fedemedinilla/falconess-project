@@ -327,6 +327,15 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
       const played = reduceUi(INITIAL_UI, { type: "done", keys: [`${fp}/w:result`] });
       expect(queue(trained, played, p)[0]).toBe("emblem");
     }
+    // a rest: no result, its effects first; once they played again, it fades in over the menu
+    const rested = loadSave("peregrina-w10");
+    decide(rested, { kind: "rest" });
+    const rfp = fpOf(rested);
+    for (const p of [LEGACY_POLICY, TARGET_POLICY]) {
+      expect(queue(rested, INITIAL_UI, p)[0]).toMatch(/^fx:action:/);
+      const played = reduceUi(INITIAL_UI, { type: "done", keys: [`${rfp}/w:fx`] });
+      expect(queue(rested, played, p)[0]).toBe("emblem");
+    }
   });
 
   it("restored at stage race: no emblem, the scene if unseen, the card", () => {
