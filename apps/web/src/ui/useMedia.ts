@@ -31,7 +31,20 @@ export function useNarrow(): boolean {
   return useMedia(NARROW_QUERY);
 }
 
+/** The viewer asked for less motion (the system setting). */
+export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+/** Whether the viewer asks for reduced motion right now: for timers and effects. */
+export function reducedMotion(): boolean {
+  return mediaList(REDUCED_MOTION_QUERY)?.matches ?? false;
+}
+
+/** The same, kept up to date (`useMedia`): for what a component renders. */
+export function useReducedMotion(): boolean {
+  return useMedia(REDUCED_MOTION_QUERY);
+}
+
 /** Smooth scrolling unless the viewer asked for reduced motion. */
 export function scrollBehavior(): ScrollBehavior {
-  return mediaList("(prefers-reduced-motion: reduce)")?.matches ? "auto" : "smooth";
+  return reducedMotion() ? "auto" : "smooth";
 }

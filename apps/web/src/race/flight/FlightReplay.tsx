@@ -35,7 +35,7 @@ import { rememberSpeed, startSpeed } from "../../mobile/pace";
 import { formatFixed, formatSeconds } from "../../text/format";
 import { gameText, ui } from "../../text/ui";
 import { cx } from "../../ui/cx";
-import { mediaList } from "../../ui/useMedia";
+import { useReducedMotion } from "../../ui/useMedia";
 import { ReplayClock } from "../clock";
 import s from "../RaceViewer.module.css";
 import { Results } from "../Results";
@@ -368,10 +368,7 @@ export function FlightReplay({ log, labels, idPrefix, onReveal }: FlightReplayPr
   const view = useMemo(() => raceView(log, labels), [log, labels]);
   const [resultsClock] = useState(() => new ReplayClock(view.end));
   useEffect(() => () => resultsClock.dispose(), [resultsClock]);
-  const reduced = useMemo(
-    () => mediaList("(prefers-reduced-motion: reduce)")?.matches ?? false,
-    [],
-  );
+  const reduced = useReducedMotion();
   const [focus, setFocus] = useState(() => view.player?.lane ?? log.results[0]?.lane ?? 0);
   const [playing, setPlaying] = useState(false);
   const [preOpen, setPreOpen] = useState(true);

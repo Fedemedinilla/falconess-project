@@ -4,34 +4,42 @@
  * result and the week's effects; Directo goes from a race straight to its result (it can still be
  * watched), skips the transition into the race mode and keeps the result and the effects short.
  */
+import { browserStore, readKey, writeKey } from "../game/storage";
+
 export type Pace = "normal" | "fast" | "direct";
 
 const KEY = "falconess.juego.ritmo";
 const ORDER: readonly Pace[] = ["normal", "fast", "direct"];
 
 function load(): Pace {
-  try {
-    const v = globalThis.localStorage?.getItem(KEY);
-    return v === "fast" || v === "direct" ? v : "normal";
-  } catch {
-    return "normal";
-  }
+  const v = readKey(browserStore(), KEY);
+  return v === "fast" || v === "direct" ? v : "normal";
 }
 
 let current: Pace | undefined;
+const listeners = new Set<() => void>();
 
 export function getPace(): Pace {
   current ??= load();
   return current;
 }
 
+/**
+ * Chooses the pace: kept in this browser (without storage it lasts this visit) and told to every
+ * subscriber, so the «Menú» in the phone's sheet and in the desk panel never disagree.
+ */
 export function setPace(p: Pace): void {
   current = p;
-  try {
-    globalThis.localStorage?.setItem(KEY, p);
-  } catch {
-    // no storage: it lasts this visit
-  }
+  writeKey(browserStore(), KEY, p);
+  for (const listener of [...listeners]) listener();
+}
+
+/** Calls `listener` after every `setPace`; returns the unsubscribe (`usePace`). */
+export function subscribePace(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export function nextPace(p: Pace): Pace {
@@ -49,21 +57,12 @@ const SPEED_KEY = "falconess.juego.velocidad";
 
 /** The replay's speed to start at: the last one chosen, at least ×2 with «Rápido». */
 export function startSpeed<T extends number>(allowed: readonly T[]): T | undefined {
-  let last: number | undefined;
-  try {
-    const raw = globalThis.localStorage?.getItem(SPEED_KEY);
-    last = raw ? Number(raw) : undefined;
-  } catch {
-    last = undefined;
-  }
+  const raw = readKey(browserStore(), SPEED_KEY);
+  const last = raw ? Number(raw) : undefined;
   const want = Math.max(last ?? 1, getPace() === "fast" ? 2 : 0);
   return allowed.find((v) => v === want);
 }
 
 export function rememberSpeed(v: number): void {
-  try {
-    globalThis.localStorage?.setItem(SPEED_KEY, String(v));
-  } catch {
-    // no storage
-  }
+  writeKey(browserStore(), SPEED_KEY, String(v));
 }

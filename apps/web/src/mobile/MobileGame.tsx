@@ -23,7 +23,7 @@ import {
 } from "../screens/model/position";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useMedia } from "../ui/useMedia";
+import { reducedMotion, useMedia } from "../ui/useMedia";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
@@ -56,7 +56,7 @@ import {
 } from "./Panels";
 import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
-import { getPace, nextPace, type Pace, paceScale, setPace } from "./pace";
+import { getPace, nextPace, paceScale, setPace } from "./pace";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import { SelectScreen } from "./SelectScreen";
 import st from "./Story.module.css";
@@ -85,6 +85,7 @@ import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { trackCard } from "./track";
+import { usePace } from "./usePace";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen } from "./WorkshopScreen";
 import { type WeekFx, weekFx } from "./weekFx";
@@ -911,10 +912,6 @@ function transitionColors(
   return { primary: palette?.primary ?? "#c0392b", secondary: palette?.secondary ?? "#f1c40f" };
 }
 
-function reducedMotion(): boolean {
-  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
-
 /** The menu's own buttons: in the phone's sheet and in the wide screen's panel. */
 function MenuItems({
   onExport,
@@ -938,7 +935,7 @@ function MenuItems({
   const [confirm, setConfirm] = useState(false);
   const [sound, setSound] = useState<SoundStyle>(getSoundStyle);
   const [music, setMusicState] = useState(getMusicOn);
-  const [pace, setPaceState] = useState<Pace>(getPace);
+  const pace = usePace();
   const onSound = () => {
     const next = nextSoundStyle(sound);
     setSoundStyle(next);
@@ -999,11 +996,7 @@ function MenuItems({
         id="m-ritmo"
         data-pace={pace}
         aria-label={ui("ui.m.pace.label", { pace: ui(`ui.m.pace.${pace}`) })}
-        onClick={() => {
-          const p = nextPace(pace);
-          setPace(p);
-          setPaceState(p);
-        }}
+        onClick={() => setPace(nextPace(pace))}
       >
         <Glyph name="skip" size={20} />
         {ui("ui.m.pace", { pace: ui(`ui.m.pace.${pace}`) })}

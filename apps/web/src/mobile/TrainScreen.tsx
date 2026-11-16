@@ -3,6 +3,7 @@ import { type SimContext, statCap } from "@falconess/sim";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { reducedMotion } from "../ui/useMedia";
 import { type RunnerArt, runnerArt } from "./art";
 import { RESULT, resultTimeline, type TrainResult } from "./flow/trainResult";
 import { Glyph, type GlyphName } from "./Glyph";
@@ -496,8 +497,4 @@ function BondSeg({ badge }: { badge: CrewBadge }) {
       ))}
     </span>
   );
-}
-
-function reducedMotion(): boolean {
-  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }

@@ -1,16 +1,13 @@
 import type { ChatTopic } from "@falconess/schema";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
+import { reducedMotion } from "../ui/useMedia";
 import s from "./Story.module.css";
 
 type Bubble = { readonly key: string; readonly text: string; readonly mine: boolean };
 
 const TYPING_MS = 650;
 const PER_CHAR_MS = 12;
-
-function reduced(): boolean {
-  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
 
 /**
  * The chat with the Falconess (owner 2026-11-12): optional, only to know her better. The player
@@ -55,7 +52,7 @@ export function ChatSheet({
     let at = 0;
     t.replyKeys.forEach((k, i) => {
       const text = gameText(k);
-      const wait = reduced() ? 0 : TYPING_MS + Math.min(900, text.length * PER_CHAR_MS);
+      const wait = reducedMotion() ? 0 : TYPING_MS + Math.min(900, text.length * PER_CHAR_MS);
       timers.current.push(setTimeout(() => setTyping(true), at));
       at += wait;
       timers.current.push(

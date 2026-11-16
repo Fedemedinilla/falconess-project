@@ -3,6 +3,7 @@ import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState }
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useLatest } from "../ui/useLatest";
+import { reducedMotion } from "../ui/useMedia";
 import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
@@ -27,10 +28,6 @@ const CARD_MS = 1500;
 /** Auto: how long a finished line stays before the next one (owner 2026-11-12: 1.5 s was too fast). */
 const AUTO_MS = 4500;
 const LEAVE_MS = 800;
-
-function reduced(): boolean {
-  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
 
 function speakerName(line: StoryLine): string | undefined {
   return UNNAMED.has(line.speaker) ? undefined : gameText(`speaker.${line.speaker}`);
@@ -83,7 +80,7 @@ export function StoryOverlay({
       if (done.current) return;
       done.current = true;
       setLeaving(true);
-      setTimeout(() => onDoneRef.current(skipped), reduced() ? 0 : LEAVE_MS);
+      setTimeout(() => onDoneRef.current(skipped), reducedMotion() ? 0 : LEAVE_MS);
     },
     [onDoneRef],
   );
@@ -93,7 +90,7 @@ export function StoryOverlay({
   useEffect(() => {
     const t = setTimeout(
       () => setIndex(0),
-      reduced() ? 300 : digest ? INTRO_MS + CARD_MS / 3 : INTRO_MS + CARD_MS,
+      reducedMotion() ? 300 : digest ? INTRO_MS + CARD_MS / 3 : INTRO_MS + CARD_MS,
     );
     return () => clearTimeout(t);
   }, []);
@@ -102,7 +99,7 @@ export function StoryOverlay({
   // biome-ignore lint/correctness/useExhaustiveDependencies: restart on each new line
   useEffect(() => {
     if (index < 0) return;
-    if (reduced() || digest) {
+    if (reducedMotion() || digest) {
       setShown(Number.MAX_SAFE_INTEGER);
       return;
     }

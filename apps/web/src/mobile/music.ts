@@ -13,6 +13,7 @@
  *   tap resumes music the browser held back. Off in the «Menú» (kept in this browser), and
  *   paused while the page is hidden.
  */
+import { browserStore, readKey, writeKey } from "../game/storage";
 import menuUrl from "./music/menu.mp3";
 import raceUrl from "./music/race.mp3";
 import titleUrl from "./music/title.mp3";
@@ -42,11 +43,7 @@ let musicOn = readMusicOn();
 let timer: ReturnType<typeof setInterval> | undefined;
 
 function readMusicOn(): boolean {
-  try {
-    return globalThis.localStorage?.getItem(MUSIC_KEY) !== "off";
-  } catch {
-    return true;
-  }
+  return readKey(browserStore(), MUSIC_KEY) !== "off";
 }
 
 /** Whether music is on (the «Menú» switch). */
@@ -57,11 +54,8 @@ export function getMusicOn(): boolean {
 /** The «Menú» switch: off fades the music out, on brings the wanted track back in. */
 export function setMusicOn(on: boolean): void {
   musicOn = on;
-  try {
-    globalThis.localStorage?.setItem(MUSIC_KEY, on ? "on" : "off");
-  } catch {
-    // no storage: the choice lasts this visit
-  }
+  // without storage the choice lasts this visit
+  writeKey(browserStore(), MUSIC_KEY, on ? "on" : "off");
   if (on) start();
   else stopAll(FADE_OUT);
 }
