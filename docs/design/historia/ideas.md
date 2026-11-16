@@ -355,7 +355,9 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - En la temporada, el entrenador es el jugador, sin cara (I13). En el Modo Historia de cada estrella
   está su entrenador canon, con personalidad.
 - Ejemplos del dueño («imaginá…»), **propuesta** hasta que los confirme:
-  - **Peregrina:** un entrenador al que le encanta dormir y hacer las cosas lento.
+  - **Peregrina:** un entrenador lento y tranquilo, sin apuro. **Decidido (2026-11-16): no es
+    dormilón;** dormir queda como marca de Milana. Encaja con el final del canon, donde le enseña a
+    «respirar, despacio, sin apuro».
   - **Caracara:** «ella siendo tan compinche y amigable», su entrenador corre y entrena con ella, y
     después se toman unas cervezas juntos en el hangar o el taller.
   - **Cernícala:** «bien independiente e intelectual»; con su entrenador pelean por quién domina a
@@ -364,7 +366,6 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   amigable; Cernícala es independiente e intelectual. Coinciden con sus líneas de presentación
   (`ui.m.pick.line.caracara`: «Aventurera. Si hay un atajo, lo prueba»;
   `ui.m.pick.line.cernicala`: «Calma y analítica. Mide antes de moverse»).
-- A revisar: el entrenador dormilón de Peregrina comparte rasgo con Milana, que duerme en las
-  tribunas y dice «qué cansador» (`docs/design/canon-peregrina.md` §4).
-- Abierto: las 17 escenas de Peregrina de hoy son de temporada, con el jugador como entrenador
-  neutro; el Modo Historia con su entrenador canon pediría escenas propias.
+- **Decidido (2026-11-16): el Modo Historia de cada estrella tiene escenas propias,** más largas y
+  con su entrenador canon. La temporada sigue con sus escenas y el entrenador neutro: cuentan lo
+  mismo desde dos lugares. Las 17 escenas de Peregrina de hoy son de temporada.
