@@ -11,6 +11,11 @@ import { SEEN_KEY } from "./game/storage";
  */
 const SRC = dirname(fileURLToPath(import.meta.url));
 const KEY = /"falconess\.(juego|pruebas)\.[a-z-]+"|"falconess\.lang"/g;
+/**
+ * A key built at run time, which the snapshot cannot see: a template literal, or a quoted prefix
+ * ending at its dot that something is added to (`"falconess.juego." + name`).
+ */
+const BUILT = /`falconess\.(juego|pruebas|lang)|["']falconess\.((juego|pruebas)\.)?["']/;
 
 function sources(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
@@ -48,8 +53,25 @@ describe("the browser's storage keys", () => {
     `);
   });
   it("are never built at run time", () => {
-    const built = files.filter((f) => /`falconess\.(juego|pruebas|lang)/.test(f.text));
+    const built = files.filter((f) => BUILT.test(f.text));
     expect(built.map((f) => f.path)).toEqual([]);
+  });
+  it("the scan catches each way of building one, and not a text key", () => {
+    // a template's `${` written apart, so the samples stay plain strings
+    const $ = "$";
+    for (const line of [
+      `const k = \`falconess.juego.${$}{name}\`;`,
+      'const k = "falconess.juego." + name;',
+      "const k = 'falconess.pruebas.' + name;",
+      'const k = "falconess." + area + "." + name;',
+    ])
+      expect(BUILT.test(line), line).toBe(true);
+    for (const line of [
+      'const k = "falconess.juego.ritmo";',
+      `gameText(\`falconess.${$}{state.falconessId}\`);`,
+      'ui("falconess.peregrina");',
+    ])
+      expect(BUILT.test(line), line).toBe(false);
   });
   it("keep the scenes seen apart from the controller's read step (two SEEN_KEYs today)", () => {
     const story = files.find((f) => f.path === join("mobile", "storyModel.ts"));
