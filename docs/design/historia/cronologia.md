@@ -20,4 +20,8 @@ trío son las tres ganadoras de la primera liga (`docs/world.md` §4).
 | S48    | Caracara no corre la Larga, pero la ve y ve perder a Peregrina (por qué, abierto) | decidido 2026-11-16 | `ideas.md` I7                                     |
 
 Abierto: en qué semana empieza la historia principal respecto de este año (se puso S1 como lugar,
-no está decidido); si la primera liga es la de este año; qué pasa los años siguientes.
+no está decidido); qué pasa los años siguientes.
+
+Decidido (2026-11-16): este año es el de **la primera liga oficial**. Antes: la guerra, de varias
+décadas (unas tres generaciones), terminó hace 30 años; el deporte nació hace 10, con carreras chicas
+y exhibiciones (`docs/world.md` §3-§4).

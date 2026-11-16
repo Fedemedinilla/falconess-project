@@ -33,9 +33,12 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
   sentidos aumentados, «la necesidad pasó a la genética. Y ahora este es el resultado».
 - Puerta abierta (dueño): el fandom del mundo y de los jugadores, creando sus propias Falconess y
   sus historias (encaja con la Falconess al azar, `ideas.md` I5).
-- Abierto: cuánto duró la guerra (para que el rasgo pase de madres a hijas hace falta más de una
-  generación, o que el rasgo existiera antes y la guerra lo volviera común); si todas las que lo
-  tienen vuelan.
+- **Decidido (2026-11-16): la guerra duró varias décadas, unas tres generaciones.** Las primeras
+  mensajeras tenían el rasgo débil y raro; la guerra las volvió necesarias, y sus hijas y nietas
+  nacieron con él más fuerte. Muchas Falconess de hoy son nietas de mensajeras. El dueño quiere «una
+  base pseudo verosímil» y que quede también «un poco de mitología o magia»: la explicación nunca se
+  cierra del todo.
+- Abierto: si todas las que lo tienen vuelan.
 
 ## 4. Historia del mundo
 
@@ -54,6 +57,9 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
 5. **El deporte.** Una ex Falconess mensajera funda el deporte que se ve en el juego.
    **Decidido (dueño, 2026-11-16): la guerra terminó hace 30 años y el deporte empezó hace 10.**
    Peregrina, Cernícala y Caracara son las tres ganadoras de la primera liga.
+   **Decidido (2026-11-16): la primera liga oficial es la de este año**, el año del juego y de la
+   historia principal. Los diez años anteriores fueron de carreras chicas, exhibiciones y armado
+   del deporte.
 6. **Hoy.** El deporte es joven y todavía cambia sus reglas y sus modos (`ideas.md` I2, I3). Es el
    año del trío pionero (`docs/design/historia/cronologia.md`).
 
@@ -75,8 +81,8 @@ como side note de que el mundo tiene pasado.» Sirve para fondos de escenas y pa
 
 Abierto:
 
-- ¿La primera liga fue hace 10 años o es la de este año? (Si fue hace 10, el trío lleva una década
-  de estrellas.)
+- «Las tres ganadoras de la primera liga»: ¿cada una gana su distancia? Si Caracara gana las largas,
+  ¿cómo se explica que no corra la gran Larga, la carrera más larga del año (`ideas.md` I7)?
 - ¿Quién fue la fundadora? ¿Vive? ¿Aparece en la historia principal?
 - ¿Cómo se llama esa primera carrera y cómo se la recuerda?
 

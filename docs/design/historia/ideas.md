@@ -5,10 +5,51 @@ Todo lo que cuenta el dueño, tal como lo cuenta. Estados: **idea**, **en discus
 
 ## Estado
 
-**2026-11-16 (sesión 1).** Se aprobó la distribución en seis piezas (`README.md`). El dueño volcó
-sus primeras ideas (I1-I5). Decidido: habrá una historia principal del deporte (I1b) además de la
-de cada corredora. Abierto: si el jugador es entrenador de la protagonista y en qué año arranca la
-historia principal; después, el resto de las preguntas del traspaso.
+**2026-11-16 (sesión 1): resumen de todo lo que hay.**
+
+Cómo trabajamos: seis piezas en `docs/design/historia/` (`README.md`) más `secretos.md`; la biblia del
+mundo en `docs/world.md`.
+
+Decidido:
+
+- **Modos de historia.** Un Main Story Mode, espina dorsal del deporte, que crece con cada temporada
+  y actualización. Su protagonista es una recién llegada que descubre el mundo, no jugable fuera de
+  ese modo; el jugador es su entrenador, también nuevo. Aparte, un Modo Historia por cada Falconess
+  con nombre, contado desde ella y su entrenador (I1, I1b, I4).
+- **Dos tipos de Falconess.** Las de nombre (hechas a mano, temporada con camino propio, dejan cajas
+  negras, nunca se enfrentan entre jugadores) y las al azar (se elige una de tres; equipo de tres
+  por cuenta con una principal; se arman libres; temporada larga y competitiva sin historia; cara
+  del jugador en el multijugador). Las cajas negras tienen usos (ej. 3) y se gastan en los dos
+  modos (I5).
+- **El mundo.** Propio y futuro, «parecido, pero no tanto». Alas de colores «a lo anime». Guerras de
+  unas tres generaciones, un clima que hizo imposible viajar y comunicarse, las Falconess como
+  mensajeras, una carrera entre bandos que trajo la paz (la imagen encuadrada en muchas casas). La
+  guerra terminó hace 30 años; una ex mensajera fundó el deporte hace 10; **este año es la primera
+  liga oficial**. Hoy el clima es hostil en partes pero vivible, con restos de la guerra en el
+  paisaje. La guerra es pasado: no se olvida, nunca es el tema.
+- **Las Falconess.** Nacen con el «algo»: ganas de volar y sentidos levemente aumentados, heredados
+  de las mensajeras; base creíble con algo de mito.
+- **Las escuderías.** Nacen de los bandos; hoy son casas deportivas con orgullo de origen. Muchas;
+  cada una con varias Falconess que muestran sus valores a su manera (Kōryū: lujo y deporte, «como
+  Ferrari»). Puerta abierta a escuderías menos fair play. En el multijugador, los grupos de
+  jugadores también son escuderías.
+- **El trío pionero.** Peregrina (cortas), Cernícala (medias) y Caracara (largas), estrellas a la vez
+  y ganadoras de la primera liga. Caracara no corrió la gran Larga, pero vio perder a Peregrina.
+- **Futuro del deporte.** Carreras urbanas, de resistencia contra el clima y por equipos (I3).
+- **Secreto:** la escudería sombra, entrenada para ganarle a cada estrella; trae las habilidades
+  ofensivas cuando se revele (`secretos.md` S1).
+- Gerifalte queda para después (I8).
+
+Abierto (lo más importante):
+
+- El resto del secreto (lo va a contar el dueño): Milana, la Jefa, quién mandó la invitación.
+- Caracara: si ganó las largas de la primera liga, por qué no corrió la gran Larga.
+- El mundo: países y mapa, cómo funcionan las alas, la fundadora, la carrera de la paz, la historia
+  de cada escudería, carreras, vida cotidiana, glosario.
+- La temporada de la Falconess al azar: con qué se rellena.
+- Contradicción a corregir con permiso: `docs/design/historia-peregrina.md:85-86` (quién invita).
+
+Sigue: completar el secreto; después, la fundadora y la carrera de la paz, o las escuderías.
 
 ## Ideas
 
