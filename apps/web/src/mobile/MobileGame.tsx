@@ -146,6 +146,11 @@ export function MobileGame() {
   // owner 2026-11-13: on a wide screen the game sits in a taller, wider column with the menu open
   // beside it as a panel; on a phone the panels open from «Menú»
   const desk = useMedia(DESK_QUERY);
+  // the wide screen has no «Menú» sheet (its panel is the menu): going wide closes it, or it
+  // would stay "open" unseen and hold back every story scene
+  useEffect(() => {
+    if (desk) setMenuOpen(false);
+  }, [desk]);
   const [tab, setTab] = useState<PanelTab>("menu");
   const [sheet, setSheet] = useState<PanelTab>();
   const [trackFor, setTrackFor] = useState<string>();

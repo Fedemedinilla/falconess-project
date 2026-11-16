@@ -1,13 +1,14 @@
 import { expect, type Page } from "@playwright/test";
-import { continueRun, startMobile, test } from "./mobile-helpers";
+import { continueRun, seedRun, startMobile, test } from "./mobile-helpers";
 import { coverage, freezeAt, opacityOf } from "./motion";
 
 /**
  * The test tools of the phone game (plan-final §2.8). The frame probe every phone test runs
  * under: it catches each of its rules, says which elements collided, when and for how many
  * frames, keeps watching after a reload and under a paused fake clock, and leaves the test view
- * alone. The motion helpers, on markup whose numbers are known. Then the sheet the probe caught
- * twice on the page (the goals' track sheet over the menu's own).
+ * alone. The motion helpers, on markup whose numbers are known. Then the two sheets the probe
+ * caught twice on the page: the goals' track sheet over the menu's own, and the phone's «Menú»
+ * beside the wide screen's panel (neither is mounted while it is not needed).
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -157,4 +158,24 @@ test("the goals' track sheet over the menu: one #m-pista-dialogo, on a wide scre
   await expect(page.locator("#m-pista-dialogo")).toHaveCount(1);
   await page.click("#m-pista-cerrar");
   await expect(page.locator("#m-pista-dialogo")).toHaveCount(0);
+});
+
+test("«Menú» open on the phone, then the window goes wide: it closes, and scenes still play", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-menu");
+  await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+  // a tablet turned to landscape: the panel beside the column is the menu now
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("#m-panel")).toBeVisible();
+  await expect(page.locator("#m-menu-dialogo")).toHaveCount(0);
+  // nothing is left open behind the panel: her first race's scene comes before the position
+  await page.click("#m-descansar");
+  await expect(page.locator('#m-capitulo[data-scene="peregrina-debut"]')).toBeVisible({
+    timeout: 20_000,
+  });
 });
