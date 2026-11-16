@@ -81,8 +81,23 @@ historia principal; después, el resto de las preguntas del traspaso.
   copia de ella.
 - No jugable fuera del Main Story Mode.
 - Decidido de paso: Peregrina y Caracara son **pioneras y estrellas del momento** del deporte.
-- Abierto: si el jugador es su entrenador; en qué año del mundo arranca respecto de las crónicas de
-  las estrellas.
+- Decidido (2026-11-16): **el jugador es su entrenador, y también es nuevo** en el mundo: «alguien
+  que solo quiere ayudarla a la protagonista a entrar en el mundo de las Falconess, pero que no tiene
+  mucha experiencia de entrenador, por lo que también va a aprender las reglas y métodos y todo lo
+  que significa ser un entrenador de Falconess» (el dueño lo compara con la historia de Oguri Cap).
+- Decidido (2026-11-16): **arranca el mismo año en que las tres originales ya son las estrellas** «en
+  sus propios sectores, representando a sus cuadrillas».
+- Abierto: qué es un «sector» (¿las distancias de cada una?) y si «cuadrilla» aquí es la escudería
+  (Kōryū Racing, etc.) o el equipo de mecánicos, que es lo que hoy significa en el juego.
+
+### I6 · Las cuadrillas tienen varias Falconess (2026-11-16)
+
+> «Las cuadrillas tienen a varias Falconess bajo su banner. Por el momento solo estas 3 son las que
+> se pueden jugar, pero a futuro vamos a crear más cuadrillas, más Falconess.»
+- Estado: **decidida** (2026-11-16).
+- Va a: biblia del mundo (escuelas y cuadrillas) y relaciones.
+- Consecuencia para la cronología: las tres originales son estrellas a la vez, el mismo año. Falta
+  confirmar con el dueño que eso responde «¿corren el mismo año del mundo?» del traspaso.
 
 ### I5 · Creá tu propia Falconess, al azar (2026-11-16)
 
@@ -99,3 +114,27 @@ historia principal; después, el resto de las preguntas del traspaso.
   (`docs/handoff/generador-de-nombres.md`, `pnpm names`).
 - Abierto para más adelante: cuántas veces se puede tirar el dado; si estas Falconess tienen
   historia propia o solo la que arma la temporada; cómo convive con el gacha sin pago para ganar.
+
+#### Opciones para I5 (propuesta, 2026-11-16, para que elija el dueño)
+
+Qué arriesga la Falconess al azar (para que el jugador se encariñe, como en XCOM):
+
+1. **Carrera con fin:** corre un número fijo de temporadas y se retira; queda en una sala con su
+   historial. No vuelve nunca.
+2. **Marcas que quedan:** lesiones o caídas dejan secuelas para siempre (un techo de stat más bajo,
+   una manía); cada Falconess termina distinta.
+3. **El accidente grave:** muy de vez en cuando una caída rompe las alas y termina su carrera. Quizá
+   solo en un modo «sin red» que el jugador elige. Revisar con el tono (T17).
+4. **El contrato:** si no rinde, la cuadrilla o el patrocinador la dejan ir.
+5. **El legado:** solo lo que logra pasa a la siguiente (herencia, ADR-0013); una temporada mala es
+   una herencia pobre.
+
+Cuántas veces se tira el dado:
+
+1. **Pocas tiradas que se recargan** (por ejemplo, tres por día).
+2. **Pruebas de selección:** se presentan tres candidatas y se elige una; no hay dado.
+3. **Tirar cuesta algo ganado jugando,** nunca dinero (gacha sin pago para ganar).
+4. **Se cierra al empezar:** se puede tirar antes de la primera semana; después es la tuya, y las
+   rechazadas no vuelven.
+5. **Las rechazadas siguen en el mundo:** aparecen después como rivales en tus carreras (enlaza
+   con el Modo Némesis, T20 de `docs/design/temporada-v3.md`).
