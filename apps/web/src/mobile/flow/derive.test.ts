@@ -561,6 +561,30 @@ describe("the sheet hold and a replayed scene", () => {
       expect(flowOf(v2, INITIAL_UI, p, { sheetOpen: true }).layer?.kind).toBe("event");
   });
 
+  it("a sheet open over the covered emblem before a scene: the card, never the black without the emblem", () => {
+    // the black stands only under the emblem: held alone it would cover the wide screen's chat
+    // (a sheet in the column, under the black) and leave nothing to tap (review of phase 4)
+    const t = loadSave("peregrina-w10");
+    const fp = fpOf(t);
+    const covered = reduceUi(decide(t, { kind: "rest" }), {
+      type: "done",
+      keys: [`${fp}/w:fx`, `${fp}/w:emblem:in`],
+    });
+    for (const p of BOTH) {
+      expect(flowOf(t, covered, p).screen).toEqual({ kind: "black" });
+      const flow = flowOf(t, covered, p, { sheetOpen: true });
+      expect(flow.top).toMatchObject({ kind: "emblem", covered: true });
+      expect(flow.layer).toBeUndefined();
+      expect(flow.screen).toEqual({
+        kind: "position",
+        week: t.weeks.getSnapshot(),
+        wings: raceWings(t.game.context(), stateOf(t)),
+        inert: false,
+      });
+      expect(flow.screenKey).toBe("position");
+    }
+  });
+
   it("«Historia» / «Ver» play a scene only when nothing else is in front (critic b)", () => {
     const t = started();
     const prologue = factsFor(t).scenes.find((s) => s.id === "peregrina-prologue");

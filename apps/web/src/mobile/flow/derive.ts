@@ -134,17 +134,23 @@ export function deriveFlow(
   if (!top || !beat) throw new Error("the beat queue ends with an idle or a position beat");
   const state = f.run.run.state;
   const ended = state.status === "ended";
+  const card = beats.find((b) => b.kind === "position");
   const shown = shownOf(ctx, f, ui, p, {
     beat,
     next: beats.slice(at + 1).find((b) => !isInstant(b)),
-    card: beats.find((b) => b.kind === "position"),
+    card,
     watch: watched(state, ui.nav),
   });
   let { screen, layer } = shown;
   // a sheet open holds a beat's layer (F10): it waits for the sheet to close; the event dialog does not
   if (f.sheetOpen && layer && layer.kind !== "event") {
     layer = undefined;
-    screen = awake(screen);
+    // the black stands only under the emblem: held, the emblem leaves the card it covers (alone,
+    // the black would hide the wide screen's chat, a sheet of the column, and leave no way on)
+    screen =
+      screen.kind === "black" && card?.kind === "position"
+        ? { kind: "position", week: card.week, wings: card.wings, inert: false }
+        : awake(screen);
   }
   const replayable =
     shown.layer === undefined &&
