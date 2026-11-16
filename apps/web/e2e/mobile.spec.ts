@@ -321,7 +321,13 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
     return [0.2, 0.5, 0.7, 0.9].map((y) => [...c.getImageData(w / 2, h * y, 1, 1).data].join());
   });
   expect(new Set(colors).size).toBeGreaterThan(2);
-  // a dive at any moment: the slider seeks while the visor follows
+  // a dive at any moment: the slider seeks while the visor follows (paused first: at ×4 the
+  // replay would run past the row before the check reads it)
+  await page.click("#m-carrera-reproducir");
+  await expect(page.locator("#m-carrera-reproducir")).toHaveAttribute(
+    "aria-label",
+    t("ui.flight.play"),
+  );
   await page.locator("#m-carrera-tiempo").fill("400");
   await expect(flight).toHaveAttribute("data-row", "400");
   await expect(visor).toHaveAttribute("data-band", /[0-3]/);
