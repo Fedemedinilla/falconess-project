@@ -6,6 +6,7 @@ import {
   test,
   toPosition,
   toResult,
+  watchCues,
   week,
 } from "./mobile-helpers";
 
@@ -15,7 +16,8 @@ import {
  * player left it; on the wide screen the End's column stays put through it (plan-final 5.1). The
  * week that ends the season plays whole before the End (5.4, F3): a training's result, or the race
  * with its scene and its result, then the week's effects over the End; the season's black box is
- * kept at the tap that ended it, before any of that.
+ * kept at the tap that ended it, before any of that. A result that ends by itself brings the End
+ * with no whoosh (5.10).
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -119,6 +121,24 @@ test("the non-race finale (Caracara, week 48): her training's result first, then
   // no effect of the week to show (it read at once): the End
   await expect(page.locator("#m-fin")).toBeVisible();
   await expect(page.locator("#m-efectos")).toHaveCount(0);
+});
+
+test("the non-race finale's result gives way to the End by itself, with no whoosh (critic b)", async ({
+  page,
+}) => {
+  await seedRun(page, "caracara-w48");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-entrenar");
+  const cues = await watchCues(page);
+  await page.dblclick("#m-entrenar-technique");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  // no tap: the result's own time ends it, and the End comes in silence
+  await expect(page.locator("#m-fin")).toBeVisible();
+  await page.waitForTimeout(300);
+  const played = await cues();
+  expect(played.at(-1)).toMatch(/^(success|boost|fail)$/);
+  expect(played).not.toContain("nav");
 });
 
 test("the race finale (Peregrina, week 48): the box kept at «Correr», the race, then its effects over the End", async ({

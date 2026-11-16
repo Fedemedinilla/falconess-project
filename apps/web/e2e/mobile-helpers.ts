@@ -359,6 +359,37 @@ export async function continueRun(page: Page): Promise<void> {
   await expect(page.locator("#m-continuar")).toHaveCount(0);
 }
 
+/**
+ * Starts listening to the game's sounds: the tests cannot hear, so each cue the page plays names
+ * itself on `<html data-sfx="count:cue">`. Returns the cues played from now on, in order (one
+ * observer per page load; a reload starts none).
+ */
+export async function watchCues(page: Page): Promise<() => Promise<string[]>> {
+  await page.evaluate(() => {
+    const html = document.documentElement;
+    const countOf = (value: string | null) => Number((value ?? "0:").split(":")[0]);
+    const cues: string[] = [];
+    let last = countOf(html.getAttribute("data-sfx"));
+    // each record's old value is the cue set before it: the last one is the attribute itself
+    const take = (value: string | null) => {
+      const cue = (value ?? "").split(":")[1];
+      if (cue === undefined || countOf(value) <= last) return;
+      last = countOf(value);
+      cues.push(cue);
+    };
+    Reflect.set(window, "__cues", cues);
+    new MutationObserver((records) => {
+      for (const r of records) take(r.oldValue);
+      take(html.getAttribute("data-sfx"));
+    }).observe(html, { attributes: true, attributeFilter: ["data-sfx"], attributeOldValue: true });
+  });
+  return () =>
+    page.evaluate(() => {
+      const cues: unknown = Reflect.get(window, "__cues");
+      return Array.isArray(cues) ? cues.map(String) : [];
+    });
+}
+
 /** The week in play, from the HUD; throws (instead of waiting) when no HUD is on screen. */
 export async function week(page: Page): Promise<number> {
   const hud = page.locator("#m-semana");

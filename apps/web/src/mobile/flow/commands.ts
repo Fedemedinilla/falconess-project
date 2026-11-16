@@ -2,8 +2,10 @@
  * What a tap or a timer does in the phone's flow (plan §1.7): each command reads the flow, the facts
  * and the UI state as it found them, writes to the stores and dispatches to the UI state in the same
  * synchronous call (critic (c)3: `game.act` and the nav change never come apart), and does nothing
- * for a beat that is no longer the one in front (a stale timer, a second tap, F18). The same code
- * drives the game and the node season walks. Pure and text-free (flow/imports.test.ts).
+ * for a beat that is no longer the one in front (a stale timer, a second tap, F18). The sounds
+ * play here too, inside the tap: the action's cue, and the whoosh only where a tap goes to another
+ * screen (`open`, `raceAgain`, `rewatch`, `raceContinue`), so a timer never sounds (critic b). The
+ * same code drives the game and the node season walks. Pure and text-free (flow/imports.test.ts).
  */
 import type { Position, SeasonState, StoryScene, TrainingKind } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
@@ -32,6 +34,7 @@ export type FlowPorts = {
   >;
   readonly story: Pick<StoryStore, "markSeen">;
   readonly cards: Pick<InspirationStore, "markShown">;
+  /** The action's cue, and the whoosh of a tap that goes to another screen. */
   readonly sound: { cue(c: SoundCue): void; nav(): void };
   /** The flag the race commands read (legacy: no finish hold, a watch goes from its replay to its result). */
   readonly policy: Pick<FlowPolicy, "finishHold">;

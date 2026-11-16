@@ -12,6 +12,7 @@ import {
   test,
   toPosition,
   toResult,
+  watchCues,
   week,
 } from "./mobile-helpers";
 import { coverage, freezeAt } from "./motion";
@@ -26,6 +27,7 @@ import { coverage, freezeAt } from "./motion";
  * The notices (5.9): a scene's notice waits while anything plays in front, then shows its whole
  * time just over the screen's anchor (the track tab, a card's foot), fades out when the screen
  * changes, and is gone from the first frame of a scene; a run that no longer replays says so.
+ * The sounds (5.10): only taps sound, and only a tap that goes to another screen whooshes.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -669,4 +671,40 @@ test("the last race's scene: its notice shows over the result's foot, and not ov
   await expect(page.locator("#m-fin")).toBeVisible();
   await page.waitForTimeout(300);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+});
+
+test("a race week's sounds come from its taps: none as the action's effects end by themselves, a whoosh at «Ver otra vez» and «Continuar» (critic b)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  const cues = await watchCues(page);
+  /** The cues played since `n` had played. */
+  const since = async (n: number) => (await cues()).slice(n);
+  await page.click("#m-descansar");
+  await expect.poll(async () => (await since(0))[0]).toBe("confirm");
+  // the action's effects, untouched: their own time brings the emblem, with no whoosh under it
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await expect(page.locator("#m-transicion")).toBeVisible({ timeout: 10_000 });
+  await toPosition(page);
+  expect(await cues()).not.toContain("nav");
+  // «Correr» plays its tap: the race is no change of screen of the menu's (plan §1.7 rule 2)
+  let n = (await cues()).length;
+  await page.click("#m-correr");
+  await expect.poll(() => since(n)).toEqual(["tap"]);
+  await page.click("#m-saltar");
+  await toResult(page);
+  // «Ver otra vez» and «Continuar» go to another screen: the whoosh, instead of their tap
+  n = (await cues()).length;
+  await page.click("#m-ver-otra-vez");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await expect.poll(() => since(n)).toEqual(["nav"]);
+  await page.click("#m-saltar");
+  await toResult(page);
+  n = (await cues()).length;
+  await page.click("#m-carrera-seguir");
+  await expect.poll(async () => (await since(n))[0]).toBe("nav");
+  await expect(page.locator("#m-carrera-seguir")).toHaveCount(0);
 });

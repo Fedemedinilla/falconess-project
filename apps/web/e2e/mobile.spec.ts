@@ -14,6 +14,7 @@ import {
   test,
   toPosition,
   toResult,
+  watchCues,
   week,
 } from "./mobile-helpers";
 
@@ -397,12 +398,21 @@ test("sounds: a tap, a change of screen, a training's result; the «Menú» swit
   await expect.poll(cue).toBe("nav");
   await page.click("#m-entrenar-risk-flight");
   await expect.poll(cue).toBe("tap");
+  const cues = await watchCues(page);
   await page.dblclick("#m-entrenar-agility");
   await expect.poll(cue).toMatch(/^(success|boost|fail)$/);
   const result = await page.locator("html").getAttribute("data-sfx");
   // the result is not followed by the whoosh of going back to the menu
   await page.waitForTimeout(300);
   expect(await page.locator("html").getAttribute("data-sfx")).toBe(result);
+  // nor when it ends by itself (critic b): only a tap whooshes, never a timer
+  await expect(page.locator("#m-entrenar")).toBeVisible();
+  await page.waitForTimeout(150);
+  const played = await cues();
+  expect(played.at(-1)).not.toBe("nav");
+  expect(played.slice(played.findIndex((c) => /^(success|boost|fail)$/.test(c)))).not.toContain(
+    "nav",
+  );
   await settle(page);
 
   // the switch: Propulsor → Visor → apagado → Hangar → Propulsor, remembered on reload

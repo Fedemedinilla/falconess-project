@@ -1,13 +1,6 @@
 import type { ContentIndex, Position, WorkshopOp } from "@falconess/schema";
 import { difficultyOf, type SimContext } from "@falconess/sim";
-import {
-  type ReactElement,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
 import { navigate } from "../app/useRoute";
 import { allScenes, allTopics } from "../content/story";
 import { addBox } from "../game/boxes";
@@ -20,7 +13,7 @@ import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { boxToKeep } from "./flow/box";
-import type { Flow, Layer } from "./flow/types";
+import type { Layer } from "./flow/types";
 import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
 import { LayerHost } from "./LayerHost";
@@ -48,7 +41,6 @@ import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import st from "./Story.module.css";
 import { StoryListSheet } from "./StoryListSheet";
 import { StoryOverlay } from "./StoryOverlay";
-import { playNav } from "./sfx";
 import { openTopics } from "./storyModel";
 import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
@@ -69,7 +61,8 @@ export type RunMusic = Exclude<Track, "title">;
  * §1): the HUD, the one screen (`data-screen`), the one layer in front of it (`LayerHost`: the
  * week's effects, the inheritance card, a story scene, the emblem, the event dialog), the notices
  * and the sheets. Every tap and every timer that ends a beat goes through the flow's commands,
- * which act on the game and move the flow in the same call. Three modes (owner 2026-11-13):
+ * which act on the game and move the flow in the same call, and play the sounds inside the tap:
+ * a timer never sounds (critic b). Three modes (owner 2026-11-13):
  * training (its screen and result), the menu (the week's decision, its effects, a story scene due
  * after it), and the race (the emblem, only here, then the scene before the race, the position,
  * the race, the scene after it, its result; then the menu).
@@ -137,18 +130,6 @@ export function RunView({
   // everywhere else (the shell plays the title theme over the title and the selection)
   const music = flow.music;
   useEffect(() => onMusic(music), [onMusic, music]);
-
-  // a change of screen whooshes (in the commit that changed it, so it replaces the tap's sound),
-  // as each change of today's view did; 5.10 moves the whoosh into the taps' commands
-  const screenName = legacyScreen(flow);
-  const shownName = useRef<string | undefined>(undefined);
-  useLayoutEffect(() => {
-    // an instant beat renders nothing: what shows is the next commit's
-    if (screenName === undefined) return;
-    const was = shownName.current;
-    shownName.current = screenName;
-    if (was !== undefined && was !== screenName) playNav();
-  }, [screenName]);
 
   const ctx = game.context();
   useSeasonBox(ctx, run);
@@ -573,50 +554,6 @@ export function RunView({
       </div>
     ) : null,
   );
-}
-
-/**
- * Today's names of the screens (until 5.10): the whoosh plays when the name changes, as it did on
- * each change of the old view (the training picker and its result, the workshop, the race card,
- * the race). Undefined for an instant beat, which renders nothing.
- */
-function legacyScreen(flow: Flow): string | undefined {
-  const t = flow.top;
-  switch (t.kind) {
-    case "train-result":
-      return "trained";
-    case "fx":
-      return t.part === "action" ? "actionfx" : "menu";
-    case "emblem":
-    case "position":
-      return "prerace";
-    case "scene":
-      return t.where === "prerace" ? "prerace" : t.where === "race" ? "race" : "menu";
-    case "replay":
-    case "finish":
-    case "race-result":
-      return "race";
-    case "event":
-    case "inspiration":
-      return "menu";
-    case "ack":
-    case "enter":
-    case "pass":
-      return undefined;
-    case "idle":
-      switch (flow.screen.kind) {
-        case "train":
-          return "train";
-        case "workshop":
-          return "workshop";
-        case "plan":
-          return "prerace";
-        case "race":
-          return "race";
-        default:
-          return "menu";
-      }
-  }
 }
 
 /**

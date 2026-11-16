@@ -23,7 +23,7 @@ import { ACTIVE_POLICY } from "./flow/policy";
 import type { Flow, FlowFacts } from "./flow/types";
 import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./flow/ui";
 import type { Pace } from "./pace";
-import { playSound } from "./sfx";
+import { playNav, playSound } from "./sfx";
 import { storyStore } from "./storyModel";
 import { usePace } from "./usePace";
 import { useStory } from "./useStory";
@@ -176,8 +176,8 @@ export function useFlow({
       weeks,
       story: { markSeen: (seed, id) => storyStore.markSeen(seed, id) },
       cards,
-      // the cues play inside the tap; the whoosh stays the run's view's until 5.10
-      sound: { cue: playSound, nav: () => undefined },
+      // inside the tap (iOS plays sounds only there), never on a timer (critic b)
+      sound: { cue: playSound, nav: playNav },
       policy: ACTIVE_POLICY,
       dispatch,
       now,

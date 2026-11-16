@@ -272,7 +272,7 @@ export function queueTap(): void {
   }, 0);
 }
 
-/** The change of screen; skipped when the click already played its own cue (a training's result). */
+/** A tap's change of screen (the flow's commands play it); skipped right after another cue. */
 export function playNav(): void {
   if (performance.now() - lastCueAt < 200) return;
   playSound("nav");

@@ -108,7 +108,8 @@ export function MobileGame() {
   useEffect(() => stopMusic, []);
 
   // the selection and a run are two screens: going between them whooshes (in the click's own
-  // commit, so it replaces its tap); a run whooshes between its own screens
+  // commit, so it replaces its tap; only a tap starts or leaves a run); inside a run, the taps'
+  // commands whoosh (flow/commands.ts)
   const inRun = run !== undefined;
   const firstScreen = useRef(true);
   // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of screen only
