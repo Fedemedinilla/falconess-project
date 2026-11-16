@@ -99,6 +99,7 @@ export class GameController {
   readonly #content: (rulesetVersion: string) => ContentIndex;
   readonly #store: KeyValueStore | undefined;
   readonly #listeners = new Set<() => void>();
+  readonly #ctxCache = new Map<string, SimContext>();
   #snap: GameSnapshot = EMPTY;
 
   /**
@@ -296,8 +297,20 @@ export class GameController {
 
   // --- internals --------------------------------------------------------------------------------
 
+  /**
+   * One context per ruleset, kept while `#content` hands out the same index (`seasonContent`
+   * builds one per language and version): screens memoize on `context()`, and a new object on
+   * every call would recompute them on every render. A language switch is a new index, hence a
+   * new context.
+   */
   #ctx(rulesetVersion: string): SimContext {
-    return { ruleset: getRuleset(rulesetVersion), content: this.#content(rulesetVersion) };
+    const ruleset = getRuleset(rulesetVersion);
+    const content = this.#content(rulesetVersion);
+    const hit = this.#ctxCache.get(rulesetVersion);
+    if (hit?.ruleset === ruleset && hit.content === content) return hit;
+    const ctx: SimContext = { ruleset, content };
+    this.#ctxCache.set(rulesetVersion, ctx);
+    return ctx;
   }
 
   #toSave(run: ActiveRun): SavedRun {

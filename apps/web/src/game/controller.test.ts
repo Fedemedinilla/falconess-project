@@ -334,6 +334,37 @@ describe("GameController", () => {
     expect(rulesDigest(run.state)).toBe(V1_DIGESTS.run1.perInput[4]);
   });
 
+  it("context() keeps its identity while the content is the same, and changes when the content does", () => {
+    // seasonContent hands out one index per language and version: a language switch is a new one
+    let current = content;
+    const game = new GameController(() => current, memoryStore());
+    const first = game.context();
+    expect(game.context()).toBe(first);
+    expect(game.newRunContext()).toBe(first);
+    expect(game.start("peregrina", HANGAR, "web-42")).toBe(true);
+    expect(game.act({ kind: "rest" })).toBe(true);
+    expect(game.context()).toBe(first);
+
+    current = { ...content };
+    const second = game.context();
+    expect(second).not.toBe(first);
+    expect(second.content).toBe(current);
+    expect(second.ruleset).toBe(first.ruleset);
+    expect(game.context()).toBe(second);
+    expect(game.newRunContext()).toBe(second);
+  });
+
+  it("keeps one context per ruleset: a v1 run's and the new season's stay apart and stable", () => {
+    const game = new GameController(content, memoryStore());
+    expect(game.loadText(RUN1_TEXT)).toBe(true);
+    const v1 = game.context();
+    const next = game.newRunContext();
+    expect(v1.ruleset).toBe(RULESET_V1);
+    expect(next.ruleset).toBe(CURRENT_RULESET);
+    expect(game.context()).toBe(v1);
+    expect(game.newRunContext()).toBe(next);
+  });
+
   it("leaves the run for a new season and notifies subscribers once per change", () => {
     const game = started();
     let calls = 0;

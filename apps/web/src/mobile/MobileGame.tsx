@@ -27,6 +27,7 @@ import { useMedia } from "../ui/useMedia";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
+import { digestFor } from "./flow/scenes";
 import { fxPart } from "./flow/steps";
 import { resultTimeline, type TrainResult, trainingCue, trainResultOf } from "./flow/trainResult";
 import type { WorkshopTab } from "./flow/types";
@@ -351,7 +352,7 @@ export function MobileGame() {
           primary={colors.primary}
           secondary={colors.secondary}
           // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
-          digest={replay ? undefined : sceneDigest()}
+          digest={replay ? undefined : digestFor(getPace())}
           onDone={(skipped) => {
             if (!replay) markSeen(run.seed, sc.id);
             setReplay(undefined);
@@ -882,12 +883,6 @@ function StoryToast({ children, long = false }: { children: React.ReactNode; lon
       {children}
     </div>
   );
-}
-
-/** «Ritmo» (owner 2026-11-14): Rápido and Directo pass a scene as a digest. */
-function sceneDigest(): { ms: number } | undefined {
-  const p = getPace();
-  return p === "normal" ? undefined : { ms: p === "fast" ? 1100 : 650 };
 }
 
 /** «Directo» (owner 2026-11-14): a goal race opens on its result; «Ver otra vez» plays it. */

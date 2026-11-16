@@ -2,6 +2,7 @@ import type { StoryBackground, StoryLine, StoryScene } from "@falconess/schema";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useLatest } from "../ui/useLatest";
 import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
@@ -46,16 +47,20 @@ export function StoryOverlay({
   scene,
   primary,
   secondary,
-  digest,
+  digest: digestProp,
   onDone,
 }: {
   scene: StoryScene;
   primary: string;
   secondary: string;
-  /** Play a fast digest instead of every line. */
+  /** Play a fast digest instead of every line; read once, when the scene mounts. */
   digest?: Digest | undefined;
+  /** Called when the scene has left; held in a ref, so a new arrow on each render is fine. */
   onDone: (skipped: boolean) => void;
 }) {
+  // latched: «Ritmo» can change in the desk panel's «Menú» mid-scene, and the timers key on it
+  const [digest] = useState(digestProp);
+  const onDoneRef = useLatest(onDone);
   const lines = useMemo(
     () => (digest ? digestLines(scene.lines) : scene.lines),
     [digest, scene.lines],
@@ -78,9 +83,9 @@ export function StoryOverlay({
       if (done.current) return;
       done.current = true;
       setLeaving(true);
-      setTimeout(() => onDone(skipped), reduced() ? 0 : LEAVE_MS);
+      setTimeout(() => onDoneRef.current(skipped), reduced() ? 0 : LEAVE_MS);
     },
-    [onDone],
+    [onDoneRef],
   );
 
   // the chapter's card, then the first line
