@@ -26,3 +26,14 @@ cuándo se revela y qué no se puede escribir antes.
   la invitación.
 - No escribir antes de la revelación: que Milana pertenece a ella, que la invitación fue una trampa,
   o cualquier nombre de la escudería.
+
+## S2 · El linaje de la protagonista (dueño, 2026-11-16)
+
+- Qué es: la protagonista de la historia principal es **nieta de una de las mensajeras que corrieron
+  la carrera de la paz**.
+- Estado: **decidido**.
+- Cómo se revela: de a poco, a medida que el mundo se abre al jugador (`ideas.md` I13). En qué
+  capítulo y cómo: abierto.
+- No escribir antes: que ella lo sepa desde el principio, ni que el lazo le dé talento. Empieza mala
+  corriendo; todo lo que gana, lo gana (dueño).
+- Abierto: cuál de las mensajeras; si alguien del elenco lo sabe (¿la fundadora?).

@@ -331,3 +331,12 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 > personaje principal que conecte a todas las expansiones. Yo veo a la protagonista así, que su
 > historia va creciendo con la del mundo y cómo se va abriendo de a poco al jugador.»
 - Estado: **decidida** la dirección (2026-11-16). Investigación: `investigacion-ffxiv.md`.
+- **Decidido (dueño, 2026-11-16): es nieta de una de las mensajeras de la carrera de la paz** y lo va
+  descubriendo de a poco. «Pero quiero que le cueste, que empiece desde 0, desde bien bien abajo. No
+  como Special Week que ya de la nada es buena corriendo. Si bien haremos clichés de anime, no
+  cometeremos sus errores.» Cómo se revela el lazo: `secretos.md` S2.
+- **Decidido (dueño, 2026-11-16): el entrenador de la historia principal es un personaje oficial,
+  masculino, con historia propia.** «Ambos son súper naive al inicio, ella es mala corriendo pero
+  quiere mejorar, y él es malo entrenando, pero quiere mejorar. La Main Story va de eso.»
+- Abierto: cómo convive con la regla de que en las temporadas la voz del jugador no tiene género
+  (`docs/design/escenas.md` §4b); y si el entrenador de Peregrina en su canon es otra persona.
