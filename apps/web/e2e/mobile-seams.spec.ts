@@ -5,8 +5,9 @@ import { continueRun, pastTitle, seedRun, settle, startMobile, test, week } from
 /**
  * The phone game's seams (plan-final 2.6): each run gets its own view, so nothing of one season
  * leaks into the next (F2: the week's effects); the game's tree is the same on a phone and on a
- * wide screen, so crossing the wide-screen size never restarts what is playing (F12); and the
- * season's end shares the run's one «Exportar» sheet.
+ * wide screen, so crossing the wide-screen size never restarts what is playing (F12); a scene
+ * keeps the digest it started with (2.1); and the season's end shares the run's one «Exportar»
+ * sheet.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -100,6 +101,31 @@ test("F12: the story notice is placed again over the track tab when the window c
   await expect(notice).toBeVisible();
   expect(await gap()).toBeGreaterThanOrEqual(0);
   expect(await gap()).toBeLessThan(40);
+});
+
+test("a scene keeps the «Ritmo» it started with: Normal chosen mid-digest, then a re-render", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem("falconess.juego.ritmo", "fast"));
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-digest", "true");
+  await scene.evaluate((el) => el.setAttribute("data-probe", "kept"));
+  // the wide screen's panel is live under the scene: Rápido → Directo → Normal
+  const pace = page.locator("#m-ritmo");
+  await pace.click();
+  await pace.click();
+  await expect(pace).toHaveAttribute("data-pace", "normal");
+  // the game renders again (the panel goes): the same scene, still its digest (2.1, F11)
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await expect(page.locator("#m-panel")).toHaveCount(0);
+  await expect(scene).toHaveAttribute("data-probe", "kept");
+  await expect(scene).toHaveAttribute("data-digest", "true");
+  await expect(page.locator("#m-capitulo-resumen")).toBeVisible();
 });
 
 test("the season's end opens the run's one «Exportar» sheet, and closing it gives the focus back", async ({
