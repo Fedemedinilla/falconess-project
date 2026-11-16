@@ -69,6 +69,39 @@ test("F12: crossing the wide-screen size keeps the scene that is playing (no rem
   await expect(scene).toHaveAttribute("data-probe", "kept");
 });
 
+test("F12: the story notice is placed again over the track tab when the window crosses the wide-screen size", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await page.click("#m-capitulo-saltar");
+  const notice = page.locator("#m-capitulo-aviso");
+  await expect(notice).toBeVisible();
+  /**
+   * From where the notice rests (its way-in slide taken out) to the tab's top, on the screen
+   * (owner 2026-11-14: just over the tab).
+   */
+  const gap = () =>
+    page.evaluate(() => {
+      const el = document.getElementById("m-capitulo-aviso");
+      const tab = document.getElementById("m-pista-tab")?.getBoundingClientRect();
+      if (!el || !tab) return Number.NaN;
+      const shift = getComputedStyle(el).transform;
+      const slide = shift === "none" ? 0 : new DOMMatrixReadOnly(shift).m42;
+      return tab.top - (el.getBoundingClientRect().bottom - slide);
+    });
+  expect(await gap()).toBeGreaterThanOrEqual(0);
+  // the phone's layout: the column and its tab move, the notice follows them
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await expect(page.locator("#m-panel")).toHaveCount(0);
+  await expect(notice).toBeVisible();
+  expect(await gap()).toBeGreaterThanOrEqual(0);
+  expect(await gap()).toBeLessThan(40);
+});
+
 test("the season's end opens the run's one «Exportar» sheet, and closing it gives the focus back", async ({
   page,
 }) => {

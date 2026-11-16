@@ -308,7 +308,9 @@ export function RunView({
         />
       )}
       {storyToast && (
-        <StoryToast key={storyToast.n} long={storyToast.again !== undefined}>
+        // placed once, over the track tab: placed again when the wide screen comes or goes (the
+        // column stays, the tab moves; 5.9's NoticeHost re-measures on any resize)
+        <StoryToast key={`${storyToast.n}/${desk}`} long={storyToast.again !== undefined}>
           <b>
             {storyToast.kicker} · {storyToast.title}
           </b>
