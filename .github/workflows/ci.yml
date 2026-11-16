@@ -1,8 +1,9 @@
 # Verify every push to main and every pull request (ROADMAP D2, D13; docs/race-engine.md 22, 24.4).
 #
 # - verify: lint, typecheck (sources and tests), the whole test suite (the golden logs of
-#   tests/golden/v1 and the determinism checks included: packages/sim/src/race/golden.test.ts) and
-#   the content validation.
+#   tests/golden/v1 and the determinism checks included: packages/sim/src/race/golden.test.ts, and
+#   the phone flow's whole season-walk matrix, `FLOW_WALKS=all`, under 10 s) and the content
+#   validation.
 # - bench: `pnpm bench` in its own job, so timing noise never hides the verify results. The bench
 #   writes the ms per race to the job summary and fails only on its own gate: the canyon
 #   p95 over 5 ms (packages/sim/bench/race.bench.ts).
@@ -49,6 +50,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+        env:
+          FLOW_WALKS: all
       - run: pnpm content:validate
 
   bench:

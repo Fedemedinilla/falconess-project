@@ -51,18 +51,23 @@ type SeededSave = {
 };
 
 /**
- * A seeded save, continued: the run, its last week read (`vista`) and its scenes seen
- * (`historia`), as `seedRun` stores them in the e2e. `historia` replaces the file's.
+ * What `seedRun` stores for a seeded save: the run, its last week read (`vista`) and its scenes
+ * seen (`historia`, which `historia` here replaces).
  */
-export function loadSave(name: string, historia?: readonly string[]): TestGame {
+export function saveSeed(name: string, historia?: readonly string[]): Record<string, string> {
   const text = readFileSync(`${SAVES}${name}.json`, "utf8");
   const fixture: SeededSave = JSON.parse(text);
   const seen = historia ?? fixture.historia;
-  const t = testGame({
+  return {
     [RUN_KEY]: JSON.stringify(fixture.save),
     [SEEN_KEY]: fixture.vista,
     [STORY_KEY]: JSON.stringify({ runs: { [fixture.save.seed]: seen }, ever: seen }),
-  });
+  };
+}
+
+/** A seeded save, continued, as the e2e's «Continuar» opens it. */
+export function loadSave(name: string, historia?: readonly string[]): TestGame {
+  const t = testGame(saveSeed(name, historia));
   if (!t.game.continueSaved()) throw new Error(`the seeded save ${name} did not load`);
   return t;
 }

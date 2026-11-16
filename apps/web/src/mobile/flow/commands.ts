@@ -1,0 +1,337 @@
+/**
+ * What a tap or a timer does in the phone's flow (plan §1.7): each command reads the flow, the facts
+ * and the UI state as it found them, writes to the stores and dispatches to the UI state in the same
+ * synchronous call (critic (c)3: `game.act` and the nav change never come apart), and does nothing
+ * for a beat that is no longer the one in front (a stale timer, a second tap, F18). The same code
+ * drives the game and the node season walks. Pure and text-free (flow/imports.test.ts).
+ */
+import type { Position, SeasonState, StoryScene, TrainingKind } from "@falconess/schema";
+import type { SimContext } from "@falconess/sim";
+import type { GameController, GameErrorKind } from "../../game/controller";
+import { runFingerprint } from "../../game/run";
+import { TRAINING_KINDS } from "../../screens/model/actions";
+import { isRaceWeek, type WeekActionInput, withPosition } from "../../screens/model/position";
+import type { SoundCue } from "../sfx";
+import type { StoryStore } from "../storyModel";
+import type { WeekStore } from "./decidedWeek";
+import { watchKey } from "./derive";
+import type { InspirationStore } from "./inspirations";
+import type { FlowPolicy } from "./policy";
+import { trainingCue } from "./trainResult";
+import type { Flow, FlowFacts, InstantBeat, WorkshopTab } from "./types";
+import type { UiEvent, UiState } from "./ui";
+import { screenFrom, tryPreview } from "./week";
+
+/** What the commands reach: the game, the stores, the sounds, the UI state and the flow now. */
+export type FlowPorts = {
+  readonly ctx: SimContext;
+  readonly game: Pick<GameController, "act" | "acknowledgeStep" | "getSnapshot">;
+  readonly weeks: Pick<
+    WeekStore,
+    "plan" | "decide" | "setPosition" | "enterRace" | "markRaceSeen" | "clear"
+  >;
+  readonly story: Pick<StoryStore, "markSeen">;
+  readonly cards: Pick<InspirationStore, "markShown">;
+  readonly sound: { cue(c: SoundCue): void; nav(): void };
+  /** The flag the race commands read (legacy: no finish hold, a watch goes from its replay to its result). */
+  readonly policy: Pick<FlowPolicy, "finishHold">;
+  readonly dispatch: (e: UiEvent) => void;
+  /** The flow, facts and UI state exactly as this tap or timer found them. */
+  readonly now: () => { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
+};
+
+export type Commands = {
+  /** «Entrenar», «Taller», «Habilidades», the race bar's card, «Volver» and «Listo»: only at idle. */
+  open(to: "menu" | "train" | "workshop" | "skills" | "plan"): void;
+  selectTraining(kind: TrainingKind): void;
+  workshopTab(tab: WorkshopTab): void;
+  /** The week's action: a normal week commits it, a race week decides it (its preview plays first). */
+  choose(input: WeekActionInput): void;
+  /** A position on the planning card or the decided one; undefined: her wings' own. */
+  position(position: Position | undefined): void;
+  /** «Correr». */
+  run(): void;
+  /** A beat's timer or tap ended it (a result, the effects, a card, the emblem, a race's result). */
+  complete(key: string): void;
+  /** The emblem is opaque: what is under it may change. */
+  covered(key: string): void;
+  /** «Saltar» or a tap on the finish banner: the replay and the hold end, or a watch goes to its result. */
+  raceSkip(play: string): void;
+  /** The race's stage ended by itself: the replay, then the finish hold, then the result. */
+  raceNext(play: string): void;
+  /** «Ver otra vez» on a race's result. */
+  raceAgain(): void;
+  /** «Ver carrera» on the season's end. */
+  rewatch(turn: number): void;
+  /** «Continuar» on a race's result: the race mode ends, or a watch from the end goes back to it. */
+  raceContinue(): void;
+  /** A story scene ended (`skipped`: «Saltar»). */
+  sceneDone(key: string, skipped: boolean): void;
+  /** «Historia» or «Ver»: a scene again, whole. */
+  watchScene(scene: StoryScene): void;
+  /** An instant beat, before paint: idempotent, and it always ends the beat. */
+  resolve(beat: InstantBeat): void;
+};
+
+/** Why the controller refused the last act, named as `ui.error.<kind>` names it. */
+function errorKindOf(game: FlowPorts["game"]): GameErrorKind {
+  return game.getSnapshot().error?.kind ?? "unexpected";
+}
+
+/** The fingerprint of the run the controller holds now. */
+function fingerprintNow(game: FlowPorts["game"]): string | undefined {
+  const run = game.getSnapshot().run;
+  return run && runFingerprint(run);
+}
+
+/** The week's training cards as the cue reads them: a crew there makes a success a boost. */
+function cueCards(state: SeasonState): { kind: TrainingKind; boosted: boolean }[] {
+  return TRAINING_KINDS.map((kind) => ({
+    kind,
+    boosted: (state.crewPresence[kind] ?? []).length > 0,
+  }));
+}
+
+/** The commands of one run's view, on its ports. */
+export function flowCommands(p: FlowPorts): Commands {
+  /** A watch shows its race screen at a stage before the result: the result's buttons are not there. */
+  const watching = (ui: UiState): boolean => ui.nav.at === "watch" && ui.nav.stage !== "result";
+
+  const complete = (key: string): void => {
+    const { flow, facts, ui } = p.now();
+    const t = flow.top;
+    if (t.key !== key) return;
+    switch (t.kind) {
+      case "train-result":
+        break;
+      case "fx":
+        // the action's part leaves the step unread: the race part reads it
+        if (t.part !== "action") p.game.acknowledgeStep();
+        break;
+      case "inspiration":
+        p.cards.markShown(facts.run.run.seed, t.card.key);
+        break;
+      case "emblem":
+        // a no-op for the legacy emblem of a watch: no decided week has the run's fingerprint
+        p.weeks.enterRace(t.fp);
+        break;
+      case "race-result":
+        if (watching(ui)) return;
+        p.weeks.markRaceSeen(facts.run.fp);
+        break;
+      default:
+        // scenes end through sceneDone, instants through resolve, the race through raceNext or raceSkip
+        return;
+    }
+    p.dispatch({ type: "done", keys: [key] });
+  };
+
+  return {
+    open(to) {
+      const { flow, facts, ui } = p.now();
+      if (flow.top.kind !== "idle" || flow.layer || ui.nav.at === "watch") return;
+      if (facts.run.run.state.status === "ended") return;
+      p.sound.nav();
+      p.dispatch({ type: "open", to });
+    },
+
+    selectTraining(kind) {
+      const { flow } = p.now();
+      if (flow.top.kind !== "idle" || flow.layer) return;
+      p.dispatch({ type: "select", kind });
+    },
+
+    workshopTab(tab) {
+      const { flow } = p.now();
+      if (flow.top.kind !== "idle" || flow.layer) return;
+      p.dispatch({ type: "tab", tab });
+    },
+
+    choose(input) {
+      const { flow, facts, ui } = p.now();
+      if (!flow.canAct || flow.layer) return; // F27, with the controller's expectInputs
+      const { run, fp } = facts.run;
+      const state = run.state;
+      const cards = cueCards(state);
+      if (!isRaceWeek(p.ctx, state)) {
+        if (!p.game.act(input, run.inputs.length)) {
+          p.dispatch({ type: "notice", notice: errorKindOf(p.game) });
+          return;
+        }
+        const after = p.game.getSnapshot();
+        // still inside the tap (iOS plays sounds only there)
+        p.sound.cue(trainingCue(input, state.turn, after.lastStep?.after, cards));
+        const next = fingerprintNow(p.game);
+        if (next !== undefined) p.dispatch({ type: "acted", fp: next });
+        return;
+      }
+      // the shared preview cache: the facts read this same simulation
+      const preview = tryPreview(p.ctx, state, input);
+      if (!preview.ok) {
+        p.dispatch({ type: "notice", notice: preview.kind }); // F7, C16: no fallback
+        return;
+      }
+      const planned = facts.record?.phase === "planned" ? facts.record.position : undefined;
+      p.weeks.decide({
+        fp,
+        turn: state.turn,
+        inputs: run.inputs.length,
+        input,
+        position: planned,
+        stage: "action",
+      });
+      p.sound.cue(trainingCue(input, state.turn, preview.step.after, cards));
+      p.dispatch({ type: "decided", fp, from: screenFrom(ui.nav) });
+    },
+
+    position(position) {
+      const { flow, facts } = p.now();
+      const t = flow.top;
+      if (flow.layer) return;
+      if (t.kind === "position") {
+        p.weeks.setPosition(t.week.fp, position);
+        return;
+      }
+      if (t.kind !== "idle" || flow.screen.kind !== "plan") return;
+      const { run, fp } = facts.run;
+      if (facts.record?.phase === "planned") p.weeks.setPosition(fp, position);
+      else p.weeks.plan(fp, run.state.turn, position);
+    },
+
+    run() {
+      const { flow } = p.now();
+      const t = flow.top;
+      if (t.kind !== "position" || flow.layer) return; // a second «Correr» finds the race
+      const w = t.week;
+      if (!p.game.act(withPosition(w.input, w.position), w.inputs)) {
+        p.dispatch({ type: "notice", notice: errorKindOf(p.game) });
+        return;
+      }
+      p.weeks.clear();
+      const next = fingerprintNow(p.game);
+      if (next !== undefined) p.dispatch({ type: "raced", fp: next });
+    },
+
+    complete,
+
+    covered(key) {
+      const { flow } = p.now();
+      const t = flow.top;
+      if (t.kind === "emblem" && t.key === key && !t.covered)
+        p.dispatch({ type: "done", keys: [`${key}:in`] });
+    },
+
+    raceSkip(play) {
+      const { flow, facts, ui } = p.now();
+      const t = flow.top;
+      if (t.key === play && (t.kind === "replay" || t.kind === "finish")) {
+        const fp = facts.run.fp;
+        p.dispatch({ type: "done", keys: [`${fp}/race:replay`, `${fp}/race:finish`] });
+        return;
+      }
+      if (ui.nav.at === "watch" && ui.nav.stage !== "result" && watchKey(ui.nav) === play)
+        p.dispatch({ type: "watchStage", n: ui.nav.n, stage: "result" });
+    },
+
+    raceNext(play) {
+      const { flow, ui } = p.now();
+      const t = flow.top;
+      if (t.key === play && (t.kind === "replay" || t.kind === "finish")) {
+        p.dispatch({ type: "done", keys: [play] });
+        return;
+      }
+      if (ui.nav.at !== "watch" || ui.nav.stage === "result" || watchKey(ui.nav) !== play) return;
+      // legacy (until 6.3): no finish hold, the replay goes straight to the result
+      const hold = ui.nav.stage === "replay" && p.policy.finishHold;
+      p.dispatch({ type: "watchStage", n: ui.nav.n, stage: hold ? "finish" : "result" });
+    },
+
+    raceAgain() {
+      const { flow, ui } = p.now();
+      const t = flow.top;
+      if (t.kind !== "race-result" || ui.nav.at === "watch" || flow.layer) return;
+      p.sound.nav();
+      p.dispatch({ type: "watch", turn: t.turn, from: "result" });
+    },
+
+    rewatch(turn) {
+      const { flow, facts, ui } = p.now();
+      const state = facts.run.run.state;
+      if (flow.top.kind !== "idle" || flow.layer || ui.nav.at === "watch") return;
+      if (state.status !== "ended" || !state.raceResults.some((r) => r.turn === turn)) return;
+      p.sound.nav();
+      p.dispatch({ type: "watch", turn, from: "end" });
+    },
+
+    raceContinue() {
+      const { flow, ui } = p.now();
+      if (flow.top.kind === "race-result") {
+        if (watching(ui) || flow.layer) return;
+        p.sound.nav();
+        complete(flow.top.key);
+        return;
+      }
+      if (ui.nav.at === "watch" && ui.nav.from === "end" && ui.nav.stage === "result") {
+        p.sound.nav();
+        p.dispatch({ type: "watchDone", n: ui.nav.n });
+      }
+    },
+
+    sceneDone(key, skipped) {
+      const { flow, facts } = p.now();
+      const layer = flow.layer;
+      if (layer?.kind !== "scene" || layer.key !== key) return;
+      const kind = skipped ? "skipped" : "seen";
+      const id = layer.scene.id;
+      if (layer.replay) {
+        // «Historia» and «Ver» mark nothing: the scene was seen already
+        p.dispatch({ type: "replay", scene: undefined });
+        p.dispatch({
+          type: "toast",
+          toast: { id: `${key}/${kind}`, sceneId: id, kind, shown: false },
+        });
+        return;
+      }
+      if (flow.top.key !== key) return;
+      p.story.markSeen(facts.run.run.seed, id);
+      p.dispatch({
+        type: "toast",
+        toast: { id: `${facts.run.fp}/${id}/${kind}`, sceneId: id, kind, shown: false },
+      });
+      p.dispatch({ type: "done", keys: [key] });
+    },
+
+    watchScene(scene) {
+      const { flow } = p.now();
+      if (flow.canReplay) p.dispatch({ type: "replay", scene });
+    },
+
+    resolve(b) {
+      const { facts } = p.now();
+      const fp = facts.run.fp;
+      switch (b.kind) {
+        case "ack":
+          // only this run's step: a stale ack never reads a newer step
+          if (b.key === `${fp}/ack`) p.game.acknowledgeStep();
+          break;
+        case "enter":
+          p.weeks.enterRace(b.fp);
+          break;
+        case "pass":
+          p.story.markSeen(facts.run.run.seed, b.scene.id);
+          p.dispatch({
+            type: "toast",
+            toast: {
+              id: `${fp}/${b.scene.id}/passed`,
+              sceneId: b.scene.id,
+              kind: "passed",
+              shown: false,
+            },
+          });
+          break;
+      }
+      // never stalls on a write that changed nothing
+      p.dispatch({ type: "done", keys: [b.key] });
+    },
+  };
+}
