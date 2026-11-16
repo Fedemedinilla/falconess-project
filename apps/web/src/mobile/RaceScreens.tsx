@@ -155,33 +155,43 @@ export function PreRaceScreen({
 
 /**
  * A goal race of the run: the v3 flight view (the replay component of the test view) with «Saltar»
- * to the result, then the result against the goal and the tip of the advice.
+ * to the result, then the result against the goal and the tip of the advice. `stage` is the flow's:
+ * the replay (its finish too, until 6.3's banner), the race held while a story scene plays over it
+ * (owner 2026-11-13: its result waits), or the result. «Saltar» and the replay's own end quote
+ * `play`, the key of what plays now, so a stale one does nothing.
  */
 export function RaceScreen({
   ctx,
   state,
   turn,
-  showResult,
-  hold = false,
+  stage,
+  play,
   onSkip,
-  onReplay,
-  onDone,
+  onNext,
+  onAgain,
+  onContinue,
 }: {
   ctx: SimContext;
   state: SeasonState;
   turn: number;
-  showResult: boolean;
-  /** A story scene plays over the finished race: its result waits (owner 2026-11-13). */
-  hold?: boolean;
-  onSkip: () => void;
-  onReplay: () => void;
-  onDone: () => void;
+  stage: "replay" | "finish" | "held" | "result";
+  play: string;
+  /** «Saltar»: the race to its result. */
+  onSkip: (play: string) => void;
+  /** The replay ended by itself (or its own «Final»). */
+  onNext: (play: string) => void;
+  /** «Ver otra vez». */
+  onAgain: () => void;
+  /** «Continuar». */
+  onContinue: () => void;
 }) {
   const log = useGoalRaceLog(turn);
   // «Ritmo» Rápido (owner 2026-11-14) starts the race at ×2 at least
   const pace = usePace();
   const result = state.raceResults.find((r) => r.turn === turn);
   const ctxCourse = log ? pageLabels().courseName(log.courseId) : "";
+  const showResult = stage === "held" || stage === "result";
+  const hold = stage === "held";
   return (
     <div className={cx(s.screen, s.raceScreen)}>
       <div className={s.raceHead}>
@@ -190,7 +200,7 @@ export function RaceScreen({
           <b>{ctxCourse}</b>
         </div>
         {!showResult && (
-          <button type="button" className={s.skip} id="m-saltar" onClick={onSkip}>
+          <button type="button" className={s.skip} id="m-saltar" onClick={() => onSkip(play)}>
             <Glyph name="skip" size={18} weight={2.4} />
             {ui("ui.m.race.skip")}
           </button>
@@ -214,7 +224,7 @@ export function RaceScreen({
               log={log}
               labels={pageLabels()}
               idPrefix="m-carrera"
-              onReveal={onSkip}
+              onReveal={() => onNext(play)}
               minSpeed={pace === "fast" ? 2 : undefined}
             />
           </div>
@@ -222,12 +232,7 @@ export function RaceScreen({
       </div>
       {showResult && !hold && (
         <div className={s.foot}>
-          <button
-            type="button"
-            className={cx(s.btn, s.back)}
-            id="m-ver-otra-vez"
-            onClick={onReplay}
-          >
+          <button type="button" className={cx(s.btn, s.back)} id="m-ver-otra-vez" onClick={onAgain}>
             <Glyph name="play" size={18} weight={2.4} />
             <span>{ui("ui.m.race.again")}</span>
           </button>
@@ -237,7 +242,7 @@ export function RaceScreen({
             id="m-carrera-seguir"
             onClick={(e) => {
               if (e.detail > 1) return;
-              onDone();
+              onContinue();
             }}
           >
             {ui("ui.m.continue")}

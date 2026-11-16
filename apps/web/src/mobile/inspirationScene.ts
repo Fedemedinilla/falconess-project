@@ -40,9 +40,10 @@ function weekCard(
 /**
  * The scene the last step left (ADR-0013): an inspiration week that began with it (its entry is
  * new to the step), or, on a run of only its start, the start's own. Undefined when no box did
- * anything worth the card (no record inspired her). Today's game (legacy, until 5.3): a week's
+ * anything worth the card (no record inspired her). The rule the game shipped (legacy): a week's
  * card shows only while its step is unread, the start's on every call while the run is only its
- * start.
+ * start. The game now asks `inspirationCard`, whose legacy policy passes it the unread step only;
+ * this stays as that rule's pinned reference (F19) until 5.3 deletes both.
  */
 export function inspirationScene(
   seed: string,

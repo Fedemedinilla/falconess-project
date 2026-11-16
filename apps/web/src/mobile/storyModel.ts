@@ -35,7 +35,11 @@ export function triggerHolds(ctx: SimContext, state: SeasonState, t: StoryTrigge
   }
 }
 
-/** The first scene of her story due now and not seen in this season yet. */
+/**
+ * The first scene of her story due now and not seen in this season yet, in file order: the order
+ * the game shipped, pinned (F13) until 5.2. The game asks `dueScenes` (flow/scenes.ts), whose
+ * legacy policy gives this order.
+ */
 export function dueScene(
   scenes: readonly StoryScene[],
   ctx: SimContext,

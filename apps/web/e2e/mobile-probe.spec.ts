@@ -59,9 +59,11 @@ test("the probe names a duplicate id, where each copy sits and the frame it show
 
 test("two screens, or two layers «in», in the same frame", async ({ page, probe }) => {
   await startMobile(page, "cernicala");
+  // the game's own screen is the menu (4.1: `data-screen`); a second one is put next to it
+  await expect(page.locator('[data-screen="menu"]')).toHaveCount(1);
   await inject(
     page,
-    '<div data-screen="menu"></div><div data-screen="train"></div>' +
+    '<div data-screen="train"></div>' +
       '<div data-layer="fx" data-layer-phase="out"></div>' +
       '<div data-layer="scene" data-layer-phase="in"></div>' +
       '<div data-layer="emblem" data-layer-phase="in"></div>',

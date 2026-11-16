@@ -11,7 +11,7 @@ import { type InspirationScene, inspirationCard } from "../inspirationScene";
 import { type WeekFx, type WeekFxPart, weekFx } from "../weekFx";
 import type { FlowPolicy } from "./policy";
 import { dueScenes, menuOrder } from "./scenes";
-import { addedRace } from "./steps";
+import { addedRace, fxPart } from "./steps";
 import type { Beat, FlowFacts, InstantBeat, Nav, SceneMode } from "./types";
 import type { UiState } from "./ui";
 import { raceWings, trainBeat } from "./week";
@@ -145,7 +145,7 @@ export function beatsOf(
     }
     if (p.order === "legacy" && card) push(cardBeat(card)); // C10 as the game plays it today
     if (tail) {
-      const part: WeekFxPart = race ? "race" : "all";
+      const part = fxPart(unread);
       const fx = stepFx(ctx, unread, part);
       push(
         fx.length > 0

@@ -134,11 +134,8 @@ export type World = {
   signature(): readonly unknown[];
   /** «Nueva temporada» → a new season (the run's view remounts). */
   start(falconessId: string, seed: string, o?: StartOptions): void;
-  /**
-   * A seeded save of the phone e2e (`e2e/saves/<name>.json`), opened with «Continuar»
-   * (`elsewhere`: scenes seen only in another season of this browser).
-   */
-  load(name: string, historia?: readonly string[], elsewhere?: readonly string[]): void;
+  /** A seeded save of the phone e2e (`e2e/saves/<name>.json`), opened with «Continuar». */
+  load(name: string, historia?: readonly string[]): void;
   /** The event dialog's answer (it acts by itself). */
   answer(option: number): void;
   /** The error notice's close button. */
@@ -394,8 +391,8 @@ export function createWorld(o: WorldOptions): World {
       trace.push({ type: "season", at: at(), seed, falconessId });
       render();
     },
-    load(name, historia, elsewhere) {
-      for (const [k, v] of Object.entries(saveSeed(name, historia, elsewhere))) kv.setItem(k, v);
+    load(name, historia) {
+      for (const [k, v] of Object.entries(saveSeed(name, historia))) kv.setItem(k, v);
       game = new GameController(loadSeasonContent, kv);
       if (!game.continueSaved()) throw new Error(`the seeded save ${name} did not load`);
       season += 1;

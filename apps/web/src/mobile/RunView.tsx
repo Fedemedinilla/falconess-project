@@ -1,57 +1,29 @@
-import type {
-  ContentIndex,
-  Position,
-  SeasonState,
-  StoryScene,
-  TrainingKind,
-  WorkshopOp,
-} from "@falconess/schema";
-import { advanceSeason, difficultyOf } from "@falconess/sim";
+import type { ContentIndex, Position, StoryScene, WorkshopOp } from "@falconess/schema";
+import { difficultyOf } from "@falconess/sim";
 import {
   type ReactElement,
   type ReactNode,
-  useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 import { navigate } from "../app/useRoute";
 import { allScenes, allTopics } from "../content/story";
-import type { ActiveRun, Step } from "../game/controller";
+import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
-import type { ActionKind } from "../screens/model/actions";
-import {
-  chosenFor,
-  type WeekActionInput,
-  type WeekPosition,
-  wingsPosition,
-  withPosition,
-} from "../screens/model/position";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { reducedMotion } from "../ui/useMedia";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
+import { ErrorNotice } from "./ErrorNotice";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
-import { digestFor } from "./flow/scenes";
-import {
-  type LegacyNames,
-  legacyNames,
-  SHADOW_IDLE,
-  type ShadowWatch,
-  sameFlow,
-  shadowCommands,
-  shadowFrame,
-} from "./flow/shadow";
-import { fxPart } from "./flow/steps";
-import { resultTimeline, type TrainResult, trainingCue, trainResultOf } from "./flow/trainResult";
-import type { Flow, WorkshopTab } from "./flow/types";
-import type { UiState } from "./flow/ui";
+import type { Flow, Layer } from "./flow/types";
+import type { Toast } from "./flow/ui";
+import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
-import { inspirationScene } from "./inspirationScene";
+import { LayerHost } from "./LayerHost";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
 import { MenuItems, type MenuItemsProps, MobileMenu } from "./MenuSheet";
 import s from "./Mobile.module.css";
@@ -70,14 +42,13 @@ import {
 } from "./Panels";
 import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
-import { getPace, paceScale } from "./pace";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import st from "./Story.module.css";
 import { StoryListSheet } from "./StoryListSheet";
 import { StoryOverlay } from "./StoryOverlay";
 import { StoryToast } from "./StoryToast";
-import { playNav, playSound } from "./sfx";
-import { dueScene, openTopics } from "./storyModel";
+import { playNav } from "./sfx";
+import { openTopics } from "./storyModel";
 import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
@@ -86,46 +57,24 @@ import { useFlow } from "./useFlow";
 import { useStory } from "./useStory";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen } from "./WorkshopScreen";
-import { type WeekFx, weekFx } from "./weekFx";
-
-type View =
-  | { readonly screen: "menu" }
-  | { readonly screen: "train"; readonly selected?: TrainingKind | undefined }
-  | { readonly screen: "workshop"; readonly tab: WorkshopTab }
-  | {
-      readonly screen: "prerace";
-      readonly input?: WeekActionInput | undefined;
-      /** The action's result was already shown (a race week's preview): no way back, no repeat. */
-      readonly decided?: boolean;
-    }
-  | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
-  /** A race week's action played its effects over the menu (skills bought…), then the race mode. */
-  | { readonly screen: "actionfx"; readonly input: WeekActionInput; readonly fx: readonly WeekFx[] }
-  | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
-
-const MENU: View = { screen: "menu" };
 
 /** The music a run's page wants: the race's own in a race, the menu theme everywhere else. */
 export type RunMusic = Exclude<Track, "title">;
 
-/** The action whose vigor the bar previews on a screen. */
-function previewKind(view: View): ActionKind | undefined {
-  if (view.screen === "train") return view.selected;
-  if (view.screen === "workshop") return "workshop";
-  if (view.screen === "prerace" && view.input) return view.input.kind;
-  if (view.screen === "actionfx") return view.input.kind;
-  return undefined;
-}
+/** How long a story notice stays: a scene passed by, with its «Ver», a little longer. */
+const NOTICE_MS = 4000;
+const PASSED_MS = 6000;
 
 /**
  * One run of the phone game, keyed by the shell per run: everything here starts fresh with a new
- * season, a load or a replay from storage (the week's effects, the sheets, the scene asked for,
- * its notice, the race week's position). The week menu while the run is active (training,
- * workshop, pre-race card, flight race and its result as screens; the week's effects and the event
- * dialog over the menu), the season's end once it ends. Three modes (owner 2026-11-13): training
- * (its screen and result), the menu (the week's decision; a story scene due after it plays once
- * the decision's effects end), and the race (the emblem transition, only here, then the scene
- * before the race, the position, the race, the scene after it, its result; then the menu).
+ * season, a load or a replay from storage. What shows comes from the flow model (`useFlow`, plan
+ * §1): the HUD, the one screen (`data-screen`), the one layer in front of it (`LayerHost`: the
+ * week's effects, the inheritance card, a story scene, the emblem, the event dialog), the notices
+ * and the sheets. Every tap and every timer that ends a beat goes through the flow's commands,
+ * which act on the game and move the flow in the same call. Three modes (owner 2026-11-13):
+ * training (its screen and result), the menu (the week's decision, its effects, a story scene due
+ * after it), and the race (the emblem, only here, then the scene before the race, the position,
+ * the race, the scene after it, its result; then the menu).
  *
  * The tree has fixed slots (the backdrop, the game's column, the panel, the sheets), so crossing
  * the wide-screen size changes classes and the panel, never the column: what plays goes on.
@@ -153,19 +102,11 @@ export function RunView({
   /** The music this run's page wants: the shell is the one that plays it. */
   onMusic: (track: RunMusic) => void;
 }) {
-  const { game, snap } = useGame();
+  const { game } = useGame();
   // the scenes seen and the chat read: a mark re-renders the game
   const story = useStory();
-  // the flow model (plan 4.0, the shadow): it follows today's game on dry ports, each of today's
-  // handlers below calling its command after its own work; a development check compares the two
-  const { flow, ui: flowUi, cmd, now: flowNow } = useFlow({ run, title: title !== undefined });
-  const dry = useMemo(() => shadowCommands(cmd, flowNow), [cmd, flowNow]);
-  const [view, setView] = useState<View>(MENU);
-  const [weekPosition, setWeekPosition] = useState<WeekPosition>();
+  const { flow, ui: flowUi, cmd, now, dispatch } = useFlow({ run, title: title !== undefined });
   const [menuOpen, setMenuOpen] = useState(false);
-  const [sceneDone, setSceneDone] = useState<string>();
-  // owner 2026-11-13: the week's mood, injury and sleep play as effects, once per step
-  const [fxDone, setFxDone] = useState<number>();
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [outingOpen, setOutingOpen] = useState(false);
@@ -186,181 +127,115 @@ export function RunView({
     if (desk) onTab(t);
     else setSheet(t);
   };
-  const inputs = run.inputs.length;
-
-  // the emblem transition (owner 2026-11-12) covers the way into a race: the race page starts
-  // fully covered by it
-  const ended = run.state.status === "ended" && view.screen !== "race";
-  // the race mode starts at the position card of a decided race week
-  const page = ended
-    ? "end"
-    : view.screen === "trained"
-      ? "train"
-      : view.screen === "actionfx"
-        ? "menu"
-        : view.screen === "prerace" && view.decided
-          ? "race"
-          : view.screen;
-  // story scenes and the chat (owner 2026-11-12)
-  const [replay, setReplay] = useState<StoryScene>();
-  const [storyToast, setStoryToast] = useState<{
-    n: number;
-    kicker: string;
-    title: string;
-    skipped: boolean;
-    /** Seen in an earlier season, so it was passed by (owner 2026-11-14): a tap plays it. */
-    again?: StoryScene | undefined;
-  }>();
   const [chatOpen, setChatOpen] = useState(false);
   const [storyListOpen, setStoryListOpen] = useState(false);
-  useEffect(() => {
-    if (!storyToast) return;
-    const id = setTimeout(() => setStoryToast(undefined), storyToast.again ? 6000 : 4000);
-    return () => clearTimeout(id);
-  }, [storyToast]);
-  // the music follows the page (owner 2026-11-12): the race's own in a race, the menu theme
+
+  // the music follows the mode (owner 2026-11-12): the race's own in race mode, the menu theme
   // everywhere else (the shell plays the title theme over the title and the selection)
-  const music: RunMusic = page === "race" ? "race" : "menu";
+  const music = flow.music;
   useEffect(() => onMusic(music), [onMusic, music]);
-  const [cover, setCover] = useState<number>();
-  const endCover = useCallback(() => {
-    setCover(undefined);
-    dry.complete("emblem");
-  }, [dry]);
-  const firstPage = useRef(true);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of page only
+
+  // a change of screen whooshes (in the commit that changed it, so it replaces the tap's sound),
+  // as each change of today's view did; 5.10 moves the whoosh into the taps' commands
+  const screenName = legacyScreen(flow);
+  const shownName = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
-    if (firstPage.current) firstPage.current = false;
-    // only on the way to a race (owner 2026-11-12: on every screen it got in the way)
-    // «Directo» (owner 2026-11-14) goes into the race mode without it
-    else if (page === "race" && !reducedMotion() && getPace() !== "direct") {
-      setCover((c) => (c ?? 0) + 1);
-      // opaque from its first frame: what is under it may change at once
-      dry.covered();
-    }
-  }, [page]);
+    // an instant beat renders nothing: what shows is the next commit's
+    if (screenName === undefined) return;
+    const was = shownName.current;
+    shownName.current = screenName;
+    if (was !== undefined && was !== screenName) playNav();
+  }, [screenName]);
+
   const ctx = game.context();
   const state = run.state;
+  const inputs = run.inputs.length;
   const colors = transitionColors(ctx.content, state.falconessId);
-  const transition = cover !== undefined && (
-    <ScreenTransition
-      key={cover}
-      primary={colors.primary}
-      secondary={colors.secondary}
-      onDone={endCover}
-    />
-  );
-
-  // a change of screen whooshes (in the click's own commit, so it replaces its tap); the shell
-  // whooshes between the selection and a run
-  const firstScreen = useRef(true);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of screen only
-  useLayoutEffect(() => {
-    if (firstScreen.current) firstScreen.current = false;
-    else playNav();
-  }, [view.screen]);
-
-  const shown = useRef(inputs);
-  useEffect(() => {
-    // the run moved on outside this screen's own act (the test view): back to the menu
-    if (inputs < shown.current) setView(MENU);
-    shown.current = inputs;
-  }, [inputs]);
-
   const toTests = () => navigate("inicio");
   const style = accentStyle(ctx.content, state.falconessId);
+  // ADR-0013: the boxes she inherited from, for the inheritance card
+  const startInput = run.inputs[0];
+  const parents = startInput?.kind === "start" ? startInput.parents : [];
 
-  /**
-   * The story scene due now in a mode (owner 2026-11-13): the scene before a race only in the race
-   * mode, before the position; the others after the week's decision (on the menu, once its
-   * effects ended) or after the race, before its result.
-   */
-  const dueIn = (where: SceneMode): StoryScene | undefined => {
-    const fits = (sc: StoryScene) => (sc.trigger.kind === "goal-before") === (where === "prerace");
-    return dueScene(allScenes().filter(fits), ctx, state, story.seenInRun(run.seed));
-  };
-  /** The scene to play now (or one asked from «Historia»), once nothing else is on screen. */
-  const storyScene = (where: SceneMode | undefined): StoryScene | undefined => {
-    if (replay) return replay;
-    const idle =
-      where !== undefined &&
-      title === undefined &&
-      cover === undefined &&
-      !menuOpen &&
-      !chatOpen &&
-      !storyListOpen;
-    return idle ? dueIn(where) : undefined;
-  };
-  const storyLayer = (sc: StoryScene | undefined) => (
+  // the story notice: the newest one shows (a new one takes its place), for its time
+  const toast = flowUi.toasts.at(-1);
+  const toastId = toast?.id;
+  const toastMs = toast?.kind === "passed" ? PASSED_MS : NOTICE_MS;
+  useEffect(() => {
+    if (toastId === undefined) return;
+    const t = setTimeout(() => {
+      for (const gone of now().ui.toasts) dispatch({ type: "toastGone", id: gone.id });
+    }, toastMs);
+    return () => clearTimeout(t);
+  }, [toastId, toastMs, now, dispatch]);
+  const notices = (
     <>
-      {/* owner 2026-11-14: a scene seen in an earlier season is passed by, with a line to watch it */}
-      {sc && !replay && story.seenEver().has(sc.id) && (
-        <Acknowledge
-          key={sc.id}
-          onMount={() => {
-            story.markSeen(run.seed, sc.id);
-            setStoryToast({
-              n: Date.now(),
-              kicker: gameText(sc.kickerKey),
-              title: gameText(sc.titleKey),
-              skipped: true,
-              again: sc,
-            });
+      {toast && (
+        <StoryNotice
+          // placed once, over the track tab: placed again when the wide screen comes or goes (the
+          // column stays, the tab moves; 5.9's NoticeHost re-measures on any resize)
+          key={`${toast.id}/${desk}`}
+          toast={toast}
+          onWatch={(sc) => {
+            // «Ver» plays the scene only where a scene may play now (the menu, a card, a result)
+            if (!now().flow.canReplay) return;
+            for (const gone of now().ui.toasts) dispatch({ type: "toastGone", id: gone.id });
+            cmd.watchScene(sc);
           }}
         />
       )}
-      {sc && (replay || !story.seenEver().has(sc.id)) && (
-        <StoryOverlay
-          key={`${sc.id}/${replay ? "again" : "first"}`}
-          scene={sc}
-          primary={colors.primary}
-          secondary={colors.secondary}
-          // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
-          digest={replay ? undefined : digestFor(getPace())}
-          onDone={(skipped) => {
-            if (!replay) story.markSeen(run.seed, sc.id);
-            setReplay(undefined);
-            setStoryToast({
-              n: Date.now(),
-              kicker: gameText(sc.kickerKey),
-              title: gameText(sc.titleKey),
-              skipped,
-            });
-            dry.sceneDone(sc.id, skipped);
-          }}
+      {flowUi.notice && (
+        <ErrorNotice
+          kind={flowUi.notice}
+          onClose={() => dispatch({ type: "notice", notice: undefined })}
         />
-      )}
-      {storyToast && (
-        // placed once, over the track tab: placed again when the wide screen comes or goes (the
-        // column stays, the tab moves; 5.9's NoticeHost re-measures on any resize)
-        <StoryToast key={`${storyToast.n}/${desk}`} long={storyToast.again !== undefined}>
-          <b>
-            {storyToast.kicker} · {storyToast.title}
-          </b>
-          <br />
-          {storyToast.again ? (
-            <span className={st.toastRow}>
-              {ui("ui.m.story.passed")}
-              <button
-                type="button"
-                className={st.toastBtn}
-                id="m-escena-ver"
-                onClick={() => {
-                  const again = storyToast.again;
-                  setStoryToast(undefined);
-                  setReplay(again);
-                  if (again) cmd.watchScene(again);
-                }}
-              >
-                {ui("ui.m.story.watch")}
-              </button>
-            </span>
-          ) : (
-            ui(storyToast.skipped ? "ui.m.story.skipped" : "ui.m.story.seen")
-          )}
-        </StoryToast>
       )}
     </>
+  );
+
+  /** The layer in front of the screen, from the flow's layer. */
+  const layer = (l: Layer): ReactElement => {
+    switch (l.kind) {
+      case "fx":
+        return <WeekFxOverlay fx={l.fx} content={ctx.content} onDone={() => cmd.complete(l.key)} />;
+      case "inspiration":
+        return (
+          <InspirationOverlay
+            scene={l.card}
+            falconessId={state.falconessId}
+            parents={parents}
+            onDone={() => cmd.complete(l.key)}
+          />
+        );
+      case "scene":
+        return (
+          <StoryOverlay
+            scene={l.scene}
+            primary={colors.primary}
+            secondary={colors.secondary}
+            // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
+            digest={l.digest}
+            onDone={(skipped) => cmd.sceneDone(l.key, skipped)}
+          />
+        );
+      case "emblem":
+        return (
+          <ScreenTransition
+            beat={l.key}
+            primary={colors.primary}
+            secondary={colors.secondary}
+            onCovered={cmd.covered}
+            onDone={cmd.complete}
+          />
+        );
+      case "event":
+        return <EventDialog />;
+    }
+  };
+  const layers = (
+    <LayerHost top={flow.layer} render={layer}>
+      {notices}
+    </LayerHost>
   );
 
   /** «Exportar» of this run: from «Menú», from the panel and from the season's end. */
@@ -423,6 +298,8 @@ export function RunView({
       )}
     </div>
   );
+  const screen = flow.screen;
+  const atEnd = screen.kind === "end";
   /**
    * The fixed slots (F12): the backdrop and the panel come and go with the wide screen; the
    * column (keyed by what it shows: the season's end or the run) and the sheets stay.
@@ -431,90 +308,41 @@ export function RunView({
     <>
       {desk ? (
         // the season's end keeps Kōryū's tint behind it
-        <div className={s.deskBg} style={ended ? undefined : style} aria-hidden="true" />
+        <div className={s.deskBg} style={atEnd ? undefined : style} aria-hidden="true" />
       ) : null}
       {column}
       {panelSlot}
       {sheets}
     </>
   );
-
-  const pending = state.pendingEvent !== undefined;
-  const onMenuScreen = view.screen === "menu";
-  // ADR-0013: an inspiration (or the season's start with parents) shows its card first
-  const startInput = run.inputs[0];
-  const parents = startInput?.kind === "start" ? startInput.parents : [];
-  const scene = onMenuScreen
-    ? inspirationScene(run.seed, state, inputs, snap.lastStep, snap.lastStepSeen)
-    : undefined;
-  const showScene = scene !== undefined && scene.key !== sceneDone;
-  const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
-  const fx = fxStep ? weekFx(fxStep, ctx.ruleset, fxPart(fxStep)) : [];
-  const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
-  const mode: SceneMode | undefined =
-    view.screen === "prerace" && view.decided
-      ? "prerace"
-      : view.screen === "race" && view.result
-        ? "race"
-        : onMenuScreen && !showScene && !showFx && !pending
-          ? "menu"
-          : undefined;
-  // the scene that plays now (at the season's end, the race mode's), or one asked for
-  const sceneNow = storyScene(ended ? "race" : mode);
-  // the race mode's transition opens on black when a scene comes next: no card shows between
-  const blackFor =
-    !ended && mode === "prerace" && cover !== undefined ? dueIn("prerace") : undefined;
-  // the shadow (plan 4.0): what today's game shows, by name, against the model's flow
-  const seenEver = story.seenEver();
-  useShadowCheck(
-    flow,
-    flowUi,
-    legacyNames(view, {
-      ended,
-      hold: view.screen === "race" && dueIn("race") !== undefined,
-      cover: cover !== undefined,
-      black: blackFor && (seenEver.has(blackFor.id) ? "passed" : "scene"),
-      inspiration: !ended && showScene,
-      fx: !ended && showFx,
-      event: !ended && onMenuScreen && !showScene && !showFx && pending,
-      scene:
-        sceneNow && (replay || !seenEver.has(sceneNow.id))
-          ? { id: sceneNow.id, replay: replay !== undefined }
-          : undefined,
-      sheet:
-        title !== undefined ||
-        menuOpen ||
-        chatOpen ||
-        storyListOpen ||
-        outingOpen ||
-        historyOpen ||
-        exporting !== undefined ||
-        (!desk && sheet !== undefined) ||
-        trackSheet?.open === true,
-    }),
+  /** The one screen: what the probe counts (`data-screen`), with no box of its own. */
+  const slot = (body: ReactNode) => (
+    <div style={{ display: "contents" }} data-screen={screen.kind}>
+      {body}
+    </div>
   );
 
-  if (ended)
+  if (atEnd)
     return slots(
       <div
         key="end"
-        className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)}
+        className={cx(s.app, desk && s.appDesk, desk && flow.solo && s.appDeskSolo)}
         style={style}
         data-app
+        data-mode={flow.mode}
+        data-beat={flow.top.kind}
       >
-        <EndScreen
-          run={run}
-          onRace={(t) => {
-            setView({ screen: "race", turn: t, result: false });
-            cmd.rewatch(t);
-          }}
-          onNew={() => game.newSeason()}
-          onTests={() => navigate("fin")}
-          onExport={exportRun}
-        />
+        {slot(
+          <EndScreen
+            run={run}
+            onRace={cmd.rewatch}
+            onNew={() => game.newSeason()}
+            onTests={() => navigate("fin")}
+            onExport={exportRun}
+          />,
+        )}
         {exportSheet}
-        {storyLayer(sceneNow)}
-        {transition}
+        {layers}
         {title}
       </div>,
       null,
@@ -522,110 +350,27 @@ export function RunView({
 
   const menu = weekMenu(ctx, state);
   const cards = trainingCards(ctx, state);
-  const wings = wingsPosition(ctx.content, state.equippedFrame);
-  const chosen = menu.raceWeek ? chosenFor(weekPosition, state) : undefined;
-  // the week's step is read once its effects played (none: at once); no dialog waits on the menu
-  const unreadNoFx = (stepOnMenu: Step | undefined) =>
-    stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset, fxPart(stepOnMenu)).length === 0;
-
-  /** Apply the week's input (with the race position on a race week); a race opens its view. */
-  const commit = (input: WeekActionInput) => {
-    const raceTurn = menu.raceWeek ? state.turn : undefined;
-    if (!game.act(withPosition(input, chosen), inputs)) return;
-    const step = game.getSnapshot().lastStep;
-    const cue = trainingCue(input, state.turn, step?.after, cards);
-    playSound(cue);
-    const next: View =
-      raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: raceStraight() } : MENU;
-    // a training plays its result on the training screen first (owner 2026-11-11)
-    const kind = cards.find((c) => c.kind === input.kind)?.kind;
-    if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
-      setView({
-        screen: "trained",
-        next,
-        result: trainResultOf(
-          ctx,
-          kind,
-          cue,
-          step,
-          Math.max(0, step.after.skillPoints - step.before.skillPoints),
-        ),
-      });
-      return;
-    }
-    setView(next);
-  };
-  /**
-   * A week's action. On a race week (owner 2026-11-12) its result comes first, then the race
-   * mode: the week is previewed with the season's own pure step (the action does not depend on
-   * the position; only the race does), a training's result shows on its screen, then the pre-race
-   * card runs the real input. After the preview the action is decided: the card has no «Volver».
-   */
-  const actToday = (input: WeekActionInput) => {
-    if (!menu.raceWeek) {
-      commit(input);
-      return;
-    }
-    let after: SeasonState;
-    try {
-      after = advanceSeason(ctx, state, withPosition(input, chosen));
-    } catch {
-      setView({ screen: "prerace", input });
-      return;
-    }
-    const step: Step = { before: state, input: withPosition(input, chosen), after };
-    const cue = trainingCue(input, state.turn, after, cards);
-    playSound(cue);
-    // what the action did (a bought skill, how she slept…) plays before the race mode
-    const actionFx = weekFx(step, ctx.ruleset, "action");
-    const race: View = { screen: "prerace", input, decided: true };
-    const next: View = actionFx.length > 0 ? { screen: "actionfx", input, fx: actionFx } : race;
-    const kind = cards.find((c) => c.kind === input.kind)?.kind;
-    if (kind && (cue === "success" || cue === "boost" || cue === "fail")) {
-      // the race's skill points are not hers yet: only the Simulator's own
-      const points =
-        kind === "train:simulator" && cue !== "fail" ? ctx.ruleset.season.simulatorSkillPoints : 0;
-      setView({ screen: "trained", next, result: trainResultOf(ctx, kind, cue, step, points) });
-      return;
-    }
-    setView(next);
-  };
-  /** A week's action, then the model's own (dry: it reads what today's acted). */
-  const act = (input: WeekActionInput) => {
-    actToday(input);
-    cmd.choose(input);
-  };
-  /** The race week's real input, after its preview: straight to the race. */
-  const runRaceWeek = (input: WeekActionInput) => {
-    const turn = state.turn;
-    if (!game.act(withPosition(input, chosen), inputs)) return;
-    setView({ screen: "race", turn, result: raceStraight() });
-  };
 
   const onMenu = (action: MenuAction) => {
     switch (action) {
       case "train":
-        setView({ screen: "train" });
         cmd.open("train");
         return;
       case "rest":
-        act({ kind: "rest" });
+        cmd.choose({ kind: "rest" });
         return;
       case "outing":
         // ADR-0016: with sintonía the player picks the crew she goes out with
         if (ctx.ruleset.season.crewSync) setOutingOpen(true);
-        else act({ kind: "outing" });
+        else cmd.choose({ kind: "outing" });
         return;
       case "workshop":
-        setView({ screen: "workshop", tab: "wings" });
         cmd.open("workshop");
         return;
       case "skills":
-        setView({ screen: "workshop", tab: "skills" });
         cmd.open("skills");
         return;
       case "race":
-        setView({ screen: "prerace" });
         cmd.open("plan");
         return;
       case "menu":
@@ -633,100 +378,68 @@ export function RunView({
         return;
     }
   };
+  const back = () => cmd.open("menu");
+  // a pick of her wings' own position is no choice: the race follows the frame's (F47)
+  const pickFor = (wings: Position) => (p: Position) => cmd.position(p === wings ? undefined : p);
 
-  const hud = (
-    <Hud
-      hard={difficultyOf(state) === "exigente"}
-      turn={menu.turn}
-      turns={menu.turns}
-      goal={menu.goal}
-      vigor={vigorView(ctx, state, previewKind(view))}
-      vigorPop={
-        view.screen === "trained" && view.result.vigor !== 0
-          ? {
-              delta: view.result.vigor,
-              delay: resultTimeline(view.result, paceScale(getPace())).vigor ?? 0,
-            }
-          : undefined
-      }
-      mood={menu.mood}
-      content={ctx.content}
-    />
-  );
+  const hud = flow.hud;
+  const hudMenu = hud && (hud.of === state ? menu : weekMenu(ctx, hud.of));
 
-  let screen: ReactNode;
-  switch (view.screen) {
+  let body: ReactNode = null;
+  switch (screen.kind) {
     case "menu":
-      screen = (
-        <MenuScreen ctx={ctx} state={state} menu={menu} pendingEvent={pending} onAction={onMenu} />
+      body = (
+        <MenuScreen
+          ctx={ctx}
+          state={state}
+          menu={menu}
+          pendingEvent={state.pendingEvent !== undefined}
+          onAction={onMenu}
+        />
       );
       break;
-    case "trained":
-      screen = (
+    case "train": {
+      // the picker and its result are one screen; a result that ended stays under the emblem
+      const { selected, result, finished } = screen;
+      body = (
         <TrainScreen
           ctx={ctx}
           state={state}
           cards={cards}
-          selected={undefined}
-          injured={false}
-          onSelect={() => undefined}
-          onConfirm={() => undefined}
-          onBack={() => undefined}
-          result={view.result}
-          onResultDone={() => {
-            setView(view.next);
-            dry.complete("train-result");
-          }}
+          selected={selected}
+          injured={result === undefined && menu.injured}
+          onSelect={cmd.selectTraining}
+          onConfirm={(kind) => cmd.choose({ kind })}
+          onBack={back}
+          result={result?.result}
+          resultKey={result?.key}
+          finished={finished}
+          onResultDone={cmd.complete}
         />
       );
       break;
-    case "train":
-      screen = (
-        <TrainScreen
-          ctx={ctx}
-          state={state}
-          cards={cards}
-          selected={view.selected}
-          injured={menu.injured}
-          onSelect={(kind) => {
-            setView({ screen: "train", selected: kind });
-            cmd.selectTraining(kind);
-          }}
-          onConfirm={(kind) => act({ kind })}
-          onBack={() => {
-            setView(MENU);
-            cmd.open("menu");
-          }}
-        />
-      );
-      break;
+    }
     case "workshop":
-      screen = (
+      body = (
         <WorkshopScreen
           key={`${state.turn}/${inputs}`}
           ctx={ctx}
           state={state}
-          tab={view.tab}
-          onTab={(tab) => {
-            setView({ screen: "workshop", tab });
-            cmd.workshopTab(tab);
-          }}
-          onConfirm={(ops: WorkshopOp[]) => act({ kind: "workshop", ops })}
-          onBack={() => {
-            setView(MENU);
-            cmd.open("menu");
-          }}
+          tab={screen.tab}
+          onTab={cmd.workshopTab}
+          onConfirm={(ops: WorkshopOp[]) => cmd.choose({ kind: "workshop", ops })}
+          onBack={back}
         />
       );
       break;
-    case "prerace": {
+    case "plan":
+    case "position": {
       const goal = menu.goal;
-      if (!goal || !menu.raceWeek) {
-        screen = null;
-        break;
-      }
-      const input = view.input;
-      screen = (
+      if (!goal || !menu.raceWeek) break;
+      const decided = screen.kind === "position" ? screen : undefined;
+      const wings = decided ? decided.wings : raceWings(ctx, state);
+      const position = screen.kind === "position" ? screen.week.position : screen.position;
+      body = (
         <PreRaceScreen
           ctx={ctx}
           state={state}
@@ -736,78 +449,32 @@ export function RunView({
           mirror={goal.mirror}
           named={goal.named}
           wings={wings}
-          position={chosen}
-          input={input}
-          onPosition={(position: Position) => {
-            setWeekPosition(position === wings ? undefined : { turn: state.turn, position });
-            cmd.position(position === wings ? undefined : position);
-          }}
-          onRun={() => {
-            if (!input) {
-              // «Listo» on the planning card
-              setView(MENU);
-              cmd.open("menu");
-            } else if (view.decided) {
-              runRaceWeek(input);
-              cmd.run();
-            }
-            // a preview that failed (F7): the model has no such card (4.1 shows a notice)
-            else commit(input);
-          }}
-          onBack={
-            view.decided
-              ? undefined
-              : () => {
-                  setView(MENU);
-                  cmd.open("menu");
-                }
-          }
+          position={position}
+          input={decided?.week.input}
+          onPosition={pickFor(wings)}
+          // «Listo» on the planning card; «Correr» on the decided one (no way back, owner rule)
+          onRun={decided ? cmd.run : back}
+          onBack={decided ? undefined : back}
         />
       );
       break;
     }
-    case "actionfx":
-      screen = (
-        <>
-          <MenuScreen
-            ctx={ctx}
-            state={state}
-            menu={menu}
-            pendingEvent={false}
-            onAction={() => undefined}
-          />
-          <WeekFxOverlay
-            fx={view.fx}
-            content={ctx.content}
-            onDone={() => {
-              setView({ screen: "prerace", input: view.input, decided: true });
-              dry.complete("fx");
-            }}
-          />
-        </>
-      );
+    case "black":
+      // under the emblem, before a scene: no card shows between (owner 2026-11-13)
+      body = <div className={st.black} data-black aria-hidden="true" />;
       break;
     case "race":
-      screen = (
+      body = (
         <RaceScreen
           ctx={ctx}
           state={state}
-          turn={view.turn}
-          showResult={view.result}
-          // the scene after the race comes before its result
-          hold={dueIn("race") !== undefined}
-          onSkip={() => {
-            setView({ screen: "race", turn: view.turn, result: true });
-            dry.raceSkip();
-          }}
-          onReplay={() => {
-            setView({ screen: "race", turn: view.turn, result: false });
-            cmd.raceAgain();
-          }}
-          onDone={() => {
-            setView(MENU);
-            cmd.raceContinue();
-          }}
+          turn={screen.turn}
+          stage={screen.stage}
+          play={screen.play}
+          onSkip={cmd.raceSkip}
+          onNext={cmd.raceNext}
+          onAgain={cmd.raceAgain}
+          onContinue={cmd.raceContinue}
         />
       );
       break;
@@ -816,40 +483,26 @@ export function RunView({
   return slots(
     <div
       key="run"
-      className={cx(s.app, view.screen === "race" && s.appWide, desk && s.appDesk)}
+      className={cx(s.app, flow.wide && s.appWide, desk && s.appDesk)}
       style={style}
       data-app
+      data-mode={flow.mode}
+      data-beat={flow.top.kind}
     >
-      {view.screen !== "race" && hud}
-      {screen}
-      {/* the week's effects and the event wait until the race and its result were seen */}
-      {showScene && scene && (
-        <InspirationOverlay
-          scene={scene}
-          falconessId={state.falconessId}
-          parents={parents}
-          onDone={() => {
-            setSceneDone(scene.key);
-            dry.complete("inspiration");
-          }}
-        />
-      )}
-      {showFx && (
-        <WeekFxOverlay
-          key={inputs}
-          fx={fx}
+      {hud && hudMenu && (
+        <Hud
+          hard={difficultyOf(hud.of) === "exigente"}
+          turn={hudMenu.turn}
+          turns={hudMenu.turns}
+          goal={hudMenu.goal}
+          vigor={vigorView(ctx, hud.vigor, hud.preview)}
+          vigorPop={hud.pop}
+          mood={hudMenu.mood}
           content={ctx.content}
-          onDone={() => {
-            setFxDone(inputs);
-            game.acknowledgeStep();
-            dry.complete("fx");
-          }}
         />
       )}
-      {blackFor && <div className={st.black} aria-hidden="true" />}
-      {storyLayer(sceneNow)}
-      {!showScene && unreadNoFx(fxStep) && <Acknowledge onMount={() => game.acknowledgeStep()} />}
-      {onMenuScreen && !showScene && !showFx && pending && <EventDialog />}
+      {slot(body)}
+      {layers}
       {chatOpen && (
         <ChatSheet
           name={gameText(`falconess.${state.falconessId}`)}
@@ -867,7 +520,7 @@ export function RunView({
         open={outingOpen}
         onPick={(manufacturer) => {
           setOutingOpen(false);
-          act({ kind: "outing", manufacturer });
+          cmd.choose({ kind: "outing", manufacturer });
         }}
         onClose={() => setOutingOpen(false)}
       />
@@ -878,7 +531,6 @@ export function RunView({
         )}
         onWatch={(sc) => {
           setStoryListOpen(false);
-          setReplay(sc);
           cmd.watchScene(sc);
         }}
         onClose={() => setStoryListOpen(false)}
@@ -893,7 +545,6 @@ export function RunView({
         }}
         onClose={() => setHistoryOpen(false)}
       />
-      {transition}
       {title}
       {/* the wide screen's panel is its menu: one set of the menu's buttons on the page */}
       {!desk && (
@@ -906,7 +557,7 @@ export function RunView({
         />
       )}
     </div>,
-    desk ? (
+    desk && !flow.solo ? (
       <div className={cx(s.app, s.appContents)}>
         <DeskPanel tab={tab} onTab={openPanel} dot={guideNew ? "guide" : undefined}>
           {panel(tab)}
@@ -917,62 +568,87 @@ export function RunView({
 }
 
 /**
- * The shadow's check (plan 4.0; development builds only): after a commit where the model's flow
- * and today's game differ, it looks again at each animation frame, and a difference still on
- * screen at two frames in a row (`shadowFrame`) is a console error, which fails any e2e run on the
- * dev server (`E2E_DEV=1`). The known differences (`sameFlow`'s rules) never count.
+ * The notice after a story scene (owner 2026-11-13): played («seen», «skipped») or passed by
+ * because she saw it in an earlier season (owner 2026-11-14), with «Ver» to play it whole.
  */
-function useShadowCheck(flow: Flow, ui: UiState, legacy: LegacyNames): void {
-  const latest = useRef({ flow, ui, legacy });
-  const watch = useRef<ShadowWatch>(SHADOW_IDLE);
-  const frame = useRef<number | undefined>(undefined);
-  useLayoutEffect(() => {
-    latest.current = { flow, ui, legacy };
-  });
-  useEffect(() => {
-    if (!import.meta.env.DEV || frame.current !== undefined) return;
-    const differs = (): string | undefined => {
-      const { flow: f, ui: u, legacy: l } = latest.current;
-      const v = sameFlow(f, l, u);
-      if (v.kind !== "mismatch") return undefined;
-      return JSON.stringify({
-        model: v.model,
-        legacy: v.legacy,
-        top: `${f.top.kind} ${f.top.key}`,
-      });
-    };
-    if (differs() === undefined) return;
-    const tick = () => {
-      const mismatch = differs();
-      const step = shadowFrame(watch.current, mismatch);
-      watch.current = step.watch;
-      if (step.report) console.error("flow shadow", mismatch);
-      frame.current = mismatch === undefined ? undefined : requestAnimationFrame(tick);
-    };
-    frame.current = requestAnimationFrame(tick);
-  });
-  useEffect(
-    () => () => {
-      if (frame.current !== undefined) cancelAnimationFrame(frame.current);
-      frame.current = undefined;
-    },
-    [],
+function StoryNotice({
+  toast,
+  onWatch,
+}: {
+  readonly toast: Toast;
+  readonly onWatch: (scene: StoryScene) => void;
+}) {
+  const scene = allScenes().find((sc) => sc.id === toast.sceneId);
+  if (!scene) return null;
+  return (
+    <StoryToast long={toast.kind === "passed"}>
+      <b>
+        {gameText(scene.kickerKey)} · {gameText(scene.titleKey)}
+      </b>
+      <br />
+      {toast.kind === "passed" ? (
+        <span className={st.toastRow}>
+          {ui("ui.m.story.passed")}
+          <button
+            type="button"
+            className={st.toastBtn}
+            id="m-escena-ver"
+            onClick={() => onWatch(scene)}
+          >
+            {ui("ui.m.story.watch")}
+          </button>
+        </span>
+      ) : (
+        ui(toast.kind === "skipped" ? "ui.m.story.skipped" : "ui.m.story.seen")
+      )}
+    </StoryToast>
   );
 }
 
-/** «Directo» (owner 2026-11-14): a goal race opens on its result; «Ver otra vez» plays it. */
-function raceStraight(): boolean {
-  return getPace() === "direct";
-}
-
-/** Where a story scene can play (owner 2026-11-13). */
-type SceneMode = "menu" | "prerace" | "race";
-
-/** Marks the week's step read once mounted (a week whose decision left no effects to play). */
-function Acknowledge({ onMount }: { onMount: () => void }) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once
-  useEffect(onMount, []);
-  return null;
+/**
+ * Today's names of the screens (until 5.10): the whoosh plays when the name changes, as it did on
+ * each change of the old view (the training picker and its result, the workshop, the race card,
+ * the race). Undefined for an instant beat, which renders nothing.
+ */
+function legacyScreen(flow: Flow): string | undefined {
+  const t = flow.top;
+  switch (t.kind) {
+    case "train-result":
+      return "trained";
+    case "fx":
+      return t.part === "action" ? "actionfx" : "menu";
+    case "emblem":
+      // the legacy emblem over a race seen again from the season's end (F25) is the race's
+      return flow.screen.kind === "race" ? "race" : "prerace";
+    case "position":
+      return "prerace";
+    case "scene":
+      return t.where === "prerace" ? "prerace" : t.where === "race" ? "race" : "menu";
+    case "replay":
+    case "finish":
+    case "race-result":
+      return "race";
+    case "event":
+    case "inspiration":
+      return "menu";
+    case "ack":
+    case "enter":
+    case "pass":
+      return undefined;
+    case "idle":
+      switch (flow.screen.kind) {
+        case "train":
+          return "train";
+        case "workshop":
+          return "workshop";
+        case "plan":
+          return "prerace";
+        case "race":
+          return "race";
+        default:
+          return "menu";
+      }
+  }
 }
 
 /** The sponsor's two colors of the Falconess in play (Kōryū's red and yellow without a palette). */

@@ -62,25 +62,12 @@ type Fixtures = {
   errors: string[];
 };
 
-/**
- * What the phone game's flow shadow reports (plan 4.0, dev server only): the flow model and the
- * game on screen differed for two frames in a row (`mobile/flow/shadow.ts`).
- */
-const SHADOW_ERROR = "console: flow shadow ";
-
-/**
- * The app tests: fonts stubbed, clipboard allowed, failing on any console error; under `E2E_DEV=1`
- * that includes every flow shadow report, which fails with its own message first.
- */
+/** The app tests: fonts stubbed, clipboard allowed, failing on any console error. */
 export const test = base.extend<Fixtures>({
   errors: [
     async ({ page }, use) => {
       const errors = watchErrors(page);
       await use(errors);
-      expect(
-        errors.filter((e) => e.startsWith(SHADOW_ERROR)),
-        "flow shadow: the flow model and the game on screen differ",
-      ).toEqual([]);
       expect(errors, "console errors or uncaught exceptions").toEqual([]);
     },
     { auto: true },

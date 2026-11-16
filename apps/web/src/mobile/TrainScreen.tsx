@@ -3,6 +3,7 @@ import { type SimContext, statCap } from "@falconess/sim";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useLatest } from "../ui/useLatest";
 import { reducedMotion } from "../ui/useMedia";
 import { type RunnerArt, runnerArt } from "./art";
 import { RESULT, resultTimeline, type TrainResult } from "./flow/trainResult";
@@ -43,6 +44,8 @@ export function TrainScreen({
   onConfirm,
   onBack,
   result,
+  resultKey,
+  finished = false,
   onResultDone,
 }: {
   ctx: SimContext;
@@ -55,9 +58,15 @@ export function TrainScreen({
   onBack: () => void;
   /** Set right after a training ran: the screen plays its result, then calls `onResultDone`. */
   result?: TrainResult | undefined;
-  onResultDone?: () => void;
+  /** The result's beat key: its timers and its drop play once per key, whatever re-renders. */
+  resultKey?: string | undefined;
+  /** The result already ended (it stays under the emblem): no timers, no drop played again. */
+  finished?: boolean;
+  /** The result ended (its time is up or a tap), quoting its key; read when it fires. */
+  onResultDone?: (key: string) => void;
 }) {
   const art = runnerArt(state.falconessId);
+  const resultDone = useLatest(onResultDone);
   // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
   const timeline = result ? resultTimeline(result, paceScale(getPace())) : undefined;
   const pops = result &&
@@ -72,10 +81,10 @@ export function TrainScreen({
       from: result.from,
       fromPoints: result.fromPoints,
     };
-  // the pings climb with the «+N» (a failure has none)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once per result
+  // the pings climb with the «+N» (a failure has none); then the result ends
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per result's beat (its key)
   useEffect(() => {
-    if (!result || !timeline) return;
+    if (!result || !timeline || resultKey === undefined || finished) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
     const ups = [...Object.values(timeline.stats), timeline.points].filter(
       (d): d is number => d !== undefined,
@@ -84,11 +93,11 @@ export function TrainScreen({
       ups.forEach((d, i) => {
         timers.push(setTimeout(() => playPing(i, ups.length), d));
       });
-    timers.push(setTimeout(() => onResultDone?.(), timeline.end));
+    timers.push(setTimeout(() => resultDone.current?.(resultKey), timeline.end));
     return () => {
       for (const t of timers) clearTimeout(t);
     };
-  }, [result]);
+  }, [resultKey, finished]);
   const card = result ? undefined : cards.find((c) => c.kind === selected);
   const gains: Partial<Record<StatName, number>> | undefined = card
     ? Object.fromEntries(card.gains.map((g) => [g.stat, g.gain]))
@@ -102,6 +111,7 @@ export function TrainScreen({
   // the result (owner 2026-11-13): the stats slide down to the bottom (a transform: nothing else
   // moves, the scene stays put) and leave the room above them to the crews' cards
   const [drop, setDrop] = useState<{ y: number; b: number }>();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per result's beat (its key)
   useLayoutEffect(() => {
     if (!result) {
       setDrop(undefined);
@@ -117,8 +127,8 @@ export function TrainScreen({
     const box = (screenRef.current?.offsetParent ?? document.body).getBoundingClientRect();
     setDrop({ y, b: Math.round(box.bottom - foot.bottom + strip.height + 46) });
     // explicit animations: the result may mount a fresh screen, where a CSS transition has no
-    // «before» to start from
-    if (reducedMotion()) return;
+    // «before» to start from; a result that already ended stays where it landed
+    if (reducedMotion() || finished) return;
     stripRef.current?.animate(
       [{ transform: "translateY(0)" }, { transform: `translateY(${y}px)` }],
       {
@@ -136,7 +146,7 @@ export function TrainScreen({
         ],
         { duration: 240, easing: "ease-in", fill: "both" },
       );
-  }, [result]);
+  }, [resultKey]);
   const showing = result ? result.kind : selected;
   const active = showing !== undefined && art?.training?.[showing] ? showing : undefined;
   // which way the scene slides in: from the right when the player moved right
@@ -344,7 +354,9 @@ export function TrainScreen({
           className={s.resultSkip}
           id="m-resultado-seguir"
           aria-label={ui("ui.m.result.next")}
-          onClick={() => onResultDone?.()}
+          onClick={() => {
+            if (resultKey !== undefined) onResultDone?.(resultKey);
+          }}
         />
       )}
       <div
