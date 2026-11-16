@@ -234,3 +234,17 @@ Cuántas veces se tira el dado:
   mundo propio y futuro; alas «a lo anime»; el «algo» de las Falconess; guerras, clima imposible,
   mensajeras, la carrera que trajo la paz y la ex mensajera que funda el deporte; las escuderías
   nacen de los bandos.
+
+### I11 · Milana y la invitación: una trama escondida (2026-11-16)
+
+> «Milana sabía demasiado y exactamente cómo ganarle a Peregrina... además... ¿quién envió la
+> invitación a la Larga a Peregrina??? HHMMMMMMMMMMMMM»
+- Estado: **en discusión**. Pista del dueño, dicha a propósito sin revelar más. Se cruza con la
+  idea de una escudería «sombra», menos fair play, con un jefe veterano (`docs/world.md` §5).
+- Lo que ya hay en el juego y no lo contradice:
+  - La crónica dice solo «la invitaron» (`docs/design/canon-peregrina.md:19`).
+  - La escena «La invitación» dice «llega un sobre rojo al box», sin remitente, y cierra con la Jefa
+    guardando el sobre en un cajón sobre «una foto vieja de otra Falconess, dormida en una tribuna»
+    (`packages/content/text/es.json`, `story.peregrina-invitation.1` y `.11`).
+- Lo que sí lo contradice: `docs/design/historia-peregrina.md:85-86` dice que la invitan «fans,
+  prensa, Kōryū». Ajustar si el dueño lo confirma.
