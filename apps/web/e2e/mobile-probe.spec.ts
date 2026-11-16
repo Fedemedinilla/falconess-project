@@ -23,6 +23,14 @@ async function inject(page: Page, html: string): Promise<void> {
   }, html);
 }
 
+/** Until the page has painted twice: what was injected was on screen for a frame at least. */
+async function twoFrames(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))),
+  );
+}
+
 async function removeInjected(page: Page): Promise<void> {
   await page.evaluate(() => {
     for (const el of document.querySelectorAll("[data-probe-test]")) el.remove();
@@ -37,6 +45,8 @@ test("the probe names a duplicate id, where each copy sits and the frame it show
   expect(probe.reports()).toEqual([]);
   await inject(page, '<i id="probe-twin"></i><b id="probe-twin"></b>');
   await expect.poll(() => probe.reports().length).toBe(1);
+  // painted before it goes (else the report says "gone before the next frame", rightly)
+  await twoFrames(page);
   await removeInjected(page);
   await expect.poll(() => probe.reports()[0] ?? "").not.toContain("frames not counted yet");
   const [report] = probe.take();
