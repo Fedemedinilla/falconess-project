@@ -324,3 +324,10 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Posible sin tocar el motor (propuesta): pistas urbanas armadas con los tramos que ya existen;
   puntaje por equipo calculado fuera de la carrera; la resistencia como varias etapas seguidas con
   decisiones entre etapas (acampar, descansar, rendirse) en la capa de temporada.
+
+### I13 · La protagonista crece con el mundo, como en FFXIV (2026-11-16)
+
+> «Cada expansión le agrega algo al personaje. Y sabiendo que es un MMORPG, es muy raro que haya un
+> personaje principal que conecte a todas las expansiones. Yo veo a la protagonista así, que su
+> historia va creciendo con la del mundo y cómo se va abriendo de a poco al jugador.»
+- Estado: **decidida** la dirección (2026-11-16). Investigación: `investigacion-ffxiv.md`.
