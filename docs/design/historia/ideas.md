@@ -227,3 +227,10 @@ Cuántas veces se tira el dado:
 - Estado: **decidida** (2026-11-16). El dueño pidió saber cómo se construye un mundo que parezca
   vivo (Tolkien, Cygames) y por dónde empezar; la explicación y las primeras preguntas se dieron en
   el chat de la sesión 1. Va a: `docs/world.md`.
+
+### I10 · El trasfondo: guerras, clima y mensajeras (2026-11-16)
+
+- Estado: **decidida** (2026-11-16). Ordenada en `docs/world.md` §1-§5 con las palabras del dueño:
+  mundo propio y futuro; alas «a lo anime»; el «algo» de las Falconess; guerras, clima imposible,
+  mensajeras, la carrera que trajo la paz y la ex mensajera que funda el deporte; las escuderías
+  nacen de los bandos.
