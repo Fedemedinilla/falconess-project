@@ -154,7 +154,10 @@ export function trainResultOf(
   return result;
 }
 
-/** A week's sound: a training's result (a crew there makes it a boost), else a confirm. */
+/**
+ * A week's sound: a training's result (a crew there makes it a boost), else a confirm. A training
+ * that rested by rule (an injured week, a v1 forced rest) had no result: a confirm too (F4, O2).
+ */
 export function trainingCue(
   input: WeekActionInput,
   turn: number,
@@ -163,7 +166,9 @@ export function trainingCue(
 ): TrainingCue {
   const card = cards.find((c) => c.kind === input.kind);
   if (!card) return "confirm";
-  const entry = after?.log.find((e) => e.turn === turn && e.input?.kind === input.kind);
-  if (!entry?.notes.includes("log.train.ok")) return entry ? "fail" : "confirm";
-  return card.boosted ? "boost" : "success";
+  const notes = after?.log.find((e) => e.turn === turn && e.input?.kind === input.kind)?.notes;
+  if (notes?.includes("log.train.ok")) return card.boosted ? "boost" : "success";
+  return notes?.includes("log.train.fail") || notes?.includes("log.train.injury")
+    ? "fail"
+    : "confirm";
 }

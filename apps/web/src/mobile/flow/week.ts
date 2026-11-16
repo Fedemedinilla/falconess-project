@@ -7,7 +7,6 @@ import type { Position, RunInput, SeasonState, TrainingKind } from "@falconess/s
 import { advanceSeason, InvalidInputError, type SimContext, WorkshopError } from "@falconess/sim";
 import type { GameErrorKind, Step } from "../../game/controller";
 import { raceFrame, type WeekActionInput, wingsPosition } from "../../screens/model/position";
-import type { FlowPolicy } from "./policy";
 import { type TrainOutcome, trainResultOf } from "./trainResult";
 import type { Nav, TrainBeat } from "./types";
 
@@ -32,11 +31,10 @@ function trainingOf(input: RunInput): TrainingKind | undefined {
 
 /**
  * What a training's result shows: a success (a boost with a crew there), or a fail when it failed
- * or hurt her. A training that rested by rule (an injured week, a v1 forced rest) did not train:
- * `restedCue` (legacy, F4) still shows it as a fail; without it there is no result. Undefined for
- * any other action.
+ * or hurt her. A training that rested by rule (an injured week, a v1 forced rest) did not train, so
+ * it has no result (F4, O2: the week's effects tell it). Undefined for any other action.
  */
-export function trainingOutcome(step: Step, restedCue: boolean): TrainOutcome | undefined {
+export function trainingOutcome(step: Step): TrainOutcome | undefined {
   const kind = trainingOf(step.input);
   if (!kind) return undefined;
   const entry = step.after.log.find((e) => e.turn === step.before.turn && e.input?.kind === kind);
@@ -45,7 +43,7 @@ export function trainingOutcome(step: Step, restedCue: boolean): TrainOutcome | 
     return (step.before.crewPresence[kind] ?? []).length > 0 ? "boost" : "success";
   if (entry.notes.includes("log.train.fail") || entry.notes.includes("log.train.injury"))
     return "fail";
-  return restedCue ? "fail" : undefined;
+  return undefined;
 }
 
 const beats = new WeakMap<Step, Map<string, TrainBeat>>();
@@ -60,10 +58,9 @@ export function trainBeat(
   step: Step,
   source: "step" | "preview",
   key: string,
-  p: Pick<FlowPolicy, "restedCue">,
 ): TrainBeat | undefined {
   const kind = trainingOf(step.input);
-  const outcome = trainingOutcome(step, p.restedCue);
+  const outcome = trainingOutcome(step);
   if (!kind || !outcome) return undefined;
   const id = `${source}|${key}|${outcome}`;
   let byId = beats.get(step);

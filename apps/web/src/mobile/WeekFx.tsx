@@ -16,6 +16,7 @@ const GLYPH: Partial<Record<WeekFxKind, GlyphName>> = {
   "mood-up": "heart",
   "mood-down": "heart",
   injury: "cross",
+  recovery: "cross",
   "sleep-great": "bed",
   "sleep-normal": "bed",
   "sleep-poor": "bed",

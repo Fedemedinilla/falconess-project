@@ -117,7 +117,7 @@ export function beatsOf(
   if (w && f.preview) {
     const k = (b: string) => `${w.fp}/w:${b}`;
     if (w.stage === "action") {
-      const tb = trainBeat(ctx, f.preview, "preview", k("result"), p);
+      const tb = trainBeat(ctx, f.preview, "preview", k("result"));
       push(tb);
       const afx = stepFx(ctx, f.preview, "action");
       if (afx.length > 0)
@@ -157,7 +157,7 @@ export function beatsOf(
     // the race part's vigor already showed before «Correr»
     let landed = race !== undefined;
     if (!race) {
-      const tb = trainBeat(ctx, unread, "step", k("result"), p);
+      const tb = trainBeat(ctx, unread, "step", k("result"));
       landed = tb !== undefined;
       push(tb);
     } else if (racing(f.record, ended)) {

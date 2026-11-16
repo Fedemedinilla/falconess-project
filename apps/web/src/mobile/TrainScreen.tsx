@@ -11,7 +11,6 @@ import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type CrewBadge, crewInitials, statCells, type TrainingCard } from "./model";
 import { StatStrip } from "./Parts";
-import { getPace, paceScale } from "./pace";
 import { placeScene } from "./sceneLayout";
 import { playPing } from "./sfx";
 
@@ -32,7 +31,9 @@ function trainButtonId(kind: TrainingKind): string {
  * The training screen: her chibi on stage with the chosen training's ribbon and its crews (a
  * column at the top right, each with its bond bar), the gains over her stats, and the five round
  * trainings with their crews' faces. A tap chooses (nothing moves), a second tap on the chosen one
- * trains; «Fallo N %» hangs on the chosen button's top edge in its risk color.
+ * trains; «Fallo N %» hangs on the chosen button's top edge in its risk color. Its result plays on
+ * the week she trained in (critic b1): its buttons and crews, the trained one chosen, while her
+ * stats count up to the week after (F6).
  */
 export function TrainScreen({
   ctx,
@@ -44,11 +45,14 @@ export function TrainScreen({
   onConfirm,
   onBack,
   result,
+  after,
+  k,
   resultKey,
   finished = false,
   onResultDone,
 }: {
   ctx: SimContext;
+  /** The week on screen: during a result, the week she trained in. */
   state: SeasonState;
   cards: readonly TrainingCard[];
   selected: TrainingKind | undefined;
@@ -58,6 +62,10 @@ export function TrainScreen({
   onBack: () => void;
   /** Set right after a training ran: the screen plays its result, then calls `onResultDone`. */
   result?: TrainResult | undefined;
+  /** What the result's stats count up to: the week after it (a race week's: its preview). */
+  after?: SeasonState | undefined;
+  /** «Ritmo»'s scale of the result's timeline, as the flow read it (`paceScale`). */
+  k: number;
   /** The result's beat key: its timers and its drop play once per key, whatever re-renders. */
   resultKey?: string | undefined;
   /** The result already ended (it stays under the emblem): no timers, no drop played again. */
@@ -68,7 +76,9 @@ export function TrainScreen({
   const art = runnerArt(state.falconessId);
   const resultDone = useLatest(onResultDone);
   // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
-  const timeline = result ? resultTimeline(result, paceScale(getPace())) : undefined;
+  const timeline = result ? resultTimeline(result, k) : undefined;
+  // the stats the strip shows: during a result, the week after it (they count up from `before`)
+  const counted = result && after ? after : state;
   const pops = result &&
     timeline && {
       stats: Object.fromEntries(
@@ -236,8 +246,9 @@ export function TrainScreen({
         </div>
         <div className={cx(s.stripWrap, drop && s.stripDown)} ref={stripRef}>
           <StatStrip
-            stats={statCells(state, statCap(ctx.ruleset, state))}
-            skillPoints={state.skillPoints}
+            stats={statCells(counted, statCap(ctx.ruleset, counted))}
+            // a race week's preview counts up only the Simulator's points (rule 46)
+            skillPoints={result ? result.fromPoints + result.points : state.skillPoints}
             gains={gains ?? {}}
             pointsGain={card?.skillPoints}
             long
@@ -326,14 +337,14 @@ export function TrainScreen({
       </div>
       {result && result.crews.length > 0 && (
         <div className={s.crewIn} id="m-resultado-cuadrillas">
-          {result.crews.map((m, k) => {
+          {result.crews.map((m, i) => {
             const bond = result.bonds.find((b) => b.manufacturer === m);
             const sync = result.sync.includes(m);
             return (
               <div
                 key={m}
                 className={cx(s.crewInCard, sync && s.crewInSync)}
-                style={{ animationDelay: `${RESULT.crewIn + k * RESULT.crewStep * paceScale()}ms` }}
+                style={{ animationDelay: `${RESULT.crewIn + i * RESULT.crewStep * k}ms` }}
                 data-crew={m}
               >
                 <CrewFace ctx={ctx} id={m} sync={sync} size={58} />

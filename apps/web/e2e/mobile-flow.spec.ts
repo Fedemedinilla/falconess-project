@@ -361,3 +361,55 @@ test("a race week's workshop swaps her wings: the card preselects the new wings'
   await toResult(page);
   await expect(page.locator("#m-resultado-posicion")).toHaveAttribute("data-position", "closer");
 });
+
+test("a normal week's training result shows the week she trained in: its HUD, its button, the vigor at its «±N» (critic b1, L3)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await seedRun(page, "peregrina-w39-insp");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-entrenar");
+  await page.click("#m-entrenar-agility");
+  const vigor = await page.locator("#m-vigor").getAttribute("data-vigor");
+  // the clock stands still from here: the result's timers run only as the test moves it on
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  await page.click("#m-entrenar-agility");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  await settleUpdates(page);
+  await page.clock.runFor(200);
+  await settleUpdates(page);
+  // the week she trained in, the button she trained on, the vigor not yet moved
+  expect(await week(page)).toBe(39);
+  await expect(page.locator("#m-entrenar-agility")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#m-vigor")).toHaveAttribute("data-vigor", vigor ?? "");
+  // its «±N» lands before the result ends: the bar has moved, still on week 39
+  const end = await resultEnd(page);
+  await page.clock.runFor(end - 300);
+  await settleUpdates(page);
+  expect(await present(page, "#m-resultado")).toBe(true);
+  expect(await week(page)).toBe(39);
+  expect(await page.locator("#m-vigor").getAttribute("data-vigor")).not.toBe(vigor);
+});
+
+test("a race week's training result counts her stats up and keeps the week being decided (F6)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-entrenar");
+  await page.click("#m-entrenar-technique");
+  const value = page.locator('#m-stats [data-stat="technique"] > span').nth(1);
+  const before = Number(await value.textContent());
+  await page.click("#m-entrenar-technique");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  expect(await week(page)).toBe(10);
+  // the number counts up to what the training made of it, while the result is still there
+  await expect
+    .poll(async () => Number(await value.textContent()), { timeout: 2500 })
+    .toBeGreaterThan(before);
+  expect(await present(page, "#m-resultado")).toBe(true);
+  expect(await week(page)).toBe(10);
+});

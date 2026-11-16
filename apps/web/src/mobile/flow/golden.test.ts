@@ -188,6 +188,26 @@ describe("Appendix A: the expected sequences (target policy)", () => {
     expect(w.trace.some((e) => e.type === "box")).toBe(true);
   });
 
+  it("A.10 an injured week: no training's result, the «RECUPERACIÓN» effect over the menu, then the next week (O2)", () => {
+    const w = world();
+    w.load("injured");
+    const turn = w.now().facts.run.run.state.turn;
+    const from = w.trace.length;
+    w.cmd.open("train");
+    w.cmd.selectTraining("train:agility");
+    w.cmd.choose({ kind: "train:agility" });
+    const top = w.now().flow.top;
+    expect(top.kind === "fx" && top.fx[0]?.kind).toBe("recovery");
+    play(w);
+    expect(seen(w, from)).toEqual([
+      "training train · idle",
+      "menu menu(inert) + fx · fx:all",
+      "menu menu · idle",
+    ]);
+    expect(ended(w, from)).toEqual(["fx:all"]);
+    expect(w.now().facts.run.run.state.turn).toBe(turn + 1);
+  });
+
   it("the goal-failed path: the race, end-failed in the race mode before the result, the race's effects over the end", () => {
     const w = world();
     w.load("peregrina-w10-lose");

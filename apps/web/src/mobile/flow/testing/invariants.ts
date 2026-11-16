@@ -447,7 +447,7 @@ const I9 = invariant(
       if (addedRace(last.step)) {
         need.push(`${fp}/race:result`);
         if (w.pace !== "direct") need.push(`${fp}/race:replay`);
-      } else if (trainingOutcome(last.step, w.policy.restedCue)) need.push(`${fp}/result`);
+      } else if (trainingOutcome(last.step)) need.push(`${fp}/result`);
       for (const k of need) if (!done.has(k)) out.push(`${where(last)}: ${k} never completed`);
       if (!done.has(`${fp}/fx`) && !done.has(`${fp}/ack`))
         out.push(`${where(last)}: the last week's effects never completed`);
@@ -657,7 +657,7 @@ const I16 = invariant(
 const I17 = invariant(
   "I17",
   "during a training's result the HUD shows the week she trained in",
-  (p) => p.trainView,
+  always,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {

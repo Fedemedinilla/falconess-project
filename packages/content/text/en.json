@@ -1860,6 +1860,7 @@
   "ui.m.fx.mood-up": "FIRED UP!",
   "ui.m.fx.mood-down": "DOWNCAST",
   "ui.m.fx.injury": "INJURED!",
+  "ui.m.fx.recovery": "RECOVERY",
   "ui.m.fx.sleep-great": "PERFECT REST!",
   "ui.m.fx.sleep-normal": "GOOD REST!",
   "ui.m.fx.sleep-poor": "POOR REST",

@@ -104,7 +104,32 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
   );
 }
 
-function VigorBar({ vigor, pop }: { vigor: VigorView; pop?: VigorPop | undefined }) {
+/**
+ * The vigor bar. During a training's result (`to`, keyed by its beat) its value switches to the
+ * week after when the result's «±N» lands (`at` ms after the beat began, L3): the number, its
+ * label and the fill change together, the fill with its own slide.
+ */
+function VigorBar({
+  vigor: from,
+  to,
+  at = 0,
+  beat,
+  pop,
+}: {
+  vigor: VigorView;
+  to?: VigorView | undefined;
+  at?: number | undefined;
+  beat?: string | undefined;
+  pop?: VigorPop | undefined;
+}) {
+  const [landed, setLanded] = useState<string>();
+  const switches = to !== undefined && beat !== undefined;
+  useEffect(() => {
+    if (!switches || beat === undefined) return;
+    const t = setTimeout(() => setLanded(beat), at);
+    return () => clearTimeout(t);
+  }, [switches, beat, at]);
+  const vigor = to && beat !== undefined && landed === beat ? to : from;
   const pct = (v: number) => `${(100 * v) / vigor.max}%`;
   const after = vigor.after;
   let cost: CSSProperties | undefined;
@@ -157,6 +182,10 @@ type VigorPop = { readonly delta: number; readonly delay: number };
 type HudProps = {
   /** A training's result is playing: its vigor change on the bar. */
   vigorPop?: VigorPop | undefined;
+  /** The bar's value once that change lands (`vigorAt` ms into the result `vigorBeat`). */
+  vigorTo?: VigorView | undefined;
+  vigorAt?: number | undefined;
+  vigorBeat?: string | undefined;
   /** ADR-0012: Exigente shows a chip under the calendar. */
   hard?: boolean;
   turn: number;
@@ -168,7 +197,19 @@ type HudProps = {
 };
 
 /** The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood. */
-export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, content }: HudProps) {
+export function Hud({
+  hard = false,
+  turn,
+  turns,
+  goal,
+  vigor,
+  vigorPop,
+  vigorTo,
+  vigorAt,
+  vigorBeat,
+  mood,
+  content,
+}: HudProps) {
   const tone = moodTone(mood);
   return (
     <header className={s.hud}>
@@ -196,7 +237,7 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
       <div className={s.hudR}>
         <GoalPill goal={goal} content={content} />
         <div className={s.vrow}>
-          <VigorBar vigor={vigor} pop={vigorPop} />
+          <VigorBar vigor={vigor} to={vigorTo} at={vigorAt} beat={vigorBeat} pop={vigorPop} />
           <div
             className={cx(s.mood, s[`mood-${tone}`])}
             id="m-animo"

@@ -44,6 +44,7 @@ import {
 } from "./Panels";
 import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
+import { paceScale } from "./pace";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import st from "./Story.module.css";
 import { StoryListSheet } from "./StoryListSheet";
@@ -108,7 +109,14 @@ export function RunView({
   const { game } = useGame();
   // the scenes seen and the chat read: a mark re-renders the game
   const story = useStory();
-  const { flow, ui: flowUi, cmd, now, dispatch } = useFlow({ run, title: title !== undefined });
+  const {
+    flow,
+    ui: flowUi,
+    cmd,
+    now,
+    dispatch,
+    pace,
+  } = useFlow({ run, title: title !== undefined });
   const [menuOpen, setMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -414,19 +422,24 @@ export function RunView({
       );
       break;
     case "train": {
-      // the picker and its result are one screen; a result that ended stays under the emblem
+      // the picker and its result are one screen; a result that ended stays under the emblem.
+      // A result plays on the week she trained in (its buttons, crews and HUD), counting her
+      // stats up to the week after (critic b1, F6)
       const { selected, result, finished } = screen;
+      const week = result?.before ?? state;
       body = (
         <TrainScreen
           ctx={ctx}
-          state={state}
-          cards={cards}
+          state={week}
+          cards={week === state ? cards : trainingCards(ctx, week)}
           selected={selected}
-          injured={result === undefined && menu.injured}
+          injured={(week === state ? menu : weekMenu(ctx, week)).injured}
           onSelect={cmd.selectTraining}
           onConfirm={(kind) => cmd.choose({ kind })}
           onBack={back}
           result={result?.result}
+          after={result?.after}
+          k={paceScale(pace)}
           resultKey={result?.key}
           finished={finished}
           onResultDone={cmd.complete}
@@ -520,6 +533,10 @@ export function RunView({
           goal={hudMenu.goal}
           vigor={vigorView(ctx, hud.vigor, hud.preview)}
           vigorPop={hud.pop}
+          // a training's result: the bar moves to the week after when its «±N» lands (L3)
+          vigorTo={hud.vigorTo && vigorView(ctx, hud.vigorTo, undefined)}
+          vigorAt={hud.vigorAt}
+          vigorBeat={hud.vigorTo && flow.top.key}
           mood={hudMenu.mood}
           content={ctx.content}
         />

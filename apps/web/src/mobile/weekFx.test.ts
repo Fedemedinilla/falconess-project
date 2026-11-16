@@ -70,6 +70,32 @@ describe("weekFx (owner 2026-11-13)", () => {
   });
 });
 
+describe("weekFx of an injured week (O2, F4)", () => {
+  it("an injured training and an injured rest both show «RECUPERACIÓN», plus any mood change", () => {
+    for (const input of [{ kind: "train:agility" }, { kind: "rest" }] as const)
+      for (let i = 0; i < 10; i++) {
+        const before: SeasonState = { ...startSeason(ctx, `fx-rec-${i}`, start), injuryTurns: 1 };
+        const after = advanceSeason(ctx, before, input);
+        expect(after.log.at(-1)?.notes).toContain("log.injured");
+        const fx = weekFx({ before, input, after }, ctx.ruleset);
+        const mood = after.mood - before.mood;
+        expect(fx.map((e) => e.kind)).toEqual([
+          "recovery",
+          ...(mood > 0 ? ["mood-up"] : mood < 0 ? ["mood-down"] : []),
+        ]);
+        // the injury stamp's tone: she lost the week to it
+        expect(fx[0]?.good).toBe(false);
+      }
+  });
+  it("on a race week the recovery is the action's part, not the race's", () => {
+    const before: SeasonState = { ...startSeason(ctx, "fx-rec-race", start), injuryTurns: 1 };
+    const after = advanceSeason(ctx, before, { kind: "rest" });
+    const step = { before, input: { kind: "rest" } as RunInput, after };
+    expect(weekFx(step, ctx.ruleset, "action").map((e) => e.kind)).toEqual(["recovery"]);
+    expect(weekFx(step, ctx.ruleset, "race").some((e) => e.kind === "recovery")).toBe(false);
+  });
+});
+
 describe("weekFx parts of a race week (owner 2026-11-13)", () => {
   it("the action's part has no race effects, the race's only the mood and the points", () => {
     const before: SeasonState = startSeason(ctx, "fx-part", start);

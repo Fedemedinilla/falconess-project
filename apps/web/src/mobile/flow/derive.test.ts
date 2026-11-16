@@ -1,8 +1,13 @@
+import type { RunInput } from "@falconess/schema";
+import { advanceSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
+import type { ActiveRun, Step } from "../../game/controller";
 import { paceScale } from "../pace";
 import { deriveFlow, screenKey, watchKey } from "./derive";
+import { factsOf } from "./facts";
 import { type FlowPolicy, LEGACY_POLICY, TARGET_POLICY } from "./policy";
 import { DIGEST } from "./scenes";
+import { testScenes } from "./testing/content";
 import {
   commit,
   decide,
@@ -17,7 +22,7 @@ import {
   uiAfter,
 } from "./testing/game";
 import { resultTimeline } from "./trainResult";
-import type { Flow } from "./types";
+import type { Flow, FlowFacts } from "./types";
 import { INITIAL_UI, reduceUi, type UiState } from "./ui";
 import { raceWings } from "./week";
 
@@ -42,6 +47,30 @@ const started = (seed = "s1"): TestGame => {
   return t;
 };
 
+/**
+ * The facts of `t`'s stores over another run in play: a save's run with her injured, which no seeded
+ * save reaches on a race week or on the season's last week (its inputs, so its fp and its week's
+ * record, stay the save's).
+ */
+const factsOver = (t: TestGame, run: ActiveRun, unread?: Step): FlowFacts =>
+  factsOf(t.game.context(), {
+    snap: unread
+      ? { run, lastStep: unread, lastStepSeen: false }
+      : { run, lastStep: t.game.getSnapshot().lastStep, lastStepSeen: true },
+    week: t.weeks.getSnapshot(),
+    story: t.story,
+    cards: t.cards,
+    scenes: testScenes(),
+    pace: "normal",
+    reduced: false,
+    sheetOpen: false,
+  });
+
+const hurtRun = (t: TestGame): ActiveRun => {
+  const run = runOf(t);
+  return { ...run, state: { ...run.state, injuryTurns: 1 } };
+};
+
 /** `peregrina-w10`, raced after a rest (she wins: `peregrina-debut-win` comes after the race). */
 const raced = (save = "peregrina-w10"): { t: TestGame; mine: UiState } => {
   const t = loadSave(save);
@@ -50,7 +79,7 @@ const raced = (save = "peregrina-w10"): { t: TestGame; mine: UiState } => {
 };
 
 describe("a training's result", () => {
-  it("the training screen; legacy over the next week's HUD (critic b1), target the week she trained in", () => {
+  it("the training screen with the week she trained in: its HUD, its button, the vigor at its «±N» (critic b1, L3)", () => {
     const t = started();
     const before = stateOf(t);
     const mine = commit(t, { kind: "train:agility" });
@@ -61,7 +90,7 @@ describe("a training's result", () => {
         throw new Error("train");
       expect(flow.screen.result).toBe(flow.top);
       expect(flow.screen.finished).toBe(false);
-      expect(flow.screen.selected).toBe(p.trainView ? "train:agility" : undefined);
+      expect(flow.screen.selected).toBe("train:agility");
       expect([flow.mode, flow.screenKey, flow.layer, flow.music]).toEqual([
         "training",
         "train",
@@ -75,16 +104,10 @@ describe("a training's result", () => {
       expect(flow.hud?.pop).toEqual(
         result.vigor === 0 ? undefined : { delta: result.vigor, delay },
       );
-      if (p.trainView) {
-        expect(flow.hud?.of).toBe(before);
-        expect(flow.hud?.vigor).toBe(before);
-        expect(flow.hud?.vigorTo).toBe(stateOf(t));
-        expect(flow.hud?.vigorAt).toBe(delay);
-      } else {
-        expect(flow.hud?.of).toBe(stateOf(t));
-        expect(flow.hud?.vigor).toBe(stateOf(t));
-        expect(flow.hud?.vigorTo).toBeUndefined();
-      }
+      expect(flow.hud?.of).toBe(before);
+      expect(flow.hud?.vigor).toBe(before);
+      expect(flow.hud?.vigorTo).toBe(stateOf(t));
+      expect(flow.hud?.vigorAt).toBe(delay);
     }
   });
 
@@ -99,7 +122,7 @@ describe("a training's result", () => {
       expect(flow.hud?.of).toBe(stateOf(t));
       expect(flow.hud?.of.turn).toBe(10);
       expect(flow.hud?.of.mood).toBe(stateOf(t).mood);
-      expect(flow.hud?.vigorTo).toBe(p.trainView ? factsFor(t).preview?.after : undefined);
+      expect(flow.hud?.vigorTo).toBe(factsFor(t).preview?.after);
     }
   });
 });
@@ -134,7 +157,7 @@ describe("the week's effects", () => {
     }
   });
 
-  it("a race week's action's effects: over the menu; legacy previews the action's cost, target its vigor once landed", () => {
+  it("a race week's action's effects: over the menu, the action's vigor once it landed (no cost stripes)", () => {
     const t = loadSave("peregrina-w10");
     const mine = decide(t, { kind: "rest" });
     for (const p of BOTH) {
@@ -145,7 +168,7 @@ describe("the week's effects", () => {
       expect(flow.mode).toBe("menu");
       expect(flow.hud?.of).toBe(stateOf(t));
       expect(flow.hud?.vigor).toBe(stateOf(t));
-      expect(flow.hud?.preview).toBe(p.trainView ? undefined : "rest");
+      expect(flow.hud?.preview).toBeUndefined();
     }
     // a training that hurt her: its result, then the injury; the vigor already landed (review 2 M-C)
     const hurt = testGame();
@@ -161,7 +184,7 @@ describe("the week's effects", () => {
       const flow = flowOf(hurt, played, p);
       expect(flow.top).toMatchObject({ kind: "fx", part: "action", landed: true });
       expect(flow.top.kind === "fx" && flow.top.fx.map((x) => x.kind)).toEqual(["injury"]);
-      expect(flow.hud?.vigor).toBe(p.trainView ? preview?.after : stateOf(hurt));
+      expect(flow.hud?.vigor).toBe(preview?.after);
     }
   });
 
@@ -288,6 +311,33 @@ describe("the race mode", () => {
     }
   });
 
+  it("an injured race week's training: no result, the recovery over the menu, the emblem rises over that menu (F4, O2)", () => {
+    const t = loadSave("peregrina-w10");
+    const run = hurtRun(t);
+    const fp = fpOf(t);
+    const mine = decide(t, { kind: "train:agility" }, "train");
+    const facts = factsOver(t, run);
+    expect(facts.record?.phase).toBe("decided");
+    const afterFx = reduceUi(mine, { type: "done", keys: [`${fp}/w:fx`] });
+    for (const p of BOTH) {
+      const flow = deriveFlow(t.game.context(), facts, mine, p);
+      expect(flow.top).toMatchObject({ kind: "fx", part: "action", landed: false });
+      expect(flow.top.kind === "fx" && flow.top.fx.map((x) => x.kind)).toEqual(["recovery"]);
+      expect(flow.screen).toEqual({ kind: "menu", inert: true });
+      // she rested by rule: the bar moves when the recovery lifts, with no cost stripes
+      expect([flow.hud?.of, flow.hud?.vigor, flow.hud?.preview]).toEqual([
+        run.state,
+        run.state,
+        undefined,
+      ]);
+      // the emblem rises over that menu: never the picker the training was chosen on
+      const emblem = deriveFlow(t.game.context(), facts, afterFx, p);
+      expect(emblem.top).toMatchObject({ kind: "emblem", covered: false });
+      expect(emblem.screen).toEqual({ kind: "menu", inert: true });
+      expect(emblem.hud?.vigor).toBe(facts.preview?.after);
+    }
+  });
+
   it("covered: black only when a scene comes next (the HUD kept under it), else the inert card", () => {
     const t = loadSave("peregrina-w10");
     const fp = fpOf(t);
@@ -311,7 +361,7 @@ describe("the race mode", () => {
     }
   });
 
-  it("the scene before the race over the inert card; then the card, no way back; legacy's HUD previews the cost", () => {
+  it("the scene before the race over the inert card; then the card, no way back; the HUD has the action's vigor", () => {
     const t = loadSave("peregrina-w10");
     const fp = fpOf(t);
     const mine = reduceUi(decide(t, { kind: "rest" }), {
@@ -324,7 +374,7 @@ describe("the race mode", () => {
       expect(flow.top).toMatchObject({ kind: "scene", where: "prerace" });
       expect(flow.screen).toMatchObject({ kind: "position", inert: true });
       expect([flow.mode, flow.music]).toEqual(["race", "race"]);
-      expect(flow.hud?.vigor).toBe(p.trainView ? preview?.after : stateOf(t));
+      expect(flow.hud?.vigor).toBe(preview?.after);
     }
     t.story.markSeen("1", "peregrina-debut");
     for (const p of BOTH) {
@@ -336,7 +386,7 @@ describe("the race mode", () => {
         inert: false,
       });
       expect(flow.screenKey).toBe("position");
-      expect(flow.hud?.preview).toBe(p.trainView ? undefined : "rest");
+      expect(flow.hud?.preview).toBeUndefined();
       expect([flow.canAct, flow.canReplay, flow.toast, flow.desk.locked]).toEqual([
         false,
         true,
@@ -549,6 +599,33 @@ describe("idle", () => {
         true,
       ]);
       expect(flow.hud?.of.turn).toBe(48);
+      // the week she trained in: its HUD and buttons, the training she chose (critic b1)
+      expect(flow.hud?.of).toBe(t.game.getSnapshot().lastStep?.before);
+      expect(flow.screen.kind === "train" && flow.screen.selected).toBe("train:technique");
+    }
+  });
+
+  it("an injured season's last week: no result, its recovery over the end, then the end (F4, O2, O5)", () => {
+    const t = loadSave("caracara-w48");
+    const hurt = hurtRun(t);
+    const ctx = t.game.context();
+    const input: RunInput = { kind: "train:technique" };
+    const step: Step = { before: hurt.state, input, after: advanceSeason(ctx, hurt.state, input) };
+    expect(step.after.status).toBe("ended");
+    const run: ActiveRun = { ...hurt, inputs: [...hurt.inputs, input], state: step.after };
+    const facts = factsOver(t, run, step);
+    const mine = uiAfter({ type: "acted" });
+    for (const p of BOTH) {
+      const flow = deriveFlow(ctx, facts, mine, p);
+      expect(flow.top).toMatchObject({ kind: "fx", part: "all", landed: false });
+      expect(flow.top.kind === "fx" && flow.top.fx[0]?.kind).toBe("recovery");
+      expect([flow.screen, flow.mode, flow.hud]).toEqual([
+        { kind: "end", inert: true },
+        "end",
+        undefined,
+      ]);
+      const done = reduceUi(mine, { type: "done", keys: [flow.top.key] });
+      expect(deriveFlow(ctx, facts, done, p).screen).toEqual({ kind: "end", inert: false });
     }
   });
 

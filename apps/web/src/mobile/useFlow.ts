@@ -87,6 +87,8 @@ export function useFlow({
   readonly now: () => FlowNow;
   /** A UI-only event (a notice gone): never one that acts on the game. */
   readonly dispatch: (e: UiEvent) => void;
+  /** «Ritmo» as the flow reads it (latched): what a beat's own timeline scales by. */
+  readonly pace: Pace;
 } {
   const { game, snap } = useGame();
   const story = useStory();
@@ -201,5 +203,5 @@ export function useFlow({
     if (week !== undefined && record === undefined) weeks.clear();
   }, [week, record, weeks]);
 
-  return { flow, ui, cmd, now, dispatch };
+  return { flow, ui, cmd, now, dispatch, pace: facts.pace };
 }

@@ -2114,14 +2114,13 @@
   }
 }
 
-/* a training's result (owner 2026-11-11): the stamp, the «+N» with rising chevrons */
+/* a training's result (owner 2026-11-11): the stamp, the «+N» with rising chevrons. The rounds and
+   the foot it replaces end hidden; their fade and sink are TrainScreen's own animation (L2: one
+   fade, none under reduced motion or under the emblem). No transform here: the result measures
+   where the foot stands to drop the stats onto it */
 .leaving {
   opacity: 0;
-  transform: translateY(18px);
   pointer-events: none;
-  transition:
-    opacity 0.22s ease-in,
-    transform 0.28s cubic-bezier(0.4, 0, 1, 1);
 }
 .stamp {
   position: absolute;

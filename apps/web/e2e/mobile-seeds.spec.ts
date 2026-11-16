@@ -82,7 +82,7 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-entrenar")).toHaveCount(0);
   });
 
-  test("F4 (flipped in 5.8): a training on an injured week shows a failed result", async ({
+  test("F4 (flipped in 5.8): a training on an injured week shows no result, then the recovery", async ({
     page,
   }) => {
     await seedRun(page, "injured");
@@ -91,8 +91,18 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-lesion")).toBeVisible();
     await page.click("#m-entrenar");
     await expect(page.locator("#m-entrenar-lesion")).toBeVisible();
+    await page.evaluate(() => {
+      Reflect.set(window, "__result", false);
+      new MutationObserver(() => {
+        if (document.getElementById("m-resultado")) Reflect.set(window, "__result", true);
+      }).observe(document.body, { childList: true, subtree: true });
+    });
     await page.dblclick("#m-entrenar-agility");
-    await expect(page.locator("#m-resultado")).toHaveAttribute("data-outcome", "fail");
+    // she rested by rule (O2): the week's effects say so, no training's result came first
+    await expect(page.locator('#m-efectos [data-fx="recovery"]')).toBeVisible();
+    expect(await page.evaluate(() => Reflect.get(window, "__result"))).toBe(false);
+    await settle(page);
+    expect(await week(page)).toBe(9);
   });
 
   test("a failed goal (5.4 adds the race's effects over the End): the ending scene, the result, the End", async ({

@@ -141,12 +141,15 @@ describe("a normal week", () => {
       expect(queue(t, INITIAL_UI, p)).toEqual(["idle"]);
   });
 
-  it("an injured week's training rested by rule: legacy «FALLÓ» (F4), target no result (no effect yet: 5.8)", () => {
+  it("an injured week's training rested by rule: no training's result, the recovery effect (F4, O2)", () => {
     const t = loadSave("injured");
     expect(stateOf(t).injuryTurns).toBeGreaterThan(0);
+    const before = stateOf(t);
     const mine = commit(t, { kind: "train:agility" });
-    expect(queue(t, mine, LEGACY_POLICY)).toEqual(["result:fail", "ack", "idle"]);
-    expect(queue(t, mine, TARGET_POLICY)).toEqual(["ack", "idle"]);
+    const mood = stateOf(t).mood - before.mood;
+    const fx = ["recovery", ...(mood > 0 ? ["mood-up"] : mood < 0 ? ["mood-down"] : [])];
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, mine, p)).toEqual([`fx:all:${fx.join("+")}`, "idle"]);
   });
 
   it("the week before an inspiration (39 → 40): effects → card → scene (D2; the card came first, C10)", () => {

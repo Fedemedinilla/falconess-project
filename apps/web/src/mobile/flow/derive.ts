@@ -232,11 +232,11 @@ function shownOf(
   const menu: Screen = { kind: "menu", inert: true };
   const plain = { racing: false, hud: hudOf(state) };
 
-  /** A decided race week's HUD: the action's vigor once it showed; legacy: its cost stripes. */
-  const raceWeekHud = (landed: boolean): HudView =>
-    p.trainView
-      ? { ...hudOf(state), vigor: landed && f.preview ? f.preview.after : state }
-      : hudOf(state, w?.input.kind);
+  /** A decided race week's HUD: the week being decided, the action's vigor once it showed. */
+  const raceWeekHud = (landed: boolean): HudView => ({
+    ...hudOf(state),
+    vigor: landed && f.preview ? f.preview.after : state,
+  });
   const position = (week: DecidedWeek, inert: boolean): Screen => ({
     kind: "position",
     week,
@@ -247,15 +247,11 @@ function shownOf(
   switch (beat.kind) {
     case "train-result":
       return {
-        screen: {
-          kind: "train",
-          selected: p.trainView ? beat.result.kind : undefined,
-          result: beat,
-          finished: false,
-        },
+        // the week she trained in, its training chosen (critic b1)
+        screen: { kind: "train", selected: beat.result.kind, result: beat, finished: false },
         mode: "training",
         layer: undefined,
-        hud: trainHud(beat, f, p),
+        hud: trainHud(beat, f),
         racing: false,
       };
     case "fx": {
@@ -324,7 +320,7 @@ function shownOf(
         ? next?.kind === "scene"
           ? { kind: "black" }
           : position(w, true)
-        : underlay(ctx, f, ui, p, w);
+        : underlay(ctx, f, ui, w);
       return { screen, mode: "race", layer, hud: raceWeekHud(true), racing: false };
     }
     case "position":
@@ -405,23 +401,11 @@ function idleOf(ctx: SimContext, f: FlowFacts, ui: UiState, watch: Watch | undef
 }
 
 /** The screen the emblem rises over: the action's effects' menu, its training's result, or where it was decided. */
-function underlay(
-  ctx: SimContext,
-  f: FlowFacts,
-  ui: UiState,
-  p: FlowPolicy,
-  w: DecidedWeek,
-): Screen {
+function underlay(ctx: SimContext, f: FlowFacts, ui: UiState, w: DecidedWeek): Screen {
   const preview = f.preview;
   if (preview && stepFx(ctx, preview, "action").length > 0) return { kind: "menu", inert: true };
-  const tb = preview && trainBeat(ctx, preview, "preview", `${w.fp}/w:result`, p);
-  if (tb)
-    return {
-      kind: "train",
-      selected: p.trainView ? tb.result.kind : undefined,
-      result: tb,
-      finished: true,
-    };
+  const tb = preview && trainBeat(ctx, preview, "preview", `${w.fp}/w:result`);
+  if (tb) return { kind: "train", selected: tb.result.kind, result: tb, finished: true };
   const nav = ui.nav;
   switch (ui.from) {
     case "train":
@@ -438,20 +422,19 @@ function underlay(
   }
 }
 
-/** A training's result's HUD: the week she trained in, the vigor moving when its «±N» lands (L3). */
-function trainHud(beat: TrainBeat, f: FlowFacts, p: FlowPolicy): HudView {
+/**
+ * A training's result's HUD: the week she trained in (its calendar, goal and mood, also over the
+ * season's end), the vigor moving to the week after when its «±N» lands (L3).
+ */
+function trainHud(beat: TrainBeat, f: FlowFacts): HudView {
   const result = beat.result;
   const delay = resultTimeline(result, paceScale(f.pace)).vigor ?? 0;
-  const pop = result.vigor !== 0 ? { delta: result.vigor, delay } : undefined;
-  const state = f.run.run.state;
-  return p.trainView
-    ? {
-        of: beat.before,
-        vigor: beat.before,
-        vigorTo: beat.after,
-        vigorAt: delay,
-        preview: undefined,
-        pop,
-      }
-    : { ...hudOf(state), pop };
+  return {
+    of: beat.before,
+    vigor: beat.before,
+    vigorTo: beat.after,
+    vigorAt: delay,
+    preview: undefined,
+    pop: result.vigor !== 0 ? { delta: result.vigor, delay } : undefined,
+  };
 }
