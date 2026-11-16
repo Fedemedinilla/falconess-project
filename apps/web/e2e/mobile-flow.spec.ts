@@ -268,6 +268,35 @@ test("a card once shown stays shown: «Menú» → language, and the start's car
   expect(await week(page)).toBe(1);
 });
 
+test("a reload on the card brings it back; once «Continuar» on it, a reload does not (the browser's storage)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w39-insp");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await page.click("#m-efectos");
+  const card = page.locator("#m-inspiracion");
+  await expect(card).toHaveAttribute("data-kind", "inspiration");
+  // the week's effects were read, the card not yet dismissed: a reload brings it back (§1.8)
+  await page.reload();
+  await continueRun(page);
+  await expect(card).toHaveAttribute("data-kind", "inspiration");
+  await page.click("#m-inspiracion-seguir");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-first-vos");
+  await skipScene(page);
+  expect(await week(page)).toBe(40);
+  // dismissed: Boot's store kept it in the browser's storage, so the next load does not show it
+  await page.reload();
+  await pastTitle(page);
+  const seen = await watchCard(page);
+  await page.click("#m-continuar");
+  await expect(page.locator("#m-descansar")).toBeEnabled();
+  await page.waitForTimeout(600);
+  expect(await seen()).toBe(false);
+});
+
 test("the cards an earlier build showed are not shown again: week 24, read, no card at «Continuar»", async ({
   page,
 }) => {
