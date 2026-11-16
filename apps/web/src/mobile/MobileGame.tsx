@@ -71,21 +71,14 @@ import {
   type SoundStyle,
   setSoundStyle,
 } from "./sfx";
-import {
-  dueScene,
-  markRead,
-  markSeen,
-  openTopics,
-  readTopics,
-  seenEver,
-  seenInRun,
-} from "./storyModel";
+import { dueScene, openTopics } from "./storyModel";
 import { TitleScreen } from "./TitleScreen";
 import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { trackCard } from "./track";
 import { usePace } from "./usePace";
+import { useStory } from "./useStory";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen } from "./WorkshopScreen";
 import { type WeekFx, weekFx } from "./weekFx";
@@ -136,6 +129,8 @@ function previewKind(view: View): ActionKind | undefined {
  */
 export function MobileGame() {
   const { game, snap } = useGame();
+  // the scenes seen and the chat read: a mark re-renders the game
+  const story = useStory();
   const [view, setView] = useState<View>(MENU);
   const [weekPosition, setWeekPosition] = useState<WeekPosition>();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -206,7 +201,6 @@ export function MobileGame() {
             : view.screen;
   const [title, setTitle] = useState(() => !titleDone);
   // story scenes and the chat (owner 2026-11-12)
-  const [, setStoryTick] = useState(0);
   const [replay, setReplay] = useState<StoryScene>();
   const [storyToast, setStoryToast] = useState<{
     n: number;
@@ -313,7 +307,7 @@ export function MobileGame() {
    */
   const dueIn = (where: SceneMode): StoryScene | undefined => {
     const fits = (sc: StoryScene) => (sc.trigger.kind === "goal-before") === (where === "prerace");
-    return dueScene(allScenes().filter(fits), ctx, state, seenInRun(run.seed));
+    return dueScene(allScenes().filter(fits), ctx, state, story.seenInRun(run.seed));
   };
   /** The scene to play now (or one asked from «Historia»), once nothing else is on screen. */
   const storyScene = (where: SceneMode | undefined): StoryScene | undefined => {
@@ -330,12 +324,11 @@ export function MobileGame() {
   const storyLayer = (sc: StoryScene | undefined) => (
     <>
       {/* owner 2026-11-14: a scene seen in an earlier season is passed by, with a line to watch it */}
-      {sc && !replay && seenEver().has(sc.id) && (
+      {sc && !replay && story.seenEver().has(sc.id) && (
         <Acknowledge
           key={sc.id}
           onMount={() => {
-            markSeen(run.seed, sc.id);
-            setStoryTick((n) => n + 1);
+            story.markSeen(run.seed, sc.id);
             setStoryToast({
               n: Date.now(),
               kicker: gameText(sc.kickerKey),
@@ -346,7 +339,7 @@ export function MobileGame() {
           }}
         />
       )}
-      {sc && (replay || !seenEver().has(sc.id)) && (
+      {sc && (replay || !story.seenEver().has(sc.id)) && (
         <StoryOverlay
           key={`${sc.id}/${replay ? "again" : "first"}`}
           scene={sc}
@@ -355,9 +348,8 @@ export function MobileGame() {
           // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
           digest={replay ? undefined : digestFor(getPace())}
           onDone={(skipped) => {
-            if (!replay) markSeen(run.seed, sc.id);
+            if (!replay) story.markSeen(run.seed, sc.id);
             setReplay(undefined);
-            setStoryTick((n) => n + 1);
             setStoryToast({
               n: Date.now(),
               kicker: gameText(sc.kickerKey),
@@ -682,7 +674,7 @@ export function MobileGame() {
       onHistory={() => setHistoryOpen(true)}
       onTests={toTests}
       chatName={gameText(`falconess.${state.falconessId}`)}
-      chatNew={openTopics(allTopics(), state).some((tp) => !readTopics().has(tp.id))}
+      chatNew={openTopics(allTopics(), state).some((tp) => !story.readTopics().has(tp.id))}
       onChat={() => setChatOpen(true)}
       onStory={() => setStoryListOpen(true)}
       onNew={() => game.newSeason()}
@@ -744,13 +736,10 @@ export function MobileGame() {
         <ChatSheet
           name={gameText(`falconess.${state.falconessId}`)}
           topics={openTopics(allTopics(), state)}
-          read={readTopics()}
+          read={story.readTopics()}
           primary={colors.primary}
           secondary={colors.secondary}
-          onRead={(id) => {
-            markRead(id);
-            setStoryTick((n) => n + 1);
-          }}
+          onRead={story.markRead}
           onClose={() => setChatOpen(false)}
         />
       )}
@@ -767,7 +756,7 @@ export function MobileGame() {
       <StoryListSheet
         open={storyListOpen}
         scenes={allScenes().filter(
-          (sc) => sc.falconess === state.falconessId && seenEver().has(sc.id),
+          (sc) => sc.falconess === state.falconessId && story.seenEver().has(sc.id),
         )}
         onWatch={(sc) => {
           setStoryListOpen(false);
@@ -803,7 +792,7 @@ export function MobileGame() {
           }}
           onTests={toTests}
           chatName={gameText(`falconess.${state.falconessId}`)}
-          chatNew={openTopics(allTopics(), state).some((tp) => !readTopics().has(tp.id))}
+          chatNew={openTopics(allTopics(), state).some((tp) => !story.readTopics().has(tp.id))}
           onChat={() => {
             setMenuOpen(false);
             setChatOpen(true);
