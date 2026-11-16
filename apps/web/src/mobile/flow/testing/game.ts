@@ -52,16 +52,24 @@ type SeededSave = {
 
 /**
  * What `seedRun` stores for a seeded save: the run, its last week read (`vista`) and its scenes
- * seen (`historia`, which `historia` here replaces).
+ * seen (`historia`, which `historia` here replaces), plus `elsewhere`: scenes seen only in another
+ * season of this browser.
  */
-export function saveSeed(name: string, historia?: readonly string[]): Record<string, string> {
+export function saveSeed(
+  name: string,
+  historia?: readonly string[],
+  elsewhere: readonly string[] = [],
+): Record<string, string> {
   const text = readFileSync(`${SAVES}${name}.json`, "utf8");
   const fixture: SeededSave = JSON.parse(text);
   const seen = historia ?? fixture.historia;
   return {
     [RUN_KEY]: JSON.stringify(fixture.save),
     [SEEN_KEY]: fixture.vista,
-    [STORY_KEY]: JSON.stringify({ runs: { [fixture.save.seed]: seen }, ever: seen }),
+    [STORY_KEY]: JSON.stringify({
+      runs: { [fixture.save.seed]: seen },
+      ever: [...seen, ...elsewhere],
+    }),
   };
 }
 

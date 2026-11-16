@@ -13,6 +13,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -36,9 +37,19 @@ import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { digestFor } from "./flow/scenes";
+import {
+  type LegacyNames,
+  legacyNames,
+  SHADOW_IDLE,
+  type ShadowWatch,
+  sameFlow,
+  shadowCommands,
+  shadowFrame,
+} from "./flow/shadow";
 import { fxPart } from "./flow/steps";
 import { resultTimeline, type TrainResult, trainingCue, trainResultOf } from "./flow/trainResult";
-import type { WorkshopTab } from "./flow/types";
+import type { Flow, WorkshopTab } from "./flow/types";
+import type { UiState } from "./flow/ui";
 import { InspirationOverlay } from "./Inspiration";
 import { inspirationScene } from "./inspirationScene";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
@@ -71,6 +82,7 @@ import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { type TrackCardView, trackCard } from "./track";
+import { useFlow } from "./useFlow";
 import { useStory } from "./useStory";
 import { WeekFxOverlay } from "./WeekFx";
 import { WorkshopScreen } from "./WorkshopScreen";
@@ -144,6 +156,10 @@ export function RunView({
   const { game, snap } = useGame();
   // the scenes seen and the chat read: a mark re-renders the game
   const story = useStory();
+  // the flow model (plan 4.0, the shadow): it follows today's game on dry ports, each of today's
+  // handlers below calling its command after its own work; a development check compares the two
+  const { flow, ui: flowUi, cmd, now: flowNow } = useFlow({ run, title: title !== undefined });
+  const dry = useMemo(() => shadowCommands(cmd, flowNow), [cmd, flowNow]);
   const [view, setView] = useState<View>(MENU);
   const [weekPosition, setWeekPosition] = useState<WeekPosition>();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -207,15 +223,21 @@ export function RunView({
   const music: RunMusic = page === "race" ? "race" : "menu";
   useEffect(() => onMusic(music), [onMusic, music]);
   const [cover, setCover] = useState<number>();
-  const endCover = useCallback(() => setCover(undefined), []);
+  const endCover = useCallback(() => {
+    setCover(undefined);
+    dry.complete("emblem");
+  }, [dry]);
   const firstPage = useRef(true);
   // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of page only
   useLayoutEffect(() => {
     if (firstPage.current) firstPage.current = false;
     // only on the way to a race (owner 2026-11-12: on every screen it got in the way)
     // «Directo» (owner 2026-11-14) goes into the race mode without it
-    else if (page === "race" && !reducedMotion() && getPace() !== "direct")
+    else if (page === "race" && !reducedMotion() && getPace() !== "direct") {
       setCover((c) => (c ?? 0) + 1);
+      // opaque from its first frame: what is under it may change at once
+      dry.covered();
+    }
   }, [page]);
   const ctx = game.context();
   const state = run.state;
@@ -304,6 +326,7 @@ export function RunView({
               title: gameText(sc.titleKey),
               skipped,
             });
+            dry.sceneDone(sc.id, skipped);
           }}
         />
       )}
@@ -326,6 +349,7 @@ export function RunView({
                   const again = storyToast.again;
                   setStoryToast(undefined);
                   setReplay(again);
+                  if (again) cmd.watchScene(again);
                 }}
               >
                 {ui("ui.m.story.watch")}
@@ -415,6 +439,61 @@ export function RunView({
     </>
   );
 
+  const pending = state.pendingEvent !== undefined;
+  const onMenuScreen = view.screen === "menu";
+  // ADR-0013: an inspiration (or the season's start with parents) shows its card first
+  const startInput = run.inputs[0];
+  const parents = startInput?.kind === "start" ? startInput.parents : [];
+  const scene = onMenuScreen
+    ? inspirationScene(run.seed, state, inputs, snap.lastStep, snap.lastStepSeen)
+    : undefined;
+  const showScene = scene !== undefined && scene.key !== sceneDone;
+  const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
+  const fx = fxStep ? weekFx(fxStep, ctx.ruleset, fxPart(fxStep)) : [];
+  const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
+  const mode: SceneMode | undefined =
+    view.screen === "prerace" && view.decided
+      ? "prerace"
+      : view.screen === "race" && view.result
+        ? "race"
+        : onMenuScreen && !showScene && !showFx && !pending
+          ? "menu"
+          : undefined;
+  // the scene that plays now (at the season's end, the race mode's), or one asked for
+  const sceneNow = storyScene(ended ? "race" : mode);
+  // the race mode's transition opens on black when a scene comes next: no card shows between
+  const blackFor =
+    !ended && mode === "prerace" && cover !== undefined ? dueIn("prerace") : undefined;
+  // the shadow (plan 4.0): what today's game shows, by name, against the model's flow
+  const seenEver = story.seenEver();
+  useShadowCheck(
+    flow,
+    flowUi,
+    legacyNames(view, {
+      ended,
+      hold: view.screen === "race" && dueIn("race") !== undefined,
+      cover: cover !== undefined,
+      black: blackFor && (seenEver.has(blackFor.id) ? "passed" : "scene"),
+      inspiration: !ended && showScene,
+      fx: !ended && showFx,
+      event: !ended && onMenuScreen && !showScene && !showFx && pending,
+      scene:
+        sceneNow && (replay || !seenEver.has(sceneNow.id))
+          ? { id: sceneNow.id, replay: replay !== undefined }
+          : undefined,
+      sheet:
+        title !== undefined ||
+        menuOpen ||
+        chatOpen ||
+        storyListOpen ||
+        outingOpen ||
+        historyOpen ||
+        exporting !== undefined ||
+        (!desk && sheet !== undefined) ||
+        trackSheet?.open === true,
+    }),
+  );
+
   if (ended)
     return slots(
       <div
@@ -425,13 +504,16 @@ export function RunView({
       >
         <EndScreen
           run={run}
-          onRace={(t) => setView({ screen: "race", turn: t, result: false })}
+          onRace={(t) => {
+            setView({ screen: "race", turn: t, result: false });
+            cmd.rewatch(t);
+          }}
           onNew={() => game.newSeason()}
           onTests={() => navigate("fin")}
           onExport={exportRun}
         />
         {exportSheet}
-        {storyLayer(storyScene("race"))}
+        {storyLayer(sceneNow)}
         {transition}
         {title}
       </div>,
@@ -442,7 +524,6 @@ export function RunView({
   const cards = trainingCards(ctx, state);
   const wings = wingsPosition(ctx.content, state.equippedFrame);
   const chosen = menu.raceWeek ? chosenFor(weekPosition, state) : undefined;
-  const pending = state.pendingEvent !== undefined;
   // the week's step is read once its effects played (none: at once); no dialog waits on the menu
   const unreadNoFx = (stepOnMenu: Step | undefined) =>
     stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset, fxPart(stepOnMenu)).length === 0;
@@ -480,7 +561,7 @@ export function RunView({
    * the position; only the race does), a training's result shows on its screen, then the pre-race
    * card runs the real input. After the preview the action is decided: the card has no «Volver».
    */
-  const act = (input: WeekActionInput) => {
+  const actToday = (input: WeekActionInput) => {
     if (!menu.raceWeek) {
       commit(input);
       return;
@@ -509,6 +590,11 @@ export function RunView({
     }
     setView(next);
   };
+  /** A week's action, then the model's own (dry: it reads what today's acted). */
+  const act = (input: WeekActionInput) => {
+    actToday(input);
+    cmd.choose(input);
+  };
   /** The race week's real input, after its preview: straight to the race. */
   const runRaceWeek = (input: WeekActionInput) => {
     const turn = state.turn;
@@ -520,6 +606,7 @@ export function RunView({
     switch (action) {
       case "train":
         setView({ screen: "train" });
+        cmd.open("train");
         return;
       case "rest":
         act({ kind: "rest" });
@@ -531,12 +618,15 @@ export function RunView({
         return;
       case "workshop":
         setView({ screen: "workshop", tab: "wings" });
+        cmd.open("workshop");
         return;
       case "skills":
         setView({ screen: "workshop", tab: "skills" });
+        cmd.open("skills");
         return;
       case "race":
         setView({ screen: "prerace" });
+        cmd.open("plan");
         return;
       case "menu":
         setMenuOpen(true);
@@ -583,7 +673,10 @@ export function RunView({
           onConfirm={() => undefined}
           onBack={() => undefined}
           result={view.result}
-          onResultDone={() => setView(view.next)}
+          onResultDone={() => {
+            setView(view.next);
+            dry.complete("train-result");
+          }}
         />
       );
       break;
@@ -595,9 +688,15 @@ export function RunView({
           cards={cards}
           selected={view.selected}
           injured={menu.injured}
-          onSelect={(kind) => setView({ screen: "train", selected: kind })}
+          onSelect={(kind) => {
+            setView({ screen: "train", selected: kind });
+            cmd.selectTraining(kind);
+          }}
           onConfirm={(kind) => act({ kind })}
-          onBack={() => setView(MENU)}
+          onBack={() => {
+            setView(MENU);
+            cmd.open("menu");
+          }}
         />
       );
       break;
@@ -608,9 +707,15 @@ export function RunView({
           ctx={ctx}
           state={state}
           tab={view.tab}
-          onTab={(tab) => setView({ screen: "workshop", tab })}
+          onTab={(tab) => {
+            setView({ screen: "workshop", tab });
+            cmd.workshopTab(tab);
+          }}
           onConfirm={(ops: WorkshopOp[]) => act({ kind: "workshop", ops })}
-          onBack={() => setView(MENU)}
+          onBack={() => {
+            setView(MENU);
+            cmd.open("menu");
+          }}
         />
       );
       break;
@@ -633,13 +738,30 @@ export function RunView({
           wings={wings}
           position={chosen}
           input={input}
-          onPosition={(position: Position) =>
-            setWeekPosition(position === wings ? undefined : { turn: state.turn, position })
+          onPosition={(position: Position) => {
+            setWeekPosition(position === wings ? undefined : { turn: state.turn, position });
+            cmd.position(position === wings ? undefined : position);
+          }}
+          onRun={() => {
+            if (!input) {
+              // «Listo» on the planning card
+              setView(MENU);
+              cmd.open("menu");
+            } else if (view.decided) {
+              runRaceWeek(input);
+              cmd.run();
+            }
+            // a preview that failed (F7): the model has no such card (4.1 shows a notice)
+            else commit(input);
+          }}
+          onBack={
+            view.decided
+              ? undefined
+              : () => {
+                  setView(MENU);
+                  cmd.open("menu");
+                }
           }
-          onRun={() =>
-            input ? (view.decided ? runRaceWeek(input) : commit(input)) : setView(MENU)
-          }
-          onBack={view.decided ? undefined : () => setView(MENU)}
         />
       );
       break;
@@ -657,7 +779,10 @@ export function RunView({
           <WeekFxOverlay
             fx={view.fx}
             content={ctx.content}
-            onDone={() => setView({ screen: "prerace", input: view.input, decided: true })}
+            onDone={() => {
+              setView({ screen: "prerace", input: view.input, decided: true });
+              dry.complete("fx");
+            }}
           />
         </>
       );
@@ -671,33 +796,23 @@ export function RunView({
           showResult={view.result}
           // the scene after the race comes before its result
           hold={dueIn("race") !== undefined}
-          onSkip={() => setView({ screen: "race", turn: view.turn, result: true })}
-          onReplay={() => setView({ screen: "race", turn: view.turn, result: false })}
-          onDone={() => setView(MENU)}
+          onSkip={() => {
+            setView({ screen: "race", turn: view.turn, result: true });
+            dry.raceSkip();
+          }}
+          onReplay={() => {
+            setView({ screen: "race", turn: view.turn, result: false });
+            cmd.raceAgain();
+          }}
+          onDone={() => {
+            setView(MENU);
+            cmd.raceContinue();
+          }}
         />
       );
       break;
   }
 
-  const onMenuScreen = view.screen === "menu";
-  // ADR-0013: an inspiration (or the season's start with parents) shows its card first
-  const startInput = run.inputs[0];
-  const parents = startInput?.kind === "start" ? startInput.parents : [];
-  const scene = onMenuScreen
-    ? inspirationScene(run.seed, state, inputs, snap.lastStep, snap.lastStepSeen)
-    : undefined;
-  const showScene = scene !== undefined && scene.key !== sceneDone;
-  const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
-  const fx = fxStep ? weekFx(fxStep, ctx.ruleset, fxPart(fxStep)) : [];
-  const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
-  const mode: SceneMode | undefined =
-    view.screen === "prerace" && view.decided
-      ? "prerace"
-      : view.screen === "race" && view.result
-        ? "race"
-        : onMenuScreen && !showScene && !showFx && !pending
-          ? "menu"
-          : undefined;
   return slots(
     <div
       key="run"
@@ -713,7 +828,10 @@ export function RunView({
           scene={scene}
           falconessId={state.falconessId}
           parents={parents}
-          onDone={() => setSceneDone(scene.key)}
+          onDone={() => {
+            setSceneDone(scene.key);
+            dry.complete("inspiration");
+          }}
         />
       )}
       {showFx && (
@@ -724,14 +842,12 @@ export function RunView({
           onDone={() => {
             setFxDone(inputs);
             game.acknowledgeStep();
+            dry.complete("fx");
           }}
         />
       )}
-      {/* the race mode's transition opens on black when a scene comes next: no card shows between */}
-      {mode === "prerace" && cover !== undefined && dueIn("prerace") && (
-        <div className={st.black} aria-hidden="true" />
-      )}
-      {storyLayer(storyScene(mode))}
+      {blackFor && <div className={st.black} aria-hidden="true" />}
+      {storyLayer(sceneNow)}
       {!showScene && unreadNoFx(fxStep) && <Acknowledge onMount={() => game.acknowledgeStep()} />}
       {onMenuScreen && !showScene && !showFx && pending && <EventDialog />}
       {chatOpen && (
@@ -763,6 +879,7 @@ export function RunView({
         onWatch={(sc) => {
           setStoryListOpen(false);
           setReplay(sc);
+          cmd.watchScene(sc);
         }}
         onClose={() => setStoryListOpen(false)}
       />
@@ -796,6 +913,50 @@ export function RunView({
         </DeskPanel>
       </div>
     ) : null,
+  );
+}
+
+/**
+ * The shadow's check (plan 4.0; development builds only): after a commit where the model's flow
+ * and today's game differ, it looks again at each animation frame, and a difference still on
+ * screen at two frames in a row (`shadowFrame`) is a console error, which fails any e2e run on the
+ * dev server (`E2E_DEV=1`). The known differences (`sameFlow`'s rules) never count.
+ */
+function useShadowCheck(flow: Flow, ui: UiState, legacy: LegacyNames): void {
+  const latest = useRef({ flow, ui, legacy });
+  const watch = useRef<ShadowWatch>(SHADOW_IDLE);
+  const frame = useRef<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    latest.current = { flow, ui, legacy };
+  });
+  useEffect(() => {
+    if (!import.meta.env.DEV || frame.current !== undefined) return;
+    const differs = (): string | undefined => {
+      const { flow: f, ui: u, legacy: l } = latest.current;
+      const v = sameFlow(f, l, u);
+      if (v.kind !== "mismatch") return undefined;
+      return JSON.stringify({
+        model: v.model,
+        legacy: v.legacy,
+        top: `${f.top.kind} ${f.top.key}`,
+      });
+    };
+    if (differs() === undefined) return;
+    const tick = () => {
+      const mismatch = differs();
+      const step = shadowFrame(watch.current, mismatch);
+      watch.current = step.watch;
+      if (step.report) console.error("flow shadow", mismatch);
+      frame.current = mismatch === undefined ? undefined : requestAnimationFrame(tick);
+    };
+    frame.current = requestAnimationFrame(tick);
+  });
+  useEffect(
+    () => () => {
+      if (frame.current !== undefined) cancelAnimationFrame(frame.current);
+      frame.current = undefined;
+    },
+    [],
   );
 }
 
