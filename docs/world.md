@@ -54,7 +54,16 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
    deciden correr entre ellas: «quisieron un momento de paz, deporte y competición sana». Esa escena
    queda en la historia «y obviamente encuadrada en muchos hogares en la pared»: Falconess de
    distintos colores, por distintos países, corriendo. Y empieza la paz.
+   **Decidido (2026-11-16): corrieron cinco mensajeras, una por cada bando.** Esos cinco bandos son
+   hoy las cinco escuderías fundadoras (Kōryū, Altair, Boneyard, Steinhaus, Lumière); las demás
+   escuderías vinieron después. Una de las cinco es la abuela de la protagonista de la historia
+   principal (`docs/design/historia/secretos.md` S2).
 5. **El deporte.** Una ex Falconess mensajera funda el deporte que se ve en el juego.
+   **Decidido (dueño, 2026-11-16): la fundadora no corrió la carrera de la paz; la vio.** «De hecho,
+   fue una de las que lo vio, y la inspiró. Por eso crea el deporte mucho después, para llevar a las
+   pistas esa inspiración y mostrársela al mundo. Ella lo vivió, desde afuera. No quiere dejar que
+   esa luz se extinga.» Hoy dirige la liga y conoció a la abuela de la protagonista (ver
+   `docs/design/historia/secretos.md` S2).
    **Decidido (dueño, 2026-11-16): la guerra terminó hace 30 años y el deporte empezó hace 10.**
    Peregrina, Cernícala y Caracara son las tres ganadoras de la primera liga.
    **Decidido (2026-11-16): la primera liga oficial es la de este año**, el año del juego y de la
@@ -83,7 +92,7 @@ Abierto:
 
 - «Las tres ganadoras de la primera liga»: ¿cada una gana su distancia? Si Caracara gana las largas,
   ¿cómo se explica que no corra la gran Larga, la carrera más larga del año (`ideas.md` I7)?
-- ¿Quién fue la fundadora? ¿Vive? ¿Aparece en la historia principal?
+- El nombre de la fundadora y su papel en la historia principal.
 - ¿Cómo se llama esa primera carrera y cómo se la recuerda?
 
 ## 5. Las escuderías
@@ -99,7 +108,8 @@ Abierto:
 - **Decidido (dueño, 2026-11-16):** cada una tiene sus colores y
   valores, y varias Falconess bajo su bandera que los muestran a su manera, nunca en contra
   (`ideas.md` I6). Kōryū Racing: lujo y deporte a la vez, «claramente como Ferrari».
-- Hoy son cinco: Kōryū Racing (Peregrina), Altair Systems (Cernícala), Boneyard Works (Caracara),
+- Las cinco del juego son las **fundadoras**: nacen de los cinco bandos de la carrera de la paz
+  (decidido 2026-11-16). Hoy son cinco: Kōryū Racing (Peregrina), Altair Systems (Cernícala), Boneyard Works (Caracara),
   Steinhaus Aerowerk y Lumière Aéronef (sin Falconess jugable) (`docs/BRIEF.md` §7).
 - En el multijugador, los grupos de jugadores también se llaman escuderías (`ideas.md` I5).
 - Abierto: la historia de cada una, de qué pueblo viene y quién la dirige.

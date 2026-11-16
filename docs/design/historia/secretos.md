@@ -36,4 +36,8 @@ cuándo se revela y qué no se puede escribir antes.
   capítulo y cómo: abierto.
 - No escribir antes: que ella lo sepa desde el principio, ni que el lazo le dé talento. Empieza mala
   corriendo; todo lo que gana, lo gana (dueño).
-- Abierto: cuál de las mensajeras; si alguien del elenco lo sabe (¿la fundadora?).
+- **Decidido (2026-11-16):** la abuela es una de las cinco mensajeras de la carrera de la paz, una
+  por bando (`docs/world.md` §4).
+- **Decidido (2026-11-16):** la fundadora del deporte, que vio esa carrera desde afuera, conoció a la
+  abuela y sabe quién es la protagonista antes que ella misma. Guarda el secreto.
+- Abierto: cuál de las cinco (de qué bando, hoy qué escudería).
