@@ -316,6 +316,11 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   (`packages/schema/src/skill.ts:16-25`, `SkillEffect`), y `docs/design/temporada-v3.md` T19 ya
   anotaba que las habilidades contra rivales piden un cambio de motor. Las temporadas 1 y 2 chocan
   con la condición «sin cambiar el motor» en esa parte.
+- **Decidido (dueño, 2026-11-16):** para las temporadas 1 y 2 se acepta **un único cambio de motor,
+  solo para «habilidades que afectan a otras»**, decidido y escrito (con su ADR) cuando se llegue a
+  esas temporadas. Todo lo demás, sin tocar el motor.
+- **Decidido (dueño, 2026-11-16):** **las Falconess al azar vienen del Underground,** sin escudería;
+  el jugador las descubre en las pruebas de selección.
 - Posible sin tocar el motor (propuesta): pistas urbanas armadas con los tramos que ya existen;
   puntaje por equipo calculado fuera de la carrera; la resistencia como varias etapas seguidas con
   decisiones entre etapas (acampar, descansar, rendirse) en la capa de temporada.
