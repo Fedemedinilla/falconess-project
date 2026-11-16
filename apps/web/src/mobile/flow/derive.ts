@@ -8,7 +8,7 @@ import type { SimContext } from "@falconess/sim";
 import type { ActionKind } from "../../screens/model/actions";
 import { isRaceWeek } from "../../screens/model/position";
 import { paceScale } from "../pace";
-import { beatsOf, isInstant, stepFx, watched } from "./beats";
+import { beatsOf, isInstant, stepFx } from "./beats";
 import type { FlowPolicy } from "./policy";
 import { digestFor } from "./scenes";
 import { addedRace } from "./steps";
@@ -29,6 +29,11 @@ import type { UiState } from "./ui";
 import { raceWings, trainBeat } from "./week";
 
 type Watch = Extract<Nav, { at: "watch" }>;
+
+/** A watch of a race the season ran (a turn without a result has nothing to show). */
+function watched(state: SeasonState, nav: Nav): Watch | undefined {
+  return nav.at === "watch" && state.raceResults.some((r) => r.turn === nav.turn) ? nav : undefined;
+}
 
 /** The key a watch's race screen quotes to «Saltar» and its natural end: new per watch and stage. */
 export function watchKey(nav: Watch): string {
@@ -184,10 +189,8 @@ export function deriveFlow(
     },
     music: mode === "race" ? "race" : "menu",
     wide: screen.kind === "race",
-    // legacy (until 5.1, with the emblem on a watch): the panel comes back while the end's race replays
-    solo:
-      screen.kind === "end" ||
-      (!p.emblemOnWatch && screen.kind === "race" && screen.watch === "end"),
+    // the end, or a race of it seen again: the wide screen keeps the end's lone column (M3, L8)
+    solo: screen.kind === "end" || (screen.kind === "race" && screen.watch === "end"),
     toast:
       layer === undefined &&
       beat.kind !== "replay" &&
@@ -314,16 +317,9 @@ function shownOf(
         : { ...plain, screen: menu, mode: "menu", layer };
     }
     case "emblem": {
+      // only from a decided week into the race mode (owner 2026-11-13; F25, M3)
+      if (!w) throw new Error("the emblem plays only on a decided race week");
       const layer: Layer = { kind: "emblem", key: beat.key, fadeIn: beat.fadeIn };
-      // legacy (F25): the emblem over a race seen again from the end
-      if (!w)
-        return {
-          screen: watch ? watchScreen(watch) : { kind: "end", inert: true },
-          mode: "race",
-          layer,
-          hud: undefined,
-          racing: false,
-        };
       const screen: Screen = beat.covered
         ? next?.kind === "scene"
           ? { kind: "black" }

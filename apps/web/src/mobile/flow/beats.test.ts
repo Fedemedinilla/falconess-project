@@ -539,23 +539,20 @@ describe("a v2 event (C19)", () => {
 });
 
 describe("watching a race again from the end", () => {
-  it("legacy plays the emblem first (F25, until 5.1), not under Directo or reduced motion; target never", () => {
+  it("no emblem: it only goes from the week into the race mode (F25, M3, C4), whatever the pace", () => {
     const t = loadSave("peregrina-ended");
     const watch = ui({ type: "watch", turn: 10, from: "end" });
-    expect(queue(t, watch, LEGACY_POLICY)).toEqual(["emblem:covered:cut", "idle"]);
-    expect(beats(t, watch, LEGACY_POLICY)[0]?.key).toBe("watch:1/emblem");
-    expect(queue(t, watch, LEGACY_POLICY, { pace: "direct" })).toEqual(["idle"]);
-    expect(queue(t, watch, LEGACY_POLICY, { reduced: true })).toEqual(["idle"]);
-    expect(queue(t, watch, TARGET_POLICY)).toEqual(["idle"]);
-    // played once per watch: the next watch has its own
-    const done = reduceUi(watch, { type: "done", keys: ["watch:1/emblem"] });
-    expect(queue(t, done, LEGACY_POLICY)).toEqual(["idle"]);
-    const again = reduceUi(reduceUi(done, { type: "watchDone", n: 1 }), {
-      type: "watch",
-      turn: 20,
-      from: "end",
-    });
-    expect(beats(t, again, LEGACY_POLICY)[0]?.key).toBe("watch:2/emblem");
+    for (const p of [LEGACY_POLICY, TARGET_POLICY]) {
+      expect(queue(t, watch, p)).toEqual(["idle"]);
+      expect(queue(t, watch, p, { pace: "fast" })).toEqual(["idle"]);
+      // the next watch too
+      const again = reduceUi(reduceUi(watch, { type: "watchDone", n: 1 }), {
+        type: "watch",
+        turn: 20,
+        from: "end",
+      });
+      expect(queue(t, again, p)).toEqual(["idle"]);
+    }
   });
 
   it("a turn without a result has nothing to watch: no emblem", () => {

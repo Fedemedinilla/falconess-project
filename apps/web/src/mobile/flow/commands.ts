@@ -13,7 +13,6 @@ import { TRAINING_KINDS } from "../../screens/model/actions";
 import { isRaceWeek, type WeekActionInput, withPosition } from "../../screens/model/position";
 import type { SoundCue } from "../sfx";
 import type { StoryStore } from "../storyModel";
-import { watchEmblemKey } from "./beats";
 import type { WeekStore } from "./decidedWeek";
 import { watchKey } from "./derive";
 import type { InspirationStore } from "./inspirations";
@@ -113,7 +112,6 @@ export function flowCommands(p: FlowPorts): Commands {
         p.cards.markShown(facts.run.run.seed, t.card.key);
         break;
       case "emblem":
-        // a no-op for the legacy emblem of a watch: no decided week has the run's fingerprint
         p.weeks.enterRace(t.fp);
         break;
       case "race-result":
@@ -257,9 +255,6 @@ export function flowCommands(p: FlowPorts): Commands {
         // the watch began (it still ends there)
         if (nav.stage !== "result") return;
         p.sound.nav();
-        // legacy (F25, until 5.1): today that replay stays on the race page, so the emblem that
-        // opened a watch from the end does not play again
-        if (nav.from === "end") p.dispatch({ type: "done", keys: [watchEmblemKey(ui.seq + 1)] });
         p.dispatch({ type: "watch", turn: nav.turn, from: nav.from });
         return;
       }

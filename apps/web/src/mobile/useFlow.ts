@@ -35,9 +35,9 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * While the legacy policy is active, the week's record and the cards shown live in memory stores
  * of this mount (today's "lost on reload"; 5.3 and 5.6 move each to a stored one).
  *
- * «Ritmo» and reduced motion are latched while the week is under way (a beat in front, or a race
- * seen again): today the game reads them only when a page changes or «Correr» runs, so a change in
- * the wide screen's panel takes effect at the next idle moment (5.5 locks the panel instead).
+ * «Ritmo» and reduced motion are latched while the week is under way (a beat in front): today the
+ * game reads them only when a page changes or «Correr» runs, so a change in the wide screen's panel
+ * takes effect at the next idle moment (5.5 locks the panel instead).
  */
 export function useFlow({
   run,
@@ -96,12 +96,8 @@ export function useFlow({
     () => deriveFlow(ctx, facts, ui, ACTIVE_POLICY, lastRef.current),
     [ctx, facts, ui],
   );
-  // the week is settled (nothing in front, no race seen again): «Ritmo» and reduced motion apply
-  if (
-    flow.top.kind === "idle" &&
-    ui.nav.at !== "watch" &&
-    (motion.pace !== livePace || motion.reduced !== liveReduced)
-  )
+  // the week is settled (nothing in front): «Ritmo» and reduced motion apply
+  if (flow.top.kind === "idle" && (motion.pace !== livePace || motion.reduced !== liveReduced))
     setMotion({ pace: livePace, reduced: liveReduced });
 
   const [{ cmd, now, dispatch }] = useState(() => {

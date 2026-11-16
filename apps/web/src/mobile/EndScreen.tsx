@@ -1,5 +1,5 @@
 import type { BlackBox } from "@falconess/schema";
-import { useEffect, useMemo } from "react";
+import { type RefObject, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
@@ -17,16 +17,20 @@ import { StatStrip } from "./Parts";
 /**
  * The end of the season on the phone: the grade and score of the sim, each goal race with its
  * place, and her final stats. The test view's #fin keeps the black box and the copy of the run.
- * «Exportar» opens the run's own sheet (RunView's: one on the page).
+ * «Exportar» opens the run's own sheet (RunView's: one on the page). A race seen again from here
+ * comes back to the End where the player left it (`scroll`, kept by RunView across the race).
  */
 export function EndScreen({
   run,
+  scroll,
   onRace,
   onNew,
   onTests,
   onExport,
 }: {
   run: ActiveRun;
+  /** How far down the End was when «Ver carrera» left it: where it opens (L6, M3). */
+  scroll: RefObject<number>;
   onRace: (turn: number) => void;
   onNew: () => void;
   onTests: () => void;
@@ -47,9 +51,14 @@ export function EndScreen({
   const art = runnerArt(state.falconessId);
   const name = gameText(ctx.content.getFalconess(state.falconessId).textKey);
   const goals = goalStatuses(ctx, state);
+  const body = useRef<HTMLDivElement>(null);
+  // before paint: back from a race seen again, the End is where the player left it
+  useLayoutEffect(() => {
+    if (body.current) body.current.scrollTop = scroll.current;
+  }, [scroll]);
   return (
     <div className={s.screen}>
-      <div className={s.body}>
+      <div className={s.body} ref={body}>
         <div className={cx(s.panel, s.endc)} id="m-fin">
           {art && <img className={s.endPic} src={art.chibi} alt="" draggable={false} />}
           <p className={s.cap}>
@@ -83,7 +92,10 @@ export function EndScreen({
                   type="button"
                   className={s.linkBtn}
                   id={`m-fin-carrera-${g.goal.turn}`}
-                  onClick={() => onRace(g.goal.turn)}
+                  onClick={() => {
+                    scroll.current = body.current?.scrollTop ?? 0;
+                    onRace(g.goal.turn);
+                  }}
                 >
                   <b>{ui("ui.m.race.place", { place: g.result.place })}</b>{" "}
                   {formatSeconds(g.result.timeTicks)} s

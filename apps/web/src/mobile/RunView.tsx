@@ -129,6 +129,8 @@ export function RunView({
   };
   const [chatOpen, setChatOpen] = useState(false);
   const [storyListOpen, setStoryListOpen] = useState(false);
+  // how far down the season's end was when a race of it was seen again: it comes back there
+  const endScroll = useRef(0);
 
   // the music follows the mode (owner 2026-11-12): the race's own in race mode, the menu theme
   // everywhere else (the shell plays the title theme over the title and the selection)
@@ -307,8 +309,8 @@ export function RunView({
   const slots = (column: ReactElement, panelSlot: ReactElement | null) => (
     <>
       {desk ? (
-        // the season's end keeps Kōryū's tint behind it
-        <div className={s.deskBg} style={atEnd ? undefined : style} aria-hidden="true" />
+        // the season's end keeps Kōryū's tint behind it, through a race of it seen again too
+        <div className={s.deskBg} style={flow.solo ? undefined : style} aria-hidden="true" />
       ) : null}
       {column}
       {panelSlot}
@@ -335,6 +337,7 @@ export function RunView({
         {slot(
           <EndScreen
             run={run}
+            scroll={endScroll}
             onRace={cmd.rewatch}
             onNew={() => game.newSeason()}
             onTests={() => navigate("fin")}
@@ -483,7 +486,13 @@ export function RunView({
   return slots(
     <div
       key="run"
-      className={cx(s.app, flow.wide && s.appWide, desk && s.appDesk)}
+      // a race of the season's end seen again keeps the end's lone column on the wide screen (M3)
+      className={cx(
+        s.app,
+        flow.wide && s.appWide,
+        desk && s.appDesk,
+        desk && flow.solo && s.appDeskSolo,
+      )}
       style={style}
       data-app
       data-mode={flow.mode}
@@ -618,8 +627,6 @@ function legacyScreen(flow: Flow): string | undefined {
     case "fx":
       return t.part === "action" ? "actionfx" : "menu";
     case "emblem":
-      // the legacy emblem over a race seen again from the season's end (F25) is the race's
-      return flow.screen.kind === "race" ? "race" : "prerace";
     case "position":
       return "prerace";
     case "scene":

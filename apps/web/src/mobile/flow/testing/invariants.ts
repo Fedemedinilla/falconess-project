@@ -141,7 +141,6 @@ const I1 = invariant(
       let at: number | undefined;
       for (const e of of(mount, "done")) {
         const k = e.beat.key;
-        if (k.startsWith("watch:")) continue; // legacy's emblem over a watch: no race week
         const t = tail(k);
         const fixed = t === undefined ? undefined : RACE_ORDER[t];
         const sc = sceneOf(e.beat);
@@ -176,7 +175,7 @@ const I1 = invariant(
 const I2 = invariant(
   "I2",
   "the emblem: at most once per race week per mount, right after its action; never under Directo or reduced motion, in a watch, or when restoring at stage race",
-  (p) => !p.emblemOnWatch,
+  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -188,16 +187,18 @@ const I2 = invariant(
       mount.forEach((e, i) => {
         if (e.type !== "done" || e.beat.kind !== "emblem") return;
         const k = e.beat.key;
-        if (k.startsWith("watch:")) out.push(`${where(e)}: the emblem over a watch`);
+        // a race seen again has no emblem: its screen is the race's (F25, M3)
+        if (e.flow.screen.kind === "race") out.push(`${where(e)}: the emblem over a watch`);
         if (w.pace === "direct" || w.reduced)
           out.push(`${where(e)}: the emblem under ${w.reduced ? "reduced motion" : "Directo"}`);
         if (seen.has(k)) out.push(`${where(e)}: ${k} twice in a mount`);
         seen.add(k);
-        if (k === restoredRace)
-          out.push(`${where(e)}: the emblem of a week restored at stage race`);
         // between the decision (or the mount's start) and the emblem: only the week's action
         const fp = fpOfKey(k);
         const from = lastIndex(mount, (d, j) => j < i && d.type === "decide" && d.week.fp === fp);
+        // restored, not decided again in this mount (legacy loses the week at a reload, F1)
+        if (k === restoredRace && from < 0)
+          out.push(`${where(e)}: the emblem of a week restored at stage race`);
         for (const d of mount.slice(from + 1, i))
           if (d.type === "done" && d.beat.key !== `${fp}/w:result` && d.beat.key !== `${fp}/w:fx`)
             out.push(`${where(e)}: ${label(d.beat)} between the week's action and its emblem`);

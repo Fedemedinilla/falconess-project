@@ -5,8 +5,6 @@
  * that commit brings it back), and the last one deletes this file. Pure and text-free.
  */
 export type FlowPolicy = {
-  /** «Ver carrera» from the season's end plays the emblem (F25); removed in 5.1. */
-  readonly emblemOnWatch: boolean;
   /**
    * The scenes of each mode by kind (`SCENE_KINDS`) and in `SCENE_ORDER`; legacy: any scene but a
    * goal's «before» in the race, the menu and the end, in file order (F13, F14). Removed in 5.2.
@@ -40,7 +38,6 @@ export type FlowPolicy = {
 
 /** Today's game, flag by flag. */
 export const LEGACY_POLICY: FlowPolicy = Object.freeze({
-  emblemOnWatch: true,
   sceneFilters: false,
   order: "legacy",
   endSequence: false,
@@ -53,7 +50,6 @@ export const LEGACY_POLICY: FlowPolicy = Object.freeze({
 
 /** The designed flow (plan §1.4), which the season walks check. */
 export const TARGET_POLICY: FlowPolicy = Object.freeze({
-  emblemOnWatch: false,
   sceneFilters: true,
   order: "d2",
   endSequence: true,

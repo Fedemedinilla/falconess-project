@@ -328,7 +328,7 @@ describe("watches end where they began (I21, review 1 item 1)", () => {
     expect([flow.top.kind, flow.screen.kind, h.ui().nav.at]).toEqual(["idle", "end", "menu"]);
   });
 
-  it("«Ver otra vez» on a watch's result: the race again, ending where the watch began (legacy: no second emblem)", () => {
+  it("«Ver otra vez» on a watch's result: the race again, ending where the watch began", () => {
     for (const policy of [LEGACY_POLICY, TARGET_POLICY]) {
       // from a race's result: the menu after it, the actions take taps
       const t = loadSave("peregrina-w10");
@@ -351,11 +351,10 @@ describe("watches end where they began (I21, review 1 item 1)", () => {
       h.cmd.raceContinue();
       expect(h.ui().nav.at).toBe("menu");
       expect(h.until("idle").canAct).toBe(true);
-      // from the end: the end again, with no emblem the second time
+      // from the end: the end again
       const e = loadSave("peregrina-ended");
       const he = harness(e, { policy });
       he.cmd.rewatch(10);
-      he.until("idle"); // legacy: the emblem over it first (F25, until 5.1)
       s = he.now().flow.screen;
       if (s.kind === "race") he.cmd.raceSkip(s.play);
       he.cmd.raceAgain();
@@ -373,7 +372,6 @@ describe("watches end where they began (I21, review 1 item 1)", () => {
     const t = loadSave("peregrina-ended");
     const h = harness(t, { policy: LEGACY_POLICY });
     h.cmd.rewatch(10);
-    h.until("idle"); // the emblem over it (F25, until 5.1)
     const s = h.now().flow.screen;
     if (s.kind !== "race") throw new Error("no race screen");
     h.cmd.raceNext(s.play);

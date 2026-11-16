@@ -4,7 +4,7 @@
  * is scoped to the run: a committed step's and a decided week's carry the fingerprint, a scene's
  * and a card's the seed, an event's its turn. Pure and text-free (flow/imports.test.ts).
  */
-import type { SeasonState, StoryScene } from "@falconess/schema";
+import type { StoryScene } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import type { Step } from "../../game/controller";
 import { type InspirationScene, inspirationCard } from "../inspirationScene";
@@ -12,7 +12,7 @@ import { type WeekFx, type WeekFxPart, weekFx } from "../weekFx";
 import type { FlowPolicy } from "./policy";
 import { dueScenes, menuOrder } from "./scenes";
 import { addedRace, fxPart } from "./steps";
-import type { Beat, FlowFacts, InstantBeat, Nav, SceneMode } from "./types";
+import type { Beat, FlowFacts, InstantBeat, SceneMode } from "./types";
 import type { UiState } from "./ui";
 import { raceWings, trainBeat } from "./week";
 
@@ -36,16 +36,6 @@ export function stepFx(ctx: SimContext, step: Step, part: WeekFxPart): readonly 
 /** The beats that resolve before paint and render nothing (§1.7 rule 4). */
 export function isInstant(beat: Beat): beat is InstantBeat {
   return beat.kind === "ack" || beat.kind === "enter" || beat.kind === "pass";
-}
-
-/** A watch of a race the season ran (a turn without a result has nothing to show). */
-export function watched(state: SeasonState, nav: Nav): Extract<Nav, { at: "watch" }> | undefined {
-  return nav.at === "watch" && state.raceResults.some((r) => r.turn === nav.turn) ? nav : undefined;
-}
-
-/** Legacy (F25, until 5.1): the key of the emblem that opens a watch from the end. */
-export function watchEmblemKey(n: number): string {
-  return `watch:${n}/emblem`;
 }
 
 function cardBeat(card: InspirationScene): Beat {
@@ -163,10 +153,6 @@ export function beatsOf(
     for (const it of menuOrder(due(where), later, p))
       push(it.kind === "card" ? cardBeat(it.card) : scene(it.scene, where));
   }
-  // legacy (F25, removed in 5.1): «Ver carrera» from the end opens with the emblem, as today
-  const watch = watched(run.state, ui.nav);
-  if (p.emblemOnWatch && watch?.from === "end" && f.pace !== "direct" && !f.reduced)
-    push({ kind: "emblem", key: watchEmblemKey(watch.n), fp, fadeIn: false, covered: true });
   out.push({ kind: "idle", key: `idle:${fp}` });
   return out;
 }

@@ -474,7 +474,7 @@ describe("idle", () => {
       expect(flowOf(w10, plan, p).screen).toEqual({ kind: "plan", position: "stalk" });
   });
 
-  it("the end; a watch from it takes the race screen (legacy: after the emblem); `solo` there only under target", () => {
+  it("the end; a watch from it takes the race screen with no emblem, and keeps `solo` (M3, L8)", () => {
     const t = loadSave("peregrina-ended");
     for (const p of BOTH) {
       const end = flowOf(t, INITIAL_UI, p);
@@ -491,19 +491,17 @@ describe("idle", () => {
     const nav = watch.nav;
     if (nav.at !== "watch") throw new Error("watch");
     const race = { kind: "race", turn: 10, stage: "replay", play: watchKey(nav), watch: "end" };
-    const legacy = flowOf(t, watch, LEGACY_POLICY);
-    expect(legacy.top.kind).toBe("emblem");
-    expect(legacy.layer).toEqual({ kind: "emblem", key: "watch:1/emblem", fadeIn: false });
-    expect(legacy.screen).toEqual(race);
-    expect([legacy.mode, legacy.music, legacy.solo]).toEqual(["race", "race", false]);
-    const target = flowOf(t, watch, TARGET_POLICY);
-    expect([target.top.kind, target.layer, target.screen]).toEqual(["idle", undefined, race]);
-    expect([target.mode, target.solo, target.desk.locked, target.canReplay]).toEqual([
-      "race",
-      true,
-      true,
-      false,
-    ]);
+    for (const p of BOTH) {
+      const flow = flowOf(t, watch, p);
+      expect([flow.top.kind, flow.layer, flow.screen]).toEqual(["idle", undefined, race]);
+      expect([flow.mode, flow.music, flow.solo, flow.desk.locked, flow.canReplay]).toEqual([
+        "race",
+        "race",
+        true,
+        true,
+        false,
+      ]);
+    }
     // a turn without a race: nothing to watch, the end stays
     const none = uiAfter({ type: "watch", turn: 11, from: "end" });
     for (const p of BOTH) expect(flowOf(t, none, p).screen).toEqual({ kind: "end", inert: false });

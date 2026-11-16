@@ -51,14 +51,15 @@ for (const name of SAVES)
   });
 
 test.describe("LEGACY pins", () => {
-  test("F25 (flipped in 5.1): «Ver carrera» on the End opens the race with the emblem", async ({
+  test("F25 (flipped in 5.1): «Ver carrera» on the End opens the race with no emblem", async ({
     page,
   }) => {
     await seedRun(page, "peregrina-ended");
     await page.goto("./");
     await continueRun(page);
     await page.click("#m-fin-carrera-10");
-    await expect(page.locator("#m-transicion")).toBeVisible();
+    await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+    await expect(page.locator("#m-transicion")).toHaveCount(0);
   });
 
   test("F1 (flipped in 5.6): a reload on the decided race card goes back to the week's menu", async ({
