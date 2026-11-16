@@ -518,6 +518,43 @@ test("a goal's scene passed by: its notice waits out the emblem, then sits just 
   await expect(page.locator("#m-escena-ver")).toBeVisible();
 });
 
+test("a goal's scene passed by on a small phone: its notice covers none of the card's positions (rule 17)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  // the race card reaches down to its foot: over the foot the notice would hide Acecho and Remate
+  await page.setViewportSize({ width: 360, height: 740 });
+  await seedRun(page, "peregrina-w10");
+  await seenEver(page, "peregrina-debut");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  const notice = await noticeBox(page);
+  const options = page.locator("#m-posicion label");
+  expect(await options.count()).toBe(4);
+  for (let i = 0; i < 4; i++) {
+    const option = options.nth(i);
+    const box = await option.boundingBox();
+    if (!box) throw new Error("a position with no box");
+    const id = await option.getAttribute("for");
+    expect(
+      overlaps(notice, {
+        left: box.x,
+        right: box.x + box.width,
+        top: box.y,
+        bottom: box.y + box.height,
+      }),
+      `${id}`,
+    ).toBe(false);
+  }
+  expect(overlaps(notice, await boxOf(page, "#m-correr"))).toBe(false);
+  await expect(page.locator("#m-escena-ver")).toBeVisible();
+});
+
 test("«Ver» on a passed scene's notice plays it, and the notice is gone from the scene's first frame", async ({
   page,
 }) => {

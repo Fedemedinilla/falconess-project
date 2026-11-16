@@ -54,19 +54,39 @@ export function cutsNotice(layer: Layer["kind"] | undefined): boolean {
 export const NOTICE_TOP = 124;
 /** Between the notices and their anchor. */
 export const NOTICE_GAP = 10;
+/** How far a control may reach under the notices and not count as covered: a card's edge. */
+export const NOTICE_EDGE = 4;
+
+/** A control's vertical extent in the viewport (`getBoundingClientRect`'s top and bottom). */
+export type Span = { readonly top: number; readonly bottom: number };
 
 /**
  * The notices' top in their containing block: just over the screen's `[data-toast-anchor]` (the
  * menu's track tab, a card's foot: rule 17), or `NOTICE_TOP` without one. `cbTop` is where the
  * containing block starts in the viewport: the game's column when it carries a transform (the
  * wide screen), else the viewport (0).
+ *
+ * Never over one of the screen's `controls` (rule 17: never over the buttons): where the place over
+ * the anchor would cover one by more than a card's edge (a race card that reaches down to its
+ * foot, a small phone), the notices sit under the top bar instead, as on a screen with no anchor;
+ * if that covers one too, over the anchor still.
  */
 export function noticeTop(m: {
   readonly anchorTop: number | undefined;
   readonly cbTop: number;
   readonly height: number;
+  readonly controls?: readonly Span[];
 }): number {
-  const top =
-    m.anchorTop === undefined ? NOTICE_TOP : m.anchorTop - m.cbTop - m.height - NOTICE_GAP;
-  return Math.max(8, Math.round(top));
+  const at = (top: number) => Math.max(8, Math.round(top));
+  const under = at(NOTICE_TOP);
+  if (m.anchorTop === undefined) return under;
+  const over = at(m.anchorTop - m.cbTop - m.height - NOTICE_GAP);
+  const covers = (top: number) => {
+    const from = top + m.cbTop;
+    const to = from + m.height;
+    return (m.controls ?? []).some(
+      (c) => Math.min(c.bottom, to) - Math.max(c.top, from) > NOTICE_EDGE,
+    );
+  };
+  return covers(over) && !covers(under) ? under : over;
 }

@@ -49,6 +49,32 @@ describe("the notices' place", () => {
     expect(noticeTop({ anchorTop: undefined, cbTop: 20, height: 60 })).toBe(NOTICE_TOP);
     expect(noticeTop({ anchorTop: 40, cbTop: 0, height: 60 })).toBe(8);
   });
+  it("never over a control of the screen: where the anchor's place covers one, under the top bar (rule 17)", () => {
+    // a race card's positions reach down to its foot (a small phone, a long card)
+    const positions = [{ top: 480, bottom: 560 }];
+    expect(noticeTop({ anchorTop: 600, cbTop: 0, height: 60, controls: positions })).toBe(
+      NOTICE_TOP,
+    );
+    // the controls are measured in the viewport: the column's offset applies
+    expect(
+      noticeTop({ anchorTop: 620, cbTop: 20, height: 60, controls: [{ top: 540, bottom: 580 }] }),
+    ).toBe(NOTICE_TOP);
+  });
+  it("a control's edge under it is no cover; nor one away from it", () => {
+    // the notice stands 530-590: a card whose border ends 4 px into it, a button under the bar
+    const controls = [
+      { top: 400, bottom: 534 },
+      { top: 30, bottom: 80 },
+    ];
+    expect(noticeTop({ anchorTop: 600, cbTop: 0, height: 60, controls })).toBe(530);
+  });
+  it("where under the top bar covers a control too, over the anchor still", () => {
+    const controls = [
+      { top: 480, bottom: 560 },
+      { top: 130, bottom: 170 },
+    ];
+    expect(noticeTop({ anchorTop: 600, cbTop: 0, height: 60, controls })).toBe(530);
+  });
   it("cut under the layers that start on black or cover the game; faded over the effects", () => {
     expect((["scene", "emblem", "inspiration"] as const).every((k) => cutsNotice(k))).toBe(true);
     expect(cutsNotice("fx")).toBe(false);

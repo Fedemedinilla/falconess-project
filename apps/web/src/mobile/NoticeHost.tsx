@@ -10,7 +10,7 @@ import type { Flow } from "./flow/types";
 import type { Notice, Toast, UiEvent } from "./flow/ui";
 import { useLayersIdle } from "./LayerHost";
 import { MOTION } from "./motion";
-import { cutsNotice, noticeTop, type Shown, slotView } from "./noticeSlot";
+import { cutsNotice, noticeTop, type Shown, type Span, slotView } from "./noticeSlot";
 import st from "./Story.module.css";
 
 /** One notice: its words, its element, how long it stays once shown, and whom it tells. */
@@ -95,8 +95,9 @@ function useSlot(
 
 /**
  * The notices of a column (plan §1.9): the error's (`role="alert"`) over the story's
- * (`role="status"`), both just over the screen's `[data-toast-anchor]`, placed again when the
- * screen changes or the column is resized. A notice that leaves while it could still be read
+ * (`role="status"`), both just over the screen's `[data-toast-anchor]` (under the top bar where
+ * that would cover one of the screen's controls: `noticeTop`), placed again when the screen
+ * changes or the column is resized. A notice that leaves while it could still be read
  * fades out as an id-less, inert copy (no «Ver», no close) that a timer removes; under an opaque
  * layer, or under reduced motion, it goes at once.
  */
@@ -153,6 +154,7 @@ function Notices({
         anchorTop: anchor && anchor.height > 0 ? anchor.top : undefined,
         cbTop,
         height: el.getBoundingClientRect().height,
+        controls: app ? controlsUnder(app, el) : [],
       });
       setTop(t);
       for (const child of Array.from(el.children))
@@ -212,6 +214,20 @@ function Notices({
       ))}
     </>
   );
+}
+
+/** What a player taps on a screen: the notices never sit over one (rule 17). */
+const CONTROLS = 'button, a[href], input, select, textarea, label, [role="button"]';
+
+/** The screen's controls in the column, where they stand in the viewport (not the notices' own). */
+function controlsUnder(app: Element, notices: Element): Span[] {
+  const out: Span[] = [];
+  for (const c of Array.from(app.querySelectorAll(CONTROLS))) {
+    if (notices.contains(c) || c.closest("[inert], [aria-hidden='true']")) continue;
+    const r = c.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) out.push({ top: r.top, bottom: r.bottom });
+  }
+  return out;
 }
 
 /** What went wrong, in the phone's words: #juego has no «Partida» to copy the run from. */
