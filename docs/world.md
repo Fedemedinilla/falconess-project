@@ -48,9 +48,24 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
 6. **Hoy.** El deporte es joven y todavía cambia sus reglas y sus modos (`ideas.md` I2, I3). Es el
    año del trío pionero (`docs/design/historia/cronologia.md`).
 
+**La guerra hoy (dueño, 2026-11-16):** es pasado. «No se va a indagar mucho en ese tema. Es un
+pasado horrible para cualquiera, y en especial para la gente del mundo de Falconess. No se olvida,
+ya que el mundo y veteranos aún lo recuerdan. Pero ya no hay conflicto, al menos no bélico.» Regla
+para escribir: la guerra se nota en las cicatrices del mundo y en la memoria de la gente; nunca es
+el tema de una escena.
+
+**El clima hoy (dueño, 2026-11-16):** «Sigue hostil en varias partes, pero ahora se puede vivir. Los
+cielos son azules, y la naturaleza volvió a crecer en lo que antes habían quedado desiertos o tierra
+seca después de tanto caos climatológico. Por eso se pueden permitir que las pistas sean tan
+grandes y espaciosas, porque están en lugares abiertos que la humanidad logró reconquistarle al caos
+climatológico.»
+
+**Restos del pasado (dueño, 2026-11-16, como detalle de fondo):** «Estaría cool que aún se encuentren
+cosas del pasado, o edificios hundidos o maquinaria de guerra tapada por tierra o arena, o agua. Solo
+como side note de que el mundo tiene pasado.» Sirve para fondos de escenas y paisajes de pistas.
+
 Abierto:
 
-- ¿El clima sigue siendo imposible hoy, se calmó, o la tecnología lo domó?
 - ¿Cuánto tiempo pasó entre la carrera de la paz y la fundación del deporte, y entre la fundación y
   hoy?
 - ¿Quién fue la fundadora? ¿Vive? ¿Aparece en la historia principal?
@@ -58,13 +73,21 @@ Abierto:
 
 ## 5. Las escuderías
 
-- **Decidido (dueño, 2026-11-16):** nacen de los bandos de la guerra. Cada una tiene sus colores y
+- **Decidido (dueño, 2026-11-16):** nacen de los bandos, de los países enfrentados, y conservan el
+  orgullo de su origen, pero hoy son **casas deportivas**: «sus rencores se convirtieron en
+  competición sana. Representan a un pueblo sin ser el gobierno.»
+- **Decidido (2026-11-16):** hay **muchas** escuderías; las cinco del juego son solo las primeras.
+- **Puerta abierta (dueño, 2026-11-16):** escuderías menos «fair play». «Que quizás haya Chiefs de
+  escuderías que sean veteranos de guerra y al menos un 1 % de su memoria no olvida lo que X pueblo
+  le hizo al suyo. Y puede que eso lo lleve a reforzar su escudería y competir aún más fuerte.» Es
+  rencor llevado a la competencia, nunca conflicto bélico.
+- **Decidido (dueño, 2026-11-16):** cada una tiene sus colores y
   valores, y varias Falconess bajo su bandera que los muestran a su manera, nunca en contra
   (`ideas.md` I6). Kōryū Racing: lujo y deporte a la vez, «claramente como Ferrari».
 - Hoy son cinco: Kōryū Racing (Peregrina), Altair Systems (Cernícala), Boneyard Works (Caracara),
   Steinhaus Aerowerk y Lumière Aéronef (sin Falconess jugable) (`docs/BRIEF.md` §7).
 - En el multijugador, los grupos de jugadores también se llaman escuderías (`ideas.md` I5).
-- Abierto: si hoy son países, empresas o las dos cosas; la historia de cada una.
+- Abierto: la historia de cada una, de qué pueblo viene y quién la dirige.
 
 ## 6. Las carreras
 
