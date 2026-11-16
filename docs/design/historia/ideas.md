@@ -216,3 +216,14 @@ Cuántas veces se tira el dado:
 - Canon: Caracara no corrió la gran Larga; la vio desde afuera y vio perder a Peregrina. Por qué no
   corrió se escribe en su historia.
 - Abierto: en qué escenas de Peregrina aparecen más Cernícala y Caracara.
+
+### I8 · Gerifalte, para después (2026-11-16)
+
+- Estado: **decidida** la postergación (2026-11-16: «Gerifalte déjala para después. No importa
+  ahora»). Sigue siendo la rival espejo de la Copa en Exigente, sin personalidad.
+
+### I9 · Empezamos por el mundo (2026-11-16)
+
+- Estado: **decidida** (2026-11-16). El dueño pidió saber cómo se construye un mundo que parezca
+  vivo (Tolkien, Cygames) y por dónde empezar; la explicación y las primeras preguntas se dieron en
+  el chat de la sesión 1. Va a: `docs/world.md`.
