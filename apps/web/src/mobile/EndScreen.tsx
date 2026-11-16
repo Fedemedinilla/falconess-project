@@ -1,5 +1,5 @@
 import type { BlackBox } from "@falconess/schema";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
@@ -9,7 +9,6 @@ import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { runnerArt } from "./art";
-import { type ExportItem, ExportSheet, entryItem } from "./Export";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 import { statCells } from "./model";
@@ -18,20 +17,22 @@ import { StatStrip } from "./Parts";
 /**
  * The end of the season on the phone: the grade and score of the sim, each goal race with its
  * place, and her final stats. The test view's #fin keeps the black box and the copy of the run.
+ * «Exportar» opens the run's own sheet (RunView's: one on the page).
  */
 export function EndScreen({
   run,
   onRace,
   onNew,
   onTests,
+  onExport,
 }: {
   run: ActiveRun;
   onRace: (turn: number) => void;
   onNew: () => void;
   onTests: () => void;
+  onExport: () => void;
 }) {
   const { game } = useGame();
-  const [exporting, setExporting] = useState<ExportItem>();
   const ctx = game.context();
   const state = run.state;
   const summary = useMemo(
@@ -102,15 +103,11 @@ export function EndScreen({
           type="button"
           className={cx(s.btn, s.btnWide)}
           id="m-fin-exportar"
-          onClick={() => {
-            const entry = game.history().find((e) => e.seed === run.seed);
-            if (entry) setExporting(entryItem(entry));
-          }}
+          onClick={onExport}
         >
           <Glyph name="down" size={20} />
           {ui("ui.m.export.season")}
         </button>
-        <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
         <button type="button" className={s.linkBtn} id="m-fin-pruebas" onClick={onTests}>
           {ui("ui.m.end.detail")}
         </button>

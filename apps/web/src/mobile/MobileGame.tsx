@@ -1,105 +1,25 @@
-import type {
-  Position,
-  SeasonState,
-  StoryScene,
-  TrainingKind,
-  WorkshopOp,
-} from "@falconess/schema";
-import { advanceSeason, difficultyOf, type SimContext } from "@falconess/sim";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { parseHash } from "../app/route";
 import { navigate } from "../app/useRoute";
-import { allScenes, allTopics } from "../content/story";
-import type { Step } from "../game/controller";
+import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
-import { EventDialog } from "../screens/EventDialog";
-import type { ActionKind } from "../screens/model/actions";
-import {
-  chosenFor,
-  type WeekActionInput,
-  type WeekPosition,
-  wingsPosition,
-  withPosition,
-} from "../screens/model/position";
-import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { reducedMotion, useMedia } from "../ui/useMedia";
-import { useModalDialog } from "../ui/useModalDialog";
-import { ChatSheet } from "./ChatSheet";
-import { EndScreen } from "./EndScreen";
-import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
-import { digestFor } from "./flow/scenes";
-import { fxPart } from "./flow/steps";
-import { resultTimeline, type TrainResult, trainingCue, trainResultOf } from "./flow/trainResult";
-import type { WorkshopTab } from "./flow/types";
-import { Glyph } from "./Glyph";
-import { InspirationOverlay } from "./Inspiration";
-import { inspirationScene } from "./inspirationScene";
-import { LangButton } from "./LangButton";
-import { type MenuAction, MenuScreen } from "./MenuScreen";
+import { useMedia } from "../ui/useMedia";
 import s from "./Mobile.module.css";
-import { trainingCards, vigorView, weekMenu } from "./model";
 import "./motion.css";
-import { getMusicOn, setMusic, setMusicOn, stopMusic } from "./music";
-import { OutingSheet } from "./OutingSheet";
-import {
-  CrewsPanel,
-  DeskPanel,
-  GoalsPanel,
-  GuidePanel,
-  guideSeen,
-  LogPanel,
-  markGuideSeen,
-  PANEL_GLYPH,
-  PanelSheet,
-  type PanelTab,
-  panelTitle,
-} from "./Panels";
-import pm from "./Panels.module.css";
-import { accentStyle, Hud } from "./Parts";
-import { getPace, nextPace, paceScale, setPace } from "./pace";
-import { PreRaceScreen, RaceScreen } from "./RaceScreens";
+import { setMusic, stopMusic, type Track } from "./music";
+import { guideSeen, markGuideSeen, type PanelTab } from "./Panels";
+import { type RunMusic, RunView } from "./RunView";
 import { SelectScreen } from "./SelectScreen";
-import st from "./Story.module.css";
-import { StoryListSheet } from "./StoryListSheet";
-import { StoryOverlay } from "./StoryOverlay";
-import {
-  getSoundStyle,
-  nextSoundStyle,
-  playNav,
-  playSound,
-  queueTap,
-  type SoundStyle,
-  setSoundStyle,
-} from "./sfx";
-import { dueScene, openTopics } from "./storyModel";
+import { playNav, queueTap } from "./sfx";
 import { TitleScreen } from "./TitleScreen";
-import { TrackSheet } from "./TrackCard";
-import { TrainScreen } from "./TrainScreen";
-import { ScreenTransition } from "./Transition";
-import { type TrackCardView, trackCard } from "./track";
-import { usePace } from "./usePace";
-import { useStory } from "./useStory";
-import { WeekFxOverlay } from "./WeekFx";
-import { WorkshopScreen } from "./WorkshopScreen";
-import { type WeekFx, weekFx } from "./weekFx";
-
-type View =
-  | { readonly screen: "menu" }
-  | { readonly screen: "train"; readonly selected?: TrainingKind | undefined }
-  | { readonly screen: "workshop"; readonly tab: WorkshopTab }
-  | {
-      readonly screen: "prerace";
-      readonly input?: WeekActionInput | undefined;
-      /** The action's result was already shown (a race week's preview): no way back, no repeat. */
-      readonly decided?: boolean;
-    }
-  | { readonly screen: "race"; readonly turn: number; readonly result: boolean }
-  /** A race week's action played its effects over the menu (skills bought…), then the race mode. */
-  | { readonly screen: "actionfx"; readonly input: WeekActionInput; readonly fx: readonly WeekFx[] }
-  | { readonly screen: "trained"; readonly result: TrainResult; readonly next: View };
-
-const MENU: View = { screen: "menu" };
 
 /** A wide screen (owner 2026-11-13): the game's column with the panel beside it. */
 export const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
@@ -110,63 +30,41 @@ export const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
  */
 let titleDone = typeof location !== "undefined" && parseHash(location.hash) !== "juego";
 
-/** The action whose vigor the bar previews on a screen. */
-function previewKind(view: View): ActionKind | undefined {
-  if (view.screen === "train") return view.selected;
-  if (view.screen === "workshop") return "workshop";
-  if (view.screen === "prerace" && view.input) return view.input.kind;
-  if (view.screen === "actionfx") return view.input.kind;
-  return undefined;
+/** Each run's view (RunView's key): a start, a load or a replay from storage brings a new one. */
+const runIds = new WeakMap<object, number>();
+let lastRunId = 0;
+function runKey(run: ActiveRun): string {
+  const start = run.inputs[0];
+  if (start === undefined) return run.seed;
+  let id = runIds.get(start);
+  if (id === undefined) {
+    lastRunId += 1;
+    id = lastRunId;
+    runIds.set(start, id);
+  }
+  return `${run.seed}/${id}`;
 }
 
 /**
- * #juego: the phone game (the approved prototype wired to the real season). One run, the same
- * controller as the test view: character select without a run, the week menu while it is active
- * (training, workshop, pre-race card, flight race and its result as screens; the week's effects and
- * the event dialog over the menu), the season's end once it ends. Three modes (owner 2026-11-13):
- * training (its screen and result), the menu (the week's decision; a story scene due after it plays
- * once the decision's effects end), and the race (the emblem transition, only here, then the
- * scene before the race, the position, the race, the scene after it, its result; then the menu).
+ * #juego: the phone game (the approved prototype wired to the real season), with the same
+ * controller as the test view. This shell holds what outlives a run: the light theme, the tap
+ * under every button, the title screen, the wide-screen flag, the wide screen's panel tab and the
+ * guide's dot, and the music (its one writer). Without a run it shows the character select; with
+ * one, a RunView of its own (keyed per run, so a new season starts with nothing of the last one).
  */
 export function MobileGame() {
-  const { game, snap } = useGame();
-  // the scenes seen and the chat read: a mark re-renders the game
-  const story = useStory();
-  const [view, setView] = useState<View>(MENU);
-  const [weekPosition, setWeekPosition] = useState<WeekPosition>();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [sceneDone, setSceneDone] = useState<string>();
-  // owner 2026-11-13: the week's mood, injury and sleep play as effects, once per step
-  const [fxDone, setFxDone] = useState<number>();
-  const [exporting, setExporting] = useState<ExportItem>();
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [outingOpen, setOutingOpen] = useState(false);
+  const { snap } = useGame();
+  const run = snap.run;
   // owner 2026-11-13: on a wide screen the game sits in a taller, wider column with the menu open
   // beside it as a panel; on a phone the panels open from «Menú»
   const desk = useMedia(DESK_QUERY);
-  // the wide screen has no «Menú» sheet (its panel is the menu): going wide closes it, or it
-  // would stay "open" unseen and hold back every story scene
-  useEffect(() => {
-    if (desk) setMenuOpen(false);
-  }, [desk]);
   const [tab, setTab] = useState<PanelTab>("menu");
-  const [sheet, setSheet] = useState<PanelTab>();
-  // the goals' track sheet keeps its card while it closes
-  const [trackSheet, setTrackSheet] = useState<{
-    readonly view: TrackCardView;
-    readonly open: boolean;
-  }>();
   const [guideNew, setGuideNew] = useState(() => !guideSeen());
-  const openPanel = (t: PanelTab) => {
-    if (t === "guide") {
-      markGuideSeen();
-      setGuideNew(false);
-    }
-    if (desk) setTab(t);
-    else setSheet(t);
-  };
-  const run = snap.run;
-  const inputs = run?.inputs.length ?? 0;
+  const seeGuide = useCallback(() => {
+    markGuideSeen();
+    setGuideNew(false);
+  }, []);
+  const [title, setTitle] = useState(() => !titleDone);
 
   // the phone game is light and airy by design: its dialogs (shared with the test view) must not
   // take the system's dark tokens under the game's light colors; the test view gets its theme back
@@ -189,889 +87,74 @@ export function MobileGame() {
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
-  // the emblem transition (owner 2026-11-12) covers the way into a race: the race page starts
-  // fully covered by it
-  const ended = run?.state.status === "ended" && view.screen !== "race";
-  // the race mode starts at the position card of a decided race week
-  const page = !run
-    ? "select"
-    : ended
-      ? "end"
-      : view.screen === "trained"
-        ? "train"
-        : view.screen === "actionfx"
-          ? "menu"
-          : view.screen === "prerace" && view.decided
-            ? "race"
-            : view.screen;
-  const [title, setTitle] = useState(() => !titleDone);
-  // story scenes and the chat (owner 2026-11-12)
-  const [replay, setReplay] = useState<StoryScene>();
-  const [storyToast, setStoryToast] = useState<{
-    n: number;
-    kicker: string;
-    title: string;
-    skipped: boolean;
-    /** Seen in an earlier season, so it was passed by (owner 2026-11-14): a tap plays it. */
-    again?: StoryScene | undefined;
-  }>();
-  const [chatOpen, setChatOpen] = useState(false);
-  const [storyListOpen, setStoryListOpen] = useState(false);
-  useEffect(() => {
-    if (!storyToast) return;
-    const id = setTimeout(() => setStoryToast(undefined), storyToast.again ? 6000 : 4000);
-    return () => clearTimeout(id);
-  }, [storyToast]);
-  const titleScreen = title && (
+  // the music follows the page (owner 2026-11-12): the title theme until a season starts, then
+  // what the run's page wants (a new run starts on the menu's until its view says otherwise)
+  const key = run ? runKey(run) : undefined;
+  const [runMusic, setRunMusic] = useState<{ readonly key: string; readonly track: RunMusic }>();
+  const onMusic = useCallback(
+    (track: RunMusic) => {
+      if (key !== undefined) setRunMusic({ key, track });
+    },
+    [key],
+  );
+  const music: Track =
+    title || !run
+      ? "title"
+      : runMusic !== undefined && runMusic.key === key
+        ? runMusic.track
+        : "menu";
+  useEffect(() => setMusic(music), [music]);
+  useEffect(() => stopMusic, []);
+
+  // the selection and a run are two screens: going between them whooshes (in the click's own
+  // commit, so it replaces its tap); a run whooshes between its own screens
+  const inRun = run !== undefined;
+  const firstScreen = useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of screen only
+  useLayoutEffect(() => {
+    if (firstScreen.current) firstScreen.current = false;
+    else playNav();
+  }, [inRun]);
+
+  const titleScreen = title ? (
     <TitleScreen
       onStart={() => {
         titleDone = true;
         setTitle(false);
       }}
     />
-  );
-  // the music follows the page (owner 2026-11-12): the title theme until a season starts, the
-  // race's own in a race, the menu theme everywhere else
-  const track = title || page === "select" ? "title" : page === "race" ? "race" : "menu";
-  useEffect(() => setMusic(track), [track]);
-  useEffect(() => stopMusic, []);
-  const [cover, setCover] = useState<number>();
-  const endCover = useCallback(() => setCover(undefined), []);
-  const firstPage = useRef(true);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of page only
-  useLayoutEffect(() => {
-    if (firstPage.current) firstPage.current = false;
-    // only on the way to a race (owner 2026-11-12: on every screen it got in the way)
-    // «Directo» (owner 2026-11-14) goes into the race mode without it
-    else if (page === "race" && !reducedMotion() && getPace() !== "direct")
-      setCover((c) => (c ?? 0) + 1);
-  }, [page]);
-  const colors = transitionColors(game, run?.state.falconessId);
-  const transition = cover !== undefined && (
-    <ScreenTransition
-      key={cover}
-      primary={colors.primary}
-      secondary={colors.secondary}
-      onDone={endCover}
-    />
-  );
+  ) : undefined;
 
-  // a change of screen whooshes (in the click's own commit, so it replaces its tap)
-  const screenName = run ? view.screen : "select";
-  const firstScreen = useRef(true);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of screen only
-  useLayoutEffect(() => {
-    if (firstScreen.current) firstScreen.current = false;
-    else playNav();
-  }, [screenName]);
-
-  // a new run (or a load, or an undo in the test view) starts on the menu
-  const firstInput = run?.inputs[0];
-  const seed = run?.seed;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on a different run only
-  useEffect(() => {
-    setView(MENU);
-  }, [seed, firstInput]);
-
-  const shown = useRef(inputs);
-  useEffect(() => {
-    // the run moved on outside this screen's own act (the test view): back to the menu
-    if (inputs < shown.current) setView(MENU);
-    shown.current = inputs;
-  }, [inputs]);
-
-  const toTests = () => navigate("inicio");
-  /** A screen without the panel (the selection, the season's end): centered on a wide screen. */
-  const solo = (node: React.ReactNode) =>
-    desk ? (
-      <div className={s.deskRoot}>
-        <div className={s.deskBg} aria-hidden="true" />
-        {node}
-      </div>
-    ) : (
-      node
-    );
-
-  if (!run)
-    return solo(
-      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} data-app>
-        <SelectScreen onTests={toTests} />
-        {transition}
-        {titleScreen}
-      </div>,
-    );
-
-  const ctx = game.context();
-  const state = run.state;
-  const style = accentStyle(ctx.content, state.falconessId);
-
-  /**
-   * The story scene due now in a mode (owner 2026-11-13): the scene before a race only in the race
-   * mode, before the position; the others after the week's decision (on the menu, once its
-   * effects ended) or after the race, before its result.
-   */
-  const dueIn = (where: SceneMode): StoryScene | undefined => {
-    const fits = (sc: StoryScene) => (sc.trigger.kind === "goal-before") === (where === "prerace");
-    return dueScene(allScenes().filter(fits), ctx, state, story.seenInRun(run.seed));
-  };
-  /** The scene to play now (or one asked from «Historia»), once nothing else is on screen. */
-  const storyScene = (where: SceneMode | undefined): StoryScene | undefined => {
-    if (replay) return replay;
-    const idle =
-      where !== undefined &&
-      !title &&
-      cover === undefined &&
-      !menuOpen &&
-      !chatOpen &&
-      !storyListOpen;
-    return idle ? dueIn(where) : undefined;
-  };
-  const storyLayer = (sc: StoryScene | undefined) => (
-    <>
-      {/* owner 2026-11-14: a scene seen in an earlier season is passed by, with a line to watch it */}
-      {sc && !replay && story.seenEver().has(sc.id) && (
-        <Acknowledge
-          key={sc.id}
-          onMount={() => {
-            story.markSeen(run.seed, sc.id);
-            setStoryToast({
-              n: Date.now(),
-              kicker: gameText(sc.kickerKey),
-              title: gameText(sc.titleKey),
-              skipped: true,
-              again: sc,
-            });
-          }}
-        />
-      )}
-      {sc && (replay || !story.seenEver().has(sc.id)) && (
-        <StoryOverlay
-          key={`${sc.id}/${replay ? "again" : "first"}`}
-          scene={sc}
-          primary={colors.primary}
-          secondary={colors.secondary}
-          // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
-          digest={replay ? undefined : digestFor(getPace())}
-          onDone={(skipped) => {
-            if (!replay) story.markSeen(run.seed, sc.id);
-            setReplay(undefined);
-            setStoryToast({
-              n: Date.now(),
-              kicker: gameText(sc.kickerKey),
-              title: gameText(sc.titleKey),
-              skipped,
-            });
-          }}
-        />
-      )}
-      {storyToast && (
-        <StoryToast key={storyToast.n} long={storyToast.again !== undefined}>
-          <b>
-            {storyToast.kicker} · {storyToast.title}
-          </b>
-          <br />
-          {storyToast.again ? (
-            <span className={st.toastRow}>
-              {ui("ui.m.story.passed")}
-              <button
-                type="button"
-                className={st.toastBtn}
-                id="m-escena-ver"
-                onClick={() => {
-                  const again = storyToast.again;
-                  setStoryToast(undefined);
-                  setReplay(again);
-                }}
-              >
-                {ui("ui.m.story.watch")}
-              </button>
-            </span>
-          ) : (
-            ui(storyToast.skipped ? "ui.m.story.skipped" : "ui.m.story.seen")
-          )}
-        </StoryToast>
-      )}
-    </>
-  );
-
-  if (state.status === "ended" && view.screen !== "race")
-    return solo(
-      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} style={style} data-app>
-        <EndScreen
+  return (
+    <div className={s.deskRoot}>
+      {run ? (
+        <RunView
+          key={key}
           run={run}
-          onRace={(t) => setView({ screen: "race", turn: t, result: false })}
-          onNew={() => game.newSeason()}
-          onTests={() => navigate("fin")}
-        />
-        {storyLayer(storyScene("race"))}
-        {transition}
-        {titleScreen}
-      </div>,
-    );
-
-  const menu = weekMenu(ctx, state);
-  const cards = trainingCards(ctx, state);
-  const wings = wingsPosition(ctx.content, state.equippedFrame);
-  const chosen = menu.raceWeek ? chosenFor(weekPosition, state) : undefined;
-  const pending = state.pendingEvent !== undefined;
-  // the week's step is read once its effects played (none: at once); no dialog waits on the menu
-  const unreadNoFx = (stepOnMenu: Step | undefined) =>
-    stepOnMenu !== undefined && weekFx(stepOnMenu, ctx.ruleset, fxPart(stepOnMenu)).length === 0;
-
-  /** Apply the week's input (with the race position on a race week); a race opens its view. */
-  const commit = (input: WeekActionInput) => {
-    const raceTurn = menu.raceWeek ? state.turn : undefined;
-    if (!game.act(withPosition(input, chosen), inputs)) return;
-    const step = game.getSnapshot().lastStep;
-    const cue = trainingCue(input, state.turn, step?.after, cards);
-    playSound(cue);
-    const next: View =
-      raceTurn !== undefined ? { screen: "race", turn: raceTurn, result: raceStraight() } : MENU;
-    // a training plays its result on the training screen first (owner 2026-11-11)
-    const kind = cards.find((c) => c.kind === input.kind)?.kind;
-    if (kind && step && (cue === "success" || cue === "boost" || cue === "fail")) {
-      setView({
-        screen: "trained",
-        next,
-        result: trainResultOf(
-          ctx,
-          kind,
-          cue,
-          step,
-          Math.max(0, step.after.skillPoints - step.before.skillPoints),
-        ),
-      });
-      return;
-    }
-    setView(next);
-  };
-  /**
-   * A week's action. On a race week (owner 2026-11-12) its result comes first, then the race
-   * mode: the week is previewed with the season's own pure step (the action does not depend on
-   * the position; only the race does), a training's result shows on its screen, then the pre-race
-   * card runs the real input. After the preview the action is decided: the card has no «Volver».
-   */
-  const act = (input: WeekActionInput) => {
-    if (!menu.raceWeek) {
-      commit(input);
-      return;
-    }
-    let after: SeasonState;
-    try {
-      after = advanceSeason(ctx, state, withPosition(input, chosen));
-    } catch {
-      setView({ screen: "prerace", input });
-      return;
-    }
-    const step: Step = { before: state, input: withPosition(input, chosen), after };
-    const cue = trainingCue(input, state.turn, after, cards);
-    playSound(cue);
-    // what the action did (a bought skill, how she slept…) plays before the race mode
-    const actionFx = weekFx(step, ctx.ruleset, "action");
-    const race: View = { screen: "prerace", input, decided: true };
-    const next: View = actionFx.length > 0 ? { screen: "actionfx", input, fx: actionFx } : race;
-    const kind = cards.find((c) => c.kind === input.kind)?.kind;
-    if (kind && (cue === "success" || cue === "boost" || cue === "fail")) {
-      // the race's skill points are not hers yet: only the Simulator's own
-      const points =
-        kind === "train:simulator" && cue !== "fail" ? ctx.ruleset.season.simulatorSkillPoints : 0;
-      setView({ screen: "trained", next, result: trainResultOf(ctx, kind, cue, step, points) });
-      return;
-    }
-    setView(next);
-  };
-  /** The race week's real input, after its preview: straight to the race. */
-  const runRaceWeek = (input: WeekActionInput) => {
-    const turn = state.turn;
-    if (!game.act(withPosition(input, chosen), inputs)) return;
-    setView({ screen: "race", turn, result: raceStraight() });
-  };
-
-  const onMenu = (action: MenuAction) => {
-    switch (action) {
-      case "train":
-        setView({ screen: "train" });
-        return;
-      case "rest":
-        act({ kind: "rest" });
-        return;
-      case "outing":
-        // ADR-0016: with sintonía the player picks the crew she goes out with
-        if (ctx.ruleset.season.crewSync) setOutingOpen(true);
-        else act({ kind: "outing" });
-        return;
-      case "workshop":
-        setView({ screen: "workshop", tab: "wings" });
-        return;
-      case "skills":
-        setView({ screen: "workshop", tab: "skills" });
-        return;
-      case "race":
-        setView({ screen: "prerace" });
-        return;
-      case "menu":
-        setMenuOpen(true);
-        return;
-    }
-  };
-
-  const hud = (
-    <Hud
-      hard={difficultyOf(state) === "exigente"}
-      turn={menu.turn}
-      turns={menu.turns}
-      goal={menu.goal}
-      vigor={vigorView(ctx, state, previewKind(view))}
-      vigorPop={
-        view.screen === "trained" && view.result.vigor !== 0
-          ? {
-              delta: view.result.vigor,
-              delay: resultTimeline(view.result, paceScale(getPace())).vigor ?? 0,
-            }
-          : undefined
-      }
-      mood={menu.mood}
-      content={ctx.content}
-    />
-  );
-
-  let screen: React.ReactNode;
-  switch (view.screen) {
-    case "menu":
-      screen = (
-        <MenuScreen ctx={ctx} state={state} menu={menu} pendingEvent={pending} onAction={onMenu} />
-      );
-      break;
-    case "trained":
-      screen = (
-        <TrainScreen
-          ctx={ctx}
-          state={state}
-          cards={cards}
-          selected={undefined}
-          injured={false}
-          onSelect={() => undefined}
-          onConfirm={() => undefined}
-          onBack={() => undefined}
-          result={view.result}
-          onResultDone={() => setView(view.next)}
-        />
-      );
-      break;
-    case "train":
-      screen = (
-        <TrainScreen
-          ctx={ctx}
-          state={state}
-          cards={cards}
-          selected={view.selected}
-          injured={menu.injured}
-          onSelect={(kind) => setView({ screen: "train", selected: kind })}
-          onConfirm={(kind) => act({ kind })}
-          onBack={() => setView(MENU)}
-        />
-      );
-      break;
-    case "workshop":
-      screen = (
-        <WorkshopScreen
-          key={`${state.turn}/${inputs}`}
-          ctx={ctx}
-          state={state}
-          tab={view.tab}
-          onTab={(tab) => setView({ screen: "workshop", tab })}
-          onConfirm={(ops: WorkshopOp[]) => act({ kind: "workshop", ops })}
-          onBack={() => setView(MENU)}
-        />
-      );
-      break;
-    case "prerace": {
-      const goal = menu.goal;
-      if (!goal || !menu.raceWeek) {
-        screen = null;
-        break;
-      }
-      const input = view.input;
-      screen = (
-        <PreRaceScreen
-          ctx={ctx}
-          state={state}
-          courseId={goal.courseId}
-          minPlace={goal.minPlace}
-          cup={goal.cup}
-          mirror={goal.mirror}
-          named={goal.named}
-          wings={wings}
-          position={chosen}
-          input={input}
-          onPosition={(position: Position) =>
-            setWeekPosition(position === wings ? undefined : { turn: state.turn, position })
-          }
-          onRun={() =>
-            input ? (view.decided ? runRaceWeek(input) : commit(input)) : setView(MENU)
-          }
-          onBack={view.decided ? undefined : () => setView(MENU)}
-        />
-      );
-      break;
-    }
-    case "actionfx":
-      screen = (
-        <>
-          <MenuScreen
-            ctx={ctx}
-            state={state}
-            menu={menu}
-            pendingEvent={false}
-            onAction={() => undefined}
-          />
-          <WeekFxOverlay
-            fx={view.fx}
-            content={ctx.content}
-            onDone={() => setView({ screen: "prerace", input: view.input, decided: true })}
-          />
-        </>
-      );
-      break;
-    case "race":
-      screen = (
-        <RaceScreen
-          ctx={ctx}
-          state={state}
-          turn={view.turn}
-          showResult={view.result}
-          // the scene after the race comes before its result
-          hold={dueIn("race") !== undefined}
-          onSkip={() => setView({ screen: "race", turn: view.turn, result: true })}
-          onReplay={() => setView({ screen: "race", turn: view.turn, result: false })}
-          onDone={() => setView(MENU)}
-        />
-      );
-      break;
-  }
-
-  const onMenuScreen = view.screen === "menu";
-  // ADR-0013: an inspiration (or the season's start with parents) shows its card first
-  const startInput = run.inputs[0];
-  const parents = startInput?.kind === "start" ? startInput.parents : [];
-  const scene = onMenuScreen
-    ? inspirationScene(run.seed, state, inputs, snap.lastStep, snap.lastStepSeen)
-    : undefined;
-  const showScene = scene !== undefined && scene.key !== sceneDone;
-  const fxStep = onMenuScreen && !snap.lastStepSeen ? snap.lastStep : undefined;
-  const fx = fxStep ? weekFx(fxStep, ctx.ruleset, fxPart(fxStep)) : [];
-  const showFx = !showScene && fx.length > 0 && fxDone !== inputs;
-  const mode: SceneMode | undefined =
-    view.screen === "prerace" && view.decided
-      ? "prerace"
-      : view.screen === "race" && view.result
-        ? "race"
-        : onMenuScreen && !showScene && !showFx && !pending
-          ? "menu"
-          : undefined;
-  const menuItems = (
-    <MenuItems
-      key={run.seed}
-      onExport={() => {
-        const entry = game.history().find((e) => e.seed === run.seed);
-        if (entry) setExporting(entryItem(entry));
-      }}
-      onHistory={() => setHistoryOpen(true)}
-      onTests={toTests}
-      chatName={gameText(`falconess.${state.falconessId}`)}
-      chatNew={openTopics(allTopics(), state).some((tp) => !story.readTopics().has(tp.id))}
-      onChat={() => setChatOpen(true)}
-      onStory={() => setStoryListOpen(true)}
-      onNew={() => game.newSeason()}
-    />
-  );
-  const panel = (t: PanelTab) =>
-    t === "menu" ? (
-      <div className={pm.menuGrid}>{menuItems}</div>
-    ) : t === "log" ? (
-      <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} />
-    ) : t === "goals" ? (
-      <GoalsPanel
-        ctx={ctx}
-        state={state}
-        onTrack={(courseId) => setTrackSheet({ view: trackCard(ctx, courseId), open: true })}
-      />
-    ) : t === "crews" ? (
-      <CrewsPanel ctx={ctx} state={state} />
-    ) : (
-      <GuidePanel
-        onDone={() => {
-          if (desk) setTab("menu");
-          else setSheet(undefined);
-        }}
-      />
-    );
-  const game_ = (
-    <div
-      className={cx(s.app, view.screen === "race" && s.appWide, desk && s.appDesk)}
-      style={style}
-      data-app
-    >
-      {view.screen !== "race" && hud}
-      {screen}
-      {/* the week's effects and the event wait until the race and its result were seen */}
-      {showScene && scene && (
-        <InspirationOverlay
-          scene={scene}
-          falconessId={state.falconessId}
-          parents={parents}
-          onDone={() => setSceneDone(scene.key)}
-        />
-      )}
-      {showFx && (
-        <WeekFxOverlay
-          key={inputs}
-          fx={fx}
-          content={ctx.content}
-          onDone={() => {
-            setFxDone(inputs);
-            game.acknowledgeStep();
-          }}
-        />
-      )}
-      {/* the race mode's transition opens on black when a scene comes next: no card shows between */}
-      {mode === "prerace" && cover !== undefined && dueIn("prerace") && (
-        <div className={st.black} aria-hidden="true" />
-      )}
-      {storyLayer(storyScene(mode))}
-      {!showScene && unreadNoFx(fxStep) && <Acknowledge onMount={() => game.acknowledgeStep()} />}
-      {onMenuScreen && !showScene && !showFx && pending && <EventDialog />}
-      {chatOpen && (
-        <ChatSheet
-          name={gameText(`falconess.${state.falconessId}`)}
-          topics={openTopics(allTopics(), state)}
-          read={story.readTopics()}
-          primary={colors.primary}
-          secondary={colors.secondary}
-          onRead={story.markRead}
-          onClose={() => setChatOpen(false)}
-        />
-      )}
-      <OutingSheet
-        ctx={ctx}
-        state={state}
-        open={outingOpen}
-        onPick={(manufacturer) => {
-          setOutingOpen(false);
-          act({ kind: "outing", manufacturer });
-        }}
-        onClose={() => setOutingOpen(false)}
-      />
-      <StoryListSheet
-        open={storyListOpen}
-        scenes={allScenes().filter(
-          (sc) => sc.falconess === state.falconessId && story.seenEver().has(sc.id),
-        )}
-        onWatch={(sc) => {
-          setStoryListOpen(false);
-          setReplay(sc);
-        }}
-        onClose={() => setStoryListOpen(false)}
-      />
-      <ExportSheet item={exporting} onClose={() => setExporting(undefined)} />
-      <HistorySheet
-        open={historyOpen}
-        entries={historyOpen ? game.history() : []}
-        onExport={(e) => {
-          setHistoryOpen(false);
-          setExporting(entryItem(e));
-        }}
-        onClose={() => setHistoryOpen(false)}
-      />
-      {transition}
-      {titleScreen}
-      {/* the wide screen's panel is its menu: one set of the menu's buttons on the page */}
-      {!desk && (
-        <MobileMenu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          onExport={() => {
-            setMenuOpen(false);
-            const entry = game.history().find((e) => e.seed === run.seed);
-            if (entry) setExporting(entryItem(entry));
-          }}
-          onHistory={() => {
-            setMenuOpen(false);
-            setHistoryOpen(true);
-          }}
-          onTests={toTests}
-          chatName={gameText(`falconess.${state.falconessId}`)}
-          chatNew={openTopics(allTopics(), state).some((tp) => !story.readTopics().has(tp.id))}
-          onChat={() => {
-            setMenuOpen(false);
-            setChatOpen(true);
-          }}
-          onStory={() => {
-            setMenuOpen(false);
-            setStoryListOpen(true);
-          }}
-          onNew={() => {
-            setMenuOpen(false);
-            game.newSeason();
-          }}
-          onPanel={(t) => {
-            setMenuOpen(false);
-            openPanel(t);
-          }}
+          desk={desk}
+          tab={tab}
+          onTab={setTab}
           guideNew={guideNew}
+          onGuideSeen={seeGuide}
+          title={titleScreen}
+          onMusic={onMusic}
         />
-      )}
-    </div>
-  );
-  return (
-    <>
-      {desk ? (
-        <div className={s.deskRoot} style={style}>
-          <div className={s.deskBg} aria-hidden="true" />
-          {game_}
-          <div className={cx(s.app, s.appContents)}>
-            <DeskPanel tab={tab} onTab={openPanel} dot={guideNew ? "guide" : undefined}>
-              {panel(tab)}
-            </DeskPanel>
-          </div>
-        </div>
       ) : (
-        game_
+        <SelectFrame desk={desk} title={titleScreen} />
       )}
-      <div className={cx(s.app, s.appContents)} style={style}>
-        <PanelSheet
-          open={!desk && sheet !== undefined}
-          title={sheet ? panelTitle(sheet) : ""}
-          onClose={() => setSheet(undefined)}
-        >
-          {sheet && panel(sheet)}
-        </PanelSheet>
-        {trackSheet && (
-          <TrackSheet
-            view={trackSheet.view}
-            open={trackSheet.open}
-            onClose={() => setTrackSheet((t) => (t?.open ? { ...t, open: false } : t))}
-          />
-        )}
-      </div>
-    </>
-  );
-}
-
-/**
- * The notice after a story scene (owner 2026-11-13): just over the goal's track tab, never over
- * the menu's buttons; without that card on screen, under the top bar.
- */
-function StoryToast({ children, long = false }: { children: React.ReactNode; long?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [spot, setSpot] = useState<React.CSSProperties>({ visibility: "hidden" });
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    // the notice is fixed: viewport coordinates
-    // the track hides in its edge tab (owner 2026-11-14): just over the tab
-    const track = document.getElementById("m-pista-tab")?.getBoundingClientRect();
-    const height = el.getBoundingClientRect().height;
-    const top = track && track.height > 0 ? track.top - height - 10 : 124;
-    setSpot({ top: Math.max(8, Math.round(top)) });
-  }, []);
-  return (
-    <div
-      ref={ref}
-      className={cx(st.toast, long && st.toastLong)}
-      id="m-capitulo-aviso"
-      role="status"
-      style={spot}
-    >
-      {children}
     </div>
   );
 }
 
-/** «Directo» (owner 2026-11-14): a goal race opens on its result; «Ver otra vez» plays it. */
-function raceStraight(): boolean {
-  return getPace() === "direct";
-}
-
-/** Where a story scene can play (owner 2026-11-13). */
-type SceneMode = "menu" | "prerace" | "race";
-
-/** Marks the week's step read once mounted (a week whose decision left no effects to play). */
-function Acknowledge({ onMount }: { onMount: () => void }) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once
-  useEffect(onMount, []);
-  return null;
-}
-
-/** The sponsor's two colors of the Falconess in play (Kōryū's red and yellow before one is picked). */
-function transitionColors(
-  game: { context(): SimContext },
-  falconessId: string | undefined,
-): { primary: string; secondary: string } {
-  const content = falconessId === undefined ? undefined : game.context().content;
-  const f = falconessId === undefined ? undefined : content?.falconess.get(falconessId);
-  const palette = f ? content?.getManufacturer(f.sponsor).palette : undefined;
-  return { primary: palette?.primary ?? "#c0392b", secondary: palette?.secondary ?? "#f1c40f" };
-}
-
-/** The menu's own buttons: in the phone's sheet and in the wide screen's panel. */
-function MenuItems({
-  onExport,
-  onHistory,
-  onTests,
-  onNew,
-  chatName,
-  chatNew,
-  onChat,
-  onStory,
-}: {
-  onExport: () => void;
-  onHistory: () => void;
-  onTests: () => void;
-  onNew: () => void;
-  chatName: string;
-  chatNew: boolean;
-  onChat: () => void;
-  onStory: () => void;
-}) {
-  const [confirm, setConfirm] = useState(false);
-  const [sound, setSound] = useState<SoundStyle>(getSoundStyle);
-  const [music, setMusicState] = useState(getMusicOn);
-  const pace = usePace();
-  const onSound = () => {
-    const next = nextSoundStyle(sound);
-    setSoundStyle(next);
-    setSound(next);
-    // the new style says itself: its success
-    playSound("success");
-  };
+/** The character select: centered on a wide screen, with no panel beside it. */
+function SelectFrame({ desk, title }: { desk: boolean; title: ReactElement | undefined }) {
   return (
     <>
-      <button type="button" className={s.btn} id="m-chat-abrir" data-new={chatNew} onClick={onChat}>
-        <Glyph name="chat" size={20} />
-        {ui("ui.m.chat.with", { name: chatName })}
-        {chatNew && <span className={st.newTag}>{ui("ui.m.chat.new")}</span>}
-      </button>
-      <button type="button" className={s.btn} id="m-historia-abrir" onClick={onStory}>
-        <Glyph name="book" size={20} />
-        {ui("ui.m.story.title")}
-      </button>
-      <button type="button" className={s.btn} id="m-exportar-partida" onClick={onExport}>
-        <Glyph name="down" size={20} />
-        {ui("ui.m.export.run")}
-      </button>
-      <button type="button" className={s.btn} id="m-temporadas" onClick={onHistory}>
-        <Glyph name="book" size={20} />
-        {ui("ui.m.history.title")}
-      </button>
-      <button type="button" className={s.btn} id="m-pruebas" onClick={onTests}>
-        <Glyph name="screen" size={20} />
-        {ui("ui.m.tests")}
-      </button>
-      <button
-        type="button"
-        className={s.btn}
-        id="m-sonido"
-        data-style={sound}
-        aria-label={ui("ui.m.sound.label", { style: ui(`ui.m.sound.${sound}`) })}
-        onClick={onSound}
-      >
-        <Glyph name={sound === "off" ? "mute" : "speaker"} size={20} />
-        {ui("ui.m.sound", { style: ui(`ui.m.sound.${sound}`) })}
-      </button>
-      <button
-        type="button"
-        className={s.btn}
-        id="m-musica"
-        data-on={music}
-        onClick={() => {
-          setMusicOn(!music);
-          setMusicState(!music);
-        }}
-      >
-        <Glyph name={music ? "note" : "mute"} size={20} />
-        {ui("ui.m.music", { state: ui(music ? "ui.m.music.on" : "ui.m.music.off") })}
-      </button>
-      <button
-        type="button"
-        className={s.btn}
-        id="m-ritmo"
-        data-pace={pace}
-        aria-label={ui("ui.m.pace.label", { pace: ui(`ui.m.pace.${pace}`) })}
-        onClick={() => setPace(nextPace(pace))}
-      >
-        <Glyph name="skip" size={20} />
-        {ui("ui.m.pace", { pace: ui(`ui.m.pace.${pace}`) })}
-      </button>
-      <LangButton className={s.btn} id="m-idioma" />
-      {confirm ? (
-        <button type="button" className={cx(s.btn, s.btnMain)} id="m-nueva-si" onClick={onNew}>
-          {ui("ui.m.new.confirm")}
-        </button>
-      ) : (
-        <button type="button" className={s.btn} id="m-nueva" onClick={() => setConfirm(true)}>
-          <Glyph name="flag" size={20} />
-          {ui("ui.m.new")}
-        </button>
-      )}
-    </>
-  );
-}
-
-/** «Menú» on a phone: the panels first (owner 2026-11-13), then the menu's buttons. */
-function MobileMenu({
-  open,
-  onClose,
-  onPanel,
-  guideNew,
-  ...items
-}: {
-  open: boolean;
-  onClose: () => void;
-  onPanel: (tab: PanelTab) => void;
-  guideNew: boolean;
-  onExport: () => void;
-  onHistory: () => void;
-  onTests: () => void;
-  onNew: () => void;
-  chatName: string;
-  chatNew: boolean;
-  onChat: () => void;
-  onStory: () => void;
-}) {
-  // mounted on open: its buttons start fresh each time («Nueva temporada» unconfirmed)
-  const { ref, mounted } = useModalDialog(open, onClose);
-  if (!mounted) return null;
-  return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-menu-dialogo"
-      aria-labelledby="m-menu-titulo"
-      onClose={onClose}
-    >
-      <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-menu-titulo">
-          {ui("ui.m.menu")}
-        </h2>
-        {(["guide", "goals", "crews", "log"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            className={s.btn}
-            id={`m-panel-abrir-${t}`}
-            onClick={() => onPanel(t)}
-          >
-            <Glyph name={PANEL_GLYPH[t]} size={20} />
-            {panelTitle(t)}
-            {t === "guide" && guideNew && <span className={st.newTag}>{ui("ui.m.guide.new")}</span>}
-          </button>
-        ))}
-        <MenuItems {...items} />
-        <button type="button" className={cx(s.btn, s.btnDark)} id="m-menu-cerrar" onClick={onClose}>
-          {ui("ui.m.close")}
-        </button>
+      {desk ? <div className={s.deskBg} aria-hidden="true" /> : null}
+      <div className={cx(s.app, desk && s.appDesk, desk && s.appDeskSolo)} data-app>
+        <SelectScreen onTests={() => navigate("inicio")} />
+        {title}
       </div>
-    </dialog>
+    </>
   );
 }
