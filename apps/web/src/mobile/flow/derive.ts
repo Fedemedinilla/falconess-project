@@ -240,7 +240,7 @@ function shownOf(
   const position = (week: DecidedWeek, inert: boolean): Screen => ({
     kind: "position",
     week,
-    wings: card?.kind === "position" ? card.wings : raceWings(ctx, state),
+    wings: card?.kind === "position" ? card.wings : raceWings(ctx, state, week.input),
     inert,
   });
 

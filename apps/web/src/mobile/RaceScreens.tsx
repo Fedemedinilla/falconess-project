@@ -48,6 +48,10 @@ export function PreRaceScreen({
   mirror?: boolean;
   /** ADR-0015: the id of a named rival who runs in it (Milana). */
   named?: string | undefined;
+  /**
+   * The position of the wings she races with, preselected: after the week's action on the decided
+   * card (a workshop order may equip other wings, F5), the equipped ones on the planning card.
+   */
   wings: Position;
   position: Position | undefined;
   /** The week's action waiting for the race, if one was chosen. */

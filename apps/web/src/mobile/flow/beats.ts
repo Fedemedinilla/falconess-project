@@ -137,8 +137,14 @@ export function beatsOf(
       );
     }
     for (const sc of due("prerace")) push(scene(sc, "prerace"));
-    // nothing after «Correr» exists yet: the card is always the last beat (it has no way back)
-    out.push({ kind: "position", key: k("position"), week: w, wings: raceWings(ctx, run.state) });
+    // nothing after «Correr» exists yet: the card is always the last beat (it has no way back);
+    // it preselects the position of the wings the action leaves her with (F5)
+    out.push({
+      kind: "position",
+      key: k("position"),
+      week: w,
+      wings: raceWings(ctx, run.state, w.input),
+    });
     return out;
   }
 

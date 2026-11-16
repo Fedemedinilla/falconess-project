@@ -8,6 +8,8 @@ import {
   skipScene,
   startMobile,
   test,
+  toPosition,
+  toResult,
   week,
 } from "./mobile-helpers";
 
@@ -335,4 +337,27 @@ test("reduced motion turned on during a race week's training result: the race mo
     timeout: 20_000,
   });
   expect(await page.evaluate(() => Reflect.get(window, "__emblem"))).toBe(false);
+});
+
+test("a race week's workshop swaps her wings: the card preselects the new wings' position, and the old one is a choice (F5)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  // her dive wings race as a closer; Mule's (ground) as the pack
+  await page.click("#m-taller");
+  await page.click("#m-ala-mule");
+  await page.click("#m-taller-confirmar");
+  await toPosition(page);
+  await expect(page.locator("#m-posicion-pack")).toBeChecked();
+  // the old wings' position is no longer her default: picking it is a choice the race keeps
+  await page.click('label[for="m-posicion-closer"]');
+  await expect(page.locator("#m-posicion-closer")).toBeChecked();
+  await page.click("#m-correr");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await page.click("#m-saltar");
+  await toResult(page);
+  await expect(page.locator("#m-resultado-posicion")).toHaveAttribute("data-position", "closer");
 });

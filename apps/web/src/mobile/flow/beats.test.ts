@@ -1,3 +1,4 @@
+import type { Position } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import type { WeekActionInput } from "../../screens/model/position";
 import type { Pace } from "../pace";
@@ -209,6 +210,8 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
     readonly from: "menu" | "train" | "workshop";
     readonly action: readonly string[];
     readonly scene: string;
+    /** The position the card preselects: her wings' after the action (F5). */
+    readonly wings: Position;
   }[] = [
     {
       name: "a training",
@@ -217,6 +220,7 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
       from: "train",
       action: ["result:success"],
       scene: "peregrina-debut",
+      wings: "closer",
     },
     {
       name: "a rest",
@@ -225,6 +229,7 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
       from: "menu",
       action: ["fx:action:sleep-normal"],
       scene: "peregrina-debut",
+      wings: "closer",
     },
     {
       name: "a workshop that learns a skill",
@@ -233,6 +238,7 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
       from: "workshop",
       action: ["fx:action:skills"],
       scene: "peregrina-long",
+      wings: "closer",
     },
     {
       name: "a workshop that swaps the wings",
@@ -241,6 +247,8 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
       from: "workshop",
       action: [],
       scene: "peregrina-debut",
+      // Mule's ground wings race in the pack: the card follows them, not the dive wings (F5)
+      wings: "pack",
     },
   ];
 
@@ -264,9 +272,8 @@ describe("a decided race week (C: the action's part, the race mode up to «Corre
             if (b.kind !== "scene") expect(b.key.startsWith(`${fp}/w:`)).toBe(true);
           const card = queued.at(-1);
           expect(card?.kind === "position" && card.week).toBe(t.weeks.getSnapshot());
-          expect(card?.kind === "position" && card.wings).toBe(
-            raceWings(t.game.context(), stateOf(t)),
-          );
+          expect(card?.kind === "position" && card.wings).toBe(c.wings);
+          expect(c.wings).toBe(raceWings(t.game.context(), stateOf(t), c.input));
         }
       }
     });

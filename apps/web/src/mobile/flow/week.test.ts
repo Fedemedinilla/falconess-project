@@ -240,10 +240,15 @@ describe("previewResult: one simulation per state and input (critic b: the race 
 });
 
 describe("raceWings: the position her wings race in by default", () => {
-  it("is the equipped frame's (F5: the action's frame from 5.7)", () => {
+  const frame = (id: string) => ctx.content.getFrame(id);
+
+  it("with no action, or one that equips nothing, the equipped frame's", () => {
     const state = raceWeek("week-wings");
-    const frame = (id: string) => ctx.content.getFrame(id);
     expect(raceWings(ctx, state)).toBe(DEFAULT_POSITION[frame(state.equippedFrame).style]);
+    expect(raceWings(ctx, state, { kind: "rest" })).toBe(raceWings(ctx, state));
+    expect(raceWings(ctx, state, { kind: "workshop", ops: [{ op: "repair" }] })).toBe(
+      raceWings(ctx, state),
+    );
     const other = [...ctx.content.frames.values()].find(
       (f) => f.style !== frame(state.equippedFrame).style,
     );
@@ -251,6 +256,33 @@ describe("raceWings: the position her wings race in by default", () => {
     expect(raceWings(ctx, { ...state, equippedFrame: other.id })).toBe(
       DEFAULT_POSITION[other.style],
     );
+  });
+
+  it("a workshop equip-frame on a race week: the frame it equips, the one the sim races (F5)", () => {
+    const state = raceWeek("week-wings");
+    const other = state.hangar.find((id) => frame(id).style !== frame(state.equippedFrame).style);
+    if (!other) throw new Error("no frame of another style in her hangar");
+    const input: WeekActionInput = {
+      kind: "workshop",
+      ops: [{ op: "equip-frame", frameId: other }],
+    };
+    const wings = raceWings(ctx, state, input);
+    expect(wings).toBe(DEFAULT_POSITION[frame(other).style]);
+    expect(wings).not.toBe(raceWings(ctx, state));
+    // with no position on the input, the race runs in the new wings' own
+    const ran = advanceSeason(ctx, state, input).raceResults.at(-1);
+    expect(ran?.turn).toBe(state.turn);
+    expect(ran?.frameId).toBe(other);
+    expect(ran?.position).toBe(wings);
+  });
+
+  it("an injured week rests whatever the order: her wings stay the equipped ones", () => {
+    const state = { ...raceWeek("week-wings"), injuryTurns: 1 };
+    const other = state.hangar.find((id) => frame(id).style !== frame(state.equippedFrame).style);
+    if (!other) throw new Error("no frame of another style in her hangar");
+    expect(
+      raceWings(ctx, state, { kind: "workshop", ops: [{ op: "equip-frame", frameId: other }] }),
+    ).toBe(raceWings(ctx, state));
   });
 });
 

@@ -452,7 +452,9 @@ export function RunView({
       const goal = menu.goal;
       if (!goal || !menu.raceWeek) break;
       const decided = screen.kind === "position" ? screen : undefined;
-      const wings = decided ? decided.wings : raceWings(ctx, state);
+      // the decided card's wings follow its action's frame (F5); the planning card comes before
+      // any action, so its default is the equipped frame's
+      const wings = decided?.wings ?? raceWings(ctx, state);
       const position = screen.kind === "position" ? screen.week.position : screen.position;
       body = (
         <PreRaceScreen
