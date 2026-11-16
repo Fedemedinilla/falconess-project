@@ -289,3 +289,33 @@ Cuántas veces se tira el dado:
     (`packages/content/text/es.json`, `story.peregrina-invitation.1` y `.11`).
 - Lo que sí lo contradice: `docs/design/historia-peregrina.md:85-86` dice que la invitan «fans,
   prensa, Kōryū». Ajustar si el dueño lo confirma.
+
+### I12 · Temporadas futuras (2026-11-16)
+
+Cada una trae una actualización de pistas o mecánicas. **Condición del dueño: no cambian el motor**
+(«PERO NO CAMBIAN EL MOTOR»). Estado: **idea**; el orden entre ellas no está decidido. Va a:
+cronología (después del año de la primera liga), biblia del mundo, `secretos.md` (la primera).
+
+1. **La escudería sombra.** Se descubre; sus miembros están entrenadas y perfeccionadas para ser la
+   contraparte de las tres estrellas. Trae: habilidades que perjudican a otras (debuffs), acciones
+   agresivas como bloqueos o rebufos «con consciencia».
+2. **Carreras por equipos.** Equipos de tres Falconess en la misma carrera. Trae: sinergia entre
+   Falconess y habilidades que ayudan a otras (buffs).
+3. **El Underground.** Hoy todas las carreras son oficiales, pero en las ciudades hay un circuito
+   subterráneo: Falconess sin escudería o demasiado jóvenes para las ligas mayores compiten en
+   callejones y entre el tráfico. Trae: pistas urbanas, obstáculos como autos y edificios.
+4. **Carreras de resistencia (estilo Le Mans).** Duran días. Las participantes arman equipos
+   improvisados dentro de la carrera, acampan, descansan y hacen otras actividades para seguir; se
+   pueden rendir y salir. Trae: carreras que duran días.
+
+Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-11-16):
+
+- Ya existe en el motor: bloqueo y rebufo (`packages/sim/src/rulesets/v3/constants.ts:130-184`,
+  `blockMm`, `airDraftBand`) y tipos de tramo como saltos, curvas, cañón y agua (`courses-v3`).
+- No existe: habilidades que afecten a otra corredora. Hoy una habilidad solo cambia a quien la usa
+  (`packages/schema/src/skill.ts:16-25`, `SkillEffect`), y `docs/design/temporada-v3.md` T19 ya
+  anotaba que las habilidades contra rivales piden un cambio de motor. Las temporadas 1 y 2 chocan
+  con la condición «sin cambiar el motor» en esa parte.
+- Posible sin tocar el motor (propuesta): pistas urbanas armadas con los tramos que ya existen;
+  puntaje por equipo calculado fuera de la carrera; la resistencia como varias etapas seguidas con
+  decisiones entre etapas (acampar, descansar, rendirse) en la capa de temporada.
