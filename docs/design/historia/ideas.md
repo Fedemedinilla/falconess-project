@@ -130,18 +130,44 @@ historia principal; después, el resto de las preguntas del traspaso.
 - Abierto para más adelante: cuántas veces se puede tirar el dado; si estas Falconess tienen
   historia propia o solo la que arma la temporada; cómo convive con el gacha sin pago para ganar.
 
-#### I5 y el multijugador (dueño, 2026-11-16; resumen a confirmar)
+#### I5 y el multijugador (dueño, 2026-11-16)
 
 > «La idea es que el juego llegue a ser Multiplayer. Es decir, mi Falconess random, corriendo vs las
-> Falconesses random de otros más. Lo que sí no se hará, es mi Peregrina vs la Peregrina de otros.
-> Lo que podemos hacer es que el modo actual, el de Temporada, funcione para crear a la Peregrina (o
-> Caracara o Cernícala) para que inspire a la Falconess Random. Y esa Falconess Random será la que el
-> player grindee y levee, para ponerla en contra a las Falconess de otros en multiplayer.»
-- Estado: **en discusión** (falta que el dueño confirme el resumen).
-- En el multijugador corren solo Falconess al azar; nunca las Falconess con nombre.
-- La temporada con Peregrina, Cernícala o Caracara sirve para criar su herencia (la caja negra,
-  `docs/BRIEF.md:417`), que inspira a la Falconess al azar.
-- La Falconess al azar es la que el jugador hace crecer de verdad y lleva al multijugador.
+> Falconesses random de otros más. Lo que sí no se hará, es mi Peregrina vs la Peregrina de otros.»
+
+Confirmado y ampliado por el dueño el mismo día:
+
+> «Hay dos tipos de Falconess "jugables". Las 3 que están ahora (y las que vengan después),
+> handcrafted por nosotros y su personalidad. El jugador juega sus temporadas, puede ver sus Story
+> Mode, y generar Black Boxes con los resultados de las temporadas. Y están las Falconess Random, que
+> el jugador elige de entre 3 randoms, que son únicas de cada player, serían como la representante de
+> la cuenta del jugador, la cara del jugador en el multiplayer, es random, sale de una seed, tiene
+> fortalezas y debilidades (y stats básicos y bajos), y también tiene su propia temporada para que el
+> player la pueda levear y armar COMO QUIERA, esta parte es importante, ya que Peregrina, por
+> ejemplo, no puede armarse como uno quiera, ya tiene su camino predilecto. Lo que tiene de
+> interesante la Falconess random, es que puede utilizar 2 black boxes salidas del otro modo […] (hay
+> que hacer que las black boxes tengan su cantidad de usos, ejemplo, 3 usos MÁXIMO y después se
+> destruyen).»
+- Estado: **decidida** como dirección (2026-11-16); es diseño de juego, no de historia: cuando se
+  lleve al juego va al BRIEF y a un ADR propio.
+- **Falconess con nombre:** hechas a mano, con personalidad, temporada con camino propio, Modo
+  Historia, y dejan cajas negras. Nunca corren entre jugadores.
+- **Falconess al azar:** se elige una entre tres candidatas; sale de una semilla; única de cada
+  jugador; es la cara de su cuenta en el multijugador; empieza con stats bajos, fortalezas y
+  debilidades; tiene su propia temporada y se arma como el jugador quiera.
+- **Cajas negras:** la Falconess al azar usa hasta dos por temporada; cada caja tiene usos (por
+  ejemplo, 3 como máximo) y después se destruye.
+- **El ciclo (ejemplo del dueño):** querés una Falconess de Sprint → repetís la temporada de
+  Peregrina hasta sacar dos cajas buenas (Agilidad 3★, habilidades de Sprint) → se las ponés a tu
+  Falconess al azar (cada una pierde un uso) → si la temporada sale mal, probás otra vez → cuando se
+  gastan, volvés a Peregrina por más.
+- Abierto: hoy las cajas también se usan en las temporadas de las Falconess con nombre (sacar una
+  caja en Normal para pasar Exigente, `docs/decisions/ADR-0013-herencia-con-suerte.md`, contexto y
+  decisión 1). ¿Eso sigue, y ahí también gasta usos?
+- Abierto: ¿una sola Falconess al azar por cuenta o varias? ¿A qué escudería pertenece? ¿Qué
+  historia tiene su temporada, si no tiene personalidad escrita a mano?
+- Nota para las opciones de abajo: gastar usos de cajas ya es un riesgo (lo que se arriesga en cada
+  intento), y «elegir entre tres» ya está decidido.
 
 #### Opciones para I5 (propuesta, 2026-11-16, para que elija el dueño)
 
