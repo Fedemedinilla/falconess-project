@@ -639,6 +639,52 @@ test("a saved run that no longer replays: «Continuar» says so on the selection
   await expect(alert).toHaveCount(0);
 });
 
+test("the selection's notice covers none of its choices: it sits over the heading (rule 17)", async ({
+  page,
+}) => {
+  const { save } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-w10.json", import.meta.url)), "utf8"),
+  );
+  const broken = JSON.stringify({
+    ...save,
+    inputs: [...save.inputs, { kind: "event:choose", option: 0 }],
+  });
+  await page.addInitScript((text) => {
+    localStorage.setItem("falconess.pruebas.partida", text);
+  }, broken);
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-continuar");
+  const alert = page.locator("#m-aviso-error");
+  await expect(alert).toBeVisible();
+  // where it stands, its entrance's rise aside
+  const notice = await alert.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const shift = getComputedStyle(el).transform;
+    const dy = shift === "none" ? 0 : new DOMMatrixReadOnly(shift).m42;
+    return { left: r.left, right: r.right, top: r.top - dy, bottom: r.bottom - dy };
+  });
+  const choices = page.locator(
+    "[id^='m-elegir-'], [id^='m-dificultad-'], #m-continuar, #m-empezar, #m-temporadas-inicio",
+  );
+  const n = await choices.count();
+  expect(n).toBeGreaterThan(5);
+  for (let i = 0; i < n; i++) {
+    const choice = choices.nth(i);
+    const box = await choice.boundingBox();
+    if (!box) continue;
+    expect(
+      overlaps(notice, {
+        left: box.x,
+        right: box.x + box.width,
+        top: box.y,
+        bottom: box.y + box.height,
+      }),
+      `${await choice.getAttribute("id")}`,
+    ).toBe(false);
+  }
+});
+
 test("the season's start with a parent: the passed prologue's notice waits for the card, then shows its whole time (A.5.4)", async ({
   page,
 }) => {

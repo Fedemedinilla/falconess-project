@@ -355,7 +355,7 @@ function errorId(e: GameError): string {
 /**
  * The selection's notice (plan §1.9, critic b: errors were swallowed there): a «Continuar» whose
  * save no longer loads, or a season that could not start, in `ui.error.<kind>`'s words, until it
- * is closed or its time is up (`onClose` clears it).
+ * is closed or its time is up (`onClose` clears it). It sits just over the choices, on the heading.
  */
 export function ErrorNotice({
   error,

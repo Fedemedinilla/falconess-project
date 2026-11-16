@@ -62,7 +62,7 @@ export type Span = { readonly top: number; readonly bottom: number };
 
 /**
  * The notices' top in their containing block: just over the screen's `[data-toast-anchor]` (the
- * menu's track tab, a card's foot: rule 17), or `NOTICE_TOP` without one. `cbTop` is where the
+ * menu's track tab, a card's foot, the selection's choices: rule 17), or `NOTICE_TOP` without one. `cbTop` is where the
  * containing block starts in the viewport: the game's column when it carries a transform (the
  * wide screen), else the viewport (0).
  *

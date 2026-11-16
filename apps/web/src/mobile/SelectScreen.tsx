@@ -70,7 +70,8 @@ export function SelectScreen({ onTests }: { onTests: () => void }) {
                 : roster[0]?.seasonGoals.length) ?? 0,
           })}
         </p>
-        <div className={s.pickList}>
+        {/* a notice (a «Continuar» that cannot load) sits just over the choices: on the heading */}
+        <div className={s.pickList} data-toast-anchor>
           {roster.map((f) => {
             const art = runnerArt(f.id);
             const sponsor = content.getManufacturer(f.sponsor);
