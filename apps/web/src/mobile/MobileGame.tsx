@@ -20,6 +20,7 @@ import { type RunMusic, RunView } from "./RunView";
 import { SelectScreen } from "./SelectScreen";
 import { playNav, queueTap } from "./sfx";
 import { TitleScreen } from "./TitleScreen";
+import { useBackGesture } from "./useBackGesture";
 
 /** A wide screen (owner 2026-11-13): the game's column with the panel beside it. */
 export const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
@@ -148,6 +149,9 @@ export function MobileGame() {
 
 /** The character select: centered on a wide screen, with no panel beside it. */
 function SelectFrame({ desk, title }: { desk: boolean; title: ReactElement | undefined }) {
+  // the back gesture leaves #juego from here, as from the menu (a sheet open closes first); an
+  // entry the game left (a reload, «Nueva temporada» from «Menú») is taken back
+  useBackGesture("rest");
   return (
     <>
       {desk ? <div className={s.deskBg} aria-hidden="true" /> : null}

@@ -50,6 +50,32 @@ describe("the modal registry (F10): which sheets are open", () => {
     expect(modals.anyOpen()).toBe(false);
   });
 
+  it("the back gesture closes the sheet opened last of those still open, as its «Cerrar» does", () => {
+    const modals = createModalRegistry();
+    const closed: string[] = [];
+    expect(modals.closeTop()).toBe(false);
+    const goals = modals.hold(() => closed.push("goals"));
+    const track = modals.hold(() => closed.push("track"));
+    expect(modals.closeTop()).toBe(true);
+    expect(closed).toEqual(["track"]);
+    // its parent closes it: released, the one under it is next
+    track();
+    modals.closeTop();
+    expect(closed).toEqual(["track", "goals"]);
+    goals();
+    expect(modals.closeTop()).toBe(false);
+    // a sheet released out of order leaves the others in their order
+    const a = modals.hold(() => closed.push("a"));
+    const b = modals.hold(() => closed.push("b"));
+    const c = modals.hold(() => closed.push("c"));
+    b();
+    modals.closeTop();
+    c();
+    modals.closeTop();
+    expect(closed.slice(2)).toEqual(["c", "a"]);
+    a();
+  });
+
   it("released at the close request: a closing sheet is still in the page, no longer open", () => {
     const modals = createModalRegistry();
     // the parent opens it: in the page, and held

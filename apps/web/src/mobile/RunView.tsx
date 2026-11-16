@@ -55,6 +55,7 @@ import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { type TrackCardView, trackCard } from "./track";
+import { gestureAt, useBackGesture } from "./useBackGesture";
 import { useFlow } from "./useFlow";
 import { useStory } from "./useStory";
 import { WeekFxOverlay } from "./WeekFx";
@@ -133,6 +134,9 @@ export function RunView({
   const [storyListOpen, setStoryListOpen] = useState(false);
   // how far down the season's end was when a race of it was seen again: it comes back there
   const endScroll = useRef(0);
+  // the back gesture (O10): what «Volver» does where there is one, a sheet's «Cerrar» while one
+  // is open, nothing while the week plays; from the menu or the end it leaves #juego, as before
+  useBackGesture(gestureAt(flow), () => cmd.open("menu"));
 
   // the music follows the mode (owner 2026-11-12): the race's own in race mode, the menu theme
   // everywhere else (the shell plays the title theme over the title and the selection)

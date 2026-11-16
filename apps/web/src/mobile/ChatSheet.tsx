@@ -32,8 +32,9 @@ export function ChatSheet({
   onRead: (topicId: string) => void;
   onClose: () => void;
 }) {
-  // mounted only while open: it counts as an open sheet for as long as it is in the page
-  useModalOpen(true);
+  // mounted only while open: it counts as an open sheet for as long as it is in the page (and
+  // the back gesture closes it as «Cerrar» does)
+  useModalOpen(true, onClose);
   const [bubbles, setBubbles] = useState<readonly Bubble[]>([]);
   const [typing, setTyping] = useState(false);
   const feed = useRef<HTMLDivElement>(null);

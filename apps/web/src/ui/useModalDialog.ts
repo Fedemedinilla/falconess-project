@@ -15,7 +15,8 @@ export function sheetPhase(phase: SheetPhase, open: boolean): SheetPhase {
  * A sheet of the phone game as a native modal `<dialog>`: in the page only while it is open or
  * closing (`mounted`), shown with `showModal` (the focus moves in and the page behind is inert)
  * and closed natively before it leaves the page, so the focus goes back to what opened it. It
- * counts in `ui/modals` from its open until its close request.
+ * counts in `ui/modals` from its open until its close request, with `onClose` as what the back
+ * gesture does to it (O10: the browser's Back and iOS's swipe; Android's back closes it natively).
  *
  * `onClose` hears every close, as the dialog's close event did when it stayed in the page: the
  * dialog's own (Escape, Android's back: put `onClose` on the `<dialog>` too), and the one this
@@ -30,7 +31,7 @@ export function useModalDialog(
   const next = sheetPhase(phase, open);
   if (next !== phase) setPhase(next);
   const closeRef = useLatest(onClose);
-  useModalOpen(open);
+  useModalOpen(open, onClose);
   useLayoutEffect(() => {
     const d = ref.current;
     if (phase === "open") {
