@@ -56,6 +56,15 @@ describe("motion tokens: motion.css and motion.ts agree", () => {
     expect([...reduce.keys()]).toEqual([...root.keys()].filter((k) => k !== "--m-dur-fast"));
     for (const [name, ms] of reduce) expect(ms, name).toBe(0);
   });
+  // the parity check below is expected to fail; this keeps it failing for the right reason (two
+  // bodies that differ), not because a stamp's keyframes went missing or the scan lost them
+  it("both stamps have their keyframes, and the scan reads them", () => {
+    for (const file of ["Mobile.module.css", "WeekFx.module.css"]) {
+      const body = keyframes(css(file), "stampIn");
+      expect(body, file).toMatch(/^0% \{.*\}$/);
+      expect(body, file).toContain("scale(");
+    }
+  });
   // L11: the training's stamp and the week's effects' stamp are two keyframes today (CSS modules
   // scope them); 6.8 makes them one body, and this flips to `it`
   it.fails("the stamp lands the same on the training screen and in the week's effects", () => {
