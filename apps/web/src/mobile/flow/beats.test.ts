@@ -130,11 +130,14 @@ describe("a normal week", () => {
     expect(queue(t, done, TARGET_POLICY)).toEqual(["ack", "idle"]);
   });
 
-  it("committed before this mount (a reload): legacy loses the result, target plays it again (O1)", () => {
+  it("committed before this mount (a reload): the result plays again while its week is unread (O1)", () => {
     const t = started("s1");
     commit(t, { kind: "train:agility" });
-    expect(queue(t, INITIAL_UI, LEGACY_POLICY)).toEqual(["ack", "idle"]);
-    expect(queue(t, INITIAL_UI, TARGET_POLICY)).toEqual(["result:boost", "ack", "idle"]);
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(["result:boost", "ack", "idle"]);
+    t.game.acknowledgeStep();
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(["idle"]);
   });
 
   it("an injured week's training rested by rule: legacy «FALLÓ» (F4), target no result (no effect yet: 5.8)", () => {
@@ -417,21 +420,28 @@ describe("a committed race (C after «Correr»)", () => {
       expect(queue(t, mine, p)).toEqual(["fx:race:points", "idle"]);
   });
 
-  it("committed before this mount (a reload): legacy the effects and the scene on the menu, target the race again (O1)", () => {
+  it("committed before this mount (a reload): the race again, its scene in the race mode (O1)", () => {
     const { t } = raced();
-    expect(queue(t, INITIAL_UI, LEGACY_POLICY)).toEqual([
-      "fx:race:points",
-      "scene:peregrina-debut-win@menu",
-      "idle",
-    ]);
-    expect(queue(t, INITIAL_UI, TARGET_POLICY)).toEqual([
+    expect(t.weeks.getSnapshot()).toEqual({ phase: "raced", fp: fpOf(t) });
+    const again = (p: FlowPolicy) => [
       "replay",
-      "finish",
+      ...(p.finishHold ? ["finish"] : []),
       "scene:peregrina-debut-win@race",
       "race-result",
       "fx:race:points",
       "idle",
-    ]);
+    ];
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(again(p));
+    // a reload mid-race under an older build left no record: the season goes on, so the race too
+    t.weeks.clear();
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(again(p));
+    // its result seen: the race's effects on the menu
+    t.weeks.markRaceSeen(fpOf(t));
+    t.story.markSeen("1", "peregrina-debut-win");
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(["fx:race:points", "idle"]);
   });
 
   it("a step read elsewhere (the test view): the after-scene is left over for the menu", () => {
@@ -493,6 +503,47 @@ describe("the season's end (D, F3)", () => {
       "fx:race:mood-up+points",
       "idle",
     ]);
+  });
+
+  it("the race finale committed before this mount (a reload): the race again only while the record says «Correr» ran it", () => {
+    const t = loadSave("peregrina-w48");
+    decide(t, { kind: "rest" });
+    race(t, { kind: "rest" });
+    expect(stateOf(t).status).toBe("ended");
+    const again = (p: FlowPolicy) => [
+      "replay",
+      ...(p.finishHold ? ["finish"] : []),
+      "scene:peregrina-long-lost@race",
+      "race-result",
+      "fx:race:mood-up+points",
+      "idle",
+    ];
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(again(p));
+    // an End an older build saved (its last week never read, F3) has no such record: its last race
+    // never plays again, only that week's effects over the End, then what is left of its scenes
+    t.weeks.clear();
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual([
+        "fx:race:mood-up+points",
+        "scene:peregrina-long-lost@end",
+        "idle",
+      ]);
+    // nor with a record of another run, or of its result seen
+    t.weeks.markRaced("v3|another|48|00000000");
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)[0]).toBe("fx:race:mood-up+points");
+    t.weeks.markRaceSeen(fpOf(t));
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)[0]).toBe("fx:race:mood-up+points");
+  });
+
+  it("the training finale committed before this mount (a reload): its result again while unread (O1), then the End", () => {
+    const t = loadSave("caracara-w48");
+    commit(t, { kind: "train:technique" });
+    expect(stateOf(t).status).toBe("ended");
+    for (const p of [LEGACY_POLICY, TARGET_POLICY])
+      expect(queue(t, INITIAL_UI, p)).toEqual(["result:success", "ack", "idle"]);
   });
 
   it("the end's effects seen (the step read): the end, with nothing left to play", () => {

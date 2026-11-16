@@ -48,7 +48,11 @@ export type DecidedWeek = {
   readonly stage: "action" | "race";
 };
 
-/** What the week store keeps: a position planned, a week decided, or a race whose result was seen. */
+/**
+ * What the week store keeps: a position planned, a week decided, a race «Correr» ran whose result
+ * was not seen yet, or a race whose result was seen. The last two are keyed by the run the race
+ * led to.
+ */
 export type WeekRecord =
   | {
       readonly phase: "planned";
@@ -57,6 +61,7 @@ export type WeekRecord =
       readonly position: Position | undefined;
     }
   | ({ readonly phase: "decided" } & DecidedWeek)
+  | { readonly phase: "raced"; readonly fp: string }
   | { readonly phase: "raceSeen"; readonly fp: string };
 
 // --- the beats: what the game waits for -------------------------------------------------------------

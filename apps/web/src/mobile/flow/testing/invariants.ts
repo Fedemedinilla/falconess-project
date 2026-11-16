@@ -193,7 +193,7 @@ const I2 = invariant(
         // between the decision (or the mount's start) and the emblem: only the week's action
         const fp = fpOfKey(k);
         const from = lastIndex(mount, (d, j) => j < i && d.type === "decide" && d.week.fp === fp);
-        // restored, not decided again in this mount (legacy loses the week at a reload, F1)
+        // restored at stage race, and not decided again in this mount
         if (k === restoredRace && from < 0)
           out.push(`${where(e)}: the emblem of a week restored at stage race`);
         for (const d of mount.slice(from + 1, i))
@@ -406,10 +406,9 @@ const I8 = invariant(
           .map((sc) => sc.id),
       );
       const count = new Map<string, number>();
-      const dones = of(season, "done");
-      dones.forEach((d, i) => {
+      for (const d of of(season, "done")) {
         const sc = sceneOf(d.beat);
-        if (!sc) return;
+        if (!sc) continue;
         count.set(sc.id, (count.get(sc.id) ?? 0) + 1);
         if (!due.has(sc.id)) out.push(`${where(d)}: ${sc.id} played, never due`);
         const kind = sc.trigger.kind;
@@ -420,18 +419,9 @@ const I8 = invariant(
               ? "race"
               : "menu";
         const mode = sceneMode(d);
-        // legacy (until 5.6): a reload after «Correr» loses that race's mode (F1, O1), so its
-        // scenes come as the menu's or the End's leftovers (§1.4 B.4), before any race's result
-        // in that mount
-        const lost =
-          !w.policy.resume &&
-          want === "race" &&
-          !dones.some(
-            (x, j) => j < i && x.at.mount === d.at.mount && x.beat.kind === "race-result",
-          );
-        if (mode !== want && !lost)
+        if (mode !== want)
           out.push(`${where(d)}: ${sc.id} (${kind}) played in ${mode}, not ${want}`);
-      });
+      }
       for (const id of due)
         if ((count.get(id) ?? 0) !== 1)
           out.push(`season ${first.at.season}: ${id} completed ${count.get(id) ?? 0} times`);
@@ -458,13 +448,7 @@ const I9 = invariant(
         need.push(`${fp}/race:result`);
         if (w.pace !== "direct") need.push(`${fp}/race:replay`);
       } else if (trainingOutcome(last.step, w.policy.restedCue)) need.push(`${fp}/result`);
-      // legacy (until 5.6): a reload after the commit that ended the season loses what it still
-      // had to play, its training's result or its race (F1, O1: only what a mount committed
-      // plays); its effects and its box come all the same
-      const at = season.indexOf(last);
-      const lost = !w.policy.resume && season.some((e, j) => j > at && e.type === "reload");
-      for (const k of need)
-        if (!done.has(k) && !lost) out.push(`${where(last)}: ${k} never completed`);
+      for (const k of need) if (!done.has(k)) out.push(`${where(last)}: ${k} never completed`);
       if (!done.has(`${fp}/fx`) && !done.has(`${fp}/ack`))
         out.push(`${where(last)}: the last week's effects never completed`);
       const box = of(season, "box").find((b) => b.fp === fp);
@@ -521,7 +505,7 @@ const I11 = invariant(
 const I12 = invariant(
   "I12",
   "a reload inside a decided week plays that week on (same input and position), no idle menu, and «Correr» runs it",
-  (p) => p.resume,
+  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -628,7 +612,7 @@ const I15 = invariant(
 const I16 = invariant(
   "I16",
   "a reload after «Correr» and before «Continuar» plays the race mode on: the replay (Directo: the result), the scene after it if unseen, the result",
-  (p) => p.resume,
+  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -758,7 +742,7 @@ function keptEnd(key: string, done: ReadonlySet<string>): boolean {
 const I20 = invariant(
   "I20",
   "after a reload the first beats are ones whose end was not kept (§1.8): no read week's result or effects, no card shown, no scene seen, no action part past its stage; and nothing the season ended before the reload that §1.8 keeps comes back",
-  (p) => p.resume,
+  always,
   (w) => {
     const out: string[] = [];
     for (const reload of of(w.trace, "reload")) {

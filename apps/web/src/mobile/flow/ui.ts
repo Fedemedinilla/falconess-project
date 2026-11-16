@@ -24,7 +24,7 @@ export type UiState = {
   readonly seq: number;
   /** The beats finished in this mount, by key. */
   readonly done: ReadonlySet<string>;
-  /** The runs (fingerprints) decided or committed in this mount: a restored week opens covered; legacy plays only these. */
+  /** The runs (fingerprints) whose race week was decided in this mount: a restored week opens covered. */
   readonly mine: ReadonlySet<string>;
   /** Where the race week's action was decided: the screen the emblem rises over. */
   readonly from: "menu" | "train" | "workshop";
@@ -41,11 +41,11 @@ export type UiEvent =
   | { readonly type: "select"; readonly kind: TrainingKind }
   | { readonly type: "tab"; readonly tab: WorkshopTab }
   /** A normal week committed: back to the menu. */
-  | { readonly type: "acted"; readonly fp: string }
+  | { readonly type: "acted" }
   /** A race week's action decided (its preview played). */
   | { readonly type: "decided"; readonly fp: string; readonly from: "menu" | "train" | "workshop" }
   /** «Correr» committed: back to the menu once the race mode ends. */
-  | { readonly type: "raced"; readonly fp: string }
+  | { readonly type: "raced" }
   /** Beats finished; a race's result (`…/race:result`) also ends a watch from it. */
   | { readonly type: "done"; readonly keys: readonly string[] }
   | { readonly type: "watch"; readonly turn: number; readonly from: "result" | "end" }
@@ -92,12 +92,6 @@ function navOf(to: Extract<UiEvent, { type: "open" }>["to"]): Nav {
   }
 }
 
-/** The state with a committed or decided run, and maybe back on the menu. */
-function committed(ui: UiState, fp: string, nav: Nav): UiState {
-  const mine = adding(ui.mine, [fp]);
-  return mine === ui.mine && ui.nav === nav ? ui : { ...ui, mine, nav };
-}
-
 /**
  * The state after `e`. Ignored, returning `ui` itself: a pick or a tab off its screen, a watch's
  * stage or end for another watch (a stale `n`) or with none, a toast already queued, a toast
@@ -121,10 +115,10 @@ export function reduceUi(ui: UiState, e: UiEvent): UiState {
       return { ...ui, nav: { at: "workshop", tab: e.tab } };
     case "acted":
     case "raced":
-      return committed(ui, e.fp, ui.nav.at === "menu" ? ui.nav : MENU);
+      return ui.nav.at === "menu" ? ui : { ...ui, nav: MENU };
     case "decided": {
-      const next = committed(ui, e.fp, ui.nav);
-      return next.from === e.from ? next : { ...next, from: e.from };
+      const mine = adding(ui.mine, [e.fp]);
+      return mine === ui.mine && ui.from === e.from ? ui : { ...ui, mine, from: e.from };
     }
     case "done": {
       const done = adding(ui.done, e.keys);

@@ -65,19 +65,20 @@ describe("reduceUi", () => {
     expect(reduceUi(train, { type: "tab", tab: "skills" })).toBe(train);
   });
 
-  it("acted and raced: back to the menu, the run is this mount's; decided: where it was decided, the nav kept", () => {
+  it("acted and raced: back to the menu; decided: where it was decided, the nav kept, the week this mount's", () => {
     const train = after({ type: "open", to: "train" });
-    const acted = reduceUi(train, { type: "acted", fp: "a" });
+    const acted = reduceUi(train, { type: "acted" });
     expect(acted.nav).toEqual({ at: "menu" });
-    expect([...acted.mine]).toEqual(["a"]);
-    expect(reduceUi(acted, { type: "acted", fp: "a" })).toBe(acted);
+    expect(acted.mine.size).toBe(0);
+    expect(reduceUi(acted, { type: "acted" })).toBe(acted);
     const decided = reduceUi(train, { type: "decided", fp: "b", from: "train" });
     expect(decided.nav).toBe(train.nav);
     expect([decided.from, [...decided.mine]]).toEqual(["train", ["b"]]);
     expect(reduceUi(decided, { type: "decided", fp: "b", from: "train" })).toBe(decided);
-    const raced = reduceUi(decided, { type: "raced", fp: "c" });
+    const raced = reduceUi(decided, { type: "raced" });
     expect(raced.nav).toEqual({ at: "menu" });
-    expect([...raced.mine]).toEqual(["b", "c"]);
+    expect([...raced.mine]).toEqual(["b"]);
+    expect(reduceUi(raced, { type: "raced" })).toBe(raced);
   });
 
   it("done: the keys accumulate; keys already done change nothing", () => {

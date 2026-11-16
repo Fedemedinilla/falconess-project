@@ -5,8 +5,7 @@
  * Every command goes through a recorder that writes what happened to `trace`: each flow after a
  * command (a "render"), each beat a command ended, each act, decision, acknowledgement, reload and
  * black box. `reload()` is the browser's: a new controller continues the saved run, new stores read
- * the same storage (the legacy `resume` keeps the week in memory, as today) and the UI state
- * starts again.
+ * the same storage and the UI state starts again.
  */
 import { loadSeasonContent } from "@falconess/content";
 import type { BlackBox, Difficulty, RunInput, StoryScene } from "@falconess/schema";
@@ -147,9 +146,6 @@ export type World = {
   probe(name: string, fn: (cmd: Commands) => void): void;
 };
 
-/** Whether a reload keeps the week's record (legacy: memory per mount, F1). */
-const keepsWeek = (p: FlowPolicy) => p.resume;
-
 export function createWorld(o: WorldOptions): World {
   const policy = o.policy;
   const pace = o.pace ?? "normal";
@@ -158,7 +154,7 @@ export function createWorld(o: WorldOptions): World {
   const kv = memoryStore();
   const trace: TraceEvent[] = [];
   let game = new GameController(loadSeasonContent, kv);
-  let weeks = new WeekStore(keepsWeek(policy) ? kv : undefined);
+  let weeks = new WeekStore(kv);
   let story = createStoryStore(kv);
   let cards = new InspirationStore(kv);
   let ui: UiState = INITIAL_UI;
@@ -239,8 +235,8 @@ export function createWorld(o: WorldOptions): World {
         },
         setPosition: (...a) => weeks.setPosition(...a),
         enterRace: (fp) => weeks.enterRace(fp),
+        markRaced: (fp) => weeks.markRaced(fp),
         markRaceSeen: (fp) => weeks.markRaceSeen(fp),
-        clear: () => weeks.clear(),
       },
       story: { markSeen: (seed, id) => story.markSeen(seed, id) },
       cards: { markShown: (seed, key) => cards.markShown(seed, key) },
@@ -342,13 +338,10 @@ export function createWorld(o: WorldOptions): World {
     resolve: (b: InstantBeat) => using("resolve", () => commands.resolve(b)),
   };
 
-  /**
-   * A new mount of the run's view: its stores read the storage again (legacy keeps the week in
-   * memory, so it starts empty), the UI state anew.
-   */
+  /** A new mount of the run's view: its stores read the storage again, the UI state anew. */
   const remount = (): void => {
     mount += 1;
-    weeks = new WeekStore(keepsWeek(policy) ? kv : undefined);
+    weeks = new WeekStore(kv);
     story = createStoryStore(kv);
     cards = new InspirationStore(kv);
     ui = INITIAL_UI;

@@ -5,11 +5,6 @@
  * that commit brings it back), and the last one deletes this file. Pure and text-free.
  */
 export type FlowPolicy = {
-  /**
-   * A reload plays on what was not seen (the result, the race, the decided week); legacy: only
-   * what this mount committed plays, and the decided week lives in memory (F1). Removed in 5.6.
-   */
-  readonly resume: boolean;
   /** A training that rested by rule (an injured week) still shows «FALLÓ» (F4); removed in 5.8. */
   readonly restedCue: boolean;
   /**
@@ -25,7 +20,6 @@ export type FlowPolicy = {
 
 /** Today's game, flag by flag. */
 export const LEGACY_POLICY: FlowPolicy = Object.freeze({
-  resume: false,
   restedCue: true,
   trainView: false,
   finishHold: false,
@@ -34,7 +28,6 @@ export const LEGACY_POLICY: FlowPolicy = Object.freeze({
 
 /** The designed flow (plan §1.4), which the season walks check. */
 export const TARGET_POLICY: FlowPolicy = Object.freeze({
-  resume: true,
   restedCue: false,
   trainView: true,
   finishHold: true,

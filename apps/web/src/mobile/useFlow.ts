@@ -15,7 +15,7 @@ import { useAnyModalOpen } from "../ui/modals";
 import { useReducedMotion } from "../ui/useMedia";
 import { followsMotion, isInstant } from "./flow/beats";
 import { type Commands, type FlowPorts, flowCommands } from "./flow/commands";
-import { WeekStore } from "./flow/decidedWeek";
+import type { WeekStore } from "./flow/decidedWeek";
 import { deriveFlow } from "./flow/derive";
 import { factsOf } from "./flow/facts";
 import type { InspirationStore } from "./flow/inspirations";
@@ -38,6 +38,8 @@ export type FlowNow = { readonly flow: Flow; readonly facts: FlowFacts; readonly
 export type FlowStores = {
   /** The inheritance cards this browser showed (F19). */
   readonly cards: InspirationStore;
+  /** The race week's record: planned, decided, raced, its race seen (D5, F1). */
+  readonly weeks: WeekStore;
 };
 
 /** Boot's flow stores (`<FlowStoresContext value={stores}>`). */
@@ -59,8 +61,10 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * `layer` keep their identity while they say the same), and the commands on their ports, which act
  * on the game. Instant beats resolve before paint.
  *
- * The cards shown are Boot's (`FlowStoresContext`). While the legacy policy is active, the week's
- * record lives in a memory store of this mount (today's "lost on reload"; 5.6 moves it to Boot).
+ * The cards shown and the week's record are Boot's (`FlowStoresContext`), on the browser's storage:
+ * a reload plays on what it finds unfinished (D5). A week's record that belongs to no run in play
+ * (the run moved on in the test view, another season began) is dropped once this view shows; the
+ * select screen has no run's view, so a record waits there for «Continuar».
  *
  * «Ritmo» and reduced motion are latched (`followsMotion`): a change applies at once at idle, over
  * a training's result, the week's effects, a card, the event and the decided card, and waits over
@@ -89,8 +93,7 @@ export function useFlow({
   const livePace = usePace();
   const liveReduced = useReducedMotion();
   const sheetOpen = useAnyModalOpen() || title;
-  const { cards } = useFlowStores();
-  const [weeks] = useState(() => new WeekStore(undefined));
+  const { cards, weeks } = useFlowStores();
   const week = useSyncExternalStore(weeks.subscribe, weeks.getSnapshot, weeks.getSnapshot);
   useSyncExternalStore(cards.subscribe, cards.version, cards.version);
   const [motion, setMotion] = useState<Motion>(() => ({ pace: livePace, reduced: liveReduced }));
@@ -192,10 +195,10 @@ export function useFlow({
   useLayoutEffect(() => {
     if (isInstant(top)) cmd.resolve(top);
   }, [top, cmd]);
-  // a week's record of another run (the run moved on outside this view) is dropped
+  // a week's record of no run in play (stale, or a preview that no longer plays) is dropped
   const record = facts.record;
   useEffect(() => {
-    if (week !== undefined && week.phase !== "raceSeen" && record === undefined) weeks.clear();
+    if (week !== undefined && record === undefined) weeks.clear();
   }, [week, record, weeks]);
 
   return { flow, ui, cmd, now, dispatch };

@@ -117,7 +117,7 @@ export const uiAfter = (...events: UiEvent[]): UiState => events.reduce(reduceUi
 /** A week's input committed in this mount. */
 export function commit(t: TestGame, input: RunInput): UiState {
   if (!t.game.act(input)) throw new Error(`refused: ${input.kind}`);
-  return uiAfter({ type: "acted", fp: fpOf(t) });
+  return uiAfter({ type: "acted" });
 }
 
 /** A race week's action decided in this mount (its preview played). */
@@ -140,9 +140,9 @@ export function decide(
   return uiAfter({ type: "decided", fp, from });
 }
 
-/** «Correr» on the decided week's input. */
+/** «Correr» on the decided week's input: its race plays on until its result was seen. */
 export function race(t: TestGame, input: WeekActionInput): UiState {
   if (!t.game.act(input)) throw new Error(`refused: ${input.kind}`);
-  t.weeks.clear();
-  return uiAfter({ type: "raced", fp: fpOf(t) });
+  t.weeks.markRaced(fpOf(t));
+  return uiAfter({ type: "raced" });
 }

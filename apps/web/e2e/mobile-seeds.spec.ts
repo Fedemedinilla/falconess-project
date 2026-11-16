@@ -62,7 +62,7 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-transicion")).toHaveCount(0);
   });
 
-  test("F1 (flipped in 5.6): a reload on the decided race card goes back to the week's menu", async ({
+  test("F1 (flipped in 5.6): a reload on the decided race card brings the same card back", async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -76,9 +76,10 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-volver")).toHaveCount(0);
     await page.reload();
     await continueRun(page);
-    await expect(page.locator("#m-entrenar")).toBeVisible();
-    expect(await week(page)).toBe(10);
-    await expect(page.locator("#m-precarrera")).toHaveCount(0);
+    await expect(page.locator("#m-precarrera")).toBeVisible();
+    await expect(page.locator("#m-precarrera-accion")).toBeVisible();
+    await expect(page.locator("#m-volver")).toHaveCount(0);
+    await expect(page.locator("#m-entrenar")).toHaveCount(0);
   });
 
   test("F4 (flipped in 5.8): a training on an injured week shows a failed result", async ({

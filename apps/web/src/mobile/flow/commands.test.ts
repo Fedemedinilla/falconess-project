@@ -109,7 +109,6 @@ describe("commands act and move the flow in the same call (critic (c)3)", () => 
       expect(acted?.inputs).toBe(before + 1);
       // the training's sound plays inside the tap (iOS)
       expect(["success", "boost", "fail"]).toContain(h.cues.at(-1));
-      // legacy plays only what this mount committed: `acted` names the run after the act
       expect(h.now().flow.top.kind).toBe("train-result");
     }
   });
@@ -134,8 +133,8 @@ describe("commands act and move the flow in the same call (critic (c)3)", () => 
       const before = h.inputs();
       h.cmd.run();
       expect(h.inputs()).toBe(before + 1);
-      expect(t.weeks.getSnapshot()).toBeUndefined();
-      // legacy plays only this mount's race: `raced` names the run after the act
+      // the record says «Correr» ran the race of the run it led to: a reload plays it on
+      expect(t.weeks.getSnapshot()).toEqual({ phase: "raced", fp: fpOf(t) });
       expect(h.now().flow.top.kind).toBe("replay");
       const count = h.dispatched.length;
       const snap = t.game.getSnapshot();

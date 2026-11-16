@@ -69,6 +69,7 @@ describe("the decided week's stored format", () => {
         input: { kind: "workshop", ops: [{ op: "equip-frame", frameId: "nimbus-glide" }] },
       }),
       decided({ input: { kind: "outing", manufacturer: "altair" } }),
+      { phase: "raced", fp: "v3|1|11|0000abcd" },
       { phase: "raceSeen", fp: "v3|1|11|0000abcd" },
     ];
     for (const r of records) expect(decodeWeek(encodeWeek(r))).toEqual(r);
@@ -94,6 +95,7 @@ describe("the decided week's stored format", () => {
       { ...good, stage: "done" },
       { ...good, turn: "10" },
       { v: 1, phase: "raceSeen" },
+      { v: 1, phase: "raced", fp: "v3|1|11|0000abcd", turn: 10 },
       // a position belongs to the record, never to the stored input
       { ...good, input: { kind: "rest", position: "lead" } },
       // only a week's action is decided
@@ -156,7 +158,7 @@ describe("validRecord: a record counts only for the run it was written in", () =
     expect(validRecord(ctx, run, fp, order)).toBeUndefined();
   });
 
-  it("a planned position on this run's race week; a race seen by the run it led to", () => {
+  it("a planned position on this run's race week; a race run or seen by the run it led to", () => {
     const plan: WeekRecord = { phase: "planned", fp, turn: run.state.turn, position: undefined };
     expect(validRecord(ctx, run, fp, plan)).toBe(plan);
     expect(validRecord(ctx, run, fp, { ...plan, turn: 3 })).toBeUndefined();
@@ -164,6 +166,9 @@ describe("validRecord: a record counts only for the run it was written in", () =
     const seen: WeekRecord = { phase: "raceSeen", fp };
     expect(validRecord(ctx, run, fp, seen)).toBe(seen);
     expect(validRecord(ctx, run, fp, { phase: "raceSeen", fp: "x" })).toBeUndefined();
+    const raced: WeekRecord = { phase: "raced", fp };
+    expect(validRecord(ctx, run, fp, raced)).toBe(raced);
+    expect(validRecord(ctx, run, fp, { phase: "raced", fp: "x" })).toBeUndefined();
   });
 
   it("reads the one preview cache that tryPreview and previewOf read (one simulation)", () => {
@@ -232,8 +237,9 @@ describe("the week store", () => {
         (s) => s.setPosition(fp, undefined),
         { phase: "decided", ...w, position: undefined, stage: "race" },
       ],
-      ["«Correr» committed", (s) => s.clear(), undefined],
+      ["«Correr» committed", (s) => s.markRaced(next), { phase: "raced", fp: next }],
       ["«Continuar» on its result", (s) => s.markRaceSeen(next), { phase: "raceSeen", fp: next }],
+      ["a record of no run in play, dropped", (s) => s.clear(), undefined],
     ];
     for (const [moment, act, after] of life) {
       act(store);
@@ -270,8 +276,12 @@ describe("the week store", () => {
     expect(store.getSnapshot()).toBeUndefined();
   });
 
-  it("a race seen takes no position and enters no race", () => {
+  it("a race run or seen takes no position and enters no race", () => {
     const store = new WeekStore(memoryStore());
+    store.markRaced(fp);
+    store.setPosition(fp, "lead");
+    store.enterRace(fp);
+    expect(store.getSnapshot()).toEqual({ phase: "raced", fp });
     store.markRaceSeen(fp);
     store.setPosition(fp, "lead");
     store.enterRace(fp);

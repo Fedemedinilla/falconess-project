@@ -12,7 +12,7 @@ import { type WeekFx, type WeekFxPart, weekFx } from "../weekFx";
 import type { FlowPolicy } from "./policy";
 import { dueScenes, menuOrder } from "./scenes";
 import { addedRace, fxPart } from "./steps";
-import type { Beat, FlowFacts, InstantBeat, SceneMode } from "./types";
+import type { Beat, FlowFacts, InstantBeat, SceneMode, WeekRecord } from "./types";
 import type { UiState } from "./ui";
 import { raceWings, trainBeat } from "./week";
 
@@ -68,6 +68,16 @@ export function followsMotion(beat: Beat): boolean {
   }
 }
 
+/**
+ * Whether the race of the last step plays (again): until its result was seen (`raceSeen`). Once the
+ * season ended, only while this browser's record says «Correr» ran it (`raced`): an End saved
+ * before the season's last week was read (an older build never read it, F3) keeps no such record,
+ * and never replays its last race (lead decision, 5.6); its effects still come, once.
+ */
+function racing(record: WeekRecord | undefined, ended: boolean): boolean {
+  return ended ? record?.phase === "raced" : record?.phase !== "raceSeen";
+}
+
 function cardBeat(card: InspirationScene): Beat {
   return { kind: "inspiration", key: `insp:${card.key}`, card };
 }
@@ -75,7 +85,9 @@ function cardBeat(card: InspirationScene): Beat {
 /**
  * Every beat the game waits for now, in the order they play (§1.4), the idle one last (on a
  * decided race week, its position card). A beat this mount finished is left out, and a key shows
- * once (a scene due both after the race and at the season's end plays once). The legacy policy
+ * once (a scene due both after the race and at the season's end plays once). What a reload finds
+ * unfinished plays again (D5, O1, §1.8): the decided week from its stage, the race «Correr» ran
+ * until its result was seen, a training's result while its week is unread. The legacy policy
  * gives today's order, flag by flag (§1.12).
  */
 export function beatsOf(
@@ -133,19 +145,16 @@ export function beatsOf(
   // B, C after «Correr», D: the last step while unread (the controller's lastStep, lastStepSeen).
   const ended = run.state.status === "ended";
   const unread = step && !stepSeen && run.state === step.after ? step : undefined;
-  const own = p.resume || ui.mine.has(fp); // legacy: only what this mount committed
   if (unread) {
     const k = (b: string) => `${fp}/${b}`;
     const race = addedRace(unread);
     // the race part's vigor already showed before «Correr»
     let landed = race !== undefined;
     if (!race) {
-      if (own) {
-        const tb = trainBeat(ctx, unread, "step", k("result"), p);
-        landed = tb !== undefined;
-        push(tb);
-      }
-    } else if (own && f.record?.phase !== "raceSeen") {
+      const tb = trainBeat(ctx, unread, "step", k("result"), p);
+      landed = tb !== undefined;
+      push(tb);
+    } else if (racing(f.record, ended)) {
       if (f.pace !== "direct") {
         push({ kind: "replay", key: k("race:replay"), turn: race.turn });
         if (p.finishHold) push({ kind: "finish", key: k("race:finish"), turn: race.turn });

@@ -28,7 +28,7 @@ export type FlowPorts = {
   readonly game: Pick<GameController, "act" | "acknowledgeStep" | "getSnapshot">;
   readonly weeks: Pick<
     WeekStore,
-    "plan" | "decide" | "setPosition" | "enterRace" | "markRaceSeen" | "clear"
+    "plan" | "decide" | "setPosition" | "enterRace" | "markRaced" | "markRaceSeen"
   >;
   readonly story: Pick<StoryStore, "markSeen">;
   readonly cards: Pick<InspirationStore, "markShown">;
@@ -160,8 +160,7 @@ export function flowCommands(p: FlowPorts): Commands {
         const after = p.game.getSnapshot();
         // still inside the tap (iOS plays sounds only there)
         p.sound.cue(trainingCue(input, state.turn, after.lastStep?.after, cards));
-        const next = fingerprintNow(p.game);
-        if (next !== undefined) p.dispatch({ type: "acted", fp: next });
+        p.dispatch({ type: "acted" });
         return;
       }
       // the shared preview cache: the facts read this same simulation
@@ -206,9 +205,10 @@ export function flowCommands(p: FlowPorts): Commands {
         p.dispatch({ type: "notice", notice: errorKindOf(p.game) });
         return;
       }
-      p.weeks.clear();
+      // the race plays on, a reload or not, until its result was seen
       const next = fingerprintNow(p.game);
-      if (next !== undefined) p.dispatch({ type: "raced", fp: next });
+      if (next !== undefined) p.weeks.markRaced(next);
+      p.dispatch({ type: "raced" });
     },
 
     complete,

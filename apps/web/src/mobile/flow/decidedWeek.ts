@@ -1,9 +1,10 @@
 /**
  * The decided race week (D5, F1, C5): once a race week's action was previewed it is decided (no
  * way back, owner 2026-11-12), so it is kept in the browser with its stage and its position. A
- * reload plays the same week on, and the race mode once it began. One record, keyed by the run's
- * fingerprint; a record of any other run is ignored. Framework-free and subscribable like the
- * controller; pure and text-free (flow/imports.test.ts).
+ * reload plays the same week on, the race mode once it began, and the race «Correr» ran until its
+ * result was seen. One record, keyed by the run's fingerprint; a record of any other run is
+ * ignored. Framework-free and subscribable like the controller; pure and text-free
+ * (flow/imports.test.ts).
  */
 import { Position, RunInput } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
@@ -38,6 +39,7 @@ const Stored = z.discriminatedUnion("phase", [
     position: Position.optional(),
     stage: z.enum(["action", "race"]),
   }),
+  z.strictObject({ v: z.literal(1), phase: z.literal("raced"), fp: Fp }),
   z.strictObject({ v: z.literal(1), phase: z.literal("raceSeen"), fp: Fp }),
 ]);
 
@@ -59,8 +61,9 @@ export function decodeWeek(text: string | undefined): WeekRecord | undefined {
   switch (r.phase) {
     case "planned":
       return { phase: "planned", fp: r.fp, turn: r.turn, position: r.position };
+    case "raced":
     case "raceSeen":
-      return { phase: "raceSeen", fp: r.fp };
+      return { phase: r.phase, fp: r.fp };
     case "decided": {
       const { input } = r;
       if (!isWeekAction(input) || input.position !== undefined) return undefined;
@@ -85,7 +88,8 @@ export function encodeWeek(r: WeekRecord): string {
 /**
  * The record if it belongs to this run (`fp` is its fingerprint): a planned position or a decided
  * week of this race week (same fingerprint and week; a decided one also the same input count, and
- * its preview plays, read from the one preview cache), or the race seen that led to this run.
+ * its preview plays, read from the one preview cache), or the race that led to this run, run or
+ * seen.
  */
 export function validRecord(
   ctx: SimContext,
@@ -94,7 +98,7 @@ export function validRecord(
   r: WeekRecord | undefined,
 ): WeekRecord | undefined {
   if (!r || r.fp !== fp) return undefined;
-  if (r.phase === "raceSeen") return r;
+  if (r.phase === "raced" || r.phase === "raceSeen") return r;
   if (r.turn !== run.state.turn || !isRaceWeek(ctx, run.state)) return undefined;
   if (r.phase === "planned") return r;
   if (r.inputs !== run.inputs.length) return undefined;
@@ -138,7 +142,7 @@ export class WeekStore {
   /** A position picked on the planning card or the decided one, for the same week. */
   setPosition(fp: string, position: Position | undefined): void {
     const r = this.#record;
-    if (r?.fp !== fp || r.phase === "raceSeen") return;
+    if (r?.fp !== fp || (r.phase !== "planned" && r.phase !== "decided")) return;
     this.#set({ ...r, position });
   }
 
@@ -149,12 +153,20 @@ export class WeekStore {
     this.#set({ ...r, stage: "race" });
   }
 
+  /**
+   * «Correr» committed the week (`fp`: the run the race led to): a reload plays its race on until
+   * its result was seen, the season's last race too.
+   */
+  markRaced(fp: string): void {
+    this.#set({ phase: "raced", fp });
+  }
+
   /** The race's result was seen (`fp`: the run the race led to). */
   markRaceSeen(fp: string): void {
     this.#set({ phase: "raceSeen", fp });
   }
 
-  /** «Correr» committed the week. */
+  /** A record of no run in play (the run's view drops it). */
   clear(): void {
     this.#set(undefined);
   }
