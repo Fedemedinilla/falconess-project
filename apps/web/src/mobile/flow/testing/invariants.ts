@@ -850,9 +850,17 @@ export function coverage(w: Walk): Readonly<Record<string, number>> {
     } else if (e.type === "box") add("box");
   }
   const watches = new Map<string, string>();
-  for (const e of w.trace)
-    if (e.type === "frame" && e.ui.nav.at === "watch")
-      watches.set(`${e.at.mount}/${e.ui.nav.n}`, e.ui.nav.from);
+  let before: number | undefined;
+  for (const e of w.trace) {
+    if (e.type !== "frame") continue;
+    const nav = e.ui.nav;
+    if (nav.at === "watch") {
+      watches.set(`${e.at.mount}/${nav.n}`, nav.from);
+      // «Ver otra vez» on a watch's own result: a new watch straight after the last one
+      if (before !== undefined && before !== nav.n) add("watch:again");
+    }
+    before = nav.at === "watch" ? nav.n : undefined;
+  }
   for (const from of watches.values()) add(`watch:${from}`);
   add("end", w.ends.filter((e) => e.ended).length);
   return out;

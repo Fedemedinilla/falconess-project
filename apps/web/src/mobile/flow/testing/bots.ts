@@ -151,6 +151,7 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
   const refused = new Set<string>();
   const planned = new Set<string>();
   const watchedTurns = new Set<number>();
+  const watchedAgain = new Set<string>();
   let raceWeeks = 0;
   let skipNext = false;
   let rewatched = false;
@@ -190,10 +191,14 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
       flow.screen.kind === "race" &&
       flow.screen.watch
     ) {
-      // a watch: «Saltar» or the natural end, then «Continuar»
+      // a watch: «Saltar» or the natural end, then «Continuar» (or once «Ver otra vez» again)
       const play = flow.screen.play;
       label = "idle";
-      if (flow.screen.stage === "result") w.cmd.raceContinue();
+      const again = `${ui.nav.from}:${ui.nav.turn}`;
+      if (flow.screen.stage === "result" && !watchedAgain.has(again) && rnd() < 0.5) {
+        watchedAgain.add(again);
+        w.cmd.raceAgain();
+      } else if (flow.screen.stage === "result") w.cmd.raceContinue();
       else if (flow.screen.stage === "finish") w.cmd.raceNext(play);
       else {
         skipNext = !skipNext;

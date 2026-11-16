@@ -43,6 +43,11 @@ export function watched(state: SeasonState, nav: Nav): Extract<Nav, { at: "watch
   return nav.at === "watch" && state.raceResults.some((r) => r.turn === nav.turn) ? nav : undefined;
 }
 
+/** Legacy (F25, until 5.1): the key of the emblem that opens a watch from the end. */
+export function watchEmblemKey(n: number): string {
+  return `watch:${n}/emblem`;
+}
+
 function cardBeat(card: InspirationScene): Beat {
   return { kind: "inspiration", key: `insp:${card.key}`, card };
 }
@@ -161,7 +166,7 @@ export function beatsOf(
   // legacy (F25, removed in 5.1): «Ver carrera» from the end opens with the emblem, as today
   const watch = watched(run.state, ui.nav);
   if (p.emblemOnWatch && watch?.from === "end" && f.pace !== "direct" && !f.reduced)
-    push({ kind: "emblem", key: `watch:${watch.n}/emblem`, fp, fadeIn: false, covered: true });
+    push({ kind: "emblem", key: watchEmblemKey(watch.n), fp, fadeIn: false, covered: true });
   out.push({ kind: "idle", key: `idle:${fp}` });
   return out;
 }

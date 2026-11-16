@@ -13,6 +13,7 @@ import { TRAINING_KINDS } from "../../screens/model/actions";
 import { isRaceWeek, type WeekActionInput, withPosition } from "../../screens/model/position";
 import type { SoundCue } from "../sfx";
 import type { StoryStore } from "../storyModel";
+import { watchEmblemKey } from "./beats";
 import type { WeekStore } from "./decidedWeek";
 import { watchKey } from "./derive";
 import type { InspirationStore } from "./inspirations";
@@ -59,7 +60,7 @@ export type Commands = {
   raceSkip(play: string): void;
   /** The race's stage ended by itself: the replay, then the finish hold, then the result. */
   raceNext(play: string): void;
-  /** «Ver otra vez» on a race's result. */
+  /** «Ver otra vez» on a race's result, or on a watch's: the race again, from where it began. */
   raceAgain(): void;
   /** «Ver carrera» on the season's end. */
   rewatch(turn: number): void;
@@ -249,7 +250,20 @@ export function flowCommands(p: FlowPorts): Commands {
     raceAgain() {
       const { flow, ui } = p.now();
       const t = flow.top;
-      if (t.kind !== "race-result" || ui.nav.at === "watch" || flow.layer) return;
+      const nav = ui.nav;
+      if (flow.layer) return;
+      if (nav.at === "watch") {
+        // a race seen again ends on its result too, with «Ver otra vez»: once more, from where
+        // the watch began (it still ends there)
+        if (nav.stage !== "result") return;
+        p.sound.nav();
+        // legacy (F25, until 5.1): today that replay stays on the race page, so the emblem that
+        // opened a watch from the end does not play again
+        if (nav.from === "end") p.dispatch({ type: "done", keys: [watchEmblemKey(ui.seq + 1)] });
+        p.dispatch({ type: "watch", turn: nav.turn, from: nav.from });
+        return;
+      }
+      if (t.kind !== "race-result") return;
       p.sound.nav();
       p.dispatch({ type: "watch", turn: t.turn, from: "result" });
     },

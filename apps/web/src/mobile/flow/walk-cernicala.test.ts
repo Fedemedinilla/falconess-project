@@ -26,6 +26,7 @@ describe("Cernícala's season walks", () => {
     "race-result",
     "watch:result",
     "watch:end",
+    "watch:again",
     "reload:decided",
     "reload:race",
     "box",

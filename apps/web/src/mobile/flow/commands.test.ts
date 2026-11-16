@@ -241,6 +241,47 @@ describe("watches end where they began (I21, review 1 item 1)", () => {
     expect([flow.top.kind, flow.screen.kind, h.ui().nav.at]).toEqual(["idle", "end", "menu"]);
   });
 
+  it("«Ver otra vez» on a watch's result: the race again, ending where the watch began (legacy: no second emblem)", () => {
+    for (const policy of [LEGACY_POLICY, TARGET_POLICY]) {
+      // from a race's result: the menu after it, the actions take taps
+      const t = loadSave("peregrina-w10");
+      const h = harness(t, { policy });
+      h.cmd.choose({ kind: "rest" });
+      h.until("race-result");
+      h.cmd.raceAgain();
+      const first = h.ui().nav;
+      let s = h.now().flow.screen;
+      if (s.kind !== "race" || first.at !== "watch") throw new Error("no watch");
+      h.cmd.raceSkip(s.play);
+      expect(h.now().flow.screen).toMatchObject({ kind: "race", stage: "result" });
+      h.cmd.raceAgain();
+      const again = h.ui().nav;
+      expect(again).toMatchObject({ at: "watch", turn: 10, from: "result", stage: "replay" });
+      expect(again.at === "watch" && again.n > first.n).toBe(true);
+      s = h.now().flow.screen;
+      expect(s).toMatchObject({ kind: "race", stage: "replay", watch: "result" });
+      if (s.kind === "race") h.cmd.raceSkip(s.play);
+      h.cmd.raceContinue();
+      expect(h.ui().nav.at).toBe("menu");
+      expect(h.until("idle").canAct).toBe(true);
+      // from the end: the end again, with no emblem the second time
+      const e = loadSave("peregrina-ended");
+      const he = harness(e, { policy });
+      he.cmd.rewatch(10);
+      he.until("idle"); // legacy: the emblem over it first (F25, until 5.1)
+      s = he.now().flow.screen;
+      if (s.kind === "race") he.cmd.raceSkip(s.play);
+      he.cmd.raceAgain();
+      const flow = he.now().flow;
+      expect(flow.top.kind).toBe("idle");
+      expect(flow.screen).toMatchObject({ kind: "race", turn: 10, stage: "replay", watch: "end" });
+      if (flow.screen.kind === "race") he.cmd.raceSkip(flow.screen.play);
+      he.cmd.raceContinue();
+      const end = he.now().flow;
+      expect([end.top.kind, end.screen.kind, he.ui().nav.at]).toEqual(["idle", "end", "menu"]);
+    }
+  });
+
   it("legacy (until 6.3): no finish hold, a watch's replay ends on its result", () => {
     const t = loadSave("peregrina-ended");
     const h = harness(t, { policy: LEGACY_POLICY });
