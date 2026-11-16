@@ -151,7 +151,7 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
   const refused = new Set<string>();
   const planned = new Set<string>();
   const watchedTurns = new Set<number>();
-  const watchedAgain = new Set<string>();
+  let watchedAgain = false;
   let raceWeeks = 0;
   let skipNext = false;
   let rewatched = false;
@@ -164,6 +164,13 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
     );
     target = keys[Math.floor(rnd() * keys.length)];
     reloaded.add(scope);
+  };
+
+  /** Now and then a reload right after a card or a menu's scene ended: neither may come back (I20). */
+  const after = (scope: string): void => {
+    if (target !== undefined || reloaded.has(scope)) return;
+    reloaded.add(scope);
+    if (rnd() < 0.5) target = keyOf(w.now().flow.top);
   };
 
   for (let moves = 0; moves < MAX_MOVES; moves++) {
@@ -191,12 +198,12 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
       flow.screen.kind === "race" &&
       flow.screen.watch
     ) {
-      // a watch: «Saltar» or the natural end, then «Continuar» (or once «Ver otra vez» again)
+      // a watch: «Saltar» or the natural end, then «Continuar»; the season's first watch is seen
+      // once more first («Ver otra vez» on its own result)
       const play = flow.screen.play;
       label = "idle";
-      const again = `${ui.nav.from}:${ui.nav.turn}`;
-      if (flow.screen.stage === "result" && !watchedAgain.has(again) && rnd() < 0.5) {
-        watchedAgain.add(again);
+      if (flow.screen.stage === "result" && !watchedAgain) {
+        watchedAgain = true;
         w.cmd.raceAgain();
       } else if (flow.screen.stage === "result") w.cmd.raceContinue();
       else if (flow.screen.stage === "finish") w.cmd.raceNext(play);
@@ -211,8 +218,11 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
       switch (top.kind) {
         case "train-result":
         case "fx":
+          w.cmd.complete(top.key);
+          break;
         case "inspiration":
           w.cmd.complete(top.key);
+          after(top.key);
           break;
         case "race-result":
           if (!watchedTurns.has(top.turn) && rnd() < 0.3) {
@@ -232,6 +242,7 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
           break;
         case "scene":
           w.cmd.sceneDone(top.key, rnd() < 0.5);
+          if (top.where === "menu" || top.where === "end") after(top.key);
           break;
         case "emblem":
           if (!top.covered) w.cmd.covered(top.key);
@@ -260,7 +271,7 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
         case "idle": {
           if (state.status === "ended") {
             const race = state.raceResults.at(Math.floor(rnd() * state.raceResults.length));
-            if (!rewatched && race && rnd() < 0.5) {
+            if (!rewatched && race) {
               rewatched = true;
               w.cmd.rewatch(race.turn);
               break;

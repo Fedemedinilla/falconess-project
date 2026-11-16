@@ -719,9 +719,31 @@ const I19 = invariant(
 
 // --- I20 ----------------------------------------------------------------------------------------
 
+/**
+ * Whether §1.8 keeps a completed beat's end across a reload (so it must not come back): a week's
+ * training result replays while its step is unread, the action's part until the race mode
+ * began, the race until its result was seen; everything else is kept the moment it ends.
+ */
+function keptEnd(key: string, done: ReadonlySet<string>): boolean {
+  if (!done.has(key)) return false;
+  const fp = fpOfKey(key);
+  switch (tail(key)) {
+    case "result":
+      return done.has(`${fp}/fx`) || done.has(`${fp}/ack`);
+    case "w:result":
+    case "w:fx":
+      return done.has(`${fp}/w:emblem`) || done.has(`${fp}/w:enter`);
+    case "race:replay":
+    case "race:finish":
+      return done.has(`${fp}/race:result`);
+    default:
+      return true;
+  }
+}
+
 const I20 = invariant(
   "I20",
-  "after a reload the first beats are ones whose end was not kept (§1.8): no read week's result or effects, no card shown, no scene seen, no action part past its stage",
+  "after a reload the first beats are ones whose end was not kept (§1.8): no read week's result or effects, no card shown, no scene seen, no action part past its stage; and nothing the season ended before the reload that §1.8 keeps comes back",
   (p) => p.resume,
   (w) => {
     const out: string[] = [];
@@ -731,6 +753,17 @@ const I20 = invariant(
         .slice(w.trace.indexOf(reload))
         .find((e): e is Ev<"frame"> => e.type === "frame");
       if (!frame) continue;
+      // what the season ended before the reload, as the trace saw it (not as the storage says:
+      // a write that never happened would agree with itself)
+      const ended = new Set(
+        w.trace
+          .slice(0, w.trace.indexOf(reload))
+          .filter((e): e is Done => e.type === "done" && e.at.season === reload.at.season)
+          .map((e) => e.beat.key),
+      );
+      for (const x of frame.beats)
+        if (keptEnd(x.key, ended))
+          out.push(`${where(reload)}: ${label(x)} came back after the reload`);
       const r = b.record;
       const raced = r?.phase === "decided" && r.fp === b.fp && r.stage === "race";
       const first = frame.beats.findIndex((x) => !isInstant(x));
