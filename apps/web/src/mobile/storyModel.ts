@@ -109,7 +109,31 @@ function decodeSeen(raw: string | undefined): Seen {
   return { runs, ever: ever ?? [] };
 }
 
-/** The store over a key-value storage that may be missing or throw (every access is guarded). */
+/** `theirs`, then what `mine` adds to it, in each one's order. */
+function union(theirs: readonly string[], mine: readonly string[]): readonly string[] {
+  const extra = mine.filter((id) => !theirs.includes(id));
+  return extra.length === 0 ? theirs : [...theirs, ...extra];
+}
+
+function sameIds(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
+  return (a ?? []).length === (b ?? []).length && (a ?? []).every((id, i) => id === b?.[i]);
+}
+
+/**
+ * What this tab knows merged with what the storage holds now: another tab of the game may have
+ * marked scenes since this one read it (each one either tab marked stays marked).
+ */
+function mergeSeen(stored: Seen, mine: Seen): Seen {
+  const runs: Record<string, readonly string[]> = { ...mine.runs };
+  for (const [seed, ids] of Object.entries(stored.runs))
+    runs[seed] = union(ids, mine.runs[seed] ?? []);
+  return { runs, ever: union(stored.ever, mine.ever) };
+}
+
+/**
+ * The store over a key-value storage that may be missing or throw (every access is guarded). A
+ * mark reads the storage again and keeps what another tab marked meanwhile.
+ */
 export function createStoryStore(kv: KeyValueStore | undefined): StoryStore {
   let seen: Seen | undefined;
   let read: ReadonlySet<string> | undefined;
@@ -143,15 +167,16 @@ export function createStoryStore(kv: KeyValueStore | undefined): StoryStore {
       return ever;
     },
     markSeen: (seed, sceneId) => {
-      const d = seenData();
-      const inRun = d.runs[seed] ?? [];
-      if (inRun.includes(sceneId) && d.ever.includes(sceneId)) return;
+      const mine = seenData();
+      if (mine.runs[seed]?.includes(sceneId) && mine.ever.includes(sceneId)) return;
+      const d = mergeSeen(decodeSeen(readKey(kv, STORY_KEY)), mine);
       seen = {
-        runs: { ...d.runs, [seed]: inRun.includes(sceneId) ? inRun : [...inRun, sceneId] },
-        ever: d.ever.includes(sceneId) ? d.ever : [...d.ever, sceneId],
+        runs: { ...d.runs, [seed]: union(d.runs[seed] ?? [], [sceneId]) },
+        ever: union(d.ever, [sceneId]),
       };
       ever = undefined;
-      runs.delete(seed);
+      // a season whose scenes another tab marked reads them again
+      for (const s of [...runs.keys()]) if (!sameIds(seen.runs[s], mine.runs[s])) runs.delete(s);
       writeKey(kv, STORY_KEY, JSON.stringify(seen));
       changed();
     },
@@ -159,7 +184,8 @@ export function createStoryStore(kv: KeyValueStore | undefined): StoryStore {
     markRead: (topicId) => {
       const r = readTopics();
       if (r.has(topicId)) return;
-      read = new Set([...r, topicId]);
+      const stored = strings(parse(readKey(kv, CHAT_KEY))) ?? [];
+      read = new Set(union(union(stored, [...r]), [topicId]));
       writeKey(kv, CHAT_KEY, JSON.stringify([...read]));
       changed();
     },

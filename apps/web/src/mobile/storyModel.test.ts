@@ -133,6 +133,78 @@ describe("the story store (scenes seen, chat read)", () => {
     expect(createStoryStore(kv).readTopics().has("peregrina-wings")).toBe(true);
   });
 
+  it("two tabs: a scene one of them marked is kept when the other marks later (no scene plays again)", () => {
+    const kv = memoryStore();
+    // both tabs read the storage before either marked a scene
+    const a = createStoryStore(kv);
+    const b = createStoryStore(kv);
+    a.seenEver();
+    b.seenEver();
+    a.markSeen("s1", "peregrina-prologue");
+    b.markSeen("s1", "peregrina-debut");
+    b.markSeen("s2", "peregrina-prologue");
+    a.markSeen("s3", "peregrina-tears");
+    const later = createStoryStore(kv);
+    expect([...later.seenInRun("s1")]).toEqual(["peregrina-prologue", "peregrina-debut"]);
+    expect([...later.seenInRun("s2")]).toEqual(["peregrina-prologue"]);
+    expect([...later.seenInRun("s3")]).toEqual(["peregrina-tears"]);
+    expect([...later.seenEver()]).toEqual([
+      "peregrina-prologue",
+      "peregrina-debut",
+      "peregrina-tears",
+    ]);
+    // a tab that writes reads the other's marks too
+    expect(a.seenInRun("s1").has("peregrina-debut")).toBe(true);
+    expect(a.seenInRun("s2").has("peregrina-prologue")).toBe(true);
+    // one that marks a scene the other already stored writes it once
+    b.markSeen("s3", "peregrina-tears");
+    expect(JSON.parse(kv.data.get(STORY_KEY) ?? "null")).toEqual({
+      runs: {
+        s1: ["peregrina-prologue", "peregrina-debut"],
+        s2: ["peregrina-prologue"],
+        s3: ["peregrina-tears"],
+      },
+      ever: ["peregrina-prologue", "peregrina-debut", "peregrina-tears"],
+    });
+    // a season neither tab changed keeps its reading (no new set for the game to compare)
+    const kept = b.seenInRun("s2");
+    b.markSeen("s4", "peregrina-debut");
+    expect(b.seenInRun("s2")).toBe(kept);
+  });
+
+  it("two tabs: a topic one of them read stays read when the other reads another", () => {
+    const kv = memoryStore();
+    const a = createStoryStore(kv);
+    const b = createStoryStore(kv);
+    a.readTopics();
+    b.readTopics();
+    a.markRead("peregrina-wings");
+    b.markRead("peregrina-why-race");
+    expect([...createStoryStore(kv).readTopics()]).toEqual([
+      "peregrina-wings",
+      "peregrina-why-race",
+    ]);
+    expect(b.readTopics().has("peregrina-wings")).toBe(true);
+  });
+
+  it("a mark over a corrupt stored value keeps this tab's scenes and topics", () => {
+    const kv = memoryStore({
+      [STORY_KEY]: JSON.stringify({ runs: { s1: ["a"] }, ever: ["a"] }),
+      [CHAT_KEY]: JSON.stringify(["t1"]),
+    });
+    const story = createStoryStore(kv);
+    story.seenEver();
+    story.readTopics();
+    kv.data.set(STORY_KEY, "{");
+    kv.data.set(CHAT_KEY, '{"t":1}');
+    story.markSeen("s1", "b");
+    story.markRead("t2");
+    const later = createStoryStore(kv);
+    expect([...later.seenInRun("s1")]).toEqual(["a", "b"]);
+    expect([...later.seenEver()]).toEqual(["a", "b"]);
+    expect([...later.readTopics()]).toEqual(["t1", "t2"]);
+  });
+
   it("reads what earlier builds stored, and a reading keeps its identity until a mark", () => {
     const kv = memoryStore({
       [STORY_KEY]: JSON.stringify({ runs: { s1: ["a", "b"], s2: ["a"] }, ever: ["a", "b"] }),
