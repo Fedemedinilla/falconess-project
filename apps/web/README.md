@@ -277,7 +277,9 @@ docs/design/escenas.md).
   id-less, `inert`, `aria-hidden` copy with no pointer events (`useLid` drops its ids), drawn from
   its last data and removed by a flow timer once its fade has played, counted from the frame the
   fade starts on. While a layer is in, the HUD and the screen are inert
-  and the layer's control has the focus. `NoticeHost.tsx` shows the story and error notices
+  and the layer's control has the focus. When the last one goes, or the flow moves on with no layer
+  in front (another screen or top beat), a focus left on the page or under `inert` goes to the
+  screen's own control (`useFocusHome` in `RunView.tsx`). `NoticeHost.tsx` shows the story and error notices
   (`noticeSlot.ts` decides, pure: when one shows, waits, fades, is cut or dropped, and where it
   sits over the screen's `[data-toast-anchor]`, clear of controls and of `[data-toast-avoid]`).
   Sheets (`ui/useModalDialog.ts`, `ui/modals.ts`) mount on open, are released at their close
@@ -315,10 +317,14 @@ docs/design/escenas.md).
     `WRITE_SAVES=1 pnpm vitest run --project web-flow scripts/e2e-saves.test.ts`) instead of
     playing to week 10. A frame probe (`probe`, an auto fixture of `e2e/mobile-helpers.ts`) fails
     any #juego test that shows a duplicate id, two screens or two layers in at once in any frame,
-    across reloads. `e2e/motion.ts` holds the motion helpers: `holdClock` (the fake clock held
+    across reloads. `mobile-season.spec.ts` plays a whole season (Rápido, 390 × 844, a seeded start,
+    every week tapped) to the End and the next season's inheritance card, and checks every beat: no
+    console error, the focus on a control, no control covered, the HUD's week, and rules 10, 11 and
+    13 from a page-side watcher. `e2e/motion.ts` holds the motion helpers: `holdClock` (the fake clock held
     still) and `settleUpdates` (the page's own updates landed), `freezeAt` (every CSS animation at a time), `opacityOf` (the opacity as
     seen), `coverage` (what a 5 × 9 grid of points shows: each point's first opaque paint, looking
-    through transparent boxes, and `under` a leaving copy), `holdAnimations` (every CSS animation
+    through transparent boxes, and `under` a leaving copy; its page side is `coverageNow`, which an
+    init script can carry), `holdAnimations` (every CSS animation
     held where it starts, so a tap's fade is read with `freezeAt` however slow the page),
     `movingNow` (what moves), `present` (in the page
     now, without waiting), `runClock` (the held clock moved on), and for the hidden tab

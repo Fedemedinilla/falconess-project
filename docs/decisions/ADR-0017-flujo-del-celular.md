@@ -54,7 +54,10 @@ código) encontró, entre otros:
   sumo una «adentro». La que se va queda como una copia sin ids, `inert`, `aria-hidden` y sin
   punteros, dibujada con sus últimos datos, y un temporizador la saca (nunca `animationend`). Mientras
   una capa está adelante, el HUD y la pantalla de abajo son `inert` y el foco está en el control de
-  la capa; cuando se va la última, el foco vuelve al control de la pantalla.
+  la capa; cuando se va la última, el foco vuelve al control de la pantalla. Lo mismo cuando el
+  juego sigue sin una capa adelante (otra pantalla u otro beat arriba: un entrenamiento sin efectos
+  que termina en el menú, «Saltar» que termina en el resultado, «Entrenar» que abre su pantalla): un
+  foco que quedó en la página o bajo `inert` va al control de la pantalla (cierre, 2a4f6ab).
 
 ### 2. El orden (los beats)
 
