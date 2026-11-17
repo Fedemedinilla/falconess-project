@@ -433,6 +433,31 @@ illustration or a comic. The blue hole stays the only clean, bright, luminous ar
 nothing inside the blue hole besides sky and clouds. No text, no signature, no frame.
 ```
 
+Segunda corrección (dueño, 2026-11-17: «sigue pareciendo una imagen»). Editar la imagen conserva
+demasiado del dibujo; conviene **pedirla de nuevo en una conversación nueva**, con el material primero
+y el contenido después, y sin la palabra «anime» (el cuadro es una pintura vieja del mundo, no una
+ilustración del juego):
+
+```text
+Oil on canvas. A huge 19th-century romantic history painting, photographed straight on in a museum.
+Thick impasto oil paint applied with wide brushes and a palette knife, every stroke visible, paint ridges
+catching the light, raw canvas weave showing through in places. Loose and expressive: details are suggested
+with a few strokes, not drawn; no outlines, no line art, no smooth digital shading. Old cracked varnish
+(craquelure), warm amber tone, muted earthy colors, deep dark shadows. Vertical 3:4.
+
+Subject: a battlefield of scorched earth, trenches, smoke and fires seen from above, where tiny soldiers of both
+sides have stopped fighting and look up. The whole sky is a violent storm of dark grey and dull red clouds,
+except one single round hole of clear blue sky with white clouds high up, the only bright and clean spot in the
+painting, with light falling through it. Exactly five young women with mechanical wings race upward toward the
+hole in a steep diagonal, in strong forced perspective (the nearest one huge, the farthest one small), leaning
+forward and fighting for the lead, messenger bags across their bodies, wings in five colors: red and yellow;
+navy and cyan; rust brown and olive; slate grey and silver; cream and gold. Their trails all aim at the hole.
+Nothing inside the hole but sky and clouds.
+
+Avoid: digital illustration look, comic or cartoon look, clean outlines, halos, angel or feathered wings,
+glowing auras, a sixth figure, text, letters, signature, frame.
+```
+
 **Espejar personajes (2026-11-17):** el juego puede dar vuelta una imagen para que mire al otro lado.
 Las hojas de personaje miran hacia la izquierda; en el escenario, quien está a la izquierda se espeja
 para mirar al centro. Cuidado con lo que no es simétrico: el lado del broche de pelo, el lado de la
