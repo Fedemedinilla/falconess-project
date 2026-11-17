@@ -36,8 +36,23 @@ cuándo se revela y qué no se puede escribir antes.
   capítulo y cómo: abierto.
 - No escribir antes: que ella lo sepa desde el principio, ni que el lazo le dé talento. Empieza mala
   corriendo; todo lo que gana, lo gana (dueño).
-- **Decidido (2026-11-16):** la abuela es una de las cinco mensajeras de la carrera de la paz, una
-  por bando (`docs/world.md` §4).
+- **Decidido (2026-11-17):** la abuela es la sexta mensajera de la carrera de la paz, la de Vuela
+  Alto (S3).
 - **Decidido (2026-11-16):** la fundadora del deporte, que vio esa carrera desde afuera, conoció a la
   abuela y sabe quién es la protagonista antes que ella misma. Guarda el secreto.
-- Abierto: cuál de las cinco (de qué bando, hoy qué escudería).
+
+## S3 · La sexta mensajera (dueño, 2026-11-17)
+
+> «El cuadro/imagen de las cinco mensajeras fundadoras es súper reconocido, y sus colores se destacan
+> siempre. Pero entonces, ¿dónde está la sexta? En la imagen se ve claro, y en plena vista. El cielo
+> y las nubes, el celeste y blanco siempre estuvo ahí en la imagen.»
+- Estado: **decidido**.
+- Lo que sabe el mundo: la imagen de «las cinco mensajeras» (`docs/world.md` §4).
+- La verdad: fueron seis. La sexta corrió por el bando que hoy es **Vuela Alto** (celeste y
+  blanco), y es la abuela de la protagonista (S2). En la imagen está a plena vista: el celeste y el
+  blanco del cielo y las nubes son ella.
+- Vuela Alto es la sexta casa fundadora; el mundo la fue olvidando.
+- No escribir antes de la revelación: que fueron seis; que el cielo de la imagen es una Falconess;
+  que Vuela Alto es fundadora.
+- Abierto: por qué no se la distingue en la imagen; cuándo y cómo lo descubre la protagonista; quién
+  más lo sabe (la fundadora sí, S2).

@@ -379,6 +379,10 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Estado: **decidida** (2026-11-17). Va a: `docs/world.md` §5, biblias, relaciones.
 - Personaje nuevo: la única Falconess activa de Vuela Alto, modelo a seguir de la protagonista.
   Sin nombre ni ficha.
-- Abierto: si Vuela Alto es una de las escuderías fundadoras (y entonces la casa del bando de la
-  abuela); quién es su Falconess activa.
+- **Decidido (2026-11-17):** Vuela Alto es la sexta casa fundadora y la del bando de la abuela; la
+  sexta mensajera está escondida a plena vista en la imagen famosa (`secretos.md` S3).
+- **Decidido (2026-11-17):** su única Falconess activa es una **veterana leal**, la última que se
+  quedó cuando las demás se fueron a escuderías grandes; corre por orgullo y no gana tanto como
+  antes. «Hay que darle una buena personalidad, no perfecta, ella también tiene problemas.»
+  Borrador: `personajes/veterana-vuela-alto.md`.
 - Tema de la historia principal decidido el mismo día: la luz (`docs/world.md` §5b).

@@ -54,10 +54,11 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
    deciden correr entre ellas: «quisieron un momento de paz, deporte y competición sana». Esa escena
    queda en la historia «y obviamente encuadrada en muchos hogares en la pared»: Falconess de
    distintos colores, por distintos países, corriendo. Y empieza la paz.
-   **Decidido (2026-11-16): corrieron cinco mensajeras, una por cada bando.** Esos cinco bandos son
-   hoy las cinco escuderías fundadoras (Kōryū, Altair, Boneyard, Steinhaus, Lumière); las demás
-   escuderías vinieron después. Una de las cinco es la abuela de la protagonista de la historia
-   principal (`docs/design/historia/secretos.md` S2).
+   **Lo que sabe el mundo (decidido 2026-11-16):** la imagen es famosa como la de «las cinco
+   mensajeras», una por bando, y sus colores se reconocen siempre. Esos bandos son hoy las
+   escuderías fundadoras (Kōryū, Altair, Boneyard, Steinhaus, Lumière); las demás vinieron después.
+   **Lo que es verdad (2026-11-17):** fueron seis. La sexta está en la imagen, a plena vista, y nadie
+   la ve (`docs/design/historia/secretos.md` S3).
 5. **El deporte.** Una ex Falconess mensajera funda el deporte que se ve en el juego.
    **Decidido (dueño, 2026-11-16): la fundadora no corrió la carrera de la paz; la vio.** «De hecho,
    fue una de las que lo vio, y la inspiró. Por eso crea el deporte mucho después, para llevar a las
@@ -116,8 +117,10 @@ Abierto:
   celeste y blanco; inspiración argentina («serían de Argentina»), en un país propio del mundo. Tiene
   una sola Falconess activa. Ahí empieza la protagonista de la historia principal, por una oferta de
   trabajo (`docs/design/historia/ideas.md` I15).
-- Abierto: si Vuela Alto es una de las escuderías fundadoras (hoy el texto dice cinco, las del
-  juego); la historia de cada una, de qué pueblo viene y quién la dirige.
+- **Decidido (2026-11-17):** Vuela Alto es la sexta casa fundadora, la que el mundo fue olvidando a
+  medida que se venía a menos (el porqué es secreto, `docs/design/historia/secretos.md` S3). Su única
+  Falconess activa es una veterana leal (`docs/design/historia/ideas.md` I15).
+- Abierto: la historia de cada una, de qué pueblo viene y quién la dirige.
 
 ## 5b. El tema: la luz
 
