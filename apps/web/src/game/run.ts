@@ -101,3 +101,17 @@ export function runFingerprint(run: {
   }
   return `${run.rulesetVersion}|${run.seed}|${run.inputs.length}|${hash.toString(16).padStart(8, "0")}`;
 }
+
+/**
+ * How many inputs a fingerprint (`runFingerprint`) counts, when it is one of this run's season (the
+ * same ruleset and seed); undefined for another season's, or for a text that is no fingerprint.
+ */
+export function fingerprintInputs(
+  fp: string,
+  run: { readonly rulesetVersion: string; readonly seed: string },
+): number | undefined {
+  const prefix = `${run.rulesetVersion}|${run.seed}|`;
+  if (!fp.startsWith(prefix)) return undefined;
+  const rest = /^(\d+)\|[0-9a-f]{8}$/.exec(fp.slice(prefix.length));
+  return rest ? Number(rest[1]) : undefined;
+}

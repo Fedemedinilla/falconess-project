@@ -10,6 +10,7 @@ import { Position, RunInput } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import { z } from "zod";
 import type { ActiveRun } from "../../game/controller";
+import { fingerprintInputs } from "../../game/run";
 import { type KeyValueStore, readKey, removeKey, writeKey } from "../../game/storage";
 import { isRaceWeek } from "../../screens/model/position";
 import type { DecidedWeek, WeekRecord } from "./types";
@@ -103,6 +104,16 @@ export function validRecord(
   if (r.phase === "planned") return r;
   if (r.inputs !== run.inputs.length) return undefined;
   return previewResult(ctx, run.state, r.input).ok ? r : undefined;
+}
+
+/**
+ * Whether a record is of a later point of this run's season (the same ruleset and seed, more
+ * inputs): another tab played on and stored its week, and this tab's run is the stale one (the save
+ * is the last writer's, read again at «Continuar»). Such a record is never this view's to drop.
+ */
+export function isLaterInSeason(run: ActiveRun, r: WeekRecord): boolean {
+  const inputs = fingerprintInputs(r.fp, run);
+  return inputs !== undefined && inputs > run.inputs.length;
 }
 
 /**

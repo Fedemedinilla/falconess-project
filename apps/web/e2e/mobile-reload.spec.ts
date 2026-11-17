@@ -10,6 +10,7 @@ import {
   toResult,
   week,
 } from "./mobile-helpers";
+import { setTabHidden } from "./motion";
 
 /**
  * A reload (or a closed tab, or a language switch) inside a week plays that week on (D5, F1, C5,
@@ -17,7 +18,8 @@ import {
  * action's part again only if the race mode had not begun, and no way back to the menu; the race
  * mode, once «Correr» ran, replays the race up to its result; a training's result replays while
  * its week is unread. The week's record lives in this browser (`falconess.juego.semana`); one that
- * belongs to no run in play is dropped, never on the select screen. An End an older build saved
+ * belongs to no run in play is dropped, never on the select screen, and never by a tab whose run
+ * is behind the record's (another tab played on). An End an older build saved
  * (its last week never read, no record of its race) never replays its last race.
  */
 
@@ -429,4 +431,54 @@ test("12. two tabs: one left on the title continues the other's decided week, an
   await continueRun(page);
   await expect(page.locator("#m-precarrera")).toBeVisible();
   await expect(page.locator("#m-entrenar")).toHaveCount(0);
+});
+
+test("13. two tabs: a tab left on an earlier week of the season never drops the week another tab decided further on", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(120_000);
+  // the tab left behind: week 10's menu of the season (seed 1)
+  const behind = await context.newPage();
+  await seedRun(behind, "peregrina-w10");
+  await behind.goto("./");
+  await continueRun(behind);
+  await expect(behind.locator("#m-entrenar")).toBeEnabled();
+  expect(await week(behind)).toBe(10);
+  // the other tab has played the same season on to week 48 (the seeded save of the same seed),
+  // and decides its race week
+  const later = await seedRun(page, "peregrina-w48");
+  await page.goto("./");
+  await page.evaluate((fixture) => {
+    localStorage.setItem("falconess.pruebas.partida", JSON.stringify(fixture.save));
+    localStorage.setItem("falconess.pruebas.vista", fixture.vista);
+    localStorage.setItem(
+      "falconess.juego.historia",
+      JSON.stringify({ runs: { [fixture.save.seed]: fixture.historia }, ever: fixture.historia }),
+    );
+  }, later);
+  await page.reload();
+  await continueRun(page);
+  expect(await week(page)).toBe(48);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  const decided = await storedWeek(page);
+  expect(decided).toContain('"decided"');
+  // the player looks at the tab left behind a moment: its run's view renders on its older run
+  await setTabHidden(behind, true);
+  await setTabHidden(behind, false);
+  await expect(behind.locator("#m-entrenar")).toBeVisible();
+  await behind.waitForTimeout(500);
+  expect(await storedWeek(behind)).toBe(decided);
+  // back on the playing tab, and after a reload: the decided card, never week 48's menu again
+  await setTabHidden(page, true);
+  await setTabHidden(page, false);
+  await page.waitForTimeout(500);
+  await expect(page.locator("#m-precarrera")).toBeVisible();
+  await expect(page.locator("#m-entrenar")).toHaveCount(0);
+  await page.reload();
+  await continueRun(page);
+  await expect(page.locator("#m-precarrera")).toBeVisible();
+  await expect(page.locator("#m-entrenar")).toHaveCount(0);
+  expect(await storedWeek(page)).toBe(decided);
 });

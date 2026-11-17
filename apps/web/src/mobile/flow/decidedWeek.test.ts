@@ -3,7 +3,14 @@ import { advanceSeason, seasonGoalsOf, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import type { ActiveRun } from "../../game/controller";
 import { runFingerprint } from "../../game/run";
-import { decodeWeek, encodeWeek, validRecord, WEEK_KEY, WeekStore } from "./decidedWeek";
+import {
+  decodeWeek,
+  encodeWeek,
+  isLaterInSeason,
+  validRecord,
+  WEEK_KEY,
+  WeekStore,
+} from "./decidedWeek";
 import { testContext } from "./testing/content";
 import { blockedStore, memoryStore } from "./testing/memory";
 import type { DecidedWeek, WeekRecord } from "./types";
@@ -186,6 +193,34 @@ describe("validRecord: a record counts only for the run it was written in", () =
       throw new Error("refused");
     });
     expect(validRecord(ctx, refused, fp, week)).toBeUndefined();
+  });
+});
+
+describe("isLaterInSeason: a record a run's view never drops (another tab played on, C1)", () => {
+  const run = runTo("dw-1");
+  const n = run.inputs.length;
+  const of = (fp: string): WeekRecord => decided({ fp, turn: 20, inputs: n + 10 });
+
+  it("a record of this run's season with more inputs: another tab's newer week", () => {
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n + 10}|0123abcd`))).toBe(true);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n + 1}|0123abcd`))).toBe(true);
+    expect(isLaterInSeason(run, { phase: "raced", fp: `v3|dw-1|${n + 1}|0123abcd` })).toBe(true);
+    expect(isLaterInSeason(run, { phase: "raceSeen", fp: `v3|dw-1|${n + 2}|0123abcd` })).toBe(true);
+  });
+
+  it("not this run's own point or an earlier one (a week played differently: it is dropped)", () => {
+    expect(isLaterInSeason(run, of(runFingerprint(run)))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n - 1}|0123abcd`))).toBe(false);
+  });
+
+  it("not another season's (another seed or ruleset), nor a text that is no fingerprint", () => {
+    expect(isLaterInSeason(run, of(`v3|dw-2|${n + 10}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1x|${n + 10}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v2|dw-1|${n + 10}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n + 10}`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|many|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of("x"))).toBe(false);
   });
 });
 

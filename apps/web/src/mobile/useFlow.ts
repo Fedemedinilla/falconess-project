@@ -15,7 +15,7 @@ import { useAnyModalOpen } from "../ui/modals";
 import { useReducedMotion } from "../ui/useMedia";
 import { followsMotion, isInstant } from "./flow/beats";
 import { type Commands, type FlowPorts, flowCommands } from "./flow/commands";
-import type { WeekStore } from "./flow/decidedWeek";
+import { isLaterInSeason, type WeekStore } from "./flow/decidedWeek";
 import { deriveFlow } from "./flow/derive";
 import { factsOf } from "./flow/facts";
 import type { InspirationStore } from "./flow/inspirations";
@@ -65,7 +65,8 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * it now, like the save at «Continuar» (another tab may have decided the week). A record that
  * belongs to no run in play (the run moved on in the test view, another season began) is dropped
  * once this view shows; the select screen has no run's view, so a record waits there for
- * «Continuar».
+ * «Continuar». A record further on in this run's season (another tab played on) is never dropped
+ * here: this tab's run is the stale one.
  *
  * «Ritmo» and reduced motion are latched (`followsMotion`): a change applies at once at idle, over
  * a training's result, the week's effects, a card, the event and the decided card, and waits over
@@ -195,11 +196,13 @@ export function useFlow({
     if (isInstant(top)) cmd.resolve(top);
   }, [top, cmd]);
   // a week's record of no run in play (stale, or a preview that no longer plays) is dropped, the
-  // one judged only: another tab may have stored a week of this run since
+  // one judged only: another tab may have stored a week of this run since. A record further on in
+  // this run's season is another tab's newer week, and this tab's run the stale one: it stays (C1)
   const record = facts.record;
   useEffect(() => {
-    if (week !== undefined && record === undefined && weeks.getSnapshot() === week) weeks.clear();
-  }, [week, record, weeks]);
+    if (week === undefined || record !== undefined || isLaterInSeason(run, week)) return;
+    if (weeks.getSnapshot() === week) weeks.clear();
+  }, [week, record, weeks, run]);
 
   return { flow, ui, cmd, dispatch, pace: facts.pace, reduced: facts.reduced };
 }
