@@ -3,7 +3,8 @@ import { type SimContext, statCap } from "@falconess/sim";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useLatest } from "../ui/useLatest";
+import { useFlowTimer, useFlowTimers } from "../ui/flowTimer";
+import { isRepeatTap } from "../ui/tap";
 import { reducedMotion } from "../ui/useMedia";
 import { type RunnerArt, runnerArt } from "./art";
 import { RESULT, resultTimeline, type TrainResult } from "./flow/trainResult";
@@ -74,7 +75,6 @@ export function TrainScreen({
   onResultDone?: (key: string) => void;
 }) {
   const art = runnerArt(state.falconessId);
-  const resultDone = useLatest(onResultDone);
   // the result's «+N», one after the other: the stats, the points, the vigor, the bonds
   const timeline = result ? resultTimeline(result, k) : undefined;
   // the stats the strip shows: during a result, the week after it (they count up from `before`)
@@ -91,23 +91,26 @@ export function TrainScreen({
       from: result.from,
       fromPoints: result.fromPoints,
     };
-  // the pings climb with the «+N» (a failure has none); then the result ends
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once per result's beat (its key)
-  useEffect(() => {
-    if (!result || !timeline || resultKey === undefined || finished) return;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const ups = [...Object.values(timeline.stats), timeline.points].filter(
-      (d): d is number => d !== undefined,
-    );
-    if (result.outcome !== "fail")
-      ups.forEach((d, i) => {
-        timers.push(setTimeout(() => playPing(i, ups.length), d));
-      });
-    timers.push(setTimeout(() => resultDone.current?.(resultKey), timeline.end));
-    return () => {
-      for (const t of timers) clearTimeout(t);
-    };
-  }, [resultKey, finished]);
+  // the pings climb with the «+N» (a failure has none); then the result ends: flow timers keyed
+  // by the result's beat, once per key whatever re-renders (a result under the emblem has none)
+  const playing = result && timeline && resultKey !== undefined && !finished;
+  const ups = timeline
+    ? [...Object.values(timeline.stats), timeline.points].filter(
+        (d): d is number => d !== undefined,
+      )
+    : [];
+  useFlowTimers(
+    playing && result.outcome !== "fail" ? ups : undefined,
+    (i) => playPing(i, ups.length),
+    resultKey ?? "",
+  );
+  useFlowTimer(
+    playing ? timeline.end : undefined,
+    () => {
+      if (resultKey !== undefined) onResultDone?.(resultKey);
+    },
+    resultKey ?? "",
+  );
   const card = result ? undefined : cards.find((c) => c.kind === selected);
   const gains: Partial<Record<StatName, number>> | undefined = card
     ? Object.fromEntries(card.gains.map((g) => [g.stat, g.gain]))
@@ -298,7 +301,8 @@ export function TrainScreen({
                       .join(", "),
                   })}
                   onClick={(e) => {
-                    if (e.detail > 2) return;
+                    // a tap chooses, a second one trains: a third lands on the result
+                    if (isRepeatTap(e, 2)) return;
                     if (sel) onConfirm(c.kind);
                     else onSelect(c.kind);
                   }}
@@ -365,8 +369,8 @@ export function TrainScreen({
           className={s.resultSkip}
           id="m-resultado-seguir"
           aria-label={ui("ui.m.result.next")}
-          onClick={() => {
-            if (resultKey !== undefined) onResultDone?.(resultKey);
+          onClick={(e) => {
+            if (!isRepeatTap(e) && resultKey !== undefined) onResultDone?.(resultKey);
           }}
         />
       )}
@@ -385,7 +389,7 @@ export function TrainScreen({
           id="m-entrenar-confirmar"
           disabled={!card}
           onClick={(e) => {
-            if (e.detail > 1 || !card) return;
+            if (isRepeatTap(e) || !card) return;
             onConfirm(card.kind);
           }}
         >

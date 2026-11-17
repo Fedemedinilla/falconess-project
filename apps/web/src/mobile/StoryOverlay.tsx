@@ -8,6 +8,7 @@ import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
 import type { Digest } from "./flow/types";
+import { useLayerFocus, useLid } from "./LayerHost";
 import s from "./Story.module.css";
 import { digestLines } from "./storyModel";
 
@@ -58,6 +59,11 @@ export function StoryOverlay({
   // latched: «Ritmo» can change in the desk panel's «Menú» mid-scene, and the timers key on it
   const [digest] = useState(digestProp);
   const onDoneRef = useLatest(onDone);
+  // its ids only while it is in front (a leaving copy has none)
+  const lid = useLid();
+  // the stage takes the focus (L7): Enter or Space reads on, the game behind is inert
+  const stage = useRef<HTMLButtonElement>(null);
+  useLayerFocus(stage);
   const lines = useMemo(
     () => (digest ? digestLines(scene.lines) : scene.lines),
     [digest, scene.lines],
@@ -133,7 +139,7 @@ export function StoryOverlay({
     <div
       className={cx(s.overlay, cine ? s.cine : s.box, leaving && s.leaving)}
       style={style}
-      id="m-capitulo"
+      id={lid("m-capitulo")}
       data-scene={scene.id}
       data-style={scene.style}
       data-digest={digest ? "true" : undefined}
@@ -151,9 +157,10 @@ export function StoryOverlay({
         </>
       )}
       <button
+        ref={stage}
         type="button"
         className={s.stage}
-        id="m-capitulo-seguir"
+        id={lid("m-capitulo-seguir")}
         aria-label={ui("ui.m.story.next")}
         onClick={next}
       />
@@ -166,22 +173,22 @@ export function StoryOverlay({
       )}
       <div className={s.chrome}>
         {digest && (
-          <span className={s.digest} id="m-capitulo-resumen">
+          <span className={s.digest} id={lid("m-capitulo-resumen")}>
             {ui("ui.m.story.digest")}
           </span>
         )}
         <button
           type="button"
           aria-pressed={auto}
-          id="m-capitulo-auto"
+          id={lid("m-capitulo-auto")}
           onClick={() => setAuto((a) => !a)}
         >
           {ui("ui.m.story.auto")}
         </button>
-        <button type="button" id="m-capitulo-registro" onClick={() => setLog(true)}>
+        <button type="button" id={lid("m-capitulo-registro")} onClick={() => setLog(true)}>
           {ui("ui.m.story.log")}
         </button>
-        <button type="button" id="m-capitulo-saltar" onClick={() => finish(true)}>
+        <button type="button" id={lid("m-capitulo-saltar")} onClick={() => finish(true)}>
           {ui("ui.m.story.skip")} ⏭
         </button>
       </div>
@@ -237,7 +244,7 @@ export function StoryOverlay({
       )}
 
       {log && (
-        <div className={s.log} id="m-capitulo-log">
+        <div className={s.log} id={lid("m-capitulo-log")}>
           <div className={s.logList}>
             {lines.slice(0, index + 1).map((l, k) => {
               const n = speakerName(l);

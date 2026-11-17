@@ -12,6 +12,7 @@ import { useGoalRaceLog } from "../screens/shared/useGoalRaceLog";
 import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
@@ -145,7 +146,7 @@ export function PreRaceScreen({
           className={cx(s.btn, s.btnMain)}
           id="m-correr"
           onClick={(e) => {
-            if (e.detail > 1) return;
+            if (isRepeatTap(e)) return;
             onRun();
           }}
         >
@@ -238,7 +239,15 @@ export function RaceScreen({
       {showResult && !hold && (
         // a notice (the scene after the race) sits just over the result's foot
         <div className={s.foot} data-toast-anchor>
-          <button type="button" className={cx(s.btn, s.back)} id="m-ver-otra-vez" onClick={onAgain}>
+          <button
+            type="button"
+            className={cx(s.btn, s.back)}
+            id="m-ver-otra-vez"
+            onClick={(e) => {
+              if (isRepeatTap(e)) return;
+              onAgain();
+            }}
+          >
             <Glyph name="play" size={18} weight={2.4} />
             <span>{ui("ui.m.race.again")}</span>
           </button>
@@ -247,7 +256,7 @@ export function RaceScreen({
             className={cx(s.btn, s.btnMain)}
             id="m-carrera-seguir"
             onClick={(e) => {
-              if (e.detail > 1) return;
+              if (isRepeatTap(e)) return;
               onContinue();
             }}
           >

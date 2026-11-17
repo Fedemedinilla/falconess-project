@@ -14,6 +14,7 @@ import {
 import { gameBrief } from "../text/brief";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import type { WorkshopTab } from "./flow/types";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
@@ -196,7 +197,7 @@ export function WorkshopScreen({
           id="m-taller-confirmar"
           disabled={report.ops.length === 0 || report.blocked}
           onClick={(e) => {
-            if (e.detail > 1) return;
+            if (isRepeatTap(e)) return;
             onConfirm([...report.ops]);
           }}
         >

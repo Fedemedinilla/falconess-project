@@ -705,6 +705,11 @@ test("the season's start with a parent: the passed prologue's notice waits for t
   await settleUpdates(page);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
   await page.click("#m-inspiracion-seguir");
+  // the card fades out first (L1, 6.1): the notice waits for it to be gone
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.clock.runFor(240);
+  await settleUpdates(page);
   await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
   await expect(page.locator("#m-escena-ver")).toBeVisible();
   // its six seconds count from here

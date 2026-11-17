@@ -1,9 +1,10 @@
 import type { StoryScene } from "@falconess/schema";
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { allScenes } from "../content/story";
 import type { GameError, GameErrorKind } from "../game/controller";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer } from "../ui/flowTimer";
 import { useLatest } from "../ui/useLatest";
 import { useReducedMotion } from "../ui/useMedia";
 import type { Flow } from "./flow/types";
@@ -33,7 +34,6 @@ type Leaving = {
   readonly key: number;
   readonly top: number;
   readonly note: Note;
-  readonly until: number;
 };
 
 type SlotOptions = {
@@ -72,18 +72,18 @@ function useSlot(
       go(n, view === "fade");
     } else if (view === "gone") go(n, false);
   }, [view, id, at, screen, latest]);
+  // its time on screen, from its first display: a flow timer keyed by the notice
   const shownId = at?.id;
-  const shownMs = at?.ms;
-  useEffect(() => {
-    if (shownId === undefined || shownMs === undefined) return;
-    const t = setTimeout(() => {
+  useFlowTimer(
+    at?.ms,
+    () => {
       const { note: n, leave: go } = latest.current;
-      if (n?.id !== shownId) return;
+      if (!n || n.id !== shownId) return;
       setAt(undefined);
       go(n, true);
-    }, shownMs);
-    return () => clearTimeout(t);
-  }, [shownId, shownMs, latest]);
+    },
+    shownId ?? "",
+  );
   const close = () => {
     const { note: n, leave: go } = latest.current;
     if (!n) return;
@@ -127,7 +127,7 @@ function Notices({
     tops.current.delete(note.id);
     if (fade && outMs > 0 && top !== undefined) {
       seq.current += 1;
-      const copy: Leaving = { key: seq.current, top, note, until: performance.now() + outMs };
+      const copy: Leaving = { key: seq.current, top, note };
       setLeaving((l) => [...l, copy]);
     }
     note.onGone();
@@ -168,20 +168,7 @@ function Notices({
     return () => resized.disconnect();
   }, [live, screen]);
 
-  // a copy is removed by its timer, never by its animation's end
-  useEffect(() => {
-    if (leaving.length === 0) return;
-    const now = performance.now();
-    const timers = leaving.map((c) =>
-      setTimeout(
-        () => setLeaving((l) => l.filter((x) => x.key !== c.key)),
-        Math.max(0, c.until - now),
-      ),
-    );
-    return () => {
-      for (const t of timers) clearTimeout(t);
-    };
-  }, [leaving]);
+  const gone = (key: number) => setLeaving((l) => l.filter((x) => x.key !== key));
 
   const shown = (note: Note, close: () => void) => (
     <div className={st.toast} id={note.elementId} role={note.role} data-notice={note.id}>
@@ -201,18 +188,33 @@ function Notices({
         </div>
       )}
       {leaving.map((c) => (
-        <div
-          key={c.key}
-          className={st.notices}
-          style={{ top: c.top }}
-          aria-hidden="true"
-          inert
-          data-notice-leaving
-        >
-          <div className={cx(st.toast, st.toastOut)}>{c.note.body(undefined, false)}</div>
-        </div>
+        <LeavingNotice key={c.key} copy={c} ms={outMs} onGone={gone} />
       ))}
     </>
+  );
+}
+
+/** A notice's copy fading out where it stood, removed by its timer (never its animation's end). */
+function LeavingNotice({
+  copy,
+  ms,
+  onGone,
+}: {
+  readonly copy: Leaving;
+  readonly ms: number;
+  readonly onGone: (key: number) => void;
+}) {
+  useFlowTimer(ms, () => onGone(copy.key), String(copy.key));
+  return (
+    <div
+      className={st.notices}
+      style={{ top: copy.top }}
+      aria-hidden="true"
+      inert
+      data-notice-leaving
+    >
+      <div className={cx(st.toast, st.toastOut)}>{copy.note.body(undefined, false)}</div>
+    </div>
   );
 }
 

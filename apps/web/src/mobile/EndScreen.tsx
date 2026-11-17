@@ -7,6 +7,7 @@ import { goalStatuses } from "../screens/model/season";
 import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import { runnerArt } from "./art";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
@@ -128,7 +129,7 @@ export function EndScreen({
           className={cx(s.btn, s.btnMain)}
           id="m-fin-nueva"
           onClick={(e) => {
-            if (e.detail > 1) return;
+            if (isRepeatTap(e)) return;
             onNew();
           }}
         >

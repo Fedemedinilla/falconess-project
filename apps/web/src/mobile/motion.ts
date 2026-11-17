@@ -13,6 +13,8 @@ export const MOTION = {
   screenMajor: 320,
   layerIn: 240,
   layerOut: 240,
+  /** the inheritance card pops in after its intro (L1), and «Continuar» takes taps from then */
+  cardReveal: 1600,
   emblemIn: 160,
   /** the emblem's full cover between its fade in and its out phase */
   emblemBody: 1080,

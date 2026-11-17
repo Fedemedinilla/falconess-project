@@ -11,6 +11,10 @@
   cursor: pointer;
   animation: layerIn 0.25s ease-out both;
 }
+/* H2: on its way out (its time is up, or a tap), the scrim and the stamps fade out together */
+.layer.out {
+  animation: layerOut var(--m-dur-layer-out) var(--m-ease-in) both;
+}
 /* each effect at its own spot (--x, --y: its center), kept inside the screen */
 .fx {
   position: absolute;
@@ -128,6 +132,11 @@
 }
 @keyframes layerIn {
   from {
+    opacity: 0;
+  }
+}
+@keyframes layerOut {
+  to {
     opacity: 0;
   }
 }

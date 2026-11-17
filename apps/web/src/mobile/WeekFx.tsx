@@ -1,11 +1,14 @@
 import type { ContentIndex } from "@falconess/schema";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useRef, useState } from "react";
 import { gameBrief } from "../text/brief";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer, useFlowTimers } from "../ui/flowTimer";
+import { isRepeatTap } from "../ui/tap";
 import { FX, fxSpots, fxTotalMs } from "./flow/fxTimeline";
 import { Glyph, type GlyphName } from "./Glyph";
+import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
 import { crewInitials } from "./model";
 import { paceScale } from "./pace";
 import { playSound } from "./sfx";
@@ -110,7 +113,8 @@ function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentInd
 /**
  * The week's effects shown, not told (owner 2026-11-13): all together, each in a random spot of
  * the screen, a stamp like a training's «¡ÉXITO!» with chevrons, gold and rising for good news,
- * blue and falling for bad. A tap ends them.
+ * blue and falling for bad. A tap ends them (H2: then the scrim and the stamps fade out together,
+ * as an id-less copy that takes no tap and plays nothing, while the menu under them is live).
  */
 export function WeekFxOverlay({
   fx,
@@ -119,25 +123,28 @@ export function WeekFxOverlay({
 }: {
   fx: readonly WeekFx[];
   content: ContentIndex;
+  /** Their time is up, or a tap; read when it happens, so a new arrow on each render is fine. */
   onDone: () => void;
 }) {
+  const lid = useLid();
+  const playing = useLayerPhase() === "in";
   const starts = fx.map((_, i) => FX.stagger * i);
   // «Ritmo» (owner 2026-11-14): the effects leave sooner, after they popped in
   const total = Math.max(900, Math.round(fxTotalMs(fx) * paceScale()));
   const [spots] = useState(() => fxSpots(fx));
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once per mount (keyed by the step)
-  useEffect(() => {
-    const timers = fx.map((e, i) =>
-      setTimeout(
-        () => playSound(e.kind === "skills" ? "boost" : e.good ? "success" : "fail"),
-        starts[i],
-      ),
-    );
-    timers.push(setTimeout(onDone, total));
-    return () => {
-      for (const t of timers) clearTimeout(t);
-    };
-  }, []);
+  const layer = useRef<HTMLButtonElement>(null);
+  useLayerFocus(layer);
+  // each effect sounds as it pops in, then they end; once they leave, nothing more (the instance
+  // is the beat's: its timers start once)
+  useFlowTimers(
+    playing ? starts : undefined,
+    (i) => {
+      const e = fx[i];
+      if (e) playSound(e.kind === "skills" ? "boost" : e.good ? "success" : "fail");
+    },
+    "sounds",
+  );
+  useFlowTimer(playing ? total : undefined, onDone, "end");
   const label = (e: WeekFx) =>
     e.kind === "skills"
       ? ui(e.skills && e.skills.length > 1 ? "ui.m.fx.skills.many" : "ui.m.fx.skills", {
@@ -146,11 +153,15 @@ export function WeekFxOverlay({
       : ui(`ui.m.fx.${e.kind}`);
   return (
     <button
+      ref={layer}
       type="button"
-      className={f.layer}
-      id="m-efectos"
+      className={cx(f.layer, !playing && f.out)}
+      id={lid("m-efectos")}
       aria-label={fx.map(label).join(" · ")}
-      onClick={onDone}
+      onClick={(e) => {
+        // the second click of a double tap lands on what follows the effects: ignore it
+        if (!isRepeatTap(e)) onDone();
+      }}
     >
       {fx.map((e, i) => {
         const at = starts[i] ?? 0;

@@ -5,6 +5,7 @@ import { Letter } from "../screens/shared/Letter";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer } from "../ui/flowTimer";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type GoalCard, moodTone, type StatCell, type VigorView } from "./model";
@@ -123,12 +124,12 @@ function VigorBar({
   pop?: VigorPop | undefined;
 }) {
   const [landed, setLanded] = useState<string>();
-  const switches = to !== undefined && beat !== undefined;
-  useEffect(() => {
-    if (!switches || beat === undefined) return;
-    const t = setTimeout(() => setLanded(beat), at);
-    return () => clearTimeout(t);
-  }, [switches, beat, at]);
+  // a flow timer keyed by the beat (it pauses with a hidden tab, 6.11)
+  useFlowTimer(
+    to !== undefined && beat !== undefined ? at : undefined,
+    () => setLanded(beat),
+    beat ?? "",
+  );
   const vigor = to && beat !== undefined && landed === beat ? to : from;
   const pct = (v: number) => `${(100 * v) / vigor.max}%`;
   const after = vigor.after;
@@ -194,10 +195,13 @@ type HudProps = {
   vigor: VigorView;
   mood: number;
   content: ContentIndex;
+  /** A layer is in front: the bar is out of reach (L7). */
+  inert?: boolean;
 };
 
 /** The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood. */
 export function Hud({
+  inert = false,
   hard = false,
   turn,
   turns,
@@ -212,7 +216,7 @@ export function Hud({
 }: HudProps) {
   const tone = moodTone(mood);
   return (
-    <header className={s.hud}>
+    <header className={s.hud} inert={inert || undefined}>
       <div
         className={s.cal}
         id="m-semana"

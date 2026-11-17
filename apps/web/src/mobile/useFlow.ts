@@ -89,6 +89,8 @@ export function useFlow({
   readonly dispatch: (e: UiEvent) => void;
   /** «Ritmo» as the flow reads it (latched): what a beat's own timeline scales by. */
   readonly pace: Pace;
+  /** Reduced motion as the flow reads it (latched): the layers leave at once. */
+  readonly reduced: boolean;
 } {
   const { game, snap } = useGame();
   const story = useStory();
@@ -204,5 +206,5 @@ export function useFlow({
     if (week !== undefined && record === undefined && weeks.getSnapshot() === week) weeks.clear();
   }, [week, record, weeks]);
 
-  return { flow, ui, cmd, dispatch, pace: facts.pace };
+  return { flow, ui, cmd, dispatch, pace: facts.pace, reduced: facts.reduced };
 }

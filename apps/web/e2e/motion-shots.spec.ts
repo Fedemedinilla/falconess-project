@@ -224,7 +224,7 @@ const effects: Flow = async (page, m) => {
   await m.at("fx-in", [0, 300, 700]);
   m.mark();
   await page.click("#m-efectos");
-  await m.at("fx-out", [0, 120, 240]);
+  await m.at("fx-out", [0, 60, 120, 180, 240, 300]);
   await m.release();
   return "fx";
 };
@@ -281,8 +281,8 @@ const raceEnd: Flow = async (page, m) => {
   return "race-end";
 };
 
-/** Two black boxes into a new season: the inheritance card in, then «Continuar» on it. */
-const inheritance: Flow = async (page, m) => {
+/** Two black boxes in this browser: the next season's start has her inheritance card. */
+async function withBoxes(page: Page): Promise<void> {
   const box = (id: string, stat: string) => ({
     id,
     rulesetVersion: "v3",
@@ -303,19 +303,47 @@ const inheritance: Flow = async (page, m) => {
     },
     [box("b1", "agility"), box("b2", "stamina")],
   );
+}
+
+/** Two black boxes into a new season: the prologue skipped, the card in, «Continuar» on it. */
+const inheritance: Flow = async (page, m) => {
+  await withBoxes(page);
   await page.goto("./");
   await pastTitle(page);
   await page.click('[data-box="b1"]');
   await page.click('[data-box="b2"]');
   await page.click("#m-elegir-peregrina");
-  await m.hold();
   await page.click("#m-empezar");
-  await m.at("inheritance-in", [0, 150, 300, 600]);
+  // the season's start: her prologue first (D2), skipped onto the card
+  await expect(page.locator("#m-capitulo")).toBeVisible();
+  await m.hold();
+  await page.click("#m-capitulo-saltar");
+  await m.until(async () => (await page.locator("#m-inspiracion").count()) === 1, 3000);
+  await m.at("inheritance-in", [0, 120, 240, 800, 1600, 1800, 2100]);
   m.mark();
   await page.click("#m-inspiracion-seguir");
-  await m.at("inheritance-out", [0, 150, 300]);
+  await m.at("inheritance-out", [0, 80, 160, 240, 300]);
   await m.release();
   return "inheritance";
+};
+
+/** The inheritance card hurried: a tap during its intro shows it at once. */
+const inheritanceTap: Flow = async (page, m) => {
+  await withBoxes(page);
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click('[data-box="b1"]');
+  await page.click('[data-box="b2"]');
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await skipScene(page);
+  await expect(page.locator("#m-inspiracion")).toBeVisible();
+  await m.hold();
+  m.mark();
+  await page.click("#m-inspiracion");
+  await m.at("inheritance-tap", [0, 60, 120, 240]);
+  await m.release();
+  return "inheritance-tap";
 };
 
 /** The prologue skipped: the scene leaves and its notice anchors on the menu; then on Entrenar. */
@@ -352,6 +380,7 @@ const digest: Flow = async (page, m) => {
 
 const PHONE = { name: "390x844", width: 390, height: 844 };
 const SMALL = { name: "360x640", width: 360, height: 640 };
+const PHONE_S = { name: "360x740", width: 360, height: 740 };
 const TABLET = { name: "1024x768", width: 1024, height: 768 };
 const DESK = { name: "1440x900", width: 1440, height: 900 };
 
@@ -364,14 +393,19 @@ const PLAN: readonly {
   {
     viewport: PHONE,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, notice, digest },
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, inheritanceTap, notice, digest },
   },
   { viewport: PHONE, motion: "reduce", flows: { menuTrain, effects, raceWeek, inheritance } },
+  { viewport: PHONE_S, motion: "normal", flows: { effects, inheritance } },
   { viewport: SMALL, motion: "normal", flows: { menuTrain, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
   { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek } },
   { viewport: TABLET, motion: "reduce", flows: { menuTrain } },
-  { viewport: DESK, motion: "normal", flows: { menuTrain, effects, raceWeek, notice } },
+  {
+    viewport: DESK,
+    motion: "normal",
+    flows: { menuTrain, effects, raceWeek, inheritance, notice },
+  },
   { viewport: DESK, motion: "reduce", flows: { menuTrain } },
 ];
 

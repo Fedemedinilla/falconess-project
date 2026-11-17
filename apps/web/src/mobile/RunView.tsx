@@ -1,6 +1,14 @@
 import type { ContentIndex, Position, WorkshopOp } from "@falconess/schema";
 import { difficultyOf, type SimContext } from "@falconess/sim";
-import { type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { navigate } from "../app/useRoute";
 import { allScenes, allTopics } from "../content/story";
 import { addBox } from "../game/boxes";
@@ -13,7 +21,7 @@ import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { boxToKeep } from "./flow/box";
-import type { Layer } from "./flow/types";
+import type { Layer, Screen } from "./flow/types";
 import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
 import { LayerHost } from "./LayerHost";
@@ -96,7 +104,8 @@ export function RunView({
   const { game } = useGame();
   // the scenes seen and the chat read: a mark re-renders the game
   const story = useStory();
-  const { flow, ui: flowUi, cmd, dispatch, pace } = useFlow({ run, title: title !== undefined });
+  const flowView = useFlow({ run, title: title !== undefined });
+  const { flow, ui: flowUi, cmd, dispatch, pace, reduced } = flowView;
   const [menuOpen, setMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -193,10 +202,15 @@ export function RunView({
     }
   };
   const layers = (
-    <LayerHost top={flow.layer} render={layer}>
+    <LayerHost top={flow.layer} render={layer} reduced={reduced}>
       {notices}
     </LayerHost>
   );
+  // while a layer is in front the game behind it is out of reach (L7: no keyboard path to «Menú»
+  // mid-beat); when the last one goes, the focus lands on the screen's own control
+  const layerIn = flow.layer !== undefined;
+  const slotRef = useRef<HTMLDivElement>(null);
+  useFocusHome(layerIn, flow.screen.kind, slotRef);
 
   /** «Exportar» of this run: from «Menú», from the panel and from the season's end. */
   const exportRun = () => {
@@ -277,11 +291,16 @@ export function RunView({
     </>
   );
   /**
-   * The one screen: what the probe counts (`data-screen`), with no box of its own. The End is
-   * inert while a layer is over it (the week's effects, a scene: the flow says so).
+   * The one screen: what the probe counts (`data-screen`), with no box of its own; inert while a
+   * layer is in front of it (the week's effects, the card, a scene, the emblem, the event).
    */
-  const slot = (body: ReactNode, inert?: boolean) => (
-    <div style={{ display: "contents" }} data-screen={screen.kind} inert={inert || undefined}>
+  const slot = (body: ReactNode) => (
+    <div
+      ref={slotRef}
+      style={{ display: "contents" }}
+      data-screen={screen.kind}
+      inert={layerIn || undefined}
+    >
       {body}
     </div>
   );
@@ -305,7 +324,6 @@ export function RunView({
             onTests={() => navigate("fin")}
             onExport={exportRun}
           />,
-          screen.inert,
         )}
         {exportSheet}
         {layers}
@@ -470,6 +488,7 @@ export function RunView({
     >
       {hud && hudMenu && (
         <Hud
+          inert={layerIn}
           hard={difficultyOf(hud.of) === "exigente"}
           turn={hudMenu.turn}
           turns={hudMenu.turns}
@@ -554,6 +573,46 @@ export function RunView({
       </div>
     ) : null,
   );
+}
+
+/** Each screen's own control, where the focus lands when the last layer in front of it goes. */
+const HOME: Partial<Record<Screen["kind"], string>> = {
+  menu: "m-entrenar",
+  position: "m-correr",
+  race: "m-carrera-seguir",
+};
+
+const FOCUSABLE = 'button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]';
+
+/**
+ * When the last layer in front goes (L7), the focus lands on the screen's own control (its main
+ * action: «Entrenar», «Correr», «Continuar»; else its first control), never on the page's body:
+ * it was on the layer, which leaves inert. A focus the player put somewhere live stays.
+ */
+function useFocusHome(
+  layerIn: boolean,
+  screen: Screen["kind"],
+  slot: RefObject<HTMLElement | null>,
+): void {
+  const was = useRef(layerIn);
+  useLayoutEffect(() => {
+    const left = was.current && !layerIn;
+    was.current = layerIn;
+    if (!left) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active !== document.body && !active.closest("[inert]"))
+      return;
+    const at = slot.current;
+    const home = HOME[screen];
+    const usable = (el: HTMLElement | null | undefined) =>
+      el && !el.closest("[inert]") && !(el instanceof HTMLButtonElement && el.disabled)
+        ? el
+        : undefined;
+    const el =
+      usable(home ? at?.querySelector<HTMLElement>(`#${home}`) : undefined) ??
+      usable(at?.querySelector<HTMLElement>(FOCUSABLE));
+    el?.focus({ preventScroll: true });
+  }, [layerIn, screen, slot]);
 }
 
 /**

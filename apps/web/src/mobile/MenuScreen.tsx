@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode, useState } from "react";
 import { learnableSkills } from "../screens/model/workshop";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import { runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
@@ -45,7 +46,7 @@ function RoundButton({
       disabled={disabled}
       onClick={(e) => {
         // the second click of a double click lands on the next week's button: ignore it
-        if (e.detail > 1) return;
+        if (isRepeatTap(e)) return;
         onClick();
       }}
     >

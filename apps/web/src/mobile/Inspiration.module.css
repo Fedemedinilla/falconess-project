@@ -10,8 +10,22 @@
   gap: 12px;
   padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   background: radial-gradient(circle at 50% 38%, #fff6c9 0%, #f3c64a 28%, #1b2330 72%);
-  animation: fade 0.3s ease-out both;
+  animation: fade var(--m-dur-layer-in) var(--m-ease-out) both;
   overflow: hidden;
+}
+/* L1: on its way out, the whole card fades (onto the menu, or a scene's black) */
+.overlay.out {
+  animation: fadeOut var(--m-dur-layer-out) var(--m-ease-in) both;
+}
+/* a tap anywhere during the intro shows the card at once */
+.reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 .stage {
   position: relative;
@@ -59,7 +73,13 @@
   background: #fff;
   color: #14202b;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) 1.6s both;
+  /* at the end of the intro (`--insp-reveal`: motion.ts's cardReveal) */
+  animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) var(--insp-reveal, 1.6s) both;
+}
+/* hurried by a tap: it pops in now */
+.overlay[data-revealed="tap"] .card {
+  animation-delay: 0s;
+  animation-duration: var(--m-dur-fast);
 }
 .title {
   margin: 0;
@@ -125,8 +145,17 @@
   font-size: 20px;
   font-weight: 700;
 }
+/* never a card dismissed before it shows */
+.overlay:not([data-revealed]) .go {
+  pointer-events: none;
+}
 @keyframes fade {
   from {
+    opacity: 0;
+  }
+}
+@keyframes fadeOut {
+  to {
     opacity: 0;
   }
 }
