@@ -57,8 +57,15 @@ dueño va citado y marcado **dueño**; el resto es **propuesta**.
 - **Deseo oculto, que nunca dice:** que alguien vuelva a volar alto desde ese hangar sin que él la
   pierda (propuesta).
 - **Miedo (dueño):** perder a OTRA Falconess bajo su mando.
-- **A quién perdió (dueño, 2026-11-17):** no a la sexta mensajera; «pudo haber perdido a su hija, y él
-  era su spotter». Por eso cuida a la veterana dormido.
+- **A quién perdió (dueño, 2026-11-17):** no a la sexta mensajera. Perdió a su hija, de la que era el
+  spotter, pero **no murió**: la guardó de todo peligro físico, y aun así lo que ella vio y por donde
+  tuvo que volar le dejó una marca imborrable. «En la guerra perdió lo que era su hija, y quedó alguien
+  con trauma.» (`../secretos.md` S4).
+- Propuesta: por eso mira a la veterana dormido. Ve en ella señales que ya conoce (no duerme, se
+  esconde en el trabajo, la lata) y su miedo a «perder a otra» no es que se caiga: es perderla así.
+- Para escribirlo bien: la hija es una persona con su vida y su punto de vista, no un recuerdo triste
+  del viejo; lectura sensible con personas que conviven con trauma de guerra o con un familiar que
+  lo vive.
 - **La única grieta:** parece un viejo que dice cualquier cosa; es el mejor spotter que existió y se
   esconde (dueño).
 - **Valor central:** cuidar a la que vuela (propuesta).

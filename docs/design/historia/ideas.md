@@ -480,3 +480,5 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Abierto:** la rival de la protagonista («está por verse aún»).
 - **Decidido (dueño):** el viejo no perdió a la sexta; «pudo haber perdido a su hija, y él era su
   spotter». «No todo tiene que rondar alrededor de linajes y apellidos» (regla de tono).
+- **Decidido (dueño, 2026-11-17):** la hija del viejo no murió: la guerra le dejó un trauma y él
+  «perdió lo que era su hija». La ex amiga de la veterana se fue a Lumière Aéronef.

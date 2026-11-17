@@ -73,5 +73,10 @@ cuándo se revela y qué no se puede escribir antes.
 - **Decidido (dueño, 2026-11-17): no fue la sexta.** «No todo tiene que rondar alrededor de linajes
   y apellidos. Pudo haber perdido a su hija, y él era su spotter.» Dirección: perdió a su hija, una
   mensajera de la que él era el spotter.
-- Abierto: cuándo y cómo la perdió (¿en la guerra, después?); cuándo y cómo se revela.
+- **Decidido (dueño, 2026-11-17): no murió.** «Me gustaría narrar otro tipo de historia. Sobre
+  trauma. La hija murió o "se fue" después de la guerra. Él como spotter siempre la cuidó para que
+  esté bien, pero las cosas que ella vio, los lugares por donde tuvo que volar, le dejaron una marca
+  imborrable. El viejo perdió a su hija en la guerra, no significa que haya muerto, sino que en la
+  guerra perdió lo que era su hija, y quedó alguien con trauma.»
+- Abierto: dónde está hoy la hija y qué hace; si aparece; cuándo y cómo se revela.
 - No escribir antes de la revelación: que fue spotter; que es famoso; a quién perdió.
