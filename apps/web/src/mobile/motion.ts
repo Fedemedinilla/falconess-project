@@ -38,7 +38,7 @@ export const MOTION = {
   finishHoldMin: 400,
 } as const;
 
-/** The emblem's beat: from its first frame to its out phase (LEGACY 1250 until 6.4). */
+/** The emblem's beat: from its first frame to its out phase (its fade in, then its body). */
 export const EMBLEM_MS = MOTION.emblemIn + MOTION.emblemBody;
 
 /** A story scene's tempo: typing, words, Auto, the chrome, the chapter card. */

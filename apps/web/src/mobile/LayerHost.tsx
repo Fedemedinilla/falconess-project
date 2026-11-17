@@ -21,17 +21,6 @@ const LayersIdle = createContext(true);
 /** The kind of the layer leaving last, if one is. */
 const Leaving = createContext<Layer["kind"] | undefined>(undefined);
 
-/**
- * The layers whose way out LayerHost plays so far: the emblem still plays its own 1.25 s until
- * 6.4, and goes at once.
- */
-const LEAVES: ReadonlySet<Layer["kind"]> = new Set(["fx", "inspiration", "scene"]);
-
-/** How long `layer` takes to leave (0: it goes at once). */
-function leaveMs(layer: Layer, reduced: boolean): number {
-  return LEAVES.has(layer.kind) ? outMs(layer.kind, reduced) : 0;
-}
-
 /** A wrapper with no box: the phase is for the frame probe and the layer's own hooks. */
 const IN: CSSProperties = { display: "contents" };
 /** A leaving layer takes no tap: what is under it does (it is inert too). */
@@ -43,7 +32,9 @@ const drop = (): string | undefined => undefined;
 /**
  * The one full-screen layer in front of the game (plan §1.9): the week's effects, the inheritance
  * card, a story scene, the emblem or the event dialog, rendered from the flow's `layer` by
- * `render`. When the flow moves on, the layer stays a moment on its way out: the same instance
+ * `render`. When the flow moves on, the layer stays a moment on its way out (`outMs` of its kind:
+ * the effects and the card 240 ms, a scene 800, the emblem 280; the event's dialog and every layer
+ * under reduced motion go at once): the same instance
  * (nothing of it starts again), rendered from the last data it had in front, inside an inert
  * wrapper that takes no tap, without its ids (`useLid`), its timers stopped (`useLayerPhase`), so
  * it never ends a beat or plays a sound; its own timer, armed here, removes it, never an
@@ -70,12 +61,12 @@ export function LayerHost({
 }): ReactElement {
   const [seen, setSeen] = useState(top);
   const [list, setList] = useState<readonly Presence[]>(() =>
-    presenceStep([], top, performance.now(), (l) => leaveMs(l, reduced)),
+    presenceStep([], top, performance.now(), (l) => outMs(l.kind, reduced)),
   );
   // the flow's layer changed (interned: only when it really did): the list follows it
   if (top !== seen) {
     setSeen(top);
-    setList(presenceStep(list, top, performance.now(), (l) => leaveMs(l, reduced)));
+    setList(presenceStep(list, top, performance.now(), (l) => outMs(l.kind, reduced)));
   }
   // each leaving layer goes when its time is up, counted from when it started leaving
   useEffect(() => {
@@ -85,7 +76,7 @@ export function LayerHost({
       .map((e) =>
         setTimeout(
           () => setList((l) => expire(l, e.key, e.gen)),
-          Math.max(0, e.since + leaveMs(e.layer, reduced) - now),
+          Math.max(0, e.since + outMs(e.layer.kind, reduced) - now),
         ),
       );
     return () => {

@@ -24,6 +24,10 @@ import { coverage, freezeAt, opacityOf } from "./motion";
  * the fade. Timing goes through the fake clock, held still where a moment matters, and CSS moments
  * through `freezeAt`. 6.3: a race that ends by itself holds its finish a moment with her place on a
  * banner (D7: 1.2 s × Ritmo), a race seen again too; «Saltar» skips the replay and the hold.
+ * 6.4: the emblem fades in over 160 ms over the screen it rises from, and only once it is opaque
+ * does the race mode take its place under it (M2, rule 11); after its 1.24 s it fades out over
+ * 280 ms as an id-less copy onto the race mode (O6): the scene before the race, on its own black,
+ * or the decided card, which takes «Correr» at once.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -513,4 +517,121 @@ test("a reload mid-race replays the race, and its natural end still holds the ba
   await runUntil(page, "#m-carrera-llegada", 4000);
   expect(await present(page, "#m-resultado")).toBe(false);
   await runUntil(page, "#m-capitulo", 1500);
+});
+
+/**
+ * A scene seen in another season (`falconess.juego.historia`'s `ever`): it is passed by with a
+ * notice, so the race card comes right after the emblem.
+ */
+async function seenEver(page: Page, id: string): Promise<void> {
+  await page.addInitScript((scene) => {
+    const key = "falconess.juego.historia";
+    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
+      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
+    );
+    if (story.ever.includes(scene)) return;
+    story.ever.push(scene);
+    localStorage.setItem(key, JSON.stringify(story));
+  }, id);
+}
+
+/**
+ * Week 10 of `peregrina-w10`: a rest, its effects ended by a tap with the clock held: the emblem.
+ * With `passed`, that scene was seen in another season.
+ */
+async function toEmblem(page: Page, passed?: string): Promise<void> {
+  await seedRun(page, "peregrina-w10");
+  if (passed) await seenEver(page, passed);
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await holdClock(page);
+  await page.click("#m-efectos");
+  await settleUpdates(page);
+}
+
+/** At its start: the emblem in front, still clear, over the screen it rises from (the week's menu). */
+async function emblemStarts(page: Page): Promise<void> {
+  expect(await present(page, "#m-transicion")).toBe(true);
+  expect(await present(page, '[data-screen="menu"]')).toBe(true);
+  expect(await present(page, "#m-precarrera")).toBe(false);
+  expect(await present(page, "[data-black]")).toBe(false);
+  // its fade in: clear at its first frame, about half at 20 ms (--m-ease-out), opaque at 160 ms
+  await freezeAt(page, 0);
+  expect(await opacityOf(page, "#m-transicion")).toBeLessThan(0.05);
+  await freezeAt(page, 20);
+  const half = await opacityOf(page, "#m-transicion");
+  expect(half).toBeGreaterThan(0.3);
+  expect(half).toBeLessThan(0.7);
+  await freezeAt(page, 160);
+  expect(await opacityOf(page, "#m-transicion")).toBeGreaterThanOrEqual(0.99);
+}
+
+test("the emblem fades in over the week's menu, the scene's black takes the menu's place only once it is opaque, and it fades out onto the scene's black (M2, O6, rules 10-12)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toEmblem(page);
+  await emblemStarts(page);
+  // opaque (its timer counts from its first frame): the scene before the race comes next, so its
+  // black is under the emblem now, never the race card (rule 11), and the emblem covers the game
+  await page.clock.runFor(220);
+  await settleUpdates(page);
+  expect(await present(page, "[data-black]")).toBe(true);
+  expect(await present(page, '[data-screen="menu"]')).toBe(false);
+  expect(await present(page, "#m-precarrera")).toBe(false);
+  await freezeAt(page, 220);
+  expect((await coverage(page, "#m-transicion")).misses).toEqual([]);
+  // the scene only after the emblem: none while its body plays (1.24 s from its first frame)
+  await page.clock.runFor(1000);
+  await settleUpdates(page);
+  expect(await present(page, "#m-transicion")).toBe(true);
+  expect(await present(page, "#m-capitulo")).toBe(false);
+  // then it leaves: an id-less copy in front, and the scene in, on its own black under it (O6)
+  await page.clock.runFor(60);
+  await settleUpdates(page);
+  expect(await present(page, "#m-transicion")).toBe(false);
+  expect(await present(page, '[data-layer="emblem"][data-layer-phase="out"]')).toBe(true);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut");
+  await freezeAt(page, 0);
+  expect(await opacityOf(page, '[data-layer="emblem"] > *')).toBeGreaterThanOrEqual(0.99);
+  // the copy takes no tap: every point of the game reaches the scene, black from its first frame
+  expect((await coverage(page, "#m-capitulo")).misses).toEqual([]);
+  // it fades out over 280 ms (--m-ease-out), and its timer removes it
+  await freezeAt(page, 140);
+  const mid = await opacityOf(page, '[data-layer="emblem"] > *');
+  expect(mid).toBeGreaterThan(0.01);
+  expect(mid).toBeLessThan(0.5);
+  await freezeAt(page, 280);
+  expect(await opacityOf(page, '[data-layer="emblem"] > *')).toBeLessThan(0.01);
+  await page.clock.runFor(300);
+  await settleUpdates(page);
+  expect(await present(page, '[data-layer="emblem"]')).toBe(false);
+  expect(await present(page, '[data-layer-phase="in"] #m-capitulo')).toBe(true);
+});
+
+test("the emblem with no scene after it: the race card takes the menu's place once it is opaque, and its fade-out uncovers the card, which takes «Correr» at once (M2, rule 11)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toEmblem(page, "peregrina-debut");
+  await emblemStarts(page);
+  await page.clock.runFor(220);
+  await settleUpdates(page);
+  expect(await present(page, "#m-precarrera")).toBe(true);
+  expect(await present(page, "[data-black]")).toBe(false);
+  expect(await present(page, '[data-screen="menu"]')).toBe(false);
+  await freezeAt(page, 220);
+  expect((await coverage(page, "#m-transicion")).misses).toEqual([]);
+  await page.clock.runFor(1060);
+  await settleUpdates(page);
+  // its copy fades over the card, which is live from the copy's first frame
+  expect(await present(page, "#m-transicion")).toBe(false);
+  expect(await present(page, '[data-layer="emblem"][data-layer-phase="out"]')).toBe(true);
+  await expect(page.locator("#m-correr")).toBeFocused();
+  await page.click("#m-correr", { timeout: 2000 });
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
 });

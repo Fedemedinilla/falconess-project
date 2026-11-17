@@ -1,9 +1,11 @@
-/* The screen transition (Transition.tsx): 1250 ms in all. Timeline:
-   0-420 the emblem rises to the center, the line opens to a thin stripe;
-   420-760 the coin flip (the face turns at its edge);
-   680-1000 the line opens over the whole screen;
-   760-1080 the emblem leaves at the top;
-   1060-1250 the cover fades out on the new screen. */
+/* The screen transition (Transition.tsx; plan §2.6, O6). Timeline, ms from its first frame:
+   0-160 the cover fades in over the screen the week ended on (--m-dur-emblem-in);
+   then its body, its keyframes delayed by the fade in (each 1250 ms long, the last 170 still):
+   160-580 the emblem rises to the center, the line opens to a thin stripe;
+   580-920 the coin flip (the face turns at its edge);
+   840-1160 the line opens over the whole screen;
+   920-1240 the emblem leaves at the top;
+   from 1240 the cover fades out over the race mode (--m-dur-emblem-out), an id-less copy. */
 .cover {
   position: fixed;
   inset: 0;
@@ -13,7 +15,15 @@
   display: grid;
   place-items: center;
   perspective: 900px;
-  animation: coverOut 1250ms linear both;
+  animation: coverIn var(--m-dur-emblem-in) var(--m-ease-out) both;
+}
+/* a week restored from storage: opaque from its first frame */
+.cover.opaque {
+  animation: none;
+}
+/* its way out: it fades onto the race mode under it */
+.cover.out {
+  animation: leave var(--m-dur-emblem-out) var(--m-ease-out) both;
 }
 .line {
   position: absolute;
@@ -23,19 +33,19 @@
   width: 100%;
   background: var(--t2);
   transform: translateX(-50%) scaleX(0);
-  animation: lineOpen 1250ms both;
+  animation: lineOpen 1250ms var(--m-dur-emblem-in) both;
 }
 .rise {
   position: relative;
   width: min(46vw, 210px);
   aspect-ratio: 4 / 3;
-  animation: rise 1250ms both;
+  animation: rise 1250ms var(--m-dur-emblem-in) both;
 }
 .coin {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  animation: flip 1250ms both;
+  animation: flip 1250ms var(--m-dur-emblem-in) both;
 }
 .face {
   position: absolute;
@@ -59,12 +69,13 @@
   fill: currentColor;
 }
 
-@keyframes coverOut {
-  0%,
-  84.8% {
-    opacity: 1;
+@keyframes coverIn {
+  from {
+    opacity: 0;
   }
-  100% {
+}
+@keyframes leave {
+  to {
     opacity: 0;
   }
 }

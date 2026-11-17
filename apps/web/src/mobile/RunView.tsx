@@ -192,6 +192,7 @@ export function RunView({
         return (
           <ScreenTransition
             beat={l.key}
+            fadeIn={l.fadeIn}
             primary={colors.primary}
             secondary={colors.secondary}
             onCovered={cmd.covered}
