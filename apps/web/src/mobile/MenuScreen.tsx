@@ -134,7 +134,11 @@ export function MenuScreen({
             type="button"
             className={s.raceBar}
             id="m-carrera"
-            onClick={() => onAction("race")}
+            onClick={(e) => {
+              // a menu action (plan §1.7 rule 3): the second click of a double tap (one that ended
+              // the week's scene over the menu) opens nothing
+              if (!isRepeatTap(e)) onAction("race");
+            }}
             disabled={off}
           >
             <Glyph name="flag" size={22} weight={2.4} />

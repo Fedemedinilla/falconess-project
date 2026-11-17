@@ -1195,6 +1195,87 @@ test("two scenes in a row: a double tap on the first one's «Saltar» skips that
   await expect(scene).toHaveCount(0);
 });
 
+/** The words of the scene's line on screen as they stand (the whole line once its typing ended). */
+async function lineOnScreen(page: Page): Promise<string> {
+  const words = await page.evaluate(
+    () => document.querySelector("#m-capitulo [aria-live] p")?.textContent ?? "",
+  );
+  return words.normalize("NFC").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Reads a box scene on, one tap at a time (each more than a double click apart), until its last
+ * line (`last`, its text key) stands whole: one more tap ends it. A tap on a line still typing
+ * completes it, so the scene never ends here.
+ */
+async function toLastLine(page: Page, last: string): Promise<void> {
+  const words = t(last).normalize("NFC").replace(/\s+/g, " ").trim();
+  for (let i = 0; i < 60; i++) {
+    await page.waitForTimeout(600);
+    if ((await lineOnScreen(page)) === words) return;
+    await page.click("#m-capitulo-seguir");
+  }
+  throw new Error(`the scene never reached ${last}`);
+}
+
+/** The middle of what `selector` matches, on the page (under a layer too). */
+async function middleOf(page: Page, selector: string): Promise<{ x: number; y: number }> {
+  const box = await page.locator(selector).boundingBox();
+  if (!box) throw new Error(`${selector} has no box`);
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+test("the second click of a double tap that ends the scene before the race picks no position on the race card under it (F50, 6.2)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await page.click("#m-efectos");
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-debut", { timeout: 15_000 });
+  await toLastLine(page, "story.peregrina-debut.12");
+  const chosen = () => page.locator("#m-posicion input:checked").getAttribute("value");
+  const before = await chosen();
+  const other = before === "closer" ? "lead" : "closer";
+  const at = await middleOf(page, `#m-posicion label[data-position="${other}"]`);
+  await page.mouse.dblclick(at.x, at.y);
+  // the first click ended the scene; the second landed on the card under it and picked nothing
+  await expect(scene).toHaveCount(0);
+  await expect(page.locator("#m-correr")).toBeVisible();
+  await page.waitForTimeout(300);
+  expect(await chosen()).toBe(before);
+  // a tap of its own picks it
+  await page.waitForTimeout(600);
+  await page.click(`#m-posicion label[data-position="${other}"]`);
+  await expect(page.locator(`#m-posicion-${other}`)).toBeChecked();
+});
+
+test("the second click of a double tap that ends a week's scene opens no race card from the menu under it (F50, 6.2)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await seedRun(page, "peregrina-w48");
+  // week 44's scene never seen: it plays as week 48 opens, over its menu with the race's bar
+  await unseen(page, ["peregrina-tiresome"]);
+  await page.goto("./");
+  await continueRun(page);
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-tiresome");
+  await toLastLine(page, "story.peregrina-tiresome.12");
+  const at = await middleOf(page, "#m-carrera");
+  await page.mouse.dblclick(at.x, at.y);
+  await expect(scene).toHaveCount(0);
+  await page.waitForTimeout(300);
+  await expect(page.locator('[data-screen="menu"]')).toHaveCount(1);
+  // a tap of its own opens it
+  await page.waitForTimeout(600);
+  await page.click("#m-carrera");
+  await expect(page.locator('[data-screen="plan"]')).toHaveCount(1);
+});
+
 test("Rápido: the chapter's card shows whole for 0.7 s before it fades into the first line at 1.75 s (H4)", async ({
   page,
 }) => {
