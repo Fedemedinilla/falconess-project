@@ -12,7 +12,12 @@ Borrador con las palabras del dueño. Id provisorio: `veterana-vuela-alto`. Sin 
   orgullo y no gana tanto como antes.
 - «Hay que darle una buena personalidad, no perfecta, ella también tiene problemas.»
 
+## Propuesta
+
+- Su problema es el orgullo: no acepta que está en bajada, rechaza ayuda y esconde una lesión o un
+  cansancio que no le cuenta a nadie (aceptado para empezar, 2026-11-17: «luego lo veremos»).
+
 ## Abierto
 
-Nombre; edad; distancia; cuáles son sus problemas; qué sabe de Vuela Alto y de la sexta mensajera; cómo
+Nombre; edad; distancia; qué sabe de Vuela Alto y de la sexta mensajera; cómo
 trata a la protagonista al principio.

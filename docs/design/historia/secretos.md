@@ -54,5 +54,9 @@ cuándo se revela y qué no se puede escribir antes.
 - Vuela Alto es la sexta casa fundadora; el mundo la fue olvidando.
 - No escribir antes de la revelación: que fueron seis; que el cielo de la imagen es una Falconess;
   que Vuela Alto es fundadora.
-- Abierto: por qué no se la distingue en la imagen; cuándo y cómo lo descubre la protagonista; quién
+- **Por qué no se la ve (dueño, 2026-11-17):** «Me imagino a las 5 yendo hacia arriba hacia las
+  nubes. Pero nadie se pregunta quién iba primero o a quién seguían. Seguían a la abuela, que ya
+  estaba pasando las nubes, por eso no se la ve.» Nadie la borró: el mundo nunca se preguntó a quién
+  seguían.
+- Abierto: cuándo y cómo lo descubre la protagonista; quién
   más lo sabe (la fundadora sí, S2).

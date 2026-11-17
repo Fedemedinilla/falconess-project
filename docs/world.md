@@ -141,6 +141,10 @@ Nació en la carrera de la paz; la escudería sombra la amenaza; la protagonista
 ## 8. Tono
 
 - Decidido (temporada v3, T17): «cool y con filo, no kawaii».
+- **Decidido (dueño, 2026-11-17):** ni oscuro ni color de rosa. «Me gustaría no crear un mundo grim y
+  dark o depresivo, pero tampoco algo color de rosas como Umamusume. Así que quiero que haya
+  temáticas importantes y quizás no tan claras o exploradas. Neurodivergencia o salud mental.»
+- Abierto: cómo se tratan esos temas (`docs/design/historia/ideas.md` I16).
 
 ## 9. Glosario
 

@@ -385,4 +385,14 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   quedó cuando las demás se fueron a escuderías grandes; corre por orgullo y no gana tanto como
   antes. «Hay que darle una buena personalidad, no perfecta, ella también tiene problemas.»
   Borrador: `personajes/veterana-vuela-alto.md`.
+- **Propuesta aceptada para empezar (2026-11-17):** su problema es el orgullo: no acepta que está en
+  bajada, rechaza ayuda y esconde una lesión o un cansancio. «Luego lo veremos.»
 - Tema de la historia principal decidido el mismo día: la luz (`docs/world.md` §5b).
+
+### I16 · Temas importantes: neurodivergencia y salud mental (2026-11-17)
+
+- Estado: **decidida** la intención (2026-11-17); cómo tratarlos, en discusión. Va a: `docs/world.md`
+  §8 (tono) y a las biblias.
+- Ya hay material en el canon que toca esto sin nombrarlo: después de la Larga, Peregrina «no supo
+  cómo actuar ni qué sentir: no lloró, no se enojó, no le salía nada» (`docs/design/canon-peregrina.md`
+  §1).
