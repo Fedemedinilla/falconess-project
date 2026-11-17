@@ -212,3 +212,34 @@ test("the chat comes in over 240 ms, rising, and leaves over 180 ms when closed 
   await settleUpdates(page);
   await expect(chat).toHaveCount(0);
 });
+
+test("an outing's effects, which come in under the closing sheet, take the focus once it has gone (6.9, L7)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-salida");
+  const outing = page.locator("#m-salida-cuadrilla");
+  await expect(outing.locator("li[data-crew]").first()).toBeVisible();
+  await holdClock(page);
+  await outing.locator("li[data-crew] button").first().click();
+  await page.clock.runFor(200);
+  await settleUpdates(page);
+  await expect(outing).toHaveCount(0);
+  await expect(page.locator("#m-efectos")).toBeFocused();
+});
+
+test("a scene asked for from «Historia» takes the focus once the sheet has gone (6.9, L7)", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-menu");
+  await page.click("#m-historia-abrir");
+  await page.click('#m-historia [data-scene="peregrina-prologue"] button');
+  await expect(page.locator("#m-historia")).toHaveCount(0);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
+  await expect(page.locator("#m-capitulo-seguir")).toBeFocused();
+});

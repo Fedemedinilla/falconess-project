@@ -1,6 +1,6 @@
 import { type RefObject, useLayoutEffect, useRef, useState } from "react";
 import { MOTION } from "../mobile/motion";
-import { useModalOpen } from "./modals";
+import { sheetClosed, useModalOpen } from "./modals";
 import { useLatest } from "./useLatest";
 import { useReducedMotion } from "./useMedia";
 
@@ -82,6 +82,7 @@ export function useModalDialog(
       if (typeof d.close === "function") d.close();
       else d.removeAttribute("open");
       closeRef.current();
+      sheetClosed();
     }
   });
   useLayoutEffect(() => {

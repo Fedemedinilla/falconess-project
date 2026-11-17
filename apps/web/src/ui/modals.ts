@@ -81,3 +81,22 @@ export function useAnyModalOpen(): boolean {
 export function closeTopModal(): boolean {
   return modals.closeTop();
 }
+
+/** Who hears that a sheet has just closed natively (`useLayerFocus`). */
+const closedListeners = new Set<() => void>();
+
+/**
+ * A sheet has just closed natively, at the end of its way out (`useModalDialog`): the focus it
+ * gave back to what opened it may have found nothing live (a layer came in under it).
+ */
+export function sheetClosed(): void {
+  for (const listener of [...closedListeners]) listener();
+}
+
+/** Calls `listener` each time a sheet has closed natively; returns the unsubscribe. */
+export function onSheetClosed(listener: () => void): () => void {
+  closedListeners.add(listener);
+  return () => {
+    closedListeners.delete(listener);
+  };
+}
