@@ -159,3 +159,59 @@ export async function coverage(page: Page, selector: string): Promise<Coverage> 
     return { covered, points: 45, misses };
   }, selector);
 }
+
+/** Lets the page's own updates land (React commits on a posted message, a timer's too). */
+export async function settleUpdates(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    for (let i = 0; i < 3; i++)
+      await new Promise<void>((done) => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = () => done();
+        channel.port2.postMessage(0);
+      });
+  });
+}
+
+/**
+ * Holds the fake clock still (a little ahead of now): timers run only as the test moves it on.
+ * The clock flows while the call travels (a slow dev build can take longer than the lead): aim
+ * again if it got there first.
+ */
+export async function holdClock(page: Page): Promise<void> {
+  for (let tries = 0; ; tries++)
+    try {
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+      return;
+    } catch (error) {
+      if (tries >= 4 || !String(error).includes("past")) throw error;
+    }
+}
+
+/**
+ * What moves inside `scope` right now (reduced motion's check, plan §2.4): every running CSS
+ * animation and Web Animation, and every running CSS transition of anything but opacity, as
+ * `element name`. Press feedback (a transition of `--m-dur-fast`'s length or less, the answer to
+ * the finger's own touch) is not counted. Paused or finished animations do not move.
+ */
+export async function movingNow(page: Page, scope = "[data-app]"): Promise<string[]> {
+  return page.evaluate((sel) => {
+    const PRESS_MS = 120;
+    const name = (el: Element): string => {
+      const cls = el.getAttribute("class")?.split(/\s+/)[0];
+      return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
+    };
+    const out: string[] = [];
+    for (const a of document.getAnimations()) {
+      if (a.playState !== "running") continue;
+      const target = a.effect instanceof KeyframeEffect ? a.effect.target : null;
+      if (!target?.closest(sel)) continue;
+      if (a instanceof CSSAnimation) out.push(`${name(target)} ${a.animationName}`);
+      else if (a instanceof CSSTransition) {
+        const ms = Number(a.effect?.getTiming().duration ?? 0);
+        if (a.transitionProperty !== "opacity" && ms > PRESS_MS)
+          out.push(`${name(target)} ${a.transitionProperty}`);
+      } else out.push(`${name(target)} animate()`);
+    }
+    return out.sort();
+  }, scope);
+}

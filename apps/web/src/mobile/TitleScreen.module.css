@@ -145,7 +145,15 @@
   }
 }
 
+/* reduced motion (plan §2.4): the sky, its glow and the name still, «Tocá para empezar» whole; the
+   title leaves by fading only (no zoom) */
 @media (prefers-reduced-motion: reduce) {
+  .title {
+    transition: opacity 450ms ease;
+  }
+  .title[data-leaving] {
+    transform: none;
+  }
   .sky,
   .glow,
   .logo {

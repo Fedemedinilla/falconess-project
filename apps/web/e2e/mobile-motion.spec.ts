@@ -12,7 +12,7 @@ import {
   watchCues,
   week,
 } from "./mobile-helpers";
-import { coverage, freezeAt, opacityOf } from "./motion";
+import { coverage, freezeAt, holdClock, opacityOf, settleUpdates } from "./motion";
 
 /**
  * How the phone game's layers come and go (plan-final §1.9, §2, phase 6). 6.1: a layer that the
@@ -45,33 +45,6 @@ test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 /** Whether `selector` is in the page right now, without waiting for it. */
 function present(page: Page, selector: string): Promise<boolean> {
   return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
-}
-
-/** Lets the page's own updates land (React commits on a posted message, a timer's too). */
-async function settleUpdates(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    for (let i = 0; i < 3; i++)
-      await new Promise<void>((done) => {
-        const channel = new MessageChannel();
-        channel.port1.onmessage = () => done();
-        channel.port2.postMessage(0);
-      });
-  });
-}
-
-/**
- * Holds the fake clock still (a little ahead of now): timers run only as the test moves it on.
- * The clock flows while the call travels (a slow dev build can take longer than the lead): aim
- * again if it got there first.
- */
-async function holdClock(page: Page): Promise<void> {
-  for (let tries = 0; ; tries++)
-    try {
-      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
-      return;
-    } catch (error) {
-      if (tries >= 4 || !String(error).includes("past")) throw error;
-    }
 }
 
 /** What `document.elementFromPoint` finds at the middle of the game's column, by its screen. */

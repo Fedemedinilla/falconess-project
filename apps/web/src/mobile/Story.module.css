@@ -644,21 +644,26 @@
   border-radius: 6px;
 }
 
+/* reduced motion (plan §2.4, rule 71): a scene stands whole and still from its first frame (its
+   still tempo: the card for 0.9 s, then the lines whole), with no drift, pan or bob; it leaves at
+   once (no copy). The chat comes at once, its bubbles whole, no typing dots blinking. */
 @media (prefers-reduced-motion: reduce) {
-  .overlay,
-  .veil,
   .base,
+  .backdrop,
+  .box .backdrop,
+  .cine .backdrop,
   .shade,
   .chrome,
-  .leaving,
-  .bar,
-  .glow,
-  .backdrop,
+  .card,
+  .dialog,
   .more,
+  .glow,
+  .bar,
+  .wordOn,
+  .chat,
   .bubble,
-  .chat {
-    animation-duration: 0.01ms;
-    animation-delay: 0s;
+  .dots i {
+    animation: none;
   }
   /* the notice stands still and whole (H5); one that leaves goes at once */
   .toast {

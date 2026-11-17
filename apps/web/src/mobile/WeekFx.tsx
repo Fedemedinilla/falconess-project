@@ -6,6 +6,7 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useFlowTimer, useFlowTimers } from "../ui/flowTimer";
 import { isRepeatTap } from "../ui/tap";
+import { useReducedMotion } from "../ui/useMedia";
 import { type FxCell, fxGrid, fxTimeline } from "./flow/fxTimeline";
 import { Glyph, type GlyphName } from "./Glyph";
 import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
@@ -158,6 +159,9 @@ export function WeekFxOverlay({
 }) {
   const lid = useLid();
   const playing = useLayerPhase() === "in";
+  // reduced motion: every effect whole from the first frame (their CSS has no animation), so they
+  // take no timeline of their own (rule 73: an inline length would bring their fade back)
+  const reduced = useReducedMotion();
   // the instance is the beat's: its timeline and its cells are drawn once
   const [{ starts, skillAt, total }] = useState(() => fxTimeline(fx, paceScale(pace)));
   const [grid] = useState(() => fxGrid(fx));
@@ -205,8 +209,9 @@ export function WeekFxOverlay({
             data-fx={e.kind}
             style={{
               ...(cell ? cellStyle(cell) : {}),
-              animationDelay: `${at}ms`,
-              animationDuration: `${total - at}ms`,
+              ...(reduced
+                ? {}
+                : { animationDelay: `${at}ms`, animationDuration: `${total - at}ms` }),
             }}
           >
             {e.kind !== "skills" && <Badge e={e} at={at} content={content} />}

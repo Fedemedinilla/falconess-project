@@ -29,7 +29,8 @@
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  opacity: 0;
+  /* whole at rest (reduced motion shows it so); its timeline (WeekFx: delay and length) fades it
+     in and out, hidden before and after by the keyframes' fill */
   animation: fxShow 1.3s ease-out both;
 }
 .icon {
@@ -158,18 +159,19 @@
     transform: none;
   }
 }
+/* the training's stamp, the same body (L11: CSS modules scope keyframes; motion.test checks them) */
 @keyframes stampIn {
   0% {
     opacity: 0;
-    transform: scale(2) rotate(-6deg);
+    transform: scale(2.2) rotate(-6deg);
   }
   60% {
     opacity: 1;
-    transform: scale(0.94) rotate(-2deg);
+    transform: scale(0.92) rotate(-2deg);
   }
   100% {
     opacity: 1;
-    transform: rotate(-3deg);
+    transform: scale(1) rotate(-3deg);
   }
 }
 @keyframes chevUp {
@@ -198,12 +200,17 @@
     transform: rotate(180deg) translateY(-30px);
   }
 }
+/* reduced motion (plan §2.4): every effect whole and still from the first frame, where it lands
+   (the stamp tilted); their time still ends them (WeekFx's timer), and they go at once */
 @media (prefers-reduced-motion: reduce) {
+  .layer,
   .fx,
-  .icon,
-  .stamp,
-  .layer {
-    animation-duration: 0.01s;
+  .icon {
+    animation: none;
+  }
+  .stamp {
+    animation: none;
+    transform: rotate(-3deg);
   }
   .arrows {
     display: none;
@@ -336,10 +343,11 @@
     left: 130%;
   }
 }
+/* reduced motion: the portraits and the skills' cards whole and still, no shine, no glow */
 @media (prefers-reduced-motion: reduce) {
+  .crews,
   .skill,
-  .shine,
-  .crews {
-    animation-duration: 0.01s;
+  .shine {
+    animation: none;
   }
 }

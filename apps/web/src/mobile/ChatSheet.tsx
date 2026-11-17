@@ -2,7 +2,7 @@ import type { ChatTopic } from "@falconess/schema";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { useModalOpen } from "../ui/modals";
-import { reducedMotion } from "../ui/useMedia";
+import { reducedMotion, scrollBehavior } from "../ui/useMedia";
 import s from "./Story.module.css";
 
 type Bubble = { readonly key: string; readonly text: string; readonly mine: boolean };
@@ -43,7 +43,8 @@ export function ChatSheet({
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every new bubble
   useEffect(() => {
-    feed.current?.scrollTo({ top: feed.current.scrollHeight, behavior: "smooth" });
+    // smoothly, unless the viewer asked for reduced motion: then it jumps (plan §2.4)
+    feed.current?.scrollTo({ top: feed.current.scrollHeight, behavior: scrollBehavior() });
   }, [bubbles, typing]);
 
   const ask = (t: ChatTopic) => {

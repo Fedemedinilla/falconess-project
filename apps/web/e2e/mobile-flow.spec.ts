@@ -15,7 +15,7 @@ import {
   watchCues,
   week,
 } from "./mobile-helpers";
-import { coverage, freezeAt } from "./motion";
+import { coverage, freezeAt, settleUpdates } from "./motion";
 
 /**
  * The phone game's flow, now that the flow model drives it (plan-final 4.1): a sheet holds the
@@ -35,18 +35,6 @@ test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 /** Whether `selector` is in the page right now, without waiting for it. */
 function present(page: Page, selector: string): Promise<boolean> {
   return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
-}
-
-/** Lets the page's own updates land (React commits on a posted message, a timer's too). */
-async function settleUpdates(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    for (let i = 0; i < 3; i++)
-      await new Promise<void>((done) => {
-        const channel = new MessageChannel();
-        channel.port1.onmessage = () => done();
-        channel.port2.postMessage(0);
-      });
-  });
 }
 
 test("a sheet in the page but closed holds nothing: the menu's and the race card's track sheets", async ({

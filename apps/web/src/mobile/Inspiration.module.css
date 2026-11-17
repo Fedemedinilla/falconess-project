@@ -213,15 +213,20 @@
     transform: translateY(24px) scale(0.92);
   }
 }
+/* reduced motion (plan §2.4): the card whole from the first frame (Inspiration reveals it at
+   mount), her art at its last glow, the rays still, no sparks */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .rays,
-  .art,
-  .spark,
   .card {
     animation: none;
   }
+  .art {
+    animation: none;
+    filter: brightness(1.1) drop-shadow(0 0 14px #fff3a8);
+  }
   .spark {
+    animation: none;
     display: none;
   }
 }

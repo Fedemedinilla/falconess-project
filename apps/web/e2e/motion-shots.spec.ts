@@ -230,6 +230,30 @@ const menuTrain: Flow = async (page, m) => {
   return "menu-train";
 };
 
+/** The title's leave after its tap (under reduced motion: a fade only, 6.8). */
+const titleLeave: Flow = async (page, m) => {
+  await page.goto("./");
+  await expect(page.locator("#m-titulo")).toBeVisible();
+  await m.hold();
+  await page.click("#m-titulo");
+  await m.at("title-leave", [0, 150, 300, 440]);
+  await m.release();
+  return "title-leave";
+};
+
+/** Menu → training screen → a training: its result (the stamp, the «+N», the stats' drop). */
+const trainResult: Flow = async (page, m) => {
+  await startPeregrina(page);
+  await page.click("#m-entrenar");
+  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+  await page.waitForTimeout(400);
+  await m.hold();
+  await page.dblclick("#m-entrenar-agility");
+  await m.at("train-result", [0, 120, 300, 600, 1200]);
+  await m.release();
+  return "train-result";
+};
+
 /** A rest's effects over the menu, then a tap on them (on a wide screen: the panel beside them). */
 const effects: Flow = async (page, m) => {
   await startPeregrina(page);
@@ -530,17 +554,35 @@ const PLAN: readonly {
       sceneIntro,
       sceneHurry,
       sceneBox,
+      titleLeave,
+      trainResult,
     },
   },
   {
     viewport: PHONE,
     motion: "reduce",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut, sceneIntro, sceneBox },
+    flows: {
+      menuTrain,
+      effects,
+      raceWeek,
+      raceEnd,
+      inheritance,
+      raceInOut,
+      sceneIntro,
+      sceneBox,
+      titleLeave,
+      trainResult,
+    },
   },
   {
     viewport: PHONE_S,
     motion: "normal",
     flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut, sceneIntro, sceneBox },
+  },
+  {
+    viewport: PHONE_S,
+    motion: "reduce",
+    flows: { effects, raceWeek, inheritance, sceneIntro, trainResult },
   },
   { viewport: SMALL, motion: "normal", flows: { menuTrain, effects, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
@@ -567,7 +609,11 @@ const PLAN: readonly {
       sceneBox,
     },
   },
-  { viewport: DESK, motion: "reduce", flows: { menuTrain, endGlide } },
+  {
+    viewport: DESK,
+    motion: "reduce",
+    flows: { menuTrain, endGlide, effects, raceWeek, inheritance, sceneIntro, trainResult },
+  },
 ];
 
 for (const { viewport, motion, flows } of PLAN)
