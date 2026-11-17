@@ -508,10 +508,11 @@ test("«Ver otra vez» brings the replay back into the race's screen with a fade
   await expect(page.locator("#m-resultado")).toBeVisible();
   await holdClock(page);
   await page.click("#m-ver-otra-vez");
-  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
-  // the same screen (its head and «Saltar» whole): only the replay comes in, clear at its first
-  // frame and whole at 200 ms, in its place
+  // held at once, in the click's own commit (a slow replay mount would let a 200 ms fade end
+  // before a wait for it): the same screen (its head and «Saltar» whole), only the replay comes
+  // in, clear at its first frame and whole at 200 ms, in its place
   await freezeAt(page, 0);
+  await expect(page.locator("#m-carrera-vuelo")).toBeAttached();
   expect(await opacityOf(page, "#m-carrera-vuelo")).toBeLessThan(0.05);
   expect(await opacityOf(page, "#m-saltar")).toBeGreaterThanOrEqual(0.99);
   await freezeAt(page, 200);
