@@ -70,6 +70,10 @@ provisional del dueño) reemplaza al dibujo de prueba en la ilustración del gir
 (tuteo en vez de voseo), y gestos escritos en cursiva arriba de cada línea, porque todavía no hay
 animaciones («el "ahí" cuando le preguntan sobre su entrenador, no se ve que esté apuntando a nada»).
 
+**Auto (2026-11-17):** con los gestos hay más para leer; el modo automático espera 1,8 s más 45 ms por
+letra de la línea y del gesto juntos (unas 22 letras por segundo). Antes contaba solo la línea, con
+1,5 s más 38 ms por letra.
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
