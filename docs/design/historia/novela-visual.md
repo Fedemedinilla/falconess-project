@@ -63,7 +63,8 @@ Las imágenes no están en el repo (arte provisional).
 
 **Versión 14 (2026-11-17):** el exterior del hangar (arte del dueño) en la escena 1, con el cartel en
 blanco y el texto «VUELA ALTO» escrito por el juego encima, con la T caída justo donde la imagen tiene
-el hueco de la pieza que falta. Los personajes de la izquierda se espejan para mirar al centro.
+el hueco de la pieza que falta. Los personajes de la izquierda se espejan para mirar al centro. El cuadro de la carrera de la paz (óleo, arte
+provisional del dueño) reemplaza al dibujo de prueba en la ilustración del giro mayor.
 
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de

@@ -458,6 +458,17 @@ Avoid: digital illustration look, comic or cartoon look, clean outlines, halos, 
 glowing auras, a sixth figure, text, letters, signature, frame.
 ```
 
+Resultado (2026-11-17): con el prompt «óleo primero» sale como pintura de museo. Queda una
+corrección posible, en la misma conversación y con la imagen adjunta, si las alas de atrás salen de
+plumas (parecen ángeles):
+
+```text
+Keep this exact painting, its brushwork, composition and colors. Change only the wings of all five women:
+every pair must be clearly mechanical, like the red and yellow pair in front: metal frame, gears and joints,
+rigid panels instead of feathers. No feathered wings anywhere. The small cream and gold racer near the hole
+must look like a racer leaning forward and fighting for the lead, not an angel.
+```
+
 **Espejar personajes (2026-11-17):** el juego puede dar vuelta una imagen para que mire al otro lado.
 Las hojas de personaje miran hacia la izquierda; en el escenario, quien está a la izquierda se espeja
 para mirar al centro. Cuidado con lo que no es simétrico: el lado del broche de pelo, el lado de la
