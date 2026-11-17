@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 import {
   continueRun,
+  pastTitle,
   seedRun,
   startMobile,
   test,
@@ -42,9 +43,19 @@ async function settleUpdates(page: Page): Promise<void> {
   });
 }
 
-/** Holds the fake clock still (a little ahead of now): timers run only as the test moves it on. */
+/**
+ * Holds the fake clock still (a little ahead of now): timers run only as the test moves it on.
+ * The clock flows while the call travels (a slow dev build can take longer than the lead): aim
+ * again if it got there first.
+ */
 async function holdClock(page: Page): Promise<void> {
-  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+  for (let tries = 0; ; tries++)
+    try {
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+      return;
+    } catch (error) {
+      if (tries >= 4 || !String(error).includes("past")) throw error;
+    }
 }
 
 /** What `document.elementFromPoint` finds at the middle of the game's column, by its screen. */
@@ -334,4 +345,30 @@ test("the skipped scene's notice waits for the scene's exit, then sits just over
   });
   expect(gap).toBeGreaterThanOrEqual(9);
   expect(gap).toBeLessThanOrEqual(11);
+});
+
+test("a scene's notice belongs to the screen it left onto: a tap away during its exit drops it, so it never shows over the next screen's controls (6.2, rule 17)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-capitulo")).toBeVisible();
+  await holdClock(page);
+  await page.click("#m-capitulo-saltar");
+  // the menu is live under the prologue's exit: «Taller» at once
+  await page.click("#m-taller");
+  await expect(page.locator("#m-taller-wings")).toBeVisible();
+  await page.clock.runFor(1500);
+  await settleUpdates(page);
+  // the exit is over: no notice over the workshop's tabs, and none back on the menu
+  expect(await present(page, "[data-layer-phase]")).toBe(false);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.click("#m-volver");
+  await expect(page.locator("#m-entrenar")).toBeVisible();
+  await page.clock.runFor(500);
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
 });

@@ -16,6 +16,12 @@ export type Toast = {
   readonly kind: "skipped" | "seen" | "passed";
   /** Set on its first display; once shown and gone it never comes back (F23). */
   readonly shown: boolean;
+  /**
+   * The screen it waited on, never shown, while only a layer's exit held it (that screen live
+   * under the fading layer). Another screen before it shows drops it: it belonged to the screen
+   * the scene left onto, where it would have shown and gone with the change.
+   */
+  readonly heldOn?: string;
 };
 
 /** A refused act or preview, named as `ui.error.<kind>` names it. */
@@ -63,6 +69,8 @@ export type UiEvent =
   | { readonly type: "replay"; readonly scene: StoryScene | undefined }
   | { readonly type: "toast"; readonly toast: Toast }
   | { readonly type: "toastShown"; readonly id: string }
+  /** It waits, never shown, only for a layer's exit over `screen`. */
+  | { readonly type: "toastHeld"; readonly id: string; readonly screen: string }
   | { readonly type: "toastGone"; readonly id: string }
   /** A refused act or preview (a new notice each time), or none. */
   | { readonly type: "notice"; readonly notice: GameErrorKind | undefined }
@@ -171,6 +179,13 @@ export function reduceUi(ui: UiState, e: UiEvent): UiState {
     case "toastShown":
       if (!ui.toasts.some((t) => t.id === e.id && !t.shown)) return ui;
       return { ...ui, toasts: ui.toasts.map((t) => (t.id === e.id ? { ...t, shown: true } : t)) };
+    case "toastHeld":
+      // the first screen it was held on counts: it is where the scene left it
+      if (!ui.toasts.some((t) => t.id === e.id && !t.shown && t.heldOn === undefined)) return ui;
+      return {
+        ...ui,
+        toasts: ui.toasts.map((t) => (t.id === e.id ? { ...t, heldOn: e.screen } : t)),
+      };
     case "toastGone":
       if (!ui.toasts.some((t) => t.id === e.id)) return ui;
       return { ...ui, toasts: ui.toasts.filter((t) => t.id !== e.id) };

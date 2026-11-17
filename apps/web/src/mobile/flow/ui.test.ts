@@ -160,6 +160,17 @@ describe("reduceUi", () => {
     expect(reduceUi(gone, { type: "toastGone", id: "a" })).toBe(gone);
   });
 
+  it("a toast held by a layer's exit keeps the first screen it waited on; a shown one is never held (6.2)", () => {
+    const two = after({ type: "toast", toast: toast("a") }, { type: "toast", toast: toast("b") });
+    const held = reduceUi(two, { type: "toastHeld", id: "a", screen: "menu" });
+    expect(held.toasts.map((t) => t.heldOn)).toEqual(["menu", undefined]);
+    // held once: a later screen does not move it, nor does the same report again
+    expect(reduceUi(held, { type: "toastHeld", id: "a", screen: "train" })).toBe(held);
+    expect(reduceUi(held, { type: "toastHeld", id: "z", screen: "menu" })).toBe(held);
+    const shown = reduceUi(two, { type: "toastShown", id: "a" });
+    expect(reduceUi(shown, { type: "toastHeld", id: "a", screen: "menu" })).toBe(shown);
+  });
+
   it("notice: a refused act or preview, each one a notice of its own, until cleared or gone", () => {
     const refused = after({ type: "notice", notice: "workshop" });
     expect(refused.notice).toEqual({ kind: "workshop", n: 1, shown: false });

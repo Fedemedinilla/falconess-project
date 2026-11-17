@@ -27,6 +27,9 @@ type Note = {
   readonly body: (close: (() => void) | undefined, live: boolean) => ReactNode;
   readonly onShown: () => void;
   readonly onGone: () => void;
+  /** A story notice: the screen a layer's exit held it on, and how it reports that screen. */
+  readonly heldOn?: string | undefined;
+  readonly onHeld?: ((screen: string) => void) | undefined;
 };
 
 /** A notice on its way out: an id-less copy where it stood, until its timer removes it. */
@@ -42,12 +45,16 @@ type SlotOptions = {
   readonly cut: boolean;
   readonly fades: boolean;
   readonly fading: boolean;
+  /** Only a layer on its way out holds the notices: the screen under it is live. */
+  readonly exiting: boolean;
 };
 
 /**
  * One channel's notice (`slotView`): shown when nothing plays in front, for its time from its
  * first display; then, or when its screen changes or something comes in front of it, it leaves
- * (`leave`: faded as a copy, or cut) and is gone.
+ * (`leave`: faded as a copy, or cut) and is gone. A story notice that only a layer's exit holds
+ * reports the screen it waits on (`onHeld`): left for another screen before it shows, it is dropped
+ * unseen (`drop`).
  */
 function useSlot(
   note: Note | undefined,
@@ -58,7 +65,7 @@ function useSlot(
   const view = slotView(note, at, o);
   const latest = useLatest({ note, leave });
   const id = note?.id;
-  const { screen } = o;
+  const { screen, exiting } = o;
   // before paint: a notice never shows a frame over what came in front of it
   useLayoutEffect(() => {
     const { note: n, leave: go } = latest.current;
@@ -70,8 +77,9 @@ function useSlot(
     } else if (view === "fade" || view === "cut") {
       setAt(undefined);
       go(n, view === "fade");
-    } else if (view === "gone") go(n, false);
-  }, [view, id, at, screen, latest]);
+    } else if (view === "gone" || view === "drop") go(n, false);
+    else if (view === "wait" && exiting && !n.shown && n.heldOn === undefined) n.onHeld?.(screen);
+  }, [view, id, at, screen, exiting, latest]);
   // its time on screen, from its first display: a flow timer keyed by the notice
   const shownId = at?.id;
   useFlowTimer(
@@ -107,6 +115,7 @@ function Notices({
   visible,
   screen,
   cut,
+  exiting,
 }: {
   readonly error: Note | undefined;
   readonly story: Note | undefined;
@@ -115,6 +124,8 @@ function Notices({
   readonly screen: string;
   /** An opaque layer is in front (a scene, the emblem, a card). */
   readonly cut: boolean;
+  /** Only a layer on its way out holds the notices (the screen under it is live). */
+  readonly exiting: boolean;
 }) {
   const reduced = useReducedMotion();
   const outMs = reduced ? 0 : MOTION.toastOut;
@@ -133,7 +144,14 @@ function Notices({
     note.onGone();
   };
   // a notice waits for the one before it to fade out: one after the other, never one over another
-  const o: SlotOptions = { visible, screen, cut, fades: outMs > 0, fading: leaving.length > 0 };
+  const o: SlotOptions = {
+    visible,
+    screen,
+    cut,
+    fades: outMs > 0,
+    fading: leaving.length > 0,
+    exiting,
+  };
   const err = useSlot(error, o, leave);
   const sto = useSlot(story, o, leave);
   const live = `${err.live ? error?.id : ""}|${sto.live ? story?.id : ""}`;
@@ -287,9 +305,12 @@ function storyWords(
  * story notice of the flow's queue (`toasts`) and a refused act (`notice`). They show only while
  * the flow allows one (`flow.toast`: no layer, no race replay, no training's result) and no layer
  * is in front or leaving (LayerHost's child), so a notice set under a scene, the emblem, the
- * inheritance card or the week's effects waits for them and then shows its whole time. «Ver» is
- * there only while a scene may play (`flow.canReplay`, critic b). Never in `ui/modals`: the back
- * gesture and the sheet hold ignore it.
+ * inheritance card or the week's effects waits for them and then shows its whole time. A scene's
+ * notice that only the scene's 0.8 s exit holds belongs to the screen the scene left onto: if the
+ * player goes to another one during the exit (it is live under the fade), the notice is dropped
+ * unseen, as it would have shown there and gone with the change. «Ver» is there only while a scene
+ * may play (`flow.canReplay`, critic b). Never in `ui/modals`: the back gesture and the sheet hold
+ * ignore it.
  */
 export function NoticeHost({
   flow,
@@ -318,6 +339,8 @@ export function NoticeHost({
       storyWords(toast, scene, live && canWatch && scene ? () => onWatch(scene) : undefined),
     onShown: () => dispatch({ type: "toastShown", id: toast.id }),
     onGone: () => dispatch({ type: "toastGone", id: toast.id }),
+    heldOn: toast.heldOn,
+    onHeld: (screen) => dispatch({ type: "toastHeld", id: toast.id, screen }),
   };
   const error: Note | undefined = notice && {
     id: `error:${notice.n}`,
@@ -336,6 +359,7 @@ export function NoticeHost({
       visible={flow.toast && idle}
       screen={flow.screenKey}
       cut={cutsNotice(flow.layer?.kind)}
+      exiting={flow.toast && !idle}
     />
   );
 }
@@ -376,5 +400,7 @@ export function ErrorNotice({
     onShown: () => undefined,
     onGone: onClose,
   };
-  return <Notices error={note} story={undefined} visible screen="select" cut={false} />;
+  return (
+    <Notices error={note} story={undefined} visible screen="select" cut={false} exiting={false} />
+  );
 }

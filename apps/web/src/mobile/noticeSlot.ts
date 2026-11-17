@@ -18,12 +18,17 @@ export type Shown = { readonly id: string; readonly screen: string; readonly ms:
  * - `cut`: the same, but at once: an opaque layer came in front (a fading notice would show over
  *   its black first frame), or nothing fades (reduced motion);
  * - `gone`: it showed before this host was there (the End's column replaced the run's): gone;
+ * - `drop`: never shown, it waited only for a layer's exit over the screen the layer left it on
+ *   (`heldOn`, the screen live under the exit), and the player went to another screen before it
+ *   could show: it belonged there, so it goes unseen (and never over the next screen's controls);
  * - `none`: no notice.
  */
-export type SlotView = "live" | "wait" | "fade" | "cut" | "gone" | "none";
+export type SlotView = "live" | "wait" | "fade" | "cut" | "gone" | "drop" | "none";
 
 export function slotView(
-  note: { readonly id: string; readonly shown: boolean } | undefined,
+  note:
+    | { readonly id: string; readonly shown: boolean; readonly heldOn?: string | undefined }
+    | undefined,
   at: Shown | undefined,
   o: {
     /** Nothing plays in front: the flow's `toast` and the layers idle. */
@@ -40,6 +45,7 @@ export function slotView(
 ): SlotView {
   if (!note) return "none";
   const here = at !== undefined && at.id === note.id;
+  if (!here && !note.shown && note.heldOn !== undefined && note.heldOn !== o.screen) return "drop";
   if (o.visible && (here ? at.screen === o.screen : !note.shown && !o.fading)) return "live";
   if (here) return o.cut || !o.fades ? "cut" : "fade";
   return note.shown ? "gone" : "wait";

@@ -34,6 +34,17 @@ describe("slotView: what a notice does now (plan §1.9)", () => {
     expect(slotView(note("a", true), undefined, free)).toBe("gone");
     expect(slotView(note("a", true), at("b"), { ...free, visible: false })).toBe("gone");
   });
+  it("held only by a layer's exit over its screen: shown there once the exit is over; dropped unseen on another screen (6.2)", () => {
+    const held = { id: "a", shown: false, heldOn: "menu" };
+    expect(slotView(held, undefined, free)).toBe("live");
+    expect(slotView(held, undefined, { ...free, visible: false })).toBe("wait");
+    expect(slotView(held, undefined, { ...free, screen: "train" })).toBe("drop");
+    expect(slotView(held, undefined, { ...free, visible: false, screen: "race:10" })).toBe("drop");
+    // never held (it waited behind another notice, or a layer in front): it waits for its turn anywhere
+    expect(slotView(note("a"), undefined, { ...free, screen: "train" })).toBe("live");
+    // shown: the usual fade
+    expect(slotView({ ...held, shown: true }, at("a"), { ...free, screen: "train" })).toBe("fade");
+  });
   it("no notice: nothing", () => {
     expect(slotView(undefined, at("a"), free)).toBe("none");
   });
