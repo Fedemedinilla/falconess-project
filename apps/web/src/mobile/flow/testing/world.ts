@@ -241,7 +241,6 @@ export function createWorld(o: WorldOptions): World {
       story: { markSeen: (seed, id) => story.markSeen(seed, id) },
       cards: { markShown: (seed, key) => cards.markShown(seed, key) },
       sound: { cue: () => {}, nav: () => {} },
-      policy,
       dispatch,
       now,
     });
@@ -276,7 +275,7 @@ export function createWorld(o: WorldOptions): World {
       flow,
       facts,
       ui,
-      beats: beatsOf(ctx, facts, ui, policy),
+      beats: beatsOf(ctx, facts, ui),
       stable: again.top === flow.top && again.screen === flow.screen && again.layer === flow.layer,
     });
   };
@@ -359,7 +358,7 @@ export function createWorld(o: WorldOptions): World {
     ui: () => ui,
     ctx: () => game.context(),
     now,
-    beats: () => beatsOf(game.context(), factsNow(), ui, policy),
+    beats: () => beatsOf(game.context(), factsNow(), ui),
     signature,
     start(falconessId, seed, so = {}) {
       game.newSeason();
@@ -421,7 +420,7 @@ export function createWorld(o: WorldOptions): World {
         seenInRun: story.seenInRun(seed),
         cardsShown: cards.shown(seed),
         flow,
-        beats: beatsOf(game.context(), facts, ui, policy),
+        beats: beatsOf(game.context(), facts, ui),
       };
       game = new GameController(loadSeasonContent, kv);
       if (!game.continueSaved()) throw new Error("the saved run did not continue");

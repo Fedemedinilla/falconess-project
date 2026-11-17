@@ -47,7 +47,6 @@ function harness(t: TestGame, o: { readonly policy?: FlowPolicy; readonly pace?:
     story: t.story,
     cards: t.cards,
     sound: { cue: (c) => cues.push(c), nav: () => cues.push("nav") },
-    policy,
     dispatch: (e) => {
       dispatched.push({ e, inputs: inputs() });
       ui = reduceUi(ui, e);
@@ -367,14 +366,18 @@ describe("watches end where they began (I21, review 1 item 1)", () => {
     }
   });
 
-  it("legacy (until 6.3): no finish hold, a watch's replay ends on its result", () => {
-    const t = loadSave("peregrina-ended");
-    const h = harness(t, { policy: LEGACY_POLICY });
-    h.cmd.rewatch(10);
-    const s = h.now().flow.screen;
-    if (s.kind !== "race") throw new Error("no race screen");
-    h.cmd.raceNext(s.play);
-    expect(h.now().flow.screen).toMatchObject({ kind: "race", stage: "result" });
+  it("a watch's replay ends on its finish hold, then its result, whatever the policy (6.3: legacy went straight to the result)", () => {
+    for (const policy of [LEGACY_POLICY, TARGET_POLICY]) {
+      const t = loadSave("peregrina-ended");
+      const h = harness(t, { policy });
+      h.cmd.rewatch(10);
+      for (const stage of ["finish", "result"]) {
+        const s = h.now().flow.screen;
+        if (s.kind !== "race") throw new Error("no race screen");
+        h.cmd.raceNext(s.play);
+        expect(h.now().flow.screen).toMatchObject({ kind: "race", stage });
+      }
+    }
   });
 
   it("a watch and a back to the menu are only for idle moments", () => {

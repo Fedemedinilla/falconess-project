@@ -674,7 +674,7 @@ const I17 = invariant(
 const I18 = invariant(
   "I18",
   "the finish hold only after a replay that ended by itself, never under Directo",
-  (p) => p.finishHold,
+  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {

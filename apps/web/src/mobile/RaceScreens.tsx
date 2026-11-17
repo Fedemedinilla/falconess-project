@@ -12,10 +12,12 @@ import { useGoalRaceLog } from "../screens/shared/useGoalRaceLog";
 import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer } from "../ui/flowTimer";
 import { isRepeatTap } from "../ui/tap";
 import { Glyph } from "./Glyph";
 import { useLeaving } from "./LayerHost";
 import s from "./Mobile.module.css";
+import { held, MOTION } from "./motion";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { trackCard } from "./track";
 import { usePace } from "./usePace";
@@ -163,9 +165,11 @@ export function PreRaceScreen({
 /**
  * A goal race of the run: the v3 flight view (the replay component of the test view) with «Saltar»
  * to the result, then the result against the goal and the tip of the advice. `stage` is the flow's:
- * the replay (its finish too, until 6.3's banner), the race held while a story scene plays over it
- * (owner 2026-11-13: its result waits), or the result. «Saltar» and the replay's own end quote
- * `play`, the key of what plays now, so a stale one does nothing.
+ * the replay; its finish, when it ended by itself (D7: the same replay at its last frame, her place
+ * on a banner for `held(1.2 s)`, then it plays on by itself; a tap on it is «Saltar»); the race
+ * held while a story scene plays over it (owner 2026-11-13: its result waits); or the result.
+ * «Saltar», the banner and the replay's own end quote `play`, the key of what plays now, so a
+ * stale one does nothing.
  */
 export function RaceScreen({
   ctx,
@@ -183,7 +187,7 @@ export function RaceScreen({
   turn: number;
   stage: "replay" | "finish" | "held" | "result";
   play: string;
-  /** «Saltar»: the race to its result. */
+  /** «Saltar», or a tap on the finish's banner: the race to its result. */
   onSkip: (play: string) => void;
   /** The replay ended by itself (or its own «Final»). */
   onNext: (play: string) => void;
@@ -198,6 +202,12 @@ export function RaceScreen({
   const result = state.raceResults.find((r) => r.turn === turn);
   const ctxCourse = log ? pageLabels().courseName(log.courseId) : "";
   const racing = stage === "replay" || stage === "finish";
+  // the finish holds a moment, shorter on Rápido and Directo, then goes on by itself (silent)
+  useFlowTimer(
+    stage === "finish" ? held(MOTION.finishHold, pace, MOTION.finishHoldMin) : undefined,
+    () => onNext(play),
+    play,
+  );
   return (
     <div className={cx(s.screen, s.raceScreen)}>
       <div className={s.raceHead}>
@@ -237,17 +247,35 @@ export function RaceScreen({
           onContinue={onContinue}
         />
       ) : (
-        <div className={s.body}>
-          {racing && log ? (
-            <div className={s.flightWrap}>
-              <Replay
-                log={log}
-                labels={pageLabels()}
-                idPrefix="m-carrera"
-                onReveal={() => onNext(play)}
-                minSpeed={pace === "fast" ? 2 : undefined}
-              />
-            </div>
+        <div className={s.raceBody}>
+          <div className={s.body}>
+            {racing && log ? (
+              <div className={s.flightWrap}>
+                <Replay
+                  log={log}
+                  labels={pageLabels()}
+                  idPrefix="m-carrera"
+                  onReveal={() => onNext(play)}
+                  minSpeed={pace === "fast" ? 2 : undefined}
+                />
+              </div>
+            ) : null}
+          </div>
+          {stage === "finish" && result ? (
+            <button
+              type="button"
+              className={s.finish}
+              id="m-carrera-llegada"
+              aria-label={ui("ui.m.result.next")}
+              onClick={(e) => {
+                if (isRepeatTap(e)) return;
+                onSkip(play);
+              }}
+            >
+              <span className={s.finishPlace}>
+                {ui("ui.m.race.place", { place: result.place })}
+              </span>
+            </button>
           ) : null}
         </div>
       )}

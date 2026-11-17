@@ -44,6 +44,7 @@ const LAYERS = [
   "#m-capitulo-aviso",
   '[data-layer-phase="out"] > *',
   "[data-toast-anchor]",
+  "#m-carrera-llegada",
 ] as const;
 
 type Measure = { opacity: number; covered: number };
@@ -269,8 +270,11 @@ const raceWeek: Flow = async (page, m) => {
   return "race";
 };
 
-/** The race played to its natural end (from a second before it), onto what follows. */
-const raceEnd: Flow = async (page, m) => {
+/**
+ * The race played to its natural end (from a second before it): the finish banner held (D7), then
+ * what follows (the scene after the race, on its black). Shots named `name`.
+ */
+async function naturalEnd(page: Page, m: Moments, name: string): Promise<string> {
   await toRaceWeek(page);
   await page.click("#m-descansar");
   await toPosition(page);
@@ -280,10 +284,18 @@ const raceEnd: Flow = async (page, m) => {
   const rows = Number(await slider.getAttribute("max"));
   await slider.fill(String(rows - 15));
   await m.hold();
-  await m.until(async () => (await page.locator("#m-saltar").count()) === 0, 5000);
-  await m.at("race-end", [0, 420, 1200]);
+  await m.until(async () => (await page.locator("#m-carrera-llegada").count()) === 1, 5000);
+  await m.at(name, [0, 120, 420, 800, 1100, 1300]);
   await m.release();
-  return "race-end";
+  return name;
+}
+
+const raceEnd: Flow = (page, m) => naturalEnd(page, m, "race-end");
+
+/** The same on Rápido: the banner holds 720 ms. */
+const raceEndFast: Flow = async (page, m) => {
+  await page.addInitScript(() => localStorage.setItem("falconess.juego.ritmo", "fast"));
+  return naturalEnd(page, m, "race-end-fast");
 };
 
 /** Two black boxes in this browser: the next season's start has her inheritance card. */
@@ -398,10 +410,24 @@ const PLAN: readonly {
   {
     viewport: PHONE,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, inheritanceTap, notice, digest },
+    flows: {
+      menuTrain,
+      effects,
+      raceWeek,
+      raceEnd,
+      raceEndFast,
+      inheritance,
+      inheritanceTap,
+      notice,
+      digest,
+    },
   },
-  { viewport: PHONE, motion: "reduce", flows: { menuTrain, effects, raceWeek, inheritance } },
-  { viewport: PHONE_S, motion: "normal", flows: { effects, raceWeek, inheritance } },
+  {
+    viewport: PHONE,
+    motion: "reduce",
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance },
+  },
+  { viewport: PHONE_S, motion: "normal", flows: { effects, raceWeek, raceEnd, inheritance } },
   { viewport: SMALL, motion: "normal", flows: { menuTrain, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
   { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek } },
@@ -409,7 +435,7 @@ const PLAN: readonly {
   {
     viewport: DESK,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, inheritance, notice },
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, notice },
   },
   { viewport: DESK, motion: "reduce", flows: { menuTrain } },
 ];

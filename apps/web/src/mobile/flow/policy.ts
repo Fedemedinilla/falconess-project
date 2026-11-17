@@ -5,21 +5,17 @@
  * that commit brings it back), and the last one deletes this file. Pure and text-free.
  */
 export type FlowPolicy = {
-  /** The finish banner holds before the race's result (D7); removed in 6.3. */
-  readonly finishHold: boolean;
   /** The HUD reads the week just played until its effects lift (O3); removed in 6.10. */
   readonly fxHud: boolean;
 };
 
 /** Today's game, flag by flag. */
 export const LEGACY_POLICY: FlowPolicy = Object.freeze({
-  finishHold: false,
   fxHud: false,
 });
 
 /** The designed flow (plan §1.4), which the season walks check. */
 export const TARGET_POLICY: FlowPolicy = Object.freeze({
-  finishHold: true,
   fxHud: true,
 });
 

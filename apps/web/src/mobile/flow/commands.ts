@@ -18,7 +18,6 @@ import type { StoryStore } from "../storyModel";
 import type { WeekStore } from "./decidedWeek";
 import { watchKey } from "./derive";
 import type { InspirationStore } from "./inspirations";
-import type { FlowPolicy } from "./policy";
 import { trainingCue } from "./trainResult";
 import type { Flow, FlowFacts, InstantBeat, WorkshopTab } from "./types";
 import type { UiEvent, UiState } from "./ui";
@@ -36,8 +35,6 @@ export type FlowPorts = {
   readonly cards: Pick<InspirationStore, "markShown">;
   /** The action's cue, and the whoosh of a tap that goes to another screen. */
   readonly sound: { cue(c: SoundCue): void; nav(): void };
-  /** The flag the race commands read (legacy: no finish hold, a watch goes from its replay to its result). */
-  readonly policy: Pick<FlowPolicy, "finishHold">;
   readonly dispatch: (e: UiEvent) => void;
   /** The flow, facts and UI state exactly as this tap or timer found them. */
   readonly now: () => { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
@@ -243,9 +240,12 @@ export function flowCommands(p: FlowPorts): Commands {
         return;
       }
       if (ui.nav.at !== "watch" || ui.nav.stage === "result" || watchKey(ui.nav) !== play) return;
-      // legacy (until 6.3): no finish hold, the replay goes straight to the result
-      const hold = ui.nav.stage === "replay" && p.policy.finishHold;
-      p.dispatch({ type: "watchStage", n: ui.nav.n, stage: hold ? "finish" : "result" });
+      // a watch too: its replay, then its finish held a moment, then its result
+      p.dispatch({
+        type: "watchStage",
+        n: ui.nav.n,
+        stage: ui.nav.stage === "replay" ? "finish" : "result",
+      });
     },
 
     raceAgain() {

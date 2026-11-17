@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { t } from "./fixtures";
 import {
   continueRun,
   pastTitle,
@@ -21,7 +22,8 @@ import { coverage, freezeAt, opacityOf } from "./motion";
  * last layer goes (L7). 6.2: a scene's 0.8 s exit fades onto the real next screen (D7, H1): the
  * race's result is there from the exit's first frame, takes taps at once, and comes in 400 ms into
  * the fade. Timing goes through the fake clock, held still where a moment matters, and CSS moments
- * through `freezeAt`.
+ * through `freezeAt`. 6.3: a race that ends by itself holds its finish a moment with her place on a
+ * banner (D7: 1.2 s × Ritmo), a race seen again too; «Saltar» skips the replay and the hold.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -371,4 +373,144 @@ test("a scene's notice belongs to the screen it left onto: a tap away during its
   await page.clock.runFor(500);
   await settleUpdates(page);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+});
+
+/** Week 10 of `peregrina-w10`: a rest, the race mode, «Correr», to the race in the flight view. */
+async function toRace(page: Page): Promise<void> {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+}
+
+/** The replay playing at ×4 from a moment before her finish (the clock moves it on). */
+async function nearFinish(page: Page): Promise<void> {
+  await page.click("#m-carrera-vuelo-salida");
+  await page.click("#m-carrera-vuelo-x4");
+  const slider = page.locator("#m-carrera-tiempo");
+  const rows = Number(await slider.getAttribute("max"));
+  await slider.fill(String(rows - 15));
+}
+
+/** Runs the held clock on `step` ms at a time until `selector` is in the page; the ms it took. */
+async function runUntil(page: Page, selector: string, maxMs: number, step = 100): Promise<number> {
+  for (let ms = 0; ms <= maxMs; ms += step) {
+    await settleUpdates(page);
+    if (await present(page, selector)) return ms;
+    await page.clock.runFor(step);
+  }
+  throw new Error(`no ${selector} ${maxMs} ms on`);
+}
+
+test("a race that ends by itself holds her place on a banner for 1.2 s, with «Saltar» still there, then plays on (D7, H1)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toRace(page);
+  const cues = await watchCues(page);
+  await holdClock(page);
+  await nearFinish(page);
+  // found within 20 ms of its first frame: the hold is measured from there
+  await runUntil(page, "#m-carrera-llegada", 4000, 20);
+  const banner = page.locator("#m-carrera-llegada");
+  await expect(banner).toHaveAttribute("aria-label", t("ui.m.result.next"));
+  await expect(banner).toContainText(t("ui.m.race.place", { place: 1 }));
+  await expect(page.locator("#m-saltar")).toBeVisible();
+  expect(await present(page, "#m-carrera-vuelo")).toBe(true);
+  // held ≥ 1100 ms: no scene and no result meanwhile
+  for (let ms = 0; ms < 1100; ms += 100) {
+    await page.clock.runFor(100);
+    await settleUpdates(page);
+    expect(await present(page, "#m-carrera-llegada")).toBe(true);
+    expect(await present(page, "#m-resultado")).toBe(false);
+    expect(await present(page, "#m-capitulo")).toBe(false);
+  }
+  // then the race plays on by itself, silently: the scene after it, then its result
+  await runUntil(page, "#m-capitulo", 300);
+  expect(await present(page, "#m-carrera-llegada")).toBe(false);
+  expect(await cues()).not.toContain("nav");
+  await page.click("#m-capitulo-saltar");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+});
+
+test("«Saltar» skips the race and its finish: no banner; a tap on the banner skips the rest of the hold, with no whoosh (D7)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toRace(page);
+  await page.evaluate(() => {
+    let seen = false;
+    new MutationObserver(() => {
+      if (document.getElementById("m-carrera-llegada")) seen = true;
+    }).observe(document.body, { childList: true, subtree: true });
+    Reflect.set(window, "__banner", () => seen);
+  });
+  await page.click("#m-saltar");
+  await page.click("#m-capitulo-saltar");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  expect(
+    await page.evaluate(() => {
+      const seen: unknown = Reflect.get(window, "__banner");
+      return typeof seen === "function" ? Boolean(seen()) : undefined;
+    }),
+  ).toBe(false);
+  // seen again: its natural end holds the banner; a tap on it goes on at once, as «Saltar» does
+  const cues = await watchCues(page);
+  await page.click("#m-ver-otra-vez");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  const before = (await cues()).length;
+  await holdClock(page);
+  await nearFinish(page);
+  await runUntil(page, "#m-carrera-llegada", 4000);
+  await page.click("#m-carrera-llegada");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  expect((await cues()).slice(before)).not.toContain("nav");
+});
+
+test("«Ver otra vez» → its natural end → the banner → its result → «Continuar»: the race's effects, then the menu takes «Descansar» (I21)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toRace(page);
+  await page.click("#m-saltar");
+  await page.click("#m-capitulo-saltar");
+  await page.click("#m-ver-otra-vez");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await holdClock(page);
+  await nearFinish(page);
+  await runUntil(page, "#m-carrera-llegada", 4000, 20);
+  expect(await present(page, "#m-resultado")).toBe(false);
+  // the watch's hold, then its result (no scene: a watch plays none)
+  const held = await runUntil(page, "#m-resultado", 2000);
+  expect(held).toBeGreaterThanOrEqual(1100);
+  expect(await present(page, "#m-carrera-llegada")).toBe(false);
+  await page.clock.resume();
+  await page.click("#m-carrera-seguir");
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-descansar")).toBeEnabled();
+  expect(await week(page)).toBe(11);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+});
+
+test("a reload mid-race replays the race, and its natural end still holds the banner (D7, D5)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toRace(page);
+  await page.reload();
+  await continueRun(page);
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await holdClock(page);
+  await nearFinish(page);
+  await runUntil(page, "#m-carrera-llegada", 4000);
+  expect(await present(page, "#m-resultado")).toBe(false);
+  await runUntil(page, "#m-capitulo", 1500);
 });

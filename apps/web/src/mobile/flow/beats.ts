@@ -9,7 +9,6 @@ import type { SimContext } from "@falconess/sim";
 import type { Step } from "../../game/controller";
 import { type InspirationScene, inspirationCard } from "../inspirationScene";
 import { type WeekFx, type WeekFxPart, weekFx } from "../weekFx";
-import type { FlowPolicy } from "./policy";
 import { dueScenes, menuOrder } from "./scenes";
 import { addedRace, fxPart } from "./steps";
 import type { Beat, FlowFacts, InstantBeat, SceneMode, WeekRecord } from "./types";
@@ -87,15 +86,9 @@ function cardBeat(card: InspirationScene): Beat {
  * decided race week, its position card). A beat this mount finished is left out, and a key shows
  * once (a scene due both after the race and at the season's end plays once). What a reload finds
  * unfinished plays again (D5, O1, §1.8): the decided week from its stage, the race «Correr» ran
- * until its result was seen, a training's result while its week is unread. The legacy policy
- * gives today's order, flag by flag (§1.12).
+ * until its result was seen, a training's result while its week is unread.
  */
-export function beatsOf(
-  ctx: SimContext,
-  f: FlowFacts,
-  ui: UiState,
-  p: FlowPolicy,
-): readonly Beat[] {
+export function beatsOf(ctx: SimContext, f: FlowFacts, ui: UiState): readonly Beat[] {
   const { run, fp, step, stepSeen } = f.run;
   const out: Beat[] = [];
   const keys = new Set<string>();
@@ -162,8 +155,9 @@ export function beatsOf(
       push(tb);
     } else if (racing(f.record, ended)) {
       if (f.pace !== "direct") {
+        // the replay, then its finish held a moment (D7): «Saltar» ends both
         push({ kind: "replay", key: k("race:replay"), turn: race.turn });
-        if (p.finishHold) push({ kind: "finish", key: k("race:finish"), turn: race.turn });
+        push({ kind: "finish", key: k("race:finish"), turn: race.turn });
       }
       for (const sc of due("race")) push(scene(sc, "race"));
       push({ kind: "race-result", key: k("race:result"), turn: race.turn });

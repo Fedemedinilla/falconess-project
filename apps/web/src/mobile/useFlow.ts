@@ -182,7 +182,6 @@ export function useFlow({
       cards,
       // inside the tap (iOS plays sounds only there), never on a timer (critic b)
       sound: { cue: playSound, nav: playNav },
-      policy: ACTIVE_POLICY,
       dispatch,
       now,
     };

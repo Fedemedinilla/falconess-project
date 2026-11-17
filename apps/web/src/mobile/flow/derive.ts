@@ -132,7 +132,7 @@ export function deriveFlow(
   p: FlowPolicy,
   prev?: Flow,
 ): Flow {
-  const beats = beatsOf(ctx, f, ui, p);
+  const beats = beatsOf(ctx, f, ui);
   const at = beats.findIndex((b) => !isInstant(b));
   const top = beats[0];
   const beat = beats[at];
