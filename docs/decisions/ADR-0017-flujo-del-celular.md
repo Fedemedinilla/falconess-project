@@ -180,10 +180,14 @@ visita) y están en la lista fija de `src/storage-keys.test.ts`.
   [[semilla, claves], …] }`, las tarjetas mostradas por temporada (`semilla:start`, `semilla:24`,
   `semilla:40`), como mucho 20 temporadas (se van las más viejas). La primera vez que no existe la
   clave, marca las tarjetas que la versión anterior ya mostró en la partida guardada (la del inicio y
-  la de cada semana leída), una sola vez. Al marcar, une lo que otra pestaña haya guardado.
+  la de cada semana leída), una sola vez. Se vuelve a leer en cada lectura y, al marcar, une lo que
+  otra pestaña haya guardado.
 
 Dos pestañas jugando la misma partida no están soportadas (la partida guardada es del último que
-escribe); los stores no pierden lo que otra pestaña marcó.
+escribe); los stores no pierden lo que otra pestaña marcó y lo leen en cada lectura (paso 7.3): una
+tarjeta de herencia, una escena (`falconess.juego.historia`) o un tema del chat
+(`falconess.juego.chat`) que mostró una pestaña no se repite en la otra, aunque esa ya tuviera el
+menú abierto. Una lectura que no encuentra nada nuevo devuelve los mismos objetos.
 
 ### 6. El gesto atrás (O10)
 
@@ -284,15 +288,43 @@ comportamiento, el modelo puro probado en node, una sombra que lo comparaba con 
 modelo al mando con una política `LEGACY` que reproducía lo de antes, y un cambio visible para el
 dueño por commit, cada uno quitando su bandera. La última (`fxHud`) se fue en el paso 6.10 con
 `flow/policy.ts`: ya no hay políticas, y las caminatas de temporada corren una sola vez
-(`walkMatrix`). Las pruebas `mobile-seeds.spec.ts` («LEGACY pins») hoy fijan el comportamiento
-nuevo.
+(`walkMatrix`). Las pruebas de `mobile-seeds.spec.ts` que fijaban lo viejo («fragile spots, as the
+plan fixed them», antes «LEGACY pins») hoy fijan el comportamiento nuevo.
 
 ## Medición
 
-Pendiente (paso 7.3, L14): `performance.mark` alrededor de `choose` en una semana de carrera (una
-carrera de vista previa) y de `run` («Correr»: la carrera del commit más la de `useGoalRaceLog`), en
-un perfil de gama media; objetivo < 50 ms cada uno. Si alguno pasa, se consulta al dueño: diferir el
-trabajo rompería la regla de que el toque y el cambio de pantalla van juntos.
+Medido el 2026-11-17 (paso 7.3, L14) sobre la app construida (`vite build`, servida con
+`vite preview`), en Chromium (Playwright 1.63) a 390 × 844, con la CPU frenada 4× por CDP
+(`Emulation.setCPUThrottlingRate`, el perfil de gama media) solo alrededor de cada toque, en un
+contenedor de 4 núcleos Xeon; 10 muestras de cada uno, cada una en una página nueva con la partida
+sembrada `peregrina-w10` (la semana 10 es de carrera):
+
+- **El toque:** la entrada de Event Timing de su clic. «Proceso» es lo que corren sus manejadores
+  (el comando, y el render y el commit de React, que caen en la misma tarea); «a la pintura» va del
+  toque al cuadro siguiente pintado (en pasos de 8 ms).
+- **El desglose:** una compilación aparte con `performance.measure` alrededor de la carrera de
+  vista previa, de `game.act` y de `useGoalRaceLog` (no quedó en el código: solo los números).
+
+Lo que dio:
+
+- `choose`: la carrera de vista previa es la mayor parte (mediana 127 ms, p90 151); el resto es
+  derivar el flujo y montar los efectos.
+- `run`: la carrera del commit (`game.act`) 47 ms (p90 54), la que `useGoalRaceLog` vuelve a
+  simular al dibujar 54 ms (p90 76), y unos 180 ms el montaje de la pantalla de carrera (la
+  repetición: su primer cuadro y sus medidas).
+- Sin freno (1×): `choose` 37 / 52 ms (proceso / pintura, medianas), `run` 80 / 112 ms.
+- **El montaje del final** (el «Continuar» del resultado de la última carrera, con sus efectos
+  encima): sin freno ≈ 10 ms y ninguna tarea larga; a 4× una tarea de 58-76 ms y ningún cuadro
+  perdido de más de 83 ms. No congela un cuadro que se vea; la copia del aviso que se va sale a
+  tiempo (≈ 410 ms sin freno, ≈ 450 ms a 4×).
+
+Las dos medianas pasan el objetivo de 50 ms a 4×. Como dice el plan, no se cambió nada: queda como
+decisión abierta del dueño (la 6, abajo). Los números, a 4×:
+
+| Toque, 4×                                   | Proceso: mediana / p90 | A la pintura: mediana / p90 |
+| ------------------------------------------- | ---------------------- | --------------------------- |
+| `choose` («Descansar» en semana de carrera) | 186 / 224 ms           | 220 / 259 ms                |
+| `run` («Correr»)                            | 266 / 359 ms           | 340 / 418 ms                |
 
 ## Comprobaciones en aparatos
 
@@ -315,6 +347,8 @@ Lo que las pruebas no pueden reemplazar; las hace el dueño a mano:
   sobre los efectos encima del final y sobre las posiciones de la tarjeta de carrera: una sola
   decisión por gesto (iOS Safari y Android Chrome informan la cantidad de toques en `detail`, y esto
   depende de eso).
+- **Los sellos de los efectos** sin la letra condensada (antes de que cargue, o sin red): una
+  palabra nunca se corta; el sello se achica para entrar en su celda (paso 7.3).
 - **Movimiento reducido** con el ajuste del sistema (iOS «Reducir movimiento», Android «Quitar
   animaciones»): todo quieto y entero, todas las esperas de lectura en su lugar.
 
@@ -333,6 +367,20 @@ El código mantiene lo de hoy hasta que el dueño responda:
 5. El cuadro 0 del fundido de una pantalla es el cielo de la columna (después del modo carrera, el
    cielo solo): en un aparato puede leerse como un parpadeo (6.5). El plan ofrece un fundido cruzado
    con una foto de la pantalla anterior.
+6. Los dos toques pesados de una semana de carrera pasan los 50 ms en un perfil de gama media
+   (Medición): elegir la acción (≈ 0,2 s, casi todo la carrera de vista previa) y «Correr» (≈ 0,3 s:
+   la carrera, la misma carrera simulada otra vez por la pantalla de carrera y el montaje de la
+   repetición). Hoy el toque espera ese trabajo, porque el comando y el cambio de pantalla van en el
+   mismo manejador síncrono (§1). Alternativas, cada una con su costo:
+   - calcular de antemano, mientras el menú de la semana de carrera está quieto, la vista previa de
+     cada acción (≈ 1 s de CPU de fondo a 4× por semana de carrera, y batería), así el toque la
+     encuentra hecha;
+   - que «Correr» guarde la carrera que corrió y la pantalla de carrera no la simule de nuevo (−54 ms
+     a 4×, el mismo resultado);
+   - montar la repetición un cuadro después de la pantalla de carrera (la pantalla aparece antes, la
+     carrera arranca un cuadro más tarde);
+   - pintar el toque primero y simular en la tarea siguiente: rompe la regla del toque y el cambio
+     de pantalla juntos y agrega un estado intermedio que vive solo en React.
 
 ## Consecuencias
 

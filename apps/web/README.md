@@ -264,6 +264,10 @@ docs/design/escenas.md).
     `falconess.juego.semana`: a race week planned, decided with its stage, raced, its race seen)
     and `flow/inspirations.ts` (`InspirationStore`, `falconess.juego.herencia`: the inheritance
     cards shown, with a one-time migration). Both keys are pinned in `src/storage-keys.test.ts`.
+    Every store that another tab of the game may write (the week's record, the cards shown, the
+    scenes seen and the chat topics read) reads the browser's storage again at each reading,
+    merges what changed and keeps its readings' identity while nothing did, so another tab's card,
+    scene or decided week never shows twice.
   - `useFlow.ts` wires it to React (`useSyncExternalStore` over the stores, instant beats resolved
     before paint, a week record of no run in play dropped). `RunView.tsx` renders the run from the
     flow; `useBackGesture.ts` makes the back gesture do what the screen's «Volver» does (O10).
@@ -306,8 +310,9 @@ docs/design/escenas.md).
     any #juego test that shows a duplicate id, two screens or two layers in at once in any frame,
     across reloads. `e2e/motion.ts` holds the motion helpers: `holdClock` (the fake clock held
     still) and `settleUpdates` (the page's own updates landed), `freezeAt` (every CSS animation at a time), `opacityOf` (the opacity as
-    seen), `coverage` (a 5 × 9 grid of hits), `movingNow` (what moves), `setTabHidden` and
-    `cssPlayStates` (the hidden tab).
+    seen), `coverage` (a 5 × 9 grid of hits), `movingNow` (what moves), `present` (in the page
+    now, without waiting), `runClock` (the held clock moved on), and for the hidden tab
+    `setTabHidden`, `hideTab`, `cssPlayStates` and `expectCssPaused`.
   - `E2E_PORT` moves the e2e server (default 4317, `--strictPort`), so two checkouts can run their
     e2e at once; `E2E_DEV=1` (`test:e2e:dev`) runs them on the dev server, where React's warnings
     and StrictMode's double effects fail a test. `motion-shots.spec.ts` (shots project) captures
