@@ -515,3 +515,17 @@ No text, no letters, no numbers, no logos.
 Si cambia algo de la corredora: «Keep the character exactly as in the first image. Only the wings
 change.» Si las alas salen de plumas: «The wings must be mechanical blades of composite and metal, not
 feathers.»
+
+Segunda vuelta (2026-11-17): con la imagen vertical (1:2) las alas salen muy chicas, porque no hay
+lugar a los costados. Se agranda el lienzo a 16:10 con la corredora centrada y del mismo tamaño (fondo
+liso a los costados) y se adjunta esa imagen con:
+
+```text
+Keep this exact character, pose, outfit and art style, centered and at the same size. Use the empty
+space on both sides: open her wings WIDE and majestic, fully spread to the left and right, with a total
+wingspan about two and a half times her height, the long red composite blades fanned out and clearly
+separated, the tips reaching near the left and right edges of the image. Keep the same wing design:
+red back core with harness, articulated arms with hinges and pistons, flexible overlapping blades with
+gold edges and graphite undersides, and the pulse thruster nozzles at the bottom of the core with a
+faint orange glow. Keep the plain background. No feathers, no text.
+```
