@@ -63,3 +63,13 @@ cuándo se revela y qué no se puede escribir antes.
   seguían.
 - Abierto: cuándo y cómo lo descubre la protagonista; quién
   más lo sabe (la fundadora sí, S2).
+
+## S4 · El viejo fue el mejor spotter (dueño, 2026-11-17)
+
+- Qué es: el viejo de Vuela Alto, que duerme en una silla plegable, fue el spotter legendario de la
+  época de la guerra; los primeros entrenadores le pedían consejo. Un día desapareció, y nadie lo buscó
+  en el hangar de Vuela Alto (`personajes/viejo-entrenador.md`).
+- Su miedo: perder a OTRA Falconess bajo su mando. Ya perdió a una.
+- Abierto: a quién perdió (¿la sexta mensajera, la abuela de la protagonista?); cuándo y cómo se
+  revela.
+- No escribir antes de la revelación: que fue spotter; que es famoso; a quién perdió.

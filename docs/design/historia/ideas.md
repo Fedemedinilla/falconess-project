@@ -461,3 +461,11 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Antes era abierto si también pasaba la interfaz. Hay voseo claro en unas 40 cadenas de interfaz (por ejemplo
   `ui.home.lead`: «Elegí una corredora, entrenala…»), además de las escenas (conteo aproximado con una
   búsqueda de formas como «elegí», «mirá», «tenés», 2026-11-17).
+
+### I22 · Pasado y miedo del elenco de Vuela Alto (2026-11-17)
+
+- Estado: **decidida** (2026-11-17). Las palabras del dueño y las fichas completas (núcleo, voz,
+  banco de diez líneas, etapas de confianza) están en `personajes/protagonista.md`,
+  `personajes/entrenador.md`, `personajes/veterana-vuela-alto.md` y `personajes/viejo-entrenador.md`.
+  Cómo se llaman entre sí: `relaciones.md`. El secreto del viejo: `secretos.md` S4.
+- Lo marcado como propuesta (deseos ocultos, objetos, líneas modelo) espera el visto bueno.
