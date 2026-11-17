@@ -24,7 +24,9 @@
   --m-dur-desk-dim: 200ms;
   --m-dur-layout: 280ms; /* tablet width (L5), desk column (L8) */
   --m-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --m-ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  /* exits (a leaving layer, a closing sheet): it speeds up and ends on a gentle slope, so a fade's
+     last frame is near 0 (0.55, 0, 1, 0.45 ended vertical: its last frame stood at ≈ 0.4) */
+  --m-ease-in: cubic-bezier(0.3, 0, 1, 1);
   --m-ease-std: cubic-bezier(0.2, 0, 0, 1);
   --m-ease-pop: cubic-bezier(0.2, 1.6, 0.4, 1);
   --m-ease-fade: ease; /* the scene's exit (owner) */

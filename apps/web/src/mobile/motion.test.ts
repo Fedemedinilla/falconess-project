@@ -330,6 +330,35 @@ describe("the week's effects: fxTimeline and WeekFx.module.css agree", () => {
   });
 });
 
+/** A CSS `cubic-bezier(x1, y1, x2, y2)`'s progress at time `t` (0-1). */
+function bezierAt(x1: number, y1: number, x2: number, y2: number, t: number): number {
+  const at = (a: number, b: number, s: number) =>
+    3 * (1 - s) * (1 - s) * s * a + 3 * (1 - s) * s * s * b + s * s * s;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 60; i++) {
+    const s = (lo + hi) / 2;
+    if (at(x1, x2, s) < t) lo = s;
+    else hi = s;
+  }
+  return at(y1, y2, (lo + hi) / 2);
+}
+
+describe("the exits' curve (final review P1)", () => {
+  // a leaving copy and a closing sheet go when their fade's time is up: a curve that ends steep
+  // (cubic-bezier(0.55, 0, 1, 0.45) ended vertical) leaves them at ≈ 0.4 in their last frame, and
+  // they cut out instead of fading
+  it("a fade out on --m-ease-in has at most 15 % left a frame before its end", () => {
+    const decl = /--m-ease-in:\s*cubic-bezier\(([^)]*)\);/.exec(motion)?.[1];
+    const [x1 = 0, y1 = 0, x2 = 0, y2 = 0] = (decl ?? "").split(",").map(Number);
+    expect(decl).toBeDefined();
+    for (const ms of [MOTION.layerOut, MOTION.sheetOut]) {
+      const left = 1 - bezierAt(x1, y1, x2, y2, 1 - 16.7 / ms);
+      expect(left, `${ms} ms`).toBeLessThanOrEqual(0.15);
+    }
+  });
+});
+
 describe("timer helpers", () => {
   it("the emblem's beat is its fade in and its full cover", () => {
     expect(EMBLEM_MS).toBe(1240);

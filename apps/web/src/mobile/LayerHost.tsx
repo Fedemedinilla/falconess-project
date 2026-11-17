@@ -29,6 +29,8 @@ const IN: CSSProperties = { display: "contents" };
 /** A leaving layer takes no tap: what is under it does (it is inert too). */
 const OUT: CSSProperties = { display: "contents", pointerEvents: "none" };
 
+const FROM_FRAME = { fromFrame: true } as const;
+
 const keep = (id: string): string | undefined => id;
 const drop = (): string | undefined => undefined;
 
@@ -40,8 +42,9 @@ const drop = (): string | undefined => undefined;
  * under reduced motion go at once): the same instance
  * (nothing of it starts again), rendered from the last data it had in front, inside an inert
  * wrapper that takes no tap, without its ids (`useLid`), its timers stopped (`useLayerPhase`), so
- * it never ends a beat or plays a sound; its own timer, armed here, removes it, never an
- * animation's end (a flow timer: a hidden tab holds it with the fade, 6.11). A new layer comes in
+ * it never ends a beat or plays a sound; its own timer, armed here from the frame its fade starts
+ * on, removes it once the fade has played, never an animation's end (a flow timer: a hidden tab
+ * holds it with the fade, 6.11). A new layer comes in
  * after it in the page. Each wrapper names its phase for the frame probe (`data-layer-phase`): one
  * «in» at most. What the layers come in front of (`under`:
  * the HUD and the screen, before them in the page) learns which layer is leaving (the race's
@@ -73,21 +76,42 @@ export function LayerHost({
     setSeen(top);
     setList(presenceStep(list, top, visibleNow(), (l) => outMs(l.kind, reduced)));
   }
-  // each leaving layer goes when its time is up, counted from when it started leaving: a flow
-  // timer, so a hidden tab holds the copy where its fade stands
+  // when each leaving copy's fade began (`key#gen` → the time in sight): the first frame after the
+  // commit that made it leave, where its CSS fade starts, a slow commit or a late frame after `since`
+  const [fadeFrom] = useState(() => new Map<string, number>());
+  // each leaving layer goes once its fade has played (final review P1: counted from `since` it went
+  // 4-36 ms early and was cut half-faded): its time counts from the frame after that one, as the
+  // browser may set a CSS animation's start a frame after the frame that styled it; a flow timer,
+  // so a hidden tab holds the copy where its fade stands
   useEffect(() => {
-    const now = visibleNow();
-    const stops = list
-      .filter((e) => e.phase === "out")
-      .map((e) =>
-        startFlowTimer(Math.max(0, e.since + outMs(e.layer.kind, reduced) - now), () =>
-          setList((l) => expire(l, e.key, e.gen)),
-        ),
-      );
+    const stops: (() => void)[] = [];
+    const ids = new Set<string>();
+    for (const e of list) {
+      if (e.phase !== "out") continue;
+      const id = `${e.key}#${e.gen}`;
+      ids.add(id);
+      const ms = outMs(e.layer.kind, reduced);
+      const remove = () => setList((l) => expire(l, e.key, e.gen));
+      const began = fadeFrom.get(id);
+      if (began !== undefined)
+        stops.push(startFlowTimer(Math.max(0, began + ms - visibleNow()), remove, FROM_FRAME));
+      else
+        stops.push(
+          startFlowTimer(
+            0,
+            () => {
+              fadeFrom.set(id, visibleNow());
+              stops.push(startFlowTimer(ms, remove, FROM_FRAME));
+            },
+            FROM_FRAME,
+          ),
+        );
+    }
+    for (const id of fadeFrom.keys()) if (!ids.has(id)) fadeFrom.delete(id);
     return () => {
       for (const stop of stops) stop();
     };
-  }, [list, reduced]);
+  }, [list, reduced, fadeFrom]);
   const leaving = list.filter((e) => e.phase === "out").at(-1)?.layer.kind;
   return (
     <LayersIdle value={list.length === 0}>

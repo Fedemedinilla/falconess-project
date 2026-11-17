@@ -108,6 +108,26 @@ test("the week's effects leave over 240 ms as an id-less, silent copy, and the m
   expect(after.filter((c) => STAMP_CUES.has(c))).toEqual([]);
 });
 
+test("a leaving copy goes only once its fade has played: its 240 ms count from the frame its fade starts on, not from the tap (final review P1)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await startMobile(page);
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
+  await holdClock(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await settleUpdates(page);
+  await page.click("#m-efectos");
+  expect(await present(page, '[data-layer="fx"][data-layer-phase="out"]')).toBe(true);
+  // its CSS fade starts at a frame after the tap: 240 ms after the tap it still has frames to play
+  await runClock(page, 240);
+  expect(await present(page, '[data-layer="fx"][data-layer-phase="out"]')).toBe(true);
+  // and it goes within two frames more, its fade done
+  await runClock(page, 40);
+  expect(await present(page, "[data-layer-phase]")).toBe(false);
+});
+
 test("a double tap on the week's effects ends them once: the second click does not reach the inheritance card under the finger (critic b)", async ({
   page,
 }) => {

@@ -926,10 +926,14 @@ test("the season's start with a parent: the passed prologue's notice waits for t
   await settleUpdates(page);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
   await page.click("#m-inspiracion-seguir");
-  // the card fades out first (L1, 6.1): the notice waits for it to be gone
+  // the card fades out first (L1, 6.1): the notice waits for it to be gone (its 240 ms count from
+  // the frame its fade starts on, final review P1: two frames' leeway)
   await settleUpdates(page);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
-  await page.clock.runFor(240);
+  await page.clock.runFor(200);
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.clock.runFor(80);
   await settleUpdates(page);
   await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
   await expect(page.locator("#m-escena-ver")).toBeVisible();
