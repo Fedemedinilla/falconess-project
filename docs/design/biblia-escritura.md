@@ -1125,16 +1125,16 @@ Agregado por el dueño el 2026-11-17, después de probarlos en el prototipo del 
 
 ### (b) Vocabulario
 
-| Efecto                    | Cómo se escribe en el guion             | Para qué                                                |
-| ------------------------- | --------------------------------------- | ------------------------------------------------------- |
-| Texto rápido              | `[EFECTO: texto rápido]`                | Urgencia, reflejo, una ráfaga                           |
-| Texto lento               | `[EFECTO: texto lento]`                 | Duda, cansancio, un recuerdo                            |
-| Pausa dentro de la línea  | una barra en el texto: `Vuela Al…       | O.`                                                     | El tiempo de leer, de dudar o de entender |
-| Énfasis                   | asteriscos en el texto: `a las *cinco*` | La palabra que importa; sale en el color de quien habla |
-| Sacudida del globo        | `[EFECTO: sacudida]`                    | Un grito, un freno en seco                              |
-| Temblor del escenario     | `[SFX: …]` + `[EFECTO: temblor]`        | Un golpe físico: algo que se cae, encastra o choca      |
-| Susurro                   | `[EFECTO: susurro]`                     | Un aparte, algo dicho por lo bajo                       |
-| Entrada de la frase clave | la línea marcada como clave             | La línea que queda                                      |
+| Efecto                    | Cómo se escribe en el guion                                                                        | Para qué                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Texto rápido              | `[EFECTO: texto rápido]`                                                                           | Urgencia, reflejo, una ráfaga                           |
+| Texto lento               | `[EFECTO: texto lento]`                                                                            | Duda, cansancio, un recuerdo                            |
+| Pausa dentro de la línea  | una barra vertical en el texto, después de la palabra donde se frena (`Vuela Al…` + barra + ` O.`) | El tiempo de leer, de dudar o de entender               |
+| Énfasis                   | asteriscos en el texto: `a las *cinco*`                                                            | La palabra que importa; sale en el color de quien habla |
+| Sacudida del globo        | `[EFECTO: sacudida]`                                                                               | Un grito, un freno en seco                              |
+| Temblor del escenario     | `[SFX: …]` + `[EFECTO: temblor]`                                                                   | Un golpe físico: algo que se cae, encastra o choca      |
+| Susurro                   | `[EFECTO: susurro]`                                                                                | Un aparte, algo dicho por lo bajo                       |
+| Entrada de la frase clave | la línea marcada como clave                                                                        | La línea que queda                                      |
 
 Ideas sin probar, para cuando hagan falta: tachar y corregir (alguien se desdice en el mismo globo),
 un globo que tarda en aparecer (alguien duda antes de hablar) y una interferencia visual reservada
