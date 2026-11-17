@@ -686,6 +686,25 @@
   transform-origin: 50% 60%;
   animation: breathe 3.6s ease-in-out infinite;
 }
+/* A splash wider than it is tall (owner 2026-11-17): sized by the column's width, so the wingspan
+   is never cut, with her face at --ty and the floor under her feet. */
+.heroWide img {
+  width: calc(var(--kw) * 100cqw);
+  height: auto;
+  top: calc(var(--ty) * 100cqh - var(--fy) * var(--kw) * 100cqw / var(--ar));
+  left: calc(var(--tx) * 100cqw - var(--cx) * var(--kw) * 100cqw);
+}
+.heroWide .fl {
+  --iw: calc(var(--kw) * 100cqw);
+  --feet: calc(var(--ty) * 100cqh + (1 - var(--fy)) * var(--iw) / var(--ar));
+  --flh: 5cqh;
+  left: calc(var(--tx) * 100cqw - 0.11 * var(--iw));
+  right: auto;
+  width: calc(0.22 * var(--iw));
+  top: calc(var(--feet) - 0.5 * var(--flh));
+  bottom: auto;
+  height: var(--flh);
+}
 @keyframes breathe {
   0%,
   100% {
