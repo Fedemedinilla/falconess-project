@@ -54,6 +54,9 @@ cuándo se revela y qué no se puede escribir antes.
 - Vuela Alto es la sexta casa fundadora; el mundo la fue olvidando.
 - No escribir antes de la revelación: que fueron seis; que el cielo de la imagen es una Falconess;
   que Vuela Alto es fundadora.
+- Pista permitida (dueño, 2026-11-17: «que quede la pista del cielo. Es pequeña»): en la primera
+  escena de la historia principal, la protagonista dice que de chica no miraba a las cinco, miraba el
+  cielo del cuadro.
 - **Por qué no se la ve (dueño, 2026-11-17):** «Me imagino a las 5 yendo hacia arriba hacia las
   nubes. Pero nadie se pregunta quién iba primero o a quién seguían. Seguían a la abuela, que ya
   estaba pasando las nubes, por eso no se la ve.» Nadie la borró: el mundo nunca se preguntó a quién
