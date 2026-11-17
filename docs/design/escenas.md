@@ -180,8 +180,8 @@ El jugador habla seguido en las escenas: no es un testigo mudo.
    la semana, y solo cuando ya tapa todo el modo carrera ocupa su lugar debajo. Termina a los
    1,24 s y se desvanece en 0,28 s. Los toques esperan esos 1,24 s.
 3. La escena previa a la meta aparece cuando el emblema empieza a desvanecerse, en su propio negro
-   (sus primeros 0,3 s son negro puro): nunca debajo del emblema mientras tapa (dueño, regla 12,
-   reformulada con O6). Sin escena, el emblema se desvanece sobre la tarjeta y «Correr» ya
+   (sus primeros 0,3 s son negro puro): nunca debajo del emblema mientras tapa (regla del dueño,
+   reformulada en ADR-0017, O6). Sin escena, el emblema se desvanece sobre la tarjeta y «Correr» ya
    responde.
 4. La tarjeta de posición, sin «Volver» (la acción ya está decidida). Viene elegida la posición de
    las alas con que corre después de la acción; tocar esa otra vez no es elegir.
