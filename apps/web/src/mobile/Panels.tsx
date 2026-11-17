@@ -16,7 +16,7 @@ import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef } 
 import { goalStatuses } from "../screens/model/season";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useModalDialog } from "../ui/useModalDialog";
+import { useHeld, useModalDialog } from "../ui/useModalDialog";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { crewInitials } from "./model";
@@ -491,12 +491,12 @@ export function DeskPanel({
   );
 }
 
-/** A panel as a sheet, on a phone (from «Menú»). */
+/** A panel as a sheet, on a phone (from «Menú»); it fades out with the panel it showed. */
 export function PanelSheet({
   open,
-  title,
+  title: openTitle,
   onClose,
-  children,
+  children: openChildren,
 }: {
   open: boolean;
   title: string;
@@ -504,6 +504,7 @@ export function PanelSheet({
   children: ReactNode;
 }) {
   const { ref, mounted } = useModalDialog(open, onClose);
+  const { title, children } = useHeld({ title: openTitle, children: openChildren }, open);
   if (!mounted) return null;
   return (
     <dialog

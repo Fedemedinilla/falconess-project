@@ -3,6 +3,7 @@ import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { useModalOpen } from "../ui/modals";
 import { reducedMotion, scrollBehavior } from "../ui/useMedia";
+import { useSheetPhase } from "../ui/useModalDialog";
 import s from "./Story.module.css";
 
 type Bubble = { readonly key: string; readonly text: string; readonly mine: boolean };
@@ -10,20 +11,7 @@ type Bubble = { readonly key: string; readonly text: string; readonly mine: bool
 const TYPING_MS = 650;
 const PER_CHAR_MS = 12;
 
-/**
- * The chat with the Falconess (owner 2026-11-12): optional, only to know her better. The player
- * taps a question pill; she types and answers in her own voice, bubble by bubble. It changes
- * nothing in the season. A topic opens with the week (`fromTurn`); a new one carries «Nuevo».
- */
-export function ChatSheet({
-  name,
-  topics,
-  read,
-  primary,
-  secondary,
-  onRead,
-  onClose,
-}: {
+type ChatProps = {
   name: string;
   topics: readonly ChatTopic[];
   read: ReadonlySet<string>;
@@ -31,10 +19,33 @@ export function ChatSheet({
   secondary: string;
   onRead: (topicId: string) => void;
   onClose: () => void;
-}) {
-  // mounted only while open: it counts as an open sheet for as long as it is in the page (and
-  // the back gesture closes it as «Cerrar» does)
-  useModalOpen(true, onClose);
+};
+
+/**
+ * The chat with the Falconess (owner 2026-11-12): optional, only to know her better. The player
+ * taps a question pill; she types and answers in her own voice, bubble by bubble. It changes
+ * nothing in the season. A topic opens with the week (`fromTurn`); a new one carries «Nuevo».
+ * In the page while open or closing (M8): it comes in rising over 240 ms, and on its close it
+ * counts as closed at once (the back gesture goes on to what is under it) and fades out over
+ * 180 ms, inert, before it leaves; each opening starts a new conversation.
+ */
+export function ChatSheet({ open, ...props }: ChatProps & { open: boolean }) {
+  // an open sheet for the flow and the back gesture from its open until its close request
+  useModalOpen(open, props.onClose);
+  const phase = useSheetPhase(open);
+  return phase === "closed" ? null : <Chat {...props} closing={phase === "closing"} />;
+}
+
+function Chat({
+  name,
+  topics,
+  read,
+  primary,
+  secondary,
+  onRead,
+  onClose,
+  closing,
+}: ChatProps & { closing: boolean }) {
   const [bubbles, setBubbles] = useState<readonly Bubble[]>([]);
   const [typing, setTyping] = useState(false);
   const feed = useRef<HTMLDivElement>(null);
@@ -79,6 +90,8 @@ export function ChatSheet({
       role="dialog"
       aria-modal="true"
       aria-labelledby="m-chat-titulo"
+      data-closing={closing ? "" : undefined}
+      inert={closing || undefined}
     >
       <header className={s.chatBar}>
         <h2 id="m-chat-titulo">

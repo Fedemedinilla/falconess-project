@@ -15,7 +15,7 @@ import {
   watchCues,
   week,
 } from "./mobile-helpers";
-import { coverage, freezeAt, settleUpdates } from "./motion";
+import { coverage, freezeAt, holdClock, settleUpdates } from "./motion";
 
 /**
  * The phone game's flow, now that the flow model drives it (plan-final 4.1): a sheet holds the
@@ -72,15 +72,20 @@ test("a sheet in the page but closed holds nothing: the menu's and the race card
 test("a pick that closes its sheet does not hold what it starts: the outing's crew", async ({
   page,
 }) => {
+  await page.clock.install();
   await startMobile(page, "peregrina");
   await page.click("#m-salida");
   const sheet = page.locator("#m-salida-cuadrilla[open]");
   await expect(sheet).toBeVisible();
   const crew = (await sheet.locator("li[data-crew]").first().getAttribute("data-crew")) ?? "";
+  await holdClock(page);
   await page.click(`#m-salida-con-${crew}`);
-  // the sheet is released at its close request: the week's effects are there with the pick
-  expect(await present(page, "#m-salida-cuadrilla")).toBe(false);
+  // the sheet is released at its close request: the week's effects are there with the pick, under
+  // the sheet on its way out (6.9), which then leaves
+  expect(await present(page, "#m-salida-cuadrilla[data-closing]")).toBe(true);
   expect(await present(page, '#m-efectos [data-fx="bond"]')).toBe(true);
+  await page.clock.runFor(200);
+  await expect(page.locator("#m-salida-cuadrilla")).toHaveCount(0);
 });
 
 /**

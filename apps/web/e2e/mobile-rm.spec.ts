@@ -244,3 +244,26 @@ test.describe("the wide screen", () => {
     expect(await opacityOf(page, "#m-panel")).toBeLessThan(0.5);
   });
 });
+
+test("a sheet and the chat come and go at once, with nothing moving (M8, M9, §2.4)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await startMobile(page);
+  await holdClock(page);
+  await page.click("#m-menu");
+  const sheet = page.locator("#m-menu-dialogo");
+  await expect(sheet).toHaveAttribute("open");
+  expect(await movingNow(page, "dialog")).toEqual([]);
+  expect(await opacityOf(page, "#m-menu-dialogo")).toBeGreaterThanOrEqual(0.99);
+  // closed by «Cerrar» with the clock held: no closing time to wait for
+  await page.click("#m-menu-cerrar");
+  await expect(sheet).toHaveCount(0);
+  await page.click("#m-menu");
+  await page.click("#m-chat-abrir");
+  await expect(sheet).toHaveCount(0);
+  expect(await movingNow(page)).toEqual([]);
+  expect(await opacityOf(page, "#m-chat")).toBeGreaterThanOrEqual(0.99);
+  await page.click("#m-chat-cerrar");
+  await expect(page.locator("#m-chat")).toHaveCount(0);
+});

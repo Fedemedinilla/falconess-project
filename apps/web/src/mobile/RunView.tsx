@@ -543,17 +543,16 @@ export function RunView({
           {slot(body)}
         </>,
       )}
-      {chatOpen && (
-        <ChatSheet
-          name={gameText(`falconess.${state.falconessId}`)}
-          topics={openTopics(allTopics(), state)}
-          read={story.readTopics()}
-          primary={colors.primary}
-          secondary={colors.secondary}
-          onRead={story.markRead}
-          onClose={() => setChatOpen(false)}
-        />
-      )}
+      <ChatSheet
+        open={chatOpen}
+        name={gameText(`falconess.${state.falconessId}`)}
+        topics={openTopics(allTopics(), state)}
+        read={story.readTopics()}
+        primary={colors.primary}
+        secondary={colors.secondary}
+        onRead={story.markRead}
+        onClose={() => setChatOpen(false)}
+      />
       <OutingSheet
         ctx={ctx}
         state={state}

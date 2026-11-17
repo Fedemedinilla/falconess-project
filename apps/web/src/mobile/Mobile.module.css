@@ -1750,6 +1750,50 @@
 .sheet::backdrop {
   background: var(--scrim);
 }
+/* M9: it comes in rising 16 px with its scrim; on its close request it fades out where it stands
+   (`data-closing`, useModalDialog: modal and inert until a timer closes it) */
+.sheet[open] {
+  animation: sheetIn var(--m-dur-sheet-in) var(--m-ease-out) both;
+}
+.sheet[open]::backdrop {
+  animation: scrimIn var(--m-dur-sheet-in) var(--m-ease-out) both;
+}
+.sheet[data-closing] {
+  animation: sheetOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+  pointer-events: none;
+}
+.sheet[data-closing]::backdrop {
+  animation: scrimOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+}
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes sheetOut {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes scrimIn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes scrimOut {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open],
+  .sheet[open]::backdrop,
+  .sheet[data-closing],
+  .sheet[data-closing]::backdrop {
+    animation: none;
+  }
+}
 .dl {
   padding: 20px 18px 18px;
   display: flex;

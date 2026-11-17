@@ -254,6 +254,62 @@ const trainResult: Flow = async (page, m) => {
   return "train-result";
 };
 
+/** Whether the page is on the wide screen (the panel is its menu: no «Menú» sheet). */
+function wide(page: Page): boolean {
+  return (page.viewportSize()?.width ?? 0) >= 1100;
+}
+
+/**
+ * A sheet in, then «Cerrar»: its way out (6.9): «Menú» on a phone, «Historia» from the wide
+ * screen's panel.
+ */
+const sheet: Flow = async (page, m) => {
+  await startPeregrina(page);
+  const [open, close] = wide(page)
+    ? ["#m-historia-abrir", "#m-historia-cerrar"]
+    : ["#m-menu", "#m-menu-cerrar"];
+  await m.hold();
+  await page.click(open);
+  await m.at("sheet-in", [0, 60, 120, 220]);
+  m.mark();
+  await page.click(close);
+  await m.at("sheet-out", [0, 60, 120, 180, 200]);
+  await m.release();
+  return "sheet";
+};
+
+/** The chat (from «Menú» on a phone, from the panel on the wide screen): in, then out (6.9). */
+const chat: Flow = async (page, m) => {
+  await startPeregrina(page);
+  if (!wide(page)) {
+    await page.click("#m-menu");
+    await page.waitForTimeout(400);
+  }
+  await m.hold();
+  await page.click("#m-chat-abrir");
+  await m.at("chat-in", [0, 60, 120, 240]);
+  await m.until(async () => (await page.locator("dialog").count()) === 0, 400);
+  await page.click("#m-chat-cerrar");
+  await m.at("chat-out", [0, 90, 180, 200]);
+  await m.release();
+  return "chat";
+};
+
+/** The outing on the race week: the pick, the sheet's way out over the action's effects (6.9). */
+const outingPick: Flow = async (page, m) => {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-salida");
+  await expect(page.locator("#m-salida-cuadrilla li[data-crew]").first()).toBeVisible();
+  await page.waitForTimeout(400);
+  await m.hold();
+  await page.locator("#m-salida-cuadrilla li[data-crew] button").first().click();
+  await m.at("outing-pick", [0, 60, 120, 180, 200, 300]);
+  await m.release();
+  return "outing-pick";
+};
+
 /** A rest's effects over the menu, then a tap on them (on a wide screen: the panel beside them). */
 const effects: Flow = async (page, m) => {
   await startPeregrina(page);
@@ -556,6 +612,9 @@ const PLAN: readonly {
       sceneBox,
       titleLeave,
       trainResult,
+      sheet,
+      chat,
+      outingPick,
     },
   },
   {
@@ -572,12 +631,26 @@ const PLAN: readonly {
       sceneBox,
       titleLeave,
       trainResult,
+      sheet,
+      chat,
     },
   },
   {
     viewport: PHONE_S,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut, sceneIntro, sceneBox },
+    flows: {
+      menuTrain,
+      effects,
+      raceWeek,
+      raceEnd,
+      inheritance,
+      raceInOut,
+      sceneIntro,
+      sceneBox,
+      sheet,
+      chat,
+      outingPick,
+    },
   },
   {
     viewport: PHONE_S,
@@ -607,6 +680,8 @@ const PLAN: readonly {
       sceneIntro,
       sceneHurry,
       sceneBox,
+      sheet,
+      chat,
     },
   },
   {

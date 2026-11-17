@@ -491,9 +491,25 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   background: #f3f5f8;
-  animation: sceneIn 0.35s ease both;
+  /* M8: it comes in rising 24 px; on its close it fades out where it stands (ChatSheet) */
+  animation: chatIn var(--m-dur-layer-in) var(--m-ease-out) both;
   font-family: Barlow, system-ui, sans-serif;
   color: #172235;
+}
+.chat[data-closing] {
+  animation: chatOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+  pointer-events: none;
+}
+@keyframes chatIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes chatOut {
+  to {
+    opacity: 0;
+  }
 }
 .chatBar {
   background: var(--s1);
@@ -646,7 +662,7 @@
 
 /* reduced motion (plan §2.4, rule 71): a scene stands whole and still from its first frame (its
    still tempo: the card for 0.9 s, then the lines whole), with no drift, pan or bob; it leaves at
-   once (no copy). The chat comes at once, its bubbles whole, no typing dots blinking. */
+   once (no copy). The chat comes and goes at once, its bubbles whole, no typing dots blinking. */
 @media (prefers-reduced-motion: reduce) {
   .base,
   .backdrop,
@@ -661,6 +677,7 @@
   .bar,
   .wordOn,
   .chat,
+  .chat[data-closing],
   .bubble,
   .dots i {
     animation: none;
