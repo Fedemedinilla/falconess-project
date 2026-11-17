@@ -437,3 +437,15 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   después.
 - Efecto nuevo usado en el prototipo (versión 10): imitación de voz (el entrenador imita a la
   veterana, en su color y su letra).
+
+### I20 · El viejo, siempre en el hangar (2026-11-17)
+
+> «Prefiero que el entrenador, el viejo, esté en el hangar siempre, pero durmiendo o diciendo una que
+> otra oración a la veterana. Lo importante es que cuando le dice algo, es extremadamente correcto,
+> como si la observara mientras duerme.»
+>
+> «La protagonista sigue diciendo que vuela mal. NO, ella no vuela. Ni quiere volar aún.»
+- Estado: **decidida** (2026-11-17). En `personajes/viejo-entrenador.md` y `personajes/protagonista.md`.
+- Prototipo versión 11: la protagonista dice «¿Yo? No. Vine a limpiar.»; la veterana presenta al viejo
+  con las palabras del dueño; el capítulo cierra con el viejo, dormido, acertando sobre el hombro.
+- Abierto: dormir era la marca de Milana; confirmar que el viejo puede dormir también.

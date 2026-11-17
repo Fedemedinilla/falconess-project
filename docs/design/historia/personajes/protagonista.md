@@ -15,6 +15,7 @@ Borrador con las palabras del dueño. Id provisorio: `protagonista`. Sin nombre 
   (`../investigacion-ffxiv.md`).
 - Tiene el «algo» de toda Falconess. Es nieta de una mensajera de la carrera de la paz, y no lo sabe
   al principio (`../secretos.md` S2).
+- **Decidido (dueño, 2026-11-17): no vuela, ni quiere volar todavía.** Vino a limpiar.
 - **Decidido (dueño, 2026-11-17): no vuela enseguida.** Trabaja un tiempo en el hangar hasta que
   le pica el bichito de intentarlo.
 - **Decidido (dueño, 2026-11-17): es inútil de verdad, y divertida.** No da nada por sentado. Si

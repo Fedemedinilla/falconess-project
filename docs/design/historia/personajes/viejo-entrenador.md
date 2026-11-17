@@ -13,9 +13,20 @@ Borrador con las palabras del dueño. Id provisorio: `viejo-entrenador`. Sin nom
   que dijo el viejo: "Si no sos la primera, sos la última"… Esperá, ¿y eso de qué me sirve?»
   [EMPIEZA LA CARRERA].
 
+- **Decidido (dueño, 2026-11-17): está siempre en el hangar,** durmiendo o diciéndole una que otra
+  frase a la veterana. Cuando le habla a ella, es extremadamente certero, «como si la observara
+  mientras duerme».
+- **Decidido (dueño, 2026-11-17):** la veterana lo explica así: «El viejo venía con el hangar. Lo
+  importante es que cuenta como entrenador, así que puedo correr oficialmente.»
+- Para notar: con la veterana acierta siempre; los consejos sin sentido son para los demás (la
+  protagonista, en su primera carrera).
+
 ## Propuesta
 
-- Sembrado en el prototipo del capítulo 1 sin que aparezca: «Tengo. Viene los jueves. Dice cosas.»
+- En el prototipo del capítulo 1, dormido, nombra el hombro que la veterana esconde: «El hombro
+  derecho. No cargues nada hasta el jueves.»
+- Dormir era la marca de Milana (`../ideas.md` I14). Diferencia propuesta: Milana duerme porque
+  todo le cansa; el viejo duerme y lo ve todo. A confirmar con el dueño.
 
 ## Abierto
 
