@@ -418,6 +418,21 @@ flying figure or anything inside the blue hole besides sky and clouds, any text 
 poses, chibi proportions.
 ```
 
+Corrección (dueño, 2026-11-17: «no está mal, pero hay que hacerlo más painting»). En la misma
+conversación, con la imagen adjunta:
+
+```text
+Repaint this exact image as a real fine-art oil painting, keeping the same composition, the same five racers,
+their poses, colors and positions, the storm, the single hole of blue sky and the battlefield below.
+Make it look like a large 19th-century romantic history painting hanging in a museum: thick visible impasto
+brush strokes, loose painterly edges instead of clean outlines, no line art at all, layered glazes, soft
+blending in the clouds and smoke, canvas texture visible everywhere, slightly aged varnish with warm, muted,
+earthy tones and darker shadows. The faces and wings are painted with brush strokes, not drawn or cel-shaded.
+Keep a hint of anime in the faces and proportions, but it must read first as an old oil painting, not as an
+illustration or a comic. The blue hole stays the only clean, bright, luminous area. Exactly five racers;
+nothing inside the blue hole besides sky and clouds. No text, no signature, no frame.
+```
+
 **Espejar personajes (2026-11-17):** el juego puede dar vuelta una imagen para que mire al otro lado.
 Las hojas de personaje miran hacia la izquierda; en el escenario, quien está a la izquierda se espeja
 para mirar al centro. Cuidado con lo que no es simétrico: el lado del broche de pelo, el lado de la
