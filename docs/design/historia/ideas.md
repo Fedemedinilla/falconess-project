@@ -398,3 +398,10 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Ya hay material en el canon que toca esto sin nombrarlo: después de la Larga, Peregrina «no supo
   cómo actuar ni qué sentir: no lloró, no se enojó, no le salía nada» (`docs/design/canon-peregrina.md`
   §1).
+
+### I17 · Un sistema de novela visual para los Modos Historia (2026-11-17)
+
+> «Para la historia principal, vamos a necesitar crear un sistema e interfaz más adecuado a novelas
+> gráficas que el actual que usan las escenas de historia en la temporada de Peregrina.»
+- Estado: **en discusión**. Comparación y propuesta: `novela-visual.md`. Va a: un plan para el juego
+  (fase 5), cuando termine el trabajo del flujo en `playtest-ui`.

@@ -1,0 +1,45 @@
+# Escenas tipo novela visual para los Modos Historia (propuesta)
+
+Pedido del dueño (2026-11-17): la historia principal necesita «un sistema e interfaz más adecuado a
+novelas gráficas que el actual que usan las escenas de historia en la temporada de Peregrina». Mostró
+tres capturas de Umamusume: una escena de capítulo del Modo Historia y dos de un evento dentro de la
+temporada.
+
+Estado: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
+trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
+empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
+
+## Lo que muestran las capturas
+
+|                    | Modo Historia (captura 1)                                                                                                                | Evento de temporada (capturas 2 y 3)                                                               |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Pantalla           | Arriba, un escenario con el personaje de cuerpo entero en un lugar. Abajo, la conversación entera como una lista que crece y se desplaza | Fondo a pantalla completa; el personaje grande, de pie, en el centro; un globo abajo               |
+| Texto              | Tarjetas: narración en blanco; cada línea con el retrato redondo y el nombre de quien habla                                              | Un globo por línea, con el nombre en una pestaña de color; la narración sin nombre                 |
+| Lo leído           | Queda a la vista: se puede volver a leer subiendo                                                                                        | En un botón «Log» aparte                                                                           |
+| El jugador         | Sus respuestas aparecen en la conversación, con un ícono propio                                                                          | Narra en primera persona («I take out my phone…»)                                                  |
+| Contexto del juego | Ninguno: es lectura pura                                                                                                                 | Siguen a la vista las semanas que faltan, la meta, la energía y un cartel con el nombre del evento |
+| Botones            | Foto, Auto, Menú                                                                                                                         | Saltar, Rápido, Log, Menú                                                                          |
+
+## Lo que tiene hoy Falconess
+
+Tres formatos (`docs/design/escenas.md` §1): cuadro de diálogo (parecido al evento de temporada, pero
+la escena arranca en negro y tapa el juego), cinemático y chat. Una escena tiene un solo fondo, un
+retrato de la cintura para arriba por línea, y no tiene elecciones, música propia ni varios
+personajes a la vez (`packages/schema/src/story.ts`).
+
+## Lo que le faltaría a una escena de Modo Historia (propuesta, para elegir)
+
+1. **Formato «conversación»** como la captura 1: escenario arriba, lo dicho acumulado abajo.
+2. **Varios personajes en escena** a la vez, con lugar (izquierda, centro, derecha), y entradas y
+   salidas.
+3. **Cambio de fondo dentro de la escena** (el hangar de Vuela Alto, la ciudad, la casa con el cuadro
+   de las mensajeras).
+4. **Ilustraciones especiales a pantalla completa** para los momentos clave (el cuadro de la carrera
+   de la paz).
+5. **Respuestas del jugador** dentro de la conversación. Si alguna elige entre dos, solo cambia las
+   líneas que siguen, nunca el juego (las escenas son pura presentación).
+6. **Hablantes con nombre** para los entrenadores canon y el de la historia principal (hoy el
+   entrenador es siempre `trainer`, sin cara).
+7. **Música y efectos** por escena o por línea.
+8. **Capítulos y episodios:** historia → capítulo → escena, con orden y desbloqueo (ya estaba
+   previsto: «capa, capítulo y orden» en el traspaso, fase 5).
