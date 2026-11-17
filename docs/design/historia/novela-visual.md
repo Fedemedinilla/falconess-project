@@ -5,7 +5,16 @@ novelas gráficas que el actual que usan las escenas de historia en la temporada
 tres capturas de Umamusume: una escena de capítulo del Modo Historia y dos de un evento dentro de la
 temporada.
 
-Estado: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
+**Decidido (dueño, 2026-11-17):** dos formatos, como Umamusume. Los Modos Historia (la historia
+principal y la de cada estrella) usan la «conversación»; la temporada sigue con el cuadro y el
+cinemático de hoy.
+
+**Prototipo (2026-11-17):** página «Vuela Alto · Capítulo 1» (https://claude.ai/artifact/NSyxoymeyBMx8PJc9soGwW),
+fuera del juego, con texto de ejemplo que no es canon y nombres provisorios. Muestra escenario con
+tres lugares, conversación que se acumula, narración, cambio de fondo, ilustración a pantalla
+completa (el cuadro), una respuesta elegible del entrenador, indicaciones de música, Auto y Saltar.
+
+Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
 
