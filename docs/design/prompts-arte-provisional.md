@@ -350,5 +350,35 @@ moon, a faint breeze moving the grass. A few moths around the lamp. Calm, intima
 someone is still working late.
 ```
 
+#### El hangar de Vuela Alto, desde afuera (2026-11-17)
+
+El cartel va **en blanco** a propósito: el «VUELA AL O» lo escribe el juego encima, así se puede
+traducir y la letra que falta queda donde decida la escena.
+
+```text
+Anime gacha game background art, painted, polished and cinematic, in the style of a high-budget anime.
+Horizontal 16:9 image, the important details in the central area. Clean shapes, soft cel-shaded painting with
+rich light and atmosphere. No characters at all. No text, no letters, no numbers, no logos, no real brands,
+no watermark.
+
+The outside of the Vuela Alto hangar, an old racing team for winged racers that has seen better days. A big
+arched hangar made of corrugated metal stands alone at the edge of a vast green plain. The walls are painted
+in sky-blue and white horizontal bands, faded and peeling, with rust streaks running down from the bolts.
+Above the big sliding door hangs a long rectangular sign board, completely blank and empty: pale white paint
+with a sky-blue border, a few rusty screw holes and one darker, cleaner rectangle where a missing piece used
+to be. The sliding door is half open and dark inside. A crooked sky-blue and white windsock on a pole beside
+the hangar, a gravel path leading to the door with grass growing through it, a rusty piece of old machinery
+half buried in the tall grass in the distance. The plain is green and wild, grass that grew back over what
+used to be desert, gentle hills on the horizon. Huge clear blue sky with soft white clouds, bright morning
+sun. Camera at standing height on the path, slightly low angle, the hangar centered and filling the middle of
+the image. Quiet, a little forgotten, but bright and hopeful.
+```
+
 Si un fondo sale con personajes: «No characters at all, keep everything else.» Si sale vertical o
-cortado: «Make it horizontal 16:9 and keep the wings in the center.»
+cortado: «Make it horizontal 16:9 and keep the wings in the center.» Si el cartel sale con letras:
+«Make the sign board completely blank. Keep everything else.»
+
+**Espejar personajes (2026-11-17):** el juego puede dar vuelta una imagen para que mire al otro lado.
+Las hojas de personaje miran hacia la izquierda; en el escenario, quien está a la izquierda se espeja
+para mirar al centro. Cuidado con lo que no es simétrico: el lado del broche de pelo, el lado de la
+mochila y, sobre todo, el hombro derecho de la veterana (si se espeja, pasa a ser el izquierdo).
