@@ -269,17 +269,22 @@ docs/design/escenas.md).
     merges what changed and keeps its readings' identity while nothing did, so another tab's card,
     scene or decided week never shows twice.
   - `useFlow.ts` wires it to React (`useSyncExternalStore` over the stores, instant beats resolved
-    before paint, a week record of no run in play dropped). `RunView.tsx` renders the run from the
+    before paint, a week record of no run in play dropped, never one further on in the run's
+    season: another tab's newer week, `isLaterInSeason`). `RunView.tsx` renders the run from the
     flow; `useBackGesture.ts` makes the back gesture do what the screen's «Volver» does (O10).
 - **Layers and notices:** `LayerHost.tsx` keeps at most one full-screen layer in (the week's
   effects, the inheritance card, a scene, the emblem, the event); a layer that goes stays as an
   id-less, `inert`, `aria-hidden` copy with no pointer events (`useLid` drops its ids), drawn from
-  its last data and removed by a flow timer. While a layer is in, the HUD and the screen are inert
+  its last data and removed by a flow timer once its fade has played, counted from the frame the
+  fade starts on. While a layer is in, the HUD and the screen are inert
   and the layer's control has the focus. `NoticeHost.tsx` shows the story and error notices
   (`noticeSlot.ts` decides, pure: when one shows, waits, fades, is cut or dropped, and where it
   sits over the screen's `[data-toast-anchor]`, clear of controls and of `[data-toast-avoid]`).
   Sheets (`ui/useModalDialog.ts`, `ui/modals.ts`) mount on open, are released at their close
-  request and close on a 180 ms timer. Every control that advances, commits or decides ignores the
+  request and close on a 180 ms timer. The chat (`ChatSheet.tsx`) is a sheet inside the column,
+  not a native dialog (the tablet's frame and the wide screen's column hold it): RunView makes the
+  game under it, its notices and the desk panel inert while it is open, its «Cerrar» takes the
+  focus, Escape closes it, and `useFocusReturn` gives the focus back to what opened it. Every control that advances, commits or decides ignores the
   second click of a double tap (`ui/tap.ts` `isRepeatTap`).
 - **Timers are the clock:** `ui/timer.ts` (`createPausableTimer`, `pauseWhileHidden`, pure),
   `ui/flowTimer.ts` (`useFlowTimer(ms, onFire, key, { fromFrame })`, `useFlowTimers`, and
@@ -289,8 +294,10 @@ docs/design/escenas.md).
   `animationend`, `transitionend` or `finished` (`no-animationend.test.ts`). The run's column takes
   `data-hidden` while the tab is hidden, and `.app[data-app][data-hidden] *` pauses its CSS
   animations (it outranks every `animation` rule of the phone's modules: `motion.test.ts`).
-- **Motion:** every duration and easing is a token in `src/mobile/motion.css` (`--m-dur-*`,
-  `--m-ease-*`) with its twin in `motion.ts` (`MOTION`, `STORY`, `EMBLEM_MS`, `outMs`, `held`) for
+- **Motion:** every duration and easing of the screens, layers, sheets and notices is a token in
+  `src/mobile/motion.css` (`--m-dur-*`, `--m-ease-*`; a few details inside one component keep their
+  own: the chat's typing, the title's leave, the track drawer's card, the result's stamp) with its
+  twin in `motion.ts` (`MOTION`, `STORY`, `EMBLEM_MS`, `outMs`, `held`) for
   the timers; `motion.test.ts` checks that they agree. Screens only fade in (opacity, fill
   `backwards`); no transform ever touches a screen. Reduced motion is one policy: each animated
   rule has a reduced rule at the same selector (`animation: none` / `transition: none` with the end
@@ -310,7 +317,10 @@ docs/design/escenas.md).
     any #juego test that shows a duplicate id, two screens or two layers in at once in any frame,
     across reloads. `e2e/motion.ts` holds the motion helpers: `holdClock` (the fake clock held
     still) and `settleUpdates` (the page's own updates landed), `freezeAt` (every CSS animation at a time), `opacityOf` (the opacity as
-    seen), `coverage` (a 5 × 9 grid of hits), `movingNow` (what moves), `present` (in the page
+    seen), `coverage` (what a 5 × 9 grid of points shows: each point's first opaque paint, looking
+    through transparent boxes, and `under` a leaving copy), `holdAnimations` (every CSS animation
+    held where it starts, so a tap's fade is read with `freezeAt` however slow the page),
+    `movingNow` (what moves), `present` (in the page
     now, without waiting), `runClock` (the held clock moved on), and for the hidden tab
     `setTabHidden`, `hideTab`, `cssPlayStates` and `expectCssPaused`.
   - `E2E_PORT` moves the e2e server (default 4317, `--strictPort`), so two checkouts can run their

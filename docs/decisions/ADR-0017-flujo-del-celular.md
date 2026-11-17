@@ -2,7 +2,8 @@
 
 - **Estado:** aceptada por el dueño (2026-11-15: D1-D7 y los O aprobados como estaban, con O4 «solo
   N.º», O9 sin cambios, O10 aprobado y construido, O13 no). Construida del 2026-11-15 al 2026-11-17
-  en `playtest-ui` (pasos 0.1-7.2 del plan de flujo, local en `.work/flow/plan-final.md`).
+  en `playtest-ui` (pasos 0.1-7.3 del plan de flujo, local en `.work/flow/plan-final.md`, y la
+  revisión final).
 - **Alcance:** el juego del celular (`apps/web`, `#juego`) y dos valores de texto. Nada cambia en
   `packages/sim`, `packages/schema`, los rulesets, `tests/golden` ni `docs/characters`; ningún campo
   nuevo en `RunInput`. La vista de pruebas sigue igual.
@@ -69,7 +70,9 @@ código) encontró, entre otros:
 3. **Semana 39 → 40 (Peregrina):** los efectos de la 39 → la tarjeta de herencia de la 40 →
    `peregrina-first-vos` → el menú de la 40 → la acción y el modo carrera.
 4. **Directo:** el resultado (×0,35) → los efectos → `enter` (sin emblema) → la escena previa
-   resumida en su negro → la tarjeta → «Correr» abre en el resultado; «Ver otra vez» repite con su
+   resumida en su negro → la tarjeta → «Correr» abre en el resultado, o antes en la escena
+   posterior (`goal-after`/`end`) resumida si la hay (en la primera temporada, toda meta ganada
+   tiene una); «Ver otra vez» repite con su
    llegada de 420 ms.
 5. **Inicio de temporada con padres:** el título → la selección → «Empezar» → el prólogo (el menú y
    el HUD montados debajo) → la tarjeta «¡Herencia!» entra sobre la salida del prólogo → «Continuar»
@@ -81,7 +84,9 @@ código) encontró, entre otros:
    semana 48 → el final con los efectos encima.
 8. **Recarga:** una semana normal sin leer repite su resultado; una semana de carrera decidida en la
    etapa `action` repite la acción y después el emblema (si nada de la semana se jugó en este montaje,
-   el emblema abre ya tapando); en la etapa `race`, la tarjeta directamente; después de «Correr», la
+   el emblema abre ya tapando); en la etapa `race`, la tarjeta sin la acción ni el emblema (antes,
+   la escena previa si no se había terminado: una escena se marca vista al terminar); después de
+   «Correr», la
    carrera otra vez (Directo: el resultado) hasta que se vea el resultado.
 9. **«Ver otra vez»:** la carrera vuelve con un fundido de 200 ms → su llegada (si termina sola) → el
    resultado → «Continuar» → los efectos de la carrera.
@@ -95,7 +100,8 @@ las secuencias de `golden.test.ts`, y en el navegador con los e2e `mobile-*.spec
 
 - **D1 · Pantallas.** Una pantalla nueva entra con un fundido de opacidad de 200 ms (320 ms el menú
   con que abre una partida y el final), sin moverse, y responde desde el primer cuadro. Lo que cambia
-  adentro de una pantalla no vuelve a entrar. El HUD es el ancla: no se mueve; después del modo
+  adentro de una pantalla no vuelve a entrar, salvo la carrera que vuelve con «Ver otra vez» (§2,
+  punto 9). El HUD es el ancla: no se mueve; después del modo
   carrera vuelve con su propio fundido de 200 ms. El emblema va solo de la semana al modo carrera,
   nunca al repetir una carrera desde el final.
 - **D2 · Tarjeta de herencia.** Al final de una semana: los efectos, la tarjeta, la escena `turn`.
@@ -153,7 +159,7 @@ las secuencias de `golden.test.ts`, y en el navegador con los e2e `mobile-*.spec
   está a un toque.
 - **O14:** una semana de carrera decidida en `#juego` y jugada distinto en la vista de pruebas
   descarta el registro (sin callejón sin salida; la regla 45 obliga solo a `#juego`). El marco de la
-  tableta (≥ 700 px, sin escritorio) lleva `transform: translateZ(0)`, como la columna del
+  tableta (≥ 700 px de ancho y 640 de alto, sin escritorio) lleva `transform: translateZ(0)`, como la columna del
   escritorio: el título, las escenas, el emblema, los efectos, la tarjeta de herencia, los avisos y
   el chat quedan dentro del marco de 390 px, y lo que se medía por el ancho de la ventana se mide
   por el del marco (`--framew`).
@@ -173,14 +179,21 @@ visita) y están en la lista fija de `src/storage-keys.test.ts`.
   - `raceSeen` (`fp`): su resultado se vio.
 
   Se vuelve a leer en cada lectura del flujo (otra pestaña pudo escribirlo) y solo se borra cuando se
-  juzgó que no es de la partida en juego (`validRecord` en `factsOf`, el borrado en `useFlow`). Un
-  final guardado por una versión anterior, sin registro `raced`, no repite su última carrera; sus
-  efectos salen una vez.
+  juzgó que no es de la partida en juego (`validRecord` en `factsOf`, el borrado en `useFlow`);
+  nunca lo borra una pestaña cuya partida va atrás de la del registro (la misma temporada con más
+  entradas: otra pestaña siguió jugando, `isLaterInSeason`). Un final guardado por una versión
+  anterior, sin registro `raced`, no repite su última carrera; sus efectos salen una vez. Un final
+  que una versión anterior guardó después del entrenamiento de la semana 48 (Caracara, Cernícala)
+  abre una vez en el resultado de ese entrenamiento, que esa versión no mostraba, y después el final
+  (decisión abierta 7). Una semana de carrera decidida en una versión anterior vivía solo en React:
+  después de actualizar vuelve sin decidir, y se puede elegir otra acción esa única vez.
 - **`falconess.juego.herencia`** (`flow/inspirations.ts`, `InspirationStore`): `{ v: 1, seeds:
   [[semilla, claves], …] }`, las tarjetas mostradas por temporada (`semilla:start`, `semilla:24`,
   `semilla:40`), como mucho 20 temporadas (se van las más viejas). La primera vez que no existe la
   clave, marca las tarjetas que la versión anterior ya mostró en la partida guardada (la del inicio y
-  la de cada semana leída), una sola vez. Se vuelve a leer en cada lectura y, al marcar, une lo que
+  la de cada semana leída), una sola vez, y escribe la clave en esa primera carga. Una tarjeta que la
+  versión anterior mostró en una semana todavía sin leer (la mostraba antes de los efectos) sale otra
+  vez, una sola. Se vuelve a leer en cada lectura y, al marcar, une lo que
   otra pestaña haya guardado.
 
 Dos pestañas jugando la misma partida no están soportadas (la partida guardada es del último que
@@ -243,18 +256,26 @@ otro camino, así no se acumulan.
 
 - **Tokens en un solo lugar:** `mobile/motion.css` (`--m-dur-*`, `--m-ease-*`) y su gemelo
   `mobile/motion.ts` (`MOTION`, `STORY`, `EMBLEM_MS`, `outMs`, `held`); `motion.test.ts` verifica que
-  coincidan. Ningún componente tiene duraciones propias.
+  coincidan. Las pantallas, las capas, las hojas y los avisos no tienen duraciones propias; quedan
+  detalles dentro de un componente con las suyas (el tipeo del chat, la salida del título, la
+  tarjeta de la pista, el sello del resultado).
 - **Pantallas:** solo entran, solo con opacidad (`screenIn`, relleno `backwards`); ninguna
   transformación toca una pantalla, y nunca hay dos pantallas a la vez. La tableta ensancha su
   marco de 390 a 720 px para la carrera en 280 ms; en el escritorio la columna se desliza solo al
   entrar al final.
 - **Capas:** entran y salen por `LayerHost`: efectos y tarjeta de herencia 240/240 ms, emblema
-  160/1080/280 ms, escena 800 ms de salida; las copias que salen no tienen ids ni toman toques.
+  160/1080/280 ms, escena 800 ms de salida; las copias que salen no tienen ids ni toman toques, y se
+  van cuando su fundido terminó, contado desde el cuadro en que empieza (no desde el toque). Las
+  salidas (capas, hojas, el chat) usan `--m-ease-in`, que acelera sin cortar al final: su último
+  cuadro ya está casi transparente.
 - **Hojas:** entran en 220 ms subiendo 16 px y se van en 180 ms desvaneciéndose con lo que mostraban;
   se liberan al pedir el cierre, pero siguen siendo modales e `inert` hasta cerrarse (decisión
   abierta 2). Escape y el atrás de Android cierran igual. El foco vuelve a lo que las abrió (o, si
   eso ya no está, a lo que abrió aquello); una capa que entró debajo toma el foco al cerrarse. El
-  chat entra en 240 ms y se va en 180.
+  chat entra en 240 ms y se va en 180; es una hoja dentro de la columna (así lo contienen el marco de
+  la tableta y la columna del escritorio): mientras está abierto, el juego de abajo, sus avisos y el
+  panel del escritorio (que se apaga) no reciben toques ni teclas, su «Cerrar» toma el foco, Escape
+  lo cierra y al cerrarse el foco vuelve a lo que lo abrió.
 - **Los temporizadores son el reloj:** todo lo que termina un beat o avanza una escena es un
   temporizador del flujo (`ui/flowTimer.ts`: `useFlowTimer`, `useFlowTimers`, `startFlowTimer(s)`,
   sobre `ui/timer.ts`), nunca `animationend`, `transitionend` ni `finished`
@@ -349,6 +370,11 @@ Lo que las pruebas no pueden reemplazar; las hace el dueño a mano:
   depende de eso).
 - **Los sellos de los efectos** sin la letra condensada (antes de que cargue, o sin red): una
   palabra nunca se corta; el sello se achica para entrar en su celda (paso 7.3).
+- **El arte del menú después del modo carrera:** al volver al menú (el «Continuar» del resultado),
+  la ilustración de la Falconess entra con el resto de la pantalla, no un instante después. En un
+  contenedor muy cargado se vio llegar 0,1-0,2 s tarde (la imagen se decodifica de nuevo); no se
+  reprodujo en 24 pruebas sin carga, con la CPU frenada 4× ni con carga alta. Si se ve en un aparato,
+  el arreglo barato es `decoding="sync"` en esa imagen.
 - **Movimiento reducido** con el ajuste del sistema (iOS «Reducir movimiento», Android «Quitar
   animaciones»): todo quieto y entero, todas las esperas de lectura en su lugar.
 
@@ -381,11 +407,30 @@ El código mantiene lo de hoy hasta que el dueño responda:
      carrera arranca un cuadro más tarde);
    - pintar el toque primero y simular en la tarea siguiente: rompe la regla del toque y el cambio
      de pantalla juntos y agrega un estado intermedio que vive solo en React.
+7. Un final que una versión anterior guardó después del entrenamiento de la semana 48 (Caracara,
+   Cernícala; también la partida de prueba 1 del dueño) abre una vez en el resultado de ese
+   entrenamiento, con la semana 48 en el HUD, y a los ≈ 2 s pasa al final: la versión anterior iba
+   directo al final y dejaba la semana sin leer. Alternativa: que una partida terminada con su
+   última semana sin leer abra en el final, marcando la semana leída (pierde ese resultado, que la
+   jugadora nunca vio).
+8. En un teléfono de 360 × 740 y en la tableta, el aviso «Escena saltada…» de la escena previa
+   tapa, durante sus 4 s, el nombre y el objetivo de la carrera en la tarjeta decidida: ahí no queda
+   lugar libre (las posiciones y la pista son controles) y el aviso va abajo de la barra de arriba,
+   como dice §7. Alternativas: que tape la cabecera de las posiciones (texto, no un control) antes
+   que el nombre y el objetivo, que tape el botón de la pista, o que espere a la pantalla siguiente.
+9. Un aviso que se va al cambiar de pantalla se desvanece en 400 ms donde estaba: si la pantalla
+   nueva tiene un control ahí (del resultado al menú: «Entrenar»), la copia, que no toma toques, se
+   ve encima ≈ 0,3 s. Alternativas: que la copia se desvanezca debajo de la pantalla nueva, o que se
+   corte al cambiar de pantalla.
 
 ## Consecuencias
 
-- Una partida guardada sigue cargando igual; las dos claves nuevas se crean al usarse. Una tarjeta de
-  herencia ya mostrada por una versión anterior no se repite (la migración).
+- Una partida guardada sigue cargando igual. `falconess.juego.semana` se crea al usarse;
+  `falconess.juego.herencia`, en la primera carga de la versión nueva (la migración). Una tarjeta de
+  herencia que la versión anterior mostró en una semana ya leída no se repite; una que mostró en la
+  semana sin leer en que se actualizó sale otra vez, una sola (§5). Una semana de carrera decidida
+  en la versión anterior vuelve sin decidir, y un final después de un entrenamiento abre una vez en
+  su resultado (§5, decisión abierta 7).
 - Las pruebas del celular corren sobre partidas sembradas (`e2e/saves/*.json`) en vez de jugar hasta
   la semana 10, y un sondeo por cuadro (`probe`) hace fallar cualquier e2e de `#juego` con un id
   duplicado, dos pantallas o dos capas «adentro» en un mismo cuadro.

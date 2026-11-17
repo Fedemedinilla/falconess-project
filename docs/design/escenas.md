@@ -195,7 +195,8 @@ El jugador habla seguido en las escenas: no es un testigo mudo.
    junto con el de la carrera: el ánimo es de la parte de la carrera (regla del dueño 36).
 
 - **Directo:** sin emblema. La escena previa (resumida) sale en su negro y después la tarjeta;
-  «Correr» abre directo en el resultado. **Movimiento reducido:** sin emblema.
+  «Correr» abre directo en el resultado, o antes en la escena posterior (resumida) si la hay: en la
+  primera temporada, toda meta ganada tiene una. **Movimiento reducido:** sin emblema.
 - **«Ver otra vez»** (en el resultado) y **«Ver carrera»** (en el final): la carrera vuelve con un
   fundido de 0,2 s, con su llegada si termina sola, y después su resultado. Nunca con emblema ni
   escenas.
