@@ -32,4 +32,4 @@ Abierto:
 
 - El orden entre las alas y el «no» del viejo: si él ayudó a hacerlas y aun así se opone.
 - Quién escribió el nombre de pista en las alas y cuál es.
-- Los nombres comunes del elenco.
+- Los nombres comunes del elenco, de orígenes variados (`ideas.md` I26).

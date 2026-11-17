@@ -509,3 +509,10 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   del entrenador).
 - El generador de nombres se mejora más adelante para los nombres de pista de las Falconess al azar
   (dueño). Hoy el dueño lo ve sin terminar y con fuentes que dan nombres genéricos.
+
+### I26 · Nombres: Vuela Alto no es solo latina (2026-11-17)
+
+> «Que la escudería esté basada en Argentina no significa que todos sean latinos.»
+- Estado: **decidida** (2026-11-17). Los nombres del elenco salen de orígenes variados, como en un
+  país de inmigración; la inspiración argentina de Vuela Alto está en la escudería, no en el origen de
+  cada persona.
