@@ -424,6 +424,7 @@ FERRÁN [calma]: Nunca. ¿Qué tiempo hiciste?
    - `[SFX: viento en las alas]`
    - `[ILUSTRACIÓN: Brisa y Kes en la recta final, alas desplegadas]`
    - `[PAUSA]`: retención de un tiempo antes del siguiente globo.
+   - `[EFECTO: …]`: efecto de texto o de movimiento sobre un globo o el escenario (ver Tema 12).
    - `[ACOTACIÓN: gesto]`: solo si el arte o la animación lo pueden representar. Si no, convertí el gesto en línea o en expresión.
 3. **Qué describir y qué no**: describí lo que cambia (alguien entra, el ala se rompe, empieza a llover). No describas lo que el fondo ya muestra.
 4. **Ilustración a pantalla completa**: una por capítulo, a lo sumo dos, y siempre en el giro mayor. Cuando aparece, callá la narración: la imagen sola, y después un globo corto.
@@ -1106,6 +1107,110 @@ FRASE CLAVE: «Abrí el ala. Yo me encargo del resto.»
 
 ---
 
+## Tema 12. Efectos de texto y movimiento
+
+Agregado por el dueño el 2026-11-17, después de probarlos en el prototipo del Modo Historia
+(«Así es como se arman las escenas»). Todo este tema es [regla de la casa].
+
+### (a) Principios
+
+- **Un efecto es una acotación, no un adorno**: cada uno tiene que decir algo que la línea sola no
+  dice (urgencia, duda, un golpe, un aparte). Si sacás el efecto y la escena no pierde nada, sobra.
+- **El movimiento es para lo físico y lo sonoro**: algo que se cae, que golpea, que encastra, que
+  hace ruido. La vibración acompaña al sonido; nunca reemplaza a una emoción.
+- **Pocos por escena**: el efecto vale por contraste. Si todo tiembla, nada tiembla.
+- **El texto no salta**: cada letra ocupa su lugar desde el principio, aunque esté escrita a medias.
+- **Con «movimiento reducido» activado en el celular, ningún efecto se mueve**: el texto aparece
+  entero y el escenario queda quieto. La escena tiene que entenderse igual.
+
+### (b) Vocabulario
+
+| Efecto                    | Cómo se escribe en el guion             | Para qué                                                |
+| ------------------------- | --------------------------------------- | ------------------------------------------------------- |
+| Texto rápido              | `[EFECTO: texto rápido]`                | Urgencia, reflejo, una ráfaga                           |
+| Texto lento               | `[EFECTO: texto lento]`                 | Duda, cansancio, un recuerdo                            |
+| Pausa dentro de la línea  | una barra en el texto: `Vuela Al…       | O.`                                                     | El tiempo de leer, de dudar o de entender |
+| Énfasis                   | asteriscos en el texto: `a las *cinco*` | La palabra que importa; sale en el color de quien habla |
+| Sacudida del globo        | `[EFECTO: sacudida]`                    | Un grito, un freno en seco                              |
+| Temblor del escenario     | `[SFX: …]` + `[EFECTO: temblor]`        | Un golpe físico: algo que se cae, encastra o choca      |
+| Susurro                   | `[EFECTO: susurro]`                     | Un aparte, algo dicho por lo bajo                       |
+| Entrada de la frase clave | la línea marcada como clave             | La línea que queda                                      |
+
+Ideas sin probar, para cuando hagan falta: tachar y corregir (alguien se desdice en el mismo globo),
+un globo que tarda en aparecer (alguien duda antes de hablar) y una interferencia visual reservada
+para un momento inquietante de la historia.
+
+### (c) Reglas de uso
+
+1. **Máximo tres efectos por escena** (sin contar las pausas dentro de la línea), y nunca dos
+   seguidos del mismo tipo.
+2. **Énfasis: una palabra por globo** y no más de dos por escena.
+3. **Temblor del escenario solo con un sonido acotado** (`[SFX: …]`) que lo justifique.
+4. **Ningún efecto en las tarjetas de narración**: la narración es la voz quieta de la escena.
+5. **La sacudida no es enojo genérico**: es un corte, un freno, algo que interrumpe.
+6. **Texto rápido o lento cambia el tiempo, no el sentido**: la línea tiene que funcionar leída
+   entera de golpe.
+7. **El susurro no esconde información necesaria**: es un aparte que se puede perder sin perder la
+   escena.
+
+### (d) Errores comunes
+
+- Sacudir cada grito: a la tercera, el jugador deja de sentirla.
+- Énfasis en varias palabras del mismo globo: ya no se sabe cuál importa.
+- Temblor sin sonido: se lee como un error de pantalla.
+- Usar el texto lento para alargar una línea débil.
+
+### (e) Ejemplos antes/después
+
+**Ejemplo 12.1: el golpe**
+
+Antes:
+```
+[NARRACIÓN]: El ala se cae al piso con un ruido enorme.
+BRISA [sorpresa]: ¡Se cayó el ala!
+```
+
+Después:
+```
+[SFX: el ala golpea el piso del hangar]
+[EFECTO: temblor]
+BRISA [en blanco]: …
+KES [concentración]: Borde de ataque. Revisalo antes de levantarla.
+```
+_Por qué funciona:_ el golpe lo cuentan el sonido y el temblor; nadie anuncia lo que ya se oyó, y la
+línea siguiente es una acción.
+
+**Ejemplo 12.2: el freno**
+
+Antes (cada línea sacudida):
+```
+BRISA [fastidio]: ¡No toques eso! [EFECTO: sacudida]
+BRISA [fastidio]: ¡Es mío! [EFECTO: sacudida]
+BRISA [fastidio]: ¡Te dije! [EFECTO: sacudida]
+```
+
+Después:
+```
+BRISA [fastidio]: ¡No toques eso! [EFECTO: sacudida]
+BRISA [concentración]: Es la correa vieja. La nueva todavía no la probé.
+```
+
+**Ejemplo 12.3: la pausa y el énfasis**
+
+Antes:
+```
+KES [calma]: La largada es a las cinco y cuarenta.
+```
+
+Después:
+```
+KES [calma]: La largada es a las cinco|… y *cuarenta*.
+```
+_Por qué funciona:_ la pausa deja que el jugador crea que es a las cinco; el énfasis corrige, en la voz
+exacta de Kes.
+
+---
+
 ## Lista de control de una página (ejecutable antes de dar cualquier escena por terminada)
 
 **Estructura**
@@ -1158,6 +1263,12 @@ FRASE CLAVE: «Abrí el ala. Yo me encargo del resto.»
 - [ ] Como máximo una o dos marcas de lunfardo por escena, solo en personajes cuya ficha lo indique.
 - [ ] Ninguna jerga real de moda; los términos del deporte inventados están en el glosario.
 - [ ] Cada línea con subtexto tiene su nota de localización (intención, expresión, libertad de transcreación).
+
+**Efectos (Tema 12)**
+- [ ] Cada efecto tiene un motivo que la línea sola no da; como máximo tres por escena.
+- [ ] Todo temblor del escenario va con un sonido acotado.
+- [ ] Ninguna tarjeta de narración lleva efecto.
+- [ ] Leída con «movimiento reducido», la escena se entiende igual.
 
 **Mundo y tono**
 - [ ] La guerra aparece, si aparece, como cicatriz o memoria; el giro se resuelve en el presente.
