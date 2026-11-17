@@ -486,7 +486,8 @@ export function RunView({
           position={position}
           input={decided?.week.input}
           onPosition={pickFor(wings)}
-          // «Listo» on the planning card; «Correr» on the decided one (no way back, owner rule)
+          // «Elegir la acción» on the planning card; «Correr» on the decided one (no way back,
+          // owner rule)
           onRun={decided ? cmd.run : back}
           onBack={decided ? undefined : back}
         />

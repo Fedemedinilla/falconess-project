@@ -298,7 +298,7 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
               w.cmd.position(p);
               if (w.signature().some((v, i) => v !== was[i])) break;
             }
-            w.cmd.open("menu"); // «Listo»
+            w.cmd.open("menu"); // «Elegir la acción»
             break;
           }
           if (race && !planned.has(fp)) {

@@ -41,7 +41,10 @@ export type FlowPorts = {
 };
 
 export type Commands = {
-  /** «Entrenar», «Taller», «Habilidades», the race bar's card, «Volver» and «Listo»: only at idle. */
+  /**
+   * «Entrenar», «Taller», «Habilidades», the race bar's card, «Volver» and the planning card's
+   * «Elegir la acción»: only at idle.
+   */
   open(to: "menu" | "train" | "workshop" | "skills" | "plan"): void;
   selectTraining(kind: TrainingKind): void;
   workshopTab(tab: WorkshopTab): void;

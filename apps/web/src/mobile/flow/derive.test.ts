@@ -222,6 +222,26 @@ describe("the event, the card and the scenes over the menu", () => {
     expect(flow.hud?.of).toBe(stateOf(t));
   });
 
+  it("an event the game still waits on lets no action through, even marked done in this mount (final review C6)", () => {
+    const t = testGame();
+    const start = { kind: "start", falconessId: "caracara", hangar: HANGAR, parents: [] };
+    const rest = { kind: "rest" };
+    t.game.loadText(
+      JSON.stringify({
+        schemaVersion: 1,
+        rulesetVersion: "v2",
+        seed: "1",
+        inputs: [start, rest, rest, rest],
+      }),
+    );
+    t.game.acknowledgeStep();
+    const ui = reduceUi(INITIAL_UI, { type: "done", keys: ["event:caracara-scrap-run/3"] });
+    const flow = flowOf(t, ui);
+    expect(stateOf(t).pendingEvent?.eventId).toBe("caracara-scrap-run");
+    expect(flow.top.kind).toBe("idle");
+    expect(flow.canAct).toBe(false);
+  });
+
   it("the inheritance card and a week's scene: the menu inert, the HUD on the run", () => {
     const t = loadSave("peregrina-w39-insp");
     const mine = commit(t, { kind: "rest" });

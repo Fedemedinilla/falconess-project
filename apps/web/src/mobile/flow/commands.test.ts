@@ -17,7 +17,14 @@ import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./ui";
 const HANGAR = ["shiden", "mule", "nimbus", "falke"];
 
 /** The commands of one mount, on spied ports: every dispatch, cue and effective acknowledgement. */
-function harness(t: TestGame, o: { readonly pace?: Pace } = {}) {
+function harness(
+  t: TestGame,
+  o: {
+    readonly pace?: Pace;
+    /** What the commands read in place of the flow derived (a state no tap reaches today). */
+    readonly over?: (flow: Flow) => Flow;
+  } = {},
+) {
   let ui: UiState = INITIAL_UI;
   let last: Flow | undefined;
   const dispatched: { readonly e: UiEvent; readonly inputs: number }[] = [];
@@ -26,9 +33,9 @@ function harness(t: TestGame, o: { readonly pace?: Pace } = {}) {
   const inputs = (): number => t.game.getSnapshot().run?.inputs.length ?? 0;
   const now = (): { flow: Flow; facts: FlowFacts; ui: UiState } => {
     const facts = factsFor(t, o.pace === undefined ? {} : { pace: o.pace });
-    const flow = deriveFlow(t.game.context(), facts, ui, last);
-    last = flow;
-    return { flow, facts, ui };
+    const derived = deriveFlow(t.game.context(), facts, ui, last);
+    last = derived;
+    return { flow: o.over ? o.over(derived) : derived, facts, ui };
   };
   const cmd: Commands = flowCommands({
     ctx: t.game.context(),
@@ -208,6 +215,40 @@ describe("commands act and move the flow in the same call (critic (c)3)", () => 
   });
 });
 
+describe("the commands' own guards (F27, rule 50): a tap that is not the moment's does nothing (final review C6)", () => {
+  it("an action chosen on the decided card (a stale tap of the menu) decides nothing again", () => {
+    const t = loadSave("peregrina-w10");
+    const h = harness(t);
+    h.cmd.choose({ kind: "rest" });
+    const card = h.until("position");
+    const record = t.weeks.getSnapshot();
+    const ui = h.ui();
+    const before = h.inputs();
+    h.cmd.choose({ kind: "train:agility" });
+    expect(t.weeks.getSnapshot()).toBe(record);
+    expect(h.ui()).toBe(ui);
+    expect(h.inputs()).toBe(before);
+    expect(h.now().flow.top).toBe(card.top);
+  });
+
+  it("«Correr» while a layer is in front of the decided card does not run the race", () => {
+    const t = loadSave("peregrina-w10");
+    const first = harness(t);
+    first.cmd.choose({ kind: "rest" });
+    first.until("position");
+    // a new mount on the decided week (stage race: the card at once), with a layer in front
+    const h = harness(t, {
+      over: (flow) => ({ ...flow, layer: { kind: "event", key: "event:any/10" } }),
+    });
+    expect(h.now().flow.top.kind).toBe("position");
+    const before = h.inputs();
+    const record = t.weeks.getSnapshot();
+    h.cmd.run();
+    expect(h.inputs()).toBe(before);
+    expect(t.weeks.getSnapshot()).toBe(record);
+  });
+});
+
 describe("what the commands keep (plan §1.8): a new mount on the same storage plays on", () => {
   it("the planning card's pick is kept and carried into the decision; «Correr» commits the decided card's pick (D3, F22)", () => {
     const t = loadSave("peregrina-w10");
@@ -218,7 +259,7 @@ describe("what the commands keep (plan §1.8): a new mount on the same storage p
     expect(t.weeks.getSnapshot()).toEqual({ phase: "planned", fp, turn: 10, position: "lead" });
     h.cmd.position("closer");
     expect(t.weeks.getSnapshot()).toMatchObject({ phase: "planned", position: "closer" });
-    h.cmd.open("menu"); // «Listo»
+    h.cmd.open("menu"); // «Elegir la acción»
     h.cmd.choose({ kind: "rest" });
     expect(t.weeks.getSnapshot()).toMatchObject({ phase: "decided", position: "closer" });
     const card = h.until("position").top;
