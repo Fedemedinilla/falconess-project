@@ -15,7 +15,7 @@ import {
   watchCues,
   week,
 } from "./mobile-helpers";
-import { coverage, freezeAt, holdClock, present, settleUpdates } from "./motion";
+import { coverage, freezeAt, holdClock, present, runClock, settleUpdates } from "./motion";
 
 /**
  * The phone game's flow, now that the flow model drives it (plan-final 4.1): a sheet holds the
@@ -529,6 +529,7 @@ async function watchNoticeWith(page: Page, selector: string): Promise<() => Prom
 test("the scene's notice sits just over the track tab, clear of the menu's buttons, and fades out as Entrenar opens (rule 17)", async ({
   page,
 }) => {
+  await page.clock.install();
   await startMobile(page, "peregrina");
   await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
   const notice = await noticeBox(page);
@@ -537,11 +538,16 @@ test("the scene's notice sits just over the track tab, clear of the menu's butto
   expect(tab.top - notice.bottom).toBeLessThan(40);
   for (const id of ["#m-entrenar", "#m-descansar", "#m-habilidades", "#m-salida", "#m-taller"])
     expect(overlaps(notice, await boxOf(page, id)), id).toBe(false);
-  // another screen: the notice goes at once, an id-less copy of it fades out
+  // another screen: the notice goes at once, an id-less copy of it fades out over its 400 ms
+  // (the clock held: its timer, not the test's patience, final review C7)
+  await holdClock(page);
   await page.click("#m-entrenar");
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
   expect(await present(page, "[data-notice-leaving]")).toBe(true);
-  await expect.poll(() => present(page, "[data-notice-leaving]"), { timeout: 600 }).toBe(false);
+  await runClock(page, 380);
+  expect(await present(page, "[data-notice-leaving]")).toBe(true);
+  await runClock(page, 40);
+  expect(await present(page, "[data-notice-leaving]")).toBe(false);
 });
 
 test("a goal's scene passed by: its notice waits out the emblem, then sits just over the decided card's foot", async ({

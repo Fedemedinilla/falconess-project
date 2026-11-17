@@ -20,6 +20,7 @@ import {
   expectCssPaused,
   freezeAt,
   hideTab,
+  holdAnimations,
   holdClock,
   opacityOf,
   present,
@@ -555,10 +556,11 @@ test("«Ver otra vez» brings the replay back into the race's screen with a fade
   await page.click("#m-capitulo-saltar");
   await expect(page.locator("#m-resultado")).toBeVisible();
   await holdClock(page);
+  // every animation held where it starts (a slow replay mount, or a loaded machine, would let a
+  // 200 ms fade end before a wait for it): the same screen (its head and «Saltar» whole), only the
+  // replay comes in, clear at its first frame and whole at 200 ms, in its place
+  await holdAnimations(page);
   await page.click("#m-ver-otra-vez");
-  // held at once, in the click's own commit (a slow replay mount would let a 200 ms fade end
-  // before a wait for it): the same screen (its head and «Saltar» whole), only the replay comes
-  // in, clear at its first frame and whole at 200 ms, in its place
   await freezeAt(page, 0);
   await expect(page.locator("#m-carrera-vuelo")).toBeAttached();
   expect(await opacityOf(page, "#m-carrera-vuelo")).toBeLessThan(0.05);
@@ -661,8 +663,19 @@ test("the emblem fades in over the week's menu, the scene's black takes the menu
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut");
   await freezeAt(page, 0);
   expect(await opacityOf(page, '[data-layer="emblem"] > *')).toBeGreaterThanOrEqual(0.99);
-  // the copy takes no tap: every point of the game reaches the scene, black from its first frame
-  expect((await coverage(page, "#m-capitulo")).misses).toEqual([]);
+  // the copy takes no tap: the game's middle reaches the scene, black from its first frame
+  // under the copy
+  expect(
+    await page.evaluate(() => {
+      const app = document.querySelector("[data-app]")?.getBoundingClientRect();
+      const el =
+        app && document.elementFromPoint(app.left + app.width / 2, app.top + app.height / 2);
+      return el?.closest("#m-capitulo") !== null && el !== undefined;
+    }),
+  ).toBe(true);
+  expect((await coverage(page, "#m-capitulo", { under: '[data-layer="emblem"]' })).misses).toEqual(
+    [],
+  );
   // it fades out over 280 ms (--m-ease-out), and its timer removes it
   await freezeAt(page, 140);
   const mid = await opacityOf(page, '[data-layer="emblem"] > *');
@@ -921,7 +934,9 @@ test("after the race mode the HUD comes back with a fade, with the menu; the HUD
   await expect(hud).toHaveCount(0);
   await page.click("#m-saltar");
   await toResult(page);
-  // the race's own notice, if any, has gone with its time
+  // the race's own notice, if any, has gone with its time; every animation held where it starts
+  // (a fade can end before a wait for the effects does)
+  await holdAnimations(page);
   await page.click("#m-carrera-seguir");
   await expect(page.locator("#m-efectos")).toBeVisible();
   await freezeAt(page, 0);
@@ -1344,6 +1359,140 @@ test("the second click of a double tap that ends a week's scene opens no race ca
   await page.waitForTimeout(600);
   await page.click("#m-carrera");
   await expect(page.locator('[data-screen="plan"]')).toHaveCount(1);
+});
+
+/** Week 48's menu under week 44's scene, never seen, at its last line (as the tests above). */
+async function w48UnderScene(page: Page): Promise<void> {
+  await seedRun(page, "peregrina-w48");
+  await unseen(page, ["peregrina-tiresome"]);
+  await page.goto("./");
+  await continueRun(page);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tiresome");
+  await toLastLine(page, "story.peregrina-tiresome.12");
+}
+
+for (const [control, what] of [
+  ["#m-descansar", "decides no rest"],
+  ["#m-entrenar", "opens no training"],
+] as const)
+  test(`the second click of a double tap that ends a week's scene over «${control}» ${what} (F50, final review C3)`, async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await w48UnderScene(page);
+    const at = await middleOf(page, control);
+    await page.mouse.dblclick(at.x, at.y);
+    await expect(page.locator("#m-capitulo")).toHaveCount(0);
+    await page.waitForTimeout(400);
+    // the menu, as the scene left it: no week's effects, no decided week, no training screen
+    await expect(page.locator('[data-screen="menu"]')).toHaveCount(1);
+    await expect(page.locator("#m-efectos")).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem("falconess.juego.semana"))).toBeNull();
+    expect(await week(page)).toBe(48);
+  });
+
+test("the second click of a double tap that ends the scene before the race runs no race from the card under it (F50, final review C3)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await page.click("#m-efectos");
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-debut", { timeout: 15_000 });
+  await toLastLine(page, "story.peregrina-debut.12");
+  const at = await middleOf(page, "#m-correr");
+  await page.mouse.dblclick(at.x, at.y);
+  await expect(scene).toHaveCount(0);
+  await page.waitForTimeout(400);
+  // the decided card, its race not run
+  await expect(page.locator('[data-screen="position"]')).toHaveCount(1);
+  expect(await page.evaluate(() => localStorage.getItem("falconess.juego.semana"))).toContain(
+    '"decided"',
+  );
+});
+
+for (const [control, what] of [
+  ["#m-carrera-seguir", "leaves no result"],
+  ["#m-ver-otra-vez", "plays no race again"],
+] as const)
+  test(`the second click of a double tap that ends the scene after the race over «${control}» ${what} (F50, final review C3)`, async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(150_000);
+    const toScene = async (p: Page): Promise<void> => {
+      await seedRun(p, "peregrina-w10");
+      await p.goto("./");
+      await continueRun(p);
+      await p.click("#m-descansar");
+      await toPosition(p);
+      await p.click("#m-correr");
+      await p.click("#m-saltar");
+      await expect(p.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut-win", {
+        timeout: 15_000,
+      });
+    };
+    // the result mounts as the scene leaves: where its control will be, from a browser of its own
+    const other = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+    });
+    const measure = await other.newPage();
+    await toScene(measure);
+    await measure.click("#m-capitulo-saltar");
+    const at = await middleOf(measure, control);
+    await other.close();
+    await toScene(page);
+    const scene = page.locator("#m-capitulo");
+    await toLastLine(page, "story.peregrina-debut-win.12");
+    await page.mouse.dblclick(at.x, at.y);
+    await expect(scene).toHaveCount(0);
+    await page.waitForTimeout(400);
+    // the result, as the scene left it
+    await expect(page.locator("#m-resultado")).toBeVisible();
+    await expect(page.locator('[data-screen="race"]')).toHaveCount(1);
+    await expect(page.locator("#m-saltar")).toHaveCount(0);
+  });
+
+test.describe("reduced motion: the inheritance card is whole at once", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("the second click of a double tap that ends the week's effects does not leave the card under it (F50, final review C3)", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(120_000);
+    const toEffects = async (p: Page): Promise<void> => {
+      await seedRun(p, "peregrina-w39-insp");
+      await p.goto("./");
+      await continueRun(p);
+      await p.click("#m-descansar");
+      await expect(p.locator("#m-efectos")).toBeVisible();
+    };
+    // where its «Continuar» will be, from a browser of its own
+    const other = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      reducedMotion: "reduce",
+    });
+    const measure = await other.newPage();
+    await toEffects(measure);
+    await measure.click("#m-efectos");
+    const at = await middleOf(measure, "#m-inspiracion-seguir");
+    await other.close();
+    await toEffects(page);
+    await page.mouse.dblclick(at.x, at.y);
+    const card = page.locator("#m-inspiracion");
+    await expect(card).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(card).toBeVisible();
+    await expect(page.locator("#m-capitulo")).toHaveCount(0);
+    // a tap of its own goes on
+    await page.click("#m-inspiracion-seguir");
+    await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-first-vos");
+  });
 });
 
 test("Rápido: the chapter's card shows whole for 0.7 s before it fades into the first line at 1.75 s (H4)", async ({
@@ -1794,7 +1943,10 @@ test("a hidden tab holds a training's result: her stats counting up, the vigor b
   await runClock(page, 1000);
   expect(await present(page, "#m-resultado")).toBe(true);
   await runUntil(page, "#m-entrenar", 6000);
-  await expect.poll(() => week(page)).toBe(2);
+  // the week's effects, if her training brought any (a random season's mood or bond), end by
+  // their time and the HUD turns to week 2 as they lift (O3): the clock is held, so run it on
+  for (let ms = 0; ms < 8000 && (await week(page)) !== 2; ms += 200) await runClock(page, 200);
+  expect(await week(page)).toBe(2);
 });
 
 test("a hidden tab holds the emblem where it was, and its fading copy too: each goes on with the time it had left (M2, O6)", async ({
