@@ -15,11 +15,12 @@ import {
 /**
  * The phone game (#juego) from seeded saves (`e2e/saves`, written and checked by
  * `scripts/e2e-saves.test.ts`): each opens with «Continuar» where a random season gets only by
- * luck. Then today's behaviour on paths no other test reaches, pinned before the flow model
- * replaces the screen code (plan-final 1.2):
+ * luck. Then paths no other test reaches, pinned before the flow model replaced the screen code
+ * (plan-final 1.2) and kept since:
  *
- * - LEGACY pins: what the game does today and the plan changes, each flipped by its own step;
- * - watch flows: a race seen again, which must keep working through the rewiring (4.1).
+ * - fragile spots, as the plan fixed them: each test was a pin of the old behaviour that the step
+ *   it names (F25 in 5.1, F1 in 5.6, F4 in 5.8, the failed goal's End in 5.4) turned around;
+ * - watch flows: a race seen again, which kept working through the rewiring (4.1).
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -50,7 +51,7 @@ for (const name of SAVES)
     await expect(page.locator("#m-inspiracion")).toHaveCount(0);
   });
 
-test.describe("LEGACY pins", () => {
+test.describe("fragile spots, as the plan fixed them", () => {
   test("F25 (flipped in 5.1): «Ver carrera» on the End opens the race with no emblem", async ({
     page,
   }) => {

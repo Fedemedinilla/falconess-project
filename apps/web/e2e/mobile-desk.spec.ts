@@ -9,6 +9,7 @@ import {
   toPosition,
   toResult,
 } from "./mobile-helpers";
+import { present } from "./motion";
 
 /**
  * The wide screen's panel (D4, plan-final 5.5): it is locked (inert, dimmed) while anything of the
@@ -18,11 +19,6 @@ import {
  */
 
 test.use({ viewport: { width: 1440, height: 900 } });
-
-/** Whether `selector` is in the page right now, without waiting for it. */
-function present(page: Page, selector: string): Promise<boolean> {
-  return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
-}
 
 /** Whether the panel is locked right now (no waiting: the moment may be short). */
 function locked(page: Page): Promise<boolean> {

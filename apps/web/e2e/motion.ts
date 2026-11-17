@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * Motion helpers for the phone game's e2e (plan-final §2.8): what one frame of #juego holds, CSS
@@ -259,4 +259,28 @@ export async function cssPlayStates(
       }
     return { running: running.sort(), paused };
   }, scope);
+}
+
+/** Whether `selector` is in the page right now, without waiting for it. */
+export function present(page: Page, selector: string): Promise<boolean> {
+  return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
+}
+
+/** The held clock (`holdClock`) moved on by `ms`, and the page's updates in. */
+export async function runClock(page: Page, ms: number): Promise<void> {
+  await page.clock.runFor(ms);
+  await settleUpdates(page);
+}
+
+/** Hides the tab, or shows it again (`setTabHidden`), and lets the page take it in. */
+export async function hideTab(page: Page, hidden: boolean): Promise<void> {
+  await setTabHidden(page, hidden);
+  await settleUpdates(page);
+}
+
+/** The game's CSS while the tab is hidden: every animation in `scope` stands paused (6.11). */
+export async function expectCssPaused(page: Page, scope = "[data-app]"): Promise<void> {
+  const states = await cssPlayStates(page, scope);
+  expect(states.running).toEqual([]);
+  expect(states.paused).toBeGreaterThan(0);
 }

@@ -15,7 +15,7 @@ import {
   watchCues,
   week,
 } from "./mobile-helpers";
-import { coverage, freezeAt, holdClock, settleUpdates } from "./motion";
+import { coverage, freezeAt, holdClock, present, settleUpdates } from "./motion";
 
 /**
  * The phone game's flow, now that the flow model drives it (plan-final 4.1): a sheet holds the
@@ -32,11 +32,6 @@ import { coverage, freezeAt, holdClock, settleUpdates } from "./motion";
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
-
-/** Whether `selector` is in the page right now, without waiting for it. */
-function present(page: Page, selector: string): Promise<boolean> {
-  return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
-}
 
 test("a sheet in the page but closed holds nothing: the menu's and the race card's track sheets", async ({
   page,

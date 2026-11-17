@@ -17,10 +17,13 @@ import {
 import {
   coverage,
   cssPlayStates,
+  expectCssPaused,
   freezeAt,
+  hideTab,
   holdClock,
   opacityOf,
-  setTabHidden,
+  present,
+  runClock,
   settleUpdates,
 } from "./motion";
 
@@ -54,11 +57,6 @@ import {
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
-
-/** Whether `selector` is in the page right now, without waiting for it. */
-function present(page: Page, selector: string): Promise<boolean> {
-  return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
-}
 
 /** What `document.elementFromPoint` finds at the middle of the game's column, by its screen. */
 function middleHit(page: Page): Promise<string> {
@@ -1643,25 +1641,6 @@ test("a stamp breaks only between words: every effect's stamp, in es and in en, 
 
 // ---- 6.11: a hidden tab (critic b: two clocks) ----
 
-/** Hides the tab, or shows it again, and lets the page take it in. */
-async function hideTab(page: Page, hidden: boolean): Promise<void> {
-  await setTabHidden(page, hidden);
-  await settleUpdates(page);
-}
-
-/** The held clock on by `ms`, and the page's updates in. */
-async function run(page: Page, ms: number): Promise<void> {
-  await page.clock.runFor(ms);
-  await settleUpdates(page);
-}
-
-/** The game's CSS while the tab is hidden: every animation in the column stands paused. */
-async function expectCssPaused(page: Page, scope = "[data-app]"): Promise<void> {
-  const states = await cssPlayStates(page, scope);
-  expect(states.running).toEqual([]);
-  expect(states.paused).toBeGreaterThan(0);
-}
-
 test("a hidden tab holds the week's effects where they are, their sounds and their CSS too, and they end after the time they had left (critic b)", async ({
   page,
 }) => {
@@ -1677,14 +1656,14 @@ test("a hidden tab holds the week's effects where they are, their sounds and the
   // (a rest's sleep, and its mood when it moved); 1 s of it seen
   expect(await page.locator('#m-efectos [data-fx="skills"]').count()).toBe(0);
   const total = 160 * ((await page.locator("#m-efectos [data-fx]").count()) - 1) + 1800 + 500;
-  await run(page, 1000);
+  await runClock(page, 1000);
   expect(await present(page, "#m-efectos")).toBe(true);
   const heard = (await cues()).length;
   await hideTab(page, true);
   await expect(page.locator("[data-app]")).toHaveAttribute("data-hidden", "");
   await expectCssPaused(page);
   // three seconds in another tab: they are still up, on the week just played, and nothing sounded
-  await run(page, 3000);
+  await runClock(page, 3000);
   expect(await present(page, "#m-efectos")).toBe(true);
   expect(await week(page)).toBe(1);
   expect((await cues()).slice(heard)).toEqual([]);
@@ -1692,9 +1671,9 @@ test("a hidden tab holds the week's effects where they are, their sounds and the
   await expect(page.locator("[data-app]")).not.toHaveAttribute("data-hidden");
   expect((await cssPlayStates(page)).paused).toBe(0);
   // back: they end when the time they had left is up
-  await run(page, total - 1000 - 100);
+  await runClock(page, total - 1000 - 100);
   expect(await present(page, "#m-efectos")).toBe(true);
-  await run(page, 200);
+  await runClock(page, 200);
   expect(await present(page, "#m-efectos")).toBe(false);
   await expect.poll(() => week(page)).toBe(2);
 });
@@ -1714,7 +1693,7 @@ test("a hidden tab: the week's effects never end out of sight, so the inheritanc
   await settleUpdates(page);
   const heard = (await cues()).length;
   await hideTab(page, true);
-  await run(page, 8000);
+  await runClock(page, 8000);
   // nothing of the week went on: no stamp sounded, no card came, nor its sound
   expect(await present(page, "#m-efectos")).toBe(true);
   expect(await present(page, "#m-inspiracion")).toBe(false);
@@ -1745,12 +1724,12 @@ test("a hidden tab holds a training's result: her stats counting up, the vigor b
     .evaluate((el) => (el instanceof HTMLElement ? Number.parseFloat(el.style.animationDelay) : 0));
   expect(at).toBeGreaterThan(500);
   const agility = page.locator('#m-stats [data-stat="agility"] > span:nth-child(2)');
-  await run(page, 300);
+  await runClock(page, 300);
   const from = await agility.textContent();
   expect(await vigorOf(page)).toBe(vigor);
   await hideTab(page, true);
   await expectCssPaused(page);
-  await run(page, 5000);
+  await runClock(page, 5000);
   // out of sight nothing of it went on: the result, her stats where they were, the bar too
   expect(await present(page, "#m-resultado")).toBe(true);
   expect(await agility.textContent()).toBe(from);
@@ -1758,13 +1737,13 @@ test("a hidden tab holds a training's result: her stats counting up, the vigor b
   expect(await week(page)).toBe(1);
   await hideTab(page, false);
   // the «±N» lands when it had left to: `at` from the result's start, 300 ms of it seen
-  await run(page, at - 300 - 40);
+  await runClock(page, at - 300 - 40);
   expect(await vigorOf(page)).toBe(vigor);
   expect(await agility.textContent()).not.toBe(from);
-  await run(page, 80);
+  await runClock(page, 80);
   expect(await vigorOf(page)).not.toBe(vigor);
   // and the result stays its hold after it (1.1 s), then the week goes on
-  await run(page, 1000);
+  await runClock(page, 1000);
   expect(await present(page, "#m-resultado")).toBe(true);
   await runUntil(page, "#m-entrenar", 6000);
   await expect.poll(() => week(page)).toBe(2);
@@ -1776,34 +1755,34 @@ test("a hidden tab holds the emblem where it was, and its fading copy too: each 
   test.setTimeout(90_000);
   await page.clock.install();
   await toEmblem(page);
-  await run(page, 220);
+  await runClock(page, 220);
   expect(await present(page, "[data-black]")).toBe(true);
-  await run(page, 500);
+  await runClock(page, 500);
   await hideTab(page, true);
   await expectCssPaused(page);
-  await run(page, 3000);
+  await runClock(page, 3000);
   // still the emblem, and no scene behind it yet
   expect(await present(page, "#m-transicion")).toBe(true);
   expect(await present(page, "#m-capitulo")).toBe(false);
   await hideTab(page, false);
   // its 1.24 s: 720 ms of it seen, 520 left
-  await run(page, 440);
+  await runClock(page, 440);
   expect(await present(page, "#m-transicion")).toBe(true);
-  await run(page, 120);
+  await runClock(page, 120);
   const copy = '[data-layer="emblem"][data-layer-phase="out"]';
   expect(await present(page, "#m-transicion")).toBe(false);
   expect(await present(page, copy)).toBe(true);
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut");
   // its copy fades over 280 ms: hidden 100 ms into it, it waits there
-  await run(page, 100);
+  await runClock(page, 100);
   await hideTab(page, true);
   await expectCssPaused(page, copy);
-  await run(page, 2000);
+  await runClock(page, 2000);
   expect(await present(page, copy)).toBe(true);
   await hideTab(page, false);
-  await run(page, 100);
+  await runClock(page, 100);
   expect(await present(page, copy)).toBe(true);
-  await run(page, 100);
+  await runClock(page, 100);
   expect(await present(page, copy)).toBe(false);
 });
 
@@ -1820,33 +1799,33 @@ test("a hidden tab holds a notice's time on screen, and its fading copy: each go
   await page.click("#m-capitulo-saltar");
   // the prologue's exit (0.8 s), then its notice: found within 20 ms of its first frame
   await runUntil(page, "#m-capitulo-aviso", 2000, 20);
-  await run(page, 1000);
+  await runClock(page, 1000);
   await hideTab(page, true);
   await expectCssPaused(page);
-  await run(page, 6000);
+  await runClock(page, 6000);
   expect(await present(page, "#m-capitulo-aviso")).toBe(true);
   await hideTab(page, false);
   // its 4 s: 1 s of it seen, 3 s left
-  await run(page, 2800);
+  await runClock(page, 2800);
   expect(await present(page, "#m-capitulo-aviso")).toBe(true);
   let left = 0;
   while (await present(page, "#m-capitulo-aviso")) {
     expect(left).toBeLessThan(400);
-    await run(page, 20);
+    await runClock(page, 20);
     left += 20;
   }
   // gone at its time: a copy fades out where it stood (400 ms); hidden 100 ms into it, it waits
   const copy = "[data-notice-leaving]";
   expect(await present(page, copy)).toBe(true);
-  await run(page, 100);
+  await runClock(page, 100);
   await hideTab(page, true);
   await expectCssPaused(page, copy);
-  await run(page, 2000);
+  await runClock(page, 2000);
   expect(await present(page, copy)).toBe(true);
   await hideTab(page, false);
-  await run(page, 200);
+  await runClock(page, 200);
   expect(await present(page, copy)).toBe(true);
-  await run(page, 150);
+  await runClock(page, 150);
   expect(await present(page, copy)).toBe(false);
 });
 
@@ -1859,16 +1838,16 @@ test("a hidden tab holds the race's finish banner: the race goes on with the hol
   await holdClock(page);
   await nearFinish(page);
   await runUntil(page, "#m-carrera-llegada", 4000, 20);
-  await run(page, 400);
+  await runClock(page, 400);
   await hideTab(page, true);
   await expectCssPaused(page);
-  await run(page, 3000);
+  await runClock(page, 3000);
   expect(await present(page, "#m-carrera-llegada")).toBe(true);
   expect(await present(page, "#m-capitulo")).toBe(false);
   expect(await present(page, "#m-resultado")).toBe(false);
   await hideTab(page, false);
   // its 1.2 s: 400 ms of it seen
-  await run(page, 700);
+  await runClock(page, 700);
   expect(await present(page, "#m-carrera-llegada")).toBe(true);
   await runUntil(page, "#m-capitulo", 300, 20);
 });
@@ -1877,32 +1856,32 @@ test("a hidden tab during a scene's way in: it waits where it was, and the first
   page,
 }) => {
   await toPrologue(page);
-  await run(page, 600);
+  await runClock(page, 600);
   expect(await beatOf(page)).toBe("intro");
   await hideTab(page, true);
   await expectCssPaused(page);
-  await run(page, 4000);
+  await runClock(page, 4000);
   // out of sight its way in went no further: no card, no line
   expect(await beatOf(page)).toBe("intro");
   await hideTab(page, false);
-  await run(page, 100);
+  await runClock(page, 100);
   expect(await beatOf(page)).toBe("intro");
   // a tap 700 ms into what she saw of it: the card at once, the line 0.5 s later
   await page.click("#m-capitulo-seguir");
   expect(await beatOf(page)).toBe("card");
-  await run(page, 450);
+  await runClock(page, 450);
   expect(await beatOf(page)).toBe("card");
-  await run(page, 60);
+  await runClock(page, 60);
   expect(await beatOf(page)).toBe("line");
   // its words come one by one as she watches, and stand where they were while the tab is hidden
   const words = () => page.locator('#m-capitulo [class*="wordOn"]').count();
-  await run(page, 250);
+  await runClock(page, 250);
   const typed = await words();
   expect(typed).toBeGreaterThan(0);
   await hideTab(page, true);
-  await run(page, 3000);
+  await runClock(page, 3000);
   expect(await words()).toBe(typed);
   await hideTab(page, false);
-  await run(page, 300);
+  await runClock(page, 300);
   expect(await words()).toBeGreaterThan(typed);
 });
