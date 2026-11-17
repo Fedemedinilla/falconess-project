@@ -26,6 +26,14 @@ del escenario, y lo leído baja (más tenue); así se lee y se ve la escena a la
 también salen arriba. La escena ocupa toda la pantalla del celular, con Auto y Saltar en una barra
 al pie (versión 4 del prototipo).
 
+**Versión 5 (2026-11-17): reescrita con la biblia de escritura** (`docs/design/biblia-escritura.md`).
+Texto de ejemplo, no canon. Cuatro escenas con su hoja (objetivo, obstáculo, giro, salida), solo
+las diez expresiones del esquema, dos tarjetas de narración en unas cuarenta líneas, una ilustración
+en el giro mayor sin narración, y una elección con tres posturas (aceptar, rechazar, desviar), cada
+una con su expresión de respuesta y su propia versión de la línea de vuelta. El botón «Dirección»
+muestra las hojas de escena, la acción que hay debajo de cada línea y la postura de cada opción.
+Probada en los tres caminos, en claro y en oscuro (iPhone 13), sin errores.
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
