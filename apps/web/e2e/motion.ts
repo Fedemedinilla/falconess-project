@@ -149,82 +149,86 @@ export async function coverage(
   selector: string,
   options: { readonly under?: string } = {},
 ): Promise<Coverage> {
-  return page.evaluate(
-    ([sel, under]) => {
-      const scan = document.createElement("style");
-      scan.textContent = "*, *::before, *::after { pointer-events: auto !important; }";
-      document.head.append(scan);
-      const app = document.querySelector("[data-app]")?.getBoundingClientRect();
-      const left = Math.max(0, app?.left ?? 0);
-      const top = Math.max(0, app?.top ?? 0);
-      const right = Math.min(window.innerWidth, app?.right ?? window.innerWidth);
-      const bottom = Math.min(window.innerHeight, app?.bottom ?? window.innerHeight);
-      const name = (el: Element): string => {
-        const cls = el.getAttribute("class")?.split(/\s+/)[0];
-        return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
-      };
-      /** The opacity it shows at, with the element that fades it most. */
-      const seen = (el: Element): { opacity: number; by: Element } => {
-        let opacity = 1;
-        let by = el;
-        let least = 1;
-        for (let e: Element | null = el; e; e = e.parentElement) {
-          const o = Number(getComputedStyle(e).opacity);
-          opacity *= o;
-          if (o < least) {
-            least = o;
-            by = e;
-          }
+  return page.evaluate(coverageNow, [selector, options.under ?? ""] as const);
+}
+
+/**
+ * `coverage`'s page side: what the grid over the game shows right now, for `sel`, looking under
+ * `under` (empty: nothing). Self-contained (no imports, no outer names), like `frameIssues`, so an
+ * init script can carry it too (`e2e/mobile-season.spec.ts` reads it at a scene's first commit).
+ */
+export function coverageNow([sel, under]: readonly [string, string]): Coverage {
+  const scan = document.createElement("style");
+  scan.textContent = "*, *::before, *::after { pointer-events: auto !important; }";
+  document.head.append(scan);
+  const app = document.querySelector("[data-app]")?.getBoundingClientRect();
+  const left = Math.max(0, app?.left ?? 0);
+  const top = Math.max(0, app?.top ?? 0);
+  const right = Math.min(window.innerWidth, app?.right ?? window.innerWidth);
+  const bottom = Math.min(window.innerHeight, app?.bottom ?? window.innerHeight);
+  const name = (el: Element): string => {
+    const cls = el.getAttribute("class")?.split(/\s+/)[0];
+    return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
+  };
+  /** The opacity it shows at, with the element that fades it most. */
+  const seen = (el: Element): { opacity: number; by: Element } => {
+    let opacity = 1;
+    let by = el;
+    let least = 1;
+    for (let e: Element | null = el; e; e = e.parentElement) {
+      const o = Number(getComputedStyle(e).opacity);
+      opacity *= o;
+      if (o < least) {
+        least = o;
+        by = e;
+      }
+    }
+    return { opacity, by };
+  };
+  /** A computed colour's alpha (0-1). */
+  const alpha = (color: string): number => {
+    if (color === "transparent") return 0;
+    const slash = /\/\s*([\d.]+)(%?)\s*\)$/.exec(color);
+    if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1);
+    const rgba = /^rgba\((?:[^,]+,){3}\s*([\d.]+)\)$/.exec(color);
+    return rgba ? Number(rgba[1]) : 1;
+  };
+  /** Whether it paints anything of its own: a background, an image, a canvas, or its text. */
+  const paints = (el: Element): boolean => {
+    const style = getComputedStyle(el);
+    if (alpha(style.backgroundColor) > 0 || style.backgroundImage !== "none") return true;
+    if (/^(img|canvas|video|svg)$/i.test(el.tagName)) return true;
+    return [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim());
+  };
+  const misses: string[] = [];
+  let covered = 0;
+  for (let i = 0; i < 5; i++)
+    for (let j = 0; j < 9; j++) {
+      const x = Math.round(left + ((i + 0.5) * (right - left)) / 5);
+      const y = Math.round(top + ((j + 0.5) * (bottom - top)) / 9);
+      const at = `(${x}, ${y})`;
+      let miss: string | undefined = `${at}: nothing`;
+      let faded: string | undefined;
+      for (const el of document.elementsFromPoint(x, y)) {
+        if (under && el.closest(under)) continue;
+        const { opacity, by } = seen(el);
+        if (opacity === 0 || !paints(el)) continue;
+        if (!el.closest(sel)) {
+          miss = `${at}: ${name(el)}, outside ${sel}${faded ? `, under ${faded}` : ""}`;
+          break;
         }
-        return { opacity, by };
-      };
-      /** A computed colour's alpha (0-1). */
-      const alpha = (color: string): number => {
-        if (color === "transparent") return 0;
-        const slash = /\/\s*([\d.]+)(%?)\s*\)$/.exec(color);
-        if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1);
-        const rgba = /^rgba\((?:[^,]+,){3}\s*([\d.]+)\)$/.exec(color);
-        return rgba ? Number(rgba[1]) : 1;
-      };
-      /** Whether it paints anything of its own: a background, an image, a canvas, or its text. */
-      const paints = (el: Element): boolean => {
-        const style = getComputedStyle(el);
-        if (alpha(style.backgroundColor) > 0 || style.backgroundImage !== "none") return true;
-        if (/^(img|canvas|video|svg)$/i.test(el.tagName)) return true;
-        return [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim());
-      };
-      const misses: string[] = [];
-      let covered = 0;
-      for (let i = 0; i < 5; i++)
-        for (let j = 0; j < 9; j++) {
-          const x = Math.round(left + ((i + 0.5) * (right - left)) / 5);
-          const y = Math.round(top + ((j + 0.5) * (bottom - top)) / 9);
-          const at = `(${x}, ${y})`;
-          let miss: string | undefined = `${at}: nothing`;
-          let faded: string | undefined;
-          for (const el of document.elementsFromPoint(x, y)) {
-            if (under && el.closest(under)) continue;
-            const { opacity, by } = seen(el);
-            if (opacity === 0 || !paints(el)) continue;
-            if (!el.closest(sel)) {
-              miss = `${at}: ${name(el)}, outside ${sel}${faded ? `, under ${faded}` : ""}`;
-              break;
-            }
-            if (opacity >= 0.999 && alpha(getComputedStyle(el).backgroundColor) >= 0.999) {
-              miss = undefined;
-              break;
-            }
-            // a part of it that shows only in part: what is under it shows through
-            if (opacity < 0.999) faded ??= `${name(by)} at opacity ${Number(opacity.toFixed(3))}`;
-          }
-          if (miss === undefined) covered++;
-          else misses.push(miss);
+        if (opacity >= 0.999 && alpha(getComputedStyle(el).backgroundColor) >= 0.999) {
+          miss = undefined;
+          break;
         }
-      scan.remove();
-      return { covered, points: 45, misses };
-    },
-    [selector, options.under ?? ""] as const,
-  );
+        // a part of it that shows only in part: what is under it shows through
+        if (opacity < 0.999) faded ??= `${name(by)} at opacity ${Number(opacity.toFixed(3))}`;
+      }
+      if (miss === undefined) covered++;
+      else misses.push(miss);
+    }
+  scan.remove();
+  return { covered, points: 45, misses };
 }
 
 /** Lets the page's own updates land (React commits on a posted message, a timer's too). */
