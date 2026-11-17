@@ -425,8 +425,9 @@ hamaca hecha de alas viejas, arregla motores ajenos.
   no viaja con la partida exportada.
 - «Historia» (`apps/web/src/mobile/StoryListSheet.tsx`, montada en `RunView.tsx`): las escenas de esa
   Falconess vistas alguna vez en ese navegador, **en orden alfabético de id** (no cronológico).
-- Vista en otra temporada: no se repite; aviso «Ya la viste en otra temporada.» con «Ver»
-  (`flow/beats.ts`, `flow/commands.ts`, `StoryToast.tsx`).
+- Vista en otra temporada: no se repite; aviso «Ya salió en otra temporada.» (antes «Ya la viste en
+  otra temporada.») con «Ver» (`flow/beats.ts`, `flow/commands.ts`; el aviso lo muestra
+  `mobile/NoticeHost.tsx` con `mobile/noticeSlot.ts`, que reemplazaron a `StoryToast.tsx`).
 - Resumen (`digestLines` en `storyModel.ts`, usado por `StoryOverlay.tsx`): `max(3, ⌈n/3⌉)` líneas
   repartidas, siempre la primera y la última; 1100 ms (Rápido) o 650 ms (Directo) por línea.
 - Presentación: `apps/web/src/mobile/StoryOverlay.tsx` (fondos `BACKDROP` con
