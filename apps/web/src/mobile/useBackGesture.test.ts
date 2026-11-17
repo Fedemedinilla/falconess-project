@@ -333,9 +333,13 @@ describe("where the gesture is: rest, «Volver» or nothing (gestureAt)", () => 
   const train: Screen = { kind: "train", selected: undefined, result: undefined, finished: false };
   const fx: Layer = { kind: "fx", key: "f/fx", fx: [] };
 
-  it("the menu and the season's end, free: rest", () => {
+  it("the menu, free: rest", () => {
     expect(gestureAt(flow(idle, menu))).toBe("rest");
-    expect(gestureAt(flow(idle, { kind: "end", inert: false }))).toBe("rest");
+  });
+
+  it("the season's end ignores it, as the race mode does (O10): nothing", () => {
+    expect(gestureAt(flow(idle, { kind: "end", inert: false }))).toBe("hold");
+    expect(gestureAt(flow(idle, { kind: "end", inert: true }, fx))).toBe("hold");
   });
 
   it("training, the workshop and the planning card: «Volver»", () => {

@@ -9,12 +9,13 @@ import type { Flow } from "./flow/types";
 /**
  * What the back gesture (Android's back, iOS's edge swipe, the browser's Back) does where the
  * player is in #juego (owner O10, plan-final 5.6b):
- * - `rest`: the menu or the season's end, free: it leaves #juego, as it always did;
+ * - `rest`: the menu (and the selection), free: it leaves #juego, as it always did;
  * - `back`: a screen with «Volver» (training, the workshop, the planning card) or a sheet open:
  *   it does what «Volver», or the sheet's own «Cerrar», does;
  * - `hold`: anything of the week in front (its training's result, its effects, a card, a scene,
- *   the event), the emblem, the decided card (no «Volver» there, owner 2026-11-12), the race mode
- *   and a race seen again from the end: nothing, the player stays where she is.
+ *   the event), the emblem, the decided card (no «Volver» there, owner 2026-11-12), the race mode,
+ *   a race seen again from the end and the season's end itself (the owner's O10: "the End screen
+ *   ignores it as well"): nothing, the player stays where she is.
  */
 export type Gesture = "rest" | "back" | "hold";
 
@@ -31,10 +32,9 @@ export function gestureAt(flow: Pick<Flow, "top" | "screen" | "layer">): Gesture
     case "plan":
       return "back";
     case "menu":
-    case "end":
       return "rest";
     default:
-      // a race seen again from the end
+      // the season's end, and a race seen again from it
       return "hold";
   }
 }
@@ -75,7 +75,7 @@ const nothing = (): void => undefined;
  * steps forward onto its entry again, so the player stays. It never pushes a new entry for that:
  * one pushed without a tap is one the browser's own Back may skip, and the next gesture would
  * then leave #juego. Back at rest by any other way («Volver», the week's beats over, a reload on
- * the menu), the game takes its entry back with a step back of its own. The game's own steps
+ * the menu, a new season's selection), the game takes its entry back with a step back of its own. The game's own steps
  * land in a task of their own; their `popstate` is not the player's, and nothing is pushed until
  * they landed: entries never pile up, and from the menu the gesture leaves #juego as it always
  * did.

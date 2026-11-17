@@ -17,9 +17,10 @@ import {
  * and the browser's Back do what the screen's own «Volver» does (training, the workshop, the
  * planning card: back to the menu), close an open sheet as its own «Cerrar» does, and do nothing
  * while the week plays (its effects, a card, a scene, a training's result, the emblem, the decided
- * card, the race mode). From the menu, as before, it leaves #juego. `page.goBack()` is that
- * gesture: a step back in the tab's history, as the browser's Back and iOS's swipe are (Android
- * Chrome's back closes a native sheet before it reaches the history).
+ * card, the race mode) or on the season's end. From the menu and the selection, as before, it
+ * leaves #juego. `page.goBack()` is that gesture: a step back in the tab's history, as the
+ * browser's Back and iOS's swipe are (Android Chrome's back closes a native sheet before it
+ * reaches the history).
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -251,11 +252,13 @@ test("9. a training's result ignores it, then the menu leaves #juego", async ({ 
   await leftGame(page);
 });
 
-test("10. a race seen again from the season's end ignores it; the End itself leaves #juego", async ({
+test("10. the End and a race seen again from it ignore it; from the selection after it it leaves", async ({
   page,
 }) => {
+  test.setTimeout(90_000);
   await enter(page, "peregrina-ended");
-  await expect(page.locator("#m-fin")).toBeVisible();
+  // the season's end ignores the gesture, as the race mode does (O10)
+  await stays(page, "#m-fin");
   await page.click("#m-fin-carrera-48");
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
   await page.goBack();
@@ -264,7 +267,10 @@ test("10. a race seen again from the season's end ignores it; the End itself lea
   await page.click("#m-saltar");
   await expect(page.locator("#m-carrera-seguir")).toBeVisible();
   await page.click("#m-carrera-seguir");
-  await expect(page.locator("#m-fin")).toBeVisible();
+  await stays(page, "#m-fin");
+  // a new season's selection takes the game's entry back: the gesture leaves #juego there
+  await page.click("#m-fin-nueva");
+  await expect(page.locator("#m-continuar")).toBeVisible();
   await noEntryLeft(page);
   await page.goBack();
   await leftGame(page);

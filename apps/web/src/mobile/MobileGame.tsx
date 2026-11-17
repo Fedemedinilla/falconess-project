@@ -151,7 +151,7 @@ export function MobileGame() {
 /** The character select: centered on a wide screen, with no panel beside it. */
 function SelectFrame({ desk, title }: { desk: boolean; title: ReactElement | undefined }) {
   // the back gesture leaves #juego from here, as from the menu (a sheet open closes first); an
-  // entry the game left (a reload, «Nueva temporada» from «Menú») is taken back
+  // entry the game left (a reload, «Nueva temporada» from «Menú» or the season's end) is taken back
   useBackGesture("rest");
   return (
     <>
