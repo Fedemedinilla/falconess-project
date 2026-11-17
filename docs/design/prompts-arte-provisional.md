@@ -352,8 +352,10 @@ someone is still working late.
 
 #### El hangar de Vuela Alto, desde afuera (2026-11-17)
 
-El cartel va **en blanco** a propósito: el «VUELA AL O» lo escribe el juego encima, así se puede
-traducir y la letra que falta queda donde decida la escena.
+El cartel va **en blanco** a propósito: el juego escribe encima «VUELA ALTO», que es el nombre
+en castellano y no se traduce en ningún idioma (como Kōryū Racing o Lumière Aéronef). Así las letras
+salen bien (Gemini suele escribirlas mal) y, si una escena quiere el cartel con una letra caída
+(«VUELA AL O», texto de ejemplo del prototipo), se dibuja encima sin pedir otra imagen.
 
 ```text
 Anime gacha game background art, painted, polished and cinematic, in the style of a high-budget anime.
