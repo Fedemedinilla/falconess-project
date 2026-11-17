@@ -380,6 +380,44 @@ Si un fondo sale con personajes: «No characters at all, keep everything else.»
 cortado: «Make it horizontal 16:9 and keep the wings in the center.» Si el cartel sale con letras:
 «Make the sign board completely blank. Keep everything else.»
 
+#### El cuadro de la carrera de la paz (2026-11-17)
+
+Pedido del dueño: abajo, la tierra en guerra y caos; el cielo también es caos, salvo un único agujero
+de cielo azul con nubes blancas; las cinco Falconess suben desproporcionadas hacia ese agujero, y es
+una **carrera**, no una subida de ángeles. Colores de cada bando, de las escuderías fundadoras:
+Kōryū rojo y amarillo, Altair azul marino y cian, Boneyard marrón óxido y verde oliva, Steinhaus
+gris pizarra y plateado, Lumière crema y dorado. Secreto (`docs/design/historia/secretos.md` S3): el
+agujero de cielo celeste y blanco es la sexta; en el cuadro no hay ninguna figura más.
+
+```text
+A famous historic painting from a fictional world, painted in a high-budget anime style with the rich,
+dramatic feel of a classic oil painting on canvas (visible brush strokes, deep contrast). Vertical 3:4 image.
+No text, no letters, no numbers, no logos, no signature, no frame.
+
+THE GROUND: a battlefield at war, seen from above and far away. Scorched earth, trenches and ruined walls of two
+opposing sides, smoke columns, fires, broken war machines, cracked dry land. Tiny soldiers on both sides have
+stopped fighting and look up.
+
+THE SKY IS CHAOS TOO: a violent, impossible storm fills almost the whole sky: churning dark grey and bruised
+red clouds, ash, lightning, swirling winds and dust. Only ONE single hole breaks through it, high in the upper
+part of the image: a round opening of perfectly clear sky-blue sky with soft white clouds, sunlight pouring down
+through it like a beam. It is the only calm, clean place in the whole painting.
+
+THE RACE: exactly five young women with mechanical wings are RACING upward toward that hole of blue sky. This is
+a fierce race, not an angelic ascension: they fly in a steep diagonal from the lower part of the image to the
+hole, at different distances, in strong forced perspective, so they look out of proportion: the nearest racer
+is huge and close to the viewer, the farthest one is small, almost reaching the hole. They lean forward, arms
+tucked or reaching, elbows out, cutting in front of each other, one pushing past another, determined faces,
+gritted teeth and competitive grins. Speed streaks and five twisted contrails, each in its racer's colors,
+all aiming at the same point inside the blue hole. Each racer wears a messenger satchel strapped across her
+body and mechanical wings in her side's colors: 1) glossy red with yellow, 2) navy blue with cyan, 3) rust
+brown with olive green, 4) slate grey with silver, 5) cream with gold.
+
+Avoid: halos, feathered or angel wings, glowing auras, calm or praying poses, symmetric formation, a sixth
+flying figure or anything inside the blue hole besides sky and clouds, any text or logo, cleavage, suggestive
+poses, chibi proportions.
+```
+
 **Espejar personajes (2026-11-17):** el juego puede dar vuelta una imagen para que mire al otro lado.
 Las hojas de personaje miran hacia la izquierda; en el escenario, quien está a la izquierda se espeja
 para mirar al centro. Cuidado con lo que no es simétrico: el lado del broche de pelo, el lado de la
