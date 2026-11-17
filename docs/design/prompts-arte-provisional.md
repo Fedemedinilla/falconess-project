@@ -589,3 +589,25 @@ Avoid: feathers, angel look, latex or shiny bodysuit, skin-tight clothes, cleava
 the waist, any text, letters, numbers or logos, chibi proportions, western comic style, extra fingers,
 cropped feet, busy background.
 ```
+
+Quinta vuelta (2026-11-17): «cada vez más feas las alas». Las palabras «blades» y «katana-like»
+hicieron que Gemini dibujara espadas sueltas en un esqueleto de brazos. Las mejores alas fueron las de
+la segunda vuelta (abiertas, láminas superpuestas como plumas de halcón). Camino: partir de **esa**
+imagen y cambiar solo el traje, con las alas bloqueadas:
+
+```text
+Edit the attached image. Do NOT change the wings at all: keep their exact shape, size, colors,
+position and every detail. Do not change her face, hair, pose, helmet or the background either.
+Change only her clothes:
+1) Remove the red jacket tied around her waist completely.
+2) Her racing suit becomes a tailored premium motorsport suit in MATTE technical fabric (not shiny,
+not latex, not skin-tight): deep racing red, high mandarin collar, quilted shoulder panels, angular
+bright golden-yellow speed stripes along the arms and legs, graphite knee and elbow pads, red racing
+boots, and a small abstract golden-yellow falcon-wing crest on the chest (no letters). The style of a
+luxurious, sporty Japanese racing team.
+No text, no letters, no numbers, no logos.
+```
+
+Si en el futuro hay que describir alas desde cero, evitar «blades» y «katana»: pedir una silueta
+continua de ala de halcón, con paneles que se superponen sin huecos, y un borde de ataque liso que
+esconde el mecanismo.
