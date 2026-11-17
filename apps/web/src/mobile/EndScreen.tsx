@@ -55,7 +55,8 @@ export function EndScreen({
     if (body.current) body.current.scrollTop = scroll.current;
   }, [scroll]);
   return (
-    <div className={s.screen}>
+    // the season's end comes in slower than a week's screens (D1)
+    <div className={cx(s.screen, s.screenMajor)}>
       <div className={s.body} ref={body}>
         <div className={cx(s.panel, s.endc)} id="m-fin">
           {art && <img className={s.endPic} src={art.chibi} alt="" draggable={false} />}

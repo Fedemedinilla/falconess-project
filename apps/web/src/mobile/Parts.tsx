@@ -197,6 +197,11 @@ type HudProps = {
   content: ContentIndex;
   /** A layer is in front: the bar is out of reach (L7). */
   inert?: boolean;
+  /**
+   * It comes back after the race mode: it fades in, with the screen under it (L5). Read when it
+   * mounts; the HUD a run opens with is the anchor and does not fade.
+   */
+  enter?: boolean;
 };
 
 /**
@@ -215,6 +220,7 @@ function useChanged<T>(value: T): boolean {
  */
 export function Hud({
   inert = false,
+  enter = false,
   hard = false,
   turn,
   turns,
@@ -230,8 +236,9 @@ export function Hud({
   const tone = moodTone(mood);
   const turned = useChanged(turn);
   const moved = useChanged(mood);
+  const [fade] = useState(enter);
   return (
-    <header className={s.hud} inert={inert || undefined}>
+    <header className={cx(s.hud, fade && s.hudIn)} inert={inert || undefined}>
       <div
         className={s.cal}
         id="m-semana"

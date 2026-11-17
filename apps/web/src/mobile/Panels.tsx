@@ -12,7 +12,7 @@ import {
   startSeason,
   vigor,
 } from "@falconess/sim";
-import { type CSSProperties, type ReactNode, useMemo } from "react";
+import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef } from "react";
 import { goalStatuses } from "../screens/model/season";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
@@ -452,6 +452,12 @@ export function DeskPanel({
   locked: boolean;
   children: ReactNode;
 }) {
+  // the tabs share one scrolling body: a tab opens at its top (L6), not where the last one was
+  const body = useRef<HTMLDivElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of tab only
+  useLayoutEffect(() => {
+    if (body.current) body.current.scrollTop = 0;
+  }, [tab]);
   return (
     <aside
       className={cx(p.desk, locked && p.deskLocked)}
@@ -461,7 +467,9 @@ export function DeskPanel({
     >
       <div className={p.deskMain}>
         <h2 className={p.deskTitle}>{panelTitle(tab)}</h2>
-        <div className={p.deskBody}>{children}</div>
+        <div className={p.deskBody} ref={body}>
+          {children}
+        </div>
       </div>
       <nav className={p.rail} aria-label={ui("ui.m.panel.tabs")}>
         {PANEL_TABS.map((t) => (

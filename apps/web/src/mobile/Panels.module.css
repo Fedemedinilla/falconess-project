@@ -299,11 +299,23 @@
   transition:
     opacity var(--m-dur-desk-dim) var(--m-ease-std),
     filter var(--m-dur-desk-dim) var(--m-ease-std);
+  /* it fades in as it comes (a run opened on the wide screen, a window grown into it) */
+  animation: panelIn var(--m-dur-layer-in) var(--m-ease-out) backwards;
+}
+@keyframes panelIn {
+  from {
+    opacity: 0;
+  }
 }
 /* D4: locked while the week plays in the column (inert): dimmed, so it reads as asleep */
 .deskLocked {
   opacity: 0.45;
   filter: saturate(0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk {
+    animation: none;
+  }
 }
 .deskMain {
   flex: 1;

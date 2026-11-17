@@ -67,14 +67,18 @@ export function MenuScreen({
   state,
   menu,
   pendingEvent,
+  major = false,
   onAction,
 }: {
   ctx: SimContext;
   state: SeasonState;
   menu: WeekMenu;
   pendingEvent: boolean;
+  /** The menu a run opens on comes in slower (D1). Read when it mounts. */
+  major?: boolean;
   onAction: (action: MenuAction) => void;
 }) {
+  const [slow] = useState(major);
   const f = ctx.content.getFalconess(state.falconessId);
   const sponsor = ctx.content.getManufacturer(f.sponsor);
   const art = runnerArt(f.id);
@@ -94,7 +98,7 @@ export function MenuScreen({
   const track = goal && trackCard(ctx, goal.courseId);
 
   return (
-    <div className={s.screen}>
+    <div className={cx(s.screen, slow && s.screenMajor)}>
       {art && (
         <div
           className={s.hero}

@@ -2,7 +2,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import {
+  continueRun,
   pastTitle,
+  seedRun,
   settle,
   skipScene,
   startMobile,
@@ -189,10 +191,16 @@ async function seeded(page: Page): Promise<void> {
   });
 }
 
-/** Peregrina's first week, the prologue skipped and its notice gone. */
+/**
+ * Peregrina's first week, the prologue skipped and its notice gone: the scene's exit (0.8 s, 6.2)
+ * first, then the notice it leaves on the menu, its time and its own fade.
+ */
 async function startPeregrina(page: Page): Promise<void> {
   await startMobile(page, "peregrina");
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
+  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0, { timeout: 15_000 });
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
+  await page.waitForTimeout(500);
 }
 
 /** Weeks 1-9 (agility and rest in turns, as e2e #3), to the week-10 race's menu. */
@@ -395,6 +403,58 @@ const digest: Flow = async (page, m) => {
   return "digest";
 };
 
+/** A skipped scene has left: its exit (0.8 s), then its notice, have had their time. */
+async function sceneGone(page: Page): Promise<void> {
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
+  await page.waitForTimeout(300);
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0, { timeout: 15_000 });
+  await page.waitForTimeout(500);
+}
+
+/**
+ * Week 10 of `peregrina-w10` into the race and back (6.5): «Correr» (the race screen comes in; on
+ * a tablet the frame widens), then «Continuar» after the race (the menu and the HUD come back; on
+ * a tablet the frame narrows).
+ */
+const raceInOut: Flow = async (page, m) => {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await sceneGone(page);
+  await m.hold();
+  await page.click("#m-correr");
+  await m.at("race-in", [0, 70, 140, 210, 280, 400]);
+  await m.release();
+  await page.click("#m-saltar");
+  await toResult(page);
+  await sceneGone(page);
+  await m.hold();
+  await page.click("#m-carrera-seguir");
+  await m.at("race-out", [0, 100, 200, 280, 400]);
+  await m.release();
+  return "race-in-out";
+};
+
+/** The season's last race, «Continuar» on its result: the End comes (on desk the column glides). */
+const endGlide: Flow = async (page, m) => {
+  await seedRun(page, "peregrina-w48");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await page.click("#m-saltar");
+  await toResult(page);
+  await sceneGone(page);
+  await m.hold();
+  await page.click("#m-carrera-seguir");
+  await m.at("end-glide", [0, 70, 140, 210, 280, 320, 400]);
+  await m.release();
+  return "end-glide";
+};
+
 const PHONE = { name: "390x844", width: 390, height: 844 };
 const SMALL = { name: "360x640", width: 360, height: 640 };
 const PHONE_S = { name: "360x740", width: 360, height: 740 };
@@ -420,24 +480,30 @@ const PLAN: readonly {
       inheritanceTap,
       notice,
       digest,
+      raceInOut,
+      endGlide,
     },
   },
   {
     viewport: PHONE,
     motion: "reduce",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance },
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut },
   },
-  { viewport: PHONE_S, motion: "normal", flows: { effects, raceWeek, raceEnd, inheritance } },
+  {
+    viewport: PHONE_S,
+    motion: "normal",
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut },
+  },
   { viewport: SMALL, motion: "normal", flows: { menuTrain, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
-  { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek } },
-  { viewport: TABLET, motion: "reduce", flows: { menuTrain } },
+  { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek, raceInOut } },
+  { viewport: TABLET, motion: "reduce", flows: { menuTrain, raceInOut } },
   {
     viewport: DESK,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, notice },
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, notice, raceInOut, endGlide },
   },
-  { viewport: DESK, motion: "reduce", flows: { menuTrain } },
+  { viewport: DESK, motion: "reduce", flows: { menuTrain, endGlide } },
 ];
 
 for (const { viewport, motion, flows } of PLAN)

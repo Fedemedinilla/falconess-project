@@ -212,6 +212,15 @@ export function RunView({
       {notices}
     </LayerHost>
   );
+  // what comes with the run's view is there with its column; what mounts later comes in (D1, L5):
+  // the menu the run opens on comes in slower, the HUD it opens with is the anchor and does not fade
+  const [opened, setOpened] = useState(false);
+  useEffect(() => setOpened(true), []);
+  // L8: the wide screen's column glides to the middle as the End comes, from where it stood beside
+  // the panel; never when the window has just grown into the wide screen (it stood nowhere there)
+  const [deskShown, setDeskShown] = useState(desk);
+  useEffect(() => setDeskShown(desk), [desk]);
+  const glide = desk && deskShown && flow.solo;
   // while a layer is in front the game behind it is out of reach (L7: no keyboard path to «Menú»
   // mid-beat); when the last one goes, the focus lands on the screen's own control
   const layerIn = flow.layer !== undefined;
@@ -283,7 +292,8 @@ export function RunView({
   const atEnd = screen.kind === "end";
   /**
    * The fixed slots (F12): the backdrop and the panel come and go with the wide screen; the
-   * column (keyed by what it shows: the season's end or the run) and the sheets stay.
+   * column and the sheets stay. The column is one element whether it shows the run or the season's
+   * end (only what is inside it changes), so it can glide to the middle as the End comes (L8).
    */
   const slots = (column: ReactElement, panelSlot: ReactElement | null) => (
     <>
@@ -314,8 +324,13 @@ export function RunView({
   if (atEnd)
     return slots(
       <div
-        key="end"
-        className={cx(s.app, desk && s.appDesk, desk && flow.solo && s.appDeskSolo)}
+        key="column"
+        className={cx(
+          s.app,
+          desk && s.appDesk,
+          desk && flow.solo && s.appDeskSolo,
+          glide && s.appDeskGlide,
+        )}
         style={style}
         data-app
         data-mode={flow.mode}
@@ -385,6 +400,7 @@ export function RunView({
           state={state}
           menu={menu}
           pendingEvent={state.pendingEvent !== undefined}
+          major={!opened}
           onAction={onMenu}
         />
       );
@@ -480,13 +496,14 @@ export function RunView({
 
   return slots(
     <div
-      key="run"
+      key="column"
       // a race of the season's end seen again keeps the end's lone column on the wide screen (M3)
       className={cx(
         s.app,
         flow.wide && s.appWide,
         desk && s.appDesk,
         desk && flow.solo && s.appDeskSolo,
+        glide && s.appDeskGlide,
       )}
       style={style}
       data-app
@@ -498,6 +515,7 @@ export function RunView({
           {hud && hudMenu && (
             <Hud
               inert={layerIn}
+              enter={opened}
               hard={difficultyOf(hud.of) === "exigente"}
               turn={hudMenu.turn}
               turns={hudMenu.turns}

@@ -1,7 +1,7 @@
 import type { TakeoffStyle } from "@falconess/race-view";
 import type { SeasonState, Style, WorkshopOp } from "@falconess/schema";
 import { flightOf, type SimContext } from "@falconess/sim";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
 import { describeActiveSkill } from "../screens/model/describe";
 import {
@@ -59,10 +59,16 @@ export function WorkshopScreen({
     if (snap.error) game.clearError();
     setPlan(next);
   };
+  // the two tabs share one scrolling body: a tab opens at its top (L6), not where the other was
+  const body = useRef<HTMLDivElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of tab only
+  useLayoutEffect(() => {
+    if (body.current) body.current.scrollTop = 0;
+  }, [tab]);
 
   return (
     <div className={s.screen}>
-      <div className={s.body}>
+      <div className={s.body} ref={body}>
         <h1 className={s.title}>{ui("ui.m.workshop")}</h1>
         <div className={s.tabs} role="tablist" aria-label={ui("ui.m.workshop")}>
           {(["skills", "wings"] as const).map((t) => (

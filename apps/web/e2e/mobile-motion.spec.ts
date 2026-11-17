@@ -8,6 +8,7 @@ import {
   startMobile,
   test,
   toPosition,
+  toResult,
   watchCues,
   week,
 } from "./mobile-helpers";
@@ -32,6 +33,11 @@ import { coverage, freezeAt, opacityOf } from "./motion";
  * 6.10: while the week's effects play, the HUD reads the week just played (O3): its calendar, goal
  * and mood flip to the next week when the effects lift (the calendar turns its page), and the vigor
  * bar stays where the week's training already put it.
+ * 6.5: a screen fades in as it mounts, by opacity only, and takes a tap from its first frame (D1;
+ * the season's first menu and the End slower); the HUD comes back after the race mode with a fade
+ * (L5); a tablet's frame widens and narrows for the race (L5, F26) and the flight view follows its
+ * new width; on the wide screen the End's column glides to the middle with the game's layers inside
+ * it (L8), and a resize keeps them inside; a tab opens at its top (L6).
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -723,4 +729,347 @@ test.describe("reduced motion", () => {
     );
     expect(await flips()).toBe(0);
   });
+});
+
+// ---- 6.5: screens come in; the tablet's frame and the wide screen's column move; scrolls ----
+
+/** The one screen's own box (the slot `[data-screen]` has none). */
+const SCREEN = "[data-screen] > *";
+
+/** A box on the page, rounded to the pixel. */
+type Box = {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+};
+
+/** What one frame held: the game's column and, while they are up, the week's effects and the notice. */
+type Frame = {
+  readonly app: Box & { readonly width: number };
+  readonly fx: Box | null;
+  readonly notice: Box | null;
+  readonly end: boolean;
+  readonly panel: boolean;
+};
+
+/**
+ * Records every frame from now on for `ms` (the column's box, the effects' and the notice's, whether
+ * the End and the wide screen's panel are on the page); the returned call waits for the end and
+ * gives the frames.
+ */
+async function recordFrames(page: Page, ms: number): Promise<() => Promise<Frame[]>> {
+  await page.evaluate((span) => {
+    const box = (el: Element | null) => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        left: Math.round(r.left),
+        right: Math.round(r.right),
+        top: Math.round(r.top),
+        bottom: Math.round(r.bottom),
+      };
+    };
+    const frames: unknown[] = [];
+    const until = performance.now() + span;
+    const frame = () => {
+      const app = document.querySelector("[data-app]");
+      const r = app?.getBoundingClientRect();
+      frames.push({
+        app: { ...box(app ?? null), width: Math.round(r?.width ?? 0) },
+        fx: box(document.querySelector('[data-layer="fx"] > *')),
+        notice: box(document.getElementById("m-capitulo-aviso")),
+        end: document.getElementById("m-fin") !== null,
+        panel: document.getElementById("m-panel") !== null,
+      });
+      if (performance.now() < until) requestAnimationFrame(frame);
+      else Reflect.set(window, "__frames", frames);
+    };
+    Reflect.deleteProperty(window, "__frames");
+    requestAnimationFrame(frame);
+  }, ms);
+  return async () => {
+    await page.waitForFunction(() => Reflect.get(window, "__frames") !== undefined, null, {
+      timeout: ms + 10_000,
+    });
+    return page.evaluate(() => Reflect.get(window, "__frames") as Frame[]);
+  };
+}
+
+/** Whether `inner` lies inside `outer` (to the pixel). */
+function inside(inner: Box, outer: Box): boolean {
+  return (
+    inner.left >= outer.left - 1 &&
+    inner.right <= outer.right + 1 &&
+    inner.top >= outer.top - 1 &&
+    inner.bottom <= outer.bottom + 1
+  );
+}
+
+test("a new screen fades in by opacity only and takes a tap from its first frame: «Entrenar», then a training (D1, M1)", async ({
+  page,
+}) => {
+  await startMobile(page);
+  await page.click("#m-entrenar");
+  // its first frame: clear over the sky, in its place (no transform on a screen, ever)
+  await freezeAt(page, 0);
+  expect(await opacityOf(page, SCREEN)).toBeLessThan(0.05);
+  expect(await page.locator(SCREEN).evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+  // the HUD stays: the anchor
+  expect(await opacityOf(page, "[data-app] header")).toBe(1);
+  // a training takes the tap at once, while the screen is still clear
+  await page.click("#m-entrenar-agility", { timeout: 1000 });
+  await expect(page.locator("#m-entrenar-agility")).toHaveAttribute("aria-pressed", "true");
+  expect(await opacityOf(page, SCREEN)).toBeLessThan(0.05);
+  // 200 ms, --m-ease-out: most of the way at 100, whole at 200
+  await freezeAt(page, 100);
+  const mid = await opacityOf(page, SCREEN);
+  expect(mid).toBeGreaterThan(0.5);
+  expect(mid).toBeLessThan(1);
+  await freezeAt(page, 200);
+  expect(await opacityOf(page, SCREEN)).toBe(1);
+});
+
+test("the season's first menu and the End come in over 320 ms, a later menu over 200 (D1)", async ({
+  page,
+}) => {
+  const duration = () =>
+    page.locator(SCREEN).evaluate((el) => getComputedStyle(el).animationDuration);
+  await startMobile(page);
+  expect(await duration()).toBe("0.32s");
+  await page.click("#m-entrenar");
+  expect(await duration()).toBe("0.2s");
+  await page.click("#m-volver");
+  await expect(page.locator("#m-entrenar")).toBeVisible();
+  expect(await duration()).toBe("0.2s");
+  // an ended season, opened at its End
+  await page.evaluate(() => localStorage.clear());
+  await seedRun(page, "peregrina-ended");
+  await page.goto("./");
+  await continueRun(page);
+  await expect(page.locator("#m-fin")).toBeVisible();
+  expect(await duration()).toBe("0.32s");
+});
+
+test("after the race mode the HUD comes back with a fade, with the menu; the HUD a run opens with does not fade (L5)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  const hud = page.locator("[data-app] header");
+  expect(await hud.evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await expect(hud).toHaveCount(0);
+  await page.click("#m-saltar");
+  await toResult(page);
+  // the race's own notice, if any, has gone with its time
+  await page.click("#m-carrera-seguir");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await freezeAt(page, 0);
+  expect(await opacityOf(page, "[data-app] header")).toBeLessThan(0.05);
+  expect(await opacityOf(page, SCREEN)).toBeLessThan(0.05);
+  await freezeAt(page, 200);
+  expect(await opacityOf(page, "[data-app] header")).toBe(1);
+  expect(await opacityOf(page, SCREEN)).toBe(1);
+  // the calendar did not turn: it came back on the week raced (6.10)
+  expect(await page.locator('[data-app] header [class*="calFlip"]').count()).toBe(0);
+});
+
+test("a tablet's frame widens for the race over 280 ms, and the flight view draws at its new width (L5, F26)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  expect((await page.locator("[data-app]").boundingBox())?.width).toBe(390);
+  const frames = await recordFrames(page, 1500);
+  await page.click("#m-correr");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  const widths = (await frames()).map((f) => f.app.width);
+  // from the card's 390 to the race's 720 through the frames between (never a jump)
+  expect(widths.some((w) => w > 400 && w < 710)).toBe(true);
+  expect(widths.at(-1)).toBe(720);
+  for (let i = 1; i < widths.length; i++)
+    expect(widths[i] ?? 0).toBeGreaterThanOrEqual(widths[i - 1] ?? 0);
+  // the canvas' own pixels follow its wrapper as it widened (it was laid out at the frame's first
+  // width): no stretched drawing
+  const canvas = page.locator("#m-carrera-vuelo-lienzo");
+  const wrapper = () =>
+    canvas.evaluate((el) => Math.round(el.parentElement?.getBoundingClientRect().width ?? 0));
+  expect(await wrapper()).toBeGreaterThan(400);
+  await expect
+    .poll(
+      async () =>
+        (await canvas.evaluate((el) => (el as HTMLCanvasElement).width)) - (await wrapper()),
+    )
+    .toBe(0);
+});
+
+test("under reduced motion a screen comes at once: no animation on it (§2.4)", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await startMobile(page);
+  await page.click("#m-entrenar");
+  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+  expect(await page.locator(SCREEN).evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    "none",
+  );
+  expect(
+    await page.evaluate(
+      () =>
+        document
+          .getAnimations()
+          .filter(
+            (a) =>
+              a.effect instanceof KeyframeEffect &&
+              a.effect.target instanceof Element &&
+              a.effect.target.matches("[data-screen] > *, [data-app] header"),
+          ).length,
+    ),
+  ).toBe(0);
+});
+
+test("the wide screen: the End glides to the center as it comes, the panel gone, and the week's effects ride inside the column (L8, A.6)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seedRun(page, "peregrina-w48");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await page.click("#m-saltar");
+  await toResult(page);
+  const before = (await page.locator("[data-app]").boundingBox())?.x ?? 0;
+  const frames = await recordFrames(page, 1500);
+  await page.click("#m-carrera-seguir");
+  const list = await frames();
+  const atEnd = list.filter((f) => f.end);
+  expect(atEnd.length).toBeGreaterThan(0);
+  // the panel goes with the End's first frame; the column glides from beside it to the middle
+  for (const f of atEnd) expect(f.panel).toBe(false);
+  const lefts = atEnd.map((f) => f.app.left);
+  const center = Math.round(1440 / 2 - (list[0]?.app.width ?? 0) / 2);
+  expect(Math.abs((lefts.at(-1) ?? 0) - center)).toBeLessThanOrEqual(1);
+  expect(lefts.some((x) => x > before + 4 && x < center - 4)).toBe(true);
+  for (let i = 1; i < lefts.length; i++)
+    expect(lefts[i] ?? 0).toBeGreaterThanOrEqual(lefts[i - 1] ?? 0);
+  // the race's effects over the End move with the column (its transform holds them), never out
+  const withFx = atEnd.filter((f) => f.fx !== null);
+  expect(withFx.length).toBeGreaterThan(0);
+  for (const f of withFx) expect(f.fx && inside(f.fx, f.app)).toBe(true);
+  // the End's column keeps its width as it glides
+  for (const f of atEnd) expect(f.app.width).toBe(list[0]?.app.width);
+});
+
+test("the wide screen resized: the notice and the week's effects stay inside the column, frame by frame (rule 18)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // a scene seen in another season: its notice on the menu
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  await page.click("#m-capitulo-saltar");
+  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
+  let frames = await recordFrames(page, 700);
+  await page.setViewportSize({ width: 1180, height: 760 });
+  await page.waitForTimeout(150);
+  await page.setViewportSize({ width: 1400, height: 880 });
+  let list = (await frames()).filter((f) => f.notice !== null);
+  expect(list.length).toBeGreaterThan(0);
+  for (const f of list) expect(f.notice && inside(f.notice, f.app)).toBe(true);
+  // the effects of a rest, resized under them
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  frames = await recordFrames(page, 700);
+  await page.setViewportSize({ width: 1180, height: 760 });
+  await page.waitForTimeout(150);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  list = (await frames()).filter((f) => f.fx !== null);
+  expect(list.length).toBeGreaterThan(0);
+  for (const f of list) expect(f.fx && inside(f.fx, f.app)).toBe(true);
+});
+
+test("a workshop tab opens at its top, whatever the last one was scrolled to (L6)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await startMobile(page);
+  await page.click("#m-taller");
+  // the wings' tab, down to its end
+  const body = page.locator('[data-screen="workshop"] [class*="body"]');
+  await page.locator("#m-taller-wings").evaluate((el) => (el as HTMLElement).click());
+  const down = await body.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+    return el.scrollTop;
+  });
+  expect(down).toBeGreaterThan(0);
+  // the skills' tab (a tap where it is, the page not scrolled to it first)
+  await page.locator("#m-taller-skills").evaluate((el) => (el as HTMLElement).click());
+  await expect(page.locator("#m-taller-skills")).toHaveAttribute("aria-selected", "true");
+  expect(await body.evaluate((el) => el.scrollTop)).toBe(0);
+});
+
+test("the wide screen's panel: a tab opens at its top, whatever the last one was scrolled to (L6)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seedRun(page, "peregrina-w39-insp");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-panel-log");
+  const body = page.locator('#m-panel [class*="deskBody"]');
+  const down = await body.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+    return el.scrollTop;
+  });
+  expect(down).toBeGreaterThan(0);
+  await page.click("#m-panel-guide");
+  await expect(page.locator("#m-panel-guide")).toHaveAttribute("aria-pressed", "true");
+  expect(await body.evaluate((el) => el.scrollTop)).toBe(0);
+});
+
+test("a training's result across a resize into the wide screen: her stats still land on the foot (5.8, L5)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.clock.install();
+  await startMobile(page);
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-agility");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  // the result holds (its timers wait on the clock) while the tablet's window grows into the wide
+  // screen under it: the column changes its size and place, the result plays on in it
+  await holdClock(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("#m-panel")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        // the boxes' bottoms without the moves they carry (the stats' drop, the foot's fade)
+        const bottom = (el: Element | null | undefined) => {
+          if (!el) return Number.NaN;
+          const t = getComputedStyle(el).transform;
+          return el.getBoundingClientRect().bottom - (t === "none" ? 0 : new DOMMatrix(t).m42);
+        };
+        const strip = document.querySelector('[data-screen="train"] [class*="stripDown"]');
+        const foot = document.getElementById("m-volver")?.closest('[class*="foot"]');
+        // where the stats landed against where the foot stands now
+        return Math.round((strip?.getBoundingClientRect().bottom ?? Number.NaN) - bottom(foot));
+      }),
+    )
+    .toBe(0);
 });
