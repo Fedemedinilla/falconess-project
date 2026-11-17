@@ -11,7 +11,8 @@ import type { WeekFx } from "../weekFx";
  *   before; the layer leaves `tail` after the last one ends, never before `floor` in all;
  * - a learned skill's card pops `skillAt` after its effect, `perSkill` after the one before, in
  *   `skillIn` (WeekFx.module.css `skillIn`, unscaled), and stays whole at least `readMs` before
- *   its effect fades, which is at `fadeAt` of its time (WeekFx.module.css `fxShow`, 86 %);
+ *   its effect fades, which is at `fadeAt` of its time (WeekFx.module.css `fxShow`, 86 %;
+ *   motion.test checks both against the CSS);
  * - between the grid's rows of effects, a share of the free height drawn in [spaceMin, spaceMax].
  */
 export const FX = {

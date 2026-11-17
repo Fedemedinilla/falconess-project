@@ -14,7 +14,7 @@
   border: 0;
   background: rgb(10 18 30 / 0.35);
   cursor: pointer;
-  animation: layerIn 0.25s ease-out both;
+  animation: layerIn var(--m-dur-layer-in) var(--m-ease-out) both;
 }
 /* H2: on its way out (its time is up, or a tap), the scrim and the stamps fade out together */
 .layer.out {

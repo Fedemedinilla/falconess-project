@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { FX } from "./flow/fxTimeline";
 import { EMBLEM_MS, held, MOTION, outMs } from "./motion";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -284,6 +285,48 @@ describe("a hidden tab (6.11, critic b: two clocks)", () => {
             if (!sel.includes("[data-hidden]") && atLeast(specificity(sel), pause))
               louder.push(`${file} ${sel}`);
     expect(louder).toEqual([]);
+  });
+});
+
+// --- the week's effects: their timeline and their CSS (6.7, 7.3) ------------------------------
+
+/** An animation's length in ms, from its shorthand (`skillIn 0.45s …`): its first time. */
+function lengthOf(animation: string | undefined, name: string): number | undefined {
+  const one = selectorsOf(animation ?? "").find((a) => a.startsWith(`${name} `));
+  const m = one?.match(/(\d*\.?\d+)(ms|s)\b/);
+  return m ? (m[2] === "s" ? Number(m[1]) * 1000 : Number(m[1])) : undefined;
+}
+
+/** A keyframes body's stops: each offset (0-1) with its declarations. */
+function stopsOf(body: string | undefined): { at: number; decls: Map<string, string> }[] {
+  const out: { at: number; decls: Map<string, string> }[] = [];
+  for (const m of (body ?? "").matchAll(/([\d.%,\s]+|from|to)\{([^}]*)\}/g))
+    for (const at of selectorsOf(m[1] ?? ""))
+      out.push({
+        at: at === "from" ? 0 : at === "to" ? 1 : Number(at.replace("%", "")) / 100,
+        decls: declsOf(m[2] ?? ""),
+      });
+  return out.sort((a, b) => a.at - b.at);
+}
+
+describe("the week's effects: fxTimeline and WeekFx.module.css agree", () => {
+  const weekFx = css("WeekFx.module.css");
+  const rules = rulesOf(weekFx).filter((r) => r.media === "");
+  const animationOf = (sel: string) =>
+    rules.find((r) => r.selectors.includes(sel))?.decls.get("animation");
+  it("the scrim fades in on the layers' tokens (plan §2.1: 240 ms, «fx scrim»)", () => {
+    expect(animationOf(".layer")).toBe("layerIn var(--m-dur-layer-in) var(--m-ease-out) both");
+  });
+  it("a learned skill's card pops in FX.skillIn, as its keyframes play", () => {
+    expect(lengthOf(animationOf(".skill"), "skillIn")).toBe(FX.skillIn);
+  });
+  it("an effect starts fading at FX.fadeAt of its time, as fxShow does", () => {
+    const stops = stopsOf(keyframes(weekFx, "fxShow"));
+    expect(stops.at(-1)).toMatchObject({ at: 1 });
+    expect(stops.at(-1)?.decls.get("opacity")).toBe("0");
+    // the last stop still whole: where the fade out begins
+    const whole = stops.filter((s) => s.decls.get("opacity") === "1").at(-1);
+    expect(whole?.at).toBe(FX.fadeAt);
   });
 });
 
