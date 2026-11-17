@@ -54,6 +54,38 @@ export function useHeld<T>(value: T, open: boolean): T {
 }
 
 /**
+ * What had the focus when a sheet opened, and the sheet it sat in, if any: a sheet opened from
+ * another one's button (Metas, «Temporadas anteriores», «Historia», «Exportar partida» from
+ * «Menú») opens while that one is still on its way out (6.9), so the button it would give the
+ * focus back to leaves the page with it. Then the focus goes back to what opened that sheet.
+ */
+type Opener = { readonly el: Element | null; readonly from: HTMLDialogElement | null };
+const openers = new WeakMap<HTMLDialogElement, Opener>();
+
+/** Where a sheet's focus goes back to: its opener, else (through the sheets it was opened from) theirs. */
+function returnTarget(d: HTMLDialogElement): HTMLElement | undefined {
+  let o = openers.get(d);
+  for (let hops = 0; o && hops < 8; hops++) {
+    const el = o.el;
+    if (
+      el instanceof HTMLElement &&
+      el !== document.body &&
+      el.isConnected &&
+      !el.closest("[inert]")
+    )
+      return el;
+    o = o.from ? openers.get(o.from) : undefined;
+  }
+  return undefined;
+}
+
+/** Whether the focus fell out of the game: on the page, gone with its element, or under `inert`. */
+function focusLost(): boolean {
+  const a = document.activeElement;
+  return a === null || a === document.body || !a.isConnected || a.closest("[inert]") !== null;
+}
+
+/**
  * A sheet of the phone game as a native modal `<dialog>`: in the page only while it is open or
  * closing (`mounted`), shown with `showModal` (the focus moves in and the page behind is inert)
  * and closed natively before it leaves the page, so the focus goes back to what opened it. It
@@ -81,6 +113,9 @@ export function useModalDialog(
     if (d?.open) {
       if (typeof d.close === "function") d.close();
       else d.removeAttribute("open");
+      // the native close gives the focus back to what had it at the open; when that left the
+      // page (a button of «Menú», which closed meanwhile), to what opened «Menú»
+      if (focusLost()) returnTarget(d)?.focus({ preventScroll: true });
       closeRef.current();
       sheetClosed();
     }
@@ -92,6 +127,8 @@ export function useModalDialog(
       d.removeAttribute("data-closing");
       d.inert = false;
       if (!d.open) {
+        const el = document.activeElement;
+        openers.set(d, { el, from: el?.closest("dialog") ?? null });
         if (typeof d.showModal === "function") d.showModal();
         else d.setAttribute("open", "");
       }

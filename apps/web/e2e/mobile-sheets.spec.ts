@@ -66,6 +66,29 @@ test("Escape closes a sheet as «Cerrar» does, and the focus goes back to «Men
   await expect(page.locator("#m-menu")).toBeFocused();
 });
 
+test("a sheet opened from «Menú» gives the focus back to «Menú» when it closes, though «Menú» was still on its way out when it opened (6.9, parity check of phase 6)", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  // a panel (Metas), «Temporadas anteriores», «Historia», «Exportar partida»: each opens as «Menú»
+  // fades out, from a button inside it that leaves the page with it
+  for (const [open, sheet, close] of [
+    ["#m-panel-abrir-goals", "#m-panel-hoja", "#m-panel-hoja-cerrar"],
+    ["#m-temporadas", "#m-historial", "#m-historial-cerrar"],
+    ["#m-historia-abrir", "#m-historia", "#m-historia-cerrar"],
+    ["#m-exportar-partida", "#m-exportar", "#m-exportar-cerrar"],
+  ] as const) {
+    await page.click("#m-menu");
+    await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+    await page.click(open);
+    await expect(page.locator(`${sheet}[open]`)).toBeVisible();
+    await expect(page.locator("#m-menu-dialogo")).toHaveCount(0);
+    await page.click(close);
+    await expect(page.locator(sheet)).toHaveCount(0);
+    await expect(page.locator("#m-menu"), `after ${close}`).toBeFocused();
+  }
+});
+
 test("the wide screen: its panel is the menu, and no sheet waits closed in the page", async ({
   page,
 }) => {
