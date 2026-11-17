@@ -61,11 +61,16 @@ dueño va citado y marcado **dueño**; el resto es **propuesta**.
   spotter, pero **no murió**: la guardó de todo peligro físico, y aun así lo que ella vio y por donde
   tuvo que volar le dejó una marca imborrable. «En la guerra perdió lo que era su hija, y quedó alguien
   con trauma.» (`../secretos.md` S4).
+- **Decidido (dueño, 2026-11-17):** la hija vive lejos, sola y tranquila; aprendió a vivir con la
+  herida. **El que no aprendió es él: se culpa todo el tiempo.** Ella nunca vio una carrera de
+  Falconess.
 - Propuesta: por eso mira a la veterana dormido. Ve en ella señales que ya conoce (no duerme, se
   esconde en el trabajo, la lata) y su miedo a «perder a otra» no es que se caiga: es perderla así.
 - Para escribirlo bien: la hija es una persona con su vida y su punto de vista, no un recuerdo triste
   del viejo; lectura sensible con personas que conviven con trauma de guerra o con un familiar que
-  lo vive.
+  lo vive. El dueño no tiene a quién pedírsela (2026-11-17: en su país los únicos veteranos son los
+  de Malvinas) y prefiere estudiar a Tolkien, que escribió sobre el trauma de la guerra desde su
+  experiencia; lecturas sugeridas en `../ideas.md` I24.
 - **La única grieta:** parece un viejo que dice cualquier cosa; es el mejor spotter que existió y se
   esconde (dueño).
 - **Valor central:** cuidar a la que vuela (propuesta).

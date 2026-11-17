@@ -78,5 +78,9 @@ cuándo se revela y qué no se puede escribir antes.
   esté bien, pero las cosas que ella vio, los lugares por donde tuvo que volar, le dejaron una marca
   imborrable. El viejo perdió a su hija en la guerra, no significa que haya muerto, sino que en la
   guerra perdió lo que era su hija, y quedó alguien con trauma.»
-- Abierto: dónde está hoy la hija y qué hace; si aparece; cuándo y cómo se revela.
+- **Decidido (dueño, 2026-11-17):** la hija está lejos, vive sola y tranquila. Verse con el viejo no
+  le devuelve el trauma: **ella aprendió a vivir con la herida; el que no aprendió es el viejo, que se
+  culpa todo el tiempo.** La hija nunca vio una carrera de Falconess: nunca vio la «luz» que la
+  fundadora quiso mostrar.
+- Abierto: si aparece y cuándo; cuándo y cómo se revela todo esto.
 - No escribir antes de la revelación: que fue spotter; que es famoso; a quién perdió.

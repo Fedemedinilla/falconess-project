@@ -482,3 +482,22 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   spotter». «No todo tiene que rondar alrededor de linajes y apellidos» (regla de tono).
 - **Decidido (dueño, 2026-11-17):** la hija del viejo no murió: la guerra le dejó un trauma y él
   «perdió lo que era su hija». La ex amiga de la veterana se fue a Lumière Aéronef.
+
+### I24 · Trauma: la hija del viejo y cómo estudiarlo (2026-11-17)
+
+> «Ella aprendió a vivir con esa herida adentro, el que no aprendió fue el viejo, culpándose todo el
+> tiempo. La hija nunca vio una carrera de Falconess, por lo que nunca vio esa "luz de esperanza" que
+> la fundadora del deporte quiso mostrar en sus inicios.»
+- Estado: **decidida** (2026-11-17). En `secretos.md` S4 y `personajes/viejo-entrenador.md`.
+- Posibilidad abierta (propuesta, no canon): el día que la hija vea una carrera.
+- Cómo estudiarlo (dueño): en lugar de lectores con experiencia vivida, leer a Tolkien. Lecturas
+  sugeridas, para confirmar con los libros en la mano:
+  - _El Señor de los Anillos_, prólogo de la segunda edición, donde Tolkien cuenta que para 1918
+    habían muerto todos sus amigos cercanos menos uno.
+  - Las secuelas de Frodo en el último libro: el dolor que vuelve en los aniversarios de sus heridas
+    y su despedida en «Los Puertos Grises» (salvó la Comarca, «pero no para mí»).
+  - «Las Casas de Curación» (Éowyn y Faramir): curar no es volver a ser el de antes.
+  - Para el contexto: John Garth, _Tolkien and the Great War_ (Tolkien en la batalla del Somme, 1916).
+- Opcional, de su país: testimonios de veteranos de Malvinas en libros y películas (por ejemplo, el
+  libro de Daniel Kon _Los chicos de la guerra_, o _Iluminados por el fuego_), [SIN VERIFICAR los
+  datos de edición]. Leer testimonios no reemplaza la lectura sensible, pero acerca la experiencia.
