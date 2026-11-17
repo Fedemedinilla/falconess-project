@@ -14,6 +14,12 @@ fuera del juego, con texto de ejemplo que no es canon y nombres provisorios. Mue
 tres lugares, conversación que se acumula, narración, cambio de fondo, ilustración a pantalla
 completa (el cuadro), una respuesta elegible del entrenador, indicaciones de música, Auto y Saltar.
 
+**Ajustes del dueño (2026-11-17):** la interfaz va bien, pero «hay que mejorar los tamaños»: como
+en Umamusume, el escenario de arriba más chico y muchos diálogos abajo. La versión 2 del prototipo
+deja el escenario en ≈ 27 % de la pantalla y la conversación compacta (con 390 × 844 se leen unas
+cinco líneas a la vez). Aprobado tal cual: la respuesta elegible, la transición a la ilustración con
+su descripción, y los colores.
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
