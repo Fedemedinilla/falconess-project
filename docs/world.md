@@ -40,6 +40,15 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
   cierra del todo.
 - Abierto: si todas las que lo tienen vuelan.
 
+## 3b. Los spotters
+
+- **Decidido (dueño, 2026-11-17):** cada mensajera tenía un **spotter**, alguien que la guiaba desde
+  tierra. Las mensajeras eran la cara de todo, pero ninguna volaba sola. Es la versión original del
+  entrenador: **las mensajeras evolucionaron a Falconess y los spotters a entrenadores.** Refuerza que
+  el deporte necesita de los dos, aunque no parezca.
+- Abierto: si se dice «spotter» en el mundo o hay una palabra propia en castellano; qué hacía un
+  spotter exactamente (leer el viento, el clima, las rutas).
+
 ## 4. Historia del mundo
 
 **Decidido (dueño, 2026-11-16), en orden:**

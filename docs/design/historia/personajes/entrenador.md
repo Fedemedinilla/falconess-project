@@ -14,6 +14,11 @@ Pasa a `docs/characters/` solo con el visto bueno del dueño.
 - No es el entrenador de las temporadas: aquel no tiene cara ni personalidad porque es la cara del
   jugador.
 
+- **Decidido (dueño, 2026-11-17): estudió historia.** No consiguió trabajo de nada y terminó de
+  entrenador («si no vas a hacer nada para trabajar, al menos andá a hacerte trainer o algo»). No sabe
+  entrenar ni sabe de carreras, pero sabe historia: la guerra, las mensajeras y los spotters. Intenta
+  traducir esa historia «aburrida e inútil» en entrenamiento, a su manera.
+
 ## Propuesta
 
 - Trabaja en la misma escudería chica que ella (sin confirmar).

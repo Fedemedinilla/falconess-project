@@ -15,6 +15,8 @@ Borrador con las palabras del dueño. Id provisorio: `protagonista`. Sin nombre 
   (`../investigacion-ffxiv.md`).
 - Tiene el «algo» de toda Falconess. Es nieta de una mensajera de la carrera de la paz, y no lo sabe
   al principio (`../secretos.md` S2).
+- **Decidido (dueño, 2026-11-17): no vuela enseguida.** Trabaja un tiempo en el hangar hasta que
+  le pica el bichito de intentarlo.
 - Su entrenador es un personaje oficial, tan nuevo como ella (`entrenador.md`).
 - Arranca trabajando en el hangar de una escudería chica: limpia, carga piezas y mira correr a las
   demás. Es **Vuela Alto** (celeste y blanco, descuidada, una sola Falconess activa); llega por una

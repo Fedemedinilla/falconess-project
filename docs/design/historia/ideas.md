@@ -405,3 +405,19 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 > gráficas que el actual que usan las escenas de historia en la temporada de Peregrina.»
 - Estado: **en discusión**. Comparación y propuesta: `novela-visual.md`. Va a: un plan para el juego
   (fase 5), cuando termine el trabajo del flujo en `playtest-ui`.
+
+### I18 · Los spotters y el entrenador historiador (2026-11-17)
+
+> «Las Falconess cuando eran mensajeras, si bien son la cara de todo, la realidad es que todas tenían
+> a un "spotter", o a alguien que las guiaba desde tierra. Es la versión original de los trainers.
+> Refuerza el hecho de que es un deporte que necesita de ambos, aunque no parezca.»
+>
+> «El entrenador no sabe entrenar, pero lo que sí sabe: historia. Estudió historia, y al no conseguir
+> trabajo de nada, cayó acá como entrenador. […] Puede intentar traducir y traer eso del pasado, de la
+> historia aburrida e "inútil", a convertirlo en entrenamiento, a su manera.»
+- Estado: **decidida** (2026-11-17). Ordenada en `docs/world.md` §3b y en `personajes/entrenador.md`.
+- También decidido: la protagonista no vuela enseguida; trabaja un tiempo hasta que le pica el
+  bichito de intentarlo (`personajes/protagonista.md`).
+- Aplicado en el prototipo (versión 9): la escena 4 revela la historia del entrenador en cada una de
+  las tres respuestas, y el capítulo termina con ella al trapo, él anotando el viento «como los
+  spotters», y la protagonista mirando el ala hasta que la veterana la frena: «Ni se te ocurra».
