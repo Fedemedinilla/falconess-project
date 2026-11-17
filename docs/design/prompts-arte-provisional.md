@@ -529,3 +529,23 @@ red back core with harness, articulated arms with hinges and pistons, flexible o
 gold edges and graphite undersides, and the pulse thruster nozzles at the bottom of the core with a
 faint orange glow. Keep the plain background. No feathers, no text.
 ```
+
+Tercera vuelta (2026-11-17): alas bien abiertas. El dueño pide sacar el buzo atado a la cintura y
+llevar más el estilo de Kōryū: «japonés deportivo Ferrari».
+
+```text
+Keep this exact character, face, hair, falcon marks, smile, pose, helmet, the wide-open wings and the
+plain background. Make these changes only:
+1) Remove the red jacket tied around her waist completely; show the racing suit underneath.
+2) Restyle her racing suit and wings in the identity of Kōryū Racing: a luxurious, sporty Japanese racing
+team with the elegance of a classic Italian racing house, but original (no real brand, no horse, no
+logos, no letters). Deep glossy racing red with a lacquer-like finish (like urushi lacquer on a
+sports car), clean tailored lines, black graphite carbon panels, very thin gold-leaf pinstripes used
+sparingly. The suit is a premium motorsport suit, fitted and tailored, with a high mandarin collar,
+quilted shoulder panels, slim gold accents along the arms and legs and polished red boots. The wings
+keep their shape and size but look like a precision-crafted Japanese machine: blades with sharp,
+katana-like edges, gold edging, carbon undersides, flawless red lacquer, and the same pulse thruster
+at the bottom of the back unit. A small abstract gold falcon-wing crest on the chest and on the back
+unit, with no letters.
+No text, no letters, no numbers, no real logos.
+```
