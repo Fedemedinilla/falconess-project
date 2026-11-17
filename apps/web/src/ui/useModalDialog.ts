@@ -64,7 +64,12 @@ const openers = new WeakMap<HTMLDialogElement, Opener>();
 
 /** Where a sheet's focus goes back to: its opener, else (through the sheets it was opened from) theirs. */
 function returnTarget(d: HTMLDialogElement): HTMLElement | undefined {
-  let o = openers.get(d);
+  return targetOf(openers.get(d));
+}
+
+/** `o`'s element if it is still live, else (through the sheets it was opened from) theirs. */
+function targetOf(first: Opener | undefined): HTMLElement | undefined {
+  let o = first;
   for (let hops = 0; o && hops < 8; hops++) {
     const el = o.el;
     if (
@@ -83,6 +88,28 @@ function returnTarget(d: HTMLDialogElement): HTMLElement | undefined {
 function focusLost(): boolean {
   const a = document.activeElement;
   return a === null || a === document.body || !a.isConnected || a.closest("[inert]") !== null;
+}
+
+/**
+ * The focus of a sheet that is no native `<dialog>` (the chat, which stays inside the game's
+ * column): what had it when the sheet opened (and the sheet that sat in), and at its close request
+ * the focus goes back there, or through the sheets it was opened from to theirs, if it fell out of
+ * the game (it was in the sheet, which is inert from then).
+ */
+export function useFocusReturn(open: boolean): void {
+  const opener = useRef<Opener | undefined>(undefined);
+  // read as the open is asked (its render): the commit that opens it can make the opener inert
+  // (the wide screen's panel under the chat), and an element made inert loses the focus at once
+  if (open && opener.current === undefined) {
+    const el = document.activeElement;
+    opener.current = { el, from: el?.closest("dialog") ?? null };
+  }
+  useLayoutEffect(() => {
+    if (open) return;
+    const o = opener.current;
+    opener.current = undefined;
+    if (o && focusLost()) targetOf(o)?.focus({ preventScroll: true });
+  }, [open]);
 }
 
 /**

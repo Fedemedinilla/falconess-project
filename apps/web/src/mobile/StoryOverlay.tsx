@@ -358,7 +358,15 @@ export function StoryOverlay({
               );
             })}
           </div>
-          <button type="button" className={s.logClose} onClick={() => setLog(false)}>
+          <button
+            type="button"
+            className={s.logClose}
+            onClick={() => {
+              setLog(false);
+              // the log's button leaves the page: the stage takes the focus back, so Enter reads on
+              stage.current?.focus({ preventScroll: true });
+            }}
+          >
             {ui("ui.m.close.story")}
           </button>
         </div>

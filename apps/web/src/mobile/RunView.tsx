@@ -155,13 +155,16 @@ export function RunView({
 
   // the notices: a scene's (the queue's first) and a refused act's, while nothing plays in front
   const notices = (
-    <NoticeHost
-      flow={flow}
-      toasts={flowUi.toasts}
-      notice={flowUi.notice}
-      dispatch={dispatch}
-      onWatch={cmd.watchScene}
-    />
+    // under the chat, out of reach as the rest of the game (final review C4)
+    <div style={{ display: "contents" }} inert={chatOpen || undefined}>
+      <NoticeHost
+        flow={flow}
+        toasts={flowUi.toasts}
+        notice={flowUi.notice}
+        dispatch={dispatch}
+        onWatch={cmd.watchScene}
+      />
+    </div>
   );
 
   /** The layer in front of the screen, from the flow's layer. */
@@ -237,6 +240,9 @@ export function RunView({
   const layerIn = flow.layer !== undefined;
   const slotRef = useRef<HTMLDivElement>(null);
   useFocusHome(layerIn, flow.screen.kind, slotRef);
+  // the chat is a modal sheet inside the column: while it is open the game under it (and the wide
+  // screen's panel beside it) is out of reach too (final review C4)
+  const behind = layerIn || chatOpen;
   // a hidden tab (6.11): the column's CSS stands still with the flow's timers (`data-hidden`)
   const hidden = useHidden() ? "" : undefined;
 
@@ -328,7 +334,7 @@ export function RunView({
       ref={slotRef}
       style={{ display: "contents" }}
       data-screen={screen.kind}
-      inert={layerIn || undefined}
+      inert={behind || undefined}
     >
       {body}
     </div>
@@ -529,7 +535,7 @@ export function RunView({
         <>
           {hud && hudMenu && (
             <Hud
-              inert={layerIn}
+              inert={behind}
               enter={opened}
               hard={difficultyOf(hud.of) === "exigente"}
               turn={hudMenu.turn}
@@ -607,8 +613,9 @@ export function RunView({
           tab={tab}
           onTab={openPanel}
           dot={guideNew ? "guide" : undefined}
-          // D4: asleep while the week plays in the column (a layer, the race mode, a result)
-          locked={flow.desk.locked}
+          // D4: asleep while the week plays in the column (a layer, the race mode, a result), and
+          // under the chat's sheet
+          locked={flow.desk.locked || chatOpen}
         >
           {panel(tab)}
         </DeskPanel>

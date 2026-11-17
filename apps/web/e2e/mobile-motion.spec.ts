@@ -223,6 +223,34 @@ test("while a layer is in front the game behind it is out of reach, and the focu
   expect(await week(page)).toBe(2);
 });
 
+test("a scene's «Registro» closed by keyboard gives the focus back to the stage, so Enter reads on (L7, final review C5)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await page.click("#m-empezar");
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-prologue");
+  // a tap hurries the way in, a second shows the first line
+  await page.click("#m-capitulo-seguir");
+  await page.click("#m-capitulo-seguir");
+  await expect(scene).toHaveAttribute("data-beat", "line");
+  const logged = page.locator("#m-capitulo-log p");
+  await page.focus("#m-capitulo-registro");
+  await page.keyboard.press("Enter");
+  await expect(logged).toHaveCount(1);
+  await page.focus("#m-capitulo-log button");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-capitulo-log")).toHaveCount(0);
+  await expect(page.locator("#m-capitulo-seguir")).toBeFocused();
+  // Enter reads on: the line whole, then the next one
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.click("#m-capitulo-registro");
+  expect(await logged.count()).toBeGreaterThanOrEqual(2);
+});
+
 test("a reload over the action's effects opens on them with the focus and the game behind out of reach (L7, D5)", async ({
   page,
 }) => {

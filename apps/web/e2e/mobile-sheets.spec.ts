@@ -236,6 +236,71 @@ test("the chat comes in over 240 ms, rising, and leaves over 180 ms when closed 
   await expect(chat).toHaveCount(0);
 });
 
+/** Whether the focus is inside `#m-chat` (or out of the page, past its last control). */
+function focusInChat(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const a = document.activeElement;
+    return a === null || a === document.body || a.closest("#m-chat") !== null;
+  });
+}
+
+test("the chat is a modal sheet: the focus goes into it, no key reaches the game under it, Escape closes it, and the focus goes back to «Menú» (final review C4, P4)", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.focus("#m-menu");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+  await page.focus("#m-chat-abrir");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-chat")).toBeVisible();
+  await expect(page.locator("#m-menu-dialogo")).toHaveCount(0);
+  // the focus is in the chat once «Menú» has gone, and the game under it is inert
+  await expect(page.locator("#m-chat-cerrar")).toBeFocused();
+  for (const id of ["#m-menu", "#m-descansar", "#m-entrenar", "#m-pista-tab"])
+    expect(await page.locator(id).evaluate((el) => el.closest("[inert]") !== null), id).toBe(true);
+  // Tab walks the chat only
+  for (let i = 0; i < 10; i++) {
+    await page.keyboard.press("Tab");
+    expect(await focusInChat(page), `tab ${i}`).toBe(true);
+  }
+  // Enter cannot commit a week under it: «Descansar» takes no focus
+  await page.focus("#m-descansar");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-efectos")).toHaveCount(0);
+  expect(await week(page)).toBe(1);
+  // Escape closes it as its «Cerrar» does, and the focus goes back to «Menú»
+  await page.focus("#m-chat-cerrar");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#m-chat")).toHaveCount(0);
+  await expect(page.locator("#m-menu")).toBeFocused();
+  // its «Cerrar» by keyboard, the same way
+  await page.keyboard.press("Enter");
+  await page.focus("#m-chat-abrir");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-chat-cerrar")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-chat")).toHaveCount(0);
+  await expect(page.locator("#m-menu")).toBeFocused();
+  await expect(page.locator('[data-screen="menu"]')).not.toHaveAttribute("inert");
+});
+
+test("the wide screen: the chat over the column puts the panel out of reach, and gives the focus back to the panel's «Chat» (final review C4)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startMobile(page, "peregrina");
+  await page.focus("#m-panel #m-chat-abrir");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-chat-cerrar")).toBeFocused();
+  await expect(page.locator("#m-panel")).toHaveAttribute("inert");
+  await expect(page.locator('[data-screen="menu"]')).toHaveAttribute("inert");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#m-chat")).toHaveCount(0);
+  await expect(page.locator("#m-panel")).not.toHaveAttribute("inert");
+  await expect(page.locator("#m-panel #m-chat-abrir")).toBeFocused();
+});
+
 test("an outing's effects, which come in under the closing sheet, take the focus once it has gone (6.9, L7)", async ({
   page,
 }) => {
