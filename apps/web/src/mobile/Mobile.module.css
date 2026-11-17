@@ -1365,6 +1365,16 @@
   flex-direction: column;
   position: relative;
 }
+/* «Ver otra vez» (§2.6): the replay comes back into the same screen with a screen's fade, opacity
+   only (a replay mounted with its screen comes in with the screen) */
+.replayIn {
+  animation: screenIn var(--m-dur-screen) var(--m-ease-out) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .replayIn {
+    animation: none;
+  }
+}
 /*
  * The finish (D7): the replay stays on its last frame under a light dim, her place stamps in the
  * middle; a tap anywhere on it goes on, as «Saltar» does. Opacity and the stamp only: the button's

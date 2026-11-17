@@ -1,6 +1,6 @@
 import type { CupRound, Position, SeasonState } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { PlayerAdviceNote } from "../race/AdviceNote";
 import { pageLabels, Replay } from "../race/RaceReplay";
 import { describeInput } from "../screens/model/describe";
@@ -205,6 +205,9 @@ export function RaceScreen({
   const result = state.raceResults.find((r) => r.turn === turn);
   const ctxCourse = log ? pageLabels().courseName(log.courseId) : "";
   const racing = stage === "replay" || stage === "finish";
+  // what mounts inside the screen once it is in (the replay seen again, «Ver otra vez») fades in
+  const [opened, setOpened] = useState(false);
+  useEffect(() => setOpened(true), []);
   // the finish holds a moment, shorter on Rápido and Directo, then goes on by itself (silent)
   useFlowTimer(
     stage === "finish" ? held(MOTION.finishHold, pace, MOTION.finishHoldMin) : undefined,
@@ -250,7 +253,7 @@ export function RaceScreen({
           onContinue={onContinue}
         />
       ) : (
-        <div className={s.raceBody}>
+        <RaceBody again={opened}>
           <div className={s.body}>
             {racing && log ? (
               <div className={s.flightWrap}>
@@ -280,10 +283,20 @@ export function RaceScreen({
               </span>
             </button>
           ) : null}
-        </div>
+        </RaceBody>
       )}
     </div>
   );
+}
+
+/**
+ * The race's body: its replay and, at its finish, the banner over it (the head and «Saltar» stay
+ * out of it). Mounted with the race's screen, it comes in with the screen; mounted again inside it
+ * («Ver otra vez», after the result) it fades in by itself, opacity only (§2.6). Read at its mount.
+ */
+function RaceBody({ again, children }: { again: boolean; children: ReactNode }) {
+  const [fade] = useState(again);
+  return <div className={cx(s.raceBody, fade && s.replayIn)}>{children}</div>;
 }
 
 /**

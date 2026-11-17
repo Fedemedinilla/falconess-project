@@ -497,6 +497,27 @@ test("«Ver otra vez» → its natural end → the banner → its result → «C
   await expect(page.locator("#m-efectos")).toBeVisible();
 });
 
+test("«Ver otra vez» brings the replay back into the race's screen with a fade, by opacity only (§2.6, D1)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toRace(page);
+  await page.click("#m-saltar");
+  await page.click("#m-capitulo-saltar");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  await holdClock(page);
+  await page.click("#m-ver-otra-vez");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  // the same screen (its head and «Saltar» whole): only the replay comes in, clear at its first
+  // frame and whole at 200 ms, in its place
+  await freezeAt(page, 0);
+  expect(await opacityOf(page, "#m-carrera-vuelo")).toBeLessThan(0.05);
+  expect(await opacityOf(page, "#m-saltar")).toBeGreaterThanOrEqual(0.99);
+  await freezeAt(page, 200);
+  expect(await opacityOf(page, "#m-carrera-vuelo")).toBeGreaterThanOrEqual(0.99);
+});
+
 test("a reload mid-race replays the race, and its natural end still holds the banner (D7, D5)", async ({
   page,
 }) => {
