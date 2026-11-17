@@ -62,9 +62,11 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * on the game. Instant beats resolve before paint.
  *
  * The cards shown and the week's record are Boot's (`FlowStoresContext`), on the browser's storage:
- * a reload plays on what it finds unfinished (D5). A week's record that belongs to no run in play
- * (the run moved on in the test view, another season began) is dropped once this view shows; the
- * select screen has no run's view, so a record waits there for «Continuar».
+ * a reload plays on what it finds unfinished (D5). The week's record is read as the storage holds
+ * it now, like the save at «Continuar» (another tab may have decided the week). A record that
+ * belongs to no run in play (the run moved on in the test view, another season began) is dropped
+ * once this view shows; the select screen has no run's view, so a record waits there for
+ * «Continuar».
  *
  * «Ritmo» and reduced motion are latched (`followsMotion`): a change applies at once at idle, over
  * a training's result, the week's effects, a card, the event and the decided card, and waits over
@@ -195,10 +197,11 @@ export function useFlow({
   useLayoutEffect(() => {
     if (isInstant(top)) cmd.resolve(top);
   }, [top, cmd]);
-  // a week's record of no run in play (stale, or a preview that no longer plays) is dropped
+  // a week's record of no run in play (stale, or a preview that no longer plays) is dropped, the
+  // one judged only: another tab may have stored a week of this run since
   const record = facts.record;
   useEffect(() => {
-    if (week !== undefined && record === undefined) weeks.clear();
+    if (week !== undefined && record === undefined && weeks.getSnapshot() === week) weeks.clear();
   }, [week, record, weeks]);
 
   return { flow, ui, cmd, dispatch, pace: facts.pace };

@@ -388,3 +388,45 @@ test("11. a week's record of no run in play is dropped once the run shows, never
     t("ui.m.race.action", { action: t("action.rest") }),
   );
 });
+
+test("12. two tabs: one left on the title continues the other's decided week, and keeps it stored", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(90_000);
+  // a record of another run, there when both tabs load (each tab reads the storage at its load)
+  const stale = JSON.stringify({ v: 1, phase: "raceSeen", fp: "v3|another-run|4|00000000" });
+  await context.addInitScript(
+    ([key, value]) => {
+      if (sessionStorage.getItem("stale") !== null) return;
+      sessionStorage.setItem("stale", "1");
+      if (localStorage.getItem(key) === null) localStorage.setItem(key, value);
+    },
+    [WEEK_KEY, stale] as const,
+  );
+  const waiting = await context.newPage();
+  await seedRun(waiting, "peregrina-w10");
+  await waiting.goto("./");
+  await expect(waiting.locator("#m-titulo")).toBeVisible();
+  // the other tab plays week 10 up to its decided card
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  // the waiting tab continues the run as it is stored now: the same decided card, no menu
+  await continueRun(waiting);
+  await expect(waiting.locator("#m-precarrera")).toBeVisible();
+  await expect(waiting.locator("#m-precarrera-accion")).toHaveText(
+    t("ui.m.race.action", { action: t("action.rest") }),
+  );
+  await expect(waiting.locator("#m-volver")).toHaveCount(0);
+  await expect(waiting.locator("#m-entrenar")).toHaveCount(0);
+  await waiting.waitForTimeout(500);
+  expect(await storedWeek(waiting)).toContain('"decided"');
+  // and the first tab finds it again after a reload
+  await page.reload();
+  await continueRun(page);
+  await expect(page.locator("#m-precarrera")).toBeVisible();
+  await expect(page.locator("#m-entrenar")).toHaveCount(0);
+});

@@ -303,4 +303,30 @@ describe("the week store", () => {
       expect(new WeekStore(kv).getSnapshot()).toBeUndefined();
     }
   });
+
+  it("two tabs: each reads what the other stored since its load (as the save is read at «Continuar»)", () => {
+    const kv = memoryStore({ [WEEK_KEY]: encodeWeek({ phase: "raceSeen", fp: "stale" }) });
+    // a tab left on the title since the stale record, and the tab that plays on
+    const waiting = new WeekStore(kv);
+    const playing = new WeekStore(kv);
+    playing.clear();
+    playing.decide(w);
+    expect(waiting.getSnapshot()).toEqual({ phase: "decided", ...w });
+    // the same object while nothing new is stored (no identity churn)
+    expect(waiting.getSnapshot()).toBe(waiting.getSnapshot());
+    // and a write of its own starts from it: the position goes on the other tab's decided week
+    waiting.setPosition(fp, "pack");
+    expect(new WeekStore(kv).getSnapshot()).toEqual({ phase: "decided", ...w, position: "pack" });
+  });
+
+  it("a write the storage refuses keeps this tab's record for the visit", () => {
+    const kv = memoryStore({ [WEEK_KEY]: encodeWeek(planned) });
+    const store = new WeekStore(kv);
+    kv.setItem = () => {
+      throw new Error("quota");
+    };
+    store.decide(w);
+    expect(store.getSnapshot()).toEqual({ phase: "decided", ...w });
+    expect(store.getSnapshot()).toBe(store.getSnapshot());
+  });
 });

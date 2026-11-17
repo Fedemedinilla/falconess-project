@@ -108,16 +108,20 @@ export function validRecord(
 /**
  * The week's record, kept under `WEEK_KEY`: one writer per moment of the week (plan §1.8). A write
  * that changes nothing keeps the snapshot and tells no one; without storage the record lasts the
- * visit.
+ * visit. It reads the storage again, as the controller reads the save again at «Continuar»: a tab
+ * left on the title continues the week another tab decided, and never drops it as stale.
  */
 export class WeekStore {
   readonly #kv: KeyValueStore | undefined;
   readonly #listeners = new Set<() => void>();
+  /** What the storage held when the record was last read from it or written to it. */
+  #stored: string | undefined;
   #record: WeekRecord | undefined;
 
   constructor(kv: KeyValueStore | undefined) {
     this.#kv = kv;
-    this.#record = decodeWeek(readKey(kv, WEEK_KEY));
+    this.#stored = readKey(kv, WEEK_KEY);
+    this.#record = decodeWeek(this.#stored);
   }
 
   readonly subscribe = (listener: () => void): (() => void) => {
@@ -127,7 +131,18 @@ export class WeekStore {
     };
   };
 
-  readonly getSnapshot = (): WeekRecord | undefined => this.#record;
+  /**
+   * The record as the storage holds it now (another tab of the game may have written it since),
+   * the same object while the stored text is the same; without storage, the one this tab wrote.
+   */
+  readonly getSnapshot = (): WeekRecord | undefined => {
+    const stored = readKey(this.#kv, WEEK_KEY);
+    if (stored !== this.#stored) {
+      this.#stored = stored;
+      this.#record = decodeWeek(stored);
+    }
+    return this.#record;
+  };
 
   /** A position picked on the planning card (undefined: her wings'). */
   plan(fp: string, turn: number, position: Position | undefined): void {
@@ -141,14 +156,14 @@ export class WeekStore {
 
   /** A position picked on the planning card or the decided one, for the same week. */
   setPosition(fp: string, position: Position | undefined): void {
-    const r = this.#record;
+    const r = this.getSnapshot();
     if (r?.fp !== fp || (r.phase !== "planned" && r.phase !== "decided")) return;
     this.#set({ ...r, position });
   }
 
   /** The race mode began (the emblem, or straight in): a reload skips the action's part. */
   enterRace(fp: string): void {
-    const r = this.#record;
+    const r = this.getSnapshot();
     if (r?.phase !== "decided" || r.fp !== fp || r.stage !== "action") return;
     this.#set({ ...r, stage: "race" });
   }
@@ -172,11 +187,14 @@ export class WeekStore {
   }
 
   #set(next: WeekRecord | undefined): void {
+    const now = this.getSnapshot();
     const text = next && encodeWeek(next);
-    if (text === (this.#record && encodeWeek(this.#record))) return;
+    if (text === (now && encodeWeek(now))) return;
     this.#record = next;
     if (text === undefined) removeKey(this.#kv, WEEK_KEY);
     else writeKey(this.#kv, WEEK_KEY, text);
+    // what the storage holds now: one that refused the write leaves this tab's record for the visit
+    this.#stored = readKey(this.#kv, WEEK_KEY);
     for (const listener of [...this.#listeners]) listener();
   }
 }
