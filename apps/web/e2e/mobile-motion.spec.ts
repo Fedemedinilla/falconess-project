@@ -224,6 +224,74 @@ test("while a layer is in front the game behind it is out of reach, and the focu
   expect(await week(page)).toBe(2);
 });
 
+test("a training whose week brings no effects ends on the menu with the focus on «Entrenar», and the training screen takes the focus as it opens, never the page (L7, closing step 1)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  // seed 1's first week: a stamina training with no week effects, so its result ends on the menu
+  // with no layer in front (the season spec's start)
+  const seeded: { save: { inputs: unknown[] } } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-ended.json", import.meta.url)), "utf8"),
+  );
+  await page.addInitScript(
+    (run) => {
+      if (localStorage.getItem("falconess.pruebas.partida") !== null) return;
+      localStorage.setItem("falconess.pruebas.partida", JSON.stringify(run));
+      localStorage.setItem(
+        "falconess.juego.historia",
+        JSON.stringify({ runs: {}, ever: ["peregrina-prologue"] }),
+      );
+    },
+    { ...seeded.save, inputs: seeded.save.inputs.slice(0, 1) },
+  );
+  await page.clock.install();
+  await page.goto("./");
+  await continueRun(page);
+  // the passed prologue's notice is no layer: the menu is free at once
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
+  await page.focus("#m-entrenar");
+  await page.keyboard.press("Enter");
+  await expect(page.locator('[data-screen="train"]')).toBeVisible();
+  // the button that opened it left with the menu: the training screen has the focus
+  expect(
+    await page.evaluate(() => document.activeElement?.closest('[data-screen="train"]') !== null),
+  ).toBe(true);
+  await page.focus("#m-entrenar-stamina");
+  await page.keyboard.press("Enter");
+  await page.focus("#m-entrenar-confirmar");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  // the result ends by itself (no tap), onto the menu with no effects in front
+  await page.clock.runFor(8000);
+  await expect(page.locator('[data-screen="menu"]')).toBeVisible();
+  expect(await present(page, "[data-layer]")).toBe(false);
+  expect(await week(page)).toBe(2);
+  await expect(page.locator("#m-entrenar")).toBeFocused();
+});
+
+test("a race with no scene after it, by keyboard: «Correr» puts the focus on «Saltar», and «Saltar» ends on the result with the focus on «Continuar», never the page (L7, closing step 1)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  // both of the week's scenes came up in another season: they pass with a notice, no layer
+  await seenEver(page, "peregrina-debut");
+  await seenEver(page, "peregrina-debut-win");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await expect(page.locator("#m-correr")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await expect(page.locator("#m-saltar")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  // no layer in front of it (the emblem's copy may still be fading out on a slow run)
+  expect(await present(page, '#m-capitulo, [data-layer-phase="in"]')).toBe(false);
+  await expect(page.locator("#m-carrera-seguir")).toBeFocused();
+});
+
 test("a scene's «Registro» closed by keyboard gives the focus back to the stage, so Enter reads on (L7, final review C5)", async ({
   page,
 }) => {

@@ -239,7 +239,7 @@ export function RunView({
   // mid-beat); when the last one goes, the focus lands on the screen's own control
   const layerIn = flow.layer !== undefined;
   const slotRef = useRef<HTMLDivElement>(null);
-  useFocusHome(layerIn, flow.screen.kind, slotRef);
+  useFocusHome(layerIn, `${flow.screenKey} ${flow.top.key}`, flow.screen.kind, slotRef);
   // the chat is a modal sheet inside the column: while it is open the game under it (and the wide
   // screen's panel beside it) is out of reach too (final review C4)
   const behind = layerIn || chatOpen;
@@ -637,32 +637,37 @@ const FOCUSABLE = 'button:not(:disabled), a[href], input:not(:disabled), [tabind
 /**
  * When the last layer in front goes (L7), the focus lands on the screen's own control (its main
  * action: «Entrenar», «Correr», «Continuar»; else its first control), never on the page's body:
- * it was on the layer, which leaves inert. A focus the player put somewhere live stays.
+ * it was on the layer, which leaves inert. The same when the flow moves on with no layer in front
+ * (`at`, the screen's key and the top beat's, changed: a training's result that ends on the menu
+ * with no week effects, a race's replay that ends on its result with no scene after it,
+ * «Entrenar» opening the training screen): the control that had the focus went with what it
+ * ended, or went inert. A focus the player put somewhere live stays.
  */
 function useFocusHome(
   layerIn: boolean,
+  at: string,
   screen: Screen["kind"],
   slot: RefObject<HTMLElement | null>,
 ): void {
-  const was = useRef(layerIn);
+  const was = useRef({ layerIn, at });
   useLayoutEffect(() => {
-    const left = was.current && !layerIn;
-    was.current = layerIn;
-    if (!left) return;
+    const before = was.current;
+    was.current = { layerIn, at };
+    if (layerIn || (!before.layerIn && before.at === at)) return;
     const active = document.activeElement;
     if (active instanceof HTMLElement && active !== document.body && !active.closest("[inert]"))
       return;
-    const at = slot.current;
+    const box = slot.current;
     const home = HOME[screen];
     const usable = (el: HTMLElement | null | undefined) =>
       el && !el.closest("[inert]") && !(el instanceof HTMLButtonElement && el.disabled)
         ? el
         : undefined;
     const el =
-      usable(home ? at?.querySelector<HTMLElement>(`#${home}`) : undefined) ??
-      usable(at?.querySelector<HTMLElement>(FOCUSABLE));
+      usable(home ? box?.querySelector<HTMLElement>(`#${home}`) : undefined) ??
+      usable(box?.querySelector<HTMLElement>(FOCUSABLE));
     el?.focus({ preventScroll: true });
-  }, [layerIn, screen, slot]);
+  }, [layerIn, at, screen, slot]);
 }
 
 /**
