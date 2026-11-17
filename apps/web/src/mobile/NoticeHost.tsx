@@ -1,5 +1,5 @@
 import type { StoryScene } from "@falconess/schema";
-import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { allScenes } from "../content/story";
 import type { GameError, GameErrorKind } from "../game/controller";
 import { gameText, ui } from "../text/ui";
@@ -11,7 +11,15 @@ import type { Flow } from "./flow/types";
 import type { Notice, Toast, UiEvent } from "./flow/ui";
 import { useLayersIdle } from "./LayerHost";
 import { MOTION } from "./motion";
-import { cutsNotice, noticeTop, type Shown, type Span, slotView } from "./noticeSlot";
+import {
+  cutsNotice,
+  NOTICE_RISE,
+  noticeRise,
+  noticeTop,
+  type Shown,
+  type Span,
+  slotView,
+} from "./noticeSlot";
 import st from "./Story.module.css";
 
 /** One notice: its words, its element, how long it stays once shown, and whom it tells. */
@@ -159,6 +167,8 @@ function Notices({
 
   const box = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState<number>();
+  // how far they rise as they come in: never onto what stands under them
+  const [rise, setRise] = useState(NOTICE_RISE);
   // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when the notices on screen or the screen under them change
   useLayoutEffect(() => {
     const el = box.current;
@@ -171,17 +181,21 @@ function Notices({
       // fixed inside the column: its containing block is the column when it carries a transform
       const cbTop =
         app && getComputedStyle(app).transform !== "none" ? app.getBoundingClientRect().top : 0;
+      const height = el.getBoundingClientRect().height;
+      const controls = app ? spansOf(app, CONTROLS, el) : [];
+      const avoid = app ? spansOf(app, "[data-toast-avoid]", el) : [];
       const t = noticeTop({
         anchorTop: anchor && anchor.height > 0 ? anchor.top : undefined,
         cbTop,
-        height: el.getBoundingClientRect().height,
-        controls: app ? spansOf(app, CONTROLS, el) : [],
-        avoid: app ? spansOf(app, "[data-toast-avoid]", el) : [],
+        height,
+        controls,
+        avoid,
         current: scrolled ? current : undefined,
         follow: scrolled,
       });
       current = t;
       setTop(t);
+      setRise(noticeRise({ top: t, cbTop, height, controls, avoid }));
       for (const child of Array.from(el.children))
         if (child instanceof HTMLElement && child.dataset.notice)
           tops.current.set(child.dataset.notice, t + child.offsetTop);
@@ -212,7 +226,11 @@ function Notices({
         <div
           ref={box}
           className={st.notices}
-          style={top === undefined ? { visibility: "hidden" } : { top }}
+          style={
+            top === undefined
+              ? { visibility: "hidden" }
+              : ({ top, "--toast-rise": `${rise}px` } as CSSProperties)
+          }
         >
           {err.live && error && shown(error, err.close)}
           {sto.live && story && shown(story, sto.close)}

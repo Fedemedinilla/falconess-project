@@ -469,10 +469,12 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+/* it rises into its place by --toast-rise (NoticeHost: 10 px, less where something stands just under
+   it, so it never comes in over it) */
 @keyframes toastIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(var(--toast-rise, 10px));
   }
 }
 @keyframes toastOut {

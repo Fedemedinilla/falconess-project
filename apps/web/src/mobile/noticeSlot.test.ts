@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   cutsNotice,
   NOTICE_CLEAR,
+  NOTICE_RISE,
   NOTICE_TOP,
+  noticeRise,
   noticeTop,
   type Shown,
   slotView,
@@ -163,6 +165,20 @@ describe("the notices' place", () => {
     ).toBe(-50);
     // shown on a scrolled selection, it stays in view (9a4333b's rule)
     expect(noticeTop({ anchorTop: 20, cbTop: 0, height: 60, controls: choices })).toBe(8);
+  });
+  it("it rises into its place over no more room than it has under it, never onto a control (6.7)", () => {
+    const correr = [{ top: 774, bottom: 830 }];
+    // 10 px over «Correr»: its whole 10 px rise
+    expect(noticeRise({ top: 692, cbTop: 0, height: 72, controls: correr })).toBe(NOTICE_RISE);
+    // in the middle of a tight room (3.8 px each side): a 3 px rise
+    expect(noticeRise({ top: 698, cbTop: 0, height: 72.5, controls: correr })).toBe(3);
+    // what it stands over does not count, nor anything above it; nothing under it: the whole rise
+    const positions = [{ top: 537, bottom: 694 }];
+    expect(noticeRise({ top: 600, cbTop: 0, height: 60, controls: positions })).toBe(NOTICE_RISE);
+    // over a title it must not hide (avoid), in a column that carries a transform
+    expect(
+      noticeRise({ top: 100, cbTop: 20, height: 60, avoid: [{ top: 185, bottom: 220 }] }),
+    ).toBe(5);
   });
   it("cut under the layers that start on black or cover the game; faded over the effects", () => {
     expect((["scene", "emblem", "inspiration"] as const).every((k) => cutsNotice(k))).toBe(true);

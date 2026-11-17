@@ -128,3 +128,27 @@ export function noticeTop(m: {
   const shown = at(placed);
   return covers(shown) && !covers(under) ? under : shown;
 }
+
+/** The notices' rise into place as they come in (Story.module.css `toastIn`), at most. */
+export const NOTICE_RISE = 10;
+
+/**
+ * How far the notices may rise into their place (`top`, in their containing block) without
+ * touching what stands under them: their full rise, or the room down to the nearest control or
+ * thing they must not hide below them (a notice squeezed over a race card's foot comes in almost
+ * in place).
+ */
+export function noticeRise(m: {
+  readonly top: number;
+  readonly cbTop: number;
+  readonly height: number;
+  readonly controls?: readonly Span[];
+  readonly avoid?: readonly Span[];
+}): number {
+  const bottom = m.top + m.height;
+  const below = [...(m.controls ?? []), ...(m.avoid ?? [])]
+    .map((c) => c.top - m.cbTop)
+    .filter((top) => top >= bottom);
+  const room = Math.min(NOTICE_RISE, ...below.map((top) => top - bottom));
+  return Math.max(0, Math.floor(room));
+}

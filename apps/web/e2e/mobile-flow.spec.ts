@@ -606,6 +606,43 @@ test("a passed scene's notice keeps a real gap from the race card's positions ov
   expect(run.top - notice.bottom).toBeLessThan(40);
 });
 
+test("a passed scene's notice rises into its place over the race card without ever touching its positions or «Correr» (6.7, rule 17)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await seedRun(page, "peregrina-w10");
+  await seenEver(page, "peregrina-debut");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  // every frame from the effects' tap until the notice has risen into its place
+  await page.evaluate(() => {
+    const touched: string[] = [];
+    let since = -1;
+    const frame = (t: number) => {
+      const notice = document.getElementById("m-capitulo-aviso")?.getBoundingClientRect();
+      if (notice) {
+        if (since < 0) since = t;
+        for (const c of document.querySelectorAll("#m-posicion label, #m-correr")) {
+          const r = c.getBoundingClientRect();
+          if (Math.min(r.bottom, notice.bottom) - Math.max(r.top, notice.top) > 0.5)
+            touched.push(`${c.id || c.getAttribute("for")} at ${Math.round(t - since)} ms`);
+        }
+      }
+      if (since < 0 || t - since < 1000) requestAnimationFrame(frame);
+      else Reflect.set(window, "__touched", touched);
+    };
+    requestAnimationFrame(frame);
+  });
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
+  await page.waitForFunction(() => Reflect.get(window, "__touched") !== undefined, null, {
+    timeout: 15_000,
+  });
+  expect(await page.evaluate(() => Reflect.get(window, "__touched"))).toEqual([]);
+});
+
 for (const viewport of [
   { width: 390, height: 844 },
   { width: 360, height: 740 },
