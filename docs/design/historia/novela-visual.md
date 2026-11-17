@@ -34,6 +34,25 @@ una con su expresión de respuesta y su propia versión de la línea de vuelta. 
 muestra las hojas de escena, la acción que hay debajo de cada línea y la postura de cada opción.
 Probada en los tres caminos, en claro y en oscuro (iPhone 13), sin errores.
 
+**Efectos de texto (dueño, 2026-11-17, a partir de Doki Doki Literature Club): versión 7, propuesta.**
+Cada efecto es una acotación del guion (`[EFECTO: …]`) y tiene que tener un motivo dramático;
+pocos por escena. Probados en el prototipo:
+
+| Efecto                    | Para qué                                           | En el prototipo                                          |
+| ------------------------- | -------------------------------------------------- | -------------------------------------------------------- |
+| Texto rápido              | Urgencia, reflejo, ráfaga                          | «¡La agarro!», «¿Yo vuelo? ¿No era el trapo?»            |
+| Texto lento               | Duda, cansancio, recuerdo                          | el «…» de la veterana, «De chica no miraba a las cinco.» |
+| Pausa dentro de la línea  | El tiempo de leer o de dudar                       | «Vuela Al… O.»                                           |
+| Énfasis                   | La palabra que importa, en el color de quien habla | «El trapo es a las _cinco_.»                             |
+| Sacudida del globo        | Un grito, un freno en seco                         | «¡Por el borde no!»                                      |
+| Temblor del escenario     | Un golpe físico (con sonido)                       | el ala encastra: «Clac»                                  |
+| Susurro                   | Un aparte, algo dicho por lo bajo                  | «Igual que yo.»                                          |
+| Entrada de la frase clave | La línea que queda                                 | «Peor empezó esta escudería.»                            |
+
+Ideas sin probar: tachar y corregir (un personaje se desdice), el globo que tarda en aparecer (alguien
+duda antes de hablar) y una interferencia visual reservada para la escudería sombra, con sus colores.
+Con «movimiento reducido» en el celular, ningún efecto se mueve.
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
