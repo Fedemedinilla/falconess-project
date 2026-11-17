@@ -57,6 +57,8 @@ dueño va citado y marcado **dueño**; el resto es **propuesta**.
 - **Deseo oculto, que nunca dice:** que alguien vuelva a volar alto desde ese hangar sin que él la
   pierda (propuesta).
 - **Miedo (dueño):** perder a OTRA Falconess bajo su mando.
+- **A quién perdió (dueño, 2026-11-17):** no a la sexta mensajera; «pudo haber perdido a su hija, y él
+  era su spotter». Por eso cuida a la veterana dormido.
 - **La única grieta:** parece un viejo que dice cualquier cosa; es el mejor spotter que existió y se
   esconde (dueño).
 - **Valor central:** cuidar a la que vuela (propuesta).

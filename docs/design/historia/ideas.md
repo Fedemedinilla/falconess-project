@@ -469,3 +469,14 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   `personajes/entrenador.md`, `personajes/veterana-vuela-alto.md` y `personajes/viejo-entrenador.md`.
   Cómo se llaman entre sí: `relaciones.md`. El secreto del viejo: `secretos.md` S4.
 - Lo marcado como propuesta (deseos ocultos, objetos, líneas modelo) espera el visto bueno.
+
+### I23 · Sin aves, rivales y la hija del viejo (2026-11-17)
+
+- **Decidido (dueño):** «No tiene ave. Las estrellas se llaman así porque sí, pero atarnos a las aves
+  reales no es una buena estrategia.» Los personajes no se construyen desde un ave real; corrige lo
+  que sugiere `docs/design/investigacion-personajes.md` §8.3 para el elenco nuevo.
+- **Decidido (dueño):** la rival de la veterana es una ex mejor amiga que se fue de Vuela Alto apenas
+  la llamaron de otra escudería (`personajes/ex-amiga.md`).
+- **Abierto:** la rival de la protagonista («está por verse aún»).
+- **Decidido (dueño):** el viejo no perdió a la sexta; «pudo haber perdido a su hija, y él era su
+  spotter». «No todo tiene que rondar alrededor de linajes y apellidos» (regla de tono).

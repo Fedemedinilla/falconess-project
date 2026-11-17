@@ -70,6 +70,8 @@ cuándo se revela y qué no se puede escribir antes.
   época de la guerra; los primeros entrenadores le pedían consejo. Un día desapareció, y nadie lo buscó
   en el hangar de Vuela Alto (`personajes/viejo-entrenador.md`).
 - Su miedo: perder a OTRA Falconess bajo su mando. Ya perdió a una.
-- Abierto: a quién perdió (¿la sexta mensajera, la abuela de la protagonista?); cuándo y cómo se
-  revela.
+- **Decidido (dueño, 2026-11-17): no fue la sexta.** «No todo tiene que rondar alrededor de linajes
+  y apellidos. Pudo haber perdido a su hija, y él era su spotter.» Dirección: perdió a su hija, una
+  mensajera de la que él era el spotter.
+- Abierto: cuándo y cómo la perdió (¿en la guerra, después?); cuándo y cómo se revela.
 - No escribir antes de la revelación: que fue spotter; que es famoso; a quién perdió.

@@ -66,6 +66,14 @@ cumpliendo.
 - **Secreto:** que no tiene adónde ir cuando el hangar cierra (propuesta, sale del miedo del dueño).
   ¿Duerme en el hangar?
 
+### Su rival (dueño, 2026-11-17)
+
+> «La rival de la veterana puede ser una mejor amiga. Ambas eran de Vuela Alto, pero la otra apenas
+> le propusieron irse a otra escudería, ni lo dudó. Esa es la rival de la veterana, una ex amiga que
+> la abandonó.»
+
+Ficha aparte: `ex-amiga.md`. Encaja con su miedo: la única persona que tuvo cerca también se fue.
+
 ### Voz
 
 - **Largo de frase:** corto, seco. Imperativos. Remate al final.
