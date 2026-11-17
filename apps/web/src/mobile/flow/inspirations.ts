@@ -67,20 +67,25 @@ function decode(raw: string): Map<string, readonly string[]> {
  * The cards shown. On the first load with no key stored (an earlier build kept nothing), it marks
  * the saved run's cards that build already showed: the start's (shown at «Empezar») and every
  * week's whose step was read (it showed before its step was read); an unread step's card plays in
- * D2's order. Then the key exists, so no later season is migrated. A mark reads the storage again
- * and keeps what another tab marked meanwhile. Every access to the storage is guarded; without it
- * the cards last the visit.
+ * D2's order. Then the key exists, so no later season is migrated. Each reading reads the storage
+ * again (another tab of the game may have shown a card since: it never shows twice) and keeps
+ * what this tab knew (each card either tab marked stays marked: the union); a mark writes that
+ * union. A reading with nothing new stored keeps its identity. Every access to the storage is
+ * guarded; without it the cards last the visit.
  */
 export class InspirationStore {
   readonly #kv: KeyValueStore | undefined;
   readonly #seeds: Map<string, readonly string[]>;
   readonly #sets = new Map<string, ReadonlySet<string>>();
   readonly #listeners = new Set<() => void>();
+  /** What the storage held when it was last read or written. */
+  #stored: string | undefined;
   #version = 0;
 
   constructor(kv: KeyValueStore | undefined, saved?: () => LoadedRun | undefined) {
     this.#kv = kv;
     const raw = readKey(kv, CARDS_KEY);
+    this.#stored = raw;
     this.#seeds = raw === undefined ? new Map() : decode(raw);
     if (raw !== undefined) return;
     const run = saved?.();
@@ -99,11 +104,18 @@ export class InspirationStore {
     };
   };
 
-  /** Changes with every mark that changed something; until then each reading keeps its identity. */
-  readonly version = (): number => this.#version;
+  /**
+   * Changes with every mark that changed something, here or in another tab (read at this call);
+   * until then each reading keeps its identity.
+   */
+  readonly version = (): number => {
+    this.#sync();
+    return this.#version;
+  };
 
-  /** The cards shown in a season (by its seed). */
+  /** The cards shown in a season (by its seed), as the storage holds them now. */
   shown(seed: string): ReadonlySet<string> {
+    this.#sync();
     let set = this.#sets.get(seed);
     if (!set) {
       set = new Set(this.#seeds.get(seed) ?? []);
@@ -117,18 +129,12 @@ export class InspirationStore {
    * stored since this one read the storage (each card a tab marked stays marked: the union).
    */
   markShown(seed: string, key: string): void {
+    this.#sync();
     if (this.#seeds.get(seed)?.includes(key)) return;
-    const raw = readKey(this.#kv, CARDS_KEY);
-    const stored = raw === undefined ? new Map<string, readonly string[]>() : decode(raw);
-    // this tab's seasons the storage no longer has go first: the oldest, the first to go
-    const merged = new Map([...this.#seeds].filter(([s]) => !stored.has(s)));
-    for (const [s, theirs] of stored) {
-      const mine = this.#seeds.get(s) ?? [];
-      merged.set(s, [...theirs, ...mine.filter((k) => !theirs.includes(k))]);
-    }
-    const keys = merged.get(seed) ?? [];
+    const keys = this.#seeds.get(seed) ?? [];
+    const merged = new Map(this.#seeds);
     merged.delete(seed);
-    merged.set(seed, keys.includes(key) ? keys : [...keys, key]);
+    merged.set(seed, [...keys, key]);
     this.#seeds.clear();
     for (const [s, k] of [...merged].slice(Math.max(0, merged.size - MAX_SEEDS)))
       this.#seeds.set(s, k);
@@ -138,7 +144,41 @@ export class InspirationStore {
     for (const listener of [...this.#listeners]) listener();
   }
 
+  /**
+   * What the storage holds now, merged into what this tab knows when it changed since it was last
+   * read or written: this tab's seasons the storage no longer has first (the oldest, the first to
+   * go), then the storage's, each with what this tab adds to it. Only the seasons whose cards
+   * changed read again; the version changes only when one did.
+   */
+  #sync(): void {
+    const raw = readKey(this.#kv, CARDS_KEY);
+    if (raw === this.#stored) return;
+    this.#stored = raw;
+    const stored = raw === undefined ? new Map<string, readonly string[]>() : decode(raw);
+    const merged = new Map([...this.#seeds].filter(([s]) => !stored.has(s)));
+    for (const [s, theirs] of stored) {
+      const mine = this.#seeds.get(s) ?? [];
+      merged.set(s, [...theirs, ...mine.filter((k) => !theirs.includes(k))]);
+    }
+    let changed = merged.size !== this.#seeds.size;
+    for (const [s, keys] of merged)
+      if (!sameKeys(keys, this.#seeds.get(s))) {
+        changed = true;
+        this.#sets.delete(s);
+      }
+    if (!changed) return;
+    this.#seeds.clear();
+    for (const [s, k] of merged) this.#seeds.set(s, k);
+    this.#version += 1;
+  }
+
   #write(): void {
     writeKey(this.#kv, CARDS_KEY, JSON.stringify({ v: 1, seeds: [...this.#seeds] }));
+    // what the storage holds now: one that refused the write leaves this tab's cards for the visit
+    this.#stored = readKey(this.#kv, CARDS_KEY);
   }
+}
+
+function sameKeys(a: readonly string[], b: readonly string[] | undefined): boolean {
+  return a.length === (b?.length ?? 0) && a.every((k, i) => k === b?.[i]);
 }

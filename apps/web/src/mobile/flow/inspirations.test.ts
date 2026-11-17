@@ -130,6 +130,70 @@ describe("the inheritance cards shown", () => {
     expect(JSON.parse(kv.data.get(CARDS_KEY) ?? "").seeds.at(-1)).toEqual(["u", ["u:start"]]);
   });
 
+  it("two tabs: a tab that read the cards before the other one marked reads the mark at its next reading (no card shows twice)", () => {
+    const kv = memoryStore();
+    // a tab whose menu was up (it read the season's cards), and the tab that plays on
+    const waiting = new InspirationStore(kv);
+    const playing = new InspirationStore(kv);
+    const shown = waiting.shown("s");
+    const v = waiting.version();
+    playing.markShown("s", "s:24");
+    expect(waiting.version()).not.toBe(v);
+    expect(waiting.shown("s")).not.toBe(shown);
+    expect([...waiting.shown("s")]).toEqual(["s:24"]);
+    // a reading alone tells no one (a mark does): its subscribers read it at their next render
+    let told = 0;
+    waiting.subscribe(() => {
+      told += 1;
+    });
+    playing.markShown("s", "s:40");
+    expect(waiting.shown("s").has("s:40")).toBe(true);
+    expect(told).toBe(0);
+    // and its own next mark keeps them
+    waiting.markShown("t", "t:start");
+    expect([...new InspirationStore(kv).shown("s")]).toEqual(["s:24", "s:40"]);
+  });
+
+  it("a snapshot with nothing new stored keeps its identity, and another season's mark keeps this one's", () => {
+    const kv = memoryStore({
+      [CARDS_KEY]: JSON.stringify({
+        v: 1,
+        seeds: [
+          ["s", ["s:start"]],
+          ["t", ["t:start"]],
+        ],
+      }),
+    });
+    const a = new InspirationStore(kv);
+    const b = new InspirationStore(kv);
+    const s = a.shown("s");
+    const t = a.shown("t");
+    const v = a.version();
+    expect(a.version()).toBe(v);
+    expect(a.shown("s")).toBe(s);
+    b.markShown("t", "t:24");
+    const v2 = a.version();
+    expect(v2).not.toBe(v);
+    expect(a.shown("s")).toBe(s);
+    expect(a.shown("t")).not.toBe(t);
+    expect([...a.shown("t")]).toEqual(["t:start", "t:24"]);
+    // the same cards stored in another text: nothing changed
+    const tNow = a.shown("t");
+    kv.data.set(CARDS_KEY, JSON.stringify(JSON.parse(kv.data.get(CARDS_KEY) ?? "null"), null, 2));
+    expect(a.version()).toBe(v2);
+    expect(a.shown("t")).toBe(tNow);
+  });
+
+  it("a value another tab broke or removed keeps the cards this tab read (each card shown stays shown)", () => {
+    const kv = memoryStore({ [CARDS_KEY]: JSON.stringify({ v: 1, seeds: [["s", ["s:start"]]] }) });
+    const store = new InspirationStore(kv);
+    store.shown("s");
+    kv.data.set(CARDS_KEY, "{");
+    expect([...store.shown("s")]).toEqual(["s:start"]);
+    kv.data.delete(CARDS_KEY);
+    expect([...store.shown("s")]).toEqual(["s:start"]);
+  });
+
   it("a mark over a corrupt value stores this tab's cards", () => {
     const kv = memoryStore({ [CARDS_KEY]: '{"v":1,"seeds":[["s",["s:start"]]]}' });
     const store = new InspirationStore(kv);

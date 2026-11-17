@@ -229,6 +229,80 @@ describe("the story store (scenes seen, chat read)", () => {
     expect(story.readTopics()).toBe(read);
   });
 
+  it("two tabs: a tab that read the store before the other one marked reads the mark at its next reading (no scene shows twice)", () => {
+    const kv = memoryStore();
+    // a tab that read what was seen (its menu was up), and the tab that plays on
+    const waiting = createStoryStore(kv);
+    const playing = createStoryStore(kv);
+    const run = waiting.seenInRun("s1");
+    waiting.seenEver();
+    waiting.readTopics();
+    const v = waiting.version();
+    playing.markSeen("s1", "peregrina-debut");
+    playing.markRead("peregrina-wings");
+    // its next snapshot: a new version, and the readings that changed
+    expect(waiting.version()).not.toBe(v);
+    expect(waiting.seenInRun("s1")).not.toBe(run);
+    expect([...waiting.seenInRun("s1")]).toEqual(["peregrina-debut"]);
+    expect([...waiting.seenEver()]).toEqual(["peregrina-debut"]);
+    expect([...waiting.readTopics()]).toEqual(["peregrina-wings"]);
+    // a reading alone tells no one (a mark does): its subscribers read it at their next render
+    let told = 0;
+    waiting.subscribe(() => {
+      told += 1;
+    });
+    playing.markSeen("s1", "peregrina-debut-win");
+    expect(waiting.seenInRun("s1").has("peregrina-debut-win")).toBe(true);
+    expect(told).toBe(0);
+  });
+
+  it("a snapshot with nothing new stored keeps every reading's identity, and another season's mark keeps this one's", () => {
+    const kv = memoryStore({
+      [STORY_KEY]: JSON.stringify({ runs: { s1: ["a"], s2: ["b"] }, ever: ["a", "b"] }),
+      [CHAT_KEY]: JSON.stringify(["t1"]),
+    });
+    const a = createStoryStore(kv);
+    const b = createStoryStore(kv);
+    const s1 = a.seenInRun("s1");
+    const s2 = a.seenInRun("s2");
+    const read = a.readTopics();
+    const v = a.version();
+    expect(a.version()).toBe(v);
+    expect(a.seenInRun("s1")).toBe(s1);
+    expect(a.readTopics()).toBe(read);
+    b.markSeen("s2", "c");
+    const v2 = a.version();
+    expect(v2).not.toBe(v);
+    expect(a.seenInRun("s1")).toBe(s1);
+    expect(a.seenInRun("s2")).not.toBe(s2);
+    expect([...a.seenInRun("s2")]).toEqual(["b", "c"]);
+    expect(a.readTopics()).toBe(read);
+    // the same scenes stored in another text: nothing changed
+    const ever = a.seenEver();
+    const s2now = a.seenInRun("s2");
+    kv.data.set(STORY_KEY, JSON.stringify(JSON.parse(kv.data.get(STORY_KEY) ?? "null"), null, 2));
+    kv.data.set(CHAT_KEY, JSON.stringify(["t1"], null, 2));
+    expect(a.version()).toBe(v2);
+    expect(a.seenInRun("s2")).toBe(s2now);
+    expect(a.seenEver()).toBe(ever);
+    expect(a.readTopics()).toBe(read);
+  });
+
+  it("a value another tab broke or removed keeps what this tab read (each scene seen stays seen)", () => {
+    const kv = memoryStore({
+      [STORY_KEY]: JSON.stringify({ runs: { s1: ["a"] }, ever: ["a"] }),
+      [CHAT_KEY]: JSON.stringify(["t1"]),
+    });
+    const story = createStoryStore(kv);
+    story.seenInRun("s1");
+    story.readTopics();
+    kv.data.set(STORY_KEY, "{");
+    kv.data.delete(CHAT_KEY);
+    expect([...story.seenInRun("s1")]).toEqual(["a"]);
+    expect([...story.seenEver()]).toEqual(["a"]);
+    expect([...story.readTopics()]).toEqual(["t1"]);
+  });
+
   it("without storage, or with blocked or broken storage, it lasts the visit", () => {
     const broken = memoryStore({ [STORY_KEY]: "{not json", [CHAT_KEY]: '{"ever":3}' });
     for (const kv of [undefined, blocked, broken]) {

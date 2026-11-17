@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { t, textPattern } from "./fixtures";
+import { stubFonts, t, textPattern } from "./fixtures";
 import {
   continueRun,
   pastTitle,
@@ -23,7 +23,8 @@ import { coverage, freezeAt, holdClock, settleUpdates } from "./motion";
  * and a pick that closes its sheet does not hold what the pick starts), and a beat's timer keeps
  * its time whatever renders the game meanwhile (no identity churn). The inheritance card in D2's
  * order (5.3): after what the week did and before the next week's scenes, after the prologue at the
- * season's start, and once per card in this browser (a reload or a language switch keeps it shown).
+ * season's start, and once per card in this browser (a reload, a language switch or another tab of
+ * the game keeps it shown, as it keeps a scene seen).
  * The notices (5.9): a scene's notice waits while anything plays in front, then shows its whole
  * time just over the screen's anchor (the track tab, a card's foot), fades out when the screen
  * changes, and is gone from the first frame of a scene; a run that no longer replays says so.
@@ -207,6 +208,67 @@ test("weeks 39 → 40 (rule 9): the effects, the inheritance card, first-vos, th
   await settle(page);
   expect(await week(page)).toBe(41);
 });
+
+test("two tabs on one run: the inheritance card and the scene one of them showed never show again in the other", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(120_000);
+  // the other tab: the same run on week 39's menu, so it has read the cards and scenes shown
+  const other = await context.newPage();
+  await stubFonts(other);
+  await seedRun(other, "peregrina-w39-insp");
+  await other.goto("./");
+  await continueRun(other);
+  await expect(other.locator("#m-descansar")).toBeVisible();
+  expect(await week(other)).toBe(39);
+  const shownThere = await watchIds(other, ["m-inspiracion", "m-capitulo"]);
+  // this tab plays week 39: what it did, the inheritance card, then week 40's first scene
+  await seedRun(page, "peregrina-w39-insp");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-inspiracion")).toHaveAttribute("data-kind", "inspiration");
+  await page.click("#m-inspiracion-seguir");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-first-vos");
+  await skipScene(page);
+  expect(await week(page)).toBe(40);
+  // the other tab plays the same week: what it did, and then week 40's menu, with nothing of what
+  // this tab already showed (each store reads the browser's storage again where it decides)
+  await other.click("#m-descansar");
+  await expect(other.locator("#m-efectos")).toBeVisible();
+  await other.click("#m-efectos");
+  await expect
+    .poll(
+      async () =>
+        (await other.locator("#m-inspiracion, #m-capitulo").count()) > 0 ||
+        (await other.locator("[data-layer-phase]").count()) === 0,
+    )
+    .toBe(true);
+  expect(await shownThere()).toEqual([]);
+  expect(await week(other)).toBe(40);
+  await expect(other.locator("#m-entrenar")).toBeVisible();
+});
+
+/** Starts watching `ids`: the ones that were ever in the page from now on, in the order they came. */
+async function watchIds(page: Page, ids: readonly string[]): Promise<() => Promise<string[]>> {
+  await page.evaluate((watched) => {
+    const seen: string[] = [];
+    Reflect.set(window, "__ids", seen);
+    const look = () => {
+      for (const id of watched)
+        if (!seen.includes(id) && document.getElementById(id) !== null) seen.push(id);
+    };
+    look();
+    new MutationObserver(look).observe(document.body, { childList: true, subtree: true });
+  }, ids);
+  return () =>
+    page.evaluate(() => {
+      const seen: unknown = Reflect.get(window, "__ids");
+      return Array.isArray(seen) ? seen.map(String) : [];
+    });
+}
 
 /** «Empezar» with one of this browser's black boxes as a parent: her start's card is due. */
 async function startWithParent(page: Page): Promise<void> {
