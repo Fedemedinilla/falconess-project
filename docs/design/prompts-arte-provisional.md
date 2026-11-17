@@ -209,3 +209,146 @@ floor markings toward the open door. Warm, energetic, competitive atmosphere.
 Si Gemini mete letras o logos, corregir en la misma conversación con: «Remove every letter, number and
 logo. Keep everything else.» Si mete un personaje grande en primer plano: «No characters in the
 foreground, only small figures in the distance.»
+
+## Historia principal: Vuela Alto (2026-11-17)
+
+Pedido del dueño: personajes y fondos para ver la escena del capítulo 1 «en su esplendor», con
+Gemini. Estilo anime marcado. Cada personaje viene en una **hoja de personaje** con dos atuendos
+lado a lado (ropa casual a la izquierda, ropa oficial de Vuela Alto a la derecha), **sin alas**. Los
+nombres de personajes de otras obras que usó el dueño como referencia no van en los prompts: se
+describe el arquetipo con rasgos propios, para no copiar a nadie.
+
+Orden sugerido: generar primero la protagonista; cuando salga bien, adjuntarla como referencia de
+estilo y escala en los pedidos siguientes («same art style and same scale as the attached image»).
+Alturas relativas, para que el escenario no salte: el viejo ≈ 140 cm, la protagonista ≈ 155 cm, la
+veterana ≈ 170 cm, el entrenador ≈ 180 cm (encorvado).
+
+### Bloque de estilo de personajes (igual para todos, va primero)
+
+```text
+Japanese anime gacha game character reference sheet, high-budget anime style, polished and clean. Two full-body
+views of the SAME character side by side on one image: on the left in her or his casual clothes, on the right
+in the official Vuela Alto team outfit. Both standing, 3/4 view, the whole figure visible from head to shoes,
+same height and same scale in both views. Plain flat light grey background with a soft floor shadow, nothing
+else. Large expressive anime eyes, clean line art of even weight, soft cel shading with one shadow tone and
+gentle highlights, soft key light from the upper left. Vuela Alto team colors: sky blue (celeste) and white.
+IMPORTANT: NO WINGS. No mechanical wing frame, no wing mount, nothing on the back.
+```
+
+### Bloque de exclusiones (igual para todos, va al final)
+
+```text
+Avoid: any wings or mechanical parts on the back; any text, letters, numbers, logos or brand names; cleavage,
+short skirts, bare midriff, skin-tight clothes, suggestive pose; chibi proportions; western comic style; extra
+fingers; cropped feet; busy background; a second different character.
+```
+
+### La protagonista
+
+```text
+A young adult woman in her early twenties, noticeably SHORTER than average (about 155 cm), slim. Friendly,
+hopeful and eager face: bright warm eyes wide open, a small nervous smile, eyebrows slightly raised as if she
+is excited and a little scared at the same time. Clumsy, anxious body language: shoulders a bit raised, one
+hand fidgeting with her sleeve or her hair. Shoulder-length soft brown hair with a slightly messy fringe and
+one stubborn strand sticking up, a simple hair clip. She looks like a cheerful newcomer from a small town who
+has never been inside a racing team.
+LEFT, casual clothes in white and silver: an oversized white hoodie with silver zipper and silver drawstrings,
+light grey-silver cargo pants rolled at the ankles, worn white sneakers, a small silver pendant.
+RIGHT, official Vuela Alto outfit: she is the team's new janitor, not a racer. A sky-blue work coverall with
+white panels on the shoulders and white cuffs, a little too big for her, sleeves rolled up, a white cap with a
+sky-blue brim, yellow rubber gloves tucked in the belt, a cleaning rag hanging from the back pocket. She holds
+a broom with both hands, proudly, as if it were a trophy.
+```
+
+### La veterana
+
+```text
+An adult woman in her late twenties (about five years older than the newcomer), tall (about 170 cm), lean
+athletic racer build, good posture that sags a little when nobody is looking. Tired, bored, emotionally
+defeated expression: half-lidded eyes with faint dark circles, a flat mouth, but her eyes glance slightly
+upward, toward the sky, with a trace of longing: she still loves to fly. Long ash-grey hair tied in a low,
+loose ponytail with a few strands falling on her face. She subtly favors her right shoulder.
+LEFT, casual clothes in muted charcoal and deep green: a faded charcoal bomber jacket over a dark green
+t-shirt, dark jeans, scuffed boots, a thin scarf. Hands in her pockets.
+RIGHT, official Vuela Alto outfit: a sky-blue and white racing suit with a high collar and white side panels,
+clearly old and well used: faded color, a few careful patches and re-stitched seams, scuffed knee pads. She
+holds a worn racing helmet in sky blue and white loosely at her side. Proud but tired posture.
+```
+
+### El entrenador
+
+```text
+An adult man in his mid twenties, tall (about 180 cm) but slouching, lanky. Extremely casual to the point of
+sloppy: messy unbrushed dark hair sticking out in every direction, light stubble, sleepy and aimless
+half-smile, the look of someone without a job and without a plan. Slightly lost but kind eyes. He carries a
+brand-new notebook that clearly does not match the rest of him.
+LEFT, casual clothes in orange and white: a wrinkled orange hoodie with the hood half twisted, a white t-shirt
+with a small stain showing underneath, loose white track pants, untied orange sneakers, a backpack hanging from
+one shoulder.
+RIGHT, official Vuela Alto outfit: a sky-blue and white team staff jacket that is a size too big, worn open
+over his orange hoodie, a white staff lanyard with a blank card, the new notebook and a pen behind his ear.
+He stands a bit awkwardly, as if he does not know where to put his hands.
+```
+
+### El viejo
+
+```text
+A very old man, VERY SHORT (about 140 cm), small and wiry, slightly hunched. Bald on top with a fringe of white
+hair on the sides, big bushy white eyebrows that hide his eyes, and a long thin white moustache. Calm,
+half-asleep expression, eyes almost closed, but a tiny knowing smile: he sees everything. Hands folded behind
+his back.
+LEFT, casual clothes in black and sky blue, old-fashioned: clothes that were very stylish decades ago and are
+completely out of place today: a black suit jacket with very wide lapels, a sky-blue shirt with a big pointed
+collar open over the jacket, high-waisted flared black trousers, polished two-tone black and sky-blue shoes,
+a narrow black hat with a sky-blue band. He looks stuck in a past era, and proud of it.
+RIGHT, official Vuela Alto outfit: a vintage sky-blue and white coach jacket from the team's early days, with
+an old-fashioned cut and faded colors, over the same flared black trousers; a whistle on a cord around his neck
+and a folded wooden folding chair under one arm.
+```
+
+### Fondos del hangar de Vuela Alto (para el Modo Historia)
+
+El escenario del Modo Historia es una franja ancha arriba de la pantalla, no un fondo vertical:
+estos fondos van en **16:9**, con lo importante en el centro (se recorta a los costados).
+
+Bloque común:
+
+```text
+Anime gacha game background art, painted, polished and cinematic, in the style of a high-budget anime.
+Horizontal 16:9 image, the important details in the central area. Clean shapes, soft cel-shaded painting with
+rich light and atmosphere. No characters at all. No text, no letters, no numbers, no logos, no real brands,
+no watermark.
+```
+
+#### El hangar de Vuela Alto, de día
+
+```text
+Inside the hangar of Vuela Alto, an old racing team for winged racers that has seen better days. A huge
+arched hangar built for thirty people, now almost empty. Curved roof with exposed steel ribs, sky-blue and
+white paint peeling off the walls, a faded sky-blue and white banner hanging crooked from the roof (no
+letters). In the center, one single pair of sky-blue and white mechanical racing wings mounted on a work stand,
+carefully maintained, the only shiny thing in the room. Next to it, a tool cart and a small red metal drawer
+cabinet. On the wall above the red cabinet, a framed painting with an ornate golden frame: five tiny winged
+figures in different colors rising toward bright clouds in a big blue sky. In a corner, an old wooden folding
+chair. Dust floating in the air. The giant sliding door is half open at the back and shows a wide green plain
+under a clear blue sky with white clouds, grass that grew back over what used to be desert, a rusted piece of
+old machinery half buried in the grass far away. Bright morning sunlight pouring through the door and through
+high windows in long beams. Camera at chest height, wide lens, gentle perspective toward the door. Quiet,
+nostalgic, a little sad, but hopeful.
+```
+
+#### El hangar de Vuela Alto, de noche
+
+```text
+The same hangar of Vuela Alto at night, same layout and same camera as by day: arched roof with steel ribs,
+peeling sky-blue and white walls, the crooked banner, the single pair of sky-blue and white racing wings on its
+work stand in the center, the tool cart, the small red drawer cabinet, the framed painting of five winged
+figures rising toward the clouds above it, and the old wooden folding chair in the corner. Only one warm work
+lamp is on, hanging low over the wings, making a small island of yellow light; the rest of the hangar is in
+cool blue shadow. Through the half-open sliding door, a night sky full of stars over the dark plain and a pale
+moon, a faint breeze moving the grass. A few moths around the lamp. Calm, intimate, lonely, the feeling that
+someone is still working late.
+```
+
+Si un fondo sale con personajes: «No characters at all, keep everything else.» Si sale vertical o
+cortado: «Make it horizontal 16:9 and keep the wings in the center.»

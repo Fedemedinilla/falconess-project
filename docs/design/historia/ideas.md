@@ -448,4 +448,5 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Estado: **decidida** (2026-11-17). En `personajes/viejo-entrenador.md` y `personajes/protagonista.md`.
 - Prototipo versión 11: la protagonista dice «¿Yo? No. Vine a limpiar.»; la veterana presenta al viejo
   con las palabras del dueño; el capítulo cierra con el viejo, dormido, acertando sobre el hombro.
-- Abierto: dormir era la marca de Milana; confirmar que el viejo puede dormir también.
+- **Decidido (2026-11-17):** el viejo también duerme: Milana duerme porque todo le cansa; el viejo
+  duerme y lo ve todo.

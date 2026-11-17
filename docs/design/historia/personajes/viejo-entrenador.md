@@ -26,7 +26,7 @@ Borrador con las palabras del dueño. Id provisorio: `viejo-entrenador`. Sin nom
 - En el prototipo del capítulo 1, dormido, nombra el hombro que la veterana esconde: «El hombro
   derecho. No cargues nada hasta el jueves.»
 - Dormir era la marca de Milana (`../ideas.md` I14). Diferencia propuesta: Milana duerme porque
-  todo le cansa; el viejo duerme y lo ve todo. A confirmar con el dueño.
+  todo le cansa; el viejo duerme y lo ve todo. Confirmado por el dueño el 2026-11-17.
 
 ## Abierto
 
