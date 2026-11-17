@@ -103,21 +103,23 @@
   font-family: var(--cn);
   font-weight: 800;
   font-style: italic;
-  /* the window's width, or the tablet's frame's (--framew: Mobile.module.css) */
-  font-size: min(34px, calc(var(--framew, 100vw) * 0.076));
+  /* the window's width, or the tablet's frame's (--framew: Mobile.module.css); --fit (WeekFx's
+     fitStamps) makes it smaller when a word would not fit the stamp's cell */
+  font-size: calc(min(34px, calc(var(--framew, 100vw) * 0.076)) * var(--fit, 1));
   line-height: 1.05;
   letter-spacing: 1px;
   text-align: center;
   text-wrap: balance;
-  /* a word too long for its cell breaks rather than spill over the next one */
-  overflow-wrap: break-word;
+  /* a stamp wraps only between words, never inside one (7.3): the type shrinks instead */
+  overflow-wrap: normal;
+  word-break: normal;
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
   animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 .stampLong {
-  font-size: min(28px, calc(var(--framew, 100vw) * 0.064));
+  font-size: calc(min(28px, calc(var(--framew, 100vw) * 0.064)) * var(--fit, 1));
 }
 .good .stamp {
   background-image: linear-gradient(180deg, #fff6c2 0%, #ffd23f 45%, #ff8a00 100%);

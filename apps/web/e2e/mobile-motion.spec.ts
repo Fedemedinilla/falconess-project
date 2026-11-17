@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import {
@@ -1499,6 +1501,144 @@ test("1024×768: inside the tablet's frame the title's name and a scene's chapte
   const tablet = await sizes();
   expect(tablet).toEqual(phone);
   expect(tablet.chapter.lines).toBe(1);
+});
+
+// ---- 7.3: a stamp breaks only between words (3b) ----
+
+/** Every effect's stamp, in es and in en (`ui.m.fx.*`; the learned skills' count at 5). */
+function stampTexts(): string[] {
+  const texts = (lang: string): Readonly<Record<string, string>> =>
+    JSON.parse(
+      readFileSync(
+        fileURLToPath(new URL(`../../../packages/content/text/${lang}.json`, import.meta.url)),
+        "utf8",
+      ),
+    );
+  return ["es", "en"].flatMap((lang) =>
+    Object.entries(texts(lang))
+      .filter(([key]) => key.startsWith("ui.m.fx."))
+      .map(([, text]) => text.replace("{n}", "5")),
+  );
+}
+
+/** The effects' stamps (WeekFx.module.css `.stamp`: the module's class, whatever its hash). */
+const STAMP = "[data-fx] [class*='_stamp_']";
+
+/** A stamp in the effects now: its text, its cell's width, its text's, and the words that break. */
+type StampFit = {
+  readonly text: string;
+  readonly cell: number;
+  readonly width: number;
+  readonly broken: readonly string[];
+};
+
+/**
+ * Every stamp of the effects on screen: the width of its cell (its column of the layer's grid, or
+ * both for a whole row), the width its text takes (layout, so its pop's scale and tilt do not
+ * count), and each word whose characters sit on more than one line.
+ */
+function stampsNow(page: Page): Promise<StampFit[]> {
+  return page.evaluate((stamp) => {
+    const layer = document.getElementById("m-efectos");
+    if (!layer) return [];
+    const grid = getComputedStyle(layer);
+    const tracks = grid.gridTemplateColumns.split(" ").map(Number.parseFloat);
+    const gap = Number.parseFloat(grid.columnGap);
+    return [...layer.querySelectorAll<HTMLElement>(stamp)].map((el) => {
+      const column = el.closest<HTMLElement>("[data-fx]")?.style.gridColumn ?? "1";
+      const cell = column.includes("/")
+        ? (tracks[0] ?? 0) + gap + (tracks[1] ?? 0)
+        : (tracks[Number(column) - 1] ?? 0);
+      const text = el.textContent ?? "";
+      const node = el.firstChild;
+      const broken: string[] = [];
+      let at = 0;
+      for (const word of text.split(" ")) {
+        if (node) {
+          const range = document.createRange();
+          range.setStart(node, at);
+          range.setEnd(node, at + word.length);
+          if (range.getClientRects().length > 1) broken.push(word);
+        }
+        at += word.length + 1;
+      }
+      return { text, cell, width: el.scrollWidth, broken };
+    });
+  }, STAMP);
+}
+
+/** No stamp breaks a word, and none is wider than its cell. */
+function expectFitted(stamps: readonly StampFit[], where: string): void {
+  expect(stamps.length, where).toBeGreaterThan(0);
+  for (const s of stamps) {
+    expect(s.broken, `${where}: «${s.text}» breaks inside a word`).toEqual([]);
+    expect(s.width, `${where}: «${s.text}» is wider than its cell`).toBeLessThanOrEqual(
+      Math.ceil(s.cell),
+    );
+  }
+}
+
+/** Two frames of the page, so a size change has been laid out and observed. */
+async function twoFrames(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))),
+  );
+}
+
+test("a stamp breaks only between words: every effect's stamp, in es and in en, fits its cell on a 360 and a 390 px phone and in the tablet's frame (3b)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 360, height: 740 });
+  await seedRun(page, "injured");
+  await page.goto("./");
+  await continueRun(page);
+  // an injured week: the recovery's stamp, «RECUPERACIÓN», the longest word of all
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-agility");
+  await expect(page.locator('#m-efectos [data-fx="recovery"]')).toBeVisible();
+  // the tab hidden holds the effects where they are (6.11) while their stamps are measured
+  await hideTab(page, true);
+  // the class a long stamp gets (WeekFx `long`: a smaller size), «RECUPERACIÓN» has it
+  const longClass = await page.evaluate(
+    () =>
+      [...(document.querySelector("#m-efectos [class*='_stampLong_']")?.classList ?? [])].find(
+        (c) => c.startsWith("_stampLong_"),
+      ) ?? "",
+  );
+  expect(longClass).not.toBe("");
+  for (const size of [
+    { width: 360, height: 740 },
+    { width: 390, height: 844 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(size);
+    await twoFrames(page);
+    expectFitted(await stampsNow(page), `${size.width} px, as they came`);
+    // every other stamp in their place, at the full size and at a long one's: they fit again as
+    // the layer's size changes
+    for (const text of stampTexts())
+      for (const long of [false, true]) {
+        await page.evaluate(
+          ([t, stamp, longClass, on]) => {
+            for (const el of document.querySelectorAll(`#m-efectos ${stamp}`)) {
+              el.textContent = t;
+              el.classList.toggle(longClass, on);
+            }
+          },
+          [text, STAMP, longClass, long] as const,
+        );
+        await page.setViewportSize({ width: size.width, height: size.height - 1 });
+        await twoFrames(page);
+        await page.setViewportSize(size);
+        await twoFrames(page);
+        expectFitted(
+          await stampsNow(page),
+          `${size.width} px${long ? ", a long stamp's size" : ""}`,
+        );
+      }
+  }
 });
 
 // ---- 6.11: a hidden tab (critic b: two clocks) ----

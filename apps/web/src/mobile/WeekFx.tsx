@@ -1,5 +1,5 @@
 import type { ContentIndex } from "@falconess/schema";
-import { type CSSProperties, useRef, useState } from "react";
+import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 import { gameBrief } from "../text/brief";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
@@ -126,6 +126,25 @@ function long(label: string): boolean {
 /** A skill card's shine runs this long after it popped in. */
 const SHINE_AFTER = 200;
 
+/**
+ * Each stamp's type made smaller, as much as it takes for its longest word to fit its cell (a
+ * stamp wraps only between words, never inside one: «¡MOTIVADA!» broke into «¡MOTIVAD» / «A!»
+ * where the font is wider than the condensed one, as before it loads or where it never does).
+ * It reads layout only (its pop's scale and tilt are transforms) and keeps every stamp's size
+ * otherwise, so the stamps of a week are the size they always were wherever their words fit.
+ */
+function fitStamps(layer: HTMLElement): void {
+  for (const el of layer.querySelectorAll<HTMLElement>(`.${f.stamp}`)) {
+    el.style.removeProperty("--fit");
+    let fit = 1;
+    // the letter spacing does not scale with the type: a few rounds settle it
+    for (let i = 0; i < 4 && el.scrollWidth > el.clientWidth && el.scrollWidth > 0; i++) {
+      fit = Math.floor(((fit * el.clientWidth) / el.scrollWidth) * 1000) / 1000;
+      el.style.setProperty("--fit", String(fit));
+    }
+  }
+}
+
 /** An effect's cell in the layer's grid: its row (between the rows of space), its column, its place. */
 function cellStyle(c: FxCell): CSSProperties {
   return {
@@ -167,6 +186,16 @@ export function WeekFxOverlay({
   const [grid] = useState(() => fxGrid(fx));
   const layer = useRef<HTMLButtonElement>(null);
   useLayerFocus(layer);
+  // the stamps fit their cells before the first paint, and again whenever the layer's size
+  // changes (the tablet's frame widening, a phone turned, the wide screen narrowed)
+  useLayoutEffect(() => {
+    const el = layer.current;
+    if (!el) return;
+    fitStamps(el);
+    const resized = new ResizeObserver(() => fitStamps(el));
+    resized.observe(el);
+    return () => resized.disconnect();
+  }, []);
   // each effect sounds as it pops in, then they end; once they leave, nothing more (the instance
   // is the beat's: its timers start once)
   useFlowTimers(
