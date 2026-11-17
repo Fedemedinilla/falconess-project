@@ -20,6 +20,12 @@ deja el escenario en ≈ 27 % de la pantalla y la conversación compacta (con 39
 cinco líneas a la vez). Aprobado tal cual: la respuesta elegible, la transición a la ilustración con
 su descripción, y los colores.
 
+**Lo nuevo arriba (dueño, 2026-11-17):** «si el chat va en esta dirección, el player está viendo abajo
+de la pantalla y pierde de vista la escena de arriba». La línea más nueva entra arriba, justo debajo
+del escenario, y lo leído baja (más tenue); así se lee y se ve la escena a la vez. Las opciones
+también salen arriba. La escena ocupa toda la pantalla del celular, con Auto y Saltar en una barra
+al pie (versión 4 del prototipo).
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
