@@ -167,7 +167,14 @@ export function RunView({
   const layer = (l: Layer): ReactElement => {
     switch (l.kind) {
       case "fx":
-        return <WeekFxOverlay fx={l.fx} content={ctx.content} onDone={() => cmd.complete(l.key)} />;
+        return (
+          <WeekFxOverlay
+            fx={l.fx}
+            pace={pace}
+            content={ctx.content}
+            onDone={() => cmd.complete(l.key)}
+          />
+        );
       case "inspiration":
         return (
           <InspirationOverlay

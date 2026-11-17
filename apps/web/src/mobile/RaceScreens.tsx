@@ -82,8 +82,11 @@ export function PreRaceScreen({
               {ui(`ui.m.cup.${cup}`)}
             </p>
           )}
-          <h1 className={s.title}>{course}</h1>
-          <p className={s.sub}>
+          {/* a notice never hides the race's name and its objective */}
+          <h1 className={s.title} data-toast-avoid>
+            {course}
+          </h1>
+          <p className={s.sub} data-toast-avoid>
             {minPlace === 1
               ? ui("ui.m.race.goal.win")
               : minPlace >= 8

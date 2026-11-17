@@ -542,9 +542,13 @@ const PLAN: readonly {
     motion: "normal",
     flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut, sceneIntro, sceneBox },
   },
-  { viewport: SMALL, motion: "normal", flows: { menuTrain, raceWeek, notice } },
+  { viewport: SMALL, motion: "normal", flows: { menuTrain, effects, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
-  { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek, raceInOut, sceneIntro } },
+  {
+    viewport: TABLET,
+    motion: "normal",
+    flows: { menuTrain, effects, raceWeek, raceInOut, sceneIntro },
+  },
   { viewport: TABLET, motion: "reduce", flows: { menuTrain, raceInOut } },
   {
     viewport: DESK,

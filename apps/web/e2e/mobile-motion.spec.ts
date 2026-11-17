@@ -1211,3 +1211,134 @@ test.describe("reduced motion: a scene's way in", () => {
     expect(samples.at(-1)).toBe("line");
   });
 });
+
+// ---- 6.7: the week's effects in their cells, inside the tablet's frame (M6, H6, rule 18) ----
+
+/** One frame of the effects and the notices: every box, against the game's column. */
+type Boxes = {
+  readonly app: Box;
+  readonly fx: readonly Box[];
+  readonly notices: readonly Box[];
+};
+
+/** The column, every `[data-fx]` box and every notice (a leaving copy too) on the page now. */
+function boxesNow(page: Page): Promise<Boxes> {
+  return page.evaluate(() => {
+    const box = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+    };
+    const app = document.querySelector("[data-app]");
+    return {
+      app: app ? box(app) : { left: 0, right: 0, top: 0, bottom: 0 },
+      fx: [...document.querySelectorAll("[data-fx]")].map(box),
+      notices: [...document.querySelectorAll("#m-capitulo-aviso, [data-notice-leaving] > *")].map(
+        box,
+      ),
+    };
+  });
+}
+
+/** Every frame for `ms` from now: what `boxesNow` reads; the call waits for the end. */
+async function recordBoxes(page: Page, ms: number): Promise<() => Promise<Boxes[]>> {
+  await page.evaluate((span) => {
+    const box = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+    };
+    const frames: unknown[] = [];
+    const until = performance.now() + span;
+    const frame = () => {
+      const app = document.querySelector("[data-app]");
+      frames.push({
+        app: app ? box(app) : { left: 0, right: 0, top: 0, bottom: 0 },
+        fx: [...document.querySelectorAll("[data-fx]")].map(box),
+        notices: [...document.querySelectorAll("#m-capitulo-aviso, [data-notice-leaving] > *")].map(
+          box,
+        ),
+      });
+      if (performance.now() < until) requestAnimationFrame(frame);
+      else Reflect.set(window, "__boxes", frames);
+    };
+    Reflect.deleteProperty(window, "__boxes");
+    requestAnimationFrame(frame);
+  }, ms);
+  return async () => {
+    await page.waitForFunction(() => Reflect.get(window, "__boxes") !== undefined, null, {
+      timeout: ms + 10_000,
+    });
+    return page.evaluate(() => Reflect.get(window, "__boxes") as Boxes[]);
+  };
+}
+
+/** Whether two boxes share any area. */
+function overlap(a: Box, b: Box): boolean {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+/** Every effect and notice inside the column, and no two effects over each other. */
+function expectContained(f: Boxes, where: string): void {
+  for (const [i, b] of f.fx.entries()) {
+    expect(
+      inside(b, f.app),
+      `${where}: effect ${i} ${JSON.stringify(b)} in ${JSON.stringify(f.app)}`,
+    ).toBe(true);
+    for (const c of f.fx.slice(i + 1))
+      expect(overlap(b, c), `${where}: effects over each other`).toBe(false);
+  }
+  for (const n of f.notices)
+    expect(
+      inside(n, f.app),
+      `${where}: a notice ${JSON.stringify(n)} in ${JSON.stringify(f.app)}`,
+    ).toBe(true);
+}
+
+for (const viewport of [
+  { width: 1024, height: 768 },
+  { width: 1440, height: 900 },
+])
+  test(`${viewport.width}×${viewport.height}: the notice and the week's effects (an outing's two) sit inside the game's column, none over another (H6, rule 18)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await startMobile(page);
+    // the skipped prologue's notice over the track tab
+    await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
+    expectContained(await boxesNow(page), "the notice");
+    // an outing: its bond and the mood it lifted, two effects at once
+    await page.click("#m-salida");
+    const sheet = page.locator("#m-salida-cuadrilla[open]");
+    await expect(sheet).toBeVisible();
+    const crew = (await sheet.locator("li[data-crew]").first().getAttribute("data-crew")) ?? "";
+    await page.click(`#m-salida-con-${crew}`);
+    const fx = page.locator("#m-efectos");
+    await expect(fx).toBeVisible();
+    await page.waitForTimeout(700);
+    const now = await boxesNow(page);
+    expect(now.fx.length).toBeGreaterThanOrEqual(2);
+    expectContained(now, "the effects");
+  });
+
+test("a tablet's frame narrows after the race with its effects and its notice inside it, frame by frame (H6, L5)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await page.click("#m-saltar");
+  await toResult(page);
+  const frames = await recordBoxes(page, 1500);
+  await page.click("#m-carrera-seguir");
+  const list = await frames();
+  // the race's effects come up while the frame narrows from the race's width to the menu's
+  const widths = list.map((f) => Math.round(f.app.right - f.app.left));
+  expect(widths.some((w) => w > 400 && w < 710)).toBe(true);
+  const withFx = list.filter((f) => f.fx.length > 0);
+  expect(withFx.length).toBeGreaterThan(0);
+  for (const [i, f] of list.entries()) expectContained(f, `frame ${i}`);
+});

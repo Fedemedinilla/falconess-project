@@ -103,9 +103,10 @@ function useSlot(
 
 /**
  * The notices of a column (plan §1.9): the error's (`role="alert"`) over the story's
- * (`role="status"`), both just over the screen's `[data-toast-anchor]` (under the top bar where
- * that would cover one of the screen's controls: `noticeTop`), placed again when the screen
- * changes or the column is resized. A notice that leaves while it could still be read
+ * (`role="status"`), both just over the screen's `[data-toast-anchor]` (elsewhere where that
+ * would cover one of the screen's controls or what they must not hide, `[data-toast-avoid]`:
+ * `noticeTop`), placed again when the screen changes, the column is resized or the screen
+ * scrolls. A notice that leaves while it could still be read
  * fades out as an id-less, inert copy (no «Ver», no close) that a timer removes; under an opaque
  * layer, or under reduced motion, it goes at once.
  */
@@ -163,7 +164,9 @@ function Notices({
     const el = box.current;
     if (!el) return;
     const app = el.closest("[data-app]");
-    const place = () => {
+    let current: number | undefined;
+    /** Where the notices go; on a scroll they follow their anchor or stay while they cover nothing. */
+    const place = (scrolled: boolean) => {
       const anchor = app?.querySelector("[data-toast-anchor]")?.getBoundingClientRect();
       // fixed inside the column: its containing block is the column when it carries a transform
       const cbTop =
@@ -172,18 +175,28 @@ function Notices({
         anchorTop: anchor && anchor.height > 0 ? anchor.top : undefined,
         cbTop,
         height: el.getBoundingClientRect().height,
-        controls: app ? controlsUnder(app, el) : [],
+        controls: app ? spansOf(app, CONTROLS, el) : [],
+        avoid: app ? spansOf(app, "[data-toast-avoid]", el) : [],
+        current: scrolled ? current : undefined,
+        follow: scrolled,
       });
+      current = t;
       setTop(t);
       for (const child of Array.from(el.children))
         if (child instanceof HTMLElement && child.dataset.notice)
           tops.current.set(child.dataset.notice, t + child.offsetTop);
     };
-    place();
+    place(false);
     if (!app) return;
-    const resized = new ResizeObserver(place);
+    const resized = new ResizeObserver(() => place(false));
     resized.observe(app);
-    return () => resized.disconnect();
+    // the screen's scroller moves the anchor or what the notices stand over (one event a frame)
+    const scrolled = () => place(true);
+    app.addEventListener("scroll", scrolled, { capture: true, passive: true });
+    return () => {
+      resized.disconnect();
+      app.removeEventListener("scroll", scrolled, { capture: true });
+    };
   }, [live, screen]);
 
   const gone = (key: number) => setLeaving((l) => l.filter((x) => x.key !== key));
@@ -239,13 +252,38 @@ function LeavingNotice({
 /** What a player taps on a screen: the notices never sit over one (rule 17). */
 const CONTROLS = 'button, a[href], input, select, textarea, label, [role="button"]';
 
-/** The screen's controls in the column, where they stand in the viewport (not the notices' own). */
-function controlsUnder(app: Element, notices: Element): Span[] {
+/**
+ * Where what `selector` matches in the column shows in the viewport (not the notices' own, nor
+ * what is out of reach), each cut to what its scrollers show of it: a control scrolled out of view
+ * is no control the notices could cover.
+ */
+function spansOf(app: Element, selector: string, notices: Element): Span[] {
   const out: Span[] = [];
-  for (const c of Array.from(app.querySelectorAll(CONTROLS))) {
+  const clips = new Map<Element, Span | null>();
+  /** What an element's scrolling ancestors (within the column) let show, in the viewport. */
+  const clipOf = (from: Element | null): Span | null => {
+    if (!from || from === app) return null;
+    const known = clips.get(from);
+    if (known !== undefined) return known;
+    const outer = clipOf(from.parentElement);
+    let clip = outer;
+    if (getComputedStyle(from).overflowY !== "visible") {
+      const r = from.getBoundingClientRect();
+      clip = outer
+        ? { top: Math.max(outer.top, r.top), bottom: Math.min(outer.bottom, r.bottom) }
+        : { top: r.top, bottom: r.bottom };
+    }
+    clips.set(from, clip);
+    return clip;
+  };
+  for (const c of Array.from(app.querySelectorAll(selector))) {
     if (notices.contains(c) || c.closest("[inert], [aria-hidden='true']")) continue;
     const r = c.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0) out.push({ top: r.top, bottom: r.bottom });
+    if (r.width <= 0 || r.height <= 0) continue;
+    const clip = clipOf(c.parentElement);
+    const top = clip ? Math.max(r.top, clip.top) : r.top;
+    const bottom = clip ? Math.min(r.bottom, clip.bottom) : r.bottom;
+    if (bottom > top) out.push({ top, bottom });
   }
   return out;
 }

@@ -238,7 +238,8 @@ export function Hud({
   const moved = useChanged(mood);
   const [fade] = useState(enter);
   return (
-    <header className={cx(s.hud, fade && s.hudIn)} inert={inert || undefined}>
+    // a notice never hides the HUD (rule 17)
+    <header className={cx(s.hud, fade && s.hudIn)} inert={inert || undefined} data-toast-avoid>
       <div
         className={s.cal}
         id="m-semana"

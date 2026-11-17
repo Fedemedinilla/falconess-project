@@ -29,6 +29,8 @@
   --scrim: rgb(20 32 43 / 0.45);
   --cn: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
   --accpress: color-mix(in srgb, var(--acc) 82%, #000);
+  /* the column's width, for what sizes itself by it rather than by the window (the effects' stamps) */
+  --colx: min(100vw, 440px);
 
   position: fixed;
   inset: 0;
@@ -51,7 +53,10 @@
 }
 .appWide {
   max-width: 720px;
+  --colx: min(100vw, 720px);
 }
+/* the tablet's frame (rule 18, H6): its transform holds the game's fixed layers (the effects, the
+   scenes, the emblem, the notices, the title) inside it, as the wide screen's column does */
 @media (min-width: 700px) and (min-height: 640px) {
   .app {
     top: 20px;
@@ -62,10 +67,13 @@
     margin: auto;
     border-radius: 28px;
     box-shadow: 0 10px 40px rgb(20 32 43 / 0.18);
+    transform: translateZ(0);
+    --colx: 390px;
   }
   .appWide {
     width: min(720px, calc(100% - 40px));
     max-width: 720px;
+    --colx: min(720px, calc(100vw - 40px));
   }
 }
 /* L5, F26: the tablet's frame widens for the race and narrows after it, centered, over 280 ms (the
@@ -2767,6 +2775,7 @@
     0 0 0 1px rgb(20 32 43 / 0.1),
     0 18px 40px rgb(20 32 43 / 0.18);
   transform: translateZ(0);
+  --colx: var(--colw);
 }
 .app.appDeskSolo,
 .app.appDeskSolo.appWide {

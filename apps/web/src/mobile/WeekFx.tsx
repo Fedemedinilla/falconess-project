@@ -6,11 +6,11 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useFlowTimer, useFlowTimers } from "../ui/flowTimer";
 import { isRepeatTap } from "../ui/tap";
-import { FX, fxSpots, fxTotalMs } from "./flow/fxTimeline";
+import { type FxCell, fxGrid, fxTimeline } from "./flow/fxTimeline";
 import { Glyph, type GlyphName } from "./Glyph";
 import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
 import { crewInitials } from "./model";
-import { paceScale } from "./pace";
+import { type Pace, paceScale } from "./pace";
 import { playSound } from "./sfx";
 import f from "./WeekFx.module.css";
 import type { WeekFx, WeekFxKind } from "./weekFx";
@@ -83,26 +83,30 @@ function Badge({ e, at, content }: { e: WeekFx; at: number; content: ContentInde
   );
 }
 
-/** The skills she learned: compact shining cards, up to five without crowding. */
-function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentIndex }) {
+/** The skills she learned: compact shining cards, up to five without crowding; each pops at `pops[k]`. */
+function Skills({
+  e,
+  pops,
+  content,
+}: {
+  e: WeekFx;
+  pops: readonly number[];
+  content: ContentIndex;
+}) {
   const ids = e.skills ?? [];
   return (
     <ul className={cx(f.skills, ids.length > 3 && f.skillsMany)}>
       {ids.map((id, k) => {
         const skill = content.getSkill(id);
+        const pop = pops[k] ?? 0;
         return (
-          <li
-            key={id}
-            className={f.skill}
-            data-skill={id}
-            style={{ animationDelay: `${at + 250 + k * FX.perSkill}ms` }}
-          >
+          <li key={id} className={f.skill} data-skill={id} style={{ animationDelay: `${pop}ms` }}>
             <Glyph name="book" size={20} weight={2.4} />
             <span>
               <b>{gameText(skill.textKey)}</b>
               {gameBrief(skill.textKey) && <small>{gameBrief(skill.textKey)}</small>}
             </span>
-            <i className={f.shine} style={{ animationDelay: `${at + 450 + k * FX.perSkill}ms` }} />
+            <i className={f.shine} style={{ animationDelay: `${pop + SHINE_AFTER}ms` }} />
           </li>
         );
       })}
@@ -111,27 +115,52 @@ function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentInd
 }
 
 /**
- * The week's effects shown, not told (owner 2026-11-13): all together, each in a random spot of
- * the screen, a stamp like a training's «¡ÉXITO!» with chevrons, gold and rising for good news,
- * blue and falling for bad. A tap ends them (H2: then the scrim and the stamps fade out together,
- * as an id-less copy that takes no tap and plays nothing, while the menu under them is live).
+ * A stamp too long for its cell at the full size: many letters, or one long word (at the smaller
+ * size «RECUPERACIÓN» fits its cell on a 360 px phone without breaking).
+ */
+function long(label: string): boolean {
+  return label.length > 14 || label.split(" ").some((w) => w.length >= 11);
+}
+
+/** A skill card's shine runs this long after it popped in. */
+const SHINE_AFTER = 200;
+
+/** An effect's cell in the layer's grid: its row (between the rows of space), its column, its place. */
+function cellStyle(c: FxCell): CSSProperties {
+  return {
+    gridRow: 2 * c.row + 2,
+    gridColumn: c.col === "both" ? "1 / -1" : c.col + 1,
+    justifySelf: c.x,
+    alignSelf: c.y,
+  };
+}
+
+/**
+ * The week's effects shown, not told (owner 2026-11-13): all together, each in a random cell of
+ * the screen's grid (a cell of its own: two never overlap), a stamp like a training's «¡ÉXITO!»
+ * with chevrons, gold and rising for good news, blue and falling for bad. «Ritmo» shortens their
+ * timeline (`fxTimeline`, the learned skills' pops too: M6). A tap ends them (H2: then the scrim and
+ * the stamps fade out together, as an id-less copy that takes no tap and plays nothing, while the
+ * menu under them is live).
  */
 export function WeekFxOverlay({
   fx,
+  pace,
   content,
   onDone,
 }: {
   fx: readonly WeekFx[];
+  /** The flow's «Ritmo»; read once, when the effects come. */
+  pace: Pace;
   content: ContentIndex;
   /** Their time is up, or a tap; read when it happens, so a new arrow on each render is fine. */
   onDone: () => void;
 }) {
   const lid = useLid();
   const playing = useLayerPhase() === "in";
-  const starts = fx.map((_, i) => FX.stagger * i);
-  // «Ritmo» (owner 2026-11-14): the effects leave sooner, after they popped in
-  const total = Math.max(900, Math.round(fxTotalMs(fx) * paceScale()));
-  const [spots] = useState(() => fxSpots(fx));
+  // the instance is the beat's: its timeline and its cells are drawn once
+  const [{ starts, skillAt, total }] = useState(() => fxTimeline(fx, paceScale(pace)));
+  const [grid] = useState(() => fxGrid(fx));
   const layer = useRef<HTMLButtonElement>(null);
   useLayerFocus(layer);
   // each effect sounds as it pops in, then they end; once they leave, nothing more (the instance
@@ -156,6 +185,9 @@ export function WeekFxOverlay({
       ref={layer}
       type="button"
       className={cx(f.layer, !playing && f.out)}
+      style={{
+        gridTemplateRows: grid.space.map((w) => `${w.toFixed(3)}fr`).join(" auto "),
+      }}
       id={lid("m-efectos")}
       aria-label={fx.map(label).join(" · ")}
       onClick={(e) => {
@@ -165,29 +197,26 @@ export function WeekFxOverlay({
     >
       {fx.map((e, i) => {
         const at = starts[i] ?? 0;
-        const spot = spots[i] ?? { x: 50, y: 50 };
+        const cell = grid.cells[i];
         return (
           <span
             key={e.kind}
-            className={cx(f.fx, e.good ? f.good : f.bad, e.kind === "skills" && f.wide)}
+            className={cx(f.fx, e.good ? f.good : f.bad)}
             data-fx={e.kind}
-            style={
-              {
-                animationDelay: `${at}ms`,
-                animationDuration: `${total - at}ms`,
-                "--x": `${spot.x}%`,
-                "--y": `${spot.y}%`,
-              } as CSSProperties
-            }
+            style={{
+              ...(cell ? cellStyle(cell) : {}),
+              animationDelay: `${at}ms`,
+              animationDuration: `${total - at}ms`,
+            }}
           >
             {e.kind !== "skills" && <Badge e={e} at={at} content={content} />}
             <span
-              className={cx(f.stamp, label(e).length > 14 && f.stampLong)}
+              className={cx(f.stamp, long(label(e)) && f.stampLong)}
               style={{ animationDelay: `${at + 120}ms` }}
             >
               {label(e)}
             </span>
-            {e.kind === "skills" && <Skills e={e} at={at} content={content} />}
+            {e.kind === "skills" && <Skills e={e} pops={skillAt[i] ?? []} content={content} />}
           </span>
         );
       })}

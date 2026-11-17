@@ -555,6 +555,76 @@ test("a goal's scene passed by on a small phone: its notice covers none of the c
   await expect(page.locator("#m-escena-ver")).toBeVisible();
 });
 
+/** The decided race card's controls and what a notice must not hide on it (its title, its objective). */
+async function cardKeepOut(page: Page): Promise<{ controls: Box[]; text: Box[] }> {
+  const visible = async (selector: string): Promise<Box[]> => {
+    const out: Box[] = [];
+    const all = page.locator(selector);
+    for (let i = 0; i < (await all.count()); i++) {
+      const b = await all.nth(i).boundingBox();
+      if (b && b.height > 0)
+        out.push({ left: b.x, right: b.x + b.width, top: b.y, bottom: b.y + b.height });
+    }
+    return out;
+  };
+  return {
+    controls: await visible("#m-posicion label, #m-precarrera-pista, #m-correr"),
+    text: await visible("#m-precarrera h1, #m-precarrera h1 + p"),
+  };
+}
+
+/** Week `save` played to its decided card with the goal's scene `scene` passed by (seen before). */
+async function toPassedCard(page: Page, save: string, scene: string): Promise<void> {
+  await seedRun(page, save);
+  await seenEver(page, scene);
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await page.click("#m-efectos");
+  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  // its rise in is over
+  await page.waitForTimeout(400);
+}
+
+test("a passed scene's notice keeps a real gap from the race card's positions over its foot (6.7, parity N6)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await toPassedCard(page, "peregrina-w10", "peregrina-debut");
+  const notice = await noticeBox(page);
+  const { controls } = await cardKeepOut(page);
+  for (const c of controls) {
+    const gap = Math.max(c.top - notice.bottom, notice.top - c.bottom);
+    // a real gap (NOTICE_CLEAR, 3 px): no longer resting on the positions' edge
+    expect(gap, JSON.stringify(c)).toBeGreaterThanOrEqual(3);
+  }
+  // still just over the card's foot
+  const run = await boxOf(page, "#m-correr");
+  expect(run.top - notice.bottom).toBeGreaterThanOrEqual(0);
+  expect(run.top - notice.bottom).toBeLessThan(40);
+});
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 360, height: 740 },
+])
+  test(`${viewport.width}×${viewport.height}, week 48's long card: a passed scene's notice covers neither a control nor the race's name and objective, where the card leaves it room (6.7)`, async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize(viewport);
+    await toPassedCard(page, "peregrina-w48", "peregrina-long");
+    const notice = await noticeBox(page);
+    const { controls, text } = await cardKeepOut(page);
+    expect(text).toHaveLength(2);
+    for (const c of controls)
+      expect(overlaps(notice, c), `control ${JSON.stringify(c)}`).toBe(false);
+    for (const c of text) expect(overlaps(notice, c), `title ${JSON.stringify(c)}`).toBe(false);
+    await expect(page.locator("#m-escena-ver")).toBeVisible();
+  });
+
 test("«Ver» on a passed scene's notice plays it, and the notice is gone from the scene's first frame", async ({
   page,
 }) => {
@@ -681,6 +751,70 @@ test("the selection's notice covers none of its choices: it sits over the headin
         bottom: box.y + box.height,
       }),
       `${await choice.getAttribute("id")}`,
+    ).toBe(false);
+  }
+});
+
+test("a scrolled selection: the error notice goes with the heading, never over a choice (6.7, rule 17)", async ({
+  page,
+}) => {
+  const { save } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-w10.json", import.meta.url)), "utf8"),
+  );
+  const broken = JSON.stringify({
+    ...save,
+    inputs: [...save.inputs, { kind: "event:choose", option: 0 }],
+  });
+  await page.addInitScript((text) => {
+    localStorage.setItem("falconess.pruebas.partida", text);
+  }, broken);
+  await page.goto("./");
+  await pastTitle(page);
+  // «Continuar» tapped with the selection at its top: the notice over the heading
+  await page.evaluate(() => document.getElementById("m-continuar")?.click());
+  const alert = page.locator("#m-aviso-error");
+  await expect(alert).toBeVisible();
+  await page.waitForTimeout(400);
+  const before = await alert.boundingBox();
+  // the player scrolls the choices up under it
+  const moved = await page.evaluate(() => {
+    const list = document.querySelector("[data-toast-anchor]");
+    let el = list?.parentElement ?? null;
+    while (
+      el &&
+      !(el.scrollHeight > el.clientHeight + 2 && getComputedStyle(el).overflowY !== "visible")
+    )
+      el = el.parentElement;
+    if (!el) return 0;
+    el.scrollTop = 100;
+    return el.scrollTop;
+  });
+  expect(moved).toBeGreaterThan(40);
+  await page.evaluate(
+    () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+  );
+  const after = await alert.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const shift = getComputedStyle(el).transform;
+    const dy = shift === "none" ? 0 : new DOMMatrixReadOnly(shift).m42;
+    return { left: r.left, right: r.right, top: r.top - dy, bottom: r.bottom - dy };
+  });
+  // it went up with the heading
+  expect(after.top).toBeLessThan((before?.y ?? 0) - 40);
+  const choices = page.locator(
+    "[id^='m-elegir-'], [id^='m-dificultad-'], #m-continuar, #m-empezar, #m-temporadas-inicio",
+  );
+  for (let i = 0; i < (await choices.count()); i++) {
+    const box = await choices.nth(i).boundingBox();
+    if (!box) continue;
+    expect(
+      overlaps(after, {
+        left: box.x,
+        right: box.x + box.width,
+        top: box.y,
+        bottom: box.y + box.height,
+      }),
+      `${await choices.nth(i).getAttribute("id")}`,
     ).toBe(false);
   }
 });
