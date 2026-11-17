@@ -10,7 +10,7 @@ import {
   toResult,
   week,
 } from "./mobile-helpers";
-import { setTabHidden } from "./motion";
+import { holdClock, setTabHidden } from "./motion";
 
 /**
  * A reload (or a closed tab, or a language switch) inside a week plays that week on (D5, F1, C5,
@@ -154,8 +154,9 @@ test("3. a reload during the emblem of a week with nothing before it: it opens c
   await page.click("#m-ala-mule");
   await page.click("#m-taller-confirmar");
   await expect(page.locator("#m-transicion")).toBeVisible();
-  // the clock stands still: the reload lands while the emblem is up (the race mode not begun)
-  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+  // the clock stands still: the reload lands while the emblem is up (the race mode not begun);
+  // `holdClock` aims again if the clock got past its lead while the call travelled
+  await holdClock(page);
   await page.reload();
   // and runs again for the new page (the title leaves on a timer)
   await page.clock.resume();
