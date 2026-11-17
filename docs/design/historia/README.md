@@ -1,5 +1,11 @@
 # Mapa de la historia de Falconess
 
+**Regla del dueño (2026-11-17): no se escribe nada de la historia ni ninguna escena sin haber leído
+antes, enteras, las dos biblias:** `docs/design/biblia-escritura.md` (cómo se escriben escenas y
+diálogos) y `docs/design/investigacion-personajes.md` (cómo se construye un personaje vivo). El elenco de los ejemplos de la biblia de escritura (Brisa,
+Kes, Ilo, Ruth, Ferrán, las escuderías Pampero, Vértice y Halcón Norte) es inventado para el manual:
+no es canon.
+
 Decidido con el dueño el 2026-11-16 (opción A del traspaso `docs/handoff/mapa-de-historia.md`). En
 vez de un único mapa dibujado, seis piezas unidas por ids estables de personajes y escenas. El canon
 lo decide el dueño; cada dato lleva su estado: **decidido** (con fecha), **propuesta** o **abierto**.
