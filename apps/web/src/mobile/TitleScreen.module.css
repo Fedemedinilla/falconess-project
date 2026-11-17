@@ -75,7 +75,8 @@
   grid-area: 1 / 1;
   font-family: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
   font-weight: 700;
-  font-size: clamp(54px, 17vw, 92px);
+  /* by the window's width, or the tablet's frame's (it holds the title: --framew) */
+  font-size: clamp(54px, calc(var(--framew, 100vw) * 0.17), 92px);
   line-height: 0.95;
   letter-spacing: 0.01em;
 }

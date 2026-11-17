@@ -102,8 +102,8 @@
   font-family: var(--cn);
   font-weight: 800;
   font-style: italic;
-  /* the column's width, not the window's (--colx: Mobile.module.css) */
-  font-size: min(34px, calc(var(--colx, 100vw) * 0.076));
+  /* the window's width, or the tablet's frame's (--framew: Mobile.module.css) */
+  font-size: min(34px, calc(var(--framew, 100vw) * 0.076));
   line-height: 1.05;
   letter-spacing: 1px;
   text-align: center;
@@ -116,7 +116,7 @@
   animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 .stampLong {
-  font-size: min(28px, calc(var(--colx, 100vw) * 0.064));
+  font-size: min(28px, calc(var(--framew, 100vw) * 0.064));
 }
 .good .stamp {
   background-image: linear-gradient(180deg, #fff6c2 0%, #ffd23f 45%, #ff8a00 100%);
@@ -248,7 +248,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(340px, calc(var(--colx, 100vw) * 0.86));
+  width: min(340px, calc(var(--framew, 100vw) * 0.86));
   max-width: 100%;
   margin: 0;
   padding: 0;

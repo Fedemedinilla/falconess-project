@@ -1342,3 +1342,34 @@ test("a tablet's frame narrows after the race with its effects and its notice in
   expect(withFx.length).toBeGreaterThan(0);
   for (const [i, f] of list.entries()) expectContained(f, `frame ${i}`);
 });
+
+test("1024×768: inside the tablet's frame the title's name and a scene's chapter card have a 390 px phone's sizes (H6, O14)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  /** The sizes the title, the prologue's chapter card and the emblem's art take at this window. */
+  const sizes = async () => {
+    await page.goto("./");
+    const name = await page
+      .locator("#m-titulo [class*='word']")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+    await pastTitle(page);
+    await page.click("#m-elegir-peregrina");
+    await page.click("#m-empezar");
+    const card = page.locator("#m-capitulo [data-card] strong");
+    await expect(card).toBeVisible();
+    const chapter = await card.evaluate((el) => ({
+      font: getComputedStyle(el).fontSize,
+      lines: Math.round(
+        el.getBoundingClientRect().height / Number.parseFloat(getComputedStyle(el).lineHeight),
+      ),
+    }));
+    return { name, chapter };
+  };
+  await page.setViewportSize({ width: 390, height: 844 });
+  const phone = await sizes();
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const tablet = await sizes();
+  expect(tablet).toEqual(phone);
+  expect(tablet.chapter.lines).toBe(1);
+});

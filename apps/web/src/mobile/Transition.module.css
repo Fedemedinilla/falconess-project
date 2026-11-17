@@ -37,7 +37,7 @@
 }
 .rise {
   position: relative;
-  width: min(46vw, 210px);
+  width: min(calc(var(--framew, 100vw) * 0.46), 210px);
   aspect-ratio: 4 / 3;
   animation: rise 1250ms var(--m-dur-emblem-in) both;
 }
