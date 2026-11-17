@@ -549,3 +549,43 @@ at the bottom of the back unit. A small abstract gold falcon-wing crest on the c
 unit, with no letters.
 No text, no letters, no numbers, no real logos.
 ```
+
+Cuarta vuelta (2026-11-17): la edición dejó el traje como de látex brillante y perdió el amarillo de
+Kōryū. El dueño propone empezar una conversación nueva de Gemini. Prompt completo, desde cero,
+adjuntando **solo** la Peregrina aprobada original como referencia de cara y pelo:
+
+```text
+Use the attached image only as a reference for her face, hair and the dark falcon marks under her eyes.
+Create a new image of the same woman.
+
+Japanese anime gacha game character splash art, high-budget anime style, polished and clean. Wide 16:10
+image. Full body, standing, 3/4 view, centered, the whole figure visible from head to boots, about 75 %
+of the image height, with her wings fully spread to both sides. Plain flat off-white background with a
+soft floor shadow. Clean line art, soft cel shading with one shadow tone, soft key light from the upper
+left.
+
+Peregrina, the star racer of Kōryū Racing: an adult woman in her twenties, athletic racer build,
+confident and charming. Short layered slate blue-grey hair with a cream-blonde streak, dark falcon
+"moustache" marks painted below each eye, a bold competitive grin, chin slightly raised, one hand on her
+hip, a red and graphite racing helmet under the other arm.
+
+Kōryū Racing style: a sporty Japanese racing house with the luxury and elegance of a classic Italian
+racing team, but original (no real brand, no horse). Signature colors: deep racing red and bright golden
+yellow, with graphite black.
+Racing suit: a tailored premium motorsport suit in MATTE technical fabric (not shiny, not latex, not
+skin-tight), deep racing red, with a high mandarin collar, quilted shoulder panels, angular golden-yellow
+speed stripes along the arms and legs, graphite knee and elbow pads, red racing boots, a small abstract
+golden-yellow falcon-wing crest on the chest (no letters).
+
+Wings: a real, functional piece of racing equipment. A compact red back unit strapped with a harness over
+the shoulders and chest, with heat vents and tiny amber status lights; at its base, a pulse thruster
+with two short ringed nozzles and a faint orange glow. Two articulated arms with hinges, pistons and
+cables. The wing surfaces are long, flexible, overlapping blades of composite with sharp, katana-like
+edges: glossy lacquered red on top (only the wings and hard parts are glossy), graphite carbon
+underneath, thin golden-yellow edges. Fully spread, wide and majestic, wingspan about two and a half
+times her height, tips near the left and right edges of the image. Precision-crafted, elegant, fast.
+
+Avoid: feathers, angel look, latex or shiny bodysuit, skin-tight clothes, cleavage, a jacket tied at
+the waist, any text, letters, numbers or logos, chibi proportions, western comic style, extra fingers,
+cropped feet, busy background.
+```
