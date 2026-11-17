@@ -2,10 +2,19 @@ import type { RunInput, SeasonState, StoryScene, StoryTrigger } from "@falconess
 import { seasonGoalsOf, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import type { InspirationScene } from "../inspirationScene";
+import { MOTION, STORY } from "../motion";
 import {
+  cardShownAt,
   DIGEST,
   digestFor,
   dueScenes,
+  hurried,
+  INTRO_TRACKS,
+  type IntroTempo,
+  type IntroTiming,
+  type IntroTrack,
+  introTempo,
+  introTiming,
   type MenuItem,
   menuOrder,
   SCENE_KINDS,
@@ -208,5 +217,179 @@ describe("menuOrder: the menu's scenes and the inheritance card (D2)", () => {
       "x-start",
     ]);
     expect(names(menuOrder(scenes, undefined))).toEqual(ids(scenes));
+  });
+});
+
+describe("introTiming: how a scene comes in (H4, M5, M10, O7)", () => {
+  const TEMPOS: readonly IntroTempo[] = ["full", "digest", "still"];
+  /** A track's start and end, the plan's way of writing it (§2.6's table). */
+  const span = (k: IntroTrack) => [k.at, k.at + k.ms];
+
+  it("the tempo: reduced motion is still, a digest is short, anything else plays it whole", () => {
+    expect(introTempo(undefined, false)).toBe("full");
+    expect(introTempo(DIGEST.fast, false)).toBe("digest");
+    expect(introTempo(DIGEST.direct, false)).toBe("digest");
+    expect(introTempo(undefined, true)).toBe("still");
+    expect(introTempo(DIGEST.fast, true)).toBe("still");
+  });
+
+  it("one frozen object per tempo, so a scene's timers never restart on a render", () => {
+    for (const tempo of TEMPOS) {
+      expect(introTiming(tempo)).toBe(introTiming(tempo));
+      expect(Object.isFrozen(introTiming(tempo))).toBe(true);
+      expect(introTiming(tempo).tempo).toBe(tempo);
+    }
+  });
+
+  it("the table: the chrome, the ground and the backdrop, the card in and out, the first line", () => {
+    const row = (t: IntroTiming) => ({
+      chrome: t.chrome.at,
+      ground: span(t.ground),
+      backdrop: span(t.backdrop),
+      card: span(t.card),
+      cardOut: span(t.cardOut),
+      line: t.lineAt,
+    });
+    // Normal keeps today's way in (escenas.md §2: 2.8 s to the first line), the chrome from 0.3 s
+    expect(row(introTiming("full"))).toEqual({
+      chrome: 300,
+      ground: [500, 1400],
+      backdrop: [500, 1800],
+      card: [1200, 1800],
+      cardOut: [2550, 2800],
+      line: 2800,
+    });
+    expect(row(introTiming("digest"))).toEqual({
+      chrome: 300,
+      ground: [200, 900],
+      backdrop: [200, 900],
+      card: [400, 800],
+      cardOut: [1500, 1750],
+      line: 1750,
+    });
+    expect(row(introTiming("still"))).toEqual({
+      chrome: 0,
+      ground: [0, 0],
+      backdrop: [0, 0],
+      card: [0, 0],
+      cardOut: [900, 900],
+      line: 900,
+    });
+  });
+
+  it("the chapter's card shows whole at least 0.7 s in every tempo, 0.9 s under reduced motion (H4)", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      const whole = t.cardOut.at - cardShownAt(t);
+      expect(whole, tempo).toBeGreaterThanOrEqual(
+        tempo === "still" ? STORY.rmCardMs : STORY.cardMinMs,
+      );
+    }
+  });
+
+  it("the card fades out over 250 ms into the first line, the chrome in over 120 ms (instant when still)", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      expect(t.cardOut.at + t.cardOut.ms, tempo).toBe(t.lineAt);
+      expect(t.cardOut.ms, tempo).toBe(tempo === "still" ? 0 : MOTION.cardOut);
+      expect(t.chrome.ms, tempo).toBe(tempo === "still" ? 0 : MOTION.fast);
+      expect(t.chrome.at, tempo).toBe(tempo === "still" ? 0 : STORY.chromeAt);
+    }
+  });
+
+  it("everything of the way in has arrived before the card leaves; the loops start where their fade ends", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      for (const name of INTRO_TRACKS)
+        expect(t[name].at + t[name].ms, `${tempo} ${name}`).toBeLessThanOrEqual(t.cardOut.at);
+      expect(t.driftAt, tempo).toBe(t.backdrop.at + t.backdrop.ms);
+      expect(t.panAt, tempo).toBe(t.glow.at + t.glow.ms);
+    }
+  });
+});
+
+describe("hurried: a tap during a scene's way in (M10, O7)", () => {
+  const TEMPOS: readonly IntroTempo[] = ["full", "digest", "still"];
+  /** How far a track is at `t` (0 before it, 1 once it ended), as the animation's own progress. */
+  const progress = (k: IntroTrack, t: number) =>
+    k.ms === 0 ? (t >= k.at ? 1 : 0) : Math.min(1, Math.max(0, (t - k.at) / k.ms));
+  const taps = (t: IntroTiming) =>
+    Array.from({ length: Math.floor(t.lineAt / 25) }, (_, i) => i * 25);
+  const hurryMs = (tempo: IntroTempo) => (tempo === "digest" ? STORY.hurryDigestMs : STORY.hurryMs);
+
+  it("nothing jumps at the tap: every animation is where it was", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      for (const at of taps(t)) {
+        const h = hurried(t, at);
+        for (const name of [...INTRO_TRACKS, "cardOut"] as const)
+          expect(progress(h[name], at), `${tempo} ${name} at ${at}`).toBeCloseTo(
+            progress(t[name], at),
+            9,
+          );
+      }
+    }
+  });
+
+  it("the way in ends within 120 ms of the tap, never later than it would have", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      for (const at of taps(t)) {
+        const h = hurried(t, at);
+        for (const name of INTRO_TRACKS) {
+          const end = h[name].at + h[name].ms;
+          expect(end, `${tempo} ${name} at ${at}`).toBeLessThanOrEqual(
+            Math.max(at, t[name].at + t[name].ms) + 1e-9,
+          );
+          expect(end, `${tempo} ${name} at ${at}`).toBeLessThanOrEqual(
+            Math.max(t[name].at + t[name].ms, at + MOTION.fast) + 1e-9,
+          );
+          expect(end, `${tempo} ${name} at ${at}`).toBeLessThanOrEqual(at + MOTION.fast + 1e-9);
+        }
+      }
+    }
+  });
+
+  it("the first line comes 500 ms after the tap (300 in a digest), never later than its own time", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      for (const at of taps(t))
+        expect(hurried(t, at).lineAt, `${tempo} at ${at}`).toBe(
+          Math.min(t.lineAt, at + hurryMs(tempo)),
+        );
+    }
+    expect(hurried(introTiming("full"), 600).lineAt).toBe(1100);
+    expect(hurried(introTiming("digest"), 600).lineAt).toBe(900);
+  });
+
+  it("the card shows whole before it fades, and its fade ends at the first line", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      for (const at of taps(t)) {
+        const h = hurried(t, at);
+        expect(h.cardOut.at + h.cardOut.ms, `${tempo} at ${at}`).toBeCloseTo(h.lineAt, 9);
+        expect(h.cardOut.at, `${tempo} at ${at}`).toBeGreaterThanOrEqual(cardShownAt(h) - 1e-9);
+        expect(h.cardOut.ms, `${tempo} at ${at}`).toBeLessThanOrEqual(t.cardOut.ms);
+      }
+    }
+  });
+
+  it("the loops start as their hurried fade ends, unless they already run", () => {
+    const t = introTiming("full");
+    const h = hurried(t, 600);
+    expect(h.driftAt).toBeCloseTo(h.backdrop.at + h.backdrop.ms, 9);
+    expect(h.panAt).toBeCloseTo(h.glow.at + h.glow.ms, 9);
+    expect(h.driftAt).toBeLessThanOrEqual(720);
+    const late = hurried(t, 2000);
+    expect(late.driftAt).toBe(t.driftAt);
+    expect(late.panAt).toBe(t.panAt);
+  });
+
+  it("keeps its tempo, and a tap after the way in changes nothing", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      expect(hurried(t, 300).tempo).toBe(tempo);
+      expect(hurried(t, t.lineAt)).toEqual(t);
+    }
   });
 });

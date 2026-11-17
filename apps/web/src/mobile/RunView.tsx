@@ -21,6 +21,7 @@ import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
 import { boxToKeep } from "./flow/box";
+import { introTempo, introTiming } from "./flow/scenes";
 import type { Layer, Screen } from "./flow/types";
 import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
@@ -184,6 +185,8 @@ export function RunView({
             secondary={colors.secondary}
             // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
             digest={l.digest}
+            // its way in: whole, short (a digest) or still (reduced motion)
+            timing={introTiming(introTempo(l.digest, reduced))}
             // as its exit starts: the flow moves on under its fading copy (D7)
             onFinish={(skipped) => cmd.sceneDone(l.key, skipped)}
           />

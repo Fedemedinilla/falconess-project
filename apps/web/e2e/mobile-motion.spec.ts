@@ -1073,3 +1073,141 @@ test("a training's result across a resize into the wide screen: her stats still 
     )
     .toBe(0);
 });
+
+// ---- 6.6: a scene's way in (H4, M5, M10, O7) ----
+
+/**
+ * The selection with Peregrina picked under a held clock, then «Empezar»: her prologue (the
+ * cinematic, with its painted hangar) starts, and its way in moves only as the test runs the clock.
+ */
+async function toPrologue(page: Page): Promise<void> {
+  await page.clock.install();
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await holdClock(page);
+  await page.click("#m-empezar");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
+}
+
+/** Where the scene's way in is: «intro», «card» (the chapter's card whole) or «line». */
+function beatOf(page: Page): Promise<string | null> {
+  return page.locator("#m-capitulo").getAttribute("data-beat");
+}
+
+/** The scene's beat at every `step` ms of the held clock, `ms` on from now. */
+async function beatsFor(page: Page, ms: number, step = 50): Promise<(string | null)[]> {
+  const out: (string | null)[] = [];
+  for (let t = 0; t < ms; t += step) {
+    await page.clock.runFor(step);
+    await settleUpdates(page);
+    out.push(await beatOf(page));
+  }
+  return out;
+}
+
+/** How long, in ms, `beat` lasted in a run of samples `step` ms apart. */
+function lasted(samples: readonly (string | null)[], beat: string, step = 50): number {
+  return samples.filter((b) => b === beat).length * step;
+}
+
+const CARD = "#m-capitulo [data-card]";
+const BACKDROP = "#m-capitulo img";
+
+test("a scene comes in on its black, «Saltar» is there from 0.3 s, and a tap during its way in shows the chapter's card at once, the first line 0.5 s later (M10, O7)", async ({
+  page,
+}) => {
+  await toPrologue(page);
+  // rule 10 (owner): its first frame is opaque black
+  await freezeAt(page, 0);
+  expect((await coverage(page, "#m-capitulo")).misses).toEqual([]);
+  expect(await beatOf(page)).toBe("intro");
+  // the chrome fades in from 0.3 s, over 120 ms
+  await freezeAt(page, 250);
+  expect(await opacityOf(page, "#m-capitulo-saltar")).toBeLessThan(0.05);
+  await freezeAt(page, 450);
+  expect(await opacityOf(page, "#m-capitulo-saltar")).toBeGreaterThanOrEqual(0.95);
+  await page.clock.runFor(600);
+  await settleUpdates(page);
+  expect(await beatOf(page)).toBe("intro");
+  await freezeAt(page, 600);
+  const backdrop = await opacityOf(page, BACKDROP);
+  expect(backdrop).toBeGreaterThan(0.01);
+  expect(backdrop).toBeLessThan(0.5);
+  expect(await opacityOf(page, CARD)).toBeLessThan(0.01);
+  // a tap at 600 ms: the card's beat at once, and nothing jumps at the tap…
+  await page.click("#m-capitulo-seguir");
+  expect(await beatOf(page)).toBe("card");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-hurry", "");
+  await freezeAt(page, 600);
+  expect(Math.abs((await opacityOf(page, BACKDROP)) - backdrop)).toBeLessThan(0.02);
+  expect(await opacityOf(page, CARD)).toBeLessThan(0.01);
+  // …the way in catches up within 120 ms: the backdrop and the card whole
+  await freezeAt(page, 720);
+  expect(await opacityOf(page, BACKDROP)).toBeGreaterThanOrEqual(0.99);
+  expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+  // the first line 500 ms after the tap (it came at 2.8 s untouched)
+  await page.clock.runFor(450);
+  await settleUpdates(page);
+  expect(await beatOf(page)).toBe("card");
+  await page.clock.runFor(60);
+  await settleUpdates(page);
+  expect(await beatOf(page)).toBe("line");
+  await expect(page.locator("#m-capitulo")).toContainText(t("story.peregrina-prologue.1"));
+});
+
+test("a double tap during a scene's way in is one tap: the card, then a second tap shows the first line at once (F50, M10)", async ({
+  page,
+}) => {
+  await toPrologue(page);
+  await page.clock.runFor(600);
+  await settleUpdates(page);
+  await page.dblclick("#m-capitulo-seguir");
+  await settleUpdates(page);
+  expect(await beatOf(page)).toBe("card");
+  await page.click("#m-capitulo-seguir");
+  await settleUpdates(page);
+  expect(await beatOf(page)).toBe("line");
+  await expect(page.locator("#m-capitulo")).toContainText(t("story.peregrina-prologue.1"));
+});
+
+test("Rápido: the chapter's card shows whole for 0.7 s before it fades into the first line at 1.75 s (H4)", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("falconess.juego.ritmo", "fast"));
+  await toPrologue(page);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-digest", "true");
+  const early = await beatsFor(page, 1000);
+  // whole from 0.8 s to 1.5 s, then its 250 ms fade
+  await freezeAt(page, 800);
+  expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+  await freezeAt(page, 1490);
+  expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+  await freezeAt(page, 1625);
+  const fading = await opacityOf(page, CARD);
+  expect(fading).toBeGreaterThan(0.1);
+  expect(fading).toBeLessThan(0.9);
+  const late = await beatsFor(page, 1000);
+  const samples = [...early, ...late];
+  expect(lasted(samples, "card")).toBeGreaterThanOrEqual(600);
+  // the first line at 1.75 s
+  expect(samples[33]).toBe("card");
+  expect(samples[34]).toBe("line");
+});
+
+test.describe("reduced motion: a scene's way in", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("the chapter's card stands whole from the scene's first frame for 0.9 s, then the first line (H4, §2.4)", async ({
+    page,
+  }) => {
+    await toPrologue(page);
+    expect(await beatOf(page)).toBe("card");
+    await freezeAt(page, 0);
+    expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+    await freezeAt(page, 890);
+    expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+    const samples = await beatsFor(page, 1200);
+    expect(lasted(samples, "card")).toBeGreaterThanOrEqual(850);
+    expect(samples.at(-1)).toBe("line");
+  });
+});

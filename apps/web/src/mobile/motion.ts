@@ -46,9 +46,14 @@ export const STORY = {
   typeMs: 26,
   wordMs: 110,
   autoMs: 4500,
+  /** «Saltar», Auto and Registro from here on (M10) */
   chromeAt: 300,
+  /** the chapter's card shows whole at least this long (H4); under reduced motion `rmCardMs` */
   cardMinMs: 700,
   rmCardMs: 900,
+  /** a tap during the way in: the first line this long after it (M10, O7); in a digest the short one */
+  hurryMs: 500,
+  hurryDigestMs: 300,
 } as const;
 
 /** How long each full-screen layer takes to leave (plan §1.9): one entry per kind of layer. */

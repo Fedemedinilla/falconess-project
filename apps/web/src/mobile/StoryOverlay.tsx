@@ -1,14 +1,31 @@
 import type { StoryBackground, StoryLine, StoryScene } from "@falconess/schema";
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer } from "../ui/flowTimer";
+import { isRepeatTap } from "../ui/tap";
 import { useLatest } from "../ui/useLatest";
-import { reducedMotion } from "../ui/useMedia";
 import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
+import {
+  cardShownAt,
+  hurried,
+  INTRO_TRACKS,
+  type IntroTiming,
+  type IntroTrack,
+} from "./flow/scenes";
 import type { Digest } from "./flow/types";
 import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
+import { STORY } from "./motion";
 import s from "./Story.module.css";
 import { digestLines } from "./storyModel";
 
@@ -21,32 +38,54 @@ const BACKDROP: Readonly<Record<StoryBackground, string>> = {
 
 /** Speakers without a name plate. */
 const UNNAMED = new Set(["narrator", "sfx"]);
-const TYPE_MS = 26;
-const WORD_MS = 110;
-/** The steps of the way in (Story.module.css): black at once, the scene arrives, then the card. */
-const INTRO_MS = 1300;
-const CARD_MS = 1500;
-/** Auto: how long a finished line stays before the next one (owner 2026-11-12: 1.5 s was too fast). */
-const AUTO_MS = 4500;
 
 function speakerName(line: StoryLine): string | undefined {
   return UNNAMED.has(line.speaker) ? undefined : gameText(`speaker.${line.speaker}`);
 }
 
+/** A time for CSS, in ms (a hurried track's times have fractions). */
+const cssMs = (ms: number) => `${Math.round(ms * 100) / 100}ms`;
+
+/**
+ * The way in as the inline CSS variables Story.module.css reads (`--sc-<track>-at`/`-ms`, the
+ * loops' `--sc-drift-at`/`--sc-pan-at`): a hurried way in changes only these, so every animation
+ * goes on from where it is.
+ */
+function introVars(t: IntroTiming): Record<string, string> {
+  const vars: Record<string, string> = {};
+  const put = (name: string, k: IntroTrack) => {
+    vars[`--sc-${name}-at`] = cssMs(k.at);
+    vars[`--sc-${name}-ms`] = cssMs(k.ms);
+  };
+  for (const name of INTRO_TRACKS) put(name, t[name]);
+  put("card-out", t.cardOut);
+  vars["--sc-drift-at"] = cssMs(t.driftAt);
+  vars["--sc-pan-at"] = cssMs(t.panAt);
+  return vars;
+}
+
+/** Where the way in is: the scene coming in, the chapter's card whole, then its lines. */
+type IntroBeat = "intro" | "card" | "line";
+
 /**
  * A story scene over the game (owner 2026-11-12): black at once (owner 2026-11-13: the menu behind
  * never shows), the scene comes out of the black, the chapter's card shows, then its lines one tap
- * at a time. `box` is the dialogue box of a common scene, `cine` the cinematic of a key scene
- * (black bars, words appearing one by one, key lines large). Skip ends it at once; Auto moves on
- * by itself; the log rereads what was said. It ends as its 0.8 s exit starts (`onFinish`): the
- * flow moves on under it at once, and LayerHost keeps this instance on its way out, fading over
- * the real next screen (D7) as an id-less copy whose timers have stopped (F18).
+ * at a time. Its way in follows `timing` (plan §2.6: whole on Normal, short in a digest, still
+ * under reduced motion; the card always shows whole, H4): «Saltar», Auto and Registro from 0.3 s,
+ * and a tap during it (M10, O7) brings everything in within 120 ms from where it is, the card
+ * whole, and the first line 0.5 s later (0.3 s in a digest); a second tap shows it at once.
+ * `box` is the dialogue box of a common scene, `cine` the cinematic of a key scene (black bars,
+ * words appearing one by one, key lines large). Skip ends it at once; Auto moves on by itself;
+ * the log rereads what was said. It ends as its 0.8 s exit starts (`onFinish`): the flow moves on
+ * under it at once, and LayerHost keeps this instance on its way out, fading over the real next
+ * screen (D7) as an id-less copy whose timers have stopped (F18).
  */
 export function StoryOverlay({
   scene,
   primary,
   secondary,
   digest: digestProp,
+  timing: timingProp,
   onFinish,
 }: {
   scene: StoryScene;
@@ -54,11 +93,15 @@ export function StoryOverlay({
   secondary: string;
   /** Play a fast digest instead of every line; read once, when the scene mounts. */
   digest?: Digest | undefined;
+  /** Its way in (`introTiming`); read once, when the scene mounts. */
+  timing: IntroTiming;
   /** Called once, as the scene starts to leave; held in a ref, so a new arrow on each render is fine. */
   onFinish: (skipped: boolean) => void;
 }) {
   // latched: «Ritmo» can change in the desk panel's «Menú» mid-scene, and the timers key on it
   const [digest] = useState(digestProp);
+  const [timing] = useState(timingProp);
+  const still = timing.tempo === "still";
   const onFinishRef = useLatest(onFinish);
   // its ids only while it is in front (a leaving copy has none), its timers too: on its way out
   // nothing of it moves on, types or ends anything
@@ -75,6 +118,19 @@ export function StoryOverlay({
   const [shown, setShown] = useState(0);
   const [auto, setAuto] = useState(false);
   const [log, setLog] = useState(false);
+  // the way in counts from the scene's first frame; a tap during it hurries it (ms from there)
+  const born = useRef(0);
+  useEffect(() => {
+    born.current = performance.now();
+  }, []);
+  const [hurry, setHurry] = useState<number>();
+  const intro = useMemo(
+    () => (hurry === undefined ? timing : hurried(timing, hurry)),
+    [timing, hurry],
+  );
+  const vars = useMemo(() => introVars(intro), [intro]);
+  const [cardShown, setCardShown] = useState(() => cardShownAt(timing) <= 0);
+  const beat: IntroBeat = index >= 0 ? "line" : cardShown ? "card" : "intro";
   const line = index >= 0 ? lines[index] : undefined;
   const text = line ? gameText(line.textKey) : "";
   const cine = scene.style === "cine";
@@ -93,31 +149,34 @@ export function StoryOverlay({
     [onFinishRef],
   );
 
-  // the chapter's card, then the first line
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once, at the scene's start (stopped if it leaves first)
-  useEffect(() => {
-    if (!playing) return;
-    const t = setTimeout(
-      () => setIndex(0),
-      reducedMotion() ? 300 : digest ? INTRO_MS + CARD_MS / 3 : INTRO_MS + CARD_MS,
-    );
-    return () => clearTimeout(t);
-  }, [playing]);
+  // the way in: the chapter's card whole, then the first line (sooner after a tap); a leaving
+  // copy's timers are off
+  useFlowTimer(
+    playing && !cardShown ? cardShownAt(timing) : undefined,
+    () => setCardShown(true),
+    "card",
+  );
+  useFlowTimer(
+    playing && index < 0 ? Math.max(0, intro.lineAt - (hurry ?? 0)) : undefined,
+    () => setIndex(0),
+    `line:${hurry ?? "-"}`,
+  );
 
   // the line appears: a letter (box) or a word (cine) at a time
   // biome-ignore lint/correctness/useExhaustiveDependencies: restart on each new line; stop on the way out
   useEffect(() => {
     if (!playing || index < 0) return;
-    if (reducedMotion() || digest) {
+    if (still || digest) {
       setShown(Number.MAX_SAFE_INTEGER);
       return;
     }
     setShown(0);
-    const step = cine ? WORD_MS : TYPE_MS;
+    const step = cine ? STORY.wordMs : STORY.typeMs;
     const id = setInterval(() => setShown((n) => n + 1), step);
     return () => clearInterval(id);
   }, [index, playing]);
 
+  /** On to what comes next in the lines: the line whole, then the next one, then the end. */
   const next = useCallback(() => {
     if (log || index < 0) return;
     if (!complete) {
@@ -128,13 +187,36 @@ export function StoryOverlay({
     else setIndex(index + 1);
   }, [log, index, complete, lines.length, finish]);
 
-  useEffect(() => {
-    if (!playing || !(auto || digest) || !complete || log) return;
-    const t = setTimeout(next, digest ? digest.ms : AUTO_MS);
-    return () => clearTimeout(t);
-  }, [playing, auto, digest, complete, log, next]);
+  /**
+   * A tap on the scene. During the way in (M10): the first hurries it (the card whole at once, the
+   * line soon), a second shows the line at once; a double tap's second click is no second tap
+   * (F50). Then each tap reads on, as fast as the player taps.
+   */
+  const tap = (e: MouseEvent) => {
+    if (log) return;
+    if (index >= 0) {
+      next();
+      return;
+    }
+    if (isRepeatTap(e)) return;
+    if (hurry === undefined) {
+      setHurry(Math.max(0, performance.now() - born.current));
+      setCardShown(true);
+    } else setIndex(0);
+  };
 
-  const style = { "--s1": primary, "--s2": secondary } as CSSProperties;
+  // Auto and the digest move on by themselves once a line is whole (each line its own timer)
+  useFlowTimer(
+    playing && (auto || digest) && complete && !log && index >= 0
+      ? digest
+        ? digest.ms
+        : STORY.autoMs
+      : undefined,
+    next,
+    `step:${index}`,
+  );
+
+  const style = { "--s1": primary, "--s2": secondary, ...vars } as CSSProperties;
   const name = line && speakerName(line);
   const visible = text.slice(0, Math.min(shown, text.length));
 
@@ -146,6 +228,8 @@ export function StoryOverlay({
       data-scene={scene.id}
       data-style={scene.style}
       data-digest={digest ? "true" : undefined}
+      data-beat={beat}
+      data-hurry={hurry === undefined ? undefined : ""}
       data-background={scene.background}
       role="dialog"
       aria-modal="true"
@@ -165,7 +249,7 @@ export function StoryOverlay({
         className={s.stage}
         id={lid("m-capitulo-seguir")}
         aria-label={ui("ui.m.story.next")}
-        onClick={next}
+        onClick={tap}
       />
       {cine && (
         <>
@@ -197,7 +281,7 @@ export function StoryOverlay({
       </div>
 
       {index < 0 && (
-        <div className={s.card} aria-live="polite">
+        <div className={s.card} aria-live="polite" data-card="">
           <small>{gameText(scene.kickerKey)}</small>
           <strong>{gameText(scene.titleKey)}</strong>
         </div>

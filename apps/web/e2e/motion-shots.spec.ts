@@ -390,7 +390,7 @@ const notice: Flow = async (page, m) => {
   return "notice";
 };
 
-/** Rápido: Peregrina's prologue as a digest, from «Empezar». */
+/** Rápido: Peregrina's prologue as a digest, from «Empezar» (6.6: the card whole 0.8-1.5 s). */
 const digest: Flow = async (page, m) => {
   await page.addInitScript(() => localStorage.setItem("falconess.juego.ritmo", "fast"));
   await page.goto("./");
@@ -398,9 +398,54 @@ const digest: Flow = async (page, m) => {
   await page.click("#m-elegir-peregrina");
   await m.hold();
   await page.click("#m-empezar");
-  await m.at("digest", [0, 700, 1400, 2100, 2800]);
+  await m.at("digest", [0, 300, 420, 800, 1500, 1625, 1750, 2100, 2800]);
   await m.release();
   return "digest";
+};
+
+/** Peregrina's prologue (the cinematic) from «Empezar», untouched: its whole way in (6.6). */
+const sceneIntro: Flow = async (page, m) => {
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await m.hold();
+  await page.click("#m-empezar");
+  await m.at("scene-intro", [0, 300, 360, 420, 900, 1500, 1800, 2400, 2680, 2800, 3200]);
+  await m.release();
+  return "scene-intro";
+};
+
+/** The prologue hurried: a tap at 600 ms (6.6, M10): the way in in 120 ms, the line 500 ms later. */
+const sceneHurry: Flow = async (page, m) => {
+  await page.goto("./");
+  await pastTitle(page);
+  await page.click("#m-elegir-peregrina");
+  await m.hold();
+  await page.click("#m-empezar");
+  await m.at("scene-hurry", [0, 600]);
+  m.mark();
+  await page.click("#m-capitulo-seguir");
+  await m.at("scene-hurry-tap", [0, 60, 120, 250, 375, 500, 700]);
+  await m.release();
+  return "scene-hurry";
+};
+
+/**
+ * A box scene's way in (the scene before the week-10 race, after the emblem): the card out and
+ * the dialogue box in with the first line (6.6, M5).
+ */
+const sceneBox: Flow = async (page, m) => {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  await m.hold();
+  await page.click("#m-efectos");
+  await m.until(async () => (await page.locator("#m-capitulo").count()) === 1, 3000);
+  await m.at("scene-box", [0, 300, 1200, 1800, 2550, 2680, 2800, 2900, 3020]);
+  await m.release();
+  return "scene-box";
 };
 
 /** A skipped scene has left: its exit (0.8 s), then its notice, have had their time. */
@@ -482,26 +527,41 @@ const PLAN: readonly {
       digest,
       raceInOut,
       endGlide,
+      sceneIntro,
+      sceneHurry,
+      sceneBox,
     },
   },
   {
     viewport: PHONE,
     motion: "reduce",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut },
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut, sceneIntro, sceneBox },
   },
   {
     viewport: PHONE_S,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut },
+    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, raceInOut, sceneIntro, sceneBox },
   },
   { viewport: SMALL, motion: "normal", flows: { menuTrain, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
-  { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek, raceInOut } },
+  { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek, raceInOut, sceneIntro } },
   { viewport: TABLET, motion: "reduce", flows: { menuTrain, raceInOut } },
   {
     viewport: DESK,
     motion: "normal",
-    flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, notice, raceInOut, endGlide },
+    flows: {
+      menuTrain,
+      effects,
+      raceWeek,
+      raceEnd,
+      inheritance,
+      notice,
+      raceInOut,
+      endGlide,
+      sceneIntro,
+      sceneHurry,
+      sceneBox,
+    },
   },
   { viewport: DESK, motion: "reduce", flows: { menuTrain, endGlide } },
 ];
