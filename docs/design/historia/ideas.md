@@ -450,3 +450,12 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   con las palabras del dueño; el capítulo cierra con el viejo, dormido, acertando sobre el hombro.
 - **Decidido (2026-11-17):** el viejo también duerme: Milana duerme porque todo le cansa; el viejo
   duerme y lo ve todo.
+
+### I21 · Todo el texto de juego a español neutro latino (2026-11-17)
+
+- Estado: **decidida** (2026-11-17): «Definitivamente a neutro latino». Las 17 escenas y los 9 chats
+  de Peregrina pasan de voseo a tuteo **cuando termine el trabajo de las pantallas en `playtest-ui`**
+  (los textos los leen sus pruebas). Va con plan, como contenido (`packages/content/text/es.json`).
+- Abierto: si también pasa la interfaz. Hay voseo claro en unas 40 cadenas de interfaz (por ejemplo
+  `ui.home.lead`: «Elegí una corredora, entrenala…»), además de las escenas (conteo aproximado con una
+  búsqueda de formas como «elegí», «mirá», «tenés», 2026-11-17).
