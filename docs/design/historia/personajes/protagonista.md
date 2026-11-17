@@ -17,9 +17,10 @@ Borrador con las palabras del dueño. Id provisorio: `protagonista`. Sin nombre 
   al principio (`../secretos.md` S2).
 - Su entrenador es un personaje oficial, tan nuevo como ella (`entrenador.md`).
 - Arranca trabajando en el hangar de una escudería chica: limpia, carga piezas y mira correr a las
-  demás.
+  demás. Es **Vuela Alto** (celeste y blanco, descuidada, una sola Falconess activa); llega por una
+  oferta de trabajo (2026-11-17). Su modelo a seguir es esa Falconess activa.
 
 ## Abierto
 
-Nombre; edad; de dónde viene; cuál es esa escudería chica; cómo habla; qué quiere más allá
+Nombre; edad; de dónde viene; cómo habla; qué quiere más allá
 de mejorar.

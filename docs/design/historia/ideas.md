@@ -369,3 +369,16 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Decidido (2026-11-16): el Modo Historia de cada estrella tiene escenas propias,** más largas y
   con su entrenador canon. La temporada sigue con sus escenas y el entrenador neutro: cuentan lo
   mismo desde dos lugares. Las 17 escenas de Peregrina de hoy son de temporada.
+
+### I15 · Vuela Alto, la escudería de la protagonista (2026-11-17)
+
+> «Una escudería que no es nueva, pero que está súper descuidada, y lo mejor? sus colores son celeste
+> y blanco, y se llama Vuela Alto (serían de "Argentina"). La protagonista cae ahí por una job offer,
+> tienen solo 1 Falconess activa y que corre y sería como la modelo a seguir (como Silence Suzuka de
+> Special Week) para la protagonista.»
+- Estado: **decidida** (2026-11-17). Va a: `docs/world.md` §5, biblias, relaciones.
+- Personaje nuevo: la única Falconess activa de Vuela Alto, modelo a seguir de la protagonista.
+  Sin nombre ni ficha.
+- Abierto: si Vuela Alto es una de las escuderías fundadoras (y entonces la casa del bando de la
+  abuela); quién es su Falconess activa.
+- Tema de la historia principal decidido el mismo día: la luz (`docs/world.md` §5b).

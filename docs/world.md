@@ -112,7 +112,18 @@ Abierto:
   (decidido 2026-11-16). Hoy son cinco: Kōryū Racing (Peregrina), Altair Systems (Cernícala), Boneyard Works (Caracara),
   Steinhaus Aerowerk y Lumière Aéronef (sin Falconess jugable) (`docs/BRIEF.md` §7).
 - En el multijugador, los grupos de jugadores también se llaman escuderías (`ideas.md` I5).
-- Abierto: la historia de cada una, de qué pueblo viene y quién la dirige.
+- **Vuela Alto (dueño, 2026-11-17):** escudería que no es nueva pero está muy descuidada. Colores
+  celeste y blanco; inspiración argentina («serían de Argentina»), en un país propio del mundo. Tiene
+  una sola Falconess activa. Ahí empieza la protagonista de la historia principal, por una oferta de
+  trabajo (`docs/design/historia/ideas.md` I15).
+- Abierto: si Vuela Alto es una de las escuderías fundadoras (hoy el texto dice cinco, las del
+  juego); la historia de cada una, de qué pueblo viene y quién la dirige.
+
+## 5b. El tema: la luz
+
+**Decidido (dueño, 2026-11-17):** la «luz» que la fundadora no quiere dejar que se extinga es el tema
+de la historia principal: «competencia, esperanza, el saber que hay algo después de tanto caos».
+Nació en la carrera de la paz; la escudería sombra la amenaza; la protagonista la hereda.
 
 ## 6. Las carreras
 
