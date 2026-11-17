@@ -28,6 +28,15 @@ Borrador con las palabras del dueño. Id provisorio: `viejo-entrenador`. Sin nom
 - Dormir era la marca de Milana (`../ideas.md` I14). Diferencia propuesta: Milana duerme porque
   todo le cansa; el viejo duerme y lo ve todo. Confirmado por el dueño el 2026-11-17.
 
+## Su nombre (dueño, 2026-11-17)
+
+> «Sería gracioso que su nombre cambie, entre el viejo, el viejo durmiente, el viejo sabio, etc. Que
+> ni ellos sepan su nombre y ya lo hayan tomado así. Es el viejo en su modo X o el viejo haciendo X.»
+- En el juego, la etiqueta de quien habla cambia con lo que está haciendo: «El viejo, dormido», «El
+  viejo, más dormido», «El viejo, sabio (no se sabe de qué)». Probado en el prototipo.
+- Propuesta: su nombre real es parte del secreto S4. El entrenador, que estudió historia, conoce de
+  los libros el nombre del spotter legendario; el día que lo escucha, entiende quién duerme en la silla.
+
 ## Abierto
 
 Nombre; edad; si fue spotter o mensajero en la guerra; si alguna de sus frases sin sentido termina

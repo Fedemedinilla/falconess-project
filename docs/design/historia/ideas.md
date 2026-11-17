@@ -516,3 +516,11 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Estado: **decidida** (2026-11-17). Los nombres del elenco salen de orígenes variados, como en un
   país de inmigración; la inspiración argentina de Vuela Alto está en la escudería, no en el origen de
   cada persona.
+
+### I27 · Nombres que dicen algo (2026-11-17)
+
+- Pedido del dueño: la protagonista, «pequeña, naive, la que dan ganas de proteger»; la veterana,
+  «solitaria, adulta, sarcástica»; el entrenador, un nombre que le quede mal, como los que eligen
+  padres que esperaban mucho (sin Máximo ni Magno, por obvios); el viejo, sin nombre: su etiqueta
+  cambia según lo que hace (decidido, `personajes/viejo-entrenador.md`).
+- Opciones propuestas en el chat de la sesión 1; esperan elección.
