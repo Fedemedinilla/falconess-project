@@ -1946,6 +1946,6 @@
   "ui.m.pace.normal": "Normal",
   "ui.m.pace.fast": "Fast",
   "ui.m.pace.direct": "Direct",
-  "ui.m.story.passed": "You saw it in another season.",
-  "ui.m.story.digest": "Digest"
+  "ui.m.story.passed": "It already came up in another season.",
+  "ui.m.story.digest": "Quick version"
 }

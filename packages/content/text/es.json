@@ -1946,6 +1946,6 @@
   "ui.m.pace.normal": "Normal",
   "ui.m.pace.fast": "Rápido",
   "ui.m.pace.direct": "Directo",
-  "ui.m.story.passed": "Ya la viste en otra temporada.",
-  "ui.m.story.digest": "Resumen"
+  "ui.m.story.passed": "Ya salió en otra temporada.",
+  "ui.m.story.digest": "Versión rápida"
 }
