@@ -144,7 +144,13 @@ Nació en la carrera de la paz; la escudería sombra la amenaza; la protagonista
 - **Decidido (dueño, 2026-11-17):** ni oscuro ni color de rosa. «Me gustaría no crear un mundo grim y
   dark o depresivo, pero tampoco algo color de rosas como Umamusume. Así que quiero que haya
   temáticas importantes y quizás no tan claras o exploradas. Neurodivergencia o salud mental.»
-- Abierto: cómo se tratan esos temas (`docs/design/historia/ideas.md` I16).
+- **Decidido (dueño, 2026-11-17): se muestran, no se nombran.** «Se muestran en rasgos y en acciones.
+  En miedos y en decisiones, en gustos y disgustos.» Nunca tapados por lo tierno: no como Rice Shower
+  en Umamusume, donde «claramente tiene varios síntomas, pero porque es cute y shy, se tapa todo lo
+  que podría explorarse mejor». Regla para escribir: un tema nunca es algo que se cura ni lo único
+  que define a una Falconess.
+- Abierto: si los sentidos aumentados de las Falconess tienen que ver con esto (dueño: «se verá
+  luego»).
 
 ## 9. Glosario
 

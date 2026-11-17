@@ -391,7 +391,9 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 
 ### I16 · Temas importantes: neurodivergencia y salud mental (2026-11-17)
 
-- Estado: **decidida** la intención (2026-11-17); cómo tratarlos, en discusión. Va a: `docs/world.md`
+- Estado: **decidida** (2026-11-17): se muestran en rasgos, acciones, miedos, decisiones, gustos y
+  disgustos, sin nombrar diagnósticos y sin taparlos con lo tierno (`docs/world.md` §8). Abierto: si
+  se cruzan con los sentidos aumentados. Va a: `docs/world.md`
   §8 (tono) y a las biblias.
 - Ya hay material en el canon que toca esto sin nombrarlo: después de la Larga, Peregrina «no supo
   cómo actuar ni qué sentir: no lloró, no se enojó, no le salía nada» (`docs/design/canon-peregrina.md`
