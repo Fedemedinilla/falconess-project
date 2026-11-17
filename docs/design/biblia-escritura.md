@@ -1125,20 +1125,23 @@ Agregado por el dueño el 2026-11-17, después de probarlos en el prototipo del 
 
 ### (b) Vocabulario
 
-| Efecto                    | Cómo se escribe en el guion                                                                        | Para qué                                                |
-| ------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Texto rápido              | `[EFECTO: texto rápido]`                                                                           | Urgencia, reflejo, una ráfaga                           |
-| Texto lento               | `[EFECTO: texto lento]`                                                                            | Duda, cansancio, un recuerdo                            |
-| Pausa dentro de la línea  | una barra vertical en el texto, después de la palabra donde se frena (`Vuela Al…` + barra + ` O.`) | El tiempo de leer, de dudar o de entender               |
-| Énfasis                   | asteriscos en el texto: `a las *cinco*`                                                            | La palabra que importa; sale en el color de quien habla |
-| Sacudida del globo        | `[EFECTO: sacudida]`                                                                               | Un grito, un freno en seco                              |
-| Temblor del escenario     | `[SFX: …]` + `[EFECTO: temblor]`                                                                   | Un golpe físico: algo que se cae, encastra o choca      |
-| Susurro                   | `[EFECTO: susurro]`                                                                                | Un aparte, algo dicho por lo bajo                       |
-| Entrada de la frase clave | la línea marcada como clave                                                                        | La línea que queda                                      |
+| Efecto                    | Cómo se escribe en el guion                                                                        | Para qué                                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Texto rápido              | `[EFECTO: texto rápido]`                                                                           | Urgencia, reflejo, una ráfaga                                                  |
+| Texto lento               | `[EFECTO: texto lento]`                                                                            | Duda, cansancio, un recuerdo                                                   |
+| Pausa dentro de la línea  | una barra vertical en el texto, después de la palabra donde se frena (`Vuela Al…` + barra + ` O.`) | El tiempo de leer, de dudar o de entender                                      |
+| Énfasis                   | asteriscos en el texto: `a las *cinco*`                                                            | La palabra que importa; sale en el color de quien habla                        |
+| Sacudida del globo        | `[EFECTO: sacudida]`                                                                               | Un grito, un freno en seco                                                     |
+| Temblor del escenario     | `[SFX: …]` + `[EFECTO: temblor]`                                                                   | Un golpe físico: algo que se cae, encastra o choca                             |
+| Susurro                   | `[EFECTO: susurro]`                                                                                | Un aparte, algo dicho por lo bajo                                              |
+| Entrada de la frase clave | la línea marcada como clave                                                                        | La línea que queda                                                             |
+| Escribe y borra           | el texto que se borra va entre virgulillas: `~¡¿Yo vuel~`                                          | Desborde: ansiedad o entusiasmo que no la deja frenar (dueño: la protagonista) |
+| Globo que tarda           | `[EFECTO: globo que tarda]`                                                                        | Silencio incómodo antes de contestar: el globo aparece con puntos de espera    |
 
-Ideas sin probar, para cuando hagan falta: tachar y corregir (alguien se desdice en el mismo globo),
-un globo que tarda en aparecer (alguien duda antes de hablar) y una interferencia visual reservada
-para un momento inquietante de la historia.
+Escribe y borra y globo que tarda: aprobados por el dueño el 2026-11-17 y probados en el prototipo.
+Ideas sin probar, para cuando hagan falta: tachar y dejar a la vista lo tachado (alguien corrige lo
+que anotó, por ejemplo en un cuaderno) y una interferencia visual reservada para un momento
+inquietante de la historia.
 
 ### (c) Reglas de uso
 
@@ -1152,6 +1155,11 @@ para un momento inquietante de la historia.
    entera de golpe.
 7. **El susurro no esconde información necesaria**: es un aparte que se puede perder sin perder la
    escena.
+8. **Escribe y borra, una vez por escena y solo en desbordes**: lo borrado son arranques de la misma
+   frase, nunca información que el jugador necesite. Va con texto rápido.
+9. **Globo que tarda, solo para el silencio incómodo**: la línea que llega después es corta y seca.
+   No confundir con el globo «…», que es un silencio como respuesta; el globo que tarda es la duda
+   antes de responder.
 
 ### (d) Errores comunes
 
@@ -1161,6 +1169,18 @@ para un momento inquietante de la historia.
 - Usar el texto lento para alargar una línea débil.
 
 ### (e) Ejemplos antes/después
+
+**Ejemplo 12.0: el desborde y el silencio incómodo**
+
+```
+KES [concentración]: Mañana corrés la primera. Largás vos.
+BRISA [sorpresa]: ~¿Yo larg~~¿En serio me~¿Yo largo? [EFECTO: texto rápido]
+FERRÁN [concentración]: Tengo el informe del ala. Lo hice anoche, todo.
+KES [aburrimiento]: El ala es de otra corredora. [EFECTO: globo que tarda]
+```
+_Por qué funciona:_ Brisa arranca tres veces la misma pregunta y el jugador ve el entusiasmo sin que
+nadie lo nombre; la demora antes de la respuesta de Kes es el silencio incómodo, y su línea corta es
+el remate.
 
 **Ejemplo 12.1: el golpe**
 
