@@ -425,6 +425,12 @@ FERRÁN [calma]: Nunca. ¿Qué tiempo hiciste?
    - `[ILUSTRACIÓN: Brisa y Kes en la recta final, alas desplegadas]`
    - `[PAUSA]`: retención de un tiempo antes del siguiente globo.
    - `[EFECTO: …]`: efecto de texto o de movimiento sobre un globo o el escenario (ver Tema 12).
+   - `[GESTO: …]`: lo que hace el personaje mientras habla. **Mientras el juego no tenga animaciones
+     (dueño, 2026-11-17), el gesto se muestra escrito** en cursiva arriba de la línea, dentro del
+     mismo globo. Reglas: una sola acción observable, en presente y en tercera persona, de unas doce
+     palabras como máximo, nunca un sentimiento («Señala con el pulgar, sin mirar, la silla plegable
+     del rincón», no «Señala, molesta»). Si la línea depende de un gesto («Ahí»), el gesto es
+     obligatorio. Los gestos no cuentan como tarjetas de narración.
    - `[ACOTACIÓN: gesto]`: solo si el arte o la animación lo pueden representar. Si no, convertí el gesto en línea o en expresión.
 3. **Qué describir y qué no**: describí lo que cambia (alguien entra, el ala se rompe, empieza a llover). No describas lo que el fondo ya muestra.
 4. **Ilustración a pantalla completa**: una por capítulo, a lo sumo dos, y siempre en el giro mayor. Cuando aparece, callá la narración: la imagen sola, y después un globo corto.
@@ -888,6 +894,12 @@ _Por qué funciona:_ el peso del mundo se dice una vez y se pincha con humor. El
 ---
 
 ## Tema 10. Castellano rioplatense escrito y traducción al inglés
+
+> **Decisión del dueño (2026-11-17), manda sobre este tema:** el juego se escribe en **español neutro
+> latinoamericano**, con tuteo («tú tienes», «mira», «anota»), no en voseo rioplatense. «Usted»
+> sigue sirviendo para marcar distancia (la recién llegada con la veterana). Lo que sigue de este tema
+> vale como referencia del rioplatense (por ejemplo, para la voz de un personaje concreto si el dueño
+> lo pide) y para la traducción al inglés; las reglas de voseo de abajo ya no son la norma de la casa.
 
 ### (a) Principios
 

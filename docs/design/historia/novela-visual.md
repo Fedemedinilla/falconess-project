@@ -66,6 +66,10 @@ blanco y el texto «VUELA ALTO» escrito por el juego encima, con la T caída ju
 el hueco de la pieza que falta. Los personajes de la izquierda se espejan para mirar al centro. El cuadro de la carrera de la paz (óleo, arte
 provisional del dueño) reemplaza al dibujo de prueba en la ilustración del giro mayor.
 
+**Versión 16 (2026-11-17), pedidos del dueño:** todo el texto en español neutro latinoamericano
+(tuteo en vez de voseo), y gestos escritos en cursiva arriba de cada línea, porque todavía no hay
+animaciones («el "ahí" cuando le preguntan sobre su entrenador, no se ve que esté apuntando a nada»).
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
