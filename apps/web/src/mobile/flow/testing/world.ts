@@ -22,7 +22,6 @@ import { WeekStore } from "../decidedWeek";
 import { deriveFlow } from "../derive";
 import { factsOf } from "../facts";
 import { InspirationStore } from "../inspirations";
-import type { FlowPolicy } from "../policy";
 import type { Beat, DecidedWeek, Flow, FlowFacts, InstantBeat, WeekRecord } from "../types";
 import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "../ui";
 import { testScenes } from "./content";
@@ -102,7 +101,6 @@ export type TraceEvent =
   | { readonly type: "probe"; readonly at: At; readonly name: string; readonly changed: boolean };
 
 export type WorldOptions = {
-  readonly policy: FlowPolicy;
   readonly pace?: Pace;
   readonly reduced?: boolean;
   readonly scenes?: readonly StoryScene[];
@@ -119,7 +117,6 @@ export type StartOptions = {
 export type Now = { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
 
 export type World = {
-  readonly policy: FlowPolicy;
   readonly pace: Pace;
   readonly reduced: boolean;
   readonly trace: TraceEvent[];
@@ -146,8 +143,7 @@ export type World = {
   probe(name: string, fn: (cmd: Commands) => void): void;
 };
 
-export function createWorld(o: WorldOptions): World {
-  const policy = o.policy;
+export function createWorld(o: WorldOptions = {}): World {
   const pace = o.pace ?? "normal";
   const reduced = o.reduced ?? false;
   const scenes = o.scenes ?? testScenes();
@@ -182,7 +178,7 @@ export function createWorld(o: WorldOptions): World {
   };
   const now = (): Now => {
     const facts = factsNow();
-    const flow = deriveFlow(game.context(), facts, ui, policy, last);
+    const flow = deriveFlow(game.context(), facts, ui, last);
     last = flow;
     return { flow, facts, ui };
   };
@@ -268,7 +264,7 @@ export function createWorld(o: WorldOptions): World {
       boxed.add(facts.run.fp);
       trace.push({ type: "box", at: at(), fp: facts.run.fp });
     }
-    const again = deriveFlow(ctx, factsNow(), ui, policy, flow);
+    const again = deriveFlow(ctx, factsNow(), ui, flow);
     trace.push({
       type: "frame",
       at: at(),
@@ -350,7 +346,6 @@ export function createWorld(o: WorldOptions): World {
   };
 
   const world: World = {
-    policy,
     pace,
     reduced,
     trace,

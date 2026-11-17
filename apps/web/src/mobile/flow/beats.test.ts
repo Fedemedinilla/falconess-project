@@ -21,8 +21,7 @@ import { raceWings } from "./week";
 
 /**
  * The beat queue (plan §1.4, §1.5) on real games: a `GameController` on a memory store, the seeded
- * saves of the phone e2e (impl-log 1.2's facts). The queue takes no policy since 6.3: every order
- * it gives is the designed one (§1.4).
+ * saves of the phone e2e (impl-log 1.2's facts). Every order it gives is the designed one (§1.4).
  */
 
 const HANGAR = ["shiden", "mule", "nimbus", "falke"];

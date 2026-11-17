@@ -4,17 +4,15 @@ import { describe, expect, it } from "vitest";
 import type { WeekActionInput } from "../../screens/model/position";
 import type { Pace } from "../pace";
 import { isInstant } from "./beats";
-import { TARGET_POLICY } from "./policy";
 import { parents } from "./testing/bots";
 import { label } from "./testing/invariants";
 import { createWorld, type TraceEvent, type World } from "./testing/world";
 import type { Beat } from "./types";
 
 /**
- * The expected sequences of plan Appendix A, on the node world under the target policy: what the
- * player sees and what each tap or timer ends, in order. Each comes from a seeded save of the phone
- * e2e (guarded by `scripts/e2e-saves.test.ts`) or from a bounded search, which fails saying what
- * the content moved.
+ * The expected sequences of plan Appendix A, on the node world: what the player sees and what each
+ * tap or timer ends, in order. Each comes from a seeded save of the phone e2e (guarded by
+ * `scripts/e2e-saves.test.ts`) or from a bounded search, which fails saying what the content moved.
  */
 
 const DRIFT = "content moved: search again or regenerate the saves (WRITE_SAVES=1)";
@@ -80,10 +78,9 @@ function play(w: World, stop?: (b: Beat) => boolean): void {
   throw new Error(`no idle moment: ${label(w.now().flow.top)}`);
 }
 
-const world = (pace: Pace = "normal", reduced = false): World =>
-  createWorld({ policy: TARGET_POLICY, pace, reduced });
+const world = (pace: Pace = "normal", reduced = false): World => createWorld({ pace, reduced });
 
-describe("Appendix A: the expected sequences (target policy)", () => {
+describe("Appendix A: the expected sequences", () => {
   it("A.5 the season's start with parents: the prologue over the menu, then the inheritance card (D2)", () => {
     let w: World | undefined;
     for (let i = 1; i <= 20 && !w; i++) {

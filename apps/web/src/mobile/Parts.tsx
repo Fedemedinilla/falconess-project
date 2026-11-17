@@ -199,7 +199,20 @@ type HudProps = {
   inert?: boolean;
 };
 
-/** The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood. */
+/**
+ * Whether `value` changed since this part mounted: the HUD then shows the change as it happens (O3:
+ * its week turns when the week's effects lift), never when it comes back with another value.
+ */
+function useChanged<T>(value: T): boolean {
+  const [first] = useState(value);
+  return value !== first;
+}
+
+/**
+ * The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood.
+ * While the week's effects play it reads the week just played; when they lift, the calendar turns
+ * its page (each new number flips in) and the mood chip blends into its new tone (O3).
+ */
 export function Hud({
   inert = false,
   hard = false,
@@ -215,6 +228,8 @@ export function Hud({
   content,
 }: HudProps) {
   const tone = moodTone(mood);
+  const turned = useChanged(turn);
+  const moved = useChanged(mood);
   return (
     <header className={s.hud} inert={inert || undefined}>
       <div
@@ -231,7 +246,7 @@ export function Hud({
         >
           {hard ? ui("ui.m.difficulty.exigente") : ui("ui.m.week")}
         </div>
-        <div className={s.calN} aria-hidden="true">
+        <div key={turn} className={cx(s.calN, turned && s.calFlip)} aria-hidden="true">
           {turn}
         </div>
         <div className={s.calS} aria-hidden="true">
@@ -249,8 +264,16 @@ export function Hud({
             aria-label={ui("ui.m.mood.aria", { mood: gameText(`mood.${mood}`) })}
             role="img"
           >
-            <Glyph name={MOOD_GLYPH[mood] ?? "right"} size={15} weight={2.6} />
-            <span aria-hidden="true">{gameText(`mood.${mood}`)}</span>
+            <Glyph
+              key={`glyph:${mood}`}
+              name={MOOD_GLYPH[mood] ?? "right"}
+              size={15}
+              weight={2.6}
+              className={moved ? s.moodIn : undefined}
+            />
+            <span key={`word:${mood}`} className={moved ? s.moodIn : undefined} aria-hidden="true">
+              {gameText(`mood.${mood}`)}
+            </span>
           </div>
         </div>
       </div>

@@ -19,7 +19,6 @@ import type { WeekStore } from "./flow/decidedWeek";
 import { deriveFlow } from "./flow/derive";
 import { factsOf } from "./flow/facts";
 import type { InspirationStore } from "./flow/inspirations";
-import { ACTIVE_POLICY } from "./flow/policy";
 import type { Flow, FlowFacts } from "./flow/types";
 import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./flow/ui";
 import type { Pace } from "./pace";
@@ -128,10 +127,7 @@ export function useFlow({
   // what the last commit showed: the next derive interns against it, a handler reads its latches
   const factsRef = useRef(facts);
   const lastRef = useRef<Flow | undefined>(undefined);
-  const flow = useMemo(
-    () => deriveFlow(ctx, facts, ui, ACTIVE_POLICY, lastRef.current),
-    [ctx, facts, ui],
-  );
+  const flow = useMemo(() => deriveFlow(ctx, facts, ui, lastRef.current), [ctx, facts, ui]);
   // «Ritmo» and reduced motion apply where they cannot change what is playing
   if (followsMotion(flow.top) && (motion.pace !== livePace || motion.reduced !== liveReduced))
     setMotion({ pace: livePace, reduced: liveReduced });
@@ -163,7 +159,7 @@ export function useFlow({
       const f = factsNow();
       const u = uiRef.current;
       return {
-        flow: deriveFlow(game.context(), f, u, ACTIVE_POLICY, lastRef.current),
+        flow: deriveFlow(game.context(), f, u, lastRef.current),
         facts: f,
         ui: u,
       };

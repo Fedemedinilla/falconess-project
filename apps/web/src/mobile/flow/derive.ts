@@ -9,7 +9,6 @@ import type { ActionKind } from "../../screens/model/actions";
 import { isRaceWeek } from "../../screens/model/position";
 import { paceScale } from "../pace";
 import { beatsOf, isInstant, stepFx } from "./beats";
-import type { FlowPolicy } from "./policy";
 import { digestFor } from "./scenes";
 import { addedRace } from "./steps";
 import { resultTimeline } from "./trainResult";
@@ -125,13 +124,7 @@ function kept<T extends object>(prev: T | undefined, next: T): T {
  * `screen` and `layer` keep their identity while they say the same, so a component keyed on them
  * never restarts.
  */
-export function deriveFlow(
-  ctx: SimContext,
-  f: FlowFacts,
-  ui: UiState,
-  p: FlowPolicy,
-  prev?: Flow,
-): Flow {
+export function deriveFlow(ctx: SimContext, f: FlowFacts, ui: UiState, prev?: Flow): Flow {
   const beats = beatsOf(ctx, f, ui);
   const at = beats.findIndex((b) => !isInstant(b));
   const top = beats[0];
@@ -140,7 +133,7 @@ export function deriveFlow(
   const state = f.run.run.state;
   const ended = state.status === "ended";
   const card = beats.find((b) => b.kind === "position");
-  const shown = shownOf(ctx, f, ui, p, {
+  const shown = shownOf(ctx, f, ui, {
     beat,
     next: beats.slice(at + 1).find((b) => !isInstant(b)),
     card,
@@ -213,7 +206,6 @@ function shownOf(
   ctx: SimContext,
   f: FlowFacts,
   ui: UiState,
-  p: FlowPolicy,
   q: {
     /** The first beat that is not instant: the one on screen. */
     readonly beat: Beat;
@@ -258,10 +250,10 @@ function shownOf(
       const layer: Layer = { kind: "fx", key: beat.key, fx: beat.fx };
       if (beat.part === "action")
         return { screen: menu, mode: "menu", layer, hud: raceWeekHud(beat.landed), racing: false };
+      // the week just played (O3): its calendar, goal and mood until the effects lift; the vigor
+      // where a training's result (or the race mode's card) already put it, else the week's own
       const before = step?.before ?? state;
-      const hud: HudView = p.fxHud
-        ? { ...hudOf(before), vigor: beat.landed && step ? step.after : before }
-        : hudOf(state);
+      const hud: HudView = { ...hudOf(before), vigor: beat.landed && step ? step.after : before };
       return ended
         ? {
             screen: { kind: "end", inert: true },

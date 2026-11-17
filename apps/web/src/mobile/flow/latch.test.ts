@@ -10,7 +10,6 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { Pace } from "../pace";
 import { followsMotion } from "./beats";
 import { deriveFlow } from "./derive";
-import { TARGET_POLICY } from "./policy";
 import { type WalkSpec, walkMatrix } from "./testing/bots";
 import { walkOf } from "./testing/invariants";
 import type { Beat, Flow } from "./types";
@@ -21,7 +20,6 @@ const SPECS: readonly WalkSpec[] = [
   ...walkMatrix("caracara", { all: false }),
   {
     name: "v2 caracara trainer",
-    policy: TARGET_POLICY,
     falconessId: "caracara",
     seeds: ["walk-3"],
     bot: "trainer",
@@ -45,7 +43,7 @@ function* frames(): Generator<{
     for (const e of w.trace) {
       if (e.type !== "frame") continue;
       const others = MOTIONS.map((m) =>
-        deriveFlow(w.ctx, { ...e.facts, pace: m.pace, reduced: m.reduced }, e.ui, w.policy),
+        deriveFlow(w.ctx, { ...e.facts, pace: m.pace, reduced: m.reduced }, e.ui),
       );
       const where = `${spec.name} season ${e.at.season} move ${e.at.move}`;
       yield { top: e.flow.top, flow: e.flow, others, where };

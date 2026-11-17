@@ -17,7 +17,6 @@ import { vigorOf } from "../../../screens/model/actions";
 import { isRaceWeek, type WeekActionInput } from "../../../screens/model/position";
 import type { Pace } from "../../pace";
 import { isInstant } from "../beats";
-import { ACTIVE_POLICY, type FlowPolicy, TARGET_POLICY } from "../policy";
 import type { Beat } from "../types";
 import { loadSave } from "./game";
 import type { Walk } from "./invariants";
@@ -374,7 +373,6 @@ function playIntent(w: World, intent: Intent): boolean {
 /** A walk: one world, a bot, and the seasons it plays there one after the other. */
 export type WalkSpec = {
   readonly name: string;
-  readonly policy: FlowPolicy;
   readonly falconessId: string;
   /** Each a season, played in the same browser (a later one passes the scenes an earlier one saw). */
   readonly seeds: readonly string[];
@@ -391,7 +389,6 @@ const BOTS: Readonly<Record<WalkSpec["bot"], IdlePolicy>> = { restHeavy, trainer
 /** Play the walk's seasons, each to its end. */
 export function runWalk(spec: WalkSpec): Walk {
   const w = createWorld({
-    policy: spec.policy,
     ...(spec.pace === undefined ? {} : { pace: spec.pace }),
     ...(spec.reduced === undefined ? {} : { reduced: spec.reduced }),
   });
@@ -408,7 +405,6 @@ export function runWalk(spec: WalkSpec): Walk {
   });
   return {
     name: spec.name,
-    policy: spec.policy,
     pace: w.pace,
     reduced: w.reduced,
     ctx: w.ctx(),
@@ -435,15 +431,13 @@ export function walkMatrix(
   o: { readonly all: boolean; readonly exigente?: boolean },
 ): WalkSpec[] {
   const seeds = ["walk-3", "walk-4"];
-  const core = (policy: FlowPolicy, tag: string): WalkSpec[] => [
-    { name: `${tag} trainer`, policy, falconessId, seeds, bot: "trainer", parents: parents() },
-    { name: `${tag} restHeavy`, policy, falconessId, seeds, bot: "restHeavy" },
+  const specs: WalkSpec[] = [
+    { name: "trainer", falconessId, seeds, bot: "trainer", parents: parents() },
+    { name: "restHeavy", falconessId, seeds, bot: "restHeavy" },
   ];
-  const specs = [...core(TARGET_POLICY, "target"), ...core(ACTIVE_POLICY, "active")];
   if (!o.all) return specs;
   const one = (name: string, extra: Partial<WalkSpec>): WalkSpec => ({
-    name: `target trainer ${name}`,
-    policy: TARGET_POLICY,
+    name: `trainer ${name}`,
     falconessId,
     seeds: ["walk-5"],
     bot: "trainer",

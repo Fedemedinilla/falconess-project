@@ -3,6 +3,7 @@ import { t } from "./fixtures";
 import {
   continueRun,
   pastTitle,
+  runRace,
   seedRun,
   startMobile,
   test,
@@ -28,6 +29,9 @@ import { coverage, freezeAt, opacityOf } from "./motion";
  * does the race mode take its place under it (M2, rule 11); after its 1.24 s it fades out over
  * 280 ms as an id-less copy onto the race mode (O6): the scene before the race, on its own black,
  * or the decided card, which takes «Correr» at once.
+ * 6.10: while the week's effects play, the HUD reads the week just played (O3): its calendar, goal
+ * and mood flip to the next week when the effects lift (the calendar turns its page), and the vigor
+ * bar stays where the week's training already put it.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -634,4 +638,89 @@ test("the emblem with no scene after it: the race card takes the menu's place on
   await expect(page.locator("#m-correr")).toBeFocused();
   await page.click("#m-correr", { timeout: 2000 });
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+});
+
+/** The vigor bar's value (`data-vigor`). */
+function vigorOf(page: Page): Promise<string | null> {
+  return page.locator("#m-vigor").getAttribute("data-vigor");
+}
+
+/** Counts the calendar's page turns from now on (its number's flip starting), by the animation's name. */
+async function watchFlips(page: Page): Promise<() => Promise<number>> {
+  await page.evaluate(() => {
+    let flips = 0;
+    document.addEventListener("animationstart", (e) => {
+      if (e.animationName.includes("calFlip")) flips++;
+    });
+    Reflect.set(window, "__flips", () => flips);
+  });
+  return () =>
+    page.evaluate(() => {
+      const read: unknown = Reflect.get(window, "__flips");
+      return typeof read === "function" ? Number(read()) : -1;
+    });
+}
+
+test("while the week's effects play, the HUD reads the week just played; it turns to the next one when they lift (O3)", async ({
+  page,
+}) => {
+  await startMobile(page);
+  const flips = await watchFlips(page);
+  await page.click("#m-descansar");
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  // week 1 under its own effects: the week she rested in, its page not turned
+  expect(await week(page)).toBe(1);
+  expect(await flips()).toBe(0);
+  await page.click("#m-efectos");
+  await expect.poll(() => week(page)).toBe(2);
+  // the calendar turns its page once, as the effects leave
+  await expect.poll(flips).toBe(1);
+});
+
+test("after a race week's training, the race's effects keep the vigor where the training put it, on the week raced (O3, L3)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  const rested = await vigorOf(page);
+  await page.click("#m-entrenar");
+  await page.dblclick("#m-entrenar-technique");
+  await expect(page.locator("#m-resultado")).toBeVisible();
+  await toPosition(page);
+  // the training's vigor landed during its result: the card's bar holds it
+  const trained = await vigorOf(page);
+  expect(trained).not.toBe(rested);
+  await page.click("#m-correr");
+  await runRace(page);
+  await expect(page.locator("#m-efectos")).toBeVisible();
+  // the race's effects: the week raced, and the bar where the week left it (never back to before)
+  expect(await week(page)).toBe(10);
+  const during = await vigorOf(page);
+  expect(during).not.toBe(rested);
+  await page.click("#m-efectos");
+  await expect.poll(() => week(page)).toBe(11);
+  // the effects lifted: the bar did not move
+  expect(await vigorOf(page)).toBe(during);
+});
+
+test.describe("reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("the HUD turns to the next week at once when the effects lift, with no page turning (O3, §2.4)", async ({
+    page,
+  }) => {
+    await startMobile(page);
+    const flips = await watchFlips(page);
+    await page.click("#m-descansar");
+    await expect(page.locator("#m-efectos")).toBeVisible();
+    expect(await week(page)).toBe(1);
+    await page.click("#m-efectos");
+    await expect.poll(() => week(page)).toBe(2);
+    // a frame later still no page turning
+    await page.evaluate(
+      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+    );
+    expect(await flips()).toBe(0);
+  });
 });

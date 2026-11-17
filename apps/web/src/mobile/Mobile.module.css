@@ -120,6 +120,17 @@
   line-height: 50px;
   margin-top: 4px;
 }
+/* O3: the calendar turns its page when the week it shows changes (as the week's effects lift) */
+.calFlip {
+  transform-origin: 50% 0;
+  animation: calFlip var(--m-dur-layer-out) var(--m-ease-out) backwards;
+}
+@keyframes calFlip {
+  from {
+    opacity: 0;
+    transform: perspective(240px) rotateX(-80deg);
+  }
+}
 .calS {
   font-size: 13px;
   font-weight: 600;
@@ -302,6 +313,19 @@
   font-weight: 700;
   font-size: 16px;
   white-space: nowrap;
+  /* O3: a new mood blends in (its face fades in, .moodIn) */
+  transition:
+    background-color var(--m-dur-screen) var(--m-ease-std),
+    color var(--m-dur-screen) var(--m-ease-std),
+    box-shadow var(--m-dur-screen) var(--m-ease-std);
+}
+.moodIn {
+  animation: moodIn var(--m-dur-screen) var(--m-ease-std) backwards;
+}
+@keyframes moodIn {
+  from {
+    opacity: 0;
+  }
 }
 .mood-hi {
   background: var(--yel);
@@ -316,6 +340,16 @@
   background: var(--warnbg);
   color: var(--warnt);
   box-shadow: inset 0 0 0 2px var(--warn);
+}
+/* reduced motion: the HUD's week and mood change at once */
+@media (prefers-reduced-motion: reduce) {
+  .calFlip,
+  .moodIn {
+    animation: none;
+  }
+  .mood {
+    transition: none;
+  }
 }
 
 /* ---- screens ---- */
