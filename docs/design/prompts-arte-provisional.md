@@ -473,3 +473,45 @@ must look like a racer leaning forward and fighting for the lead, not an angel.
 Las hojas de personaje miran hacia la izquierda; en el escenario, quien está a la izquierda se espeja
 para mirar al centro. Cuidado con lo que no es simétrico: el lado del broche de pelo, el lado de la
 mochila y, sobre todo, el hombro derecho de la veterana (si se espeja, pasa a ser el izquierdo).
+
+## Las alas de Peregrina, rediseñadas (2026-11-17)
+
+Pedido del dueño: sacarle a la Peregrina aprobada las alas grises simples y darle unas alas mucho más
+tecnológicas y diseñadas, como las del fondo del hangar de Kōryū: un objeto real y funcional, con
+propulsor atrás y alas flexibles y futuristas. El diseño sale de lo que ya dice el juego: Kōryū
+impulsa **en ráfagas** (regla `pulse`, `docs/BRIEF.md` §7) y Peregrina es de **picada** (`dive`). En
+Gemini, adjuntar la imagen de Peregrina y, como referencia de estilo de las alas, el fondo del hangar
+de Kōryū.
+
+```text
+Edit the first attached image. Keep this exact character unchanged: same face, hair, falcon marks under
+the eyes, smile, pose, red and yellow racing suit, jacket tied at the waist, knee pads, boots, the helmet
+under her arm, the art style, line work, shading and the plain background. Change ONLY the wings.
+
+Remove the current plain grey metal wings completely and replace them with a new pair of high-tech racing
+wings, designed like a real, functional piece of racing equipment from Kōryū Racing (the second attached
+image shows the team's style: glossy racing red with gold-yellow accents, sharp and elegant).
+
+Design of the new wings:
+- A compact back unit (the "core") strapped to her back with a harness over the shoulders and around the
+  chest: a slim, aerodynamic red shell with dark graphite panels, small heat vents and a row of tiny
+  amber status lights (no text).
+- At the bottom of the core, pointing down and back, a PULSE THRUSTER: two short round nozzles with
+  layered rings, built to fire in short bursts, a faint orange glow deep inside the nozzles.
+- From the top of the core, two articulated arms with visible hinges, pistons and cable routing, folding
+  like a falcon's wing shoulder.
+- The wing surface is made of long, thin, overlapping blades of flexible composite, slightly curved, each
+  one able to bend and slide over the next, shaped like the primary feathers of a falcon but clearly
+  engineered: glossy red on top, dark graphite underneath, thin gold-yellow edges, small slots between the
+  blades for airflow.
+- Swept-back, pointed silhouette made for diving at high speed. The wings are half open, angled up and
+  back behind her, wider than her shoulders but not covering her body or her face.
+- Materials read as real: painted metal, carbon fiber weave, rubber seals, small scratches and wear from
+  racing. No feathers, no angel look, no glow except inside the thrusters.
+
+No text, no letters, no numbers, no logos.
+```
+
+Si cambia algo de la corredora: «Keep the character exactly as in the first image. Only the wings
+change.» Si las alas salen de plumas: «The wings must be mechanical blades of composite and metal, not
+feathers.»
