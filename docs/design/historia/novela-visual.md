@@ -53,6 +53,14 @@ Ideas sin probar: tachar y corregir (un personaje se desdice), el globo que tard
 duda antes de hablar) y una interferencia visual reservada para la escudería sombra, con sus colores.
 Con «movimiento reducido» en el celular, ningún efecto se mueve.
 
+**Versión 12 (2026-11-17): con el arte provisional del dueño** (Gemini, prompts en
+`docs/design/prompts-arte-provisional.md`, «Historia principal: Vuela Alto»). El fondo del hangar de
+día va en el escenario; los cuatro personajes, recortados de la cintura para arriba, con alturas
+relativas (entrenador 100 %, veterana 94 %, protagonista 86 %, viejo 78 % del alto del escenario), y
+su cara recortada como retrato redondo de cada globo. Ropa usada: casual para los tres que recién
+llegan o están de paso (protagonista, entrenador, viejo) y el traje de Vuela Alto para la veterana.
+Las imágenes no están en el repo (arte provisional).
+
 Estado del resto: **propuesta**. Nada de esto está aprobado ni empezado. Tocar el juego pide (1) que termine el
 trabajo del flujo de pantallas en `playtest-ui` (`docs/handoff/mapa-de-historia.md`, «Antes de
 empezar») y (2) un plan aprobado, porque cambia el formato de las escenas (`packages/schema`).
