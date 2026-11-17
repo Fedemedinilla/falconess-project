@@ -963,6 +963,7 @@ test("the last race's scene: its notice shows over the result's foot, and not ov
   page,
 }) => {
   test.setTimeout(90_000);
+  await page.clock.install();
   await seedRun(page, "peregrina-w48");
   await page.goto("./");
   await continueRun(page);
@@ -977,10 +978,24 @@ test("the last race's scene: its notice shows over the result's foot, and not ov
   const go = await boxOf(page, "#m-carrera-seguir");
   expect(go.top - notice.bottom).toBeGreaterThanOrEqual(0);
   expect(go.top - notice.bottom).toBeLessThan(40);
+  // the clock stands still from here: the notice's fading copy goes on its own timer's time, not
+  // on how fast the page or the test happen to run
+  await holdClock(page);
   await page.click("#m-carrera-seguir");
   await expect(page.locator("#m-efectos")).toBeVisible();
+  await settleUpdates(page);
+  // the End's effects come with the notice gone at once: only its id-less, inert copy fades out
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
-  await expect.poll(() => present(page, "[data-notice-leaving]"), { timeout: 600 }).toBe(false);
+  expect(await present(page, "[data-notice-leaving][inert]:not([id])")).toBe(true);
+  // a notice's copy fades out in 400 ms (MOTION.toastOut), then its timer removes it
+  await page.clock.runFor(380);
+  await settleUpdates(page);
+  expect(await present(page, "[data-notice-leaving]")).toBe(true);
+  await page.clock.runFor(40);
+  await settleUpdates(page);
+  expect(await present(page, "[data-notice-leaving]")).toBe(false);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.clock.resume();
   await page.click("#m-efectos");
   await expect(page.locator("#m-fin")).toBeVisible();
   await page.waitForTimeout(300);
@@ -1004,12 +1019,15 @@ test("a race week's sounds come from its taps: none as the action's effects end 
   await expect(page.locator("#m-transicion")).toBeVisible({ timeout: 10_000 });
   await toPosition(page);
   expect(await cues()).not.toContain("nav");
+  // each count is read once the taps of the clicks before it played (they wait a task: `tapsIn`)
+  await tapsIn(page);
   // «Correr» plays its tap: the race is no change of screen of the menu's (plan §1.7 rule 2)
   let n = (await cues()).length;
   await page.click("#m-correr");
   await expect.poll(() => since(n)).toEqual(["tap"]);
   await page.click("#m-saltar");
   await toResult(page);
+  await tapsIn(page);
   // «Ver otra vez» and «Continuar» go to another screen: the whoosh, instead of their tap
   n = (await cues()).length;
   await page.click("#m-ver-otra-vez");
@@ -1017,8 +1035,17 @@ test("a race week's sounds come from its taps: none as the action's effects end 
   await expect.poll(() => since(n)).toEqual(["nav"]);
   await page.click("#m-saltar");
   await toResult(page);
+  await tapsIn(page);
   n = (await cues()).length;
   await page.click("#m-carrera-seguir");
   await expect.poll(async () => (await since(n))[0]).toBe("nav");
   await expect(page.locator("#m-carrera-seguir")).toHaveCount(0);
 });
+
+/**
+ * Lets the taps of the clicks made so far play: a button's tap waits a task after its click
+ * (`queueTap`, so that click's own cue can replace it), and a task queued now runs after it.
+ */
+async function tapsIn(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>((done) => setTimeout(done, 0)));
+}
