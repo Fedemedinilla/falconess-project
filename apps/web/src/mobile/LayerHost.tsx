@@ -9,7 +9,9 @@ import {
   useLayoutEffect,
   useState,
 } from "react";
+import { startFlowTimer } from "../ui/flowTimer";
 import { onSheetClosed } from "../ui/modals";
+import { visibleNow } from "../ui/visibility";
 import { expire, type Presence, presenceStep } from "./flow/presence";
 import type { Layer } from "./flow/types";
 import { outMs } from "./motion";
@@ -39,8 +41,9 @@ const drop = (): string | undefined => undefined;
  * (nothing of it starts again), rendered from the last data it had in front, inside an inert
  * wrapper that takes no tap, without its ids (`useLid`), its timers stopped (`useLayerPhase`), so
  * it never ends a beat or plays a sound; its own timer, armed here, removes it, never an
- * animation's end. A new layer comes in after it in the page. Each wrapper names its phase for the
- * frame probe (`data-layer-phase`): one «in» at most. What the layers come in front of (`under`:
+ * animation's end (a flow timer: a hidden tab holds it with the fade, 6.11). A new layer comes in
+ * after it in the page. Each wrapper names its phase for the frame probe (`data-layer-phase`): one
+ * «in» at most. What the layers come in front of (`under`:
  * the HUD and the screen, before them in the page) learns which layer is leaving (the race's
  * result waits for a scene's black to clear); its `children` (the notices, after them) learn
  * whether the layers are idle: nothing in front and nothing leaving.
@@ -61,27 +64,28 @@ export function LayerHost({
   readonly children?: ReactNode;
 }): ReactElement {
   const [seen, setSeen] = useState(top);
+  // times on the clock that stands still while the tab is hidden (6.11), as its fade does
   const [list, setList] = useState<readonly Presence[]>(() =>
-    presenceStep([], top, performance.now(), (l) => outMs(l.kind, reduced)),
+    presenceStep([], top, visibleNow(), (l) => outMs(l.kind, reduced)),
   );
   // the flow's layer changed (interned: only when it really did): the list follows it
   if (top !== seen) {
     setSeen(top);
-    setList(presenceStep(list, top, performance.now(), (l) => outMs(l.kind, reduced)));
+    setList(presenceStep(list, top, visibleNow(), (l) => outMs(l.kind, reduced)));
   }
-  // each leaving layer goes when its time is up, counted from when it started leaving
+  // each leaving layer goes when its time is up, counted from when it started leaving: a flow
+  // timer, so a hidden tab holds the copy where its fade stands
   useEffect(() => {
-    const now = performance.now();
-    const timers = list
+    const now = visibleNow();
+    const stops = list
       .filter((e) => e.phase === "out")
       .map((e) =>
-        setTimeout(
-          () => setList((l) => expire(l, e.key, e.gen)),
-          Math.max(0, e.since + outMs(e.layer.kind, reduced) - now),
+        startFlowTimer(Math.max(0, e.since + outMs(e.layer.kind, reduced) - now), () =>
+          setList((l) => expire(l, e.key, e.gen)),
         ),
       );
     return () => {
-      for (const t of timers) clearTimeout(t);
+      for (const stop of stops) stop();
     };
   }, [list, reduced]);
   const leaving = list.filter((e) => e.phase === "out").at(-1)?.layer.kind;

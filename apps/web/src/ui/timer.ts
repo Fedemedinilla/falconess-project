@@ -33,7 +33,8 @@ type State = "frame" | "running" | "paused" | "done";
 
 /**
  * Fires `fire` once, `ms` after it starts (at once, or at the next frame with `fromFrame`),
- * unless cancelled; `pause` keeps the time left, `resume` goes on with it (a hidden tab, 6.11).
+ * unless cancelled; `pause` keeps the time left, `resume` goes on with it (a hidden tab, 6.11:
+ * `pauseWhileHidden`).
  * Pure: everything it reads comes from `clock`.
  */
 export function createPausableTimer(
@@ -90,4 +91,29 @@ export function createPausableTimer(
           ? 0
           : left,
   };
+}
+
+/** What tells timers whether the tab is hidden (`ui/visibility.ts`'s page, or a test's). */
+export type HiddenSource = {
+  readonly hidden: () => boolean;
+  /** `listener` hears each change of `hidden`; returns what stops it. */
+  readonly subscribe: (listener: () => void) => () => void;
+};
+
+/**
+ * Holds `timers` while the tab is hidden (6.11, critic b: the game's clock stops with its CSS):
+ * paused at once if it is, paused whenever it hides, and each goes on with the time it had left
+ * when it shows again (one waiting for its first frame waits for a frame again). Returns what
+ * stops following the tab; the timers stay as they are.
+ */
+export function pauseWhileHidden(timers: readonly PausableTimer[], tab: HiddenSource): () => void {
+  const follow = (): void => {
+    const hidden = tab.hidden();
+    for (const t of timers) {
+      if (hidden) t.pause();
+      else t.resume();
+    }
+  };
+  if (tab.hidden()) follow();
+  return tab.subscribe(follow);
 }

@@ -13,6 +13,7 @@ import { cx } from "../ui/cx";
 import { useFlowTimer } from "../ui/flowTimer";
 import { isRepeatTap } from "../ui/tap";
 import { useLatest } from "../ui/useLatest";
+import { isHidden, visibleNow } from "../ui/visibility";
 import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
@@ -118,10 +119,11 @@ export function StoryOverlay({
   const [shown, setShown] = useState(0);
   const [auto, setAuto] = useState(false);
   const [log, setLog] = useState(false);
-  // the way in counts from the scene's first frame; a tap during it hurries it (ms from there)
+  // the way in counts from the scene's first frame; a tap during it hurries it (ms from there),
+  // on the clock that stands still while the tab is hidden, as the way in's CSS does (6.11)
   const born = useRef(0);
   useEffect(() => {
-    born.current = performance.now();
+    born.current = visibleNow();
   }, []);
   const [hurry, setHurry] = useState<number>();
   const intro = useMemo(
@@ -162,7 +164,8 @@ export function StoryOverlay({
     `line:${hurry ?? "-"}`,
   );
 
-  // the line appears: a letter (box) or a word (cine) at a time
+  // the line appears: a letter (box) or a word (cine) at a time, none while the tab is hidden
+  // (6.11: it goes on where it stood)
   // biome-ignore lint/correctness/useExhaustiveDependencies: restart on each new line; stop on the way out
   useEffect(() => {
     if (!playing || index < 0) return;
@@ -172,7 +175,9 @@ export function StoryOverlay({
     }
     setShown(0);
     const step = cine ? STORY.wordMs : STORY.typeMs;
-    const id = setInterval(() => setShown((n) => n + 1), step);
+    const id = setInterval(() => {
+      if (!isHidden()) setShown((n) => n + 1);
+    }, step);
     return () => clearInterval(id);
   }, [index, playing]);
 
@@ -200,7 +205,7 @@ export function StoryOverlay({
     }
     if (isRepeatTap(e)) return;
     if (hurry === undefined) {
-      setHurry(Math.max(0, performance.now() - born.current));
+      setHurry(Math.max(0, visibleNow() - born.current));
       setCardShown(true);
     } else setIndex(0);
   };

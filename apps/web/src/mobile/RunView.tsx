@@ -17,6 +17,7 @@ import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
 import { gameText } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useHidden } from "../ui/visibility";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
@@ -236,6 +237,8 @@ export function RunView({
   const layerIn = flow.layer !== undefined;
   const slotRef = useRef<HTMLDivElement>(null);
   useFocusHome(layerIn, flow.screen.kind, slotRef);
+  // a hidden tab (6.11): the column's CSS stands still with the flow's timers (`data-hidden`)
+  const hidden = useHidden() ? "" : undefined;
 
   /** «Exportar» of this run: from «Menú», from the panel and from the season's end. */
   const exportRun = () => {
@@ -343,6 +346,7 @@ export function RunView({
         )}
         style={style}
         data-app
+        data-hidden={hidden}
         data-mode={flow.mode}
         data-beat={flow.top.kind}
       >
@@ -517,6 +521,7 @@ export function RunView({
       )}
       style={style}
       data-app
+      data-hidden={hidden}
       data-mode={flow.mode}
       data-beat={flow.top.kind}
     >

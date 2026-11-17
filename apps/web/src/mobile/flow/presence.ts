@@ -13,7 +13,7 @@ export type Presence = {
   /** The latest data seen while it was in front. */
   readonly layer: Layer;
   readonly phase: "in" | "out";
-  /** When it came in, or when it started leaving (`performance.now()`). */
+  /** When it came in, or when it started leaving (the page's time in sight, `visibleNow()`). */
   readonly since: number;
 };
 

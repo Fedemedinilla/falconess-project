@@ -215,3 +215,48 @@ export async function movingNow(page: Page, scope = "[data-app]"): Promise<strin
     return out.sort();
   }, scope);
 }
+
+/**
+ * The tab hidden, or shown again (6.11): `document.hidden` and `document.visibilityState` read
+ * as the browser sets them for a tab in the background, and `visibilitychange` fires, as when the
+ * player switches tabs or locks the phone. Playwright cannot hide a page, so it goes on drawing
+ * frames: only what reads these sees the hidden tab (the game's flow timers and its CSS do).
+ */
+export async function setTabHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate((h) => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => h });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => (h ? "hidden" : "visible"),
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, hidden);
+}
+
+/**
+ * The CSS animations inside `scope`, by the play state each element (and its `::before` and
+ * `::after`) computes: what runs, as `element name`, and how many stand paused. A finished
+ * animation still computes its play state, so this reads the rule, not the moment.
+ */
+export async function cssPlayStates(
+  page: Page,
+  scope = "[data-app]",
+): Promise<{ readonly running: readonly string[]; readonly paused: number }> {
+  return page.evaluate((sel) => {
+    const name = (el: Element): string => {
+      const cls = el.getAttribute("class")?.split(/\s+/)[0];
+      return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
+    };
+    const running: string[] = [];
+    let paused = 0;
+    for (const el of document.querySelector(sel)?.querySelectorAll("*") ?? [])
+      for (const pseudo of [null, "::before", "::after"]) {
+        const style = getComputedStyle(el, pseudo);
+        if (style.animationName === "none") continue;
+        if (style.animationPlayState.split(",").some((state) => state.trim() === "running"))
+          running.push(`${name(el)}${pseudo ?? ""} ${style.animationName}`);
+        else paused++;
+      }
+    return { running: running.sort(), paused };
+  }, scope);
+}

@@ -225,6 +225,68 @@ describe("one reduced-motion policy (plan §2.4, M7)", () => {
   });
 });
 
+// --- a hidden tab (6.11, critic b: two clocks) ------------------------------------------------
+
+/** A selector's specificity: [ids, classes, attributes and pseudo-classes, elements]. */
+function specificity(selector: string): readonly [number, number, number] {
+  const sel = selector
+    .replace(/::[a-z-]+/g, "")
+    .replace(/:where\([^)]*\)/g, "")
+    .replace(/:(not|is)\(/g, " ")
+    .replace(/\)/g, " ");
+  const ids = sel.match(/#[\w-]+/g)?.length ?? 0;
+  const classes =
+    (sel.match(/\.[\w-]+/g)?.length ?? 0) +
+    (sel.match(/\[[^\]]*\]/g)?.length ?? 0) +
+    (sel.match(/:[\w-]+/g)?.length ?? 0);
+  const elements = sel.replace(/\[[^\]]*\]/g, "").match(/(^|[\s>+~])[a-z][\w-]*/gi)?.length ?? 0;
+  return [ids, classes, elements];
+}
+
+/** Whether specificity `a` is at least `b`'s. */
+function atLeast(a: readonly number[], b: readonly number[]): boolean {
+  for (let i = 0; i < 3; i++) if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+  return true;
+}
+
+describe("a hidden tab (6.11, critic b: two clocks)", () => {
+  /** The game's column while the tab is hidden: everything in it, and its ::before and ::after. */
+  const PAUSE = ".app[data-app][data-hidden] *";
+  const all = MODULES.map((file) => ({ file, rules: rulesOf(css(file)) }));
+  it("reads selectors as the browser ranks them", () => {
+    expect(specificity(PAUSE)).toEqual([0, 3, 0]);
+    expect(specificity(".app .sel::before")).toEqual([0, 2, 0]);
+    expect(specificity(".sheet[open]::backdrop")).toEqual([0, 2, 0]);
+    expect(specificity(".dots i")).toEqual([0, 1, 1]);
+    expect(specificity(".app:not(.appDesk)")).toEqual([0, 2, 0]);
+    expect(specificity(":where(.app) button")).toEqual([0, 0, 1]);
+  });
+  it("the game's CSS stops with its timers: every animation in the column, and its ::before and ::after", () => {
+    const mobile = all.find((m) => m.file === "Mobile.module.css")?.rules ?? [];
+    for (const sel of [PAUSE, `${PAUSE}::before`, `${PAUSE}::after`])
+      expect(
+        mobile.some(
+          (r) =>
+            r.media === "" &&
+            r.selectors.includes(sel) &&
+            r.decls.get("animation-play-state") === "paused",
+        ),
+        sel,
+      ).toBe(true);
+  });
+  it("and it outranks every rule that sets an animation (the shorthand would set it running again)", () => {
+    const pause = specificity(PAUSE);
+    const louder: string[] = [];
+    for (const { file, rules } of all)
+      for (const r of rules)
+        if (r.decls.has("animation") || r.decls.has("animation-play-state"))
+          for (const sel of r.selectors)
+            if (!sel.includes("[data-hidden]") && atLeast(specificity(sel), pause))
+              louder.push(`${file} ${sel}`);
+    expect(louder).toEqual([]);
+  });
+});
+
 describe("timer helpers", () => {
   it("the emblem's beat is its fade in and its full cover", () => {
     expect(EMBLEM_MS).toBe(1240);

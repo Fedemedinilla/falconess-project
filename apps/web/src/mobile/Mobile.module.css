@@ -3109,3 +3109,13 @@
     gap: 10px;
   }
 }
+
+/* ---- a hidden tab (6.11, critic b: two clocks) ----
+   The column's animations stand where they are while the flow's timers wait, and go on with them.
+   `[data-app]` ranks it over every `animation` shorthand of the phone's modules (they would set it
+   running again; motion.test checks it); last in the file, after every other `*`. */
+.app[data-app][data-hidden] *,
+.app[data-app][data-hidden] *::before,
+.app[data-app][data-hidden] *::after {
+  animation-play-state: paused;
+}

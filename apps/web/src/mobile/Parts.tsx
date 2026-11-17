@@ -6,6 +6,7 @@ import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useFlowTimer } from "../ui/flowTimer";
+import { visibleNow } from "../ui/visibility";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type GoalCard, moodTone, type StatCell, type VigorView } from "./model";
@@ -310,16 +311,19 @@ type StatStripProps = {
   };
 };
 
-/** A number that counts from `from` to `to` once its `delay` has passed (ms). */
+/**
+ * A number that counts from `from` to `to` once its `delay` has passed (ms), on the clock that
+ * stands still while the tab is hidden (6.11): it goes on with its «+N», never ahead of it.
+ */
 function CountUp({ from, to, delay }: { from: number; to: number; delay: number }) {
   const [v, setV] = useState(from);
   useEffect(() => {
     if (from === to) return;
     let raf = 0;
-    const start = performance.now() + delay;
+    const start = visibleNow() + delay;
     const dur = 520;
-    const tick = (now: number) => {
-      const t = Math.min(1, Math.max(0, (now - start) / dur));
+    const tick = () => {
+      const t = Math.min(1, Math.max(0, (visibleNow() - start) / dur));
       // ease-out: fast at first, settling on the value
       const e = 1 - (1 - t) * (1 - t) * (1 - t);
       setV(Math.round(from + (to - from) * e));
