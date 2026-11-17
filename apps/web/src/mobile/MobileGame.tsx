@@ -23,7 +23,7 @@ import { TitleScreen } from "./TitleScreen";
 import { useBackGesture } from "./useBackGesture";
 
 /** A wide screen (owner 2026-11-13): the game's column with the panel beside it. */
-export const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
+const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
 
 /**
  * The title screen shows once per visit, when the page opens on the game (owner 2026-11-12); a
