@@ -1155,6 +1155,46 @@ test("a double tap during a scene's way in is one tap: the card, then a second t
   await expect(page.locator("#m-capitulo")).toContainText(t("story.peregrina-prologue.1"));
 });
 
+/**
+ * After `seedRun`: these scenes never seen, in this run nor in an earlier season, so each is due
+ * where its trigger says (two of the weeks' scenes at once play one after the other).
+ */
+async function unseen(page: Page, ids: readonly string[]): Promise<void> {
+  await page.addInitScript((drop) => {
+    const key = "falconess.juego.historia";
+    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
+      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
+    );
+    for (const seed of Object.keys(story.runs))
+      story.runs[seed] = (story.runs[seed] ?? []).filter((id) => !drop.includes(id));
+    story.ever = story.ever.filter((id) => !drop.includes(id));
+    localStorage.setItem(key, JSON.stringify(story));
+  }, ids);
+}
+
+test("two scenes in a row: a double tap on the first one's «Saltar» skips that one only, and its second click skips nothing (F50, 6.2)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w39-insp");
+  // weeks 16's and 28's scenes never seen: both due on the menu, one after the other
+  await unseen(page, ["peregrina-tears", "peregrina-rookie"]);
+  await page.goto("./");
+  await continueRun(page);
+  const scene = page.locator("#m-capitulo");
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-tears");
+  await expect.poll(() => opacityOf(page, "#m-capitulo-saltar")).toBeGreaterThanOrEqual(0.95);
+  await page.dblclick("#m-capitulo-saltar");
+  // the next scene came in at the first click, its «Saltar» under the finger: the second click
+  // skips nothing (before, the leaving scene took it; since 6.2 it lets it through)
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-rookie");
+  await page.waitForTimeout(1000);
+  await expect(scene).toHaveAttribute("data-scene", "peregrina-rookie");
+  // a tap of its own still skips it
+  await page.click("#m-capitulo-saltar");
+  await expect(scene).toHaveCount(0);
+});
+
 test("Rápido: the chapter's card shows whole for 0.7 s before it fades into the first line at 1.75 s (H4)", async ({
   page,
 }) => {

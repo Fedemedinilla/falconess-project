@@ -280,7 +280,15 @@ export function StoryOverlay({
         <button type="button" id={lid("m-capitulo-registro")} onClick={() => setLog(true)}>
           {ui("ui.m.story.log")}
         </button>
-        <button type="button" id={lid("m-capitulo-saltar")} onClick={() => finish(true)}>
+        <button
+          type="button"
+          id={lid("m-capitulo-saltar")}
+          onClick={(e) => {
+            // the scene leaves at the first click and lets the next one through (6.2): when another
+            // scene follows, the second click of a double tap lands on its «Saltar» (F50)
+            if (!isRepeatTap(e)) finish(true);
+          }}
+        >
           {ui("ui.m.story.skip")} ⏭
         </button>
       </div>
