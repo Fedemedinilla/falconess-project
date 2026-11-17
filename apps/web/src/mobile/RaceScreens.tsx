@@ -14,6 +14,7 @@ import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { isRepeatTap } from "../ui/tap";
 import { Glyph } from "./Glyph";
+import { useLeaving } from "./LayerHost";
 import s from "./Mobile.module.css";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { trackCard } from "./track";
@@ -196,8 +197,7 @@ export function RaceScreen({
   const pace = usePace();
   const result = state.raceResults.find((r) => r.turn === turn);
   const ctxCourse = log ? pageLabels().courseName(log.courseId) : "";
-  const showResult = stage === "held" || stage === "result";
-  const hold = stage === "held";
+  const racing = stage === "replay" || stage === "finish";
   return (
     <div className={cx(s.screen, s.raceScreen)}>
       <div className={s.raceHead}>
@@ -205,65 +205,103 @@ export function RaceScreen({
           <small>{ui("ui.m.race.eyebrow", { turn })}</small>
           <b>{ctxCourse}</b>
         </div>
-        {!showResult && (
+        {racing && (
           <button type="button" className={s.skip} id="m-saltar" onClick={() => onSkip(play)}>
             <Glyph name="skip" size={18} weight={2.4} />
             {ui("ui.m.race.skip")}
           </button>
         )}
       </div>
-      <div className={s.body}>
-        {showResult ? (
-          result && log && !hold ? (
-            <ResultCard
-              met={goalStatuses(ctx, state).find((g) => g.goal.turn === turn)?.met !== false}
-              place={result.place}
-              field={result.fieldSize}
-              time={result.timeTicks}
-              position={result.position}
-              advice={<PlayerAdviceNote log={log} labels={pageLabels()} id="m-consejo" />}
-            />
-          ) : null
-        ) : log ? (
-          <div className={s.flightWrap}>
-            <Replay
-              log={log}
-              labels={pageLabels()}
-              idPrefix="m-carrera"
-              onReveal={() => onNext(play)}
-              minSpeed={pace === "fast" ? 2 : undefined}
-            />
-          </div>
-        ) : null}
-      </div>
-      {showResult && !hold && (
-        // a notice (the scene after the race) sits just over the result's foot
-        <div className={s.foot} data-toast-anchor>
-          <button
-            type="button"
-            className={cx(s.btn, s.back)}
-            id="m-ver-otra-vez"
-            onClick={(e) => {
-              if (isRepeatTap(e)) return;
-              onAgain();
-            }}
-          >
-            <Glyph name="play" size={18} weight={2.4} />
-            <span>{ui("ui.m.race.again")}</span>
-          </button>
-          <button
-            type="button"
-            className={cx(s.btn, s.btnMain)}
-            id="m-carrera-seguir"
-            onClick={(e) => {
-              if (isRepeatTap(e)) return;
-              onContinue();
-            }}
-          >
-            {ui("ui.m.continue")}
-          </button>
+      {stage === "result" ? (
+        <RaceResult
+          card={
+            result && log ? (
+              <ResultCard
+                met={goalStatuses(ctx, state).find((g) => g.goal.turn === turn)?.met !== false}
+                place={result.place}
+                field={result.fieldSize}
+                time={result.timeTicks}
+                position={result.position}
+                advice={
+                  <PlayerAdviceNote
+                    log={log}
+                    labels={pageLabels()}
+                    id="m-consejo"
+                    className={s.resultAdvice}
+                  />
+                }
+              />
+            ) : null
+          }
+          onAgain={onAgain}
+          onContinue={onContinue}
+        />
+      ) : (
+        <div className={s.body}>
+          {racing && log ? (
+            <div className={s.flightWrap}>
+              <Replay
+                log={log}
+                labels={pageLabels()}
+                idPrefix="m-carrera"
+                onReveal={() => onNext(play)}
+                minSpeed={pace === "fast" ? 2 : undefined}
+              />
+            </div>
+          ) : null}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * The race's result coming in (H1): the panel rises and fades in, its place stamps, the advice and
+ * the foot (the notices' anchor) fade in after it, by opacity only, so «Continuar» takes a tap
+ * from the first frame and the foot stands where it lands. When a scene's exit is what it mounted
+ * under (the same commit as the exit's start, D7), all of it waits until the scene's black has
+ * mostly cleared (`data-after`): read once, at its mount.
+ */
+function RaceResult({
+  card,
+  onAgain,
+  onContinue,
+}: {
+  card: ReactNode;
+  onAgain: () => void;
+  onContinue: () => void;
+}) {
+  const leaving = useLeaving();
+  const [afterScene] = useState(leaving === "scene");
+  return (
+    <div className={s.resultIn} data-after={afterScene ? "scene" : undefined}>
+      <div className={s.body}>{card}</div>
+      {/* a notice (the scene after the race) sits just over the result's foot */}
+      <div className={s.foot} data-toast-anchor>
+        <button
+          type="button"
+          className={cx(s.btn, s.back)}
+          id="m-ver-otra-vez"
+          onClick={(e) => {
+            if (isRepeatTap(e)) return;
+            onAgain();
+          }}
+        >
+          <Glyph name="play" size={18} weight={2.4} />
+          <span>{ui("ui.m.race.again")}</span>
+        </button>
+        <button
+          type="button"
+          className={cx(s.btn, s.btnMain)}
+          id="m-carrera-seguir"
+          onClick={(e) => {
+            if (isRepeatTap(e)) return;
+            onContinue();
+          }}
+        >
+          {ui("ui.m.continue")}
+        </button>
+      </div>
     </div>
   );
 }

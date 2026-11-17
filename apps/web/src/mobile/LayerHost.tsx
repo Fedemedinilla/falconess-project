@@ -22,10 +22,10 @@ const LayersIdle = createContext(true);
 const Leaving = createContext<Layer["kind"] | undefined>(undefined);
 
 /**
- * The layers whose way out LayerHost plays so far. A scene still leaves on its own (its 0.8 s
- * fade, then its `onDone`) until 6.2, and the emblem inside its 1.25 s until 6.4: they go at once.
+ * The layers whose way out LayerHost plays so far: the emblem still plays its own 1.25 s until
+ * 6.4, and goes at once.
  */
-const LEAVES: ReadonlySet<Layer["kind"]> = new Set(["fx", "inspiration"]);
+const LEAVES: ReadonlySet<Layer["kind"]> = new Set(["fx", "inspiration", "scene"]);
 
 /** How long `layer` takes to leave (0: it goes at once). */
 function leaveMs(layer: Layer, reduced: boolean): number {
@@ -48,19 +48,24 @@ const drop = (): string | undefined => undefined;
  * wrapper that takes no tap, without its ids (`useLid`), its timers stopped (`useLayerPhase`), so
  * it never ends a beat or plays a sound; its own timer, armed here, removes it, never an
  * animation's end. A new layer comes in after it in the page. Each wrapper names its phase for the
- * frame probe (`data-layer-phase`): one «in» at most. Its `children` (the notices) learn whether
- * the layers are idle: nothing in front and nothing leaving.
+ * frame probe (`data-layer-phase`): one «in» at most. What the layers come in front of (`under`:
+ * the HUD and the screen, before them in the page) learns which layer is leaving (the race's
+ * result waits for a scene's black to clear); its `children` (the notices, after them) learn
+ * whether the layers are idle: nothing in front and nothing leaving.
  */
 export function LayerHost({
   top,
   render,
   reduced,
+  under,
   children,
 }: {
   readonly top: Layer | undefined;
   readonly render: (layer: Layer) => ReactElement;
   /** Reduced motion, as the flow reads it: the layers leave at once. */
   readonly reduced: boolean;
+  /** What the layers come in front of: the HUD and the screen. */
+  readonly under?: ReactNode;
   readonly children?: ReactNode;
 }): ReactElement {
   const [seen, setSeen] = useState(top);
@@ -91,6 +96,7 @@ export function LayerHost({
   return (
     <LayersIdle value={list.length === 0}>
       <Leaving value={leaving}>
+        {under}
         {list.map((e) => {
           const out = e.phase === "out";
           return (
@@ -128,7 +134,10 @@ export function useLayersIdle(): boolean {
   return useContext(LayersIdle);
 }
 
-/** The kind of a layer on its way out, if any. */
+/**
+ * The kind of a layer on its way out, if any: what LayerHost's `under` reads in the same commit
+ * as the leave's start (a scene's exit onto the race's result).
+ */
 export function useLeaving(): Layer["kind"] | undefined {
   return useContext(Leaving);
 }

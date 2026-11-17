@@ -31,7 +31,10 @@ import { coverage, opacityOf } from "./motion";
 const STEP = process.env.MOTION_STEP ?? "latest";
 const OUT = fileURLToPath(new URL(`../../../.work/ui/motion/${STEP}/`, import.meta.url));
 
-/** The layers each frame measures, when on the page. */
+/**
+ * The layers each frame measures, when on the page (one of each): a leaving copy has no id, so
+ * it is measured by its phase, and the race result's foot (the notices' anchor) by its mark.
+ */
 const LAYERS = [
   "#m-transicion",
   "#m-capitulo",
@@ -39,6 +42,8 @@ const LAYERS = [
   "#m-inspiracion",
   "#m-resultado",
   "#m-capitulo-aviso",
+  '[data-layer-phase="out"] > *',
+  "[data-toast-anchor]",
 ] as const;
 
 type Measure = { opacity: number; covered: number };
@@ -396,7 +401,7 @@ const PLAN: readonly {
     flows: { menuTrain, effects, raceWeek, raceEnd, inheritance, inheritanceTap, notice, digest },
   },
   { viewport: PHONE, motion: "reduce", flows: { menuTrain, effects, raceWeek, inheritance } },
-  { viewport: PHONE_S, motion: "normal", flows: { effects, inheritance } },
+  { viewport: PHONE_S, motion: "normal", flows: { effects, raceWeek, inheritance } },
   { viewport: SMALL, motion: "normal", flows: { menuTrain, raceWeek, notice } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
   { viewport: TABLET, motion: "normal", flows: { menuTrain, raceWeek } },

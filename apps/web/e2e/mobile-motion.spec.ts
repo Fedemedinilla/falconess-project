@@ -1,5 +1,14 @@
 import { expect, type Page } from "@playwright/test";
-import { continueRun, seedRun, startMobile, test, watchCues, week } from "./mobile-helpers";
+import {
+  continueRun,
+  seedRun,
+  startMobile,
+  test,
+  toPosition,
+  watchCues,
+  week,
+} from "./mobile-helpers";
+import { coverage, freezeAt, opacityOf } from "./motion";
 
 /**
  * How the phone game's layers come and go (plan-final §1.9, §2, phase 6). 6.1: a layer that the
@@ -8,7 +17,10 @@ import { continueRun, seedRun, startMobile, test, watchCues, week } from "./mobi
  * is under it is live; one gesture is one decision (a double tap's second click never reaches what
  * the first one mounted, critic b); while a layer is in front the game behind it is out of reach
  * and the layer's own control has the focus, which comes back to the screen's control when the
- * last layer goes (L7). Timing goes through the fake clock, held still where a moment matters.
+ * last layer goes (L7). 6.2: a scene's 0.8 s exit fades onto the real next screen (D7, H1): the
+ * race's result is there from the exit's first frame, takes taps at once, and comes in 400 ms into
+ * the fade. Timing goes through the fake clock, held still where a moment matters, and CSS moments
+ * through `freezeAt`.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -54,6 +66,8 @@ test("the week's effects leave over 240 ms as an id-less, silent copy, and the m
 }) => {
   await page.clock.install();
   await startMobile(page);
+  // the skipped prologue's own exit (0.8 s, 6.2) is over: the only layer from here is the effects
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
   const cues = await watchCues(page);
   await holdClock(page);
   await page.click("#m-descansar");
@@ -210,4 +224,114 @@ test("a triple tap on a training trains once, and its result plays on: the third
   await settleUpdates(page);
   expect(await present(page, "#m-resultado")).toBe(true);
   expect(await week(page)).toBe(1);
+});
+
+/**
+ * From now on, whether a frame ever held the scene (`#m-capitulo`) and the race's result
+ * (`#m-resultado`) at once (rule 13: the result never under or before a scene): checked after
+ * every change of the page and at every frame. Returns the frames that broke it.
+ */
+async function watchRule13(page: Page): Promise<() => Promise<number>> {
+  await page.evaluate(() => {
+    let broken = 0;
+    const check = () => {
+      if (document.getElementById("m-capitulo") && document.getElementById("m-resultado")) broken++;
+    };
+    new MutationObserver(check).observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["id"],
+    });
+    const frame = () => {
+      check();
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    Reflect.set(window, "__rule13", () => broken);
+  });
+  return () =>
+    page.evaluate(() => {
+      const read: unknown = Reflect.get(window, "__rule13");
+      return typeof read === "function" ? Number(read()) : -1;
+    });
+}
+
+/** Week 10 of `peregrina-w10`: a rest, the race mode, «Correr» and «Saltar», to the scene after it. */
+async function toSceneAfterRace(page: Page): Promise<void> {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
+  await page.click("#m-saltar");
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut-win");
+  // the scene before the race has finished leaving: the only copy from here is this scene's
+  await expect(page.locator("[data-layer-phase='out']")).toHaveCount(0);
+}
+
+test("a scene after the race leaves onto its result: the result is there from the exit's first frame, takes «Continuar» during the fade, and comes in 400 ms into it (D7, H1)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toSceneAfterRace(page);
+  const rule13 = await watchRule13(page);
+  await holdClock(page);
+  // rule 10: the scene starts on its opaque black, over the race held
+  await freezeAt(page, 0);
+  const black = await coverage(page, "#m-capitulo");
+  expect(black.misses).toEqual([]);
+  await page.click("#m-capitulo-saltar");
+  // at once: the scene's ids gone, its copy fading in front, the result under it
+  expect(await present(page, "#m-capitulo")).toBe(false);
+  expect(await present(page, '[data-layer-phase="out"] [data-scene="peregrina-debut-win"]')).toBe(
+    true,
+  );
+  expect(await present(page, '[data-after="scene"] #m-resultado')).toBe(true);
+  // 400 ms into the fade the scene's black is mostly gone and the result has not come in yet;
+  // by 800 ms it is in
+  await freezeAt(page, 400);
+  expect(await opacityOf(page, "#m-resultado")).toBeLessThan(0.1);
+  const veil = await opacityOf(page, '[data-layer-phase="out"] [data-scene]');
+  expect(veil).toBeGreaterThan(0.05);
+  expect(veil).toBeLessThan(0.4);
+  await freezeAt(page, 800);
+  expect(await opacityOf(page, "#m-resultado")).toBeGreaterThanOrEqual(0.95);
+  // «Continuar» takes the tap while the scene's copy is still on its way out (the clock is held)
+  await page.click("#m-carrera-seguir", { timeout: 2000 });
+  await expect(page.locator("#m-efectos, #m-entrenar").first()).toBeVisible();
+  expect(await present(page, '[data-layer-phase="out"] [data-scene]')).toBe(true);
+  await page.clock.runFor(900);
+  await settleUpdates(page);
+  expect(await present(page, '[data-layer-phase="out"] [data-scene]')).toBe(false);
+  expect(await rule13()).toBe(0);
+});
+
+test("the skipped scene's notice waits for the scene's exit, then sits just over the result's foot as it landed (rule 17, D7)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await toSceneAfterRace(page);
+  await holdClock(page);
+  await page.click("#m-capitulo-saltar");
+  await settleUpdates(page);
+  // no notice while the scene's copy fades over the result
+  await page.clock.runFor(700);
+  await settleUpdates(page);
+  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
+  await page.clock.runFor(200);
+  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
+  // every entrance landed: the notice NOTICE_GAP (10 px) over the foot, clear of its buttons
+  await freezeAt(page, 10_000);
+  const gap = await page.evaluate(() => {
+    const notice = document.getElementById("m-capitulo-aviso")?.getBoundingClientRect();
+    const foot = document.querySelector("[data-toast-anchor]")?.getBoundingClientRect();
+    return notice && foot ? foot.top - notice.bottom : undefined;
+  });
+  expect(gap).toBeGreaterThanOrEqual(9);
+  expect(gap).toBeLessThanOrEqual(11);
 });

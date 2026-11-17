@@ -10,7 +10,8 @@
    black at once (owner 2026-11-13: the menu behind must not show, the scene must not feel like it
    interrupts it), the scene's ground and its backdrop come out of the black and out of focus
    (0.5-1.8 s), the black bars and the chapter's card arrive (1.1-1.8 s), then the first line
-   (2.8 s). The way out fades the whole scene over 0.8 s. */
+   (2.8 s). The way out fades the whole scene over 0.8 s (owner), as LayerHost's leaving copy over
+   the real next screen (D7). */
 /* black under the race mode's transition when the scene before the race comes next */
 .black {
   position: fixed;
@@ -36,7 +37,7 @@
   }
 }
 .leaving {
-  animation: sceneOut 0.8s ease both;
+  animation: sceneOut var(--m-dur-scene-out) var(--m-ease-fade) both;
 }
 @keyframes sceneOut {
   to {

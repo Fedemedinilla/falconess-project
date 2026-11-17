@@ -184,7 +184,8 @@ export function RunView({
             secondary={colors.secondary}
             // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
             digest={l.digest}
-            onDone={(skipped) => cmd.sceneDone(l.key, skipped)}
+            // as its exit starts: the flow moves on under its fading copy (D7)
+            onFinish={(skipped) => cmd.sceneDone(l.key, skipped)}
           />
         );
       case "emblem":
@@ -201,8 +202,12 @@ export function RunView({
         return <EventDialog />;
     }
   };
-  const layers = (
-    <LayerHost top={flow.layer} render={layer} reduced={reduced}>
+  /**
+   * The layers in front of what they cover (`under`: the HUD and the screen, which read the layer
+   * leaving: the race's result after a scene), and the notices after them.
+   */
+  const layers = (under: ReactNode) => (
+    <LayerHost top={flow.layer} render={layer} reduced={reduced} under={under}>
       {notices}
     </LayerHost>
   );
@@ -315,18 +320,19 @@ export function RunView({
         data-mode={flow.mode}
         data-beat={flow.top.kind}
       >
-        {slot(
-          <EndScreen
-            run={run}
-            scroll={endScroll}
-            onRace={cmd.rewatch}
-            onNew={() => game.newSeason()}
-            onTests={() => navigate("fin")}
-            onExport={exportRun}
-          />,
+        {layers(
+          slot(
+            <EndScreen
+              run={run}
+              scroll={endScroll}
+              onRace={cmd.rewatch}
+              onNew={() => game.newSeason()}
+              onTests={() => navigate("fin")}
+              onExport={exportRun}
+            />,
+          ),
         )}
         {exportSheet}
-        {layers}
         {title}
       </div>,
       null,
@@ -486,25 +492,28 @@ export function RunView({
       data-mode={flow.mode}
       data-beat={flow.top.kind}
     >
-      {hud && hudMenu && (
-        <Hud
-          inert={layerIn}
-          hard={difficultyOf(hud.of) === "exigente"}
-          turn={hudMenu.turn}
-          turns={hudMenu.turns}
-          goal={hudMenu.goal}
-          vigor={vigorView(ctx, hud.vigor, hud.preview)}
-          vigorPop={hud.pop}
-          // a training's result: the bar moves to the week after when its «±N» lands (L3)
-          vigorTo={hud.vigorTo && vigorView(ctx, hud.vigorTo, undefined)}
-          vigorAt={hud.vigorAt}
-          vigorBeat={hud.vigorTo && flow.top.key}
-          mood={hudMenu.mood}
-          content={ctx.content}
-        />
+      {layers(
+        <>
+          {hud && hudMenu && (
+            <Hud
+              inert={layerIn}
+              hard={difficultyOf(hud.of) === "exigente"}
+              turn={hudMenu.turn}
+              turns={hudMenu.turns}
+              goal={hudMenu.goal}
+              vigor={vigorView(ctx, hud.vigor, hud.preview)}
+              vigorPop={hud.pop}
+              // a training's result: the bar moves to the week after when its «±N» lands (L3)
+              vigorTo={hud.vigorTo && vigorView(ctx, hud.vigorTo, undefined)}
+              vigorAt={hud.vigorAt}
+              vigorBeat={hud.vigorTo && flow.top.key}
+              mood={hudMenu.mood}
+              content={ctx.content}
+            />
+          )}
+          {slot(body)}
+        </>,
       )}
-      {slot(body)}
-      {layers}
       {chatOpen && (
         <ChatSheet
           name={gameText(`falconess.${state.falconessId}`)}

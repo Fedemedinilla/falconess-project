@@ -742,6 +742,10 @@ test("the last race's scene: its notice shows over the result's foot, and not ov
   await continueRun(page);
   await page.click("#m-descansar");
   await toPosition(page);
+  // the scene before the race leaves over the card for 0.8 s (6.2), then its notice shows there
+  // and goes with «Correr» (left during the exit, it would wait for the next place a notice shows)
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
+  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
   await page.click("#m-correr");
   await page.click("#m-saltar");
   // her scene after the race, skipped: its notice on the result

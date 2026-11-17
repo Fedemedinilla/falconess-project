@@ -1330,6 +1330,61 @@
   font-size: 15px;
   color: var(--tx2);
 }
+/*
+ * The race's result comes in (H1, plan §2.6): the panel rises 12 px and fades in, its place
+ * stamps from +80 ms, the advice fades in at +160 ms and the foot (the notices' anchor) at +200 ms.
+ * Only the panel moves: the advice and the foot hold controls, which take taps (and are measured
+ * for the notices) where they land from the first frame. After a scene's exit (`data-after`) all
+ * of it starts `--m-dur-result-delay` later, when the scene's black is down to about 0.2 (D7).
+ * Fill `backwards`: nothing holds a style once it is in. The stamp's 420 ms and the offsets are
+ * §2.6's (no token of their own).
+ */
+.resultIn {
+  display: contents;
+  --result-at: 0ms;
+}
+.resultIn[data-after="scene"] {
+  --result-at: var(--m-dur-result-delay);
+}
+.resultIn .result {
+  animation: resultRise var(--m-dur-result-in) var(--m-ease-out) var(--result-at) backwards;
+}
+.resultIn .resultPlace {
+  animation: resultStamp 420ms var(--m-ease-pop) calc(var(--result-at) + 80ms) backwards;
+}
+.resultIn .resultAdvice {
+  animation: resultFade var(--m-dur-result-in) var(--m-ease-out) calc(var(--result-at) + 160ms)
+    backwards;
+}
+.resultIn .foot {
+  animation: resultFade var(--m-dur-result-in) var(--m-ease-out) calc(var(--result-at) + 200ms)
+    backwards;
+}
+@keyframes resultRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes resultStamp {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+@keyframes resultFade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resultIn .result,
+  .resultIn .resultPlace,
+  .resultIn .resultAdvice,
+  .resultIn .foot {
+    animation: none;
+  }
+}
 
 /* ---- workshop ---- */
 .tabs {

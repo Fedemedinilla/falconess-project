@@ -8,7 +8,7 @@ import bgFinish from "./art/bg-finish.webp";
 import bgHangar from "./art/bg-hangar.webp";
 import bgTrack from "./art/bg-track.webp";
 import type { Digest } from "./flow/types";
-import { useLayerFocus, useLid } from "./LayerHost";
+import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
 import s from "./Story.module.css";
 import { digestLines } from "./storyModel";
 
@@ -28,7 +28,6 @@ const INTRO_MS = 1300;
 const CARD_MS = 1500;
 /** Auto: how long a finished line stays before the next one (owner 2026-11-12: 1.5 s was too fast). */
 const AUTO_MS = 4500;
-const LEAVE_MS = 800;
 
 function speakerName(line: StoryLine): string | undefined {
   return UNNAMED.has(line.speaker) ? undefined : gameText(`speaker.${line.speaker}`);
@@ -39,28 +38,32 @@ function speakerName(line: StoryLine): string | undefined {
  * never shows), the scene comes out of the black, the chapter's card shows, then its lines one tap
  * at a time. `box` is the dialogue box of a common scene, `cine` the cinematic of a key scene
  * (black bars, words appearing one by one, key lines large). Skip ends it at once; Auto moves on
- * by itself; the log rereads what was said.
+ * by itself; the log rereads what was said. It ends as its 0.8 s exit starts (`onFinish`): the
+ * flow moves on under it at once, and LayerHost keeps this instance on its way out, fading over
+ * the real next screen (D7) as an id-less copy whose timers have stopped (F18).
  */
 export function StoryOverlay({
   scene,
   primary,
   secondary,
   digest: digestProp,
-  onDone,
+  onFinish,
 }: {
   scene: StoryScene;
   primary: string;
   secondary: string;
   /** Play a fast digest instead of every line; read once, when the scene mounts. */
   digest?: Digest | undefined;
-  /** Called when the scene has left; held in a ref, so a new arrow on each render is fine. */
-  onDone: (skipped: boolean) => void;
+  /** Called once, as the scene starts to leave; held in a ref, so a new arrow on each render is fine. */
+  onFinish: (skipped: boolean) => void;
 }) {
   // latched: «Ritmo» can change in the desk panel's «Menú» mid-scene, and the timers key on it
   const [digest] = useState(digestProp);
-  const onDoneRef = useLatest(onDone);
-  // its ids only while it is in front (a leaving copy has none)
+  const onFinishRef = useLatest(onFinish);
+  // its ids only while it is in front (a leaving copy has none), its timers too: on its way out
+  // nothing of it moves on, types or ends anything
   const lid = useLid();
+  const playing = useLayerPhase() === "in";
   // the stage takes the focus (L7): Enter or Space reads on, the game behind is inert
   const stage = useRef<HTMLButtonElement>(null);
   useLayerFocus(stage);
@@ -72,7 +75,6 @@ export function StoryOverlay({
   const [shown, setShown] = useState(0);
   const [auto, setAuto] = useState(false);
   const [log, setLog] = useState(false);
-  const [leaving, setLeaving] = useState(false);
   const line = index >= 0 ? lines[index] : undefined;
   const text = line ? gameText(line.textKey) : "";
   const cine = scene.style === "cine";
@@ -81,30 +83,31 @@ export function StoryOverlay({
   const complete = shown >= units;
   const done = useRef(false);
 
+  // the flow moves on at once: the exit is LayerHost's (its time, its removal)
   const finish = useCallback(
     (skipped: boolean) => {
       if (done.current) return;
       done.current = true;
-      setLeaving(true);
-      setTimeout(() => onDoneRef.current(skipped), reducedMotion() ? 0 : LEAVE_MS);
+      onFinishRef.current(skipped);
     },
-    [onDoneRef],
+    [onFinishRef],
   );
 
   // the chapter's card, then the first line
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once, at the scene's start
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, at the scene's start (stopped if it leaves first)
   useEffect(() => {
+    if (!playing) return;
     const t = setTimeout(
       () => setIndex(0),
       reducedMotion() ? 300 : digest ? INTRO_MS + CARD_MS / 3 : INTRO_MS + CARD_MS,
     );
     return () => clearTimeout(t);
-  }, []);
+  }, [playing]);
 
   // the line appears: a letter (box) or a word (cine) at a time
-  // biome-ignore lint/correctness/useExhaustiveDependencies: restart on each new line
+  // biome-ignore lint/correctness/useExhaustiveDependencies: restart on each new line; stop on the way out
   useEffect(() => {
-    if (index < 0) return;
+    if (!playing || index < 0) return;
     if (reducedMotion() || digest) {
       setShown(Number.MAX_SAFE_INTEGER);
       return;
@@ -113,7 +116,7 @@ export function StoryOverlay({
     const step = cine ? WORD_MS : TYPE_MS;
     const id = setInterval(() => setShown((n) => n + 1), step);
     return () => clearInterval(id);
-  }, [index]);
+  }, [index, playing]);
 
   const next = useCallback(() => {
     if (log || index < 0) return;
@@ -126,10 +129,10 @@ export function StoryOverlay({
   }, [log, index, complete, lines.length, finish]);
 
   useEffect(() => {
-    if (!(auto || digest) || !complete || log) return;
+    if (!playing || !(auto || digest) || !complete || log) return;
     const t = setTimeout(next, digest ? digest.ms : AUTO_MS);
     return () => clearTimeout(t);
-  }, [auto, digest, complete, log, next]);
+  }, [playing, auto, digest, complete, log, next]);
 
   const style = { "--s1": primary, "--s2": secondary } as CSSProperties;
   const name = line && speakerName(line);
@@ -137,7 +140,7 @@ export function StoryOverlay({
 
   return (
     <div
-      className={cx(s.overlay, cine ? s.cine : s.box, leaving && s.leaving)}
+      className={cx(s.overlay, cine ? s.cine : s.box, !playing && s.leaving)}
       style={style}
       id={lid("m-capitulo")}
       data-scene={scene.id}
