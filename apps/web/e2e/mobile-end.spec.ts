@@ -177,6 +177,41 @@ test("the race finale (Peregrina, week 48): the box kept at «Correr», the race
   expect(await boxes(page)).toBe(1);
 });
 
+// one gesture, one decision (F50): the End's links under the effects of the season's last week
+for (const [link, what] of [
+  ["#m-fin-carrera-10", "starts no race again"],
+  ["#m-fin-pruebas", "opens no test view"],
+] as const)
+  test(`a double tap on the effects over the End ends them, and its second click ${what} (F50)`, async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await seedRun(page, "peregrina-w48");
+    await page.goto("./");
+    await continueRun(page);
+    await page.click("#m-descansar");
+    await toPosition(page);
+    await page.click("#m-correr");
+    await page.click("#m-saltar");
+    await toResult(page);
+    await page.click("#m-carrera-seguir");
+    await expect(page.locator("#m-efectos")).toBeVisible();
+    // the finger over one of the End's links, under the effects: a double tap ends them, and only that
+    await page.locator(link).evaluate((el) => el.scrollIntoView({ block: "center" }));
+    const box = await page.locator(link).boundingBox();
+    if (!box) throw new Error(`no ${link} on the End`);
+    await page.waitForTimeout(600);
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator("#m-efectos")).toHaveCount(0);
+    await page.waitForTimeout(500);
+    await expect(page.locator('[data-screen="end"]')).toHaveCount(1);
+    // a tap of its own follows it
+    await page.waitForTimeout(600);
+    await page.click(link);
+    if (link === "#m-fin-pruebas") await expect(page).toHaveURL(/#fin$/);
+    else await expect(page.locator('[data-screen="race"]')).toHaveCount(1);
+  });
+
 test("the wide screen: the panel stays through the season's last race, the column with it, until the End", async ({
   page,
 }) => {

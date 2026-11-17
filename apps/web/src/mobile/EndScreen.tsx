@@ -91,7 +91,9 @@ export function EndScreen({
                   type="button"
                   className={s.linkBtn}
                   id={`m-fin-carrera-${g.goal.turn}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    // the second click of a double tap on the week's effects over the End (F50)
+                    if (isRepeatTap(e)) return;
                     scroll.current = body.current?.scrollTop ?? 0;
                     onRace(g.goal.turn);
                   }}
@@ -119,7 +121,14 @@ export function EndScreen({
           <Glyph name="down" size={20} />
           {ui("ui.m.export.season")}
         </button>
-        <button type="button" className={s.linkBtn} id="m-fin-pruebas" onClick={onTests}>
+        <button
+          type="button"
+          className={s.linkBtn}
+          id="m-fin-pruebas"
+          onClick={(e) => {
+            if (!isRepeatTap(e)) onTests();
+          }}
+        >
           {ui("ui.m.end.detail")}
         </button>
       </div>
