@@ -1137,6 +1137,7 @@ Agregado por el dueño el 2026-11-17, después de probarlos en el prototipo del 
 | Entrada de la frase clave | la línea marcada como clave                                                                        | La línea que queda                                                             |
 | Escribe y borra           | el texto que se borra va entre virgulillas: `~¡¿Yo vuel~`                                          | Desborde: ansiedad o entusiasmo que no la deja frenar (dueño: la protagonista) |
 | Globo que tarda           | `[EFECTO: globo que tarda]`                                                                        | Silencio incómodo antes de contestar: el globo aparece con puntos de espera    |
+| Imitación de voz          | el texto imitado va entre acentos circunflejos: `^«¡Claro que sí!»^`                               | Un personaje imita a otro; sale en el color y la letra del imitado             |
 
 Escribe y borra y globo que tarda: aprobados por el dueño el 2026-11-17 y probados en el prototipo.
 Ideas sin probar, para cuando hagan falta: tachar y dejar a la vista lo tachado (alguien corrige lo

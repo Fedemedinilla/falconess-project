@@ -17,6 +17,8 @@ Borrador con las palabras del dueño. Id provisorio: `protagonista`. Sin nombre 
   al principio (`../secretos.md` S2).
 - **Decidido (dueño, 2026-11-17): no vuela enseguida.** Trabaja un tiempo en el hangar hasta que
   le pica el bichito de intentarlo.
+- **Decidido (dueño, 2026-11-17): es inútil de verdad, y divertida.** No da nada por sentado. Si
+  está nerviosa se pone a hacer algo: apenas agarra el trapo, limpia hasta lo que ya está limpio.
 - Su entrenador es un personaje oficial, tan nuevo como ella (`entrenador.md`).
 - Arranca trabajando en el hangar de una escudería chica: limpia, carga piezas y mira correr a las
   demás. Es **Vuela Alto** (celeste y blanco, descuidada, una sola Falconess activa); llega por una

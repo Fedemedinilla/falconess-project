@@ -421,3 +421,19 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Aplicado en el prototipo (versión 9): la escena 4 revela la historia del entrenador en cada una de
   las tres respuestas, y el capítulo termina con ella al trapo, él anotando el viento «como los
   spotters», y la protagonista mirando el ala hasta que la veterana la frena: «Ni se te ocurra».
+
+### I19 · Inútiles de verdad, y el viejo entrenador (2026-11-17)
+
+> «El hecho de que la protagonista sea mala volando, y que el entrenador sea malo entrenando, debe
+> siempre tomarse divertido pero también realmente inútiles, no hagas que den cosas por sentado u
+> obvias, porque para ellos no lo son.»
+>
+> «La veterana no está sola, es la única que corre, pero necesita un entrenador para calificar y poder
+> correr. Ese entrenador es un personaje anciano, el típico anciano que lo vio todo, sabio, pero al
+> mismo tiempo tira quotes y consejos que no tienen nada que ver con nada ni sirven para la ocasión.»
+- Estado: **decidida** (2026-11-17). Borradores: `personajes/protagonista.md`,
+  `personajes/entrenador.md`, `personajes/viejo-entrenador.md`.
+- Corrige I18: el entrenador no habla de mensajeras ni spotters al principio; la conexión llega
+  después.
+- Efecto nuevo usado en el prototipo (versión 10): imitación de voz (el entrenador imita a la
+  veterana, en su color y su letra).

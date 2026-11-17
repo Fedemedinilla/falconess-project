@@ -19,6 +19,14 @@ Pasa a `docs/characters/` solo con el visto bueno del dueño.
   entrenar ni sabe de carreras, pero sabe historia: la guerra, las mensajeras y los spotters. Intenta
   traducir esa historia «aburrida e inútil» en entrenamiento, a su manera.
 
+- **Decidido (dueño, 2026-11-17): la conexión con los spotters viene después.** Al principio no
+  habla de mensajeras ni de spotters y no es especialista en ellos; cuando empieza a conectar los
+  puntos, se mete a investigar y trae estrategias nuevas.
+- **Decidido (dueño, 2026-11-17): es inútil de verdad, y divertido.** No da nada por sentado, porque
+  para él nada es obvio: pregunta lo básico, y por la paga («Una pregunta sobre la paga…»). Ejemplo
+  del dueño: ante el silencio de la veterana, se contesta solo imitándola: «Tomo tu silencio como un
+  "¡Claro que sí, querido entrenador! ¡No te preocupes!"».
+
 ## Propuesta
 
 - Trabaja en la misma escudería chica que ella (sin confirmar).
