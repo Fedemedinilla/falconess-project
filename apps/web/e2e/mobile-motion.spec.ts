@@ -128,13 +128,15 @@ test("the inheritance card: a tap shows it at once, «Continuar» takes taps onl
       return el?.closest("#m-inspiracion") !== null && el?.id !== "m-inspiracion-seguir";
     }),
   ).toBe(true);
-  let early = true;
-  try {
-    await page.locator("#m-inspiracion-seguir").click({ trial: true, timeout: 600 });
-  } catch {
-    early = false;
-  }
-  expect(early).toBe(false);
+  await expect(page.locator("#m-inspiracion-seguir")).toBeDisabled();
+  // nor the keyboard: it cannot take the focus yet
+  expect(
+    await page.evaluate(() => {
+      const go = document.getElementById("m-inspiracion-seguir");
+      go?.focus();
+      return go !== null && document.activeElement === go;
+    }),
+  ).toBe(false);
   // a tap anywhere on it shows the card at once
   await page.click("#m-inspiracion");
   await expect(card).toHaveAttribute("data-revealed", "tap");

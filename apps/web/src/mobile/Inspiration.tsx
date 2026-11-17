@@ -125,6 +125,8 @@ export function InspirationOverlay({
           type="button"
           className={s.go}
           id={lid("m-inspiracion-seguir")}
+          // not before the card shows: no tap, no key
+          disabled={!shown}
           onClick={(e) => {
             if (!isRepeatTap(e)) onDone();
           }}
