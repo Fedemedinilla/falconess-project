@@ -501,3 +501,11 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - Opcional, de su país: testimonios de veteranos de Malvinas en libros y películas (por ejemplo, el
   libro de Daniel Kon _Los chicos de la guerra_, o _Iluminados por el fuego_), [SIN VERIFICAR los
   datos de edición]. Leer testimonios no reemplaza la lectura sensible, pero acerca la experiencia.
+
+### I25 · Nombre de pista y el primer tramo (2026-11-17)
+
+- Estado: **decidida** (2026-11-17). Ordenada en `historia-principal.md`: el nombre de pista, y el
+  primer tramo de la historia principal (las alas, los primeros vuelos, el «no» del viejo, la promesa
+  del entrenador).
+- El generador de nombres se mejora más adelante para los nombres de pista de las Falconess al azar
+  (dueño). Hoy el dueño lo ve sin terminar y con fuentes que dan nombres genéricos.

@@ -19,7 +19,7 @@ lo decide el dueño; cada dato lleva su estado: **decidido** (con fecha), **prop
 | 4. Relaciones           | Quién conoce a quién, rivalidades, mentoras, escuelas; cómo se llaman entre sí                        | `relaciones.md`                                               |
 | 5. Mapa de escenas      | Una fila por escena o chat, hecha o planeada; grilla de 48 semanas y orden del Modo Historia          | `mapa-de-escenas.md`                                          |
 
-Aparte, `secretos.md`: lo que el dueño sabe y los personajes todavía no, con cuándo se revela cada
+Aparte, `historia-principal.md` (el esqueleto de la historia principal) y `secretos.md`: lo que el dueño sabe y los personajes todavía no, con cuándo se revela cada
 cosa (decidido 2026-11-16).
 
 Las crónicas de cada Falconess siguen en `docs/design/canon-<falconess>.md` (`docs/design/canon.md`).
