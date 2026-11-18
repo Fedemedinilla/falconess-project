@@ -703,13 +703,17 @@ estilo y escala; bloque de una sola vista primero y exclusiones al final):
 
 ```text
 The SAME character as the first attached image, same face, same black hair with cream streaks in the same high
-crest ponytail, same orange-red marks under the eyes, same warm open smile, but as a workshop mechanic on a
-normal working day, not as a racer. About 165 cm, strong and relaxed. Aviator goggles pushed up on her head. Her
-olive green jumpsuit is unzipped to the waist and the upper part is tied around her hips by the sleeves; under
-it a plain loose rust-orange work t-shirt with the sleeves rolled up. A big smudge of grease on one cheek and on
-her forearms, a rag hanging from the back pocket, worn brown work gloves tucked in her belt, scuffed olive
-boots. She holds a huge wrench resting on her shoulder with one hand and waves with the other, friendly, like
-she has known you for years. Nothing about her says "famous": she looks like one more person from the shop.
+crest ponytail, same orange-red marks under the eyes, same warm open smile, but in her at-home, working-in-the-
+shop version: a real mechanic in the middle of a long day, not a racer. About 165 cm, strong and relaxed.
+Aviator goggles pushed up on her head, smudged with grease. She wears her olive green racing suit with the
+rust-orange side panels, but it is unzipped all the way down to the waist and hangs open; underneath, a plain
+loose-fitting off-white tank top with no print, modest, stained with oil. LOTS of grease and oil stains
+everywhere: a big smear across one cheek and the nose, dark oil on her hands, forearms and fingers, stains and
+dark patches on the suit, the knees worn and dirty. A heavy brown leather tool belt around her hips full of
+tools: wrenches, a screwdriver, pliers, a small hammer, a roll of tape, a rag hanging from it. Worn brown work
+gloves tucked in the belt, scuffed olive boots. She holds a huge wrench resting on her shoulder with one hand
+and waves with the other, friendly, like she has known you for years. Nothing about her says "famous": she
+looks like one more person from the shop, happy and covered in oil.
 ```
 
 ### Hombre de la soldadora (capítulo 4)
