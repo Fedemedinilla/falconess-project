@@ -115,7 +115,7 @@ menú nunca se ve detrás (dueño, 2026-11-13). Así quedó construido (ADR-0017
 - **Quién habla:**
   - `narrator`: sin placa, en cursiva, en presente y corto («Y ya no estaba.»);
   - `sfx`: un sonido escrito grande («¡TAC TAC TAC TAC!»), uno por escena como mucho;
-  - `trainer`: el jugador, «Vos», que habla de vos y sin género;
+  - `trainer`: el jugador, «Tú», al que se le habla de tú y sin género;
   - los personajes llevan su nombre en `speaker.<id>`.
 - **Una frase clave por cinemático** (`key: true`): la línea que resume la escena, grande en el
   centro («¿Plan? Ser rápida.»). Corta.
@@ -123,17 +123,24 @@ menú nunca se ve detrás (dueño, 2026-11-13). Así quedó construido (ADR-0017
   corriendo, firma gorras sin frenar), no de que alguien la describa.
 - **Lo cómico protege lo serio:** el humor sale del mismo valor que la define, así la escena sincera
   no rompe el tono, lo confirma.
-- **La voz de cada Falconess es suya:** si tapás el nombre, se tiene que saber quién habla.
-  Peregrina: formal y con jerga de piloto con el entrenador (usted) al principio; pasa al vos cuando
-  confía; apurada, cero paciencia.
+- **La voz de cada Falconess es suya:** si tapas el nombre, se tiene que saber quién habla.
+  Peregrina: formal y con jerga de piloto con el entrenador (usted) al principio; pasa al tú
+  cuando confía; apurada, cero paciencia.
 - **Siembra antes de cosechar:** lo que pega al final (la Larga, Milana, la derrota) se insinúa
   antes en escenas chicas, sin explicarlo.
 - **Nada de romance obligatorio, humillación como lección ni trauma como único motor.**
 - **El chat es su voz más directa:** respuestas con personalidad, nunca un manual de juego.
 - **Cada texto en los dos idiomas:** `es.json` y `en.json`, mismas claves (`story.<escena>.<n>`,
   `chat.<tema>.<n>`). La traducción conserva el tono, no las palabras.
+- **Español latino neutro (dueño, 2026-11-18):** todo el castellano del juego va en tuteo neutro,
+  sin voseo ni marcas de un país: `tú`, `eres`, `tienes`, `mira`, `elige`, `toca`, `cuéntame`;
+  nunca `vos`, `sos`, `tenés`, `mirá`, `elegí`, `tocá`, `contame`, `dale`, `che`, `pileta` ni
+  `cansador`. Para varias a la vez, `ustedes` (nunca `vosotros`). El `usted` sigue siendo una
+  decisión de personaje (Peregrina con el entrenador hasta que confía), no un regionalismo: el
+  beat de `peregrina-first-vos` es el paso de `usted` a `tú` (tutearse). El id de la escena queda
+  como está; las palabras cambian.
 
-## 4b. La voz del jugador («Vos», `trainer`) (dueño, 2026-11-12)
+## 4b. La voz del jugador («Tú», `trainer`) (dueño, 2026-11-12)
 
 El jugador habla seguido en las escenas: no es un testigo mudo.
 
@@ -146,7 +153,7 @@ El jugador habla seguido en las escenas: no es un testigo mudo.
 - **Siempre amable y abierto a charlar.**
 - **Su rol cambia según la Falconess:** puede sentirse padre, entrenador, hermano o amigo. La guía de
   cada Falconess define cuál.
-- **Sin género:** habla de vos y nada en el texto le asigna género.
+- **Sin género:** se le habla de tú y nada en el texto le asigna género.
 
 ## 5. Cuándo sale cada escena (`trigger`)
 
@@ -265,5 +272,5 @@ partida que no carga), con las mismas reglas de siempre (ADR-0017 §7).
 8. ¿El jugador habla con su voz: pregunta, se sorprende, firme en lo de entrenar, siempre amable?
 9. ¿Algo de lo que dice o hace la muestra, en vez de describirla?
 10. ¿Siembra algo de lo que viene?
-11. ¿Está en castellano y en inglés, y pasan los tests?
+11. ¿Está en castellano (latino neutro, sin voseo) y en inglés, y pasan los tests?
 12. ¿La viste en el teléfono, entera y saltándola?

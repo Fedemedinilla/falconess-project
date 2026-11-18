@@ -23,7 +23,7 @@ Lo que ya está fijado en el juego:
 - **Su temporada (ADR-0014):** ganar en las semanas 10 (Sprint, G3), 20 (Mirador, G3), 30 (Sprint,
   G2) y 40 (Mirador, G2), y correr la Larga en la 48 (Cruce, G1). En Exigente, cuatro victorias G2 y
   la final de la Copa contra Gerifalte en la Larga.
-- **El jugador** es su entrenador o entrenadora; el texto le habla de vos, como el resto del juego, y no le da género.
+- **El jugador** es su entrenador o entrenadora; el texto le habla de tú, como el resto del juego, y no le da género.
 
 ### Ideas para la premisa (sin estereotipos)
 
@@ -71,11 +71,14 @@ Borrador de trabajo: pasa a `docs/characters/peregrina.md` cuando el dueño la a
 - **Voz:**
   - Al principio, relajada y despreocupada («mientras sea rápida, todo va a estar bien»), formal y
     con jerga de piloto con el entrenador.
-  - Cuando empieza a valorar el entrenamiento y las decisiones del entrenador, pasa al vos y se
-    anima a probar entrenamientos distintos.
+  - Cuando empieza a valorar el entrenamiento y las decisiones del entrenador, deja el usted,
+    pasa al tú y se anima a probar entrenamientos distintos.
+  - Todo su castellano va en español latino neutro, sin voseo ni marcas de un país (dueño,
+    2026-11-18: «decidimos dejar completamente el voseo, y pasarlo a un latino neutro
+    convencional»). La regla general está en `docs/design/escenas.md`, 4.
 - **El arte que ya tiene encaja con ella:** Técnica, aburrida en el banco con el cerebro humeando;
   Simulador, «¿WTF?» mirándose las manos; Vuelo de riesgo, cara de pánico; Resistencia, decidida
-  en la pileta (el entrenamiento que menos le gusta y el que le habría salvado la Larga).
+  en la piscina (el entrenamiento que menos le gusta y el que le habría salvado la Larga).
 - **Miedo (nunca lo dice):** no saber qué es si no es rápida. Nunca construyó otra cosa. Se creía
   (y todos la veían como) la protagonista, y se durmió en los laureles de «solo mi velocidad lo
   resuelve todo». La Larga le muestra que no es la protagonista: por eso la derrota la deja en
@@ -161,10 +164,10 @@ con nombre aparecen en las historias de las otras; esta puede tener la suya más
 | E2  | Semanas 21-29            | La Novata le pregunta qué se siente perder. «No sé. Nunca me pasó». La Novata la copia en todo, también en lo torpe, y se cae.                                                                                                                    |
 | M3a | Antes de la semana 30    | La Jefa, al pasar: «Algún día te va a tocar una pista que no se gana corriendo». Peregrina se ríe.                                                                                                                                                |
 | M3b | Si gana                  | En la grada, una Falconess duerme la siesta en plena carrera: Milana. Peregrina ni la ve; la Jefa sí.                                                                                                                                             |
-| E3  | Semanas 31-39            | Un entrenamiento que odiaba le salvó una carrera. Por primera vez le da la razón al entrenador: pasa al vos y pide probar algo distinto.                                                                                                          |
+| E3  | Semanas 31-39            | Un entrenamiento que odiaba le salvó una carrera. Por primera vez le da la razón al entrenador: pasa al tú y pide probar algo distinto.                                                                                                           |
 | M4a | Antes de la semana 40    | La cima: si gana, termina el año invicta en su terreno. El estadio lleno.                                                                                                                                                                         |
 | M4b | Si gana                  | Kōryū y la prensa la invitan a la gran Larga de fin de temporada. Se anota corriendo, ahí mismo, antes de que el entrenador pueda hablar.                                                                                                         |
-| E4  | Semanas 41-47            | El entrenador intenta frenarla. Opciones: decirle la verdad / entrenar Resistencia con ella (da stats: sube un poco la chance de ganar) / dejarla ir. Ninguna la frena. Se cruza a Milana tirada en el pasto: «¿Vos sos la rápida? Qué cansador». |
+| E4  | Semanas 41-47            | El entrenador intenta frenarla. Opciones: decirle la verdad / entrenar Resistencia con ella (da stats: sube un poco la chance de ganar) / dejarla ir. Ninguna la frena. Se cruza a Milana tirada en el pasto: «¿Tú eres la rápida? Qué agotador». |
 | M5a | Antes de la semana 48    | Antes de la Larga. Su ritual de siempre. Milana bosteza en la largada.                                                                                                                                                                            |
 | —   | La carrera (semana 48)   | La carrera real del motor: Milana administra cada respiración y al final la pasa como si Peregrina fuera una piedra quieta.                                                                                                                       |
 | F1  | Pierde la Larga          | Se queda parada en la pista. No llora, no se enoja, no entiende. Mira la grada (la Novata, la Jefa) y le pregunta al entrenador: «¿Y ahora… qué se hace?». Silencio.                                                                              |
@@ -207,10 +210,10 @@ Gerifalte en la Larga.
 | No aplica                          | cuadro  | hangar | semana 28               | La Novata: «¿Qué se siente perder?» «No sé. Nunca me pasó.» |
 | Una pista que no se gana corriendo | cuadro  | hangar | antes de la meta 3      | La advertencia de la Jefa.                                  |
 | La que dormía                      | cuadro  | meta   | gana la meta 3          | Milana duerme en la tribuna; la Jefa la reconoce.           |
-| Vos tenías razón                   | cuadro  | hangar | semana 39               | La pileta le salvó una carrera: pasa al vos.                |
+| Tú tenías razón                    | cuadro  | hangar | semana 39               | La piscina le salvó una carrera: pasa al tú.                |
 | La cima                            | cine    | pista  | antes de la meta 4      | «Yo soy el viento, Jefa.» Un segundo quieta.                |
 | La invitación                      | cine    | meta   | gana la meta 4          | La invitan a la gran Larga; se anota. La foto de Milana.    |
-| Qué cansador                       | cuadro  | pista  | semana 44               | Milana tirada en el pasto: «¿Vos sos la rápida?».           |
+| Qué agotador                       | cuadro  | pista  | semana 44               | Milana tirada en el pasto: «¿Tú eres la rápida?».           |
 | La Larga                           | cine    | pista  | antes de la meta 5      | «Aire para el final.» «Va a ser corta. Ya vas a ver.»       |
 | ¿Y ahora qué se hace? (la Larga)   | cine    | meta   | corre la Larga y pierde | Milana la pasa respirando; ella se queda quieta.            |
 | Mi Falconess modelo                | cine    | meta   | gana la Larga           | «¿Y si…?»: las largas no son lo suyo; Milana, su modelo.    |

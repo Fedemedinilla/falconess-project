@@ -13,13 +13,13 @@ inocentemente, la protagonista invencible.
 En la semana 16, Cernícala lloró después de perder contra ella, y Peregrina no entendió por qué.
 La Novata le preguntó qué se sentía perder: «No sé. Nunca me pasó». En la semana 30, mientras ganaba
 su tercera carrera, una Falconess dormía la siesta en la tribuna; la Jefa la reconoció. Poco
-después, una pileta que odiaba le salvó una carrera y, por primera vez, le dio la razón a su
+después, una piscina que odiaba le salvó una carrera y, por primera vez, le dio la razón a su
 entrenador.
 
 Después de su cuarta victoria la invitaron a la gran Larga de fin de temporada, 3600 metros. Se
 anotó antes de que nadie pudiera hablar. Su entrenador sabía que le faltaba resistencia y no quiso
-romperle la ilusión. En la semana 44 conoció a Milana, tirada en el pasto: «¿Vos sos la rápida? Qué
-cansador».
+romperle la ilusión. En la semana 44 conoció a Milana, tirada en el pasto: «¿Tú eres la rápida? Qué
+agotador».
 
 En la Larga, todas las demás eran fondistas. Faltando 400 metros se quedó literalmente sin fuerzas:
 las alas seguían abiertas y ella ya no tenía con qué empujarlas. Primero la pasó Milana, respirando
@@ -60,10 +60,10 @@ es un final temprano.
 | Cap. 4 · No aplica                          | semana 28                     | canon          |
 | Cap. 5 · Una pista que no se gana corriendo | antes de la meta 3            | canon          |
 | Cap. 5 · La que dormía                      | gana la meta 3                | canon          |
-| Cap. 6 · Vos tenías razón                   | semana 39                     | canon          |
+| Cap. 6 · Tú tenías razón                    | semana 39                     | canon          |
 | Cap. 7 · La cima                            | antes de la meta 4            | canon          |
 | Cap. 7 · La invitación                      | gana la meta 4                | canon          |
-| Cap. 8 · Qué cansador                       | semana 44                     | canon          |
+| Cap. 8 · Qué agotador                       | semana 44                     | canon          |
 | Cap. 9 · La Larga                           | antes de la meta 5            | canon          |
 | Final · ¿Y ahora qué se hace? (la Larga)    | corre la Larga y no la gana   | **canon**      |
 | Final · Mi Falconess modelo                 | gana la Larga                 | **«¿y si…?»**  |
@@ -79,5 +79,5 @@ la meta.
 
 - Peregrina perdió la gran Larga, última, sin fuerzas, después de cuatro victorias; Milana la ganó.
 - Cernícala lloró después de perder contra ella, y Peregrina no lo entendió.
-- Milana duerme en las tribunas y dice «qué cansador».
+- Milana duerme en las tribunas y dice «qué agotador».
 - Nunca: que Peregrina ganó la Larga, ni que Milana es su Falconess modelo (eso es del «¿y si…?»).
