@@ -543,3 +543,19 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Decidido (dueño):** el viejo es «Viejo» sin artículo: «Viejo durmiente», no «El viejo durmiente».
 - Prototipo (versión 21): «Chica nerviosa» se presenta («¡Nina! …Nina. Con una vez alcanzaba»), «Joven
   perdido» dice «Soy Masaru», y «Chica con ojeras» pasa a ser Edda cuando el viejo la nombra al final.
+
+### I30 · Las alas de entrenamiento: tres escuderías (2026-11-18)
+
+- **Decidido (dueño):** Edda y el viejo no les dan alas de entrenamiento, así que Nina y Masaru las
+  buscan afuera, y así se presentan las escuderías, un capítulo largo por cada una:
+  - **Kōryū** (la de Peregrina): les muestran alas geniales y deportivas, les dicen un precio
+    altísimo (marca, fabricante, colores) y se quedan callados.
+  - **Altair** (la de Cernícala): alas de alta gama, pero también básicas y gratis, a cambio de
+    cuestionarios, análisis e historial completo; se saturan y escapan (comedia).
+  - **Boneyard** (la de Caracara): Caracara, sin alas puestas, parece una más del taller; con su
+    entrenador les arman unas alas con chatarra y se las regalan. Ellos no se dan cuenta de quién es.
+  - Peregrina y Cernícala no aparecen: los atiende otra gente del hangar.
+- **Propuesta (Claude, falta aprobar):** capítulos 2 a 4 en `capitulos/` («Rojo de exhibición»,
+  «Pregunta doscientos doce», «Chatarra con alas»); personajes nuevos de apoyo Ishida (Kōryū),
+  la analista Quist (Altair) y «Hombre de la soldadora» (el entrenador de Caracara, sin nombre
+  todavía). Las ilustraciones van como texto hasta que haya arte.
