@@ -30,6 +30,11 @@ Borrador con las palabras del dueño. Id provisorio: `protagonista`. Sin nombre 
 Nombre; edad; de dónde viene; cómo habla; qué quiere más allá
 de mejorar.
 
+## Nombre (dueño, 2026-11-18)
+
+- **Nombre: Nina.** **Nombre de pista: Hopeful Comet** (lo recibe cuando empieza a volar,
+  `../historia-principal.md`).
+
 ## Ficha de personaje y voz (2026-11-17)
 
 Aspecto (imagen aprobada, 2026-11-17): ≈ 155 cm, pelo castaño a los hombros con un mechón parado y un broche; casual blanco y plateado (buzo grande, cargo gris); de Vuela Alto, mameluco celeste de limpieza con gorra, guantes amarillos y trapo, la escoba como un trofeo.
