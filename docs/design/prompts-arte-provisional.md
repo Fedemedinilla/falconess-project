@@ -683,3 +683,46 @@ coat with a high navy collar and thin cyan piping, a navy turtleneck, slim navy 
 holds a large data tablet at chest height with one hand and her other index finger is about to tap it. A small
 cyan earpiece in one ear. She looks like she already knows how many questions are left.
 ```
+
+### Caracara en el taller (capítulo 4)
+
+En el capítulo 4 no tiene que parecer una estrella: sin alas, con ropa de taller. Referencia:
+`apps/web/src/mobile/art/caracara-splash.webp`. Dos pasos en Gemini.
+
+Paso 1, sacarle las alas (adjuntar la imagen de Caracara, conversación nueva):
+
+```text
+Edit the attached image. Remove the mechanical wings from her back completely, including the wing frame and
+any straps or mounts that hold them. Fill the space behind her with the same plain background. Keep EVERYTHING
+else exactly the same: same face, same hair, same pose, same thumbs up, same jumpsuit, same scarf, same gloves,
+same boots, same colors, same art style and line art. Do not redraw the character.
+```
+
+Paso 2, la versión de taller (adjuntar el resultado del paso 1 y la imagen de Nina como referencia de
+estilo y escala; bloque de una sola vista primero y exclusiones al final):
+
+```text
+The SAME character as the first attached image, same face, same black hair with cream streaks in the same high
+crest ponytail, same orange-red marks under the eyes, same warm open smile, but as a workshop mechanic on a
+normal working day, not as a racer. About 165 cm, strong and relaxed. Aviator goggles pushed up on her head. Her
+olive green jumpsuit is unzipped to the waist and the upper part is tied around her hips by the sleeves; under
+it a plain loose rust-orange work t-shirt with the sleeves rolled up. A big smudge of grease on one cheek and on
+her forearms, a rag hanging from the back pocket, worn brown work gloves tucked in her belt, scuffed olive
+boots. She holds a huge wrench resting on her shoulder with one hand and waves with the other, friendly, like
+she has known you for years. Nothing about her says "famous": she looks like one more person from the shop.
+```
+
+### Hombre de la soldadora (capítulo 4)
+
+Entrenador de Caracara según la idea del dueño (corre y entrena con ella; después, cervezas en el
+taller). Sin nombre todavía. Bloque de una sola vista primero y exclusiones al final:
+
+```text
+A man in his early forties, about 183 cm, broad-shouldered and fit like someone who still runs every morning,
+relaxed and solid posture. Short messy dark brown hair with a bit of grey, a short full beard, a few small burn
+marks and scratches on his forearms, sharp but kind eyes, a dry half smile: he does not say much and he trusts
+little, but he would do anything for his people. A welding mask flipped up on top of his head. A heavy brown
+leather welding apron over an olive green work shirt with rolled sleeves and rust-orange stitching, dark work
+trousers with knee pads, steel-toe boots, thick leather welding gloves, one of them held in his hand. A
+stopwatch on a cord around his neck, hinting that he is also a coach. Workshop look, warm and lived-in.
+```
