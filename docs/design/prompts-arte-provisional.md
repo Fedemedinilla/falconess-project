@@ -635,16 +635,18 @@ symmetrical composition. Calm, elegant, a little intimidating, like an exam room
 ### El taller de Boneyard Works
 
 ```text
-Inside the workshop of Boneyard Works, a scrappy racing team for winged racers that builds everything from
-junk. An old patched hangar with holes in the roof: warm sunbeams fall through them onto floating dust and
-sparks. Huge piles of scrap everywhere, sorted with love: old propellers, wheels of every size, refrigerator
-doors, metal sheets painted in five different colors, chains and pulleys hanging from a rusty crane. The
-team colors are olive green and rust orange, on hand-painted banners with an abstract wing emblem (no letters)
-and on a few mismatched tool chests. In the middle distance, a welding station throwing bright sparks, a work
-table covered in bolts, an old radio on a shelf. In the background, one pair of olive-and-rust racing wings
-hangs under a dusty tarp, half visible, like a secret. The entrance is a gap in a wall of scrap. Camera at
-chest height, wide lens, a bit of a tilted angle. Chaotic but cozy and happy, like a garage where friends
-build things on weekends.
+Inside the workshop of Boneyard Works, a racing team for winged racers that builds its wings from salvaged
+parts, and feels like a big family home. A tall old hangar with warm wooden beams and a few skylights; golden
+afternoon sunbeams fall softly across the room. Workbenches everywhere, each one different and clearly loved,
+covered in neat tools, bolts in glass jars and half-finished wing parts. Scrap is everywhere too, but sorted
+and cared for: shelves of old propellers, wheels and colorful metal sheets labeled by color, like a
+treasure collection. Team colors olive green and warm rust orange, on hand-painted banners with an abstract
+wing emblem (no letters) and on mismatched tool chests. Cozy details: warm string lights hanging between the
+beams, potted plants on the windowsills, a corner with a big shared table, mismatched chairs, mugs and a
+kettle, a sofa made from an old vehicle seat with a blanket, photos and drawings pinned on a corkboard (no
+readable text). An old radio on a shelf. In the background, one pair of olive-and-rust racing wings hangs
+under a tarp, half visible, like a secret. A wide open door lets in green light from outside. Camera at chest
+height, wide lens. Warm, welcoming and lived-in: a messy but happy workshop where everyone is family.
 ```
 
 ### Personajes de apoyo (una sola vista)
