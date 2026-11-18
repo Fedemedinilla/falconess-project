@@ -14,15 +14,16 @@ nombres se mejora más adelante para eso (`docs/handoff/generador-de-nombres.md`
 
 ## Primer tramo: de la escoba a las alas
 
-| Momento            | Qué pasa                                                                                                                                                               | Estado                       |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| 1. Llegada         | Capítulo 1: la protagonista llega a limpiar, el entrenador a una entrevista; la veterana y el viejo (prototipo de escena)                                              | propuesta escrita            |
-| 2. Trabajo         | Ella trabaja un tiempo en el hangar, sin querer volar, hasta que le pica el bichito                                                                                    | decidido                     |
-| 3. Las alas        | La veterana y el viejo destapan las alas que hicieron para ella; quizás ahí está escrito su nombre de pista                                                            | decidido (dueño, 2026-11-17) |
-| 4. Primeros vuelos | Sus primeras voladas; se da cuenta de que tiene el «algo» de las Falconess                                                                                             | decidido                     |
-| 5. El no del viejo | El viejo se opone rotundamente: «No», a secas y final                                                                                                                  | decidido                     |
-| 6. La promesa      | En un momento de inspiración y debilidad, potenciado por la euforia, el entrenador levanta la mano y le promete al viejo que la va a entrenar para que no le pase nada | decidido                     |
-| 7. Después         | Se arrepiente unas veinte veces en cada entrenamiento, pero no deja de hacerlo ni de intentar hacerlo bien                                                             | decidido                     |
+| Momento                  | Qué pasa                                                                                                                                                        | Estado                       |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 1. Llegada               | Capítulo 1: la protagonista llega a limpiar, el entrenador a una entrevista; la veterana y el viejo (prototipo de escena)                                       | propuesta escrita            |
+| 2. Trabajo               | Ella trabaja un tiempo en el hangar, sin querer volar, hasta que le pica el bichito                                                                             | decidido                     |
+| 3. Alas de entrenamiento | Unas alas básicas, de entrenamiento, para sus primeras pruebas                                                                                                  | decidido (dueño, 2026-11-18) |
+| 4. Primeros vuelos       | Sus primeras voladas con esas alas; se da cuenta de que tiene el «algo» de las Falconess                                                                        | decidido                     |
+| 5. El no del viejo       | El viejo se opone rotundamente: «No», a secas y final                                                                                                           | decidido                     |
+| 6. La promesa            | En un momento de inspiración y debilidad, potenciado por la euforia, Masaru levanta la mano y le promete al viejo que la va a entrenar para que no le pase nada | decidido                     |
+| 7. Después               | Se arrepiente unas veinte veces en cada entrenamiento, pero no deja de hacerlo ni de intentar hacerlo bien                                                      | decidido                     |
+| 8. Las alas oficiales    | Edda, Masaru y el viejo le dan sus alas «oficiales», las que la hacen una Falconess de competición; quizás con su nombre de pista, Hopeful Comet, escrito       | decidido (dueño, 2026-11-18) |
 
 Lo que mueve este tramo (dueño): **verla entusiasmada y volar le cambia el ánimo a todos.** El
 entrenador decide ayudarla y hacerse su entrenador porque quiere seguir viéndola contenta. Encaja con
@@ -30,6 +31,6 @@ su ficha: lo que lo engancha no se le apaga (`personajes/entrenador.md`).
 
 Abierto:
 
-- El orden entre las alas y el «no» del viejo: si él ayudó a hacerlas y aun así se opone.
-- Quién escribió el nombre de pista en las alas y cuál es.
+- De dónde salen las alas de entrenamiento.
+- Si el nombre de pista va escrito en las alas oficiales (ya decidido: Hopeful Comet).
 - Los nombres comunes del elenco, de orígenes variados (`ideas.md` I26).
