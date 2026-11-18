@@ -425,6 +425,12 @@ FERRÁN [calma]: Nunca. ¿Qué tiempo hiciste?
    - `[ILUSTRACIÓN: Brisa y Kes en la recta final, alas desplegadas]`
    - `[PAUSA]`: retención de un tiempo antes del siguiente globo.
    - `[EFECTO: …]`: efecto de texto o de movimiento sobre un globo o el escenario (ver Tema 12).
+   - `[NOMBRE: … → …]`: **el cartel de quien habla no dice el nombre hasta que el personaje se
+     identifica o alguien lo identifica** (dueño, 2026-11-18). Hasta entonces lleva una descripción de
+     lo que se ve: «Chica nerviosa» pasa a ser «Nina» cuando ella lo dice; «Chica con ojeras», «Edda»
+     cuando alguien la nombra; «Joven perdido», «Masaru». Sirve para el misterio (alguien que no se
+     presenta) y para la comedia (un nombre que tarda en llegar). La descripción es corta, visible y sin
+     juicio de carácter; los globos ya escritos conservan el cartel que tenían.
    - `[GESTO: …]`: lo que hace el personaje mientras habla. **Mientras el juego no tenga animaciones
      (dueño, 2026-11-17), el gesto se muestra escrito** en cursiva arriba de la línea, dentro del
      mismo globo. Reglas: una sola acción observable, en presente y en tercera persona, de unas doce

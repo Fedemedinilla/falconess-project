@@ -534,3 +534,12 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   nombres de moda de la fantasía generada («si llego a ver un Elara, me voy a enojar mucho»); la
   veterana, seco o de chica cool; el entrenador, un nombre que cargue lo mucho que se esperaba de él
   al nacer.
+
+### I29 · Carteles sin nombre hasta que alguien lo dice (2026-11-18)
+
+- **Decidido (dueño):** el cartel de quien habla no muestra el nombre hasta que el personaje se
+  identifica o alguien lo identifica; sirve para misterios y para comedia. Regla en
+  `docs/design/biblia-escritura.md` (tema 5, `[NOMBRE: …]`).
+- **Decidido (dueño):** el viejo es «Viejo» sin artículo: «Viejo durmiente», no «El viejo durmiente».
+- Prototipo (versión 21): «Chica nerviosa» se presenta («¡Nina! …Nina. Con una vez alcanzaba»), «Joven
+  perdido» dice «Soy Masaru», y «Chica con ojeras» pasa a ser Edda cuando el viejo la nombra al final.

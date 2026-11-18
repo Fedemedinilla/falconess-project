@@ -33,7 +33,7 @@ Borrador con las palabras del dueño. Id provisorio: `viejo-entrenador`. Sin nom
 > «Sería gracioso que su nombre cambie, entre el viejo, el viejo durmiente, el viejo sabio, etc. Que
 > ni ellos sepan su nombre y ya lo hayan tomado así. Es el viejo en su modo X o el viejo haciendo X.»
 - En el juego, la etiqueta de quien habla cambia **solo con adjetivos, nunca con verbos** (dueño,
-  2026-11-18): «El viejo durmiente», «El viejo sabio», «El viejo inmóvil», no «El viejo, durmiendo».
+  2026-11-18): «Viejo durmiente», «Viejo sabio», «Viejo inmóvil», sin artículo y sin verbos (no «El viejo durmiente» ni «El viejo, durmiendo»).
   Probado en el prototipo.
 - Propuesta: su nombre real es parte del secreto S4. El entrenador, que estudió historia, conoce de
   los libros el nombre del spotter legendario; el día que lo escucha, entiende quién duerme en la silla.
