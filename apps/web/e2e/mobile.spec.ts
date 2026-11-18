@@ -756,7 +756,8 @@ test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays 
   await expect(scene).toContainText(t("story.peregrina-prologue.1"));
   await page.click("#m-capitulo-saltar");
   await expect(scene).toHaveCount(0);
-  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
+  // skipped, it says nothing at all (owner 2026-11-18)
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
   // «Historia» lists it and plays it again
   await page.click("#m-menu");
   await page.click("#m-historia-abrir");
@@ -994,7 +995,7 @@ test("Directo: no transition, the race opens on its result and «Ver otra vez» 
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
 });
 
-test("a scene seen in an earlier season is passed by, with a button to watch it (owner 2026-11-14)", async ({
+test("a scene seen in an earlier season is passed by, saying nothing; «Historia» watches it (owner 2026-11-18)", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -1008,10 +1009,13 @@ test("a scene seen in an earlier season is passed by, with a button to watch it 
   await pastTitle(page);
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
-  const toast = page.locator("#m-capitulo-aviso");
-  await expect(toast).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-entrenar")).toBeVisible();
   await expect(page.locator("#m-capitulo")).toHaveCount(0);
-  await page.click("#m-escena-ver");
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
+  // the only way to it: «Historia», which has it
+  await page.click("#m-menu");
+  await page.click("#m-historia-abrir");
+  await page.click('#m-historia [data-scene="peregrina-prologue"] button');
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
 });
 

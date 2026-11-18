@@ -15,10 +15,9 @@ const OUT = process.env.E2E_SHOTS_DIR
 
 test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 
-/** A new season of `falconessId` on its first week's menu, with no scene or notice over it. */
+/** A new season of `falconessId` on its first week's menu, with no scene over it. */
 async function start(page: Page, falconessId: string): Promise<void> {
   await startMobile(page, falconessId);
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
   await expect(page.locator("#m-entrenar")).toBeEnabled();
 }
 
@@ -48,7 +47,6 @@ test("the pre-race card of Peregrina's first goal", async ({ page }) => {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${OUT}peregrina-raceweek-menu.png` });
   await page.click("#m-carrera");

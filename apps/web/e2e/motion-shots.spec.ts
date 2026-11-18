@@ -35,7 +35,7 @@ const OUT = fileURLToPath(new URL(`../../../.work/ui/motion/${STEP}/`, import.me
 
 /**
  * The layers each frame measures, when on the page (one of each): a leaving copy has no id, so
- * it is measured by its phase, and the race result's foot (the notices' anchor) by its mark.
+ * it is measured by its phase, and the race result's foot (the notice's anchor) by its mark.
  */
 const LAYERS = [
   "#m-transicion",
@@ -43,7 +43,6 @@ const LAYERS = [
   "#m-efectos",
   "#m-inspiracion",
   "#m-resultado",
-  "#m-capitulo-aviso",
   '[data-layer-phase="out"] > *',
   "[data-toast-anchor]",
   "#m-carrera-llegada",
@@ -192,14 +191,12 @@ async function seeded(page: Page): Promise<void> {
 }
 
 /**
- * Peregrina's first week, the prologue skipped and its notice gone: the scene's exit (0.8 s, 6.2)
- * first, then the notice it leaves on the menu, its time and its own fade.
+ * Peregrina's first week, the prologue skipped and its exit over (0.8 s, 6.2): the menu alone,
+ * with nothing left of the scene.
  */
 async function startPeregrina(page: Page): Promise<void> {
   await startMobile(page, "peregrina");
-  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0, { timeout: 15_000 });
-  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0, { timeout: 15_000 });
   await page.waitForTimeout(500);
 }
 
@@ -215,7 +212,6 @@ async function toRaceWeek(page: Page): Promise<void> {
     }
     await settle(page);
   }
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
 }
 
 type Flow = (page: Page, m: Moments) => Promise<string>;
@@ -451,8 +447,8 @@ const inheritanceTap: Flow = async (page, m) => {
   return "inheritance-tap";
 };
 
-/** The prologue skipped: the scene leaves and its notice anchors on the menu; then on Entrenar. */
-const notice: Flow = async (page, m) => {
+/** The prologue skipped: the scene's 0.8 s exit over the live menu, which is left clean (6.2). */
+const sceneLeave: Flow = async (page, m) => {
   await page.goto("./");
   await pastTitle(page);
   await page.click("#m-elegir-peregrina");
@@ -460,14 +456,9 @@ const notice: Flow = async (page, m) => {
   await expect(page.locator("#m-capitulo")).toBeVisible();
   await m.hold();
   await page.click("#m-capitulo-saltar");
-  await m.at("notice-menu", [0, 400, 800, 1200]);
+  await m.at("scene-leave", [0, 400, 800, 1200]);
   await m.release();
-  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
-  await m.hold();
-  await page.click("#m-entrenar");
-  await m.at("notice-train", [0, 200]);
-  await m.release();
-  return "notice";
+  return "scene-leave";
 };
 
 /** Rápido: Peregrina's prologue as a digest, from «Empezar» (6.6: the card whole 0.8-1.5 s). */
@@ -528,11 +519,9 @@ const sceneBox: Flow = async (page, m) => {
   return "scene-box";
 };
 
-/** A skipped scene has left: its exit (0.8 s), then its notice, have had their time. */
+/** A skipped scene has left: its exit (0.8 s) has had its time. */
 async function sceneGone(page: Page): Promise<void> {
-  await expect(page.locator("[data-layer-phase]")).toHaveCount(0);
-  await page.waitForTimeout(300);
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0, { timeout: 15_000 });
+  await expect(page.locator("[data-layer-phase]")).toHaveCount(0, { timeout: 15_000 });
   await page.waitForTimeout(500);
 }
 
@@ -603,7 +592,7 @@ const PLAN: readonly {
       raceEndFast,
       inheritance,
       inheritanceTap,
-      notice,
+      sceneLeave,
       digest,
       raceInOut,
       endGlide,
@@ -657,7 +646,7 @@ const PLAN: readonly {
     motion: "reduce",
     flows: { effects, raceWeek, inheritance, sceneIntro, trainResult },
   },
-  { viewport: SMALL, motion: "normal", flows: { menuTrain, effects, raceWeek, notice } },
+  { viewport: SMALL, motion: "normal", flows: { menuTrain, effects, raceWeek, sceneLeave } },
   { viewport: SMALL, motion: "reduce", flows: { menuTrain } },
   {
     viewport: TABLET,
@@ -674,7 +663,7 @@ const PLAN: readonly {
       raceWeek,
       raceEnd,
       inheritance,
-      notice,
+      sceneLeave,
       raceInOut,
       endGlide,
       sceneIntro,

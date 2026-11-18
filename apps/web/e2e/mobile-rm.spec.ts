@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import {
@@ -17,38 +19,47 @@ import { freezeAt, holdClock, movingNow, opacityOf } from "./motion";
  * stands still at its rest, and its rest is visible. Nothing comes in, leaves, loops or drifts
  * (`movingNow` finds no running animation, nor a transition of anything but an opacity); only the
  * reading holds keep their time (the week's effects, the chapter's card, a race's finish, a
- * notice). The scene's notice (5.9, H5, C7): no way in, no fade, the whole of it shown for its
- * time, «Ver» with it. The emblem never plays (E41); the inheritance card shows whole at once and
+ * notice). A refused act's notice (5.9, H5, C7): no way in, no fade, the whole of it shown for
+ * its time. A scene that was skipped or already seen says nothing (owner 2026-11-18): «Historia»
+ * plays it again. The emblem never plays (E41); the inheritance card shows whole at once and
  * «Continuar» takes the tap from its first frame (L1); the title leaves by fading only; the chat's
  * feed jumps to the newest bubble.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: "reduce" });
 
-test("the skipped prologue's notice shows whole and still", async ({ page }) => {
-  await startMobile(page, "peregrina");
-  const notice = page.locator("#m-capitulo-aviso");
-  await expect(notice).toContainText(t("ui.m.story.skipped"));
-  expect(await opacityOf(page, "#m-capitulo-aviso")).toBe(1);
-  expect(await notice.evaluate((el) => getComputedStyle(el).transform)).toBe("none");
-});
-
-test("a passed scene's notice shows whole, with «Ver»", async ({ page }) => {
-  await page.addInitScript(() => {
-    if (!localStorage.getItem("falconess.juego.historia"))
-      localStorage.setItem(
-        "falconess.juego.historia",
-        JSON.stringify({ runs: {}, ever: ["peregrina-prologue"] }),
-      );
+test("a refused act's notice shows whole and still on the selection", async ({ page }) => {
+  const { save } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-w10.json", import.meta.url)), "utf8"),
+  );
+  // it parses, but the season has no event to answer at its last input: «Continuar» is refused
+  const broken = JSON.stringify({
+    ...save,
+    inputs: [...save.inputs, { kind: "event:choose", option: 0 }],
   });
+  await page.addInitScript((text) => {
+    localStorage.setItem("falconess.pruebas.partida", text);
+  }, broken);
   await page.goto("./");
   await pastTitle(page);
-  await page.click("#m-elegir-peregrina");
-  await page.click("#m-empezar");
-  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.passed"));
-  expect(await opacityOf(page, "#m-capitulo-aviso")).toBe(1);
-  expect(await opacityOf(page, "#m-escena-ver")).toBe(1);
-  await page.click("#m-escena-ver");
+  await page.click("#m-continuar");
+  const notice = page.locator("#m-aviso-error");
+  await expect(notice).toContainText(t("ui.error.load-replay"));
+  expect(await opacityOf(page, "#m-aviso-error")).toBe(1);
+  expect(await notice.evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+  // and it goes at once, with no copy fading where it stood
+  await notice.getByRole("button", { name: t("ui.error.dismiss") }).click();
+  await expect(notice).toHaveCount(0);
+  await expect(page.locator("[data-notice-leaving]")).toHaveCount(0);
+});
+
+test("a skipped scene says nothing: «Historia» is where she watches it again", async ({ page }) => {
+  await startMobile(page, "peregrina");
+  await expect(page.locator("#m-entrenar")).toBeVisible();
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
+  await page.click("#m-menu");
+  await page.click("#m-historia-abrir");
+  await page.click('#m-historia [data-scene="peregrina-prologue"] button');
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
 });
 

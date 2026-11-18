@@ -247,7 +247,7 @@ test("a training whose week brings no effects ends on the menu with the focus on
   await page.clock.install();
   await page.goto("./");
   await continueRun(page);
-  // the passed prologue's notice is no layer: the menu is free at once
+  // the prologue passed by says nothing and is no layer: the menu is free at once
   await expect(page.locator("#m-entrenar")).toBeEnabled();
   await page.focus("#m-entrenar");
   await page.keyboard.press("Enter");
@@ -274,7 +274,7 @@ test("a race with no scene after it, by keyboard: «Correr» puts the focus on �
 }) => {
   test.setTimeout(90_000);
   await seedRun(page, "peregrina-w10");
-  // both of the week's scenes came up in another season: they pass with a notice, no layer
+  // both of the week's scenes came up in another season: they pass saying nothing, no layer
   await seenEver(page, "peregrina-debut");
   await seenEver(page, "peregrina-debut-win");
   await page.goto("./");
@@ -438,33 +438,7 @@ test("a scene after the race leaves onto its result: the result is there from th
   expect(await rule13()).toBe(0);
 });
 
-test("the skipped scene's notice waits for the scene's exit, then sits just over the result's foot as it landed (rule 17, D7)", async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await page.clock.install();
-  await toSceneAfterRace(page);
-  await holdClock(page);
-  await page.click("#m-capitulo-saltar");
-  await settleUpdates(page);
-  // no notice while the scene's copy fades over the result
-  await page.clock.runFor(700);
-  await settleUpdates(page);
-  expect(await present(page, "#m-capitulo-aviso")).toBe(false);
-  await page.clock.runFor(200);
-  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
-  // every entrance landed: the notice NOTICE_GAP (10 px) over the foot, clear of its buttons
-  await freezeAt(page, 10_000);
-  const gap = await page.evaluate(() => {
-    const notice = document.getElementById("m-capitulo-aviso")?.getBoundingClientRect();
-    const foot = document.querySelector("[data-toast-anchor]")?.getBoundingClientRect();
-    return notice && foot ? foot.top - notice.bottom : undefined;
-  });
-  expect(gap).toBeGreaterThanOrEqual(9);
-  expect(gap).toBeLessThanOrEqual(11);
-});
-
-test("a scene's notice belongs to the screen it left onto: a tap away during its exit drops it, so it never shows over the next screen's controls (6.2, rule 17)", async ({
+test("the screen under a scene's exit is live: a tap away during it opens the next screen, and the scene leaves nothing behind (6.2)", async ({
   page,
 }) => {
   await page.clock.install();
@@ -480,13 +454,14 @@ test("a scene's notice belongs to the screen it left onto: a tap away during its
   await expect(page.locator("#m-taller-wings")).toBeVisible();
   await page.clock.runFor(1500);
   await settleUpdates(page);
-  // the exit is over: no notice over the workshop's tabs, and none back on the menu
+  // the exit is over and left nothing: no copy, and nothing over the workshop's tabs
   expect(await present(page, "[data-layer-phase]")).toBe(false);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
   await page.click("#m-volver");
   await expect(page.locator("#m-entrenar")).toBeVisible();
   await page.clock.runFor(500);
   await settleUpdates(page);
+  expect(await present(page, "#m-capitulo")).toBe(false);
   expect(await present(page, "#m-capitulo-aviso")).toBe(false);
 });
 
@@ -879,19 +854,18 @@ type Box = {
   readonly bottom: number;
 };
 
-/** What one frame held: the game's column and, while they are up, the week's effects and the notice. */
+/** What one frame held: the game's column and, while they are up, the week's effects. */
 type Frame = {
   readonly app: Box & { readonly width: number };
   readonly fx: Box | null;
-  readonly notice: Box | null;
   readonly end: boolean;
   readonly panel: boolean;
 };
 
 /**
- * Records every frame from now on for `ms` (the column's box, the effects' and the notice's, whether
- * the End and the wide screen's panel are on the page); the returned call waits for the end and
- * gives the frames.
+ * Records every frame from now on for `ms` (the column's box and the effects', whether the End and
+ * the wide screen's panel are on the page); the returned call waits for the end and gives the
+ * frames.
  */
 async function recordFrames(page: Page, ms: number): Promise<() => Promise<Frame[]>> {
   await page.evaluate((span) => {
@@ -913,7 +887,6 @@ async function recordFrames(page: Page, ms: number): Promise<() => Promise<Frame
       frames.push({
         app: { ...box(app ?? null), width: Math.round(r?.width ?? 0) },
         fx: box(document.querySelector('[data-layer="fx"] > *')),
-        notice: box(document.getElementById("m-capitulo-aviso")),
         end: document.getElementById("m-fin") !== null,
         panel: document.getElementById("m-panel") !== null,
       });
@@ -1002,8 +975,7 @@ test("after the race mode the HUD comes back with a fade, with the menu; the HUD
   await expect(hud).toHaveCount(0);
   await page.click("#m-saltar");
   await toResult(page);
-  // the race's own notice, if any, has gone with its time; every animation held where it starts
-  // (a fade can end before a wait for the effects does)
+  // every animation held where it starts (a fade can end before a wait for the effects does)
   await holdAnimations(page);
   await page.click("#m-carrera-seguir");
   await expect(page.locator("#m-efectos")).toBeVisible();
@@ -1109,33 +1081,25 @@ test("the wide screen: the End glides to the center as it comes, the panel gone,
   for (const f of atEnd) expect(f.app.width).toBe(list[0]?.app.width);
 });
 
-test("the wide screen resized: the notice and the week's effects stay inside the column, frame by frame (rule 18)", async ({
+test("the wide screen resized: the week's effects stay inside the column, frame by frame (rule 18)", async ({
   page,
 }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 900 });
-  // a scene seen in another season: its notice on the menu
   await page.goto("./");
   await pastTitle(page);
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
   await page.click("#m-capitulo-saltar");
-  await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
-  let frames = await recordFrames(page, 700);
-  await page.setViewportSize({ width: 1180, height: 760 });
-  await page.waitForTimeout(150);
-  await page.setViewportSize({ width: 1400, height: 880 });
-  let list = (await frames()).filter((f) => f.notice !== null);
-  expect(list.length).toBeGreaterThan(0);
-  for (const f of list) expect(f.notice && inside(f.notice, f.app)).toBe(true);
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
   // the effects of a rest, resized under them
   await page.click("#m-descansar");
   await expect(page.locator("#m-efectos")).toBeVisible();
-  frames = await recordFrames(page, 700);
+  const frames = await recordFrames(page, 700);
   await page.setViewportSize({ width: 1180, height: 760 });
   await page.waitForTimeout(150);
   await page.setViewportSize({ width: 1440, height: 900 });
-  list = (await frames()).filter((f) => f.fx !== null);
+  const list = (await frames()).filter((f) => f.fx !== null);
   expect(list.length).toBeGreaterThan(0);
   for (const f of list) expect(f.fx && inside(f.fx, f.app)).toBe(true);
 });
@@ -1624,9 +1588,7 @@ function boxesNow(page: Page): Promise<Boxes> {
     return {
       app: app ? box(app) : { left: 0, right: 0, top: 0, bottom: 0 },
       fx: [...document.querySelectorAll("[data-fx]")].map(box),
-      notices: [...document.querySelectorAll("#m-capitulo-aviso, [data-notice-leaving] > *")].map(
-        box,
-      ),
+      notices: [...document.querySelectorAll("#m-aviso-error, [data-notice-leaving] > *")].map(box),
     };
   });
 }
@@ -1645,7 +1607,7 @@ async function recordBoxes(page: Page, ms: number): Promise<() => Promise<Boxes[
       frames.push({
         app: app ? box(app) : { left: 0, right: 0, top: 0, bottom: 0 },
         fx: [...document.querySelectorAll("[data-fx]")].map(box),
-        notices: [...document.querySelectorAll("#m-capitulo-aviso, [data-notice-leaving] > *")].map(
+        notices: [...document.querySelectorAll("#m-aviso-error, [data-notice-leaving] > *")].map(
           box,
         ),
       });
@@ -1689,14 +1651,12 @@ for (const viewport of [
   { width: 1024, height: 768 },
   { width: 1440, height: 900 },
 ])
-  test(`${viewport.width}×${viewport.height}: the notice and the week's effects (an outing's two) sit inside the game's column, none over another (H6, rule 18)`, async ({
+  test(`${viewport.width}×${viewport.height}: the week's effects (an outing's two) sit inside the game's column, none over another (H6, rule 18)`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
     await startMobile(page);
-    // the skipped prologue's notice over the track tab
-    await expect(page.locator("#m-capitulo-aviso")).toBeVisible();
-    expectContained(await boxesNow(page), "the notice");
+    await expect(page.locator("#m-entrenar")).toBeEnabled();
     // an outing: its bond and the mood it lifted, two effects at once
     await page.click("#m-salida");
     const sheet = page.locator("#m-salida-cuadrilla[open]");
@@ -1711,7 +1671,7 @@ for (const viewport of [
     expectContained(now, "the effects");
   });
 
-test("a tablet's frame narrows after the race with its effects and its notice inside it, frame by frame (H6, L5)", async ({
+test("a tablet's frame narrows after the race with its effects inside it, frame by frame (H6, L5)", async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -2054,30 +2014,36 @@ test("a hidden tab holds the emblem where it was, and its fading copy too: each 
   expect(await present(page, copy)).toBe(false);
 });
 
-test("a hidden tab holds a notice's time on screen, and its fading copy: each goes on with the time it had left (5.9)", async ({
+test("a hidden tab holds a notice's time on screen, and its fading copy: each goes on with the time it had left (5.9, 6.11)", async ({
   page,
 }) => {
   await page.clock.install();
+  // «Continuar» on a save that no longer replays: the selection's notice, the only one a tap raises
+  const { save } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-w10.json", import.meta.url)), "utf8"),
+  );
+  const broken = JSON.stringify({
+    ...save,
+    inputs: [...save.inputs, { kind: "event:choose", option: 0 }],
+  });
+  await page.addInitScript((text) => {
+    localStorage.setItem("falconess.pruebas.partida", text);
+  }, broken);
   await page.goto("./");
   await pastTitle(page);
-  await page.click("#m-elegir-peregrina");
-  await page.click("#m-empezar");
-  await expect(page.locator("#m-capitulo")).toBeVisible();
   await holdClock(page);
-  await page.click("#m-capitulo-saltar");
-  // the prologue's exit (0.8 s), then its notice: found within 20 ms of its first frame
-  await runUntil(page, "#m-capitulo-aviso", 2000, 20);
+  await page.click("#m-continuar");
+  await runUntil(page, "#m-aviso-error", 2000, 20);
   await runClock(page, 1000);
   await hideTab(page, true);
-  await expectCssPaused(page);
-  await runClock(page, 6000);
-  expect(await present(page, "#m-capitulo-aviso")).toBe(true);
+  await runClock(page, 8000);
+  expect(await present(page, "#m-aviso-error")).toBe(true);
   await hideTab(page, false);
-  // its 4 s: 1 s of it seen, 3 s left
-  await runClock(page, 2800);
-  expect(await present(page, "#m-capitulo-aviso")).toBe(true);
+  // its 6 s: 1 s of it seen, 5 s left
+  await runClock(page, 4800);
+  expect(await present(page, "#m-aviso-error")).toBe(true);
   let left = 0;
-  while (await present(page, "#m-capitulo-aviso")) {
+  while (await present(page, "#m-aviso-error")) {
     expect(left).toBeLessThan(400);
     await runClock(page, 20);
     left += 20;
@@ -2087,7 +2053,6 @@ test("a hidden tab holds a notice's time on screen, and its fading copy: each go
   expect(await present(page, copy)).toBe(true);
   await runClock(page, 100);
   await hideTab(page, true);
-  await expectCssPaused(page, copy);
   await runClock(page, 2000);
   expect(await present(page, copy)).toBe(true);
   await hideTab(page, false);

@@ -1574,8 +1574,6 @@
   "ui.m.story.auto": "Auto",
   "ui.m.story.log": "Registro",
   "ui.m.story.next": "Seguir",
-  "ui.m.story.skipped": "Escena saltada. Podés verla cuando quieras en Menú → Historia.",
-  "ui.m.story.seen": "Queda guardada en Menú → Historia.",
   "ui.m.story.title": "Historia",
   "ui.m.story.empty": "Todavía no viste ninguna escena de esta Falconess.",
   "ui.m.story.watch": "Ver",
@@ -1946,6 +1944,5 @@
   "ui.m.pace.normal": "Normal",
   "ui.m.pace.fast": "Rápido",
   "ui.m.pace.direct": "Directo",
-  "ui.m.story.passed": "Ya salió en otra temporada.",
   "ui.m.story.digest": "Versión rápida"
 }

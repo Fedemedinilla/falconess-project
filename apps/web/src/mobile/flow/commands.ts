@@ -68,9 +68,12 @@ export type Commands = {
   rewatch(turn: number): void;
   /** «Continuar» on a race's result: the race mode ends, or a watch from the end goes back to it. */
   raceContinue(): void;
-  /** A story scene ended (`skipped`: «Saltar»). */
+  /**
+   * A story scene ended (`skipped`: «Saltar»). Since the scene's notice went (owner 2026-11-18)
+   * nothing is shown either way, so `skipped` is only what the scene reports.
+   */
   sceneDone(key: string, skipped: boolean): void;
-  /** «Historia» or «Ver»: a scene again, whole. */
+  /** «Historia»: a scene again, whole. */
   watchScene(scene: StoryScene): void;
   /** An instant beat, before paint: idempotent, and it always ends the beat. */
   resolve(beat: InstantBeat): void;
@@ -292,27 +295,18 @@ export function flowCommands(p: FlowPorts): Commands {
       }
     },
 
-    sceneDone(key, skipped) {
+    sceneDone(key) {
       const { flow, facts } = p.now();
       const layer = flow.layer;
       if (layer?.kind !== "scene" || layer.key !== key) return;
-      const kind = skipped ? "skipped" : "seen";
       const id = layer.scene.id;
       if (layer.replay) {
-        // «Historia» and «Ver» mark nothing: the scene was seen already
+        // «Historia» marks nothing: the scene was seen already
         p.dispatch({ type: "replay", scene: undefined });
-        p.dispatch({
-          type: "toast",
-          toast: { id: `${key}/${kind}`, sceneId: id, kind, shown: false },
-        });
         return;
       }
       if (flow.top.key !== key) return;
       p.story.markSeen(facts.run.run.seed, id);
-      p.dispatch({
-        type: "toast",
-        toast: { id: `${facts.run.fp}/${id}/${kind}`, sceneId: id, kind, shown: false },
-      });
       p.dispatch({ type: "done", keys: [key] });
     },
 
@@ -333,16 +327,8 @@ export function flowCommands(p: FlowPorts): Commands {
           p.weeks.enterRace(b.fp);
           break;
         case "pass":
+          // seen in an earlier season: marked seen here too, and nothing is shown (owner 2026-11-18)
           p.story.markSeen(facts.run.run.seed, b.scene.id);
-          p.dispatch({
-            type: "toast",
-            toast: {
-              id: `${fp}/${b.scene.id}/passed`,
-              sceneId: b.scene.id,
-              kind: "passed",
-              shown: false,
-            },
-          });
           break;
       }
       // never stalls on a write that changed nothing

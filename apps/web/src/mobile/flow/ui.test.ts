@@ -1,7 +1,7 @@
 import type { StoryScene } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { testScenes } from "./testing/content";
-import { INITIAL_UI, reduceUi, type Toast, type UiEvent, type UiState } from "./ui";
+import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./ui";
 
 /** The flow's UI state (plan §1.3): every event, and each cell it ignores (the same state back). */
 
@@ -13,16 +13,9 @@ const scene = (id: string): StoryScene => {
   return sc;
 };
 
-const toast = (id: string, kind: Toast["kind"] = "seen"): Toast => ({
-  id,
-  sceneId: id,
-  kind,
-  shown: false,
-});
-
 describe("reduceUi", () => {
   it("starts on the menu with nothing done, frozen", () => {
-    expect(INITIAL_UI).toMatchObject({ nav: { at: "menu" }, seq: 0, from: "menu", toasts: [] });
+    expect(INITIAL_UI).toMatchObject({ nav: { at: "menu" }, seq: 0, from: "menu" });
     expect(INITIAL_UI.done.size + INITIAL_UI.mine.size).toBe(0);
     expect([INITIAL_UI.replay, INITIAL_UI.notice]).toEqual([undefined, undefined]);
     expect(Object.isFrozen(INITIAL_UI)).toBe(true);
@@ -139,36 +132,6 @@ describe("reduceUi", () => {
     const cleared = reduceUi(asked, { type: "replay", scene: undefined });
     expect(cleared.replay).toBeUndefined();
     expect(reduceUi(cleared, { type: "replay", scene: undefined })).toBe(cleared);
-  });
-
-  it("toasts: first in, first out, two at most; a newer one replaces the second, never the first (review 1 item 14)", () => {
-    const a = toast("a");
-    const b = toast("b", "passed");
-    const c = toast("c", "skipped");
-    const two = after({ type: "toast", toast: a }, { type: "toast", toast: b });
-    expect(two.toasts.map((t) => t.id)).toEqual(["a", "b"]);
-    // the first, unshown yet, stays; the newest takes the second place
-    expect(reduceUi(two, { type: "toast", toast: c }).toasts.map((t) => t.id)).toEqual(["a", "c"]);
-    // StrictMode's second run: the same id again adds nothing
-    expect(reduceUi(two, { type: "toast", toast: a })).toBe(two);
-    const shown = reduceUi(two, { type: "toastShown", id: "a" });
-    expect(shown.toasts.map((t) => t.shown)).toEqual([true, false]);
-    expect(reduceUi(shown, { type: "toastShown", id: "a" })).toBe(shown);
-    expect(reduceUi(shown, { type: "toastShown", id: "z" })).toBe(shown);
-    const gone = reduceUi(shown, { type: "toastGone", id: "a" });
-    expect(gone.toasts.map((t) => t.id)).toEqual(["b"]);
-    expect(reduceUi(gone, { type: "toastGone", id: "a" })).toBe(gone);
-  });
-
-  it("a toast held by a layer's exit keeps the first screen it waited on; a shown one is never held (6.2)", () => {
-    const two = after({ type: "toast", toast: toast("a") }, { type: "toast", toast: toast("b") });
-    const held = reduceUi(two, { type: "toastHeld", id: "a", screen: "menu" });
-    expect(held.toasts.map((t) => t.heldOn)).toEqual(["menu", undefined]);
-    // held once: a later screen does not move it, nor does the same report again
-    expect(reduceUi(held, { type: "toastHeld", id: "a", screen: "train" })).toBe(held);
-    expect(reduceUi(held, { type: "toastHeld", id: "z", screen: "menu" })).toBe(held);
-    const shown = reduceUi(two, { type: "toastShown", id: "a" });
-    expect(reduceUi(shown, { type: "toastHeld", id: "a", screen: "menu" })).toBe(shown);
   });
 
   it("notice: a refused act or preview, each one a notice of its own, until cleared or gone", () => {

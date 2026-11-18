@@ -184,6 +184,29 @@ describe("commands act and move the flow in the same call (critic (c)3)", () => 
     expect(h.now().flow.top.kind).toBe("idle");
   });
 
+  it("a scene skipped and one passed by are marked seen and show nothing (owner 2026-11-18)", () => {
+    // her prologue was seen in another season: the `pass` beat marks it and ends, saying nothing
+    const t = started("c3");
+    const h = harness(t);
+    h.until("idle");
+    const seed = t.game.getSnapshot().run?.seed ?? "";
+    expect(t.story.seenEver().has("peregrina-prologue")).toBe(true);
+    expect(t.story.seenInRun(seed).has("peregrina-prologue")).toBe(true);
+    // a scene played and skipped: marked seen, and nothing in its place
+    let scenes = 0;
+    for (let week = 0; week < 20 && scenes === 0; week++) {
+      h.cmd.choose({ kind: "train:agility" });
+      const top = h.until("scene", "idle").top;
+      if (top.kind !== "scene") continue;
+      scenes += 1;
+      h.cmd.sceneDone(top.key, true);
+      expect(t.story.seenEver().has(top.scene.id)).toBe(true);
+    }
+    expect(scenes).toBe(1);
+    expect(h.dispatched.filter((d) => /toast|aviso/i.test(d.e.type))).toEqual([]);
+    expect(h.ui().notice).toBeUndefined();
+  });
+
   it("resolve(ack) twice acknowledges once and always ends the beat (L9)", () => {
     const t = started("c2");
     const h = harness(t);

@@ -1,6 +1,6 @@
 /**
  * What the phone's flow keeps in React (plan §1.3): where the player went at idle, the beats this
- * mount finished, the notices. Everything else is derived from the stores (`deriveFlow`). Pure,
+ * mount finished, the notice. Everything else is derived from the stores (`deriveFlow`). Pure,
  * total and text-free: an event that changes nothing returns the same state, so a stale or
  * repeated tap renders nothing new.
  */
@@ -8,28 +8,12 @@ import type { StoryScene, TrainingKind } from "@falconess/schema";
 import type { GameErrorKind } from "../../game/controller";
 import type { Nav, WorkshopTab } from "./types";
 
-/** A notice about a story scene: played («skipped», «seen») or passed by (seen in another season). */
-export type Toast = {
-  /** `${fp}/${sceneId}/${kind}`: the same for the same moment, so StrictMode's second run adds nothing. */
-  readonly id: string;
-  readonly sceneId: string;
-  readonly kind: "skipped" | "seen" | "passed";
-  /** Set on its first display; once shown and gone it never comes back (F23). */
-  readonly shown: boolean;
-  /**
-   * The screen it waited on, never shown, while only a layer's exit held it (that screen live
-   * under the fading layer). Another screen before it shows drops it: it belonged to the screen
-   * the scene left onto, where it would have shown and gone with the change.
-   */
-  readonly heldOn?: string;
-};
-
 /** A refused act or preview, named as `ui.error.<kind>` names it. */
 export type Notice = {
   readonly kind: GameErrorKind;
   /** Tells one refusal from the next, the same kind again too: each is a notice of its own. */
   readonly n: number;
-  /** Set on its first display, as a toast's. */
+  /** Set on its first display. */
   readonly shown: boolean;
 };
 
@@ -43,10 +27,8 @@ export type UiState = {
   readonly mine: ReadonlySet<string>;
   /** Where the race week's action was decided: the screen the emblem rises over. */
   readonly from: "menu" | "train" | "workshop";
-  /** A scene asked for from «Historia» or «Ver». */
+  /** A scene asked for from «Historia». */
   readonly replay: { readonly scene: StoryScene; readonly n: number } | undefined;
-  /** First in, first out, two at most: a newer one replaces the second, never the first. */
-  readonly toasts: readonly Toast[];
   /** A refused act or preview, until it is closed or its time is up. */
   readonly notice: Notice | undefined;
 };
@@ -67,11 +49,6 @@ export type UiEvent =
   | { readonly type: "watchStage"; readonly n: number; readonly stage: "finish" | "result" }
   | { readonly type: "watchDone"; readonly n: number }
   | { readonly type: "replay"; readonly scene: StoryScene | undefined }
-  | { readonly type: "toast"; readonly toast: Toast }
-  | { readonly type: "toastShown"; readonly id: string }
-  /** It waits, never shown, only for a layer's exit over `screen`. */
-  | { readonly type: "toastHeld"; readonly id: string; readonly screen: string }
-  | { readonly type: "toastGone"; readonly id: string }
   /** A refused act or preview (a new notice each time), or none. */
   | { readonly type: "notice"; readonly notice: GameErrorKind | undefined }
   | { readonly type: "noticeShown"; readonly n: number }
@@ -87,7 +64,6 @@ export const INITIAL_UI: UiState = Object.freeze({
   mine: new Set<string>(),
   from: "menu",
   replay: undefined,
-  toasts: [],
   notice: undefined,
 });
 
@@ -114,8 +90,8 @@ function navOf(to: Extract<UiEvent, { type: "open" }>["to"]): Nav {
 
 /**
  * The state after `e`. Ignored, returning `ui` itself: a pick or a tab off its screen, a watch's
- * stage or end for another watch (a stale `n`) or with none, a toast already queued, a toast or
- * a notice shown or gone that is not there, and anything that would change nothing.
+ * stage or end for another watch (a stale `n`) or with none, a notice shown or gone that is not
+ * there, and anything that would change nothing.
  */
 export function reduceUi(ui: UiState, e: UiEvent): UiState {
   switch (e.type) {
@@ -168,27 +144,6 @@ export function reduceUi(ui: UiState, e: UiEvent): UiState {
       const n = ui.seq + 1;
       return { ...ui, seq: n, replay: { scene: e.scene, n } };
     }
-    case "toast": {
-      if (ui.toasts.some((t) => t.id === e.toast.id)) return ui;
-      const [first] = ui.toasts;
-      return {
-        ...ui,
-        toasts: first && ui.toasts.length >= 2 ? [first, e.toast] : [...ui.toasts, e.toast],
-      };
-    }
-    case "toastShown":
-      if (!ui.toasts.some((t) => t.id === e.id && !t.shown)) return ui;
-      return { ...ui, toasts: ui.toasts.map((t) => (t.id === e.id ? { ...t, shown: true } : t)) };
-    case "toastHeld":
-      // the first screen it was held on counts: it is where the scene left it
-      if (!ui.toasts.some((t) => t.id === e.id && !t.shown && t.heldOn === undefined)) return ui;
-      return {
-        ...ui,
-        toasts: ui.toasts.map((t) => (t.id === e.id ? { ...t, heldOn: e.screen } : t)),
-      };
-    case "toastGone":
-      if (!ui.toasts.some((t) => t.id === e.id)) return ui;
-      return { ...ui, toasts: ui.toasts.filter((t) => t.id !== e.id) };
     case "notice": {
       if (e.notice === undefined) return ui.notice ? { ...ui, notice: undefined } : ui;
       const n = ui.seq + 1;

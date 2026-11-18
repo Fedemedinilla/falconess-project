@@ -1,14 +1,12 @@
-import type { StoryScene } from "@falconess/schema";
 import { type CSSProperties, type ReactNode, useLayoutEffect, useRef, useState } from "react";
-import { allScenes } from "../content/story";
 import type { GameError, GameErrorKind } from "../game/controller";
-import { gameText, ui } from "../text/ui";
+import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useFlowTimer } from "../ui/flowTimer";
 import { useLatest } from "../ui/useLatest";
 import { useReducedMotion } from "../ui/useMedia";
 import type { Flow } from "./flow/types";
-import type { Notice, Toast, UiEvent } from "./flow/ui";
+import type { Notice, UiEvent } from "./flow/ui";
 import { useLayersIdle } from "./LayerHost";
 import { MOTION } from "./motion";
 import {
@@ -22,22 +20,19 @@ import {
 } from "./noticeSlot";
 import st from "./Story.module.css";
 
-/** One notice: its words, its element, how long it stays once shown, and whom it tells. */
+/** The live notice's id and role; the copy that fades out has neither. */
+const NOTICE_ID = "m-aviso-error";
+
+/** One notice: its words, how long it stays once shown, and whom it tells. */
 type Note = {
   readonly id: string;
   readonly shown: boolean;
   /** Its time on screen, from its first display. */
   readonly ms: number;
-  /** The live notice's id and role (the copy that fades out has none). */
-  readonly elementId: string;
-  readonly role: "status" | "alert";
   /** Its words; `close` (its button) only while it shows. */
-  readonly body: (close: (() => void) | undefined, live: boolean) => ReactNode;
+  readonly body: (close: (() => void) | undefined) => ReactNode;
   readonly onShown: () => void;
   readonly onGone: () => void;
-  /** A story notice: the screen a layer's exit held it on, and how it reports that screen. */
-  readonly heldOn?: string | undefined;
-  readonly onHeld?: ((screen: string) => void) | undefined;
 };
 
 /** A notice on its way out: an id-less copy where it stood, until its timer removes it. */
@@ -53,16 +48,12 @@ type SlotOptions = {
   readonly cut: boolean;
   readonly fades: boolean;
   readonly fading: boolean;
-  /** Only a layer on its way out holds the notices: the screen under it is live. */
-  readonly exiting: boolean;
 };
 
 /**
- * One channel's notice (`slotView`): shown when nothing plays in front, for its time from its
- * first display; then, or when its screen changes or something comes in front of it, it leaves
- * (`leave`: faded as a copy, or cut) and is gone. A story notice that only a layer's exit holds
- * reports the screen it waits on (`onHeld`): left for another screen before it shows, it is dropped
- * unseen (`drop`).
+ * The notice's slot (`slotView`): shown when nothing plays in front, for its time from its first
+ * display; then, or when its screen changes or something comes in front of it, it leaves
+ * (`leave`: faded as a copy, or cut) and is gone.
  */
 function useSlot(
   note: Note | undefined,
@@ -73,7 +64,7 @@ function useSlot(
   const view = slotView(note, at, o);
   const latest = useLatest({ note, leave });
   const id = note?.id;
-  const { screen, exiting } = o;
+  const { screen } = o;
   // before paint: a notice never shows a frame over what came in front of it
   useLayoutEffect(() => {
     const { note: n, leave: go } = latest.current;
@@ -85,9 +76,8 @@ function useSlot(
     } else if (view === "fade" || view === "cut") {
       setAt(undefined);
       go(n, view === "fade");
-    } else if (view === "gone" || view === "drop") go(n, false);
-    else if (view === "wait" && exiting && !n.shown && n.heldOn === undefined) n.onHeld?.(screen);
-  }, [view, id, at, screen, exiting, latest]);
+    } else if (view === "gone") go(n, false);
+  }, [view, id, at, screen, latest]);
   // its time on screen, from its first display: a flow timer keyed by the notice
   const shownId = at?.id;
   useFlowTimer(
@@ -110,72 +100,59 @@ function useSlot(
 }
 
 /**
- * The notices of a column (plan §1.9): the error's (`role="alert"`) over the story's
- * (`role="status"`), both just over the screen's `[data-toast-anchor]` (elsewhere where that
- * would cover one of the screen's controls or what they must not hide, `[data-toast-avoid]`:
- * `noticeTop`), placed again when the screen changes, the column is resized or the screen
- * scrolls. A notice that leaves while it could still be read
- * fades out as an id-less, inert copy (no «Ver», no close) that a timer removes; under an opaque
- * layer, or under reduced motion, it goes at once.
+ * A column's notice (plan §1.9): a refused act's (`role="alert"`), just over the screen's
+ * `[data-toast-anchor]` (elsewhere where that would cover one of the screen's controls or what
+ * they must not hide, `[data-toast-avoid]`: `noticeTop`), placed again when the screen changes,
+ * the column is resized or the screen scrolls. A notice that leaves while it could still be read
+ * fades out as an id-less, inert copy (no close) that a timer removes; under an opaque layer, or
+ * under reduced motion, it goes at once. A second refusal is a notice of its own: it waits for
+ * the copy of the one before it, so they never stand one over another.
  */
 function Notices({
-  error,
-  story,
+  note,
   visible,
   screen,
   cut,
-  exiting,
 }: {
-  readonly error: Note | undefined;
-  readonly story: Note | undefined;
+  readonly note: Note | undefined;
   /** Nothing plays in front of the game. */
   readonly visible: boolean;
   readonly screen: string;
   /** An opaque layer is in front (a scene, the emblem, a card). */
   readonly cut: boolean;
-  /** Only a layer on its way out holds the notices (the screen under it is live). */
-  readonly exiting: boolean;
 }) {
   const reduced = useReducedMotion();
   const outMs = reduced ? 0 : MOTION.toastOut;
   const [leaving, setLeaving] = useState<readonly Leaving[]>([]);
-  // where each live notice stands, for the copy that fades from there
+  // where the live notice stands, for the copy that fades from there
   const tops = useRef(new Map<string, number>());
   const seq = useRef(0);
-  const leave = (note: Note, fade: boolean): void => {
-    const top = tops.current.get(note.id);
-    tops.current.delete(note.id);
+  const leave = (n: Note, fade: boolean): void => {
+    const top = tops.current.get(n.id);
+    tops.current.delete(n.id);
     if (fade && outMs > 0 && top !== undefined) {
       seq.current += 1;
-      const copy: Leaving = { key: seq.current, top, note };
+      const copy: Leaving = { key: seq.current, top, note: n };
       setLeaving((l) => [...l, copy]);
     }
-    note.onGone();
+    n.onGone();
   };
   // a notice waits for the one before it to fade out: one after the other, never one over another
-  const o: SlotOptions = {
-    visible,
-    screen,
-    cut,
-    fades: outMs > 0,
-    fading: leaving.length > 0,
-    exiting,
-  };
-  const err = useSlot(error, o, leave);
-  const sto = useSlot(story, o, leave);
-  const live = `${err.live ? error?.id : ""}|${sto.live ? story?.id : ""}`;
+  const o: SlotOptions = { visible, screen, cut, fades: outMs > 0, fading: leaving.length > 0 };
+  const slot = useSlot(note, o, leave);
+  const live = slot.live ? (note?.id ?? "") : "";
 
   const box = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState<number>();
-  // how far they rise as they come in: never onto what stands under them
+  // how far it rises as it comes in: never onto what stands under it
   const [rise, setRise] = useState(NOTICE_RISE);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when the notices on screen or the screen under them change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when the notice on screen or the screen under it changes
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
     const app = el.closest("[data-app]");
     let current: number | undefined;
-    /** Where the notices go; on a scroll they follow their anchor or stay while they cover nothing. */
+    /** Where the notice goes; on a scroll it follows its anchor or stays while it covers nothing. */
     const place = (scrolled: boolean) => {
       const anchor = app?.querySelector("[data-toast-anchor]")?.getBoundingClientRect();
       // fixed inside the column: its containing block is the column when it carries a transform
@@ -204,7 +181,7 @@ function Notices({
     if (!app) return;
     const resized = new ResizeObserver(() => place(false));
     resized.observe(app);
-    // the screen's scroller moves the anchor or what the notices stand over (one event a frame)
+    // the screen's scroller moves the anchor or what the notice stands over (one event a frame)
     const scrolled = () => place(true);
     app.addEventListener("scroll", scrolled, { capture: true, passive: true });
     return () => {
@@ -215,14 +192,9 @@ function Notices({
 
   const gone = (key: number) => setLeaving((l) => l.filter((x) => x.key !== key));
 
-  const shown = (note: Note, close: () => void) => (
-    <div className={st.toast} id={note.elementId} role={note.role} data-notice={note.id}>
-      {note.body(close, true)}
-    </div>
-  );
   return (
     <>
-      {(err.live || sto.live) && (
+      {slot.live && note && (
         <div
           ref={box}
           className={st.notices}
@@ -232,8 +204,9 @@ function Notices({
               : ({ top, "--toast-rise": `${rise}px` } as CSSProperties)
           }
         >
-          {err.live && error && shown(error, err.close)}
-          {sto.live && story && shown(story, sto.close)}
+          <div className={st.toast} id={NOTICE_ID} role="alert" data-notice={note.id}>
+            {note.body(slot.close)}
+          </div>
         </div>
       )}
       {leaving.map((c) => (
@@ -262,18 +235,18 @@ function LeavingNotice({
       inert
       data-notice-leaving
     >
-      <div className={cx(st.toast, st.toastOut)}>{copy.note.body(undefined, false)}</div>
+      <div className={cx(st.toast, st.toastOut)}>{copy.note.body(undefined)}</div>
     </div>
   );
 }
 
-/** What a player taps on a screen: the notices never sit over one (rule 17). */
+/** What a player taps on a screen: the notice never sits over one (rule 17). */
 const CONTROLS = 'button, a[href], input, select, textarea, label, [role="button"]';
 
 /**
- * Where what `selector` matches in the column shows in the viewport (not the notices' own, nor
+ * Where what `selector` matches in the column shows in the viewport (not the notice's own, nor
  * what is out of reach), each cut to what its scrollers show of it: a control scrolled out of view
- * is no control the notices could cover.
+ * is no control the notice could cover.
  */
 function spansOf(app: Element, selector: string, notices: Element): Span[] {
   const out: Span[] = [];
@@ -321,101 +294,36 @@ function errorWords(kind: GameErrorKind, close: (() => void) | undefined): React
 }
 
 /**
- * A story scene's notice (owner 2026-11-13): played («seen», «skipped») or passed by because she
- * saw it in an earlier season (owner 2026-11-14), with «Ver» to play it whole where a scene may
- * play now.
- */
-function storyWords(
-  toast: Toast,
-  scene: StoryScene | undefined,
-  watch: (() => void) | undefined,
-): ReactNode {
-  return (
-    <>
-      {scene && (
-        <>
-          <b>
-            {gameText(scene.kickerKey)} · {gameText(scene.titleKey)}
-          </b>
-          <br />
-        </>
-      )}
-      {toast.kind === "passed" ? (
-        <span className={st.toastRow}>
-          {ui("ui.m.story.passed")}
-          {watch && (
-            <button type="button" className={st.toastBtn} id="m-escena-ver" onClick={watch}>
-              {ui("ui.m.story.watch")}
-            </button>
-          )}
-        </span>
-      ) : (
-        ui(toast.kind === "skipped" ? "ui.m.story.skipped" : "ui.m.story.seen")
-      )}
-    </>
-  );
-}
-
-/**
- * A run's notices (plan §1.9; replaces the story toast and the first error notice): the first
- * story notice of the flow's queue (`toasts`) and a refused act (`notice`). They show only while
- * the flow allows one (`flow.toast`: no layer, no race replay, no training's result) and no layer
- * is in front or leaving (LayerHost's child), so a notice set under a scene, the emblem, the
- * inheritance card or the week's effects waits for them and then shows its whole time. A scene's
- * notice that only the scene's 0.8 s exit holds belongs to the screen the scene left onto: if the
- * player goes to another one during the exit (it is live under the fade), the notice is dropped
- * unseen, as it would have shown there and gone with the change. «Ver» is there only while a scene
- * may play (`flow.canReplay`, critic b). Never in `ui/modals`: the back gesture and the sheet hold
- * ignore it.
+ * A run's notice (plan §1.9): a refused act (`notice`). It shows only while the flow allows one
+ * (`flow.toast`: no layer, no race replay, no training's result) and no layer is in front or
+ * leaving (LayerHost's child), so a notice set under a scene, the emblem, the inheritance card or
+ * the week's effects waits for them and then shows its whole time. Never in `ui/modals`: the back
+ * gesture and the sheet hold ignore it.
  */
 export function NoticeHost({
   flow,
-  toasts,
   notice,
   dispatch,
-  onWatch,
 }: {
   readonly flow: Flow;
-  readonly toasts: readonly Toast[];
   readonly notice: Notice | undefined;
   readonly dispatch: (e: UiEvent) => void;
-  readonly onWatch: (scene: StoryScene) => void;
 }) {
   const idle = useLayersIdle();
-  const toast = toasts[0];
-  const scene = toast && allScenes().find((sc) => sc.id === toast.sceneId);
-  const canWatch = flow.canReplay;
-  const story: Note | undefined = toast && {
-    id: toast.id,
-    shown: toast.shown,
-    ms: toast.kind === "passed" ? MOTION.toastLong : MOTION.toastShort,
-    elementId: "m-capitulo-aviso",
-    role: "status",
-    body: (_close, live) =>
-      storyWords(toast, scene, live && canWatch && scene ? () => onWatch(scene) : undefined),
-    onShown: () => dispatch({ type: "toastShown", id: toast.id }),
-    onGone: () => dispatch({ type: "toastGone", id: toast.id }),
-    heldOn: toast.heldOn,
-    onHeld: (screen) => dispatch({ type: "toastHeld", id: toast.id, screen }),
-  };
-  const error: Note | undefined = notice && {
+  const note: Note | undefined = notice && {
     id: `error:${notice.n}`,
     shown: notice.shown,
-    ms: MOTION.toastLong,
-    elementId: "m-aviso-error",
-    role: "alert",
+    ms: MOTION.noticeMs,
     body: (close) => errorWords(notice.kind, close),
     onShown: () => dispatch({ type: "noticeShown", n: notice.n }),
     onGone: () => dispatch({ type: "noticeGone", n: notice.n }),
   };
   return (
     <Notices
-      error={error}
-      story={story}
+      note={note}
       visible={flow.toast && idle}
       screen={flow.screenKey}
       cut={cutsNotice(flow.layer?.kind)}
-      exiting={flow.toast && !idle}
     />
   );
 }
@@ -449,14 +357,10 @@ export function ErrorNotice({
   const note: Note | undefined = error && {
     id: errorId(error),
     shown: false,
-    ms: MOTION.toastLong,
-    elementId: "m-aviso-error",
-    role: "alert",
+    ms: MOTION.noticeMs,
     body: (close) => errorWords(error.kind, close),
     onShown: () => undefined,
     onGone: onClose,
   };
-  return (
-    <Notices error={note} story={undefined} visible screen="select" cut={false} exiting={false} />
-  );
+  return <Notices note={note} visible screen="select" cut={false} />;
 }

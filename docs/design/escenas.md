@@ -19,9 +19,9 @@ vivo), `docs/design/canon.md` (canon, temporada y «¿y si…?») y el canon y l
 Los menús y las escenas son interfaces muy distintas: el paso de una a otra nunca es de golpe, y el
 menú nunca se ve detrás (dueño, 2026-11-13). Así quedó construido (ADR-0017):
 
-- **Entrada, en pasos (Normal, y siempre desde «Historia» o «Ver»: 2,8 s hasta la primera línea):**
+- **Entrada, en pasos (Normal, y siempre desde «Historia»: 2,8 s hasta la primera línea):**
   1. 0 s: negro opaco desde el primer cuadro. Lo que queda debajo (el menú, la tarjeta de la
-     carrera, el resultado) no se ve a través, y un aviso que estuviera arriba se corta.
+     carrera, el resultado) no se ve a través, y un aviso de error que estuviera arriba se corta.
   2. 0,3 s: aparecen «Saltar», Auto y Registro (un fundido de 0,12 s).
   3. 0,5-1,8 s: el tono de la escena y el fondo pintado salen del negro con un fundido,
      desenfocados y un poco más cerca: el fondo se enfoca mientras se aleja apenas (de 1,06 a 1).
@@ -47,9 +47,9 @@ menú nunca se ve detrás (dueño, 2026-11-13). Así quedó construido (ADR-0017
   terminó, pasa a la siguiente.
 - **Auto:** 4,5 s por línea terminada.
 - **Registro:** relee lo dicho hasta ahí.
-- **Saltar:** visible desde los 0,3 s. Termina la escena en el toque y queda el aviso «Capítulo ·
-  Título — Escena saltada. Podés verla cuando quieras en Menú → Historia». Quien juega rápido sabe
-  que hay historia y dónde está. Un doble toque salta una sola escena: si otra sigue, el segundo
+- **Saltar:** visible desde los 0,3 s. Termina la escena en el toque y no queda nada en su lugar
+  (el dueño sacó el aviso de escena el 2026-11-18): la escena queda guardada en Menú → Historia,
+  que es donde se ve de nuevo. Un doble toque salta una sola escena: si otra sigue, el segundo
   clic no la salta también.
 - **Salida (0,8 s) sobre la pantalla que sigue:** la escena termina en el toque que la cierra
   («Saltar», la última línea, Auto o el fin del resumen). El juego sigue enseguida debajo y la
@@ -60,10 +60,9 @@ menú nunca se ve detrás (dueño, 2026-11-13). Así quedó construido (ADR-0017
 - **El resultado de la carrera** entra 0,4 s después de empezar ese fundido, cuando la escena ya
   casi no se ve: el panel sube 12 px y aparece en 0,32 s, el puesto («1.º») se estampa, después el
   consejo y el pie. «Continuar» responde desde el primer cuadro.
-- **El aviso de la escena** (saltada, vista, o ya salida en otra temporada) espera la salida y
-  aparece en la pantalla donde quedó el jugador, sobre su ancla (§5). Si el jugador deja esa
-  pantalla durante los 0,8 s de la salida, el aviso no sale (decisión abierta del dueño,
-  ADR-0017).
+- **Una escena no deja aviso** (dueño, 2026-11-18): saltada, vista o ya salida en otra temporada,
+  la pantalla que viene queda limpia. Igual queda marcada como vista y no vuelve sola; Menú →
+  Historia la lista y la pasa entera.
 - **Pestaña oculta:** si el jugador se va a otra pestaña o bloquea el teléfono, la escena se queda
   donde estaba (la entrada, la tarjeta, la línea a medio escribir) y sigue con el tiempo que le
   quedaba al volver.
@@ -210,14 +209,12 @@ La transición del emblema va solo del fin de la semana al modo carrera, en ning
 Una escena por disparador y Falconess (lo exige el test). Si dos escenas caen en la misma semana,
 sale una por vez.
 
-**Los avisos de escena** («Escena saltada…», «Queda guardada en Menú → Historia.», «Ya salió en
-otra temporada.» con «Ver»): esperan a que nada se esté mostrando delante del juego y entonces
-duran su tiempo entero (4 s; 6 s con «Ver»), contado desde que se ven. Se apoyan justo arriba del
-ancla de la pantalla (la pestaña de la pista en el menú, el pie de la tarjeta de la carrera o del
-resultado, el del final), nunca sobre un botón: si arriba del ancla taparían uno, buscan el lugar
-libre más cercano. Se van con un fundido de 0,4 s al cambiar de pantalla o al entrar los efectos o
-el resultado de un entrenamiento, y se cortan de golpe bajo una escena, el emblema o la tarjeta de
-herencia. Si hay dos, el segundo espera al primero. «Ver» sale solo donde una escena puede pasar.
+**Una escena no avisa nada** (dueño, 2026-11-18). El aviso negro que decía «Escena saltada…»,
+«Queda guardada en Menú → Historia.» o «Ya salió en otra temporada.» con «Ver» se sacó entero:
+molestaba y no hacía falta. Una escena saltada, vista o pasada de largo queda marcada como vista y
+no vuelve sola; **Menú → Historia** es el único lugar desde donde se vuelve a ver, y de ahí sale
+siempre entera. El único aviso que queda en el juego es el de error (un acto rechazado o una
+partida que no carga), con las mismas reglas de siempre (ADR-0017 §7).
 
 ## 6. Implementación
 
@@ -236,8 +233,8 @@ herencia. Si hay dos, el segundo espera al primero. «Ver» sale solo donde una 
 - **Comprobar:** `pnpm test` (`packages/content/src/story.test.ts`: validación, textos en los dos
   idiomas, un disparador por escena; `text-lang.test.ts`: mismas claves y `{placeholders}`;
   `mobile/flow/scenes.test.ts`: modos, orden y tiempos de la entrada), y los e2e «story» de
-  `apps/web/e2e/mobile.spec.ts`, `mobile-flow.spec.ts` (orden y avisos) y `mobile-motion.spec.ts`
-  (entrada, apuro y salida).
+  `apps/web/e2e/mobile.spec.ts`, `mobile-flow.spec.ts` (orden, y que una escena no deja aviso) y
+  `mobile-motion.spec.ts` (entrada, apuro y salida).
 
 ## 6b. Ritmo y escenas ya vistas (dueño, 2026-11-14)
 
@@ -247,10 +244,10 @@ herencia. Si hay dos, el segundo espera al primero. «Ver» sale solo donde una 
   `digestLines`), cada una entera de una vez y pasando sola (1,1 s en Rápido, 0,65 s en Directo),
   con la entrada corta (§2) y la etiqueta «Versión rápida». Tocar adelanta y «Saltar» la termina,
   como siempre.
-- **Ya salida en otra temporada:** no se repite. Sale un aviso de una línea («Ya salió en otra
-  temporada.») con el botón «Ver», que la pasa entera. Cuenta como salida también la que se saltó o
-  se vio en versión rápida (dueño, D6).
-- Desde Menú → Historia o desde «Ver», la escena siempre sale entera, sin importar el Ritmo.
+- **Ya salida en otra temporada:** no se repite, y no avisa nada (dueño, 2026-11-18): el juego
+  sigue de largo. Cuenta como salida también la que se saltó o se vio en versión rápida (dueño,
+  D6); desde Menú → Historia se ve cuando se quiera.
+- Desde Menú → Historia, la escena siempre sale entera, sin importar el Ritmo.
 - Al escribir una escena, la primera y la última línea tienen que contar solas lo esencial: son las
   que quedan en todos los resúmenes.
 

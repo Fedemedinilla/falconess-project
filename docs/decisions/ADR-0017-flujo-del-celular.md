@@ -3,7 +3,8 @@
 - **Estado:** aceptada por el dueño (2026-11-15: D1-D7 y los O aprobados como estaban, con O4 «solo
   N.º», O9 sin cambios, O10 aprobado y construido, O13 no). Construida del 2026-11-15 al 2026-11-17
   en `playtest-ui` (pasos 0.1-7.3 del plan de flujo, local en `.work/flow/plan-final.md`, y la
-  revisión final).
+  revisión final). El 2026-11-18 el dueño sacó el aviso de escena entero (§7, decisiones abiertas
+  1 y 8): molestaba y no hacía falta. Solo queda el aviso de error.
 - **Alcance:** el juego del celular (`apps/web`, `#juego`) y dos valores de texto. Nada cambia en
   `packages/sim`, `packages/schema`, los rulesets, `tests/golden` ni `docs/characters`; ningún campo
   nuevo en `RunInput`. La vista de pruebas sigue igual.
@@ -24,7 +25,7 @@ código) encontró, entre otros:
   pisaba al anterior, un menú que se veía un cuadro entre el modo carrera y una escena;
 - temporizadores que volvían a arrancar cuando cambiaba la identidad de un objeto, sonidos que salían
   de un temporizador, efectos que se superponían;
-- el aviso de escena invisible con movimiento reducido (C7), animaciones sin tokens, y una pestaña
+- el aviso invisible con movimiento reducido (C7), animaciones sin tokens, y una pestaña
   oculta que dejaba correr todo sin que nadie lo viera.
 
 ## Decisión
@@ -40,7 +41,8 @@ código) encontró, entre otros:
   último paso y si se leyó, el registro de la semana de carrera, su vista previa (una sola caché,
   `previewResult`), las escenas vistas en la temporada y alguna vez, las tarjetas de herencia
   mostradas, el Ritmo, el movimiento reducido y si hay una hoja abierta. React guarda solo la
-  navegación en reposo, los beats que terminaron en este montaje y los avisos (`flow/ui.ts`).
+  navegación en reposo, los beats que terminaron en este montaje y el aviso de error
+  (`flow/ui.ts`).
 - **Ninguna fase del flujo vive solo en React:** cada final queda guardado (la semana leída, las
   escenas vistas, las tarjetas mostradas, el registro de la semana) o se repite a propósito al
   recargar.
@@ -63,7 +65,8 @@ código) encontró, entre otros:
 
 1. **Semana normal:** «Entrenar» → elegir y confirmar → el resultado (HUD en la semana N) → el menú
    con los efectos de la semana (el HUD sigue en N) → un toque o su tiempo → semana N + 1 → la
-   tarjeta de herencia, si toca → la escena `turn`, si la hay, sobre negro opaco → su aviso.
+   tarjeta de herencia, si toca → la escena `turn`, si la hay, sobre negro opaco (sin aviso al
+   terminar: 2026-11-18).
 2. **Semana de carrera:** el resultado de la acción (vista previa) → sus efectos (parte `action`) →
    el emblema (entra en 160 ms, tapa a los 160, termina a los 1240, sale en 280) → la escena
    `goal-before`, que aparece al empezar la salida del emblema, en su propio negro → la tarjeta de
@@ -79,7 +82,7 @@ código) encontró, entre otros:
    llegada de 420 ms.
 5. **Inicio de temporada con padres:** el título → la selección → «Empezar» → el prólogo (el menú y
    el HUD montados debajo) → la tarjeta «¡Herencia!» entra sobre la salida del prólogo → «Continuar»
-   → el menú, y después el aviso del prólogo.
+   → el menú, ya limpio (el aviso del prólogo se sacó el 2026-11-18).
 6. **Fin de temporada con carrera:** la caja negra se guarda en «Correr»; carrera, escena,
    resultado; «Continuar» → el final entra en 320 ms con los efectos de la carrera encima. «Ver
    carrera» la repite sin emblema; «Continuar» vuelve al final con el mismo desplazamiento.
@@ -123,8 +126,9 @@ las secuencias de `golden.test.ts`, y en el navegador con los e2e `mobile-*.spec
   volver (en la tarjeta decidida el gesto atrás ya no sale, §6). Se valida por huella, semana,
   cantidad de entradas, que sea semana de carrera y que la vista previa corra; lo inválido se
   descarta.
-- **D6 · Palabras.** «Vista» sigue contando las escenas saltadas y las resumidas; el aviso dice «Ya
-  salió en otra temporada.» y la etiqueta del resumen «Versión rápida» (paso 7.1).
+- **D6 · Palabras.** «Vista» sigue contando las escenas saltadas y las resumidas, y la etiqueta del
+  resumen dice «Versión rápida» (paso 7.1). El aviso que decía «Ya salió en otra temporada.» ya no
+  existe (2026-11-18): una escena ya vista se pasa de largo en silencio.
 - **D7 · Llegada y salida de escena.** Una carrera que termina sola se queda quieta con «N.º»
   estampado `1200 ms × Ritmo` (720 ms en Rápido, 420 ms en las repeticiones de Directo, nunca menos
   de 400 ms); tocar el cartel es «Saltar», y «Saltar» se salta carrera y llegada juntas. Una escena
@@ -163,7 +167,7 @@ las secuencias de `golden.test.ts`, y en el navegador con los e2e `mobile-*.spec
 - **O14:** una semana de carrera decidida en `#juego` y jugada distinto en la vista de pruebas
   descarta el registro (sin callejón sin salida; la regla 45 obliga solo a `#juego`). El marco de la
   tableta (≥ 700 px de ancho y 640 de alto, sin escritorio) lleva `transform: translateZ(0)`, como la columna del
-  escritorio: el título, las escenas, el emblema, los efectos, la tarjeta de herencia, los avisos y
+  escritorio: el título, las escenas, el emblema, los efectos, la tarjeta de herencia, el aviso y
   el chat quedan dentro del marco de 390 px, y lo que se medía por el ancho de la ventana se mide
   por el del marco (`--framew`).
 
@@ -222,26 +226,27 @@ mismo que el «Volver» de la pantalla, y nada donde no lo hay (`mobile/useBackG
 El juego empuja una sola entrada propia del historial al salir del reposo y la consume al volver por
 otro camino, así no se acumulan.
 
-### 7. Los avisos
+### 7. El aviso (solo el de error)
 
-- Dos canales (`NoticeHost`): el de error arriba y el de escena. El de escena: «Escena saltada…»
-  y «Queda guardada…» 4 s; «Ya salió en otra temporada.» con «Ver» 6 s; un error 6 s, con «Cerrar»
-  (`ui.m.error.unexpected` cuando la simulación falla; en la selección, `#m-aviso-error`).
-- Un aviso espera a que nada se esté mostrando delante del juego y dura su tiempo entero desde que se
-  ve; si hay dos, el segundo espera al primero y a su copia que se va.
+- **Una escena no avisa nada** (dueño, 2026-11-18). El aviso de escena («Escena saltada…», «Queda
+  guardada…», «Ya salió en otra temporada.» con «Ver») se sacó entero, con su cola, su regla de
+  6.2 y sus claves de texto. Una escena saltada, vista o pasada de largo igual queda marcada como
+  vista y no vuelve sola; **Menú → Historia** es desde donde se la vuelve a ver.
+- Queda un solo canal (`NoticeHost`): el de error, 6 s, con «Cerrar» (`ui.m.error.unexpected`
+  cuando la simulación falla; en la selección, un acto rechazado o una partida que no carga).
+  Siempre es `#m-aviso-error`, con `role="alert"`.
+- Un aviso espera a que nada se esté mostrando delante del juego (`flow.toast` y las capas
+  quietas) y dura su tiempo entero desde que se ve; un segundo rechazo es un aviso propio, que
+  espera al anterior y a su copia que se va.
 - Se va con un fundido de 400 ms (una copia sin ids) al cambiar de pantalla o al entrar los efectos o
   el resultado de un entrenamiento; bajo una escena, el emblema o la tarjeta de herencia se corta de
   golpe. Con movimiento reducido está quieto y entero, y se corta.
-- **La regla de 6.2:** un aviso de escena que esperaba solo la salida de esa escena pertenece a la
-  pantalla donde la escena dejó al jugador; si el jugador se va de ahí antes de que se vea, no sale
-  (decisión abierta 1).
 - **Dónde:** justo arriba del ancla de la pantalla (`[data-toast-anchor]`: la pestaña de la pista en
   el menú, el pie de la tarjeta, del resultado y del final, las opciones de la selección), con
   3 px de aire como mínimo (`NOTICE_CLEAR`) de todo control. Si ahí tapara un control, va al lugar
   libre más cercano que no tape ni un control ni lo marcado `[data-toast-avoid]` (el HUD, el nombre y
   el objetivo de la carrera); si no hay ninguno, abajo de la barra de arriba. Se reacomoda al
   desplazar la pantalla, y su subida de 10 px al entrar se limita al espacio que tiene debajo.
-- «Ver» sale solo donde una escena puede pasar (el menú, una tarjeta, el resultado, el final).
 
 ### 8. Los sonidos
 
@@ -259,7 +264,7 @@ otro camino, así no se acumulan.
 
 - **Tokens en un solo lugar:** `mobile/motion.css` (`--m-dur-*`, `--m-ease-*`) y su gemelo
   `mobile/motion.ts` (`MOTION`, `STORY`, `EMBLEM_MS`, `outMs`, `held`); `motion.test.ts` verifica que
-  coincidan. Las pantallas, las capas, las hojas y los avisos no tienen duraciones propias; quedan
+  coincidan. Las pantallas, las capas, las hojas y el aviso no tienen duraciones propias; quedan
   detalles dentro de un componente con las suyas (el tipeo del chat, la salida del título, la
   tarjeta de la pista, el sello del resultado).
 - **Pantallas:** solo entran, solo con opacidad (`screenIn`, relleno `backwards`); ninguna
@@ -276,7 +281,7 @@ otro camino, así no se acumulan.
   abierta 2). Escape y el atrás de Android cierran igual. El foco vuelve a lo que las abrió (o, si
   eso ya no está, a lo que abrió aquello); una capa que entró debajo toma el foco al cerrarse. El
   chat entra en 240 ms y se va en 180; es una hoja dentro de la columna (así lo contienen el marco de
-  la tableta y la columna del escritorio): mientras está abierto, el juego de abajo, sus avisos y el
+  la tableta y la columna del escritorio): mientras está abierto, el juego de abajo, su aviso y el
   panel del escritorio (que se apaga) no reciben toques ni teclas, su «Cerrar» toma el foco, Escape
   lo cierra y al cerrarse el foco vuelve a lo que lo abrió.
 - **Los temporizadores son el reloj:** todo lo que termina un beat o avanza una escena es un
@@ -288,15 +293,15 @@ otro camino, así no se acumulan.
   `!important`), y `motion.test.ts` la exige para cada regla nueva. Quedan solo los fundidos de
   opacidad del arte (el fondo del entrenamiento, el título) y la respuesta al presionar
   (≤ 120 ms). Las esperas de lectura se mantienen (efectos ≥ 900 ms, el resultado del entrenamiento,
-  la llegada, la tarjeta de la escena 900 ms, los avisos); las salidas son instantáneas, el emblema
+  la llegada, la tarjeta de la escena 900 ms, el aviso); las salidas son instantáneas, el emblema
   no sale (`enter`) y el resultado entra sin demora.
 - **Ritmo** (`k`: Normal 1, Rápido 0,6, Directo 0,35):
 
-  | Se escala por `k`                                                                                | No se escala                                 | Propio del Ritmo                                                                       |
-  | ------------------------------------------------------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------- |
-  | Efectos (`fxTimeline`: 160k entre uno y otro, 1800k de vida, 450k por habilidad, piso de 900 ms) | Fundidos de pantallas, capas y hojas         | Directo: sin emblema (`enter`) y sin repetición ni llegada; las repeticiones sí        |
-  | El resultado del entrenamiento (sus pasos y su espera)                                           | El emblema (1240 ms)                         | Resumen de escena: 1100 ms (Rápido) o 650 ms (Directo) por línea, con su entrada corta |
-  | La llegada: 1200 / 720 / 420 ms, nunca menos de 400                                              | La salida de la escena (800 ms) y los avisos | Rápido: la carrera arranca al menos a ×2                                               |
+  | Se escala por `k`                                                                                | No se escala                               | Propio del Ritmo                                                                       |
+  | ------------------------------------------------------------------------------------------------ | ------------------------------------------ | -------------------------------------------------------------------------------------- |
+  | Efectos (`fxTimeline`: 160k entre uno y otro, 1800k de vida, 450k por habilidad, piso de 900 ms) | Fundidos de pantallas, capas y hojas       | Directo: sin emblema (`enter`) y sin repetición ni llegada; las repeticiones sí        |
+  | El resultado del entrenamiento (sus pasos y su espera)                                           | El emblema (1240 ms)                       | Resumen de escena: 1100 ms (Rápido) o 650 ms (Directo) por línea, con su entrada corta |
+  | La llegada: 1200 / 720 / 420 ms, nunca menos de 400                                              | La salida de la escena (800 ms) y el aviso | Rápido: la carrera arranca al menos a ×2                                               |
 
 - **Pestaña oculta:** los temporizadores del flujo se pausan (`pauseWhileHidden`, `ui/visibility.ts`)
   y las animaciones CSS de la columna también (`.app[data-app][data-hidden] *`, con especificidad
@@ -356,7 +361,7 @@ Lo que las pruebas no pueden reemplazar; las hace el dueño a mano:
 
 - **Pestaña oculta,** en un iPhone (Safari), un Android (Chrome) y una pestaña de escritorio: cambiar
   de app o bloquear el teléfono durante los efectos, el resultado de un entrenamiento, el emblema, la
-  entrada de una escena y su tipeo, una carrera y su cartel de llegada, un aviso. Al volver, cada cosa
+  entrada de una escena y su tipeo, una carrera y su cartel de llegada, el aviso. Al volver, cada cosa
   sigue donde estaba, nada sonó afuera y vuelve la música. (El e2e solo simula `document.hidden`; el
   aparato además frena los cuadros y puede congelar o descartar una pestaña oculta mucho tiempo:
   entonces manda la recarga, D5.)
@@ -385,8 +390,9 @@ Lo que las pruebas no pueden reemplazar; las hace el dueño a mano:
 
 El código mantiene lo de hoy hasta que el dueño responda:
 
-1. El aviso de una escena no sale si el jugador deja la pantalla durante los 0,8 s de la salida de
-   esa escena (6.2). Alternativa: dejarlo aparecer sobre el final de la salida.
+1. ~~El aviso de una escena no sale si el jugador deja la pantalla durante los 0,8 s de la salida
+   de esa escena (6.2).~~ **Resuelta el 2026-11-18:** el dueño sacó el aviso de escena entero, así
+   que no hay nada que mostrar ni que descartar (§7).
 2. Un toque sobre el juego durante los 180 ms en que se cierra una hoja no hace nada, porque la hoja
    que se cierra sigue siendo modal (6.9). Alternativa: cerrarla de verdad al pedir el cierre y
    desvanecer una copia inerte.
@@ -416,15 +422,14 @@ El código mantiene lo de hoy hasta que el dueño responda:
    directo al final y dejaba la semana sin leer. Alternativa: que una partida terminada con su
    última semana sin leer abra en el final, marcando la semana leída (pierde ese resultado, que la
    jugadora nunca vio).
-8. En un teléfono de 360 × 740 y en la tableta, el aviso «Escena saltada…» de la escena previa
-   tapa, durante sus 4 s, el nombre y el objetivo de la carrera en la tarjeta decidida: ahí no queda
-   lugar libre (las posiciones y la pista son controles) y el aviso va abajo de la barra de arriba,
-   como dice §7. Alternativas: que tape la cabecera de las posiciones (texto, no un control) antes
-   que el nombre y el objetivo, que tape el botón de la pista, o que espere a la pantalla siguiente.
-9. Un aviso que se va al cambiar de pantalla se desvanece en 400 ms donde estaba: si la pantalla
-   nueva tiene un control ahí (del resultado al menú: «Entrenar»), la copia, que no toma toques, se
-   ve encima ≈ 0,3 s. Alternativas: que la copia se desvanezca debajo de la pantalla nueva, o que se
-   corte al cambiar de pantalla.
+8. ~~En un teléfono de 360 × 740 y en la tableta, el aviso «Escena saltada…» de la escena previa
+   tapa el nombre y el objetivo de la carrera en la tarjeta decidida.~~ **Resuelta el 2026-11-18:**
+   el dueño sacó el aviso de escena entero, y la tarjeta decidida queda limpia (§7).
+9. Un aviso de error que se va al cambiar de pantalla se desvanece en 400 ms donde estaba: si la
+   pantalla nueva tiene un control ahí, la copia, que no toma toques, se ve encima ≈ 0,3 s.
+   Alternativas: que la copia se desvanezca debajo de la pantalla nueva, o que se corte al cambiar
+   de pantalla. (Desde el 2026-11-18 solo pasa con el aviso de error, que hoy ningún camino de la
+   interfaz de `#juego` levanta: queda anotada por la selección.)
 
 ## Consecuencias
 

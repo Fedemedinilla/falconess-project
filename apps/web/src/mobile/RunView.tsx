@@ -153,17 +153,11 @@ export function RunView({
   const startInput = run.inputs[0];
   const parents = startInput?.kind === "start" ? startInput.parents : [];
 
-  // the notices: a scene's (the queue's first) and a refused act's, while nothing plays in front
+  // the notice of a refused act, while nothing plays in front
   const notices = (
     // under the chat, out of reach as the rest of the game (final review C4)
     <div style={{ display: "contents" }} inert={chatOpen || undefined}>
-      <NoticeHost
-        flow={flow}
-        toasts={flowUi.toasts}
-        notice={flowUi.notice}
-        dispatch={dispatch}
-        onWatch={cmd.watchScene}
-      />
+      <NoticeHost flow={flow} notice={flowUi.notice} dispatch={dispatch} />
     </div>
   );
 

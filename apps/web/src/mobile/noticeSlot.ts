@@ -18,17 +18,12 @@ export type Shown = { readonly id: string; readonly screen: string; readonly ms:
  * - `cut`: the same, but at once: an opaque layer came in front (a fading notice would show over
  *   its black first frame), or nothing fades (reduced motion);
  * - `gone`: it showed before this host was there (the End's column replaced the run's): gone;
- * - `drop`: never shown, it waited only for a layer's exit over the screen the layer left it on
- *   (`heldOn`, the screen live under the exit), and the player went to another screen before it
- *   could show: it belonged there, so it goes unseen (and never over the next screen's controls);
  * - `none`: no notice.
  */
-export type SlotView = "live" | "wait" | "fade" | "cut" | "gone" | "drop" | "none";
+export type SlotView = "live" | "wait" | "fade" | "cut" | "gone" | "none";
 
 export function slotView(
-  note:
-    | { readonly id: string; readonly shown: boolean; readonly heldOn?: string | undefined }
-    | undefined,
+  note: { readonly id: string; readonly shown: boolean } | undefined,
   at: Shown | undefined,
   o: {
     /** Nothing plays in front: the flow's `toast` and the layers idle. */
@@ -45,7 +40,6 @@ export function slotView(
 ): SlotView {
   if (!note) return "none";
   const here = at !== undefined && at.id === note.id;
-  if (!here && !note.shown && note.heldOn !== undefined && note.heldOn !== o.screen) return "drop";
   if (o.visible && (here ? at.screen === o.screen : !note.shown && !o.fading)) return "live";
   if (here) return o.cut || !o.fades ? "cut" : "fade";
   return note.shown ? "gone" : "wait";
@@ -56,20 +50,20 @@ export function cutsNotice(layer: Layer["kind"] | undefined): boolean {
   return layer === "scene" || layer === "emblem" || layer === "inspiration";
 }
 
-/** Without an anchor on screen, the notices sit under the top bar. */
+/** Without an anchor on screen, the notice sits under the top bar. */
 export const NOTICE_TOP = 124;
-/** Between the notices and their anchor. */
+/** Between the notice and its anchor. */
 export const NOTICE_GAP = 10;
-/** The least room between the notices and a control or what they must not hide (6.7: a real gap). */
+/** The least room between the notice and a control or what it must not hide (6.7: a real gap). */
 export const NOTICE_CLEAR = 3;
-/** How far a control may reach under the notices and not count as covered, where no place is clear. */
+/** How far a control may reach under the notice and not count as covered, where no place is clear. */
 export const NOTICE_EDGE = 4;
 
 /** A control's vertical extent in the viewport (`getBoundingClientRect`'s top and bottom). */
 export type Span = { readonly top: number; readonly bottom: number };
 
 /**
- * The notices' top in their containing block: just over the screen's `[data-toast-anchor]` (the
+ * The notice's top in its containing block: just over the screen's `[data-toast-anchor]` (the
  * menu's track tab, a card's foot, the selection's choices: rule 17), or `NOTICE_TOP` without one.
  * `cbTop` is where the containing block starts in the viewport: the game's column when it carries a
  * transform (the wide screen, the tablet's frame), else the viewport (0).
@@ -79,9 +73,8 @@ export type Span = { readonly top: number; readonly bottom: number };
  * objective). Where the place over the anchor would, the clear place nearest the anchor: closer to
  * it, in the middle of the room left over it (a race card's positions reaching down to its foot),
  * or higher up the screen, just over what it must not cover; with none (a small phone's race
- * card), the notices sit under
- * the top bar, as on a screen with no anchor, unless that covers a control by more than a card's
- * edge too: then over the anchor still (9a4333b).
+ * card), the notice sits under the top bar, as on a screen with no anchor, unless that covers a
+ * control by more than a card's edge too: then over the anchor still (9a4333b).
  *
  * Re-placed on a scroll (`current`, `follow`): over its anchor the notice follows it, also out of
  * view (the selection's choices scrolled up: it goes with the heading); elsewhere it stays where it
@@ -93,7 +86,7 @@ export function noticeTop(m: {
   readonly height: number;
   readonly controls?: readonly Span[];
   readonly avoid?: readonly Span[];
-  /** Where the notices stand now, in the containing block: a scroll re-places them. */
+  /** Where the notice stands now, in the containing block: a scroll re-places it. */
   readonly current?: number | undefined;
   /** A scroll: over its anchor the notice follows it, out of view too. */
   readonly follow?: boolean;
@@ -129,14 +122,13 @@ export function noticeTop(m: {
   return covers(shown) && !covers(under) ? under : shown;
 }
 
-/** The notices' rise into place as they come in (Story.module.css `toastIn`), at most. */
+/** The notice's rise into place as it comes in (Story.module.css `toastIn`), at most. */
 export const NOTICE_RISE = 10;
 
 /**
- * How far the notices may rise into their place (`top`, in their containing block) without
- * touching what stands under them: their full rise, or the room down to the nearest control or
- * thing they must not hide below them (a notice squeezed over a race card's foot comes in almost
- * in place).
+ * How far the notice may rise into its place (`top`, in its containing block) without touching
+ * what stands under it: its full rise, or the room down to the nearest control or thing it must
+ * not hide below it (a notice squeezed over a race card's foot comes in almost in place).
  */
 export function noticeRise(m: {
   readonly top: number;

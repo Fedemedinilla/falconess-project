@@ -418,11 +418,10 @@
   cursor: pointer;
 }
 
-/* the notice after a scene */
 /*
- * The notices (plan §1.9): fixed in the game's column, just over the screen's anchor; the error's
- * over the story's. Their time is NoticeHost's timers; the CSS only brings them in, and fades the
- * id-less copy of one that leaves.
+ * The notice of a refused act (plan §1.9): fixed in the game's column, just over the screen's
+ * anchor. Its time is NoticeHost's timer; the CSS only brings it in, and fades the id-less copy
+ * of one that leaves.
  */
 .notices {
   position: fixed;
@@ -431,7 +430,6 @@
   z-index: 56;
   display: flex;
   flex-direction: column;
-  gap: 8px;
   pointer-events: none;
 }
 .toast {
@@ -462,12 +460,6 @@
   font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
   font-weight: 700;
   font-size: 16px;
-}
-.toast b {
-  color: #f1c40f;
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 /* it rises into its place by --toast-rise (NoticeHost: 10 px, less where something stands just under
    it, so it never comes in over it) */

@@ -1574,8 +1574,6 @@
   "ui.m.story.auto": "Auto",
   "ui.m.story.log": "Log",
   "ui.m.story.next": "Next",
-  "ui.m.story.skipped": "Scene skipped. You can watch it anytime in Menu → Story.",
-  "ui.m.story.seen": "Saved in Menu → Story.",
   "ui.m.story.title": "Story",
   "ui.m.story.empty": "You haven't seen any scene of this Falconess yet.",
   "ui.m.story.watch": "Watch",
@@ -1946,6 +1944,5 @@
   "ui.m.pace.normal": "Normal",
   "ui.m.pace.fast": "Fast",
   "ui.m.pace.direct": "Direct",
-  "ui.m.story.passed": "It already came up in another season.",
   "ui.m.story.digest": "Quick version"
 }

@@ -26,9 +26,8 @@ export const MOTION = {
   resultDelay: 400,
   toastIn: 300,
   toastOut: 400,
-  /** a notice's life on screen; with «Ver» or for an error, the long one */
-  toastShort: 4000,
-  toastLong: 6000,
+  /** a notice's life on screen, from its first display */
+  noticeMs: 6000,
   sheetIn: 220,
   sheetOut: 180,
   deskDim: 200,
