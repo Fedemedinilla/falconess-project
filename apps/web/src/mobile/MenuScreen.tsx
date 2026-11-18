@@ -101,23 +101,13 @@ export function MenuScreen({
     <div className={cx(s.screen, slow && s.screenMajor)}>
       {art && (
         <div
-          className={cx(s.hero, art.wide && s.heroWide)}
-          style={
-            (art.wide
-              ? {
-                  "--ar": art.wide.ar,
-                  "--fy": art.wide.fy,
-                  "--cx": art.wide.cx,
-                  "--kw": art.wide.kw,
-                  "--ty": art.wide.ty,
-                }
-              : { "--ar": art.ar, "--fy": art.fy, "--cx": art.cx }) as CSSProperties
-          }
+          className={s.hero}
+          style={{ "--ar": art.ar, "--fy": art.fy, "--cx": art.cx } as CSSProperties}
           aria-hidden="true"
         >
           <div className={s.glow2} />
           <div className={s.fl} />
-          <img src={art.wide?.src ?? art.splash} alt="" draggable={false} />
+          <img src={art.splash} alt="" draggable={false} />
         </div>
       )}
       <div className={s.lay}>
