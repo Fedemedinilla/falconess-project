@@ -27,7 +27,7 @@ import {
 export type RunnerView = Runner & {
   readonly lane: number;
   readonly name: string;
-  /** "Vos", "R3": the name in a narrow lane label. */
+  /** "Tú", "R3": the name in a narrow lane label. */
   readonly short: string;
   /** Frame · manufacturer · style. */
   readonly kit: string;
