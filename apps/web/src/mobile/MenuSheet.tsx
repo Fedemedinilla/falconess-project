@@ -171,7 +171,7 @@ export function MobileMenu({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-menu-titulo">
+        <h2 className={s.dlTitle} id="m-menu-titulo" tabIndex={-1}>
           {ui("ui.m.menu")}
         </h2>
         {(["guide", "goals", "crews", "log"] as const).map((t) => (

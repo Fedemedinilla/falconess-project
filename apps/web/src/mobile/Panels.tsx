@@ -515,7 +515,7 @@ export function PanelSheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-panel-hoja-titulo">
+        <h2 className={s.dlTitle} id="m-panel-hoja-titulo" tabIndex={-1}>
           {title}
         </h2>
         {children}

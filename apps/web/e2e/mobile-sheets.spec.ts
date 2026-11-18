@@ -331,3 +331,22 @@ test("a scene asked for from «Historia» takes the focus once the sheet has gon
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
   await expect(page.locator("#m-capitulo-seguir")).toBeFocused();
 });
+
+test("a sheet opens at its top, with its title in view and focused: the guide no longer opens at its end", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-menu");
+  await page.click("#m-panel-abrir-guide");
+  const sheet = page.locator("#m-panel-hoja[open]");
+  await expect(sheet).toBeVisible();
+  // the guide is longer than the sheet, so it scrolls: it still starts at its first step
+  expect(await sheet.evaluate((d) => d.scrollHeight > d.clientHeight + 8)).toBe(true);
+  expect(await sheet.evaluate((d) => d.scrollTop)).toBe(0);
+  await expect(page.locator("#m-panel-hoja-titulo")).toBeInViewport();
+  await expect(page.locator("#m-panel-hoja-titulo")).toBeFocused();
+  // the same for a short sheet, which never scrolled
+  await page.click("#m-panel-hoja-cerrar");
+  await page.click("#m-menu");
+  await expect(page.locator("#m-menu-titulo")).toBeFocused();
+});

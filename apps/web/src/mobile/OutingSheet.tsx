@@ -41,7 +41,7 @@ export function OutingSheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-salida-titulo">
+        <h2 className={s.dlTitle} id="m-salida-titulo" tabIndex={-1}>
           {ui("ui.m.outing.title")}
         </h2>
         <p className={s.exportWhat}>{ui("ui.m.outing.hint", { n: S.bondPerOuting })}</p>

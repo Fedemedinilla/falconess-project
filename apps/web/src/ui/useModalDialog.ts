@@ -84,6 +84,12 @@ function targetOf(first: Opener | undefined): HTMLElement | undefined {
   return undefined;
 }
 
+/** A sheet's own title, the element it is named by (`aria-labelledby`), if it is in it. */
+function title(d: HTMLDialogElement): HTMLElement | null {
+  const id = d.getAttribute("aria-labelledby");
+  return id ? d.querySelector<HTMLElement>(`#${CSS.escape(id)}`) : null;
+}
+
 /** Whether the focus fell out of the game: on the page, gone with its element, or under `inert`. */
 function focusLost(): boolean {
   const a = document.activeElement;
@@ -158,6 +164,11 @@ export function useModalDialog(
         openers.set(d, { el, from: el?.closest("dialog") ?? null });
         if (typeof d.showModal === "function") d.showModal();
         else d.setAttribute("open", "");
+        // A sheet opens at its top (L6): `showModal` focuses the first control in it, and a sheet
+        // longer than the screen (the guide) scrolled to its end to show it. Its title takes the
+        // focus instead, which also names the sheet to a screen reader.
+        title(d)?.focus({ preventScroll: true });
+        d.scrollTop = 0;
       }
     } else if (phase === "closing") {
       // its way out: still over the page, nothing of it takes a tap or a key

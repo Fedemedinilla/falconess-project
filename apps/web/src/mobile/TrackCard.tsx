@@ -222,7 +222,7 @@ export function TrackSheet({
     >
       <div className={s.dl}>
         <p className={s.tsCap}>{ui("ui.m.track.cap")}</p>
-        <h2 className={s.dlTitle} id="m-pista-titulo">
+        <h2 className={s.dlTitle} id="m-pista-titulo" tabIndex={-1}>
           {gameText(view.nameKey)}
         </h2>
         <p className={s.tsFlavor} id="m-pista-sabor">

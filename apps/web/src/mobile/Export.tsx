@@ -149,7 +149,7 @@ export function ExportSheet({
     >
       {item && (
         <div className={s.dl}>
-          <h2 className={s.dlTitle} id="m-exportar-titulo">
+          <h2 className={s.dlTitle} id="m-exportar-titulo" tabIndex={-1}>
             {ui("ui.m.export.title")}
           </h2>
           <p className={s.exportWhat}>{item.title}</p>
@@ -258,7 +258,7 @@ export function HistorySheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-historial-titulo">
+        <h2 className={s.dlTitle} id="m-historial-titulo" tabIndex={-1}>
           {ui("ui.m.history.title")}
         </h2>
         {entries.length === 0 && <p className={s.exportWhat}>{ui("ui.m.history.empty")}</p>}

@@ -27,7 +27,7 @@ export function StoryListSheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-historia-titulo">
+        <h2 className={s.dlTitle} id="m-historia-titulo" tabIndex={-1}>
           {ui("ui.m.story.title")}
         </h2>
         {scenes.length === 0 && <p className={s.exportWhat}>{ui("ui.m.story.empty")}</p>}
