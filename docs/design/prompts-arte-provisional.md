@@ -611,3 +611,73 @@ No text, no letters, no numbers, no logos.
 Si en el futuro hay que describir alas desde cero, evitar «blades» y «katana»: pedir una silueta
 continua de ala de halcón, con paneles que se superponen sin huecos, y un borde de ataque liso que
 esconde el mecanismo.
+
+## Capítulos 2 a 4: las escuderías por dentro (2026-11-18)
+
+El hangar de Kōryū ya está (imagen del dueño, 2026-11-18). Los otros dos usan el bloque común de los
+fondos de Vuela Alto (16:9, sin personajes) y van después de él.
+
+### El hangar de Altair Systems
+
+```text
+Inside the hangar of Altair Systems, a high-tech racing team for winged racers that looks like a laboratory.
+Everything is white, navy blue and soft cyan, spotless and silent. A glossy white floor that reflects the
+ceiling lights like water, long rows of cold white light panels, a very high ceiling. In the middle distance,
+sleek navy-and-cyan mechanical racing wings floating inside glass display cases, each one scanned by thin cyan
+light lines. On one side, a simple metal rack with plain white basic training wings hanging in a neat row,
+each with a small blank tag. Big wall screens showing abstract graphs, curves and wireframe wings, with no
+readable text or numbers. A small white desk with two lonely white chairs in front of it, far too clean, like
+a waiting room. At the back, a long white corridor that goes on and on into the distance. Tiny staff in white
+coats with navy collars, small and far away, looking at tablets. Camera at chest height, wide lens, perfectly
+symmetrical composition. Calm, elegant, a little intimidating, like an exam room.
+```
+
+### El taller de Boneyard Works
+
+```text
+Inside the workshop of Boneyard Works, a scrappy racing team for winged racers that builds everything from
+junk. An old patched hangar with holes in the roof: warm sunbeams fall through them onto floating dust and
+sparks. Huge piles of scrap everywhere, sorted with love: old propellers, wheels of every size, refrigerator
+doors, metal sheets painted in five different colors, chains and pulleys hanging from a rusty crane. The
+team colors are olive green and rust orange, on hand-painted banners with an abstract wing emblem (no letters)
+and on a few mismatched tool chests. In the middle distance, a welding station throwing bright sparks, a work
+table covered in bolts, an old radio on a shelf. In the background, one pair of olive-and-rust racing wings
+hangs under a dusty tarp, half visible, like a secret. The entrance is a gap in a wall of scrap. Camera at
+chest height, wide lens, a bit of a tilted angle. Chaotic but cozy and happy, like a garage where friends
+build things on weekends.
+```
+
+### Personajes de apoyo (una sola vista)
+
+Van con el bloque de exclusiones de personajes al final, y en vez del bloque de estilo de dos
+atuendos llevan este, que pide una sola vista:
+
+```text
+Japanese anime gacha game character reference sheet, high-budget anime style, polished and clean. One
+full-body view of a single character, standing, 3/4 view, the whole figure visible from head to shoes. Plain
+flat light grey background with a soft floor shadow, nothing else. Large expressive anime eyes, clean line art
+of even weight, soft cel shading with one shadow tone and gentle highlights, soft key light from the upper
+left. IMPORTANT: NO WINGS. Same art style and same scale as the attached image.
+```
+
+#### Ishida, asesor de Kōryū (el de las alas carísimas)
+
+```text
+A man in his fifties, tall (about 178 cm) and slim, perfect upright posture, like a maître d' at the most
+expensive restaurant in the world. Black hair slicked back with elegant grey temples, a neatly trimmed thin
+moustache, narrow calm eyes and a polite smile that is only one millimeter wide: he is selling without
+selling. Hands folded behind his back. He wears a tailored deep racing-red three-piece suit with thin black
+pinstripes, a black shirt, a glossy yellow tie and a small golden wing pin on the lapel (no letters), a red
+pocket square, immaculate WHITE GLOVES, and polished black shoes. Everything about him shines a little.
+```
+
+#### Quist, analista de Altair (la del cuestionario)
+
+```text
+A woman in her thirties, about 172 cm, very straight posture, completely expressionless face: not cold, just
+always measuring. Pale ash-blonde hair pulled back in a tight low bun, not a single loose strand. A translucent
+cyan visor worn over her eyes like glasses, with faint light lines on the lens. She wears a long white lab-style
+coat with a high navy collar and thin cyan piping, a navy turtleneck, slim navy trousers and white shoes. She
+holds a large data tablet at chest height with one hand and her other index finger is about to tap it. A small
+cyan earpiece in one ear. She looks like she already knows how many questions are left.
+```

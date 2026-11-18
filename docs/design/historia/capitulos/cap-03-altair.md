@@ -20,28 +20,28 @@ _Altair Systems_
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
 [GESTO: Susurra, aunque nadie le pidió silencio.]
-MASARU [concentración]: ¿Por qué estoy susurrando?  // contagiándose del lugar
+MASARU [concentración]: ¿Por qué estoy susurrando? [EFECTO: susurro]  // contagiándose del lugar
 [GESTO: También susurra.]
-NINA [concentración]: No sé. Pero yo también.  // acompañándolo
+NINA [concentración]: No sé. Pero yo también. [EFECTO: susurro]  // acompañándolo
 [ENTRA: Mujer del visor celeste, derecha]
 [GESTO: Aparece detrás de ellos, con una tableta y un visor celeste.]
 MUJER DEL VISOR CELESTE [concentración]: Bienvenidos a Altair Systems. Analista Quist. Detecté dos visitantes sin turno.  // registrándolos antes de saludarlos
 [NOMBRE: Mujer del visor celeste → Quist]
 [GESTO: Da un saltito.]
-NINA [sorpresa]: ¡Perdón! Veníamos por unas alas. Básicas.  // disculpándose por existir
+NINA [sorpresa]: ¡Perdón! Veníamos por unas alas. Básicas. [EFECTO: sacudida]  // disculpándose por existir
 [GESTO: Desliza el dedo por la tableta.]
 QUIST [calma]: Tenemos alas básicas. Sin costo. Para candidatas que completen la evaluación.  // ofreciendo con condiciones
 MASARU [ganas]: ¿Sin costo? ¿Gratis de verdad?  // entusiasmándose antes de leer la letra chica
-QUIST [calma]: Sin costo monetario.  // advirtiendo sin advertir
+QUIST [calma]: Sin costo|… monetario.  // advirtiendo sin advertir
 MASARU [sorpresa]: ¿Hay otro tipo de costo?  // oliendo la trampa
 [GESTO: Gira la tableta: una barra de progreso en cero.]
-QUIST [calma]: Doscientas doce preguntas. Empezamos.  // empezando sin pedir permiso
+QUIST [calma]: Doscientas doce preguntas. Cuarenta y tres subpreguntas. Nueve anexos. Un ensayo. Empezamos.  // empezando sin pedir permiso
 ```
 ### Escena 2 · La evaluación
 
 - **Objetivo:** Llegar al final del cuestionario.
 - **Obstáculo:** Cada pregunta toca algo que no quieren decir.
-- **Giro:** Las preguntas llegan a lo que cada uno esconde.
+- **Giro:** Tres horas después van por la veintisiete, y las preguntas llegan a lo que cada uno esconde.
 - **Salida:** Escapan.
 ```text
 QUIST [concentración]: Pregunta uno. Nombre completo.  // midiendo
@@ -52,15 +52,30 @@ QUIST [concentración]: Pregunta dos. Horas de sueño promedio.  // siguiendo
 NINA [concentración]: ¿Contando las veces que me despierto a ensayar conversaciones?  // contestando con verdad de más
 QUIST [calma]: Sí.  // anotando todo
 NINA [en blanco]: …Pocas.  // dándose cuenta tarde de lo que dijo ([en blanco]: se arrepiente)
-[NARRACIÓN]: Cuarenta minutos después. La barra de progreso marca cuatro por ciento.
-QUIST [concentración]: Pregunta nueve. ¿Prefiere viento de frente o de cola? Justifique.  // siguiendo sin piedad
+QUIST [concentración]: Pregunta tres. Grupo sanguíneo. Pregunta cuatro. Alergias. Pregunta cuatro punto uno. Alergias emocionales. [EFECTO: texto rápido]  // acelerando sin respirar
+MASARU [sorpresa]: ¿Alergias emo…?  // quedándose atrás
+QUIST [calma]: Cuatro punto dos.  // sin esperar
+[NARRACIÓN]: Tres horas después. La barra de progreso marca trece por ciento.
+[GESTO: Se inclina hacia él sin mover la cabeza.]
+NINA [cansancio]: Masaru. ¿En qué pregunta vamos? [EFECTO: susurro]  // preguntando a escondidas
 [GESTO: Mira un punto fijo en el techo.]
-MASARU [cansancio]: Mi cerebro se apagó en la pregunta tres. Lo que queda es un protector de pantalla.  // confesando que se fue
+MASARU [cansancio]: Ni idea. Yo me perdí en la cuatro punto dos bis. [EFECTO: susurro]  // confesando que se fue
+NINA [sorpresa]: ¿Había una bis?  // descubriendo que había más
+MASARU [cansancio]: Había una bis. Y una ter. La ter me miró.  // contando un trauma chico
+MASARU [en blanco]: Desde ahí, mi cerebro es un protector de pantalla.  // rindiéndose
 [GESTO: Se ríe y se tapa la boca.]
 NINA [alegría]: Perdón.  // riéndose sin querer
 [GESTO: No se ríe.]
-QUIST [calma]: Anotado: «protector de pantalla».  // registrándolo todo
-QUIST [concentración]: Pregunta treinta y uno. Cantidad de amigos cercanos.  // tocando sin saberlo la herida
+QUIST [calma]: Anotado: «la ter me miró».  // registrándolo todo
+NINA [concentración]: Yo me perdí en la dieciocho. La que había que graficar.  // confesando lo suyo
+[GESTO: Gira la tableta.]
+QUIST [concentración]: Su gráfico quedó en el expediente.  // mostrando la prueba
+[NARRACIÓN]: La pregunta dieciocho pedía graficar «su confianza en sí misma durante el último año». La línea de Nina baja y se sale de la pantalla.
+MASARU [sorpresa]: Nina… la línea se sale de la tableta.  // viendo algo que no esperaba
+[GESTO: Se rasca la nuca.]
+NINA [en blanco]: ~Es que se cayó~Es que no me alcanzaba la tableta.  // tapando la verdad con un chiste ([en blanco]: no quiere que se note)
+QUIST [calma]: Anotado.  // registrando sin juzgar
+QUIST [concentración]: Pregunta veintisiete. Cantidad de amigos cercanos.  // tocando sin saberlo la herida
 NINA [en blanco]: … [EFECTO: globo que tarda]  // quedándose sin aire ([en blanco]: la pregunta le pegó)
 [GESTO: Mira a Masaru de reojo.]
 NINA [concentración]: ¿Él cuenta?  // buscando una respuesta que no la deje sola
@@ -70,7 +85,7 @@ QUIST [calma]: Necesito un número.  // pidiendo lo imposible
 [GESTO: Levanta un dedo, despacio. Después, medio más.]
 NINA [ganas]: Uno. …Uno y medio, con el viejo.  // eligiendo su número
 [GESTO: Gira la tableta hacia Masaru.]
-QUIST [concentración]: Pregunta treinta y dos, para el acompañante. ¿Ha terminado alguna carrera?  // tocando la herida de él
+QUIST [concentración]: Pregunta veintiocho, para el acompañante. ¿Ha terminado alguna carrera?  // tocando la herida de él
 > [ELECCIÓN] Qué contesta Masaru
 > [ACEPTAR] No.
 > [RECHAZAR] Eso es privado.
@@ -100,7 +115,7 @@ NINA [alegría]: ¡Muchas gracias por las preguntas! ¡Eran muy buenas! ¡Perdó
 [SFX: dos pares de zapatillas corriendo sobre piso brillante]
 [SALE: Nina]
 [SALE: Masaru]
-[ILUSTRACIÓN] Nina y Masaru corren por un pasillo blanco interminable. Detrás de ellos, en una pantalla gigante, la barra de progreso: 4 %.
+[ILUSTRACIÓN] Nina y Masaru corren por un pasillo blanco interminable. Detrás de ellos, en una pantalla gigante, la barra de progreso: 13 %.
 [GESTO: Sola, guarda la tableta.]
-QUIST [calma]: Evaluación interrumpida en la pregunta treinta y dos. Resultado: interesantes. [EFECTO: frase clave]  // dejándolos en sus registros
+QUIST [calma]: Evaluación interrumpida en la pregunta veintiocho de doscientas doce.| Resultado: interesantes. [EFECTO: frase clave]  // dejándolos en sus registros
 ```

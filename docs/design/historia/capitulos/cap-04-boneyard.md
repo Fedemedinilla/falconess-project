@@ -25,7 +25,7 @@ MASARU [cansancio]: Si acá también nos preguntan algo, me desmayo.  // arrastr
 NINA [concentración]: Si acá también es caro, me desmayo yo.  // acompañando el chiste
 [ENTRA: Chica del taller, derecha]
 [GESTO: Sale de abajo de un armazón, con grasa hasta en la cara.]
-CHICA DEL TALLER [alegría]: ¡Hola! Cuidado con la hélice, muerde. ¿Están perdidos o vinieron a propósito?  // recibiendo como si los conociera
+CHICA DEL TALLER [alegría]: *¡Hola!* Cuidado con la hélice, muerde. ¿Están perdidos o vinieron a propósito? [EFECTO: sacudida, énfasis]  // recibiendo como si los conociera
 MASARU [sorpresa]: ¿Hay diferencia?  // preguntando en serio
 [GESTO: Se limpia las manos en el pantalón. El pantalón queda peor.]
 CHICA DEL TALLER [alegría]: Acá, no mucha. ¿Qué necesitan?  // haciéndolos sentir en casa
@@ -35,8 +35,8 @@ NINA [ganas]: Alas. De práctica. Las más baratas. Las más baratas de las bara
 CHICA DEL TALLER [concentración]: ¿Para ti?  // midiéndola
 NINA [sorpresa]: ¿Se nota que no vuelo?  // esperando el rechazo
 CHICA DEL TALLER [alegría]: Se nota que quieres. Eso es lo difícil. Lo otro se arregla. [EFECTO: frase clave]  // viéndola de verdad
-[GESTO: Abre el cuaderno, preparado.]
-MASARU [concentración]: ¿Cuánto cuestan? Pregunto antes, por experiencia.  // protegiéndose de otro golpe
+[GESTO: Junta las manos y pone voz de terciopelo.]
+MASARU [concentración]: ¿Cuánto cuestan? Pregunto antes, porque la última vez nos dijeron ^«¿Cómo piensan pagarla?»^  // protegiéndose de otro golpe, imitando a Ishida
 [GESTO: Señala la chatarra con una llave enorme.]
 CHICA DEL TALLER [ganas]: Mira a tu alrededor. Todo esto es gratis. Lo difícil es que vuele.  // mostrando su tesoro
 CHICA DEL TALLER [concentración]: Tú, el del cuaderno. Tráeme esa rueda del fondo.  // poniéndolos a trabajar
@@ -53,6 +53,7 @@ CHICA DEL TALLER [alegría]: La que te caiga bien.  // confiando en el azar
 - **Salida:** Las alas existen.
 ```text
 [SFX: una soldadora chisporrotea]
+[EFECTO: temblor]
 [ENTRA: Hombre de la soldadora, centro]
 [GESTO: Levanta la careta de soldar.]
 HOMBRE DE LA SOLDADORA [concentración]: ¿Qué inventaste ahora?  // desconfiando por experiencia
@@ -111,12 +112,12 @@ NINA [alegría]: Te queda bien.  // riéndose también
 NINA [alegría]: Pesan como un armario.  // diciendo lo obvio con felicidad
 CHICA DEL TALLER [alegría]: Un armario que vuela. Vas a ver.  // prometiendo sin dudar
 [GESTO: Grita desde el fondo del taller.]
-HOMBRE DE LA SOLDADORA [concentración]: ¡Caracara! ¡Mañana a las seis hay entrenamiento! ¡No te olvides!  // llamándola desde el fondo
+HOMBRE DE LA SOLDADORA [concentración]: ¡Caracara! ¡Mañana a las seis hay entrenamiento! ¡No te olvides! [EFECTO: sacudida]  // llamándola desde el fondo
 [NOMBRE: Chica del taller → Caracara]
 [GESTO: Grita hacia el fondo, sin darse vuelta.]
 CARACARA [alegría]: ¡Ya sé, jefe!  // contestando sin darse vuelta
 [GESTO: Abraza las alas de chatarra.]
-NINA [alegría]: Muchas gracias. Muchas. Mañana vengo a limpiarles el taller entero.  // agradeciendo de más
+NINA [alegría]: ~¿Puedo vivir acá?~Muchas gracias. Muchas. Mañana vengo a limpiarles el taller entero.  // agradeciendo de más
 CARACARA [alegría]: Mañana entreno. Ven pasado.  // aceptando sin darle importancia
 [SALE: Caracara]
 ```
@@ -133,8 +134,8 @@ CARACARA [alegría]: Mañana entreno. Ven pasado.  // aceptando sin darle import
 NINA [alegría]: Qué amable la chica del taller.  // volviendo feliz
 MASARU [concentración]: Mucho. ¿Cómo se llamaba?  // dándose cuenta tarde
 NINA [en blanco]: …No le pregunté. [EFECTO: globo que tarda]  // dándose cuenta también ([en blanco]: vergüenza)
-MASARU [en blanco]: Yo tampoco.  // compartiendo la culpa
+MASARU [en blanco]: Yo|… tampoco.  // compartiendo la culpa
 [NARRACIÓN]: En la radio de un auto que pasa, alguien anuncia el entrenamiento abierto de Caracara, la estrella de Boneyard, mañana a las seis.
-NINA [ganas]: Mañana a las seis empiezo a volar.  // decidiendo
+NINA [ganas]: Mañana a las seis empiezo a *volar*. [EFECTO: énfasis]  // decidiendo
 MASARU [cansancio]: Mañana a las seis yo duermo.  // cerrando con su verdad
 ```

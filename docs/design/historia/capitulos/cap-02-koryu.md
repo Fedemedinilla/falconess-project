@@ -25,7 +25,7 @@ NINA [concentración]: Esta ya brilla. Pero por si acaso.  // llenando el tiempo
 [GESTO: Se queda mirando el ala celeste en su soporte.]
 NINA [en blanco]: …  // mirando lo que quiere sin animarse ([en blanco]: deseo que no se dice)
 [GESTO: Suelta el trapo.]
-NINA [ganas]: Señora Edda… ¿hay alas de práctica? Unas viejas. Unas rotas. Cualquiera.  // animándose por fin
+NINA [ganas]: ~Edda, ¿me prestas tu~Señora Edda… ¿hay alas de práctica? Unas viejas. Unas rotas. Cualquiera.  // animándose por fin
 [GESTO: Sin dejar de ajustar el ala.]
 EDDA [aburrimiento]: ¿Señora? Me acabas de sumar veinte años.  // cortándola con sarcasmo
 NINA [sorpresa]: ¡Perdón! Edda. ¿Hay alas de práctica?  // corrigiéndose rápido
@@ -38,7 +38,8 @@ NINA [ganas]: Señor… ¿usted tiene alas guardadas? ¿En algún lado?  // prob
 [GESTO: No abre los ojos.]
 VIEJO DURMIENTE [calma]: No. [EFECTO: globo que tarda]  // negándose dormido
 NINA [sorpresa]: ¿No tiene, o no me las da?  // buscando una rendija
-VIEJO TAJANTE [calma]: No.  // negándose del todo
+[GESTO: Abre un ojo. Uno solo.]
+VIEJO TAJANTE [calma]: No. [EFECTO: sacudida]  // negándose del todo
 [GESTO: Se pone el casco.]
 EDDA [fastidio]: Cuando dice dos veces que no, es que no. Me voy a volar.  // terminando la conversación
 [SALE: Edda]
@@ -50,7 +51,7 @@ NINA [en blanco]: Pedí alas. Me dijeron que no. Dos veces.  // resumiendo para 
 MASARU [concentración]: En teoría, «no» quiere decir «acá no».  // dándole una vuelta
 NINA [sorpresa]: ¿Y eso qué quiere decir?  // esperando que haya una salida
 [GESTO: Señala la puerta del hangar con el lápiz.]
-MASARU [ganas]: Que hay un «allá».  // abriendo una salida
+MASARU [ganas]: Que hay un|… *«allá»*. [EFECTO: énfasis]  // abriendo una salida
 [GESTO: Lee un cartel viejo pegado en la pared.]
 MASARU [concentración]: Kōryū. Altair. Boneyard. Las tres escuderías de la liga que quedan cerca.  // armando un plan de cinco minutos
 VIEJO SABIO [calma]: Antes de entrar a una casa ajena, mírate los zapatos.  // dejando una frase para después
@@ -73,7 +74,7 @@ NINA [ganas]: …Vamos igual.  // eligiendo ir
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
 [GESTO: Se frena en la entrada y se mira las zapatillas.]
-NINA [sorpresa]: Masaru. Hay alfombra roja. Adentro de un hangar.  // achicándose
+NINA [sorpresa]: Masaru. Hay banderas. Adentro de un hangar. [EFECTO: susurro]  // achicándose
 [GESTO: Toca un trofeo con un dedo y lo suelta enseguida.]
 MASARU [ganas]: Y trofeos. Este es más alto que tú.  // distrayéndose con lo que brilla
 [ENTRA: Hombre de guantes blancos, derecha]
@@ -102,7 +103,7 @@ ISHIDA [calma]: Solo una pregunta. ¿Cómo piensan pagarla?  // cobrando con sua
 [MÚSICA: corta en seco]
 NINA [en blanco]: …  // cayendo a tierra ([en blanco]: no lo había pensado)
 MASARU [concentración]: ¿Cuánto… sale? [EFECTO: globo que tarda]  // preguntando lo que no quiere saber
-ISHIDA [calma]: Doscientos cuarenta mil. Sin el *propulsor*. [EFECTO: énfasis, frase clave]  // diciendo la cifra como quien dice la hora
+ISHIDA [calma]: Doscientos cuarenta mil.| Sin el *propulsor*. [EFECTO: énfasis, frase clave]  // diciendo la cifra como quien dice la hora
 > [ELECCIÓN] Qué dice Masaru
 > [ACEPTAR] ¿Hay cuotas?
 > [RECHAZAR] Eso es más de lo que voy a ganar en mi vida.
@@ -114,6 +115,8 @@ ISHIDA [calma]: Hay cuotas. Ciento veinte.  // abriendo una puerta que no sirve
 MASARU [en blanco]: …  // haciendo la cuenta ([en blanco]: no le da)
 
 (si RECHAZAR)
+[GESTO: Se agarra la cabeza con las dos manos.]
+MASARU [sorpresa]: ¡En mi vida *entera*! [EFECTO: sacudida, énfasis]  // dándose cuenta en voz alta
 ISHIDA [fastidio]: Es posible. Por eso es una Shiden.  // defendiendo la marca
 [GESTO: Le tira de la manga.]
 NINA [sorpresa]: Masaru…  // frenándolo
@@ -123,7 +126,7 @@ ISHIDA [alegría]: Mirar es gratis. Respirar sobre ella, también.  // dejándos
 [GESTO: Respira sobre el ala, muy cerca.]
 MASARU [ganas]: Listo. Ya la usé.  // rematando el chiste
 [GESTO: Levanta la mano como en clase.]
-NINA [ganas]: ¿Aceptan trabajo? Limpio muy bien. Mucho. Todo el día.  // ofreciendo lo único que tiene
+NINA [ganas]: ~¿Me la fían?~¿Aceptan trabajo? Limpio muy bien. Mucho. Todo el día.  // ofreciendo lo único que tiene
 [GESTO: Mira el piso brillante. Después, a ella.]
 ISHIDA [calma]: Tenemos once personas de limpieza, señorita.  // negándose con cortesía
 NINA [en blanco]: …Doce sería un número más bonito.  // insistiendo sin esperanza
