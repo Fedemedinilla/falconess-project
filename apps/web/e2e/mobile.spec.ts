@@ -415,29 +415,30 @@ test("sounds: a tap, a change of screen, a training's result; the «Menú» swit
   );
   await settle(page);
 
-  // the switch: Propulsor → Visor → apagado → Hangar → Propulsor, remembered on reload
+  // «Menú» → «Ajustes»: every style is there and one tap picks any of them (owner 2026-11-18),
+  // and the pick is remembered on reload
   await page.click("#m-menu");
+  await page.click("#m-grupo-ajustes");
   const sw = page.locator("#m-sonido");
-  await expect(sw).toHaveAttribute("data-style", "propulsor");
+  await expect(sw).toHaveAttribute("data-value", "propulsor");
   for (const style of ["visor", "off", "hangar"]) {
-    await sw.click();
-    await expect(sw).toHaveAttribute("data-style", style);
-    await expect(sw).toContainText(t(`ui.m.sound.${style}`));
+    await page.click(`#m-sonido-${style}`);
+    await expect(sw).toHaveAttribute("data-value", style);
+    await expect(page.locator(`#m-sonido-${style}`)).toContainText(t(`ui.m.sound.${style}`));
   }
   await page.reload();
   await pastTitle(page);
   await page.click("#m-continuar");
   await settle(page);
   await page.click("#m-menu");
-  await expect(page.locator("#m-sonido")).toHaveAttribute("data-style", "hangar");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-sonido")).toHaveAttribute("data-value", "hangar");
 
   // apagado plays nothing
-  await page.locator("#m-sonido").click();
-  await page.locator("#m-sonido").click();
-  await page.locator("#m-sonido").click();
-  await expect(page.locator("#m-sonido")).toHaveAttribute("data-style", "off");
+  await page.click("#m-sonido-off");
+  await expect(page.locator("#m-sonido")).toHaveAttribute("data-value", "off");
   const before = await page.locator("html").getAttribute("data-sfx");
-  await page.click("#m-menu-cerrar");
+  await page.click("#m-ajustes-hoja-cerrar");
   await page.click("#m-entrenar");
   await page.waitForTimeout(200);
   expect(await page.locator("html").getAttribute("data-sfx")).toBe(before);
@@ -521,8 +522,9 @@ test("export: the run in play, and every season this browser played", async ({ p
   await startMobile(page, "caracara");
   await page.click("#m-descansar");
   await settle(page);
-  // «Menú» → «Exportar partida»: the save as a file or as text
+  // «Menú» → «Partida» → «Exportar partida»: the save as a file or as text
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-exportar-partida");
   const sheet = page.locator("#m-exportar[open]");
   await expect(sheet).toBeVisible();
@@ -538,6 +540,7 @@ test("export: the run in play, and every season this browser played", async ({ p
 
   // a new season: the old one stays in «Temporadas anteriores»
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-nueva");
   await page.click("#m-nueva-si");
   await page.click("#m-elegir-peregrina");
@@ -545,6 +548,7 @@ test("export: the run in play, and every season this browser played", async ({ p
   await expect(page.locator("#m-semana")).toBeVisible();
   await skipPrologue(page);
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-temporadas");
   const rows = page.locator("#m-historial li[data-seed]");
   await expect(rows).toHaveCount(2);
@@ -637,7 +641,8 @@ test("language: the switch in «Menú» keeps the run in play", async ({ page })
   await page.dblclick("#m-entrenar-agility");
   await settle(page);
   await page.click("#m-menu");
-  await page.click("#m-idioma");
+  await page.click("#m-grupo-ajustes");
+  await page.click("#m-idioma-en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   expect(await week(page)).toBe(2);
   expect(await spanishLines(page)).toEqual([]);
@@ -728,15 +733,17 @@ test("music: the title theme from the title's tap, the menu theme in the season,
   await skipPrologue(page);
   // the switch, kept on reload
   await page.click("#m-menu");
-  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "true");
-  await page.click("#m-musica");
-  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
-  await expect(page.locator("#m-musica")).toContainText(t("ui.m.music.off"));
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-value", "on");
+  await page.click("#m-musica-off");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-value", "off");
+  await expect(page.locator("#m-musica-off")).toContainText(t("ui.m.music.off"));
   await page.reload();
   await pastTitle(page);
   await page.click("#m-continuar");
   await page.click("#m-menu");
-  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-value", "off");
 });
 
 test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays it again; the chat answers", async ({
@@ -932,20 +939,24 @@ test("wide screen (owner 2026-11-13): the game's column with the panel beside it
   expect(await week(page)).toBe(2);
 });
 
-test("phone menu: the guide, goals, crews and log open as sheets", async ({ page }) => {
+test("the week menu's rail: the guide, goals, crews and log open as sheets, one tap each", async ({
+  page,
+}) => {
   await startMobile(page, "peregrina");
-  await page.click("#m-menu");
-  await expect(page.locator("#m-panel-abrir-guide")).toContainText(t("ui.m.guide.new"));
-  await page.click("#m-panel-abrir-crews");
+  // the guide keeps its dot until it has been opened (owner 2026-11-18: a dot, not the «NUEVO» tag)
+  await expect(page.locator("#m-leer-guide")).toHaveAttribute("data-new", "true");
+  await page.click("#m-leer-crews");
   await expect(page.locator("#m-panel-hoja[open] #m-cuadrillas-panel")).toBeVisible();
   await page.click("#m-panel-hoja-cerrar");
-  await page.click("#m-menu");
-  await page.click("#m-panel-abrir-guide");
+  await page.click("#m-leer-guide");
   await expect(page.locator("#m-guia li")).toHaveCount(7);
   await page.click("#m-guia-ok");
   await expect(page.locator("#m-panel-hoja[open]")).toHaveCount(0);
+  await expect(page.locator("#m-leer-guide")).toHaveAttribute("data-new", "false");
+  // «Menú» holds none of the four any more
   await page.click("#m-menu");
-  await expect(page.locator("#m-panel-abrir-guide")).not.toContainText(t("ui.m.guide.new"));
+  for (const tab of ["guide", "goals", "crews", "log"])
+    await expect(page.locator(`#m-panel-abrir-${tab}`)).toHaveCount(0);
 });
 
 test("Ritmo in the menu: Normal, Rápido, Directo, kept after a reload (owner 2026-11-14)", async ({
@@ -953,20 +964,23 @@ test("Ritmo in the menu: Normal, Rápido, Directo, kept after a reload (owner 20
 }) => {
   await startMobile(page, "cernicala");
   await page.click("#m-menu");
+  await page.click("#m-grupo-ajustes");
   const pace = page.locator("#m-ritmo");
-  await expect(pace).toHaveAttribute("data-pace", "normal");
-  await expect(pace).toContainText(t("ui.m.pace", { pace: t("ui.m.pace.normal") }));
-  await pace.click();
-  await expect(pace).toHaveAttribute("data-pace", "fast");
-  await pace.click();
-  await expect(pace).toHaveAttribute("data-pace", "direct");
+  await expect(pace).toHaveAttribute("data-value", "normal");
+  for (const p of ["normal", "fast", "direct"])
+    await expect(page.locator(`#m-ritmo-${p}`)).toContainText(t(`ui.m.pace.${p}`));
+  await page.click("#m-ritmo-fast");
+  await expect(pace).toHaveAttribute("data-value", "fast");
+  await page.click("#m-ritmo-direct");
+  await expect(pace).toHaveAttribute("data-value", "direct");
   await page.reload();
   await pastTitle(page);
   await page.click("#m-continuar");
   await page.click("#m-menu");
-  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-pace", "direct");
-  await page.locator("#m-ritmo").click();
-  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-pace", "normal");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-value", "direct");
+  await page.click("#m-ritmo-normal");
+  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-value", "normal");
 });
 
 test("Directo: no transition, the race opens on its result and «Ver otra vez» plays it", async ({

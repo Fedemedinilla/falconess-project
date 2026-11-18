@@ -24,8 +24,10 @@ test("no sheet is in the page until it opens, and each one leaves it when it clo
   await page.click("#m-menu");
   await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
   await expect(dialogs).toHaveCount(1);
-  // «Menú» → Metas: the menu's sheet gives its place to the panel's
-  await page.click("#m-panel-abrir-goals");
+  await page.click("#m-menu-cerrar");
+  await expect(dialogs).toHaveCount(0);
+  // the rail's Metas: its panel's sheet, and nothing else in the page
+  await page.click("#m-leer-goals");
   await expect(page.locator("#m-panel-hoja[open]")).toBeVisible();
   await expect(dialogs).toHaveCount(1);
   // a goal's track sheet over the panel's: two, then the panel's again
@@ -70,16 +72,26 @@ test("a sheet opened from «Menú» gives the focus back to «Menú» when it cl
   page,
 }) => {
   await startMobile(page, "peregrina");
-  // a panel (Metas), «Temporadas anteriores», «Historia», «Exportar partida»: each opens as «Menú»
-  // fades out, from a button inside it that leaves the page with it
-  for (const [open, sheet, close] of [
-    ["#m-panel-abrir-goals", "#m-panel-hoja", "#m-panel-hoja-cerrar"],
-    ["#m-temporadas", "#m-historial", "#m-historial-cerrar"],
-    ["#m-historia-abrir", "#m-historia", "#m-historia-cerrar"],
-    ["#m-exportar-partida", "#m-exportar", "#m-exportar-cerrar"],
+  // Metas opens from the week menu's rail (owner 2026-11-18): the focus goes back to its button
+  await page.click("#m-leer-goals");
+  await expect(page.locator("#m-panel-hoja[open]")).toBeVisible();
+  await page.click("#m-panel-hoja-cerrar");
+  await expect(page.locator("#m-panel-hoja")).toHaveCount(0);
+  await expect(page.locator("#m-leer-goals")).toBeFocused();
+  // «Historia» from the root, «Temporadas anteriores» and «Exportar partida» from «Partida»: each
+  // opens as the sheet it was asked from fades out, from a button that leaves the page with it,
+  // and the focus goes back through those sheets to «Menú»
+  for (const [via, open, sheet, close] of [
+    [undefined, "#m-historia-abrir", "#m-historia", "#m-historia-cerrar"],
+    ["#m-grupo-partida", "#m-temporadas", "#m-historial", "#m-historial-cerrar"],
+    ["#m-grupo-partida", "#m-exportar-partida", "#m-exportar", "#m-exportar-cerrar"],
   ] as const) {
     await page.click("#m-menu");
     await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+    if (via) {
+      await page.click(via);
+      await expect(page.locator("#m-partida-hoja[open]")).toBeVisible();
+    }
     await page.click(open);
     await expect(page.locator(`${sheet}[open]`)).toBeVisible();
     await expect(page.locator("#m-menu-dialogo")).toHaveCount(0);
@@ -189,8 +201,7 @@ test("an outing pick: the race week's effects come at once under the closing she
 test("a panel's sheet keeps its title and its panel while it fades out (6.9)", async ({ page }) => {
   await page.clock.install();
   await startMobile(page, "peregrina");
-  await page.click("#m-menu");
-  await page.click("#m-panel-abrir-goals");
+  await page.click("#m-leer-goals");
   const sheet = page.locator("#m-panel-hoja");
   await expect(sheet.locator("#m-metas")).toBeVisible();
   await holdClock(page);
@@ -336,8 +347,7 @@ test("a sheet opens at its top, with its title in view and focused: the guide no
   page,
 }) => {
   await startMobile(page, "peregrina");
-  await page.click("#m-menu");
-  await page.click("#m-panel-abrir-guide");
+  await page.click("#m-leer-guide");
   const sheet = page.locator("#m-panel-hoja[open]");
   await expect(sheet).toBeVisible();
   // the guide is longer than the sheet, so it scrolls: it still starts at its first step

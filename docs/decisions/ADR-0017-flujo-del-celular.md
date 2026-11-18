@@ -4,7 +4,8 @@
   N.º», O9 sin cambios, O10 aprobado y construido, O13 no). Construida del 2026-11-15 al 2026-11-17
   en `playtest-ui` (pasos 0.1-7.3 del plan de flujo, local en `.work/flow/plan-final.md`, y la
   revisión final). El 2026-11-18 el dueño sacó el aviso de escena entero (§7, decisiones abiertas
-  1 y 8): molestaba y no hacía falta. Solo queda el aviso de error.
+  1 y 8): molestaba y no hacía falta. Solo queda el aviso de error. El mismo día eligió el «Menú»
+  agrupado, con el riel de lecturas en la semana y los ajustes en su propia pantalla (§11).
 - **Alcance:** el juego del celular (`apps/web`, `#juego`) y dos valores de texto. Nada cambia en
   `packages/sim`, `packages/schema`, los rulesets, `tests/golden` ni `docs/characters`; ningún campo
   nuevo en `RunInput`. La vista de pruebas sigue igual.
@@ -218,7 +219,8 @@ mismo que el «Volver» de la pantalla, y nada donde no lo hay (`mobile/useBackG
   mismo sonido).
 - **Una hoja abierta** (Menú, un panel, la pista, la salida, el chat, Exportar, Temporadas,
   Historia) se cierra primero, como su «Cerrar»; una por gesto. Durante los 180 ms en que una hoja
-  se cierra, el gesto ya actúa sobre lo de abajo.
+  se cierra, el gesto ya actúa sobre lo de abajo. El «Menú» cuenta como una sola hoja aunque esté
+  en su segundo nivel: el gesto (y Escape) cierran el menú entero, no el nivel (§11).
 - **Mientras la semana juega** (un resultado, los efectos, una tarjeta, una escena, el evento, el
   emblema), en la tarjeta decidida, en el modo carrera, al repetir una carrera y en el final: nada.
 - **En el menú y en la selección:** sale de `#juego`, como siempre.
@@ -319,6 +321,52 @@ dueño por commit, cada uno quitando su bandera. La última (`fxHud`) se fue en 
 `flow/policy.ts`: ya no hay políticas, y las caminatas de temporada corren una sola vez
 (`walkMatrix`). Las pruebas de `mobile-seeds.spec.ts` que fijaban lo viejo («fragile spots, as the
 plan fixed them», antes «LEGACY pins») hoy fijan el comportamiento nuevo.
+
+### 11. El «Menú», como lo armó el dueño (2026-11-18)
+
+El menú de una sola lista no entraba: 947 px de hoja en una caja de 704 px a 360 × 740, con
+«Cerrar» abajo del corte. El dueño eligió, de cinco maquetas (`.work/menu`, local), la A con la
+pantalla de ajustes de la D y el riel de la E.
+
+- **El riel de lecturas** (`ReadingRail`, `MenuScreen.tsx`): Guía, Metas, Cuadrillas y Registro como
+  botones chicos de ícono sobre el borde derecho, justo abajo de «Menú», un toque cada uno. Es un
+  ítem del flujo de la pantalla (nunca va posicionado encima de un control) y Guía lleva su punto
+  rojo hasta que se la abrió. Solo en el celular: con la ventana ancha el riel del panel ya tiene
+  los cuatro. La pestaña «Pista» del borde izquierdo queda como estaba.
+- **La raíz** (`#m-menu-dialogo`): «Chat con Peregrina» (con su etiqueta «NUEVO»), «Historia»,
+  «Ajustes ▸» con una segunda línea que dice en qué está («Propulsor · sí · Normal · Español»),
+  «Partida ▸» y «Cerrar». 387 px en castellano y en inglés, a 360 y a 390: entra sin desplazarse.
+- **«Ajustes»** (`#m-ajustes-hoja`): cada ajuste es una tarjeta con su nombre y **todos** los
+  valores que puede tomar, el actual apretado (`aria-pressed`), un toque a cualquiera — Sonido
+  (Hangar · Propulsor · Visor · apagado), Música (sí · no), Ritmo (Normal · Rápido · Directo),
+  Idioma (Español · English). Cambiar el estilo de sonido sigue sonando su «success», así se oye lo
+  que se eligió; cambiar el idioma vuelve a dibujar la página entera (`main.tsx`), como siempre, y
+  con eso el menú se cierra.
+- **«Partida»** (`#m-partida-hoja`): Exportar partida · Temporadas anteriores · Vista de pruebas ·
+  Nueva temporada (dos toques, el segundo el confirmar). El confirmar ocupa la misma caja que la
+  fila, así nada de abajo se mueve entre los dos toques.
+- **Los dos niveles** son hojas propias: entran como cualquier hoja (220 ms subiendo 16 px) mientras
+  la raíz se va abajo, abren arriba de todo con su propio título enfocado (`tabIndex={-1}`,
+  `aria-labelledby`), y su «Volver» (el chevrón al lado del título) vuelve a traer la raíz, también
+  sobre su título. **Escape y el gesto atrás cierran el menú entero**, desde cualquier nivel, y el
+  foco vuelve a «Menú». Un «Volver» dentro de los 180 ms en que la raíz se está yendo le da una
+  clave nueva a su `<dialog>`: si se reusara el viejo, que sigue abierto y debajo del nivel en la
+  capa de arriba, volvería sin el foco en su título.
+- **La ventana ancha:** la pestaña «Menú» del panel muestra los mismos ajustes **en línea** (hay
+  lugar: no hay segundo nivel), con el mismo componente (`SettingsCards`), así un ajuste se pone
+  igual en los dos lados. Las pestañas del panel siguen con los cuatro paneles, y su «Menú» sigue
+  con «Chat», «Historia», «Exportar partida», «Temporadas anteriores», «Vista de pruebas» y «Nueva
+  temporada».
+- **Tres errores que encontró la maqueta y se corrigieron acá:** la etiqueta «NUEVO» se pintaba con
+  `var(--s1)` (el color del auspiciante, que solo ponen el chat y las escenas), así que adentro del
+  menú y del panel era blanca sobre blanco: ahora tiene su propia clase con `var(--acc)`, que existe
+  en `.app`; el confirmar de «Nueva temporada» era `btnMain` (56 px donde la fila tenía 48) y su
+  texto se partía en dos líneas, corriendo ≈ 24 px todo lo de abajo, «Cerrar» incluido; y la hoja
+  que no entraba. Cada uno tiene su prueba en `mobile-menu.spec.ts`.
+- **Texto e íconos:** siete claves nuevas en los dos idiomas (`ui.m.group.settings`,
+  `ui.m.group.run`, `ui.m.sound.name`, `ui.m.music.name`, `ui.m.pace.name`, `ui.m.lang.name`,
+  `ui.m.reading`) y dos íconos de trazo nuevos en `Glyph.tsx` (`sliders`, `box`): ningún emoji
+  nuevo.
 
 ## Medición
 

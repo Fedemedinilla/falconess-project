@@ -18,6 +18,7 @@ test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 /** «Menú» → «Nueva temporada» → confirm, then a new season with her. */
 async function newSeason(page: Page, falconessId: string): Promise<void> {
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-nueva");
   await page.click("#m-nueva-si");
   await page.click(`#m-elegir-${falconessId}`);
@@ -135,15 +136,13 @@ test("a scene keeps the «Ritmo» it started with: Normal chosen mid-digest, the
   // the wide screen's panel is locked under the scene (D4, 5.5): a tap on «Ritmo» changes nothing
   const pace = page.locator("#m-ritmo");
   await expect(page.locator("#m-panel")).toHaveAttribute("inert", "");
-  const box = await pace.boundingBox();
+  const box = await page.locator("#m-ritmo-normal").boundingBox();
   if (!box) throw new Error("no «Ritmo» on the panel");
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(pace).toHaveAttribute("data-pace", "fast");
-  // «Ritmo» changed all the same (its button's own handler, which no tap reaches now): Rápido →
-  // Directo → Normal
-  await pace.dispatchEvent("click");
-  await pace.dispatchEvent("click");
-  await expect(pace).toHaveAttribute("data-pace", "normal");
+  await expect(pace).toHaveAttribute("data-value", "fast");
+  // «Ritmo» changed all the same (the value's own handler, which no tap reaches now)
+  await page.locator("#m-ritmo-normal").dispatchEvent("click");
+  await expect(pace).toHaveAttribute("data-value", "normal");
   // the game renders again (the panel goes): the same scene, still its digest (2.1, F11)
   await page.setViewportSize({ width: 1000, height: 800 });
   await expect(page.locator("#m-panel")).toHaveCount(0);

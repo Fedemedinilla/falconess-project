@@ -150,8 +150,7 @@ test("the goals' track sheet over the menu: one #m-pista-dialogo, on the phone",
   page,
 }) => {
   await startMobile(page, "cernicala");
-  await page.click("#m-menu");
-  await page.click("#m-panel-abrir-goals");
+  await page.click("#m-leer-goals");
   await page.locator("#m-metas [data-turn]").first().click();
   await expect(page.locator("#m-pista-dialogo[open]")).toBeVisible();
   await expect(page.locator("#m-pista-dialogo")).toHaveCount(1);

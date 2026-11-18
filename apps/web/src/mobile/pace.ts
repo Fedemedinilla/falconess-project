@@ -9,7 +9,8 @@ import { browserStore, readKey, writeKey } from "../game/storage";
 export type Pace = "normal" | "fast" | "direct";
 
 const KEY = "falconess.juego.ritmo";
-const ORDER: readonly Pace[] = ["normal", "fast", "direct"];
+/** Every pace, in the order «Ajustes» lists them. */
+export const PACES = ["normal", "fast", "direct"] as const;
 
 function load(): Pace {
   const v = readKey(browserStore(), KEY);
@@ -43,7 +44,7 @@ export function subscribePace(listener: () => void): () => void {
 }
 
 export function nextPace(p: Pace): Pace {
-  return ORDER[(ORDER.indexOf(p) + 1) % ORDER.length] ?? "normal";
+  return PACES[(PACES.indexOf(p) + 1) % PACES.length] ?? "normal";
 }
 
 /** How long the timed parts of the training's result and the week's effects last (1 = normal). */

@@ -211,6 +211,7 @@ test("5. a position planned on the menu's race card survives a reload and a new 
   await page.click("#m-volver");
   // «Nueva temporada» goes to the select screen: the record waits there, «Continuar» finds it
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-nueva");
   await page.click("#m-nueva-si");
   await expect(page.locator("#m-continuar")).toBeVisible();

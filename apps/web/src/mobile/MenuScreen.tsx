@@ -9,12 +9,49 @@ import { runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { WeekMenu } from "./model";
+import { PANEL_GLYPH, type PanelTab, panelTitle } from "./Panels";
 import { GradeChip, placeText, StatStrip } from "./Parts";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { TrainBar } from "./TrainBar";
 import { trackCard } from "./track";
 
 export type MenuAction = "train" | "rest" | "outing" | "workshop" | "skills" | "race" | "menu";
+
+/** The reading panels, in the order the rail lists them. */
+const PANELS: readonly PanelTab[] = ["guide", "goals", "crews", "log"];
+
+/**
+ * The reading rail (owner 2026-11-18): Guía, Metas, Cuadrillas and Registro as small icon buttons
+ * down the right edge, right under «Menú», one tap each — they are reading, and «Menú» is doing.
+ * Guía keeps its dot until it has been opened. In the flow, never over a control; only on a phone
+ * (the wide screen's panel has its own rail with the four).
+ */
+function ReadingRail({
+  onPanel,
+  guideNew,
+}: {
+  onPanel: (tab: PanelTab) => void;
+  guideNew: boolean;
+}) {
+  return (
+    <nav className={s.rail} aria-label={ui("ui.m.reading")}>
+      {PANELS.map((t) => (
+        <button
+          key={t}
+          type="button"
+          className={s.railBtn}
+          id={`m-leer-${t}`}
+          data-new={t === "guide" ? guideNew : undefined}
+          onClick={() => onPanel(t)}
+        >
+          <Glyph name={PANEL_GLYPH[t]} size={19} weight={2.4} />
+          <span className={s.railLb}>{panelTitle(t)}</span>
+          {t === "guide" && guideNew && <span className={s.railDot} data-dot aria-hidden="true" />}
+        </button>
+      ))}
+    </nav>
+  );
+}
 
 function RoundButton({
   id,
@@ -69,6 +106,8 @@ export function MenuScreen({
   pendingEvent,
   major = false,
   onAction,
+  onPanel,
+  guideNew = false,
 }: {
   ctx: SimContext;
   state: SeasonState;
@@ -77,6 +116,9 @@ export function MenuScreen({
   /** The menu a run opens on comes in slower (D1). Read when it mounts. */
   major?: boolean;
   onAction: (action: MenuAction) => void;
+  /** The four reading panels live on this screen now; the wide screen passes none (its own rail). */
+  onPanel?: ((tab: PanelTab) => void) | undefined;
+  guideNew?: boolean;
 }) {
   const [slow] = useState(major);
   const f = ctx.content.getFalconess(state.falconessId);
@@ -128,6 +170,7 @@ export function MenuScreen({
             onClick={() => onAction("menu")}
           />
         </div>
+        {onPanel && <ReadingRail onPanel={onPanel} guideNew={guideNew} />}
         <div className={s.grow} />
         {menu.raceWeek && goal && (
           <button

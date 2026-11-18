@@ -321,7 +321,8 @@ test("a card once shown stays shown: «Menú» → language, and the start's car
   await expect(page.locator("#m-entrenar")).toBeEnabled();
   const card = await watchCard(page);
   await page.click("#m-menu");
-  await page.click("#m-idioma");
+  await page.click("#m-grupo-ajustes");
+  await page.click("#m-idioma-en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("#m-entrenar")).toBeEnabled();
   await page.waitForTimeout(600);

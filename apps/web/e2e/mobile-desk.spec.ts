@@ -101,15 +101,15 @@ test("a training's result locks the panel: «Ritmo» cannot change under it", as
   await page.goto("./");
   await continueRun(page);
   const pace = page.locator("#m-ritmo");
-  await expect(pace).toHaveAttribute("data-pace", "normal");
+  await expect(pace).toHaveAttribute("data-value", "normal");
   await page.click("#m-entrenar");
   await page.click("#m-entrenar-technique");
   await page.click("#m-entrenar-technique");
   await expect(page.locator("#m-resultado")).toBeVisible();
   expect(await locked(page)).toBe(true);
-  // a real tap where «Ritmo» is: the locked panel takes no tap
-  const box = await pace.boundingBox();
+  // a real tap where «Ritmo»'s «Rápido» is: the locked panel takes no tap
+  const box = await page.locator("#m-ritmo-fast").boundingBox();
   if (!box) throw new Error("no «Ritmo» on the panel");
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(pace).toHaveAttribute("data-pace", "normal");
+  await expect(pace).toHaveAttribute("data-value", "normal");
 });

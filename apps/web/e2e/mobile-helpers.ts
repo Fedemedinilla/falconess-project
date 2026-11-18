@@ -163,7 +163,7 @@ const seconds = (ms: number) => `${(ms / 1000).toFixed(2)} s`;
 /**
  * When, where and what: "page load 1, a DOM change 13.52 s after the load (13.6 s into the test,
  * #juego (no hash)), on screen for 14 frames, from the frame at 13.53 s to the one at 13.76 s:
- * id "m-sonido" on 2 elements: …".
+ * id "m-ritmo" on 2 elements: …".
  */
 function describeEpisode(e: Episode): string {
   const what = e.by === "change" ? "a DOM change" : "the twice-a-second check";

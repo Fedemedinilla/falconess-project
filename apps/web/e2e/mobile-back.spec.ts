@@ -314,8 +314,8 @@ test("13. a sheet over a sheet: each gesture closes the one on top, then it leav
 }) => {
   await enter(page, "peregrina-w10");
   await onMenu(page);
-  await page.click("#m-menu");
-  await page.click("#m-panel-abrir-goals");
+  // the panels open from the week menu's rail now (owner 2026-11-18), not from «Menú»
+  await page.click("#m-leer-goals");
   await expect(page.locator("#m-panel-hoja")).toBeVisible();
   // a goal's track over the goals
   await page.locator("#m-metas button").first().click();

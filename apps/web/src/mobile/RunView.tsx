@@ -416,6 +416,8 @@ export function RunView({
           pendingEvent={state.pendingEvent !== undefined}
           major={!opened}
           onAction={onMenu}
+          onPanel={desk ? undefined : openPanel}
+          guideNew={guideNew}
         />
       );
       break;
@@ -592,15 +594,7 @@ export function RunView({
       />
       {title}
       {/* the wide screen's panel is its menu: one set of the menu's buttons on the page */}
-      {!desk && (
-        <MobileMenu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          onPanel={openPanel}
-          guideNew={guideNew}
-          items={items}
-        />
-      )}
+      {!desk && <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={items} />}
     </div>,
     desk && !flow.solo ? (
       <div className={cx(s.app, s.appContents)}>

@@ -9,7 +9,8 @@
  */
 import { browserStore, readKey, writeKey } from "../game/storage";
 
-const SOUND_STYLES = ["hangar", "propulsor", "visor", "off"] as const;
+/** Every style the menu offers, in the order «Ajustes» lists them. */
+export const SOUND_STYLES = ["hangar", "propulsor", "visor", "off"] as const;
 export type SoundStyle = (typeof SOUND_STYLES)[number];
 export type SoundCue = "tap" | "confirm" | "nav" | "success" | "boost" | "fail";
 
@@ -19,12 +20,6 @@ const SOUND_KEY = "falconess.juego.sonido";
 function readSoundStyle(): SoundStyle {
   const v = readKey(browserStore(), SOUND_KEY);
   return SOUND_STYLES.find((s) => s === v) ?? "propulsor";
-}
-
-/** The style after `style` in the switch's cycle. */
-export function nextSoundStyle(style: SoundStyle): SoundStyle {
-  const i = SOUND_STYLES.indexOf(style);
-  return SOUND_STYLES[(i + 1) % SOUND_STYLES.length] ?? "propulsor";
 }
 
 let style: SoundStyle | undefined;

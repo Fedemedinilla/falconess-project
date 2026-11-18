@@ -22,7 +22,7 @@ export type FrameIssue =
  * It runs in the page, as the frame probe's scan (its init script is built from this function's
  * source) and through `page.evaluate`, so it is self-contained: no imports, no outer names.
  * Each element is named by itself and its nearest landmarks (an id, `data-app`, `data-screen`,
- * `data-layer`, a `<dialog>`), outermost first: `dialog#m-menu-dialogo[open] › button#m-sonido`.
+ * `data-layer`, a `<dialog>`), outermost first: `dialog#m-menu-dialogo[open] › button#m-menu-cerrar`.
  */
 export function frameIssues(): FrameIssue[] {
   const ATTRS = ["data-app", "data-screen", "data-layer", "data-layer-phase", "data-scene"];
