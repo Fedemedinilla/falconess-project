@@ -22,6 +22,10 @@ Borrador con las palabras del dueño. Id provisorio: `veterana-vuela-alto`. Sin 
 Nombre; edad; distancia; qué sabe de Vuela Alto y de la sexta mensajera; cómo
 trata a la protagonista al principio.
 
+## Nombre (dueño, 2026-11-18)
+
+- **Nombre: Edda.** Nombre de pista: abierto.
+
 ## Ficha de personaje y voz (2026-11-17)
 
 Aspecto (imagen aprobada, 2026-11-17): ≈ 170 cm, cinco años mayor que la protagonista, pelo gris ceniza en cola baja, ojeras; casual campera gris oscuro y remera verde; de Vuela Alto, traje de carrera celeste y blanco gastado y remendado, casco en la mano. Carga el hombro derecho (al espejarla en el escenario pasaría al izquierdo).

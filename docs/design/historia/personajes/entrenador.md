@@ -35,6 +35,11 @@ Pasa a `docs/characters/` solo con el visto bueno del dueño.
 
 Nombre; edad; por qué quiere ayudarla; de dónde viene; cómo habla.
 
+## Nombre (dueño, 2026-11-18)
+
+- **Nombre: Masaru.** Se escribe con el carácter japonés de «vencer, superar»: el nombre de lo que se
+  esperaba de él al nacer (significado a confirmar).
+
 ## Ficha de personaje y voz (2026-11-17)
 
 Aspecto (imagen aprobada, 2026-11-17): ≈ 180 cm, encorvado, pelo oscuro revuelto, barba de días; casual naranja y blanco (buzo naranja, mochila, zapatillas desatadas); de Vuela Alto, campera celeste y blanca un talle más grande, credencial en blanco, el cuaderno nuevo.

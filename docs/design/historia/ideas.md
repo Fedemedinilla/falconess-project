@@ -529,7 +529,8 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 
 - **Decidido:** la protagonista se llama **Nina**; su nombre de pista es **Hopeful Comet**.
 - **Decidido:** la etiqueta del viejo cambia solo con adjetivos («El viejo durmiente»), no con verbos.
-- Pendiente: veterana y entrenador. Pedido del dueño: nombres de varios idiomas y fuentes, sin los
+- **Decidido (2026-11-18):** la veterana se llama **Edda** y el entrenador **Masaru**.
+- Antes pendiente: veterana y entrenador. Pedido del dueño: nombres de varios idiomas y fuentes, sin los
   nombres de moda de la fantasía generada («si llego a ver un Elara, me voy a enojar mucho»); la
   veterana, seco o de chica cool; el entrenador, un nombre que cargue lo mucho que se esperaba de él
   al nacer.
