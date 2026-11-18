@@ -16,12 +16,12 @@ _Boneyard Works_
 ```text
 [FONDO: boneyard]
 [MÚSICA: rock de garage en una radio mal sintonizada]
-[NARRACIÓN]: Boneyard Works no tiene puerta: tiene un hueco en una pila de chatarra. Adentro suena una esmeriladora y alguien canta desafinado.
+[NARRACIÓN]: Boneyard Works parece una casa grande que alguien llenó de chatarra. Hay luces colgadas, plantas en las ventanas y una pava todavía caliente sobre la mesa.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
 [GESTO: Arrastra los pies.]
 MASARU [cansancio]: Si acá también nos preguntan algo, me desmayo.  // arrastrando el cansancio
-[GESTO: Esquiva una hélice tirada en el piso.]
+[GESTO: Esquiva una hélice apoyada contra un banco.]
 NINA [concentración]: Si acá también es caro, me desmayo yo.  // acompañando el chiste
 [ENTRA: Chica del taller, derecha]
 [GESTO: Sale de abajo de un armazón, con grasa hasta en la cara.]
@@ -81,7 +81,7 @@ CHICA DEL TALLER [alegría]: Todavía.  // ganando la discusión
 [EFECTO: temblor]
 NINA [sorpresa]: ¡Perdón! ¡No fui yo! …Creo que no fui yo. [EFECTO: texto rápido]  // pidiendo perdón por si acaso
 [SALE: Hombre de la soldadora]
-[ILUSTRACIÓN] Las alas de chatarra cuelgan de una cadena: una hélice vieja, una rueda, chapas de cinco colores distintos. El sol entra por los agujeros del techo y las atraviesa.
+[ILUSTRACIÓN] Las alas de chatarra cuelgan de una cadena: una hélice vieja, una rueda, chapas de cinco colores distintos. El sol de las claraboyas las atraviesa.
 [ENTRA: Masaru, centro]
 [GESTO: Entra con una rueda en los brazos y se queda quieto.]
 MASARU [sorpresa]: …Eso es un ala.  // viendo lo imposible
