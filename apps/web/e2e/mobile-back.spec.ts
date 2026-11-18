@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import {
   continueRun,
+  openPlan,
   pastTitle,
   seedRun,
   settle,
@@ -114,12 +115,14 @@ test("2. the same for the workshop, its skills and the planning card", async ({ 
   await enter(page, "peregrina-w10");
   await onMenu(page);
   const turn = await week(page);
+  // the planning card's door is the track drawer's card now (owner 2026-11-18, where the bar was)
   for (const [open, shown] of [
     ["#m-taller", "#m-taller-confirmar"],
     ["#m-habilidades", "#m-taller-puntos"],
-    ["#m-carrera", "#m-precarrera"],
+    ["#m-pista", "#m-precarrera"],
   ] as const) {
-    await page.click(open);
+    if (open === "#m-pista") await openPlan(page);
+    else await page.click(open);
     await expect(page.locator(shown)).toBeVisible();
     await expect(page.locator("#m-volver")).toBeVisible();
     await page.goBack();

@@ -2,7 +2,15 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
-import { continueRun, settle, test, toPosition, toResult, week } from "./mobile-helpers";
+import {
+  continueRun,
+  raceWeekNow,
+  settle,
+  test,
+  toPosition,
+  toResult,
+  week,
+} from "./mobile-helpers";
 import { type Coverage, coverageNow } from "./motion";
 
 /**
@@ -318,7 +326,7 @@ test("a whole season on Rápido at 390 × 844: the title, every week tapped to t
   for (let w = 1; w <= 48; w++) {
     await beat(`week ${w}: the menu`);
     expect(await week(page), "the HUD's week").toBe(w);
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     if (raceWeek) raceWeeks.push(w);
     const action = PLAN[w - 1] ?? "";
     if (action === "rest") await page.click("#m-descansar");

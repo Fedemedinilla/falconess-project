@@ -4,7 +4,9 @@ import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import {
   fingerDrag,
+  openPlan,
   pastTitle,
+  raceWeekNow,
   runRace,
   settle,
   skipPrologue,
@@ -86,8 +88,10 @@ test("the goal card: the track's profile, its distance class and letters; tap fo
 }) => {
   await startMobile(page, "peregrina");
   // Peregrina's first goal is the Sprint: two Curvas, a home straight, Agility and Technique
-  // the card hides in a tab at the screen's edge (owner 2026-11-14)
+  // the card hides in a tab at the screen's edge (owner 2026-11-14), and on a week with no race
+  // nothing opens it by itself (owner 2026-11-18: only a race week does)
   const card = page.locator("#m-pista");
+  await expect(page.locator("#m-pista-tab")).not.toHaveAttribute("data-race", "");
   await expect(card).toBeHidden();
   await page.locator("#m-pista-tab").click();
   await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
@@ -143,8 +147,9 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
     }
     await settle(page);
   }
-  // the race button opens the card: positions, her letters, distance and passive
-  await page.click("#m-carrera");
+  // the track drawer's card opens the planning card (owner 2026-11-18, where the bar was):
+  // positions, her letters, distance and passive
+  await openPlan(page);
   await expect(page.locator("#m-precarrera-distancia")).toBeVisible();
   await expect(page.locator("#m-precarrera-pasiva")).toBeVisible();
   // the track's profile and letters, as on the goal card
@@ -211,7 +216,7 @@ test("a short season to its end, then a new one; the test view is one tap away",
   await startMobile(page, "caracara");
   // resting every week: the goal races come (and one ends the season, or all four run)
   for (let i = 0; i < 80 && (await page.locator("#m-fin").count()) === 0; i++) {
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     await page.click("#m-descansar");
     if (raceWeek) {
       await toPosition(page);
@@ -288,11 +293,11 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
 }) => {
   test.setTimeout(180_000);
   await startMobile(page, "peregrina");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await toPosition(page);
@@ -346,11 +351,11 @@ test("first person: a finger turns her head sideways, up to her neck's reach, an
   // a fake clock (flowing in real time) lets the test skip the idle seconds
   await page.clock.install();
   await startMobile(page, "peregrina");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await toPosition(page);
@@ -608,7 +613,7 @@ test("language: the menu switches to English and a whole short season reads in E
   };
   for (let i = 0; i < 80 && (await page.locator("#m-fin").count()) === 0; i++) {
     await look();
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     await page.click("#m-descansar");
     await look();
     if (raceWeek) {
@@ -661,11 +666,11 @@ test("screen transition: the emblem opens the race mode, then the scene, then th
   await expect(page.locator("#m-entrenar-agility")).toBeVisible();
   await expect(page.locator("#m-transicion")).toHaveCount(0);
   await page.click("#m-volver");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-correr");
   await page.click("#m-descansar");
   // what the rest did plays first, over the menu, before the race mode (owner 2026-11-13)
@@ -827,7 +832,7 @@ test("story order: a week's scene plays after that week's decision, without a tr
   // to week 16, where her chapter 2 is due (week 10 is her first race, to win)
   let k = 0;
   while ((await week(page)) < 16) {
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     if (k++ % 2) await page.click("#m-descansar");
     else {
       await page.click("#m-entrenar");
@@ -998,7 +1003,7 @@ test("Directo: no transition, the race opens on its result and «Ver otra vez» 
     }
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-correr");
   await page.click("#m-descansar");
   await toPosition(page);

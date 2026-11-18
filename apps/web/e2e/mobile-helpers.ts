@@ -360,6 +360,43 @@ export async function continueRun(page: Page): Promise<void> {
 }
 
 /**
+ * Whether the week on screen is a race week: its track tab says so (owner 2026-11-18, where the
+ * race bar did). After her last goal there is no tab, as there was no bar.
+ */
+export async function raceWeekNow(page: Page): Promise<boolean> {
+  return (await page.locator("#m-pista-tab[data-race]").count()) > 0;
+}
+
+/**
+ * The planning card of a race week (D3): the track drawer's card is its door now (owner
+ * 2026-11-18, where the race bar was). The drawer opens by itself on a race week, so this only
+ * taps the tab when something closed it.
+ */
+export async function openPlan(page: Page): Promise<void> {
+  const tab = page.locator("#m-pista-tab");
+  if ((await tab.getAttribute("aria-expanded")) !== "true") await tab.click();
+  await page.click("#m-pista");
+  await expect(page.locator("#m-precarrera")).toBeVisible();
+}
+
+/**
+ * Takes `ids` out of what this browser has seen (after `seedRun`): each of those scenes is due
+ * again where its trigger says (two of the weeks' scenes at once play one after the other).
+ */
+export async function unseenScenes(page: Page, ids: readonly string[]): Promise<void> {
+  await page.addInitScript((drop) => {
+    const key = "falconess.juego.historia";
+    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
+      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
+    );
+    for (const seed of Object.keys(story.runs))
+      story.runs[seed] = (story.runs[seed] ?? []).filter((id) => !drop.includes(id));
+    story.ever = story.ever.filter((id) => !drop.includes(id));
+    localStorage.setItem(key, JSON.stringify(story));
+  }, ids);
+}
+
+/**
  * Starts listening to the game's sounds: the tests cannot hear, so each cue the page plays names
  * itself on `<html data-sfx="count:cue">`. Returns the cues played from now on, in order (one
  * observer per page load; a reload starts none).

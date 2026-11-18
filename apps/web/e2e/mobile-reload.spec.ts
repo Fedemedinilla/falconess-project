@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import {
   continueRun,
+  openPlan,
   pastTitle,
   seedRun,
   settle,
@@ -192,21 +193,21 @@ test("4. a position picked on the decided card survives a reload", async ({ page
   await expect(page.locator("#m-resultado-posicion")).toHaveAttribute("data-position", position);
 });
 
-test("5. a position planned on the menu's race card survives a reload and a new season's select screen", async ({
+test("5. a position planned from the menu's track drawer survives a reload and a new season's select screen", async ({
   page,
 }) => {
   test.setTimeout(90_000);
   await seedRun(page, "peregrina-w10");
   await page.goto("./");
   await continueRun(page);
-  await page.click("#m-carrera");
+  await openPlan(page);
   const position = await otherPosition(page);
   await pick(page, position);
   await page.click("#m-correr");
   await expect(page.locator("#m-entrenar")).toBeVisible();
   await page.reload();
   await continueRun(page);
-  await page.click("#m-carrera");
+  await openPlan(page);
   await expect(page.locator(`#m-posicion-${position}`)).toBeChecked();
   await page.click("#m-volver");
   // «Nueva temporada» goes to the select screen: the record waits there, «Continuar» finds it
@@ -220,7 +221,7 @@ test("5. a position planned on the menu's race card survives a reload and a new 
   await page.waitForTimeout(300);
   expect(await storedWeek(page)).toBe(stored);
   await page.click("#m-continuar");
-  await page.click("#m-carrera");
+  await openPlan(page);
   await expect(page.locator(`#m-posicion-${position}`)).toBeChecked();
   await page.click("#m-volver");
   // and the decided card takes it

@@ -263,6 +263,12 @@ export type Flow = {
   readonly solo: boolean;
   /** A notice may show (it also waits for no layer to be in or leaving). */
   readonly toast: boolean;
+  /**
+   * The menu's track drawer opens by itself now (owner 2026-11-18, where the race bar was): a race
+   * week's idle menu with nothing in front of it, and not opened for this week yet. It waits for a
+   * layer and for a sheet, as everything else does.
+   */
+  readonly openTrack: boolean;
   /** «Historia» and «Ver» may start a scene now. */
   readonly canReplay: boolean;
   /** The week's actions take a tap now. */

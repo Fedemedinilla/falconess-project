@@ -8,9 +8,10 @@
 }
 /* The way in, in steps (owner 2026-11-12: half a second from the menus to a scene was a jolt):
    black at once (owner 2026-11-13: the menu behind must not show, the scene must not feel like it
-   interrupts it), «Saltar», Auto and Registro from 0.3 s, the scene's ground and its backdrop come
-   out of the black and out of focus (0.5-1.8 s), the black bars and the chapter's card arrive
-   (1.1-1.8 s), the card fades out (2.55 s), then the first line (2.8 s). Every start and length is
+   interrupts it), the scene's ground and its backdrop come out of the black and out of focus
+   (0.5-1.8 s), the black bars and the chapter's card arrive (1.1-1.8 s), «Saltar», Auto and
+   Registro once that card stands whole (1.8 s, owner 2026-11-18: the buttons come after the
+   picture, never before it), the card fades out (2.55 s), then the first line (2.8 s). Every start and length is
    an inline variable StoryOverlay writes from `introTiming` (flow/scenes.ts: shorter in a digest,
    still under reduced motion), `--sc-<part>-at` and `--sc-<part>-ms`; a tap during the way in
    rewrites them so everything goes on from where it is and is in within 120 ms (M10). The way out
@@ -140,7 +141,7 @@
   display: flex;
   gap: 6px;
   z-index: 4;
-  /* from 0.3 s, over 120 ms (M10: «Saltar» always there) */
+  /* from where the chapter's card stands whole, over 120 ms (owner 2026-11-18) */
   animation: fadeIn var(--sc-chrome-ms) var(--m-ease-out) var(--sc-chrome-at) both;
 }
 .cine .chrome {

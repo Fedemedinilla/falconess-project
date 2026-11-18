@@ -114,9 +114,10 @@ las secuencias de `golden.test.ts`, y en el navegador con los e2e `mobile-*.spec
 - **D2 · Tarjeta de herencia.** Al final de una semana: los efectos, la tarjeta, la escena `turn`.
   Al empezar la temporada: el prólogo y después la tarjeta. Cada tarjeta sale una sola vez en ese
   navegador (`falconess.juego.herencia`, §5).
-- **D3 · Tarjeta para planear.** El botón de la semana de carrera del menú abre la tarjeta de
-  posición sin escena ni transición, con «Elegir la acción» y «Volver»; la posición elegida ahí se
-  guarda (`planned`, §5).
+- **D3 · Tarjeta para planear.** La tarjeta de la pista del menú (`#m-pista`, el cajón del borde
+  izquierdo) abre en una semana de carrera la tarjeta de posición, sin escena ni transición, con
+  «Elegir la acción» y «Volver»; la posición elegida ahí se guarda (`planned`, §5). Era el cartel
+  `#m-carrera`, que se fue el 2026-11-18 (§12): es la única puerta a esa tarjeta.
 - **D4 · Escritorio.** El panel de al lado se apaga (45 %, un poco menos de color, 200 ms) y no
   recibe toques mientras hay una capa adelante, el resultado de un entrenamiento o el modo carrera
   (también la tarjeta decidida); se despierta cuando la capa empieza a irse. Durante la carrera
@@ -153,8 +154,10 @@ las secuencias de `golden.test.ts`, y en el navegador con los e2e `mobile-*.spec
   hasta los 1240; su salida no bloquea. Una semana restaurada abre con el emblema ya tapando. La
   regla 12 del dueño («la escena solo después del emblema») queda así: la escena `goal-before`
   aparece cuando el emblema empieza a irse, y sus primeros 300 ms son negro puro.
-- **O7:** «Saltar», Auto y Registro desde los 0,3 s; un toque en la entrada la apura, otro muestra
-  la línea; el resumen tiene una entrada corta con la tarjeta entera 0,7 s (escenas.md §2).
+- **O7:** «Saltar», Auto y Registro entran cuando la tarjeta del capítulo ya está entera (1,8 s en
+  Normal, 0,8 s en el resumen), no antes (dueño 2026-11-18, §12: eran los 0,3 s del paso 6.6); un
+  toque en la entrada la apura y trae todo, los botones incluidos, otro muestra la línea; el resumen
+  tiene una entrada corta con la tarjeta entera 0,7 s (escenas.md §2).
 - **O8:** las repeticiones de la vista de pruebas ya no arrancan a ×2 cuando el celular está en
   Rápido.
 - **O9:** sin cambios: `#juego` guarda la caja negra al terminar una temporada v3; el final de la
@@ -367,6 +370,36 @@ pantalla de ajustes de la D y el riel de la E.
   `ui.m.group.run`, `ui.m.sound.name`, `ui.m.music.name`, `ui.m.pace.name`, `ui.m.lang.name`,
   `ui.m.reading`) y dos íconos de trazo nuevos en `Glyph.tsx` (`sliders`, `box`): ningún emoji
   nuevo.
+
+### 12. La semana de carrera y la entrada de una escena (dueño, 2026-11-18)
+
+Dos correcciones del dueño sobre lo construido, con una captura de la semana 10 adelante.
+
+- **El cartel de la semana de carrera se fue.** `#m-carrera` («Carrera esta semana · G3 Sprint ·
+  Ganar» con «Ver») ya no existe. En su lugar, **el cajón de la pista se abre solo** en una semana
+  de carrera: «es la misma info, y así el jugador entiende que en esa tab hay info de la carrera».
+  El HUD ya dice cuándo es («Hoy · Ganar» en la píldora de la meta), así que no se perdió nada.
+- **Se abre una vez por semana, no por montaje.** `flow.openTrack` (derive) es verdadero cuando el
+  beat de arriba es `idle`, la pantalla es el menú, no hay capa ni hoja adelante (espera, como todo
+  lo demás: una escena, los efectos, el emblema, la tarjeta de herencia, el título) y
+  `ui.trackWeek !== state.turn`. Al abrirse, `MenuScreen` despacha `{type:"trackShown", turn}`: ir
+  al taller y volver no lo abre de nuevo, cerrarlo lo deja cerrado esa semana, y la próxima semana
+  de carrera lo abre otra vez. Nunca tapa «Entrenar» ni las píldoras: el cajón es un ítem del flujo
+  de la pantalla, arriba de la tira de stats.
+- **La puerta a la tarjeta para planear** es ahora la tarjeta del cajón (`#m-pista`): en una semana
+  de carrera corre `onAction("race")` (D3) en vez de abrir la hoja de la pista, porque la tarjeta
+  para planear ya muestra el perfil, lo que pide y las cuatro posiciones. En una semana sin carrera
+  el cajón se comporta como siempre (la hoja `#m-pista-dialogo`), y en una semana de carrera esa
+  hoja sigue a un toque desde Metas. La pestaña lleva `data-race` cuando hay carrera: es lo que
+  miran los e2e desde que no hay cartel.
+- **Los botones de la escena van después del dibujo.** El dueño: «los botones de auto, registro y
+  saltar aparecen antes que el background + líneas negras de la cinemática. Eso hace que se vean
+  como que no son parte del todo». El orden es ahora fondo → desenfoque y título del capítulo →
+  botones → texto: el `chrome` arranca en `cardShownAt()` (Normal 1800 ms, resumen 800 ms, los dos
+  +120 ms de fundido; con movimiento reducido todo junto en el cuadro 0), y la primera línea queda
+  donde estaba (2800 ms y 1750 ms). `INTRO_TRACKS` los lista en ese orden y `timing()` los deriva de
+  la tarjeta, así que no hay número suelto. El toque que apura la entrada (M10, O7) sigue trayendo
+  todo en 120 ms, los botones incluidos: es la única forma de llegar a «Saltar» temprano.
 
 ## Medición
 

@@ -418,6 +418,9 @@ export function RunView({
           onAction={onMenu}
           onPanel={desk ? undefined : openPanel}
           guideNew={guideNew}
+          // owner 2026-11-18: on a race week the track drawer opens by itself, once that week
+          autoTrack={flow.openTrack}
+          onTrackShown={() => dispatch({ type: "trackShown", turn: state.turn })}
         />
       );
       break;

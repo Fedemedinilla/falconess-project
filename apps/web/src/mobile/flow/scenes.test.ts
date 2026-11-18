@@ -250,9 +250,10 @@ describe("introTiming: how a scene comes in (H4, M5, M10, O7)", () => {
       cardOut: span(t.cardOut),
       line: t.lineAt,
     });
-    // Normal keeps today's way in (escenas.md §2: 2.8 s to the first line), the chrome from 0.3 s
+    // Normal keeps today's way in (escenas.md §2: 2.8 s to the first line); the chrome comes once
+    // the chapter's card stands whole (owner 2026-11-18, was 0.3 s)
     expect(row(introTiming("full"))).toEqual({
-      chrome: 300,
+      chrome: 1800,
       ground: [500, 1400],
       backdrop: [500, 1800],
       card: [1200, 1800],
@@ -260,7 +261,7 @@ describe("introTiming: how a scene comes in (H4, M5, M10, O7)", () => {
       line: 2800,
     });
     expect(row(introTiming("digest"))).toEqual({
-      chrome: 300,
+      chrome: 800,
       ground: [200, 900],
       backdrop: [200, 900],
       card: [400, 800],
@@ -293,7 +294,18 @@ describe("introTiming: how a scene comes in (H4, M5, M10, O7)", () => {
       expect(t.cardOut.at + t.cardOut.ms, tempo).toBe(t.lineAt);
       expect(t.cardOut.ms, tempo).toBe(tempo === "still" ? 0 : MOTION.cardOut);
       expect(t.chrome.ms, tempo).toBe(tempo === "still" ? 0 : MOTION.fast);
-      expect(t.chrome.at, tempo).toBe(tempo === "still" ? 0 : STORY.chromeAt);
+    }
+  });
+
+  it("the chrome («Saltar», Auto, Registro) comes only once the card stands whole (owner 2026-11-18)", () => {
+    for (const tempo of TEMPOS) {
+      const t = introTiming(tempo);
+      // never before the picture and its card: the buttons are the last thing in (was 0.3 s, M10)
+      expect(t.chrome.at, tempo).toBe(cardShownAt(t));
+      for (const name of INTRO_TRACKS)
+        expect(t.chrome.at, `${tempo} ${name}`).toBeGreaterThanOrEqual(t[name].at);
+      // and still before the card leaves, so nothing of the way in lands on the first line
+      expect(t.chrome.at + t.chrome.ms, tempo).toBeLessThanOrEqual(t.cardOut.at);
     }
   });
 

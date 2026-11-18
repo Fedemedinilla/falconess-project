@@ -1,4 +1,5 @@
 import type { StatName, TrackDemand } from "@falconess/schema";
+import type { MouseEvent } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useModalDialog } from "../ui/useModalDialog";
@@ -158,11 +159,15 @@ export function TrackCardButton({
   view,
   id,
   onOpen,
+  sheet = true,
   disabled = false,
 }: {
   view: TrackCardView;
   id: string;
-  onOpen: () => void;
+  /** What the card opens: its sheet, or the planning card on a race week (owner 2026-11-18). */
+  onOpen: (e: MouseEvent<HTMLButtonElement>) => void;
+  /** False: it opens a screen, not a dialog (a race week's planning card), so no `haspopup`. */
+  sheet?: boolean;
   disabled?: boolean;
 }) {
   return (
@@ -172,7 +177,7 @@ export function TrackCardButton({
       id={id}
       data-course={view.courseId}
       aria-label={ui("ui.m.track.open", { course: gameText(view.nameKey) })}
-      aria-haspopup="dialog"
+      aria-haspopup={sheet ? "dialog" : undefined}
       disabled={disabled}
       onClick={onOpen}
     >

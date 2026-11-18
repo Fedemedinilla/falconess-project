@@ -192,6 +192,15 @@ export function deriveFlow(ctx: SimContext, f: FlowFacts, ui: UiState, prev?: Fl
       screen.kind !== "black" &&
       !(screen.kind === "race" && (screen.stage === "replay" || screen.stage === "finish")),
     canReplay: replayable && layer === undefined,
+    // owner 2026-11-18: on a race week the menu opens the track drawer by itself, once that week,
+    // and only with nothing in front of it (a layer, a sheet, the title screen: it waits)
+    openTrack:
+      top.kind === "idle" &&
+      screen.kind === "menu" &&
+      layer === undefined &&
+      !f.sheetOpen &&
+      ui.trackWeek !== state.turn &&
+      isRaceWeek(ctx, state),
     canAct:
       top.kind === "idle" &&
       (ui.nav.at === "menu" || ui.nav.at === "train" || ui.nav.at === "workshop") &&

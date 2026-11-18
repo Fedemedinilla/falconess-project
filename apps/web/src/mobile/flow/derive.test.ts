@@ -510,6 +510,39 @@ describe("idle", () => {
     expect(flowOf(w10, plan).screen).toEqual({ kind: "plan", position: "stalk" });
   });
 
+  it("the track drawer opens by itself on a race week's menu, once for that week (owner 2026-11-18)", () => {
+    // the race bar is gone: on a race week the menu opens the track drawer itself (it is the same
+    // information, and it teaches the player that the tab holds the race)
+    const w10 = loadSave("peregrina-w10");
+    expect(flowOf(w10, INITIAL_UI).openTrack).toBe(true);
+    // once it opened (or the player closed it), it stays as it is for that week
+    const shown = uiAfter({ type: "trackShown", turn: 10 });
+    expect(flowOf(w10, shown).openTrack).toBe(false);
+    // another week's mark is not this one's: the next race week opens it again
+    expect(flowOf(w10, uiAfter({ type: "trackShown", turn: 20 })).openTrack).toBe(true);
+    // a normal week opens nothing by itself
+    expect(flowOf(started(), INITIAL_UI).openTrack).toBe(false);
+    // and neither does a screen that is not the menu (the planning card the drawer leads to)
+    expect(flowOf(w10, uiAfter({ type: "open", to: "plan" })).openTrack).toBe(false);
+    expect(flowOf(w10, uiAfter({ type: "open", to: "train" })).openTrack).toBe(false);
+  });
+
+  it("the track drawer waits, as everything else does: a layer in front or a sheet open holds it (owner 2026-11-18)", () => {
+    // the week's effects over the race week's menu: the drawer waits under them
+    const fxWeek = loadSave("peregrina-w10");
+    const mine = decide(fxWeek, { kind: "rest" });
+    const fx = flowOf(fxWeek, mine);
+    expect([fx.layer?.kind, fx.openTrack]).toEqual(["fx", false]);
+    // a sheet (or the title screen) over the menu holds it too (F10)
+    const w10 = loadSave("peregrina-w10");
+    const held = deriveFlow(w10.game.context(), factsFor(w10, { sheetOpen: true }), INITIAL_UI);
+    expect([held.screen, held.layer, held.openTrack]).toEqual([
+      { kind: "menu", inert: false },
+      undefined,
+      false,
+    ]);
+  });
+
   it("the end; a watch from it takes the race screen with no emblem, and keeps `solo` (M3, L8)", () => {
     const t = loadSave("peregrina-ended");
     const end = flowOf(t, INITIAL_UI);

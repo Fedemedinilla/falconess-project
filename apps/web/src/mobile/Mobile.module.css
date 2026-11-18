@@ -778,53 +778,6 @@
   border-radius: 4px;
   background: var(--acc);
 }
-.app .raceBar {
-  flex: none;
-  min-height: 52px;
-  border-radius: 16px;
-  background: var(--tx);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px 6px 14px;
-  text-align: left;
-  box-shadow: 0 4px 0 rgb(20 32 43 / 0.2);
-}
-.raceBarT {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-.raceBarT b {
-  font-family: var(--cn);
-  font-size: 19px;
-  line-height: 21px;
-}
-.raceBarT span {
-  font-size: 12px;
-  line-height: 15px;
-  color: #d8e0e8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.raceBarGo {
-  flex: none;
-  min-width: 56px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--yel);
-  color: var(--ink);
-  font-family: var(--cn);
-  font-weight: 700;
-  font-size: 18px;
-  line-height: 40px;
-  text-align: center;
-  padding: 0 10px;
-}
-
 /* stats strip */
 .strip {
   flex: none;

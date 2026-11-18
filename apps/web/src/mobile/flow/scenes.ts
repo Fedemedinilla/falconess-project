@@ -136,20 +136,22 @@ export type IntroTrack = { readonly at: number; readonly ms: number };
 
 /** The animations of the way in, in the order they come (each a track of `IntroTiming`). */
 export const INTRO_TRACKS = Object.freeze([
-  "chrome",
   "ground",
   "backdrop",
   "shade",
   "glow",
   "bars",
   "card",
+  "chrome",
 ] as const);
 
 /**
  * A scene's way in (StoryOverlay writes it as inline CSS variables; its timers read `lineAt`):
- * black at once, then the chrome («Saltar», Auto, Registro), the scene's ground and its painted
- * backdrop with its shade, the cinematic's glow and bars, the chapter's card in, held, and out
- * into the first line. `driftAt` and `panAt` start the backdrop's and the glow's slow loops.
+ * black at once, then the scene's ground and its painted backdrop with its shade, the cinematic's
+ * glow and bars, the chapter's card, and only once that card stands whole the chrome («Saltar»,
+ * Auto, Registro: owner 2026-11-18, so the buttons read as part of the picture and not as
+ * something laid over it); then the card out into the first line. `driftAt` and `panAt` start the
+ * backdrop's and the glow's slow loops.
  */
 export type IntroTiming = {
   readonly tempo: IntroTempo;
@@ -168,15 +170,19 @@ export type IntroTiming = {
 
 const track = (at: number, ms: number): IntroTrack => Object.freeze({ at, ms });
 
-/** The way in of each tempo, from its first line back: the card's fade ends there. */
+/**
+ * The way in of each tempo, from its first line back: the card's fade ends there, and the chrome
+ * comes in where the card stands whole (owner 2026-11-18), at once in a tempo with no animation.
+ */
 function timing(
   tempo: IntroTempo,
-  t: Omit<IntroTiming, "tempo" | "cardOut" | "driftAt" | "panAt">,
+  t: Omit<IntroTiming, "tempo" | "chrome" | "cardOut" | "driftAt" | "panAt">,
   cardOutMs: number,
 ): IntroTiming {
   return Object.freeze({
     tempo,
     ...t,
+    chrome: track(cardShownAt(t), t.card.ms === 0 ? 0 : MOTION.fast),
     cardOut: track(t.lineAt - cardOutMs, cardOutMs),
     driftAt: t.backdrop.at + t.backdrop.ms,
     panAt: t.glow.at + t.glow.ms,
@@ -185,15 +191,15 @@ function timing(
 
 /**
  * Each tempo's way in. `full` keeps the owner's (escenas.md §2: the first line at 2.8 s) with the
- * chrome from 0.3 s (M10, was 1.3 s) and the card fading out over its last 250 ms (M5). `digest`
- * is shorter (H4: on Rápido the card used to be whole for 0 ms) with the card whole for 0.7 s.
- * `still` (reduced motion) has no animation: the card whole for 0.9 s, then the first line.
+ * card fading out over its last 250 ms (M5), so its chrome comes at 1.8 s, where the card stands
+ * whole (owner 2026-11-18). `digest` is shorter (H4: on Rápido the card used to be whole for
+ * 0 ms) with the card whole for 0.7 s, so its chrome comes at 0.8 s. `still` (reduced motion) has
+ * no animation: everything stands from the first frame, the card whole for 0.9 s, then the line.
  */
 const INTRO: Readonly<Record<IntroTempo, IntroTiming>> = Object.freeze({
   full: timing(
     "full",
     {
-      chrome: track(STORY.chromeAt, MOTION.fast),
       ground: track(500, 900),
       backdrop: track(500, 1300),
       shade: track(600, 900),
@@ -207,7 +213,6 @@ const INTRO: Readonly<Record<IntroTempo, IntroTiming>> = Object.freeze({
   digest: timing(
     "digest",
     {
-      chrome: track(STORY.chromeAt, MOTION.fast),
       ground: track(200, 700),
       backdrop: track(200, 700),
       shade: track(250, 650),
@@ -221,7 +226,6 @@ const INTRO: Readonly<Record<IntroTempo, IntroTiming>> = Object.freeze({
   still: timing(
     "still",
     {
-      chrome: track(0, 0),
       ground: track(0, 0),
       backdrop: track(0, 0),
       shade: track(0, 0),
@@ -244,8 +248,8 @@ export function introTiming(tempo: IntroTempo): IntroTiming {
   return INTRO[tempo];
 }
 
-/** When the chapter's card is whole (its fade in ended). */
-export function cardShownAt(t: IntroTiming): number {
+/** When the chapter's card is whole (its fade in ended): where the chrome comes in. */
+export function cardShownAt(t: Pick<IntroTiming, "card">): number {
   return t.card.at + t.card.ms;
 }
 
@@ -263,9 +267,10 @@ function hurryTrack(k: IntroTrack, at: number, within: number): IntroTrack {
 
 /**
  * The way in after a tap at `at` ms (M10, O7): every animation of it catches up within 120 ms from
- * where it is (the card shows whole), and the first line comes 500 ms after the tap (300 in a
- * digest), never later than it would have; the card's fade ends at that line, after it showed
- * whole. A second tap shows the line at once (StoryOverlay).
+ * where it is (the card shows whole, and the chrome comes with it: the tap is the only way to
+ * «Saltar» early now), and the first line comes 500 ms after the tap (300 in a digest), never
+ * later than it would have; the card's fade ends at that line, after it showed whole. A second tap
+ * shows the line at once (StoryOverlay).
  */
 export function hurried(t: IntroTiming, at: number): IntroTiming {
   const h = (name: (typeof INTRO_TRACKS)[number]) => hurryTrack(t[name], at, MOTION.fast);

@@ -72,9 +72,10 @@ type IntroBeat = "intro" | "card" | "line";
  * A story scene over the game (owner 2026-11-12): black at once (owner 2026-11-13: the menu behind
  * never shows), the scene comes out of the black, the chapter's card shows, then its lines one tap
  * at a time. Its way in follows `timing` (plan §2.6: whole on Normal, short in a digest, still
- * under reduced motion; the card always shows whole, H4): «Saltar», Auto and Registro from 0.3 s,
- * and a tap during it (M10, O7) brings everything in within 120 ms from where it is, the card
- * whole, and the first line 0.5 s later (0.3 s in a digest); a second tap shows it at once.
+ * under reduced motion; the card always shows whole, H4): «Saltar», Auto and Registro come once
+ * the chapter's card stands whole (owner 2026-11-18), and a tap during it (M10, O7) brings
+ * everything in within 120 ms from where it is, the chrome and the card whole, and the first line
+ * 0.5 s later (0.3 s in a digest); a second tap shows it at once.
  * `box` is the dialogue box of a common scene, `cine` the cinematic of a key scene (black bars,
  * words appearing one by one, key lines large). Skip ends it at once; Auto moves on by itself;
  * the log rereads what was said. It ends as its 0.8 s exit starts (`onFinish`): the flow moves on

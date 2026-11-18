@@ -31,6 +31,12 @@ export type UiState = {
   readonly replay: { readonly scene: StoryScene; readonly n: number } | undefined;
   /** A refused act or preview, until it is closed or its time is up. */
   readonly notice: Notice | undefined;
+  /**
+   * The week whose track drawer already opened by itself (owner 2026-11-18): it opens once a race
+   * week, so leaving to the workshop and coming back does not open it again, and closing it keeps
+   * it closed until the next race week.
+   */
+  readonly trackWeek: number | undefined;
 };
 
 export type UiEvent =
@@ -52,7 +58,9 @@ export type UiEvent =
   /** A refused act or preview (a new notice each time), or none. */
   | { readonly type: "notice"; readonly notice: GameErrorKind | undefined }
   | { readonly type: "noticeShown"; readonly n: number }
-  | { readonly type: "noticeGone"; readonly n: number };
+  | { readonly type: "noticeGone"; readonly n: number }
+  /** The track drawer of a race week opened by itself (or the player closed it): once a week. */
+  | { readonly type: "trackShown"; readonly turn: number };
 
 const MENU: Nav = Object.freeze({ at: "menu" });
 
@@ -65,6 +73,7 @@ export const INITIAL_UI: UiState = Object.freeze({
   from: "menu",
   replay: undefined,
   notice: undefined,
+  trackWeek: undefined,
 });
 
 /** The set with `items`, or the same set when it had them all. */
@@ -154,5 +163,7 @@ export function reduceUi(ui: UiState, e: UiEvent): UiState {
       return { ...ui, notice: { ...ui.notice, shown: true } };
     case "noticeGone":
       return ui.notice?.n === e.n ? { ...ui, notice: undefined } : ui;
+    case "trackShown":
+      return ui.trackWeek === e.turn ? ui : { ...ui, trackWeek: e.turn };
   }
 }

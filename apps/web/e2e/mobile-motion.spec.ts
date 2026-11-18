@@ -11,6 +11,7 @@ import {
   test,
   toPosition,
   toResult,
+  unseenScenes,
   watchCues,
   week,
 } from "./mobile-helpers";
@@ -1215,7 +1216,9 @@ function lasted(samples: readonly (string | null)[], beat: string, step = 50): n
 const CARD = "#m-capitulo [data-card]";
 const BACKDROP = "#m-capitulo img";
 
-test("a scene comes in on its black, «Saltar» is there from 0.3 s, and a tap during its way in shows the chapter's card at once, the first line 0.5 s later (M10, O7)", async ({
+const SKIP = "#m-capitulo-saltar";
+
+test("a scene comes in on its black, «Saltar» only once the chapter's card is whole, and a tap during its way in brings everything in (M10, O7, owner 2026-11-18)", async ({
   page,
 }) => {
   await toPrologue(page);
@@ -1223,11 +1226,17 @@ test("a scene comes in on its black, «Saltar» is there from 0.3 s, and a tap d
   await freezeAt(page, 0);
   expect((await coverage(page, "#m-capitulo")).misses).toEqual([]);
   expect(await beatOf(page)).toBe("intro");
-  // the chrome fades in from 0.3 s, over 120 ms
-  await freezeAt(page, 250);
-  expect(await opacityOf(page, "#m-capitulo-saltar")).toBeLessThan(0.05);
-  await freezeAt(page, 450);
-  expect(await opacityOf(page, "#m-capitulo-saltar")).toBeGreaterThanOrEqual(0.95);
+  // owner 2026-11-18: the buttons come after the picture, so nothing of the chrome shows while the
+  // ground, the backdrop, the bars and the card are still coming in (it used to be there from 0.3 s)
+  for (const ms of [250, 450, 600, 1200, 1790]) {
+    await freezeAt(page, ms);
+    expect(await opacityOf(page, SKIP), `${ms} ms`).toBeLessThan(0.05);
+  }
+  // the card stands whole at 1.8 s; the chrome fades in over the 120 ms after it
+  await freezeAt(page, 1800);
+  expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+  await freezeAt(page, 1920);
+  expect(await opacityOf(page, SKIP)).toBeGreaterThanOrEqual(0.95);
   await page.clock.runFor(600);
   await settleUpdates(page);
   expect(await beatOf(page)).toBe("intro");
@@ -1236,6 +1245,7 @@ test("a scene comes in on its black, «Saltar» is there from 0.3 s, and a tap d
   expect(backdrop).toBeGreaterThan(0.01);
   expect(backdrop).toBeLessThan(0.5);
   expect(await opacityOf(page, CARD)).toBeLessThan(0.01);
+  expect(await opacityOf(page, SKIP)).toBeLessThan(0.05);
   // a tap at 600 ms: the card's beat at once, and nothing jumps at the tap…
   await page.click("#m-capitulo-seguir");
   expect(await beatOf(page)).toBe("card");
@@ -1243,10 +1253,13 @@ test("a scene comes in on its black, «Saltar» is there from 0.3 s, and a tap d
   await freezeAt(page, 600);
   expect(Math.abs((await opacityOf(page, BACKDROP)) - backdrop)).toBeLessThan(0.02);
   expect(await opacityOf(page, CARD)).toBeLessThan(0.01);
-  // …the way in catches up within 120 ms: the backdrop and the card whole
+  expect(await opacityOf(page, SKIP)).toBeLessThan(0.05);
+  // …the way in catches up within 120 ms: the backdrop, the card and the chrome whole, which is
+  // now the only way to «Saltar» early (owner 2026-11-18)
   await freezeAt(page, 720);
   expect(await opacityOf(page, BACKDROP)).toBeGreaterThanOrEqual(0.99);
   expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+  expect(await opacityOf(page, SKIP)).toBeGreaterThanOrEqual(0.95);
   // the first line 500 ms after the tap (it came at 2.8 s untouched)
   await page.clock.runFor(450);
   await settleUpdates(page);
@@ -1272,30 +1285,13 @@ test("a double tap during a scene's way in is one tap: the card, then a second t
   await expect(page.locator("#m-capitulo")).toContainText(t("story.peregrina-prologue.1"));
 });
 
-/**
- * After `seedRun`: these scenes never seen, in this run nor in an earlier season, so each is due
- * where its trigger says (two of the weeks' scenes at once play one after the other).
- */
-async function unseen(page: Page, ids: readonly string[]): Promise<void> {
-  await page.addInitScript((drop) => {
-    const key = "falconess.juego.historia";
-    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
-      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
-    );
-    for (const seed of Object.keys(story.runs))
-      story.runs[seed] = (story.runs[seed] ?? []).filter((id) => !drop.includes(id));
-    story.ever = story.ever.filter((id) => !drop.includes(id));
-    localStorage.setItem(key, JSON.stringify(story));
-  }, ids);
-}
-
 test("two scenes in a row: a double tap on the first one's «Saltar» skips that one only, and its second click skips nothing (F50, 6.2)", async ({
   page,
 }) => {
   test.setTimeout(90_000);
   await seedRun(page, "peregrina-w39-insp");
   // weeks 16's and 28's scenes never seen: both due on the menu, one after the other
-  await unseen(page, ["peregrina-tears", "peregrina-rookie"]);
+  await unseenScenes(page, ["peregrina-tears", "peregrina-rookie"]);
   await page.goto("./");
   await continueRun(page);
   const scene = page.locator("#m-capitulo");
@@ -1372,31 +1368,44 @@ test("the second click of a double tap that ends the scene before the race picks
 
 test("the second click of a double tap that ends a week's scene opens no race card from the menu under it (F50, 6.2)", async ({
   page,
+  browser,
 }) => {
-  test.setTimeout(120_000);
-  await seedRun(page, "peregrina-w48");
-  // week 44's scene never seen: it plays as week 48 opens, over its menu with the race's bar
-  await unseen(page, ["peregrina-tiresome"]);
-  await page.goto("./");
-  await continueRun(page);
+  test.setTimeout(150_000);
+  // owner 2026-11-18: the race bar is gone, so the door is the track drawer's card, which the
+  // scene's end opens by itself: where it will be, measured from a browser of its own
+  const toScene = async (p: Page): Promise<void> => {
+    await seedRun(p, "peregrina-w48");
+    // week 44's scene never seen: it plays as week 48 opens, over its menu
+    await unseenScenes(p, ["peregrina-tiresome"]);
+    await p.goto("./");
+    await continueRun(p);
+    await expect(p.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tiresome");
+  };
+  const other = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const measure = await other.newPage();
+  await toScene(measure);
+  await measure.click("#m-capitulo-saltar");
+  await expect(measure.locator("#m-pista")).toBeVisible();
+  const at = await middleOf(measure, "#m-pista");
+  await other.close();
+  await toScene(page);
   const scene = page.locator("#m-capitulo");
-  await expect(scene).toHaveAttribute("data-scene", "peregrina-tiresome");
   await toLastLine(page, "story.peregrina-tiresome.12");
-  const at = await middleOf(page, "#m-carrera");
   await page.mouse.dblclick(at.x, at.y);
   await expect(scene).toHaveCount(0);
   await page.waitForTimeout(300);
+  // the card came out of the tab under the finger: the second click opened no planning card
   await expect(page.locator('[data-screen="menu"]')).toHaveCount(1);
   // a tap of its own opens it
   await page.waitForTimeout(600);
-  await page.click("#m-carrera");
+  await page.click("#m-pista");
   await expect(page.locator('[data-screen="plan"]')).toHaveCount(1);
 });
 
 /** Week 48's menu under week 44's scene, never seen, at its last line (as the tests above). */
 async function w48UnderScene(page: Page): Promise<void> {
   await seedRun(page, "peregrina-w48");
-  await unseen(page, ["peregrina-tiresome"]);
+  await unseenScenes(page, ["peregrina-tiresome"]);
   await page.goto("./");
   await continueRun(page);
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tiresome");
@@ -1537,6 +1546,12 @@ test("Rápido: the chapter's card shows whole for 0.7 s before it fades into the
   // whole from 0.8 s to 1.5 s, then its 250 ms fade
   await freezeAt(page, 800);
   expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+  // the chrome comes after that card here too (owner 2026-11-18): nothing of it before 0.8 s
+  await freezeAt(page, 790);
+  expect(await opacityOf(page, SKIP)).toBeLessThan(0.05);
+  await freezeAt(page, 920);
+  expect(await opacityOf(page, SKIP)).toBeGreaterThanOrEqual(0.95);
+  await freezeAt(page, 800);
   await freezeAt(page, 1490);
   expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
   await freezeAt(page, 1625);
@@ -1560,6 +1575,8 @@ test.describe("reduced motion: a scene's way in", () => {
     expect(await beatOf(page)).toBe("card");
     await freezeAt(page, 0);
     expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
+    // everything at once here, the chrome included (owner 2026-11-18 keeps §2.4's rule)
+    expect(await opacityOf(page, SKIP)).toBeGreaterThanOrEqual(0.99);
     await freezeAt(page, 890);
     expect(await opacityOf(page, CARD)).toBeGreaterThanOrEqual(0.99);
     const samples = await beatsFor(page, 1200);

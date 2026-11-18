@@ -5,6 +5,7 @@ import { stubFonts, t, textPattern } from "./fixtures";
 import {
   continueRun,
   pastTitle,
+  runRace,
   seedRun,
   settle,
   skipScene,
@@ -12,6 +13,7 @@ import {
   test,
   toPosition,
   toResult,
+  unseenScenes,
   watchCues,
   week,
 } from "./mobile-helpers";
@@ -30,23 +32,28 @@ import { holdClock, present, runClock, settleUpdates } from "./motion";
  * when the screen changes; a run that no longer replays says so on the selection. A scene that was
  * skipped, watched or passed by says nothing at all and is watched again from «Historia».
  * The sounds (5.10): only taps sound, and only a tap that goes to another screen whooshes.
+ * The race week's menu (owner 2026-11-18): no bar of its own, the track drawer opening by itself
+ * once that week (never under a layer), and its card as the planning card's door.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-test("a sheet in the page but closed holds nothing: the menu's and the race card's track sheets", async ({
+test("a sheet in the page but closed holds nothing: the goals' and the race card's track sheets", async ({
   page,
 }) => {
   test.setTimeout(90_000);
   await seedRun(page, "peregrina-w10");
   await page.goto("./");
   await continueRun(page);
-  // the menu's track sheet, opened and closed: its component stays in the page, closed
-  await page.click("#m-pista-tab");
-  await page.click("#m-pista");
+  // a goal's track sheet over the menu, opened and closed: its component stays in the page, closed
+  // (on a race week the menu's own card is the planning card's door, owner 2026-11-18)
+  await page.click("#m-leer-goals");
+  await page.locator("#m-metas button").first().click();
   await expect(page.locator("#m-pista-dialogo[open]")).toBeVisible();
   await page.click("#m-pista-cerrar");
   await expect(page.locator("#m-pista-dialogo")).toHaveCount(0);
+  await page.click("#m-panel-hoja-cerrar");
+  await expect(page.locator("#m-panel-hoja")).toHaveCount(0);
   // the race week's rest: what it did comes at once, then the emblem at a tap
   await page.click("#m-descansar");
   expect(await present(page, "#m-efectos")).toBe(true);
@@ -64,6 +71,126 @@ test("a sheet in the page but closed holds nothing: the menu's and the race card
   await page.click("#m-saltar");
   // and the scene after the race: nothing was left holding it
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-debut-win");
+});
+
+/** The week's action buttons: the drawer's card must stand over none of them. */
+const ACTIONS = ["#m-entrenar", "#m-descansar", "#m-habilidades", "#m-salida", "#m-taller"];
+
+test("a race week's menu has no bar: the track drawer opens by itself, over no action button (owner 2026-11-18)", async ({
+  page,
+}) => {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  // the bar that said «Carrera esta semana» is gone
+  await expect(page.locator("#m-carrera")).toHaveCount(0);
+  // the tab holds the week's race, and it opened itself: the card with this week's track
+  const tab = page.locator("#m-pista-tab");
+  await expect(tab).toHaveAttribute("data-race", "");
+  await expect(tab).toHaveAttribute("aria-expanded", "true");
+  const card = page.locator("#m-pista");
+  await expect(card).toBeVisible();
+  await expect(card).toBeInViewport();
+  await expect(card).toHaveAttribute("data-course", "sprint");
+  // nothing of it stands over the week's buttons, which all take their tap
+  const box = await card.boundingBox();
+  if (!box) throw new Error("the drawer's card has no box");
+  for (const id of ACTIONS) {
+    const action = await page.locator(id).boundingBox();
+    if (!action) throw new Error(`${id} has no box`);
+    expect(box.y + box.height, id).toBeLessThanOrEqual(action.y);
+    await expect(page.locator(id)).toBeEnabled();
+  }
+  // closed by the player, it stays closed for this week: the workshop and back opens nothing
+  await tab.click();
+  await expect(tab).toHaveAttribute("aria-expanded", "false");
+  await expect(card).toBeHidden();
+  await page.click("#m-taller");
+  await expect(page.locator("#m-taller-confirmar")).toBeVisible();
+  await page.click("#m-volver");
+  await expect(page.locator("#m-entrenar")).toBeVisible();
+  await page.waitForTimeout(400);
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#m-pista")).toBeHidden();
+});
+
+test("the drawer's card is the planning card's door on a race week (D3, owner 2026-11-18)", async ({
+  page,
+}) => {
+  await seedRun(page, "peregrina-w10");
+  await page.goto("./");
+  await continueRun(page);
+  await page.click("#m-pista");
+  // the planning card, with everything the bar's card showed: the track, what it asks, the four
+  // positions, «Volver» and «Elegir la acción»
+  await expect(page.locator('[data-screen="plan"]')).toHaveCount(1);
+  await expect(page.locator("#m-precarrera-pista-perfil")).toBeVisible();
+  await expect(page.locator("#m-precarrera-pista-pide [data-letter]")).not.toHaveCount(0);
+  await expect(page.locator("#m-posicion input")).toHaveCount(4);
+  await expect(page.locator("#m-volver")).toBeVisible();
+  const on = page.locator("#m-correr");
+  await expect(on).toContainText(t("ui.m.race.ready"));
+  // and it leads on to the week's action, as the bar's card did
+  await on.click();
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
+  // no track sheet of the menu's own on a race week: that card is the door
+  await expect(page.locator("#m-pista-dialogo")).toHaveCount(0);
+});
+
+test("the track drawer waits for the layer in front, as everything else does (owner 2026-11-18)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await seedRun(page, "peregrina-w48");
+  // week 44's scene never seen: it plays as week 48 (a race week) opens, over its menu
+  await unseenScenes(page, ["peregrina-tiresome"]);
+  await page.goto("./");
+  await continueRun(page);
+  await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-tiresome");
+  // the menu is under it: nothing opens by itself while a layer is in front
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#m-pista")).toBeHidden();
+  await skipScene(page);
+  // once it has gone, the drawer opens
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#m-pista")).toBeVisible();
+});
+
+test("the track drawer opens again on the next race week, and on no other week (owner 2026-11-18)", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await seedRun(page, "peregrina-w39-insp");
+  await page.goto("./");
+  await continueRun(page);
+  await settle(page);
+  expect(await week(page)).toBe(39);
+  // week 39 has no race: the tab says so and nothing opens by itself
+  await expect(page.locator("#m-pista-tab")).not.toHaveAttribute("data-race", "");
+  await expect(page.locator("#m-pista")).toBeHidden();
+  // week 40 has one (its inheritance card first: the drawer waits for it, then opens)
+  await page.click("#m-descansar");
+  await settle(page);
+  expect(await week(page)).toBe(40);
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("data-race", "");
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
+  // closed, it stays closed for week 40 only
+  await page.click("#m-pista-tab");
+  await expect(page.locator("#m-pista")).toBeHidden();
+  await page.click("#m-descansar");
+  await toPosition(page);
+  await page.click("#m-correr");
+  await runRace(page);
+  await settle(page);
+  while ((await week(page)) < 48) {
+    await expect(page.locator("#m-pista-tab")).not.toHaveAttribute("data-race", "");
+    await page.click("#m-descansar");
+    await settle(page);
+  }
+  // her last goal's week: it opens by itself again
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("data-race", "");
+  await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#m-pista")).toBeVisible();
 });
 
 test("a pick that closes its sheet does not hold what it starts: the outing's crew", async ({

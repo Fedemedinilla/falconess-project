@@ -17,8 +17,26 @@ describe("reduceUi", () => {
   it("starts on the menu with nothing done, frozen", () => {
     expect(INITIAL_UI).toMatchObject({ nav: { at: "menu" }, seq: 0, from: "menu" });
     expect(INITIAL_UI.done.size + INITIAL_UI.mine.size).toBe(0);
-    expect([INITIAL_UI.replay, INITIAL_UI.notice]).toEqual([undefined, undefined]);
+    expect([INITIAL_UI.replay, INITIAL_UI.notice, INITIAL_UI.trackWeek]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
     expect(Object.isFrozen(INITIAL_UI)).toBe(true);
+  });
+
+  it("trackShown: the week whose track drawer opened by itself, one week at a time (owner 2026-11-18)", () => {
+    const ten = after({ type: "trackShown", turn: 10 });
+    expect(ten.trackWeek).toBe(10);
+    // the same week again changes nothing: the drawer opens once a week, closed or not
+    expect(reduceUi(ten, { type: "trackShown", turn: 10 })).toBe(ten);
+    // the next race week is its own
+    expect(reduceUi(ten, { type: "trackShown", turn: 20 }).trackWeek).toBe(20);
+    // and nothing else of the state moves
+    expect(reduceUi(ten, { type: "trackShown", turn: 20 })).toMatchObject({
+      nav: { at: "menu" },
+      seq: 0,
+    });
   });
 
   it("open: each screen of the idle menu; the same screen again changes nothing", () => {

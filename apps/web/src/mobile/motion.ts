@@ -40,13 +40,11 @@ export const MOTION = {
 /** The emblem's beat: from its first frame to its out phase (its fade in, then its body). */
 export const EMBLEM_MS = MOTION.emblemIn + MOTION.emblemBody;
 
-/** A story scene's tempo: typing, words, Auto, the chrome, the chapter card. */
+/** A story scene's tempo: typing, words, Auto, the chapter card, a hurried way in. */
 export const STORY = {
   typeMs: 26,
   wordMs: 110,
   autoMs: 4500,
-  /** «Saltar», Auto and Registro from here on (M10) */
-  chromeAt: 300,
   /** the chapter's card shows whole at least this long (H4); under reduced motion `rmCardMs` */
   cardMinMs: 700,
   rmCardMs: 900,

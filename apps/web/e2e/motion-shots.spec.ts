@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import {
   continueRun,
+  openPlan,
   pastTitle,
   seedRun,
   settle,
@@ -325,7 +326,7 @@ const effects: Flow = async (page, m) => {
  */
 const raceWeek: Flow = async (page, m) => {
   await toRaceWeek(page);
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-correr");
   await page.click("#m-descansar");
   await expect(page.locator("#m-efectos")).toBeVisible();
@@ -469,7 +470,8 @@ const digest: Flow = async (page, m) => {
   await page.click("#m-elegir-peregrina");
   await m.hold();
   await page.click("#m-empezar");
-  await m.at("digest", [0, 300, 420, 800, 1500, 1625, 1750, 2100, 2800]);
+  // 0.8 s: the card whole and the chrome coming in after it (owner 2026-11-18)
+  await m.at("digest", [0, 300, 420, 800, 860, 920, 1500, 1625, 1750, 2100, 2800]);
   await m.release();
   return "digest";
 };
@@ -481,7 +483,8 @@ const sceneIntro: Flow = async (page, m) => {
   await page.click("#m-elegir-peregrina");
   await m.hold();
   await page.click("#m-empezar");
-  await m.at("scene-intro", [0, 300, 360, 420, 900, 1500, 1800, 2400, 2680, 2800, 3200]);
+  // 1.8 s: the card whole, and only then the chrome, in over 120 ms (owner 2026-11-18)
+  await m.at("scene-intro", [0, 300, 420, 900, 1500, 1800, 1860, 1920, 2400, 2680, 2800, 3200]);
   await m.release();
   return "scene-intro";
 };
@@ -496,6 +499,7 @@ const sceneHurry: Flow = async (page, m) => {
   await m.at("scene-hurry", [0, 600]);
   m.mark();
   await page.click("#m-capitulo-seguir");
+  // the tap brings the chrome in too, within 120 ms: the only way to «Saltar» early now
   await m.at("scene-hurry-tap", [0, 60, 120, 250, 375, 500, 700]);
   await m.release();
   return "scene-hurry";
