@@ -559,3 +559,37 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   «Pregunta doscientos doce», «Chatarra con alas»); personajes nuevos de apoyo Ishida (Kōryū),
   la analista Quist (Altair) y «Hombre de la soldadora» (el entrenador de Caracara, sin nombre
   todavía). Las ilustraciones van como texto hasta que haya arte.
+
+### I31 · Las piezas que faltan: chip y casco (2026-11-19)
+
+- **Decidido (dueño):** Caracara les dice que alas y propulsor están listos, pero faltan piezas: el
+  chip (controlador) y un casco que lo aloje y muestre la interfaz. Regla del mundo en
+  `docs/world.md` §2.
+- **Decidido (dueño):** cada escudería pone una pieza: Boneyard las alas, Altair el chip, Kōryū el
+  casco.
+- **Decidido (dueño), capítulo de Altair:** al salir de Boneyard, Caracara hace una llamada que se
+  oye a medias («sabes que mi instinto nunca me falla… Sí, bueno, excepto esa vez… ¿llevas la
+  cuenta o qué?»). En la calle, un parlante que no sabían que existía: «Nina Nina y Masaru El Sin
+  Diploma, repórtense en Altair.» Dudan; el parlante: «Ahora.» Quist los lleva a un laboratorio; una
+  voz (Cernícala, sin que se sepa) les indica la mesa azul: un chip azul de fábrica. «Sin él, eres
+  solo una niña con una heladera hecha de chatarra en la espalda.» Nina agradece sin saber cómo
+  llamarla; una silla con ruedas cruza el laboratorio, una chica de lentes la estudia de lejos,
+  calla a Masaru con un «sh», vuelve con la silla: «Mesa verde. En la esquina. Cajón rojo. Tiren el
+  otro. Y cierren la puerta al irse.» En el cajón, un chip blanco, viejo, de otra generación.
+- **Decidido (dueño):** el chip blanco es viejo, quizás conectado a la abuela de Nina (`secretos.md`
+  S2). La escena es como la de la tienda de varitas: Cernícala la estudia y piensa «quizás». Por eso
+  estaba abandonado: no es el estándar de fábrica.
+- **Decidido (dueño), capítulo de Kōryū:** de vuelta con el carrito, un «cometa rojo» los atropella en
+  una esquina: es Peregrina, que putea con símbolos («@&/$?»), los ve y sale corriendo a una
+  velocidad que no parece humana hacia Kōryū, para llegar antes. Ishida sale a la calle: «La
+  señorita los espera» (Kōryū cree que todos saben quién es). Adentro, Peregrina posa heroica,
+  agitada y transpirada, y finge sorpresa muy mal: «¡Oh! ¡Qué sorpresa, unos fans!». Ishida aplaude
+  con ritmo; salen cuatro personas de Kōryū con un casco cada una; Peregrina mide la cabeza de Nina
+  con gestos, chasquea los dedos y trae de otro cajón un casco blanco, viejo y usado. Ishida: «A su
+  entrenador no le va a gustar esto.» Peregrina: «¡Él no es mi padre!». Lo firma en la frente, se lo
+  da, y empieza con consejos de comercial («lo más importante es un desayuno saludable…») hasta que
+  Ishida tose. Fotos firmadas para los dos, una gorra de Kōryū para Masaru, y afuera: ¿qué acaba de
+  pasar?
+- **Propuesta (Claude, falta aprobar):** capítulo 5 (Altair, el chip) y capítulo 6 (Kōryū, el casco);
+  la radio que anuncia el entrenamiento de Caracara pasa al final del 6. Masaru se guarda el chip
+  azul «por si acaso». La firma de Peregrina es ilegible: siguen sin saber quién era.

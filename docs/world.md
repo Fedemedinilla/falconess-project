@@ -19,7 +19,16 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
   Referencia: la imagen del hangar de Kōryū que mostró el dueño (alas rojas y doradas, mecánicos de
   rojo, estandarte rojo con emblema dorado). Ver también `docs/design/prompts-arte-provisional.md`
   §3 «El hangar de Kōryū».
-- Abierto: cómo funcionan a grandes rasgos; qué pueden y qué no; por qué son desmontables.
+- **Decidido (dueño, 2026-11-19): el controlador.** Las alas y el propulsor van en un bastidor a la
+  espalda; un chip, el controlador, conecta la mente y los sentidos de la Falconess con el bastidor:
+  plegar, abrir del todo, cuándo encender el propulsor. El casco aloja el chip y le muestra la
+  interfaz de manejo. El bastidor rinde según quien lo lleva: una Falconess motivada rinde más que una
+  desmotivada (es la razón, dentro del mundo, de que el ánimo pese en la carrera).
+- **Decidido (dueño, 2026-11-19): solo con el don.** Una persona sin el don, con el chip puesto, siente
+  las alas conectadas pero no sabe moverlas, como si le hubiera crecido una extremidad nueva. Con el
+  don les es natural: son una extremidad más. Algunas dicen sentir un dolor fantasma cuando no las
+  llevan puestas, como si les faltara algo.
+- Abierto: qué pueden y qué no; por qué son desmontables.
 
 ## 3. Las Falconess
 
@@ -38,7 +47,7 @@ Fuente de verdad del mundo de Falconess. El canon lo decide el dueño; cada dato
   nacieron con él más fuerte. Muchas Falconess de hoy son nietas de mensajeras. El dueño quiere «una
   base pseudo verosímil» y que quede también «un poco de mitología o magia»: la explicación nunca se
   cierra del todo.
-- Abierto: si todas las que lo tienen vuelan.
+- Abierto: si todas las que lo tienen vuelan. Sin el don no se vuela (§2, el controlador).
 
 ## 3b. Los spotters
 
