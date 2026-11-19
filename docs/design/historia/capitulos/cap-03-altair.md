@@ -110,12 +110,15 @@ NINA [concentración]: Masaru.  // llamándolo en voz baja
 MASARU [ganas]: Sí.  // entendiendo sin que le expliquen
 NINA [ganas]: ¿Corremos?  // proponiendo la huida
 MASARU [ganas]: Corremos.  // aceptando con alivio
+[MÚSICA: la música del laboratorio se corta en seco]
+[MÚSICA: tema de chiste épico: la gran huida]
 [GESTO: Hace una reverencia mientras ya se va.]
 NINA [alegría]: ¡Muchas gracias por las preguntas! ¡Eran muy buenas! ¡Perdón! [EFECTO: texto rápido]  // huyendo con buenos modales
 [SFX: dos pares de zapatillas corriendo sobre piso brillante]
 [SALE: Nina]
 [SALE: Masaru]
 [ILUSTRACIÓN] Nina y Masaru corren por un pasillo blanco interminable. Detrás de ellos, en una pantalla gigante, la barra de progreso: 13 %.
+[MÚSICA: se corta; vuelve el silencio del laboratorio]
 [GESTO: Sola, guarda la tableta.]
 QUIST [calma]: Evaluación interrumpida en la pregunta veintiocho de doscientas doce.| Resultado: interesantes. [EFECTO: frase clave]  // dejándolos en sus registros
 ```

@@ -129,7 +129,7 @@ CARACARA [alegría]: Mañana entreno. Ven pasado.  // aceptando sin darle import
 - **Salida:** Mañana a las seis empieza algo.
 ```text
 [FONDO: exterior]
-[MÚSICA: tema de Vuela Alto, ahora con batería]
+[MÚSICA: tema de Vuela Alto]
 [GESTO: Camina torcida por el peso de las alas.]
 NINA [alegría]: Qué amable la chica del taller.  // volviendo feliz
 MASARU [concentración]: Mucho. ¿Cómo se llamaba?  // dándose cuenta tarde

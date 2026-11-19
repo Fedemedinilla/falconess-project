@@ -15,7 +15,7 @@ _Kōryū Racing_
 - **Salida:** Salen a buscar alas a otras escuderías.
 ```text
 [FONDO: interior]
-[MÚSICA: tema de Vuela Alto, guitarra sola]
+[MÚSICA: tema de Vuela Alto]
 [NARRACIÓN]: Tres semanas después. El hangar de Vuela Alto nunca estuvo tan limpio.
 [ENTRA: Nina, izquierda]
 [ENTRA: Viejo, centro]
