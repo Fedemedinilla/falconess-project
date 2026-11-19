@@ -14,11 +14,20 @@ _Altair Systems_
 - **Giro:** Doscientas doce preguntas.
 - **Salida:** Aceptan, sin saber lo que les espera.
 ```text
-[FONDO: altair]
-[MÚSICA: electrónica suave, como de laboratorio]
-[NARRACIÓN]: El hangar de Altair Systems es blanco, azul marino y silencio. Las pantallas muestran números que nadie mira.
+[FONDO: altair-ext]
+[NARRACIÓN]: Altair Systems parece un observatorio que aterrizó en el pasto. El pasto está cortado a la misma altura, hoja por hoja.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
+[GESTO: Revisa el cuaderno.]
+MASARU [concentración]: Altair Systems. La escudería de Cernícala. Dicen que acá miden todo.  // presentando el lugar
+NINA [concentración]: ¿Todo todo?  // desconfiando un poco
+[GESTO: Toca el timbre.]
+MASARU [ganas]: Seguro que no tanto. Toquemos el timbre.  // subestimando el lugar
+[SFX: una voz suave sale de la puerta: «Treinta y ocho segundos para tocar el timbre. Registrado.»]
+NINA [en blanco]: … [EFECTO: globo que tarda]  // callándose ([en blanco]: no sabe si es un chiste)
+[FONDO: altair]
+[MÚSICA: electrónica suave, como de laboratorio]
+[NARRACIÓN]: Adentro, Altair Systems es blanco, azul marino y silencio. Las pantallas muestran números que nadie mira.
 [GESTO: Susurra, aunque nadie le pidió silencio.]
 MASARU [concentración]: ¿Por qué estoy susurrando? [EFECTO: susurro]  // contagiándose del lugar
 [GESTO: También susurra.]
@@ -58,13 +67,11 @@ QUIST [concentración]: Pregunta tres. Grupo sanguíneo. Pregunta cuatro. Alergi
 NINA [cansancio]: Masaru. ¿En qué pregunta vamos? [EFECTO: susurro]  // preguntando a escondidas
 [GESTO: Mira un punto fijo en el techo.]
 MASARU [cansancio]: Ni idea. Yo me perdí en la cuatro punto dos bis. [EFECTO: susurro]  // confesando que se fue
-NINA [sorpresa]: ¿Había una bis?  // descubriendo que había más
-MASARU [cansancio]: Había una bis. Y una ter. La ter me miró.  // contando un trauma chico
 MASARU [en blanco]: Desde ahí, mi cerebro es un protector de pantalla.  // rindiéndose
 [GESTO: Se ríe y se tapa la boca.]
 NINA [alegría]: Perdón.  // riéndose sin querer
 [GESTO: No se ríe.]
-QUIST [calma]: Anotado: «la ter me miró».  // registrándolo todo
+QUIST [calma]: Anotado: «protector de pantalla».  // registrándolo todo
 NINA [concentración]: Yo me perdí en la dieciocho. La que había que graficar.  // confesando lo suyo
 QUIST [concentración]: Pregunta veintisiete. Cantidad de amigos cercanos.  // tocando sin saberlo la herida
 NINA [en blanco]: … [EFECTO: globo que tarda]  // quedándose sin aire ([en blanco]: la pregunta le pegó)

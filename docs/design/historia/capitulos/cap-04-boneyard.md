@@ -14,11 +14,19 @@ _Boneyard Works_
 - **Giro:** La chica del taller se entusiasma con la idea.
 - **Salida:** Deciden construirlas.
 ```text
-[FONDO: boneyard]
-[MÚSICA: folk rock de taller, entre amigos]
-[NARRACIÓN]: Boneyard Works parece una casa grande que alguien llenó de chatarra. Hay luces colgadas, plantas en las ventanas y una pava todavía caliente sobre la mesa.
+[FONDO: boneyard-ext]
+[NARRACIÓN]: Boneyard Works es un granero enorme rodeado de chatarra, con unas alas pintadas a mano en la pared. Hay ropa colgada al sol y una huerta.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
+[GESTO: Tacha la tercera línea del cuaderno, por adelantado.]
+MASARU [cansancio]: Boneyard Works. La escudería de Caracara. La última de la lista.  // presentando el lugar sin muchas ganas
+NINA [calma]: Parece una casa.  // relajándose sin darse cuenta
+MASARU [concentración]: Parece una casa que se comió un taller.  // mirando la chatarra
+[GESTO: Sonríe por primera vez en todo el día.]
+NINA [alegría]: Me gusta.  // sintiéndose bienvenida
+[FONDO: boneyard]
+[MÚSICA: folk rock de taller, entre amigos]
+[NARRACIÓN]: Adentro es una casa grande que alguien llenó de chatarra. Hay luces colgadas, plantas en las ventanas y una pava todavía caliente sobre la mesa.
 [GESTO: Arrastra los pies.]
 MASARU [cansancio]: Si acá también nos preguntan algo, me desmayo.  // arrastrando el cansancio
 [GESTO: Esquiva una hélice apoyada contra un banco.]

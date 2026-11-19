@@ -730,3 +730,50 @@ leather welding apron over an olive green work shirt with rolled sleeves and rus
 trousers with knee pads, steel-toe boots, thick leather welding gloves, one of them held in his hand. A
 stopwatch on a cord around his neck, hinting that he is also a coach. Workshop look, warm and lived-in.
 ```
+
+### Las sedes de las escuderías, desde afuera (capítulos 2 a 4, 2026-11-19)
+
+No son hangares iguales: cada edificio muestra la personalidad de su escudería a la vista. Van con
+el bloque común de los fondos de Vuela Alto (16:9, sin personajes) y van después de él.
+
+#### Kōryū Racing
+
+```text
+The headquarters of Kōryū Racing, a proud luxury racing team for winged racers, seen from the street. Not a
+hangar: a sleek, low, ultra-modern flagship building whose roof sweeps up in one long curved shape like a
+folded red wing, glossy racing-red lacquer panels with sharp gold trim and tall glass walls, with a subtle
+Japanese touch in the layered roof edges and a small zen garden of raked white gravel by the entrance. A red
+carpet runs from the glass doors all the way to the sidewalk, between two rows of red and gold banners with
+an abstract gold wing emblem (no letters). A tall gold wing sculpture over a black reflecting pool, a
+gleaming red-and-gold racing wing displayed in a glass case like a sports car in a showroom, a polished
+sidewalk that shines like a mirror. Behind the building, the top of a huge grandstand and part of the track.
+Late afternoon golden light, a clear blue sky. Elegant, expensive, intimidating, like the flagship store of
+the most exclusive brand in the world.
+```
+
+#### Altair Systems
+
+```text
+The campus of Altair Systems, a high-tech racing team for winged racers, seen from the entrance path. Not a
+hangar: a pristine white research complex shaped like an observatory, a big smooth white dome next to a tall
+slim tower with a ring of antennas and sensors, all clean geometric shapes, white panels, navy blue glass and
+thin glowing cyan light lines. A perfectly symmetrical straight path of white stone leads to silent sliding
+glass doors with a small white intercom panel. The lawn is cut perfectly even, with small white measuring
+posts placed at regular intervals, small white drones floating in a neat line, a few tiny figures in white
+coats far away. Calm, clinical, beautiful and slightly eerie, like a laboratory that measures everything,
+even the visitors. Bright, soft overcast daylight, no harsh shadows.
+```
+
+#### Boneyard Works
+
+```text
+The home of Boneyard Works, a racing team for winged racers that builds its wings from salvaged parts, seen
+from its yard. Not a hangar: a huge old wooden barn joined to a patched metal workshop, with a big porch,
+mismatched windows and a roof repaired with sheets of different colors. On the front wall, a large
+hand-painted mural of a pair of wings in olive green and rust orange. Around it, scrap is sorted in friendly
+piles and turned into things: a garden fence made of old propellers, flower pots made from tires, a wind
+chime of spanners, a bench made from a vehicle seat. A small vegetable garden, laundry drying in the sun,
+warm string lights along the porch, a hand-painted wooden sign with no letters, a big open sliding door
+showing the warm workshop inside. Golden afternoon light. Warm, welcoming, a little chaotic, like a big
+family home where everyone builds things together.
+```

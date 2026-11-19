@@ -68,11 +68,21 @@ NINA [ganas]: …Vamos igual.  // eligiendo ir
 - **Giro:** El precio.
 - **Salida:** Se van con las manos vacías y la dignidad, más o menos, entera.
 ```text
-[FONDO: koryu]
-[MÚSICA: piano y cuerdas, elegante]
-[NARRACIÓN]: El hangar de Kōryū Racing huele a pintura nueva. Hasta el piso brilla más que el ala de Edda.
+[FONDO: koryu-ext]
+[MÚSICA: el tema de Vuela Alto se apaga]
+[NARRACIÓN]: La sede de Kōryū Racing no parece un hangar: parece un palacio rojo con forma de ala. La alfombra roja empieza en la vereda.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
+[GESTO: Lee un folleto dorado que le dieron en la esquina.]
+MASARU [concentración]: Kōryū Racing. La escudería de Peregrina. Acá dice que «ganar es una costumbre».  // presentando el lugar como guía turístico
+[GESTO: Señala con el dedo, y enseguida baja la mano.]
+NINA [sorpresa]: Masaru… hay un señor lustrando la vereda.  // viendo algo que no entra en su mundo
+MASARU [en blanco]: Ah. Por eso brilla.  // aceptando lo inexplicable
+[GESTO: Se mira las zapatillas gastadas. Se limpia una con la otra. Queda igual.]
+NINA [concentración]: «Antes de entrar a una casa ajena, mírate los zapatos.»  // acordándose del viejo justo ahora
+[FONDO: koryu]
+[MÚSICA: piano y cuerdas, elegante]
+[NARRACIÓN]: Adentro, el hangar de Kōryū huele a pintura nueva. Hasta el piso brilla más que el ala de Edda.
 [GESTO: Se frena en la entrada y se mira las zapatillas.]
 NINA [sorpresa]: Masaru. Hay banderas. Adentro de un hangar. [EFECTO: susurro]  // achicándose
 [GESTO: Toca un trofeo con un dedo y lo suelta enseguida.]
@@ -116,6 +126,7 @@ NINA [ganas]: ¡Perfecto! ¿Cómo hacemos? ¿Hay que firmar algo? ¿Llenar algo?
 ISHIDA [calma]: Solo una pregunta. ¿Cómo piensan pagarla?  // cobrando con suavidad
 [MÚSICA: detrás de la puerta dorada, la orquesta deja de tocar en seco]
 NINA [en blanco]: …  // cayendo a tierra ([en blanco]: no lo había pensado)
+[MÚSICA: tema de chiste épico]
 MASARU [concentración]: ¿Cuánto… sale? [EFECTO: globo que tarda]  // preguntando lo que no quiere saber
 ISHIDA [calma]: Doscientos cuarenta mil.| Sin el *propulsor*. [EFECTO: énfasis, frase clave]  // diciendo la cifra como quien dice la hora
 > [ELECCIÓN] Qué dice Masaru
@@ -154,4 +165,5 @@ NINA [concentración]: Algún día quiero sonreír así. Sin la parte de la pica
 [SALE: Ishida]
 [SALE: Nina]
 [SALE: Masaru]
+[MÚSICA: se apaga]
 ```
