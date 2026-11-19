@@ -315,6 +315,10 @@ KES [alegría]: Hoy no hay excusas para nadie.
 2. Cada escena tiene su propio giro. El capítulo tiene un giro mayor, que es candidato a ilustración a pantalla completa.
 3. Alterná el tipo de escena: tensión / respiro / tensión. Una escena de respiro puede usar kishōtenketsu.
 4. Terminá el capítulo con una pregunta abierta concreta, no con una frase de cierre filosófica.
+5. **La protagonista decide y paga** (dueño, 2026-11-19): en cada capítulo del Modo Historia, la
+   protagonista toma al menos una decisión que solo ella puede tomar y que le cuesta algo (tiempo,
+   descanso, orgullo, una deuda, la confianza de alguien). Lo que recibe de otros llega como trato,
+   no como regalo. La elección del jugador cambia el tono con que lo decide, no la decisión.
 
 **Escenas de temporada cortas** [regla de la casa]:
 1. **Primera línea**: la situación y el deseo, juntos («Tercera. Ya tengo anotado qué hice mal.»).
@@ -1256,6 +1260,7 @@ exacta de Kes.
 - [ ] Escribí arriba del guion, en una línea cada uno: objetivo, obstáculo, giro y salida.
 - [ ] La escena empieza después del saludo y termina antes de la despedida.
 - [ ] El último globo cambia el estado o abre una pregunta concreta; no resume.
+- [ ] (Modo Historia) La protagonista tomó una decisión propia que le costó algo (Tema 4, regla 5).
 - [ ] Las siembras nuevas quedaron anotadas en el registro de siembras, con su actualización de cosecha.
 
 **Formato**
@@ -1299,6 +1304,8 @@ exacta de Kes.
 
 **Idioma y localización**
 - [ ] Búsqueda de «tú/ti/os/vosotros/ven/di/haz/pon/sal/ten» hecha y corregida.
+- [ ] Búsqueda de rioplatenses comunes hecha y corregida (dueño, 2026-11-19, español neutro): vereda,
+  pava, mameluco, heladera, remera, campera, birome, nene/nena, laburo, che, dale.
 - [ ] Como máximo una o dos marcas de lunfardo por escena, solo en personajes cuya ficha lo indique.
 - [ ] Ninguna jerga real de moda; los términos del deporte inventados están en el glosario.
 - [ ] Cada línea con subtexto tiene su nota de localización (intención, expresión, libertad de transcreación).

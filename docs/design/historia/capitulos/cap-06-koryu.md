@@ -31,18 +31,18 @@ MASARU [concentración]: Pero dijo «quizás». El viejo nunca dijo «quizás».
 CHICA DE ROJO [fastidio]: ¡&%@#! [EFECTO: sacudida]  // chocando con todo a la vez
 NINA [sorpresa]: ¡El chip! ¿Dónde está el—? …Ah. En mi mano. [EFECTO: texto rápido]  // rescatando lo único que importa
 [GESTO: Los mira desde el suelo, despeinada, con un ojo cerrado.]
-CHICA DE ROJO [sorpresa]: Mameluco celeste. Alas de chatarra.  // reconociéndolos desde el piso
-CHICA DE ROJO [en blanco]: No. No, no, no.  // dándose cuenta de que llega tarde
+CHICA DE ROJO [sorpresa]: Overol celeste. Alas de chatarra.  // reconociéndolos desde el piso
+CHICA DE ROJO [sorpresa]: No. No, no, no.  // dándose cuenta de que llega tarde
 [SALE: Chica de rojo]
-[GESTO: Sigue sentado en la vereda, con el cuaderno abierto en la cara.]
-MASARU [en blanco]: ¿Eso era una persona?  // procesando lo que pasó
+[GESTO: Sigue sentado en la acera, con el cuaderno abierto en la cara.]
+MASARU [sorpresa]: ¿Eso era una persona?  // procesando lo que pasó
 NINA [concentración]: Corría para el mismo lado que nosotros.  // mirando hacia donde se fue
 MASARU [cansancio]: Para el mismo lado, pero a otra velocidad. Como todo el mundo hoy.  // levantándose de a partes
 ```
 ### Escena 2 · La señorita
 
 - **Objetivo:** Pasar por delante de Kōryū sin que nadie los mire.
-- **Obstáculo:** Ishida los está esperando en la vereda.
+- **Obstáculo:** Ishida los está esperando en la acera.
 - **Giro:** «La señorita» quiere verlos, y ellos no saben quién es.
 - **Salida:** Entran con el carrito en brazos.
 ```text
@@ -51,7 +51,7 @@ MASARU [cansancio]: Para el mismo lado, pero a otra velocidad. Como todo el mund
 [GESTO: Espera al final de la alfombra roja, con las manos detrás de la espalda.]
 HOMBRE DE GUANTES BLANCOS [calma]: Buenas tardes. La señorita los está esperando.  // recibiéndolos como a invitados
 MASARU [sorpresa]: ¿Qué señorita?  // preguntando lo obvio
-HOMBRE DE GUANTES BLANCOS [en blanco]: La señorita. [EFECTO: globo que tarda]  // repitiendo lo que no necesita explicación
+HOMBRE DE GUANTES BLANCOS [calma]: La señorita. [EFECTO: globo que tarda]  // repitiendo lo que no necesita explicación
 [GESTO: Se endereza, por si es una entrevista.]
 NINA [concentración]: ¿La que contrata a la gente de limpieza?  // buscando la única señorita que se le ocurre
 HOMBRE DE GUANTES BLANCOS [calma]: Pasen, por favor. El carrito, en brazos. Las ruedas no pisan la alfombra.  // cuidando la alfombra antes que nada
@@ -71,7 +71,7 @@ MASARU [cansancio]: En teoría, las ruedas existen para no llevar las cosas en b
 [GESTO: Posa con las manos en la cintura. Le sube y le baja el pecho.]
 CHICA DE ROJO [alegría]: ¡Oh! ¡Qué sorpresa! ¡Unos fans!  // fingiendo que estaba ahí desde siempre
 NINA [sorpresa]: Es la del póster. [EFECTO: susurro]  // reconociéndola recién ahora
-MASARU [concentración]: Es la de la vereda.  // reconociéndola por otro lado
+MASARU [concentración]: Es la de la acera.  // reconociéndola por otro lado
 [GESTO: Se seca la frente con el dorso del guante, rápido.]
 CHICA DE ROJO [ganas]: Estuve acá… toda la tarde. Tranquila. Posando.  // mintiendo entre respiraciones
 > [ELECCIÓN] Qué le dice Masaru
@@ -99,7 +99,7 @@ CHICA DE ROJO [concentración]: …  // eligiendo con los ojos ([concentración]
 CHICA DE ROJO [concentración]: Ninguno. Ninguno es.  // descartando el lujo entero
 [GESTO: Sale disparada hacia un mueble del fondo.]
 CHICA DE ROJO [ganas]: ¡Ya sé!  // decidiendo de golpe
-NINA [en blanco]: ¿Me midió la cabeza con los dedos?  // procesando el trámite
+NINA [sorpresa]: ¿Me midió la cabeza con los dedos?  // procesando el trámite
 [GESTO: Vuelve con un casco blanco, viejo, con rayones de muchos vuelos.]
 CHICA DE ROJO [alegría]: Este.  // ofreciendo su elección
 HOMBRE DE GUANTES BLANCOS [concentración]: Señorita. Ese casco no sale de ese cajón. A su entrenador esto no le va a gustar.  // advirtiendo con respeto
@@ -107,7 +107,11 @@ CHICA DE ROJO [aburrimiento]: Pfff. No es mi papá.  // despachando la advertenc
 [SFX: el chillido de un marcador sobre plástico]
 [ILUSTRACIÓN] Peregrina firma el casco blanco con un marcador rojo, en la frente, la lengua afuera de concentración. Nina lo sostiene con los dos brazos y los ojos muy abiertos.
 NINA [en blanco]: …Gracias. [EFECTO: globo que tarda]  // agradeciendo sin entender ([en blanco]: no sabe qué acaba de recibir)
-CHICA DE ROJO [alegría]: De nada, mi fan. Ahora, lo más importante. El desayuno.  // pasando al modo cartel
+[GESTO: Le extiende el casco de vuelta, con los dos brazos.]
+NINA [ganas]: No puedo pagarlo.  // devolviendo lo que no puede aceptar
+CHICA DE ROJO [sorpresa]: ¿Pagarlo? Tiene mi firma. Vale más ahora que hace un minuto.  // sin entender la objeción
+NINA [concentración]: Entonces le debo una.  // aceptando la deuda en vez del regalo
+CHICA DE ROJO [alegría]: ¡Confirmado! Me la pagas en la pista. Ahora, lo más importante. El desayuno.  // cerrando el trato y pasando al modo cartel
 CHICA DE ROJO [ganas]: Fruta, proteína, y llegar primera a la mesa. Segundo: nunca camines si puedes correr. Tercero— [EFECTO: texto rápido]  // recitando su propio comercial
 [GESTO: Tose una sola vez, desde la puerta.]
 HOMBRE DE GUANTES BLANCOS [concentración]: Ejem.  // frenándola con una tos
@@ -127,10 +131,10 @@ CHICA DE ROJO [alegría]: Para que te vean llegar. Siempre hay que ver llegar a 
 [FONDO: exterior]
 [MÚSICA: tema de Vuela Alto]
 [GESTO: Tiene la gorra puesta. No se la sacó.]
-MASARU [en blanco]: ¿Qué acaba de pasar?  // intentando resumir el día
+MASARU [cansancio]: ¿Qué acaba de pasar?  // intentando resumir el día
 NINA [concentración]: Nos dieron alas. Un chip. Un casco. Y fotos.  // contando lo que tiene en los brazos
 MASARU [concentración]: ¿De quién son las fotos?  // mirando la firma
-NINA [en blanco]: Dice… «¡Vuela!». Y un garabato. Y un dibujito de un ala.  // leyendo lo que no se puede leer
+NINA [concentración]: Dice… «¡Vuela!». Y un garabato. Y un dibujito de un ala.  // leyendo lo que no se puede leer
 [NARRACIÓN]: En la radio de un auto que pasa, alguien anuncia el entrenamiento abierto de Caracara, de Boneyard Works, mañana a las seis.
 NINA [ganas]: Mañana a las seis empiezo a *volar*. [EFECTO: énfasis]  // decidiendo
 MASARU [cansancio]: Mañana a las seis yo duermo.  // cerrando con su verdad

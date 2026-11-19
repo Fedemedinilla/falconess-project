@@ -63,28 +63,28 @@ NINA [ganas]: …Vamos igual.  // eligiendo ir
 ```
 ### Escena 2 · Kōryū Racing
 
-- **Objetivo:** Conseguir alas de práctica.
-- **Obstáculo:** En Kōryū todo es de lujo y nadie dice el precio.
-- **Giro:** El precio.
-- **Salida:** Se van con las manos vacías y la dignidad, más o menos, entera.
+- **Objetivo:** Entrar a Kōryū sin desentonar.
+- **Obstáculo:** Todo es de lujo, empezando por la acera.
+- **Giro:** La música de fondo es una orquesta de verdad.
+- **Salida:** Ishida los lleva a ver las alas.
 ```text
 [FONDO: koryu-ext]
 [MÚSICA: el tema de Vuela Alto se apaga]
-[NARRACIÓN]: La sede de Kōryū Racing no parece un hangar: parece un palacio rojo con forma de ala. La alfombra roja empieza en la vereda.
+[NARRACIÓN]: La sede de Kōryū Racing no parece un hangar: parece un palacio rojo con forma de ala. La alfombra roja empieza en la acera.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
 [GESTO: Lee un folleto dorado que le dieron en la esquina.]
 MASARU [concentración]: Kōryū Racing. La escudería de Peregrina. Acá dice que «ganar es una costumbre».  // presentando el lugar como guía turístico
 [GESTO: Señala con el dedo, y enseguida baja la mano.]
-NINA [sorpresa]: Masaru… hay un señor lustrando la vereda.  // viendo algo que no entra en su mundo
-MASARU [en blanco]: Ah. Por eso brilla.  // aceptando lo inexplicable
+NINA [sorpresa]: Masaru… hay un señor lustrando la acera.  // viendo algo que no entra en su mundo
+MASARU [aburrimiento]: Ah. Por eso brilla.  // aceptando lo inexplicable
 [GESTO: Se mira las zapatillas gastadas. Se limpia una con la otra. Queda igual.]
 NINA [concentración]: «Antes de entrar a una casa ajena, mírate los zapatos.»  // acordándose del viejo justo ahora
 [FONDO: koryu]
 [MÚSICA: piano y cuerdas, elegante]
 [NARRACIÓN]: Adentro, el hangar de Kōryū huele a pintura nueva. Hasta el piso brilla más que el ala de Edda.
 [GESTO: Se frena en la entrada y se mira las zapatillas.]
-NINA [sorpresa]: Masaru. Hay banderas. Adentro de un hangar. [EFECTO: susurro]  // achicándose
+NINA [sorpresa]: Masaru. Hay banderas. Adentro de un hangar.  // achicándose
 [GESTO: Toca un trofeo con un dedo y lo suelta enseguida.]
 MASARU [ganas]: Y trofeos. Este es más alto que tú.  // distrayéndose con lo que brilla
 [ENTRA: Hombre de guantes blancos, derecha]
@@ -92,16 +92,16 @@ MASARU [ganas]: Y trofeos. Este es más alto que tú.  // distrayéndose con lo 
 HOMBRE DE GUANTES BLANCOS [calma]: Bienvenidos a Kōryū Racing. Ishida, asesor de pilotos. ¿En qué puedo servirles?  // recibiendo con protocolo
 [NOMBRE: Hombre de guantes blancos → Ishida]
 [GESTO: Señala el techo, como si el violín estuviera colgado ahí.]
-NINA [sorpresa]: Perdón. Una pregunta antes. Esa música… ~¿es un parlante muy ca~¿Es un violín? ¿Un violín de *verdad*? ¿Ahora? [EFECTO: énfasis]  // descubriendo de dónde sale la música
+NINA [sorpresa]: Antes que nada, una pregunta. Esa música… ~¿es un parlante muy ca~¿Es un violín? ¿Un violín de *verdad*? ¿Ahora? [EFECTO: énfasis]  // descubriendo de dónde sale la música
 [GESTO: Mira las rejillas del techo.]
 MASARU [concentración]: Yo pensé que era el aire acondicionado. Pero muy afinado.  // aportando lo que puede
 [GESTO: Sonríe con una sonrisa ensayada mil veces. No es mala; es perfecta.]
 ISHIDA [alegría]: Ja, ja. Claro que no, pequeña.  // corrigiendo con una sonrisa de catálogo
 [GESTO: Señala con un guante blanco una puerta dorada, al fondo.]
 ISHIDA [calma]: No es *una* persona. Es nuestra orquesta sinfónica. Ensaya detrás de esa puerta. [EFECTO: globo que tarda, énfasis]  // diciendo lo increíble como algo normal
-NINA [sorpresa]: ¿Queeeeé? [EFECTO: texto lento, sacudida]  // sin poder creerlo
+NINA [sorpresa]: ¿Queeeeé? [EFECTO: sacudida]  // sin poder creerlo
 [GESTO: Se le cae el cuaderno.]
-MASARU [sorpresa]: ¿Queeeeeeeeé? [EFECTO: texto lento, sacudida]  // sin poder creerlo, más largo
+MASARU [sorpresa]: ¿Queeeeeeeeé?  // sin poder creerlo, más largo
 MASARU [concentración]: ¿Tienen una orquesta… para el *fondo*? [EFECTO: énfasis]  // tratando de entender el tamaño de todo
 [GESTO: Se acomoda un guante.]
 ISHIDA [calma]: Para el fondo, para la entrada y los martes, para el almuerzo.  // contestando sin una gota de ironía
@@ -109,6 +109,14 @@ ISHIDA [calma]: Para el fondo, para la entrada y los martes, para el almuerzo.  
 NINA [ganas]: Eh… ¡Buenas tardes! Venimos por unas alas. De práctica. Básicas. Las más básicas.  // presentándose de más
 [GESTO: Sonríe un milímetro.]
 ISHIDA [calma]: En Kōryū no existe lo básico. Existe lo esencial. Acompáñenme.  // vendiendo sin vender
+```
+### Escena 3 · El precio
+
+- **Objetivo:** Que les muestren las alas de práctica.
+- **Obstáculo:** En Kōryū no existe lo básico.
+- **Giro:** El precio.
+- **Salida:** Se van con las manos vacías, debajo de un póster.
+```text
 [SFX: una cortina pesada se descorre]
 [GESTO: Descorre la cortina. Detrás, un ala gira sobre un pedestal.]
 ISHIDA [concentración]: Modelo Shiden. Laca roja en siete capas. Propulsor de ráfaga.  // mostrando la joya
@@ -141,7 +149,7 @@ MASARU [en blanco]: …  // haciendo la cuenta ([en blanco]: no le da)
 
 (si RECHAZAR)
 [GESTO: Se agarra la cabeza con las dos manos.]
-MASARU [sorpresa]: ¡En mi vida *entera*! [EFECTO: sacudida, énfasis]  // dándose cuenta en voz alta
+MASARU [sorpresa]: ¡En mi vida *entera*! [EFECTO: énfasis]  // dándose cuenta en voz alta
 ISHIDA [fastidio]: Es posible. Por eso es una Shiden.  // defendiendo la marca
 [GESTO: Le tira de la manga.]
 NINA [sorpresa]: Masaru…  // frenándolo

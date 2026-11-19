@@ -26,7 +26,7 @@ MASARU [concentración]: Parece una casa que se comió un taller.  // mirando la
 NINA [alegría]: Me gusta.  // sintiéndose bienvenida
 [FONDO: boneyard]
 [MÚSICA: folk rock de taller, entre amigos]
-[NARRACIÓN]: Adentro es una casa grande que alguien llenó de chatarra. Hay luces colgadas, plantas en las ventanas y una pava todavía caliente sobre la mesa.
+[NARRACIÓN]: Adentro es una casa grande que alguien llenó de chatarra. Hay luces colgadas, plantas en las ventanas y una tetera todavía caliente sobre la mesa.
 [GESTO: Arrastra los pies.]
 MASARU [cansancio]: Si acá también nos preguntan algo, me desmayo.  // arrastrando el cansancio
 [GESTO: Esquiva una hélice apoyada contra un banco.]
@@ -61,7 +61,6 @@ CHICA DEL TALLER [alegría]: La que te caiga bien.  // confiando en el azar
 - **Salida:** Las alas existen.
 ```text
 [SFX: una soldadora chisporrotea]
-[EFECTO: temblor]
 [ENTRA: Hombre de la soldadora, centro]
 [GESTO: Levanta la careta de soldar.]
 HOMBRE DE LA SOLDADORA [concentración]: ¿Qué inventaste ahora?  // desconfiando por experiencia
@@ -87,7 +86,7 @@ HOMBRE DE LA SOLDADORA [aburrimiento]: Los refrigeradores no vuelan.  // poniend
 CHICA DEL TALLER [alegría]: Todavía.  // ganando la discusión
 [SFX: el armazón cae de golpe sobre la mesa de trabajo]
 [EFECTO: temblor]
-NINA [sorpresa]: ¡Perdón! ¡No fui yo! …Creo que no fui yo. [EFECTO: texto rápido]  // pidiendo perdón por si acaso
+NINA [sorpresa]: ¡Yo no toqué nada! …Creo que no toqué nada.  // defendiéndose por si acaso
 [SALE: Hombre de la soldadora]
 [ILUSTRACIÓN] Las alas de chatarra cuelgan de una cadena: una hélice vieja, una rueda, chapas de cinco colores distintos. El sol de las claraboyas las atraviesa.
 [ENTRA: Masaru, centro]
@@ -140,8 +139,11 @@ HOMBRE DE LA SOLDADORA [concentración]: ¡Caracara! ¡Mañana a las seis hay en
 [GESTO: Grita hacia el fondo, sin darse vuelta.]
 CARACARA [alegría]: ¡Ya sé, jefe!  // contestando sin darse vuelta
 [GESTO: Abraza las alas de chatarra.]
-NINA [alegría]: ~¿Puedo vivir acá?~Muchas gracias. Muchas. Mañana vengo a limpiarles el taller entero.  // agradeciendo de más
-CARACARA [alegría]: Mañana entreno. Ven pasado.  // aceptando sin darle importancia
+NINA [ganas]: ~¿Puedo vivir acá?~No me las regalen. Los sábados limpio el taller. Todos. Hasta que valgan lo que valen. [EFECTO: texto rápido]  // poniendo ella el precio
+CARACARA [sorpresa]: ¿Todos los sábados? Esta chatarra no vale tanto.  // intentando bajarle el precio
+NINA [concentración]: Para mí sí.  // sosteniendo el trato
+[GESTO: Le da la mano. Le deja grasa en los dedos.]
+CARACARA [alegría]: Trato. Los sábados entreno a las seis. Ven a las ocho.  // aceptando con gusto
 [SALE: Caracara]
 ```
 ### Escena 3 · Lo que no preguntaron
@@ -170,7 +172,7 @@ CARACARA [fastidio]: …No, no la conozco. Pero mi instinto nunca falla. [EFECTO
 CARACARA [aburrimiento]: Bueno. Esa vez no cuenta. Llovía.  // descontando un error
 CARACARA [fastidio]: ¿Y esa otra? ¿Llevas un cuaderno con mis fallas o qué? [EFECTO: sacudida]  // ofendiéndose a medias
 [GESTO: Mira el camino por donde se fue el carrito.]
-CARACARA [alegría]: Mameluco celeste. Limpia mejor que tú. No la vas a poder perder de vista.  // describiéndola con cariño
+CARACARA [alegría]: Overol celeste. Limpia mejor que tú. No la vas a poder perder de vista.  // describiéndola con cariño
 [GESTO: Se ríe y corta sin despedirse.]
 CARACARA [calma]: Te debo una.| …Otra. Sí. Ya sé que llevas la cuenta. [EFECTO: frase clave]  // agradeciendo a su manera
 [SALE: Caracara]

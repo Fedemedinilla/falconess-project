@@ -30,14 +30,14 @@ NINA [en blanco]: … [EFECTO: globo que tarda]  // callándose ([en blanco]: no
 [NARRACIÓN]: Adentro, Altair Systems es blanco, azul marino y silencio. Las pantallas muestran números que nadie mira.
 [GESTO: Susurra, aunque nadie le pidió silencio.]
 MASARU [concentración]: ¿Por qué estoy susurrando? [EFECTO: susurro]  // contagiándose del lugar
-[GESTO: También susurra.]
-NINA [concentración]: No sé. Pero yo también. [EFECTO: susurro]  // acompañándolo
+[GESTO: Le contesta en el mismo susurro.]
+NINA [concentración]: No sé. Pero yo también.  // acompañándolo
 [ENTRA: Mujer del visor celeste, derecha]
 [GESTO: Aparece detrás de ellos, con una tableta y un visor celeste.]
 MUJER DEL VISOR CELESTE [concentración]: Bienvenidos a Altair Systems. Analista Quist. Detecté dos visitantes sin turno.  // registrándolos antes de saludarlos
 [NOMBRE: Mujer del visor celeste → Quist]
 [GESTO: Da un saltito.]
-NINA [sorpresa]: ¡Perdón! Veníamos por unas alas. Básicas. [EFECTO: sacudida]  // disculpándose por existir
+NINA [sorpresa]: ¡Buenas tardes! Veníamos por unas alas. Básicas. [EFECTO: sacudida]  // presentándose de un salto
 [GESTO: Desliza el dedo por la tableta.]
 QUIST [calma]: Tenemos alas básicas. Sin costo. Para candidatas que completen la evaluación.  // ofreciendo con condiciones
 MASARU [ganas]: ¿Sin costo? ¿Gratis de verdad?  // entusiasmándose antes de leer la letra chica
@@ -65,9 +65,9 @@ QUIST [concentración]: Pregunta tres. Grupo sanguíneo. Pregunta cuatro. Alergi
 [NARRACIÓN]: Tres horas después. La barra de progreso marca trece por ciento.
 [GESTO: Se inclina hacia él sin mover la cabeza.]
 NINA [cansancio]: Masaru. ¿En qué pregunta vamos? [EFECTO: susurro]  // preguntando a escondidas
-[GESTO: Mira un punto fijo en el techo.]
-MASARU [cansancio]: Ni idea. Yo me perdí en la cuatro punto dos bis. [EFECTO: susurro]  // confesando que se fue
-MASARU [en blanco]: Desde ahí, mi cerebro es un protector de pantalla.  // rindiéndose
+[GESTO: Le contesta igual de bajo, mirando un punto fijo en el techo.]
+MASARU [cansancio]: Ni idea. Yo me perdí en la cuatro punto dos bis.  // confesando que se fue
+MASARU [cansancio]: Desde ahí, mi cerebro es un protector de pantalla.  // rindiéndose
 [GESTO: Se ríe y se tapa la boca.]
 NINA [alegría]: Perdón.  // riéndose sin querer
 [GESTO: No se ríe.]
@@ -111,7 +111,7 @@ MASARU [ganas]: Corremos.  // aceptando con alivio
 [MÚSICA: la música del laboratorio se apaga]
 [MÚSICA: tema de chiste épico: la gran huida]
 [GESTO: Hace una reverencia mientras ya se va.]
-NINA [alegría]: ¡Muchas gracias por las preguntas! ¡Eran muy buenas! ¡Perdón! [EFECTO: texto rápido]  // huyendo con buenos modales
+NINA [alegría]: ¡Muchas gracias por las preguntas! ¡Eran muy buenas! ¡Perdón!  // huyendo con buenos modales
 [SFX: dos pares de zapatillas corriendo sobre piso brillante]
 [SALE: Nina]
 [SALE: Masaru]

@@ -18,11 +18,11 @@ _Altair Systems_
 [NARRACIÓN]: Media hora de avenida. El carrito sigue torciendo a la izquierda, como si quisiera volver al taller.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
-[GESTO: Lee el cuaderno mientras camina, sin mirar la vereda.]
+[GESTO: Lee el cuaderno mientras camina, sin mirar la acera.]
 MASARU [concentración]: En teoría, ya tenemos alas. Faltan dos cosas que no existen en nuestro presupuesto.  // haciendo la cuenta en voz alta
 MASARU [cansancio]: Nuestro presupuesto tampoco existe. Es un dibujo de una moneda.  // mostrando la página
 NINA [ganas]: Puedo limpiar más. Antes de entrar y después de salir.  // ofreciendo lo único que tiene
-MASARU [en blanco]: Ya limpias antes de entrar y después de salir.  // recordándole la verdad
+MASARU [cansancio]: Ya limpias antes de entrar y después de salir.  // recordándole la verdad
 NINA [concentración]: Entonces durante.  // redoblando sin pensarlo
 [SFX: un pitido de sirena; un parlante oxidado en un poste se enciende]
 [EFECTO: temblor]
@@ -35,11 +35,11 @@ NINA [concentración]: Lo dijiste en la pregunta veintiocho.  // recordándoselo
 MASARU [cansancio]: Lo dije con la cara. No cuenta.  // perdiendo con dignidad
 [GESTO: Se acerca a Nina y habla sin mover la boca.]
 MASARU [concentración]: Si no vamos, ¿qué pasa? ¿Nos miden desde lejos? [EFECTO: susurro]  // proponiendo desobedecer en voz baja
-NINA [en blanco]: Ya nos miden desde lejos.  // señalando el poste con los ojos
+NINA [concentración]: Ya nos miden desde lejos.  // señalando el poste con los ojos
 VOZ DEL PARLANTE [calma]: Ahora. [EFECTO: sacudida]  // terminando la discusión
 [MÚSICA: tema de chiste épico]
 [GESTO: Da vuelta el carrito en una sola maniobra, sin saber cómo.]
-NINA [sorpresa]: ¡Ya vamos! ¡Perdón! ¡Ya vamos!  // obedeciendo a un poste
+NINA [sorpresa]: ¡Ya vamos! ¡Ya mismo! ¡Ya vamos!  // obedeciendo a un poste
 [SALE: Nina]
 [SALE: Masaru]
 ```
@@ -124,6 +124,8 @@ NINA [fastidio]: No. Dijo el rojo.  // negándose sin pensarlo dos veces
 NINA [sorpresa]: Dijo que tiremos el azul.  // recordándole la orden
 [GESTO: Se guarda el chip azul en el bolsillo del pecho.]
 MASARU [concentración]: Lo tiro después. En casa. Con calma.  // guardándoselo en el bolsillo
+[GESTO: Cierra la mano sobre el chip blanco.]
+NINA [ganas]: Me llevo este. Si no funciona, que sea mi culpa.  // eligiendo ella, y haciéndose cargo
 NINA [concentración]: Vamos. Despacito. [EFECTO: susurro]  // saliendo sin molestar
 VOZ DEL FONDO DEL LABORATORIO [fastidio]: …¿Cómo que no estás en el hangar?  // hablando por teléfono, lejos
 VOZ DEL FONDO DEL LABORATORIO [calma]: Entonces van a llegar antes que tú. [EFECTO: globo que tarda]  // dejando caer la frase como una apuesta
