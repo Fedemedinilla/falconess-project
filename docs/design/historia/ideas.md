@@ -593,3 +593,17 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Propuesta (Claude, falta aprobar):** capítulo 5 (Altair, el chip) y capítulo 6 (Kōryū, el casco);
   la radio que anuncia el entrenamiento de Caracara pasa al final del 6. Masaru se guarda el chip
   azul «por si acaso». La firma de Peregrina es ilegible: siguen sin saber quién era.
+
+### I32 · Quién avisa a Peregrina, y el casco blanco (2026-11-19)
+
+- **Decidido (dueño):** mientras se van del laboratorio, se oye a Cernícala por teléfono: «¿Cómo que
+  no estás en el hangar?… Entonces van a llegar antes que tú». Por eso Peregrina viene corriendo y
+  putea cuando los ve: quiere llegar antes que ellos.
+- **Decidido (dueño):** el casco blanco, como el chip blanco, tiene alguna conexión con la línea de
+  Nina (`secretos.md` S2). Peregrina lo elige por instinto; Cernícala, después de estudiarla
+  («…Quizás»).
+- **Decidido (dueño):** dos capítulos largos: 5 (Altair, el chip) y 6 (Kōryū, el casco), escritos
+  con las biblias, sin copiar al pie de la letra las palabras del dueño.
+- **Propuesta (Claude, falta aprobar):** Ishida avisa que «ese casco no sale de ese cajón»; Peregrina
+  nunca dice su nombre porque da por hecho que todos la conocen; la radio del final del 6 anuncia el
+  entrenamiento de Caracara; Masaru se guarda el chip azul si el jugador elige «desviar».

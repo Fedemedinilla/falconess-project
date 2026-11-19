@@ -2,7 +2,7 @@
 
 Borrador (2026-11-18), escrito con `docs/design/biblia-escritura.md` y `docs/design/investigacion-personajes.md`.
 No es canon hasta que el dueño lo apruebe. Formato: `NOMBRE [expresión]: texto`, un renglón por globo; después
-de `//`, la acción que sostiene la línea. Prototipo jugable: «Vuela Alto · Capítulos 2 a 4».
+de `//`, la acción que sostiene la línea. Prototipo jugable: «Vuela Alto · Capítulos 2 a 6».
 
 ## Historia principal · Capítulo 4 · Chatarra con alas
 
@@ -119,6 +119,21 @@ NINA [alegría]: Te queda bien.  // riéndose también
 [GESTO: Se tambalea con las alas puestas.]
 NINA [alegría]: Pesan como un armario.  // diciendo lo obvio con felicidad
 CHICA DEL TALLER [alegría]: Un armario que vuela. Vas a ver.  // prometiendo sin dudar
+[GESTO: Aprieta los ojos y mira fijo el ala izquierda.]
+NINA [concentración]: …  // intentando mover el ala izquierda ([concentración]: lo intenta en serio)
+CHICA DEL TALLER [sorpresa]: ¿Qué haces?  // descubriendo el error
+NINA [ganas]: La muevo. Con la cabeza. ¿No es así?  // explicando lo que imaginó
+HOMBRE DE LA SOLDADORA [aburrimiento]: Así es. Cuando tienes con qué.  // corrigiendo sin burlarse, desde el fondo
+[GESTO: Golpea el bastidor vacío con un nudillo. Suena hueco.]
+CHICA DEL TALLER [concentración]: Le falta el controlador. Un chip así de chiquito.  // nombrando la pieza que falta
+CHICA DEL TALLER [calma]: Es el que te conecta con las alas. Sin él, pesan y nada más.  // explicando con las manos ocupadas
+HOMBRE DE LA SOLDADORA [concentración]: Y un casco donde ponerlo. Si no, no ves nada cuando abres.  // sumando la segunda pieza
+[GESTO: Escribe las dos palabras y las subraya dos veces.]
+MASARU [concentración]: Chip. Casco.  // anotando la lista de lo imposible
+MASARU [cansancio]: ¿Alguno de los dos crece en la chatarra?  // esperando un milagro
+HOMBRE DE LA SOLDADORA [aburrimiento]: No.  // cerrando la esperanza en una palabra
+[GESTO: Se limpia una mano en el pantalón y saca el teléfono del bolsillo de atrás.]
+CHICA DEL TALLER [ganas]: Eso déjamelo a mí.  // tomando el problema como propio
 [GESTO: Grita desde el fondo del taller.]
 HOMBRE DE LA SOLDADORA [concentración]: ¡Caracara! ¡Mañana a las seis hay entrenamiento! ¡No te olvides! [EFECTO: sacudida]  // llamándola desde el fondo
 [NOMBRE: Chica del taller → Caracara]
@@ -129,21 +144,35 @@ NINA [alegría]: ~¿Puedo vivir acá?~Muchas gracias. Muchas. Mañana vengo a li
 CARACARA [alegría]: Mañana entreno. Ven pasado.  // aceptando sin darle importancia
 [SALE: Caracara]
 ```
-### Escena 3 · De vuelta
+### Escena 3 · Lo que no preguntaron
 
 - **Objetivo:** Volver a Vuela Alto con las alas.
-- **Obstáculo:** Ninguno: van felices.
-- **Giro:** No saben con quién estuvieron.
-- **Salida:** Mañana a las seis empieza algo.
+- **Obstáculo:** Las alas no vuelan todavía: faltan el chip y el casco.
+- **Giro:** No saben con quién estuvieron; la chica del taller hace una llamada.
+- **Salida:** Alguien, en algún lado, le debe un favor a Caracara.
 ```text
-[FONDO: exterior]
-[MÚSICA: tema de Vuela Alto]
-[GESTO: Camina torcida por el peso de las alas.]
+[FONDO: boneyard-ext]
+[MÚSICA: el folk del taller sigue, más bajo, desde adentro]
+[NARRACIÓN]: El carrito tiene una rueda que gira para el lado contrario. Las alas suenan como una ferretería en cada piedra.
+[GESTO: Empuja el carrito con todo el cuerpo.]
 NINA [alegría]: Qué amable la chica del taller.  // volviendo feliz
 MASARU [concentración]: Mucho. ¿Cómo se llamaba?  // dándose cuenta tarde
 NINA [en blanco]: …No le pregunté. [EFECTO: globo que tarda]  // dándose cuenta también ([en blanco]: vergüenza)
 MASARU [en blanco]: Yo|… tampoco.  // compartiendo la culpa
-[NARRACIÓN]: En la radio de un auto que pasa, alguien anuncia el entrenamiento abierto de Caracara, la estrella de Boneyard, mañana a las seis.
-NINA [ganas]: Mañana a las seis empiezo a *volar*. [EFECTO: énfasis]  // decidiendo
-MASARU [cansancio]: Mañana a las seis yo duermo.  // cerrando con su verdad
+NINA [ganas]: La próxima le pregunto. Y le limpio el taller.  // prometiendo volver
+[SALE: Nina]
+[SALE: Masaru]
+[ENTRA: Caracara, centro]
+[GESTO: Sale al porche con el teléfono en la oreja.]
+CARACARA [alegría]: Hola, hola. ¿Te desperté? Mejor. Escucha.  // llamando sin pedir permiso
+CARACARA [ganas]: Necesito un controlador. De los básicos. Para una chica que no voló nunca.  // pidiendo el favor de frente
+CARACARA [fastidio]: …No, no la conozco. Pero mi instinto nunca falla. [EFECTO: globo que tarda]  // defendiendo su olfato
+CARACARA [aburrimiento]: Bueno. Esa vez no cuenta. Llovía.  // descontando un error
+CARACARA [fastidio]: ¿Y esa otra? ¿Llevas un cuaderno con mis fallas o qué? [EFECTO: sacudida]  // ofendiéndose a medias
+[GESTO: Mira el camino por donde se fue el carrito.]
+CARACARA [alegría]: Mameluco celeste. Limpia mejor que tú. No la vas a poder perder de vista.  // describiéndola con cariño
+[GESTO: Se ríe y corta sin despedirse.]
+CARACARA [calma]: Te debo una.| …Otra. Sí. Ya sé que llevas la cuenta. [EFECTO: frase clave]  // agradeciendo a su manera
+[SALE: Caracara]
+[MÚSICA: se apaga]
 ```
