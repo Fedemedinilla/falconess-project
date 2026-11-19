@@ -151,4 +151,7 @@ MASARU [cansancio]: Gracias por… el brillo.  // despidiéndose sin saber cómo
 [NARRACIÓN]: Al salir pasan junto a un póster gigante: una corredora de rojo, en picada, sonriendo como si ya hubiera ganado.
 [GESTO: Se queda mirando el póster.]
 NINA [concentración]: Algún día quiero sonreír así. Sin la parte de la picada.  // deseando en voz baja
+[SALE: Ishida]
+[SALE: Nina]
+[SALE: Masaru]
 ```

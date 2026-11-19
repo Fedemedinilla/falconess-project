@@ -53,8 +53,6 @@ NINA [concentración]: ¿Contando las veces que me despierto a ensayar conversac
 QUIST [calma]: Sí.  // anotando todo
 NINA [en blanco]: …Pocas.  // dándose cuenta tarde de lo que dijo ([en blanco]: se arrepiente)
 QUIST [concentración]: Pregunta tres. Grupo sanguíneo. Pregunta cuatro. Alergias. Pregunta cuatro punto uno. Alergias emocionales. [EFECTO: texto rápido]  // acelerando sin respirar
-MASARU [sorpresa]: ¿Alergias emo…?  // quedándose atrás
-QUIST [calma]: Cuatro punto dos.  // sin esperar
 [NARRACIÓN]: Tres horas después. La barra de progreso marca trece por ciento.
 [GESTO: Se inclina hacia él sin mover la cabeza.]
 NINA [cansancio]: Masaru. ¿En qué pregunta vamos? [EFECTO: susurro]  // preguntando a escondidas
@@ -68,13 +66,6 @@ NINA [alegría]: Perdón.  // riéndose sin querer
 [GESTO: No se ríe.]
 QUIST [calma]: Anotado: «la ter me miró».  // registrándolo todo
 NINA [concentración]: Yo me perdí en la dieciocho. La que había que graficar.  // confesando lo suyo
-[GESTO: Gira la tableta.]
-QUIST [concentración]: Su gráfico quedó en el expediente.  // mostrando la prueba
-[NARRACIÓN]: La pregunta dieciocho pedía graficar «su confianza en sí misma durante el último año». La línea de Nina baja y se sale de la pantalla.
-MASARU [sorpresa]: Nina… la línea se sale de la tableta.  // viendo algo que no esperaba
-[GESTO: Se rasca la nuca.]
-NINA [en blanco]: ~Es que se cayó~Es que no me alcanzaba la tableta.  // tapando la verdad con un chiste ([en blanco]: no quiere que se note)
-QUIST [calma]: Anotado.  // registrando sin juzgar
 QUIST [concentración]: Pregunta veintisiete. Cantidad de amigos cercanos.  // tocando sin saberlo la herida
 NINA [en blanco]: … [EFECTO: globo que tarda]  // quedándose sin aire ([en blanco]: la pregunta le pegó)
 [GESTO: Mira a Masaru de reojo.]
@@ -85,7 +76,7 @@ QUIST [calma]: Necesito un número.  // pidiendo lo imposible
 [GESTO: Levanta un dedo, despacio. Después, medio más.]
 NINA [ganas]: Uno. …Uno y medio, con el viejo.  // eligiendo su número
 [GESTO: Gira la tableta hacia Masaru.]
-QUIST [concentración]: Pregunta veintiocho, para el acompañante. ¿Ha terminado alguna carrera?  // tocando la herida de él
+QUIST [concentración]: Pregunta veintiocho, para el acompañante. ¿Ha terminado sus estudios superiores?  // tocando la herida de él
 > [ELECCIÓN] Qué contesta Masaru
 > [ACEPTAR] No.
 > [RECHAZAR] Eso es privado.
@@ -102,7 +93,7 @@ MASARU [fastidio]: ¿Cuántas preguntas tiene?  // temiendo la respuesta
 QUIST [calma]: Cuarenta.  // contestando con exactitud
 
 (si DESVIAR)
-QUIST [concentración]: Llegar al final.  // definiendo sin ironía
+QUIST [concentración]: Llegar al final. Con título.  // definiendo sin ironía
 MASARU [cansancio]: Ah. Entonces no.  // riéndose de sí mismo para no decir más
 [GESTO: Le toca el codo.]
 NINA [concentración]: Masaru.  // llamándolo en voz baja
@@ -110,7 +101,7 @@ NINA [concentración]: Masaru.  // llamándolo en voz baja
 MASARU [ganas]: Sí.  // entendiendo sin que le expliquen
 NINA [ganas]: ¿Corremos?  // proponiendo la huida
 MASARU [ganas]: Corremos.  // aceptando con alivio
-[MÚSICA: la música del laboratorio se corta en seco]
+[MÚSICA: la música del laboratorio se apaga]
 [MÚSICA: tema de chiste épico: la gran huida]
 [GESTO: Hace una reverencia mientras ya se va.]
 NINA [alegría]: ¡Muchas gracias por las preguntas! ¡Eran muy buenas! ¡Perdón! [EFECTO: texto rápido]  // huyendo con buenos modales
@@ -121,4 +112,5 @@ NINA [alegría]: ¡Muchas gracias por las preguntas! ¡Eran muy buenas! ¡Perdó
 [MÚSICA: se corta; vuelve el silencio del laboratorio]
 [GESTO: Sola, guarda la tableta.]
 QUIST [calma]: Evaluación interrumpida en la pregunta veintiocho de doscientas doce.| Resultado: interesantes. [EFECTO: frase clave]  // dejándolos en sus registros
+[SALE: Quist]
 ```
