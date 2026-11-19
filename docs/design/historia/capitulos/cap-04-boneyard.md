@@ -15,7 +15,7 @@ _Boneyard Works_
 - **Salida:** Deciden construirlas.
 ```text
 [FONDO: boneyard-ext]
-[NARRACIÓN]: Boneyard Works es un granero enorme rodeado de chatarra, con unas alas pintadas a mano en la pared. Hay ropa colgada al sol y una huerta.
+[NARRACIÓN]: Boneyard Works es un granero enorme con unas alas pintadas a mano en la pared. Hay ropa colgada al sol, una huerta y una cerca hecha con hélices.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
 [GESTO: Tacha la tercera línea del cuaderno, por adelantado.]
