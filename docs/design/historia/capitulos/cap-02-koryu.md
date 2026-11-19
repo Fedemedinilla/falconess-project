@@ -81,8 +81,22 @@ MASARU [ganas]: Y trofeos. Este es más alto que tú.  // distrayéndose con lo 
 [GESTO: Aparece sin hacer ruido, con las manos detrás de la espalda.]
 HOMBRE DE GUANTES BLANCOS [calma]: Bienvenidos a Kōryū Racing. Ishida, asesor de pilotos. ¿En qué puedo servirles?  // recibiendo con protocolo
 [NOMBRE: Hombre de guantes blancos → Ishida]
+[GESTO: Señala el techo, como si el violín estuviera colgado ahí.]
+NINA [sorpresa]: Perdón. Una pregunta antes. Esa música… ~¿es un parlante muy ca~¿Es un violín? ¿Un violín de *verdad*? ¿Ahora? [EFECTO: énfasis]  // descubriendo de dónde sale la música
+[GESTO: Mira las rejillas del techo.]
+MASARU [concentración]: Yo pensé que era el aire acondicionado. Pero muy afinado.  // aportando lo que puede
+[GESTO: Sonríe con una sonrisa ensayada mil veces. No es mala; es perfecta.]
+ISHIDA [alegría]: Ja, ja. Claro que no, pequeña.  // corrigiendo con una sonrisa de catálogo
+[GESTO: Señala con un guante blanco una puerta dorada, al fondo.]
+ISHIDA [calma]: No es *una* persona. Es nuestra orquesta sinfónica. Ensaya detrás de esa puerta. [EFECTO: globo que tarda, énfasis]  // diciendo lo increíble como algo normal
+NINA [sorpresa]: ¿Queeeeé? [EFECTO: texto lento, sacudida]  // sin poder creerlo
+[GESTO: Se le cae el cuaderno.]
+MASARU [sorpresa]: ¿Queeeeeeeeé? [EFECTO: texto lento, sacudida]  // sin poder creerlo, más largo
+MASARU [concentración]: ¿Tienen una orquesta… para el *fondo*? [EFECTO: énfasis]  // tratando de entender el tamaño de todo
+[GESTO: Se acomoda un guante.]
+ISHIDA [calma]: Para el fondo, para la entrada y los martes, para el almuerzo.  // contestando sin una gota de ironía
 [GESTO: Hace una reverencia que nadie le pidió.]
-NINA [ganas]: ¡Buenas tardes! Venimos por unas alas. De práctica. Básicas. Las más básicas.  // presentándose de más
+NINA [ganas]: Eh… ¡Buenas tardes! Venimos por unas alas. De práctica. Básicas. Las más básicas.  // presentándose de más
 [GESTO: Sonríe un milímetro.]
 ISHIDA [calma]: En Kōryū no existe lo básico. Existe lo esencial. Acompáñenme.  // vendiendo sin vender
 [SFX: una cortina pesada se descorre]
@@ -100,7 +114,7 @@ ISHIDA [calma]: Es la de práctica de nuestras corredoras juveniles.  // subiend
 NINA [ganas]: ¡Perfecto! ¿Cómo hacemos? ¿Hay que firmar algo? ¿Llenar algo? [EFECTO: texto rápido]  // apurándose antes de tiempo
 [GESTO: Junta las manos.]
 ISHIDA [calma]: Solo una pregunta. ¿Cómo piensan pagarla?  // cobrando con suavidad
-[MÚSICA: corta en seco]
+[MÚSICA: detrás de la puerta dorada, la orquesta deja de tocar en seco]
 NINA [en blanco]: …  // cayendo a tierra ([en blanco]: no lo había pensado)
 MASARU [concentración]: ¿Cuánto… sale? [EFECTO: globo que tarda]  // preguntando lo que no quiere saber
 ISHIDA [calma]: Doscientos cuarenta mil.| Sin el *propulsor*. [EFECTO: énfasis, frase clave]  // diciendo la cifra como quien dice la hora

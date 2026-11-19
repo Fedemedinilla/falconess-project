@@ -15,7 +15,7 @@ _Boneyard Works_
 - **Salida:** Deciden construirlas.
 ```text
 [FONDO: boneyard]
-[MÚSICA: rock de garage en una radio mal sintonizada]
+[MÚSICA: folk rock de taller, entre amigos]
 [NARRACIÓN]: Boneyard Works parece una casa grande que alguien llenó de chatarra. Hay luces colgadas, plantas en las ventanas y una pava todavía caliente sobre la mesa.
 [ENTRA: Nina, izquierda]
 [ENTRA: Masaru, centro]
