@@ -631,3 +631,18 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Idea (dueño):** en algún momento Masaru decide volver a estudiar, y eso choca con ser el
   entrenador de Nina. ¿Se queda o se va? Nina le dice sonriendo que vaya, pero por dentro llora y
   cree que es egoísta llorar porque quiere que se quede.
+
+### I35 · Qué hacen las alas con lo que siente la Falconess (2026-11-21)
+
+- **Pregunta del dueño (abierta):** si las alas dependen de cómo está la cabeza, ¿qué pasa con alguien
+  con un pasado triste como el de Nina? ¿Qué hacen con el rencor en carrera: mejoran, se esfuerzan
+  más, se rinden? ¿Hay un seguro que las apague si la Falconess está comprometida? ¿Qué pasa si
+  fallan en plena carrera? ¿Se corre con lluvia? ¿Qué pasa si un rayo le pega al bastidor? Mostrarlo
+  en el Modo Historia de Nina.
+- **Propuesta (Claude, falta aprobar):** «las alas no mienten» (amplifican lo que se siente de
+  verdad), el repliegue de seguridad, el chip blanco que escucha de más, y lluvia y tormenta; ver la
+  respuesta del 2026-11-21.
+- **Dato del motor (verificado en `packages/sim/src/rulesets/v3/constants.ts`):** la carrera v3 no
+  tiene clima, las alas no se gastan ni se rompen (`noWear`), el ánimo ya pesa y existe la caída
+  forzada cuando se vacía la reserva. Lluvia, fallas y rayos serían escenas del Modo Historia, no
+  reglas del motor (congelado, ADR-0010).
