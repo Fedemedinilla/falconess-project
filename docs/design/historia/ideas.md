@@ -607,3 +607,15 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
 - **Propuesta (Claude, falta aprobar):** Ishida avisa que «ese casco no sale de ese cajón»; Peregrina
   nunca dice su nombre porque da por hecho que todos la conocen; la radio del final del 6 anuncia el
   entrenamiento de Caracara; Masaru se guarda el chip azul si el jugador elige «desviar».
+
+### I33 · La rival de Nina: una que no se queda quieta (2026-11-21)
+
+- **Decidido (dueño):** Nina tiene una rival desde sus inicios. No es el «primer jefe» de anime que
+  después se vuelve su mejor amiga o desaparece con su nivel de la primera temporada: sigue
+  entrenando y le gana carreras importantes. Referencias del dueño: Jungle Pocket, Mejiro McQueen y
+  Grass Wonder (Umamusume), secundarias que terminan ganando y le muestran a la protagonista y al
+  jugador que la rival tampoco se quedó quieta; Garou (One Punch Man), que empieza opuesto al
+  protagonista y a quien se lo ve esforzarse como a un protagonista; Ritchie (Pokémon), simpático,
+  que le gana a Ash en la liga de forma merecida: los dos merecían ganar.
+- **Propuesta (Claude, falta aprobar):** opciones de concepto en la respuesta del 2026-11-21 («la de
+  la pregunta doscientos doce», «la de las cuatro y media», «la que no debería volar»).
