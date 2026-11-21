@@ -1,10 +1,10 @@
-# cap-04-boneyard
+# cap-06-boneyard
 
 Borrador (2026-11-18), escrito con `docs/design/biblia-escritura.md` y `docs/design/investigacion-personajes.md`.
 No es canon hasta que el dueño lo apruebe. Formato: `NOMBRE [expresión]: texto`, un renglón por globo; después
-de `//`, la acción que sostiene la línea. Prototipo jugable: «Vuela Alto · Capítulos 2 a 6».
+de `//`, la acción que sostiene la línea. Prototipo jugable: «Vuela Alto · Capítulos 2 a 8».
 
-## Historia principal · Capítulo 4 · Chatarra con alas
+## Historia principal · Capítulo 6 · Chatarra con alas
 
 _Boneyard Works_
 ### Escena 1 · El taller

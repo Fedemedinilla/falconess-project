@@ -680,3 +680,11 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   `wind-hover` (tramo medio, en mitad del pelotón), Caracara `scavenger-stride` (en los saltos). Los
   disparadores posibles hoy son tramo, tipo de terreno, puesto, calor y energía
   (`packages/schema/src/skill.ts`); «ser pasada» o «duelo» no existen como disparador.
+
+### I37 · Dos capítulos antes de las escuderías (2026-11-21)
+
+- **Decidido (dueño):** hay que escribir al menos dos capítulos entre el 1 y el de Kōryū: los que eran
+  2 a 6 pasan a ser 4 a 8. El capítulo 2 nuevo: conocer más a los personajes y a Nina trabajando de
+  limpieza.
+- **Propuesta (Claude, falta aprobar):** capítulo 2 «Cinco y un minuto» (`capitulos/cap-02-trabajo.md`).
+  El 3 queda para cuando a Nina le pica el bichito.

@@ -1,10 +1,10 @@
-# cap-02-koryu
+# cap-04-koryu
 
 Borrador (2026-11-18), escrito con `docs/design/biblia-escritura.md` y `docs/design/investigacion-personajes.md`.
 No es canon hasta que el dueño lo apruebe. Formato: `NOMBRE [expresión]: texto`, un renglón por globo; después
-de `//`, la acción que sostiene la línea. Prototipo jugable: «Vuela Alto · Capítulos 2 a 6».
+de `//`, la acción que sostiene la línea. Prototipo jugable: «Vuela Alto · Capítulos 2 a 8».
 
-## Historia principal · Capítulo 2 · Rojo de exhibición
+## Historia principal · Capítulo 4 · Rojo de exhibición
 
 _Kōryū Racing_
 ### Escena 1 · Las alas que no hay
