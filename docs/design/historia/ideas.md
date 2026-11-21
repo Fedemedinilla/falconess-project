@@ -656,3 +656,12 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   don y las alas no lo son todo (y que no son «waifus con alas»): Peregrina, la competición;
   Cernícala, el análisis; Caracara, divertirse, volar y probar lo que le hizo al bastidor. Es
   también una forma de que otras Falconess ayuden a Nina.
+
+### I36 · El límite que cada una abre a su manera (2026-11-21)
+
+- **Idea (dueño):** como Oguri Cap en Cinderella Grey: todas a su alrededor terminan despertando su
+  límite menos ella; se la ve intentando y llegando, pero sin poder atravesarlo, porque cada límite
+  se abre distinto y ella no lo estaba intentando bien. Sale del foco de cada Falconess (I35). Solo
+  para el Modo Historia: el motor de carrera no entra en esto.
+- **Propuesta (Claude, falta aprobar):** nombre, reglas y camino de Nina en la respuesta del
+  2026-11-21.
