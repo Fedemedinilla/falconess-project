@@ -171,6 +171,13 @@ Nació en la carrera de la paz; la escudería sombra la amenaza; la protagonista
   que define a una Falconess.
 - Abierto: si los sentidos aumentados de las Falconess tienen que ver con esto (dueño: «se verá
   luego»).
+- **Decidido (dueño, 2026-11-21): emociones que suben y bajan de verdad, y consecuencias que quedan.**
+  Lo que a Umamusume le falta: una derrota no se arregla con un abrazo y una sonrisa, y después de una
+  carrera extrema nadie se pone a bailar como idol, porque eso diluye todo y hace que nada importe.
+  Sin volverse gris ni trágico, y sin que sean todas amigas kawaii: entre Falconess puede haber
+  envidia, rencor o una que subestima a la otra (no odio). Hay días grises con lluvia, entrenamientos
+  en que el chip no le responde porque ella está desequilibrada, lesiones y recuperación. Las escenas
+  tristes hacen brillar las felices, y hasta las comunes.
 
 ## 9. Glosario
 

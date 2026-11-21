@@ -622,3 +622,12 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   lo dice con respeto: tienen todo para ganarle, quizás algún día; hoy no.
 - **Propuesta (Claude, falta aprobar):** opciones de concepto en la respuesta del 2026-11-21 («la de
   la pregunta doscientos doce», «la de las cuatro y media», «la que no debería volar»).
+
+### I34 · Subidas y bajadas de verdad; Masaru y el estudio (2026-11-21)
+
+- **Decidido (dueño):** tono en `docs/world.md` §8: consecuencias que quedan, envidia y rencor
+  posibles, días grises, el chip que no responde si ella está desequilibrada, lesiones y recuperación.
+  Nada de bailes de idol después de las carreras.
+- **Idea (dueño):** en algún momento Masaru decide volver a estudiar, y eso choca con ser el
+  entrenador de Nina. ¿Se queda o se va? Nina le dice sonriendo que vaya, pero por dentro llora y
+  cree que es egoísta llorar porque quiere que se quede.
