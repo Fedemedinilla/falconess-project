@@ -617,5 +617,8 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   jugador que la rival tampoco se quedó quieta; Garou (One Punch Man), que empieza opuesto al
   protagonista y a quien se lo ve esforzarse como a un protagonista; Ritchie (Pokémon), simpático,
   que le gana a Ash en la liga de forma merecida: los dos merecían ganar.
+- **Decidido (dueño):** también Karasuno contra Aoba Jōsai (Haikyuu!!): una derrota que duele
+  porque el relato hace creer que los protagonistas ganan, lo dan todo, y no alcanza. La rival se
+  lo dice con respeto: tienen todo para ganarle, quizás algún día; hoy no.
 - **Propuesta (Claude, falta aprobar):** opciones de concepto en la respuesta del 2026-11-21 («la de
   la pregunta doscientos doce», «la de las cuatro y media», «la que no debería volar»).
