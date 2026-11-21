@@ -665,3 +665,7 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   para el Modo Historia: el motor de carrera no entra en esto.
 - **Propuesta (Claude, falta aprobar):** nombre, reglas y camino de Nina en la respuesta del
   2026-11-21.
+- **Decidido (dueño, 2026-11-21):** el cielo calma a Nina (una escena en que las alas le andan mal
+  porque su cabeza es un caos y tiene que calmarse), pero no es su foco ni lo que le abre el límite.
+  El límite se atraviesa con algo más urgente y personal: cuando entiende por fin por qué vuela. Como
+  tiene la cabeza tan mezclada, todavía no lo sabe.
