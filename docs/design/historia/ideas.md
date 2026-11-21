@@ -646,3 +646,13 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   tiene clima, las alas no se gastan ni se rompen (`noWear`), el ánimo ya pesa y existe la caída
   forzada cuando se vacía la reserva. Lluvia, fallas y rayos serían escenas del Modo Historia, no
   reglas del motor (congelado, ADR-0010).
+
+- **Decidido (dueño, 2026-11-21):** la tormenta es para lo cinematográfico, algo distinto de un día
+  de sol, no un recurso de trama. Las alas no leen el pasado, pero alguien con el pasado de Nina
+  puede volver a pensar en cosas viejas cuando se siente mal, y ahí las alas sí reaccionan. «No
+  estoy pidiendo que escribamos cosas crueles, sino realistas al momento de mostrar dramas
+  internos.» No sanitizar lo que no se pidió sanitizar.
+- **Decidido (dueño, 2026-11-21): cada Falconess tiene de dónde sacar foco,** y eso muestra que el
+  don y las alas no lo son todo (y que no son «waifus con alas»): Peregrina, la competición;
+  Cernícala, el análisis; Caracara, divertirse, volar y probar lo que le hizo al bastidor. Es
+  también una forma de que otras Falconess ayuden a Nina.
