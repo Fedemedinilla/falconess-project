@@ -669,3 +669,14 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   porque su cabeza es un caos y tiene que calmarse), pero no es su foco ni lo que le abre el límite.
   El límite se atraviesa con algo más urgente y personal: cuando entiende por fin por qué vuela. Como
   tiene la cabeza tan mezclada, todavía no lo sabe.
+- **Idea (dueño, 2026-11-21, lo está pensando):** atar el límite a las habilidades únicas del juego,
+  como las de Umamusume (se activan al ser pasada en la recta final, por debajo de cierto vigor o en
+  un duelo por el puesto). La imagen: tormenta pesada; primera la rival, segunda Nina, a punto de
+  pasarla y sin poder; la radio llena de gritos de Masaru y Edda; flashbacks; Nina resuelve su
+  límite y la pasa; al ser pasada, la rival despierta el suyo: detrás de Nina se forma otra
+  tormenta. Pelean hasta la meta y Nina pierde.
+- **Dato del juego (verificado):** cada estrella ya tiene una habilidad única con disparador
+  (`packages/content/skills/`): Peregrina `stoop-strike` (recta final, en bajada), Cernícala
+  `wind-hover` (tramo medio, en mitad del pelotón), Caracara `scavenger-stride` (en los saltos). Los
+  disparadores posibles hoy son tramo, tipo de terreno, puesto, calor y energía
+  (`packages/schema/src/skill.ts`); «ser pasada» o «duelo» no existen como disparador.
