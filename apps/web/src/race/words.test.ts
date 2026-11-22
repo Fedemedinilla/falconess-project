@@ -140,7 +140,7 @@ describe("race words", () => {
 
   it("gives every runner a short lane name", () => {
     const view = raceView(canyon, labels);
-    expect(view.player?.short).toBe("Vos");
+    expect(view.player?.short).toBe("Tú");
     const log = runFreeRace(ctx, defaultForm(content));
     const rival = log.entries.find((e) => e.runnerId === "rival-3");
     if (!rival) throw new Error("no rival-3");

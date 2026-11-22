@@ -5,6 +5,8 @@ import { Letter } from "../screens/shared/Letter";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer } from "../ui/flowTimer";
+import { visibleNow } from "../ui/visibility";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { type GoalCard, moodTone, type StatCell, type VigorView } from "./model";
@@ -104,7 +106,32 @@ function GoalPill({ goal, content }: { goal: GoalCard | undefined; content: Cont
   );
 }
 
-function VigorBar({ vigor, pop }: { vigor: VigorView; pop?: VigorPop | undefined }) {
+/**
+ * The vigor bar. During a training's result (`to`, keyed by its beat) its value switches to the
+ * week after when the result's «±N» lands (`at` ms after the beat began, L3): the number, its
+ * label and the fill change together, the fill with its own slide.
+ */
+function VigorBar({
+  vigor: from,
+  to,
+  at = 0,
+  beat,
+  pop,
+}: {
+  vigor: VigorView;
+  to?: VigorView | undefined;
+  at?: number | undefined;
+  beat?: string | undefined;
+  pop?: VigorPop | undefined;
+}) {
+  const [landed, setLanded] = useState<string>();
+  // a flow timer keyed by the beat (it pauses with a hidden tab, 6.11)
+  useFlowTimer(
+    to !== undefined && beat !== undefined ? at : undefined,
+    () => setLanded(beat),
+    beat ?? "",
+  );
+  const vigor = to && beat !== undefined && landed === beat ? to : from;
   const pct = (v: number) => `${(100 * v) / vigor.max}%`;
   const after = vigor.after;
   let cost: CSSProperties | undefined;
@@ -157,6 +184,10 @@ type VigorPop = { readonly delta: number; readonly delay: number };
 type HudProps = {
   /** A training's result is playing: its vigor change on the bar. */
   vigorPop?: VigorPop | undefined;
+  /** The bar's value once that change lands (`vigorAt` ms into the result `vigorBeat`). */
+  vigorTo?: VigorView | undefined;
+  vigorAt?: number | undefined;
+  vigorBeat?: string | undefined;
   /** ADR-0012: Exigente shows a chip under the calendar. */
   hard?: boolean;
   turn: number;
@@ -165,13 +196,51 @@ type HudProps = {
   vigor: VigorView;
   mood: number;
   content: ContentIndex;
+  /** A layer is in front: the bar is out of reach (L7). */
+  inert?: boolean;
+  /**
+   * It comes back after the race mode: it fades in, with the screen under it (L5). Read when it
+   * mounts; the HUD a run opens with is the anchor and does not fade.
+   */
+  enter?: boolean;
 };
 
-/** The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood. */
-export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, content }: HudProps) {
+/**
+ * Whether `value` changed since this part mounted: the HUD then shows the change as it happens (O3:
+ * its week turns when the week's effects lift), never when it comes back with another value.
+ */
+function useChanged<T>(value: T): boolean {
+  const [first] = useState(value);
+  return value !== first;
+}
+
+/**
+ * The top of every week screen: the calendar, the next goal, vigor (with the preview) and mood.
+ * While the week's effects play it reads the week just played; when they lift, the calendar turns
+ * its page (each new number flips in) and the mood chip blends into its new tone (O3).
+ */
+export function Hud({
+  inert = false,
+  enter = false,
+  hard = false,
+  turn,
+  turns,
+  goal,
+  vigor,
+  vigorPop,
+  vigorTo,
+  vigorAt,
+  vigorBeat,
+  mood,
+  content,
+}: HudProps) {
   const tone = moodTone(mood);
+  const turned = useChanged(turn);
+  const moved = useChanged(mood);
+  const [fade] = useState(enter);
   return (
-    <header className={s.hud}>
+    // a notice never hides the HUD (rule 17)
+    <header className={cx(s.hud, fade && s.hudIn)} inert={inert || undefined} data-toast-avoid>
       <div
         className={s.cal}
         id="m-semana"
@@ -186,7 +255,7 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
         >
           {hard ? ui("ui.m.difficulty.exigente") : ui("ui.m.week")}
         </div>
-        <div className={s.calN} aria-hidden="true">
+        <div key={turn} className={cx(s.calN, turned && s.calFlip)} aria-hidden="true">
           {turn}
         </div>
         <div className={s.calS} aria-hidden="true">
@@ -196,7 +265,7 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
       <div className={s.hudR}>
         <GoalPill goal={goal} content={content} />
         <div className={s.vrow}>
-          <VigorBar vigor={vigor} pop={vigorPop} />
+          <VigorBar vigor={vigor} to={vigorTo} at={vigorAt} beat={vigorBeat} pop={vigorPop} />
           <div
             className={cx(s.mood, s[`mood-${tone}`])}
             id="m-animo"
@@ -204,8 +273,16 @@ export function Hud({ hard = false, turn, turns, goal, vigor, vigorPop, mood, co
             aria-label={ui("ui.m.mood.aria", { mood: gameText(`mood.${mood}`) })}
             role="img"
           >
-            <Glyph name={MOOD_GLYPH[mood] ?? "right"} size={15} weight={2.6} />
-            <span aria-hidden="true">{gameText(`mood.${mood}`)}</span>
+            <Glyph
+              key={`glyph:${mood}`}
+              name={MOOD_GLYPH[mood] ?? "right"}
+              size={15}
+              weight={2.6}
+              className={moved ? s.moodIn : undefined}
+            />
+            <span key={`word:${mood}`} className={moved ? s.moodIn : undefined} aria-hidden="true">
+              {gameText(`mood.${mood}`)}
+            </span>
           </div>
         </div>
       </div>
@@ -234,16 +311,19 @@ type StatStripProps = {
   };
 };
 
-/** A number that counts from `from` to `to` once its `delay` has passed (ms). */
+/**
+ * A number that counts from `from` to `to` once its `delay` has passed (ms), on the clock that
+ * stands still while the tab is hidden (6.11): it goes on with its «+N», never ahead of it.
+ */
 function CountUp({ from, to, delay }: { from: number; to: number; delay: number }) {
   const [v, setV] = useState(from);
   useEffect(() => {
     if (from === to) return;
     let raf = 0;
-    const start = performance.now() + delay;
+    const start = visibleNow() + delay;
     const dur = 520;
-    const tick = (now: number) => {
-      const t = Math.min(1, Math.max(0, (now - start) / dur));
+    const tick = () => {
+      const t = Math.min(1, Math.max(0, (visibleNow() - start) / dur));
       // ease-out: fast at first, settling on the value
       const e = 1 - (1 - t) * (1 - t) * (1 - t);
       setV(Math.round(from + (to - from) * e));

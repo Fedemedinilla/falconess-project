@@ -1,8 +1,8 @@
 /**
  * Provisional art of the three Falconess (AI-generated, declared as such on screen, T15): the
- * full-body splash of the week menu and the chibi of the training screen and the roster. The same
- * images the approved phone prototype embeds (docs/design/prototipo), as WebP files Vite inlines in
- * the Artifact.
+ * full-body splash of the week menu and the chibi of the training screen and the roster. The images
+ * the approved phone prototype embeds (docs/design/prototipo), as WebP files Vite inlines in the
+ * Artifact, except Peregrina's splash, which the owner redrew with her wings folded (2026-11-17).
  */
 import type { TrainingKind } from "@falconess/schema";
 import caracaraChibi from "./art/caracara-chibi.webp";
@@ -46,9 +46,9 @@ const ART: Readonly<Record<string, RunnerArt>> = {
   peregrina: {
     splash: peregrinaSplash,
     chibi: peregrinaChibi,
-    ar: 0.499,
-    fy: 0.1,
-    cx: 0.45,
+    ar: 0.496,
+    fy: 0.083,
+    cx: 0.446,
     training: {
       "train:agility": { src: peregrinaTrainAgility, w: 720, h: 1290, fx: 0.63, fy: 0.23 },
       "train:stamina": { src: peregrinaTrainStamina, w: 720, h: 1290, fx: 0.5, fy: 0.4 },

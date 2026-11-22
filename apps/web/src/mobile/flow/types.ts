@@ -48,7 +48,11 @@ export type DecidedWeek = {
   readonly stage: "action" | "race";
 };
 
-/** What the week store keeps: a position planned, a week decided, or a race whose result was seen. */
+/**
+ * What the week store keeps: a position planned, a week decided, a race «Correr» ran whose result
+ * was not seen yet, or a race whose result was seen. The last two are keyed by the run the race
+ * led to.
+ */
 export type WeekRecord =
   | {
       readonly phase: "planned";
@@ -57,6 +61,7 @@ export type WeekRecord =
       readonly position: Position | undefined;
     }
   | ({ readonly phase: "decided" } & DecidedWeek)
+  | { readonly phase: "raced"; readonly fp: string }
   | { readonly phase: "raceSeen"; readonly fp: string };
 
 // --- the beats: what the game waits for -------------------------------------------------------------
@@ -258,6 +263,12 @@ export type Flow = {
   readonly solo: boolean;
   /** A notice may show (it also waits for no layer to be in or leaving). */
   readonly toast: boolean;
+  /**
+   * The menu's track drawer opens by itself now (owner 2026-11-18, where the race bar was): a race
+   * week's idle menu with nothing in front of it, and not opened for this week yet. It waits for a
+   * layer and for a sheet, as everything else does.
+   */
+  readonly openTrack: boolean;
   /** «Historia» and «Ver» may start a scene now. */
   readonly canReplay: boolean;
   /** The week's actions take a tap now. */

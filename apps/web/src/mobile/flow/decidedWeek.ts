@@ -1,14 +1,16 @@
 /**
  * The decided race week (D5, F1, C5): once a race week's action was previewed it is decided (no
  * way back, owner 2026-11-12), so it is kept in the browser with its stage and its position. A
- * reload plays the same week on, and the race mode once it began. One record, keyed by the run's
- * fingerprint; a record of any other run is ignored. Framework-free and subscribable like the
- * controller; pure and text-free (flow/imports.test.ts).
+ * reload plays the same week on, the race mode once it began, and the race «Correr» ran until its
+ * result was seen. One record, keyed by the run's fingerprint; a record of any other run is
+ * ignored. Framework-free and subscribable like the controller; pure and text-free
+ * (flow/imports.test.ts).
  */
 import { Position, RunInput } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import { z } from "zod";
 import type { ActiveRun } from "../../game/controller";
+import { fingerprintInputs } from "../../game/run";
 import { type KeyValueStore, readKey, removeKey, writeKey } from "../../game/storage";
 import { isRaceWeek } from "../../screens/model/position";
 import type { DecidedWeek, WeekRecord } from "./types";
@@ -38,6 +40,7 @@ const Stored = z.discriminatedUnion("phase", [
     position: Position.optional(),
     stage: z.enum(["action", "race"]),
   }),
+  z.strictObject({ v: z.literal(1), phase: z.literal("raced"), fp: Fp }),
   z.strictObject({ v: z.literal(1), phase: z.literal("raceSeen"), fp: Fp }),
 ]);
 
@@ -59,8 +62,9 @@ export function decodeWeek(text: string | undefined): WeekRecord | undefined {
   switch (r.phase) {
     case "planned":
       return { phase: "planned", fp: r.fp, turn: r.turn, position: r.position };
+    case "raced":
     case "raceSeen":
-      return { phase: "raceSeen", fp: r.fp };
+      return { phase: r.phase, fp: r.fp };
     case "decided": {
       const { input } = r;
       if (!isWeekAction(input) || input.position !== undefined) return undefined;
@@ -85,7 +89,8 @@ export function encodeWeek(r: WeekRecord): string {
 /**
  * The record if it belongs to this run (`fp` is its fingerprint): a planned position or a decided
  * week of this race week (same fingerprint and week; a decided one also the same input count, and
- * its preview plays, read from the one preview cache), or the race seen that led to this run.
+ * its preview plays, read from the one preview cache), or the race that led to this run, run or
+ * seen.
  */
 export function validRecord(
   ctx: SimContext,
@@ -94,7 +99,7 @@ export function validRecord(
   r: WeekRecord | undefined,
 ): WeekRecord | undefined {
   if (!r || r.fp !== fp) return undefined;
-  if (r.phase === "raceSeen") return r;
+  if (r.phase === "raced" || r.phase === "raceSeen") return r;
   if (r.turn !== run.state.turn || !isRaceWeek(ctx, run.state)) return undefined;
   if (r.phase === "planned") return r;
   if (r.inputs !== run.inputs.length) return undefined;
@@ -102,18 +107,32 @@ export function validRecord(
 }
 
 /**
+ * Whether a record is of a later point of this run's season (the same ruleset and seed, more
+ * inputs): another tab played on and stored its week, and this tab's run is the stale one (the save
+ * is the last writer's, read again at «Continuar»). Such a record is never this view's to drop.
+ */
+export function isLaterInSeason(run: ActiveRun, r: WeekRecord): boolean {
+  const inputs = fingerprintInputs(r.fp, run);
+  return inputs !== undefined && inputs > run.inputs.length;
+}
+
+/**
  * The week's record, kept under `WEEK_KEY`: one writer per moment of the week (plan §1.8). A write
  * that changes nothing keeps the snapshot and tells no one; without storage the record lasts the
- * visit.
+ * visit. It reads the storage again, as the controller reads the save again at «Continuar»: a tab
+ * left on the title continues the week another tab decided, and never drops it as stale.
  */
 export class WeekStore {
   readonly #kv: KeyValueStore | undefined;
   readonly #listeners = new Set<() => void>();
+  /** What the storage held when the record was last read from it or written to it. */
+  #stored: string | undefined;
   #record: WeekRecord | undefined;
 
   constructor(kv: KeyValueStore | undefined) {
     this.#kv = kv;
-    this.#record = decodeWeek(readKey(kv, WEEK_KEY));
+    this.#stored = readKey(kv, WEEK_KEY);
+    this.#record = decodeWeek(this.#stored);
   }
 
   readonly subscribe = (listener: () => void): (() => void) => {
@@ -123,7 +142,18 @@ export class WeekStore {
     };
   };
 
-  readonly getSnapshot = (): WeekRecord | undefined => this.#record;
+  /**
+   * The record as the storage holds it now (another tab of the game may have written it since),
+   * the same object while the stored text is the same; without storage, the one this tab wrote.
+   */
+  readonly getSnapshot = (): WeekRecord | undefined => {
+    const stored = readKey(this.#kv, WEEK_KEY);
+    if (stored !== this.#stored) {
+      this.#stored = stored;
+      this.#record = decodeWeek(stored);
+    }
+    return this.#record;
+  };
 
   /** A position picked on the planning card (undefined: her wings'). */
   plan(fp: string, turn: number, position: Position | undefined): void {
@@ -137,16 +167,24 @@ export class WeekStore {
 
   /** A position picked on the planning card or the decided one, for the same week. */
   setPosition(fp: string, position: Position | undefined): void {
-    const r = this.#record;
-    if (r?.fp !== fp || r.phase === "raceSeen") return;
+    const r = this.getSnapshot();
+    if (r?.fp !== fp || (r.phase !== "planned" && r.phase !== "decided")) return;
     this.#set({ ...r, position });
   }
 
   /** The race mode began (the emblem, or straight in): a reload skips the action's part. */
   enterRace(fp: string): void {
-    const r = this.#record;
+    const r = this.getSnapshot();
     if (r?.phase !== "decided" || r.fp !== fp || r.stage !== "action") return;
     this.#set({ ...r, stage: "race" });
+  }
+
+  /**
+   * «Correr» committed the week (`fp`: the run the race led to): a reload plays its race on until
+   * its result was seen, the season's last race too.
+   */
+  markRaced(fp: string): void {
+    this.#set({ phase: "raced", fp });
   }
 
   /** The race's result was seen (`fp`: the run the race led to). */
@@ -154,17 +192,20 @@ export class WeekStore {
     this.#set({ phase: "raceSeen", fp });
   }
 
-  /** «Correr» committed the week. */
+  /** A record of no run in play (the run's view drops it). */
   clear(): void {
     this.#set(undefined);
   }
 
   #set(next: WeekRecord | undefined): void {
+    const now = this.getSnapshot();
     const text = next && encodeWeek(next);
-    if (text === (this.#record && encodeWeek(this.#record))) return;
+    if (text === (now && encodeWeek(now))) return;
     this.#record = next;
     if (text === undefined) removeKey(this.#kv, WEEK_KEY);
     else writeKey(this.#kv, WEEK_KEY, text);
+    // what the storage holds now: one that refused the write leaves this tab's record for the visit
+    this.#stored = readKey(this.#kv, WEEK_KEY);
     for (const listener of [...this.#listeners]) listener();
   }
 }

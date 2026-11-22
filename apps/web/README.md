@@ -35,7 +35,8 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
   (docs/design/prototipo, T14) wired to the season: character select, week menu (layout D, delta
   3B), training (double tap, «Fallo N %» in its risk color), pre-race card, the v3 flight race with
   «Saltar» and its result, workshop (skills, wings), season end. `model.ts` holds its view models;
-  the art is in `src/mobile/art/`. Every other route is the «Vista de pruebas».
+  the art is in `src/mobile/art/`; `flow/` decides what is on screen (below, «The phone game»).
+  Every other route is the «Vista de pruebas».
 - `src/screens/` season screens; `src/race/` race screens. The route map is in `src/app/App.tsx`.
 
 ## Rules
@@ -47,7 +48,7 @@ pnpm --filter @falconess/web test:e2e:shots # screenshots for review, .work/ui/s
   races only from a `RaceLog` (interpolating positions between frames is fine). The Turn screen's
   previews (`src/screens/model/actions.ts`) only cap a gain at the stat's room and clamp vigor to
   the bar; `actions.test.ts` compares every preview with what `advanceSeason` applies, in v1 and v2.
-- Rulesets: new seasons start on `CURRENT_RULESET` (v2, ADR-0006); a saved or pasted run replays
+- Rulesets: new seasons start on `CURRENT_RULESET` (v3, ADR-0011); a saved or pasted run replays
   and plays on with the ruleset it carries (`GameController.context()`), and a version-less
   `replay:` line of the CLI is v1. The ruleset shows next to the seed (Turn, «Continuar», «Partida»,
   SeasonEnd). `newRunContext()` is the context of a season about to start (Home, NewSeason).
@@ -237,6 +238,102 @@ a phone and in one row from a 40rem container (never three and one).
 - Aptitude rows (status panel, new season, roster, SeasonEnd's black box) draw the shape before
   each position's name.
 
+## The phone game (`#juego`): flow, layers and motion
+
+How the phone game decides what is on screen and how it moves (ADR-0017; its scenes' timing in
+docs/design/escenas.md).
+
+- **The flow model** (`src/mobile/flow/`, pure and text-free: `flow/imports.test.ts` checks that
+  nothing in it reaches React, a component, the text tables or a content glob):
+  - `beats.ts` `beatsOf`: the ordered queue of what the game waits for (a training's result, the
+    week's effects, an inheritance card, a scene, the emblem, the position card, the replay, the
+    finish hold, the race's result, the event, idle). Only the first one (`flow.top`) is shown or
+    acted on. Keys are scoped to the run (a committed step's and a decided week's carry the run's
+    fingerprint, a scene's and a card's the seed).
+  - `derive.ts` `deriveFlow(ctx, facts, ui)`: the mode, the screen, the layer in front, the HUD, the
+    wide screen's panel (`desk`) and the music, from the queue's first beat. `facts.ts` `factsOf`
+    reads the stores; `ui.ts` `reduceUi` keeps the little React holds (where the player went at
+    idle, the beats this mount finished, the notices), total and pure.
+  - `commands.ts` `flowCommands(ports)`: every tap and timer goes through it; `game.act` and the
+    screen change run in one synchronous handler, sounds play inside the tap, a stale key does
+    nothing. `scenes.ts` (which scenes each mode plays, their order, `introTiming`), `week.ts` (the
+    race week's preview, one `previewResult` cache), `fxTimeline.ts` (`fxTimeline`, `fxGrid`),
+    `trainResult.ts`, `presence.ts` (the layers' in/out list).
+  - The stores it reads: the controller (`game/`), the story store (`storyModel.ts`), the pace
+    store (`pace.ts`, `usePace`) and Boot's two flow stores, `flow/decidedWeek.ts` (`WeekStore`,
+    `falconess.juego.semana`: a race week planned, decided with its stage, raced, its race seen)
+    and `flow/inspirations.ts` (`InspirationStore`, `falconess.juego.herencia`: the inheritance
+    cards shown, with a one-time migration). Both keys are pinned in `src/storage-keys.test.ts`.
+    Every store that another tab of the game may write (the week's record, the cards shown, the
+    scenes seen and the chat topics read) reads the browser's storage again at each reading,
+    merges what changed and keeps its readings' identity while nothing did, so another tab's card,
+    scene or decided week never shows twice.
+  - `useFlow.ts` wires it to React (`useSyncExternalStore` over the stores, instant beats resolved
+    before paint, a week record of no run in play dropped, never one further on in the run's
+    season: another tab's newer week, `isLaterInSeason`). `RunView.tsx` renders the run from the
+    flow; `useBackGesture.ts` makes the back gesture do what the screen's «Volver» does (O10).
+- **Layers and notices:** `LayerHost.tsx` keeps at most one full-screen layer in (the week's
+  effects, the inheritance card, a scene, the emblem, the event); a layer that goes stays as an
+  id-less, `inert`, `aria-hidden` copy with no pointer events (`useLid` drops its ids), drawn from
+  its last data and removed by a flow timer once its fade has played, counted from the frame the
+  fade starts on. While a layer is in, the HUD and the screen are inert
+  and the layer's control has the focus. When the last one goes, or the flow moves on with no layer
+  in front (another screen or top beat), a focus left on the page or under `inert` goes to the
+  screen's own control (`useFocusHome` in `RunView.tsx`). `NoticeHost.tsx` shows the story and error notices
+  (`noticeSlot.ts` decides, pure: when one shows, waits, fades, is cut or dropped, and where it
+  sits over the screen's `[data-toast-anchor]`, clear of controls and of `[data-toast-avoid]`).
+  Sheets (`ui/useModalDialog.ts`, `ui/modals.ts`) mount on open, are released at their close
+  request and close on a 180 ms timer. The chat (`ChatSheet.tsx`) is a sheet inside the column,
+  not a native dialog (the tablet's frame and the wide screen's column hold it): RunView makes the
+  game under it, its notices and the desk panel inert while it is open, its «Cerrar» takes the
+  focus, Escape closes it, and `useFocusReturn` gives the focus back to what opened it. Every control that advances, commits or decides ignores the
+  second click of a double tap (`ui/tap.ts` `isRepeatTap`).
+- **Timers are the clock:** `ui/timer.ts` (`createPausableTimer`, `pauseWhileHidden`, pure),
+  `ui/flowTimer.ts` (`useFlowTimer(ms, onFire, key, { fromFrame })`, `useFlowTimers`, and
+  `startFlowTimer(s)` outside React) and `ui/visibility.ts` (`visibleNow()`, `isHidden()`,
+  `useHidden()`). Every timer that ends a beat or a notice is a flow timer: restarted only by its
+  key, paused while the tab is hidden and resumed with the time it had left; nothing waits for
+  `animationend`, `transitionend` or `finished` (`no-animationend.test.ts`). The run's column takes
+  `data-hidden` while the tab is hidden, and `.app[data-app][data-hidden] *` pauses its CSS
+  animations (it outranks every `animation` rule of the phone's modules: `motion.test.ts`).
+- **Motion:** every duration and easing of the screens, layers, sheets and notices is a token in
+  `src/mobile/motion.css` (`--m-dur-*`, `--m-ease-*`; a few details inside one component keep their
+  own: the chat's typing, the title's leave, the track drawer's card, the result's stamp) with its
+  twin in `motion.ts` (`MOTION`, `STORY`, `EMBLEM_MS`, `outMs`, `held`) for
+  the timers; `motion.test.ts` checks that they agree. Screens only fade in (opacity, fill
+  `backwards`); no transform ever touches a screen. Reduced motion is one policy: each animated
+  rule has a reduced rule at the same selector (`animation: none` / `transition: none` with the end
+  state, never 0.01 ms or `!important`), checked by `motion.test.ts` for every phone module; reading
+  holds stay. «Ritmo» scales the holds and timelines (`paceScale`), never the fades.
+- **Tests:**
+  - The `web-flow` vitest project (root `vitest.config.ts`) runs `src/mobile/flow/**/*.test.ts` and
+    `scripts/e2e-saves.test.ts` natively (tsx loader), since Vite's module runner makes the season
+    walks about 15 times slower: `pnpm vitest run --project web-flow`. The walks
+    (`flow/walk-*.test.ts`, bots and invariants I1-I22 in `flow/testing/`) play whole seasons
+    through the commands; `FLOW_WALKS=all` adds the paces, reduced motion and Exigente.
+    `golden.test.ts` pins the expected beat sequences.
+  - The phone e2e (`e2e/mobile*.spec.ts`) open seeded saves (`e2e/saves/*.json`, read by `seedRun`
+    and `continueRun`; written and checked by `scripts/e2e-saves.test.ts`, regenerated with
+    `WRITE_SAVES=1 pnpm vitest run --project web-flow scripts/e2e-saves.test.ts`) instead of
+    playing to week 10. A frame probe (`probe`, an auto fixture of `e2e/mobile-helpers.ts`) fails
+    any #juego test that shows a duplicate id, two screens or two layers in at once in any frame,
+    across reloads. `mobile-season.spec.ts` plays a whole season (Rápido, 390 × 844, a seeded start,
+    every week tapped) to the End and the next season's inheritance card, and checks every beat: no
+    console error, the focus on a control, no control covered, the HUD's week, and rules 10, 11 and
+    13 from a page-side watcher. `e2e/motion.ts` holds the motion helpers: `holdClock` (the fake clock held
+    still) and `settleUpdates` (the page's own updates landed), `freezeAt` (every CSS animation at a time), `opacityOf` (the opacity as
+    seen), `coverage` (what a 5 × 9 grid of points shows: each point's first opaque paint, looking
+    through transparent boxes, and `under` a leaving copy; its page side is `coverageNow`, which an
+    init script can carry), `holdAnimations` (every CSS animation
+    held where it starts, so a tap's fade is read with `freezeAt` however slow the page),
+    `movingNow` (what moves), `present` (in the page
+    now, without waiting), `runClock` (the held clock moved on), and for the hidden tab
+    `setTabHidden`, `hideTab`, `cssPlayStates` and `expectCssPaused`.
+  - `E2E_PORT` moves the e2e server (default 4317, `--strictPort`), so two checkouts can run their
+    e2e at once; `E2E_DEV=1` (`test:e2e:dev`) runs them on the dev server, where React's warnings
+    and StrictMode's double effects fail a test. `motion-shots.spec.ts` (shots project) captures
+    the transitions frame by frame into `.work/ui/motion/`.
+
 ## Published page contract
 
 `build:artifact` post-processes the single-file build (`scripts/artifact.ts`) and fails when the
@@ -256,7 +353,7 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
 
 - `season.spec.ts`: a whole season of each Falconess with seed `pt-e2e-1`, played by clicks with a
   simple policy (`play.ts`: first event option, rest at vigor 40 or less, else train the lowest
-  stat); new seasons play ruleset v2.
+  stat); new seasons play ruleset v3.
   The T12 goal race is replayed at ×8 to the finish and its classification must give the place the
   season recorded; SeasonEnd opens it again. Each season writes its timing to
   `.work/ui/timing/<falconess>.json`: about 8–10 s per season (60–65 decisions, ~130–150 ms
@@ -294,7 +391,7 @@ browser goes through the proxy. Any console error or uncaught exception fails a 
 - `ruleset.spec.ts`: the owner's playtest 1 (`packages/sim/src/season/__fixtures__/`) loads as a
   v1 run, its last week's «Lo que pasó» over SeasonEnd, with its grade (B); a copy cut before week
   19 plays on under v1 (vigor 15, the forced rest, +40) and keeps v1 after a reload; a new season
-  is v2.
+  is v3.
 - `explain.spec.ts`: one card's «Breve | Completo», then «Explicaciones» for every card; the
   default survives a reload and the card's own choice does not; the card in view stays put when
   the default changes; on a phone the switches open with «Ver detalle», the default sits at the

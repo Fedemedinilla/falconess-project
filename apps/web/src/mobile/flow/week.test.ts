@@ -14,7 +14,6 @@ import {
 import { describe, expect, it } from "vitest";
 import type { Step } from "../../game/controller";
 import type { WeekActionInput } from "../../screens/model/position";
-import { LEGACY_POLICY, TARGET_POLICY } from "./policy";
 import { testContext } from "./testing/content";
 import type { Nav } from "./types";
 import {
@@ -83,31 +82,27 @@ describe("trainingOutcome: what a training's result shows", () => {
   const ok = trainingWith("train:agility", "log.train.ok");
 
   it("a good training is a success, or a boost with a crew there", () => {
-    expect(trainingOutcome(withCrews(ok, "train:agility", []), true)).toBe("success");
-    expect(trainingOutcome(withCrews(ok, "train:agility", ["altair"]), true)).toBe("boost");
-    expect(trainingOutcome(withCrews(ok, "train:agility", ["altair"]), false)).toBe("boost");
+    expect(trainingOutcome(withCrews(ok, "train:agility", []))).toBe("success");
+    expect(trainingOutcome(withCrews(ok, "train:agility", ["altair"]))).toBe("boost");
   });
 
   it("a failed training is a fail, and so is one that hurt her", () => {
     const failed = trainingWith("train:risk-flight", "log.train.fail");
     const hurt = trainingWith("train:risk-flight", "log.train.injury");
-    for (const rested of [true, false]) {
-      expect(trainingOutcome(failed, rested)).toBe("fail");
-      expect(trainingOutcome(hurt, rested)).toBe("fail");
-    }
+    expect(trainingOutcome(failed)).toBe("fail");
+    expect(trainingOutcome(hurt)).toBe("fail");
   });
 
-  it("an injured week's training rests by rule: «FALLÓ» under legacy, no result under target (F4)", () => {
+  it("an injured week's training rests by rule: no result (F4; its effects say so, O2)", () => {
     const injured = play({ ...start("week-injured"), injuryTurns: 1 }, { kind: "train:agility" });
     expect(injured.after.log.at(-1)?.notes).toContain("log.injured");
-    expect(trainingOutcome(injured, LEGACY_POLICY.restedCue)).toBe("fail");
-    expect(trainingOutcome(injured, TARGET_POLICY.restedCue)).toBeUndefined();
+    expect(trainingOutcome(injured)).toBeUndefined();
   });
 
   it("an action that is no training has no result", () => {
     const rest = play(start("week-rest"), { kind: "rest" });
-    expect(trainingOutcome(rest, true)).toBeUndefined();
-    expect(trainingOutcome(play(start("week-shop"), { kind: "outing" }), true)).toBeUndefined();
+    expect(trainingOutcome(rest)).toBeUndefined();
+    expect(trainingOutcome(play(start("week-shop"), { kind: "outing" }))).toBeUndefined();
   });
 });
 
@@ -115,11 +110,11 @@ describe("trainBeat: a training's result as a beat", () => {
   it("a committed step counts its own points up (after − before): the race's too", () => {
     const state = raceWeek("week-race");
     const step = play(state, { kind: "train:simulator" });
-    expect(trainingOutcome(step, true)).not.toBe("fail");
+    expect(trainingOutcome(step)).not.toBe("fail");
     const own = step.after.skillPoints - step.before.skillPoints;
     // the race paid points on top of the Simulator's own
     expect(own).toBeGreaterThan(ctx.ruleset.season.simulatorSkillPoints);
-    const beat = trainBeat(ctx, step, "step", "fp/result", TARGET_POLICY);
+    const beat = trainBeat(ctx, step, "step", "fp/result");
     expect(beat).toMatchObject({ kind: "train-result", key: "fp/result" });
     expect(beat?.result.points).toBe(own);
     expect(beat?.before).toBe(step.before);
@@ -129,27 +124,24 @@ describe("trainBeat: a training's result as a beat", () => {
   it("a race week's preview counts only the Simulator's points (the race's are not hers yet)", () => {
     const state = raceWeek("week-race");
     const step = play(state, { kind: "train:simulator" });
-    const beat = trainBeat(ctx, step, "preview", "fp/w:result", TARGET_POLICY);
+    const beat = trainBeat(ctx, step, "preview", "fp/w:result");
     expect(beat?.result.points).toBe(ctx.ruleset.season.simulatorSkillPoints);
     const agility = play(state, { kind: "train:agility" });
-    expect(trainBeat(ctx, agility, "preview", "fp/w:result", TARGET_POLICY)?.result.points).toBe(0);
+    expect(trainBeat(ctx, agility, "preview", "fp/w:result")?.result.points).toBe(0);
   });
 
   it("is the same object for the same step and key, every call", () => {
     const step = trainingWith("train:agility", "log.train.ok");
-    const a = trainBeat(ctx, step, "step", "k/result", TARGET_POLICY);
+    const a = trainBeat(ctx, step, "step", "k/result");
     expect(a).toBeDefined();
-    expect(trainBeat(ctx, step, "step", "k/result", TARGET_POLICY)).toBe(a);
-    expect(trainBeat(ctx, step, "step", "k2/result", TARGET_POLICY)).not.toBe(a);
+    expect(trainBeat(ctx, step, "step", "k/result")).toBe(a);
+    expect(trainBeat(ctx, step, "step", "k2/result")).not.toBe(a);
   });
 
-  it("none for a rest; an injured week's only under legacy (a «FALLÓ»)", () => {
-    expect(
-      trainBeat(ctx, play(start("week-rest"), { kind: "rest" }), "step", "r", TARGET_POLICY),
-    ).toBeUndefined();
+  it("none for a rest, nor for an injured week's training (F4)", () => {
+    expect(trainBeat(ctx, play(start("week-rest"), { kind: "rest" }), "step", "r")).toBeUndefined();
     const injured = play({ ...start("week-injured"), injuryTurns: 1 }, { kind: "train:agility" });
-    expect(trainBeat(ctx, injured, "step", "i", TARGET_POLICY)).toBeUndefined();
-    expect(trainBeat(ctx, injured, "step", "i", LEGACY_POLICY)?.result.outcome).toBe("fail");
+    expect(trainBeat(ctx, injured, "step", "i")).toBeUndefined();
   });
 });
 
@@ -240,10 +232,15 @@ describe("previewResult: one simulation per state and input (critic b: the race 
 });
 
 describe("raceWings: the position her wings race in by default", () => {
-  it("is the equipped frame's (F5: the action's frame from 5.7)", () => {
+  const frame = (id: string) => ctx.content.getFrame(id);
+
+  it("with no action, or one that equips nothing, the equipped frame's", () => {
     const state = raceWeek("week-wings");
-    const frame = (id: string) => ctx.content.getFrame(id);
     expect(raceWings(ctx, state)).toBe(DEFAULT_POSITION[frame(state.equippedFrame).style]);
+    expect(raceWings(ctx, state, { kind: "rest" })).toBe(raceWings(ctx, state));
+    expect(raceWings(ctx, state, { kind: "workshop", ops: [{ op: "repair" }] })).toBe(
+      raceWings(ctx, state),
+    );
     const other = [...ctx.content.frames.values()].find(
       (f) => f.style !== frame(state.equippedFrame).style,
     );
@@ -251,6 +248,33 @@ describe("raceWings: the position her wings race in by default", () => {
     expect(raceWings(ctx, { ...state, equippedFrame: other.id })).toBe(
       DEFAULT_POSITION[other.style],
     );
+  });
+
+  it("a workshop equip-frame on a race week: the frame it equips, the one the sim races (F5)", () => {
+    const state = raceWeek("week-wings");
+    const other = state.hangar.find((id) => frame(id).style !== frame(state.equippedFrame).style);
+    if (!other) throw new Error("no frame of another style in her hangar");
+    const input: WeekActionInput = {
+      kind: "workshop",
+      ops: [{ op: "equip-frame", frameId: other }],
+    };
+    const wings = raceWings(ctx, state, input);
+    expect(wings).toBe(DEFAULT_POSITION[frame(other).style]);
+    expect(wings).not.toBe(raceWings(ctx, state));
+    // with no position on the input, the race runs in the new wings' own
+    const ran = advanceSeason(ctx, state, input).raceResults.at(-1);
+    expect(ran?.turn).toBe(state.turn);
+    expect(ran?.frameId).toBe(other);
+    expect(ran?.position).toBe(wings);
+  });
+
+  it("an injured week rests whatever the order: her wings stay the equipped ones", () => {
+    const state = { ...raceWeek("week-wings"), injuryTurns: 1 };
+    const other = state.hangar.find((id) => frame(id).style !== frame(state.equippedFrame).style);
+    if (!other) throw new Error("no frame of another style in her hangar");
+    expect(
+      raceWings(ctx, state, { kind: "workshop", ops: [{ op: "equip-frame", frameId: other }] }),
+    ).toBe(raceWings(ctx, state));
   });
 });
 

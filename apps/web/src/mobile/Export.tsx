@@ -3,7 +3,7 @@ import { exportFileName, type SeasonEntry } from "../game/history";
 import { locale } from "../text/lang";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useModalDialog } from "../ui/useModalDialog";
+import { useHeld, useModalDialog } from "../ui/useModalDialog";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
@@ -75,13 +75,15 @@ function fileOf(item: ExportItem): File | undefined {
  * may do none of those (inside another app's frame).
  */
 export function ExportSheet({
-  item,
+  item: openItem,
   onClose,
 }: {
   item: ExportItem | undefined;
   onClose: () => void;
 }) {
-  const { ref, mounted } = useModalDialog(item !== undefined, onClose);
+  const { ref, mounted } = useModalDialog(openItem !== undefined, onClose);
+  // it fades out with the save it showed
+  const item = useHeld(openItem, openItem !== undefined);
   const field = useRef<HTMLTextAreaElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new item starts clean
@@ -147,7 +149,7 @@ export function ExportSheet({
     >
       {item && (
         <div className={s.dl}>
-          <h2 className={s.dlTitle} id="m-exportar-titulo">
+          <h2 className={s.dlTitle} id="m-exportar-titulo" tabIndex={-1}>
             {ui("ui.m.export.title")}
           </h2>
           <p className={s.exportWhat}>{item.title}</p>
@@ -228,7 +230,7 @@ export function entryItem(entry: SeasonEntry): ExportItem {
  */
 export function HistorySheet({
   open,
-  entries,
+  entries: openEntries,
   onExport,
   onClose,
 }: {
@@ -238,6 +240,8 @@ export function HistorySheet({
   onClose: () => void;
 }) {
   const { ref, mounted } = useModalDialog(open, onClose);
+  // it fades out with the seasons it listed
+  const entries = useHeld(openEntries, open);
   const date = new Intl.DateTimeFormat(locale(), {
     day: "numeric",
     month: "short",
@@ -254,7 +258,7 @@ export function HistorySheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-historial-titulo">
+        <h2 className={s.dlTitle} id="m-historial-titulo" tabIndex={-1}>
           {ui("ui.m.history.title")}
         </h2>
         {entries.length === 0 && <p className={s.exportWhat}>{ui("ui.m.history.empty")}</p>}

@@ -4,14 +4,12 @@
  * Only with `FLOW_WALKS=all`.
  */
 import { describe } from "vitest";
-import { TARGET_POLICY } from "./policy";
 import type { WalkSpec } from "./testing/bots";
 import { itHolds, itReaches } from "./testing/invariants";
 
 const ALL = process.env.FLOW_WALKS === "all";
 const v2 = (falconessId: string, bot: WalkSpec["bot"]): WalkSpec => ({
   name: `v2 ${falconessId} ${bot}`,
-  policy: TARGET_POLICY,
   falconessId,
   seeds: ["walk-3"],
   bot,

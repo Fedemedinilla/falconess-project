@@ -1,7 +1,7 @@
 import type { TakeoffStyle } from "@falconess/race-view";
 import type { SeasonState, Style, WorkshopOp } from "@falconess/schema";
 import { flightOf, type SimContext } from "@falconess/sim";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useGame } from "../game/useGame";
 import { describeActiveSkill } from "../screens/model/describe";
 import {
@@ -14,6 +14,7 @@ import {
 import { gameBrief } from "../text/brief";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import type { WorkshopTab } from "./flow/types";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
@@ -58,10 +59,16 @@ export function WorkshopScreen({
     if (snap.error) game.clearError();
     setPlan(next);
   };
+  // the two tabs share one scrolling body: a tab opens at its top (L6), not where the other was
+  const body = useRef<HTMLDivElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of tab only
+  useLayoutEffect(() => {
+    if (body.current) body.current.scrollTop = 0;
+  }, [tab]);
 
   return (
     <div className={s.screen}>
-      <div className={s.body}>
+      <div className={s.body} ref={body}>
         <h1 className={s.title}>{ui("ui.m.workshop")}</h1>
         <div className={s.tabs} role="tablist" aria-label={ui("ui.m.workshop")}>
           {(["skills", "wings"] as const).map((t) => (
@@ -196,7 +203,7 @@ export function WorkshopScreen({
           id="m-taller-confirmar"
           disabled={report.ops.length === 0 || report.blocked}
           onClick={(e) => {
-            if (e.detail > 1) return;
+            if (isRepeatTap(e)) return;
             onConfirm([...report.ops]);
           }}
         >

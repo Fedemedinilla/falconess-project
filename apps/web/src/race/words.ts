@@ -75,7 +75,7 @@ export function runnerName(entry: RaceEntry, labels: RaceLabels): string {
 }
 
 /**
- * A runner's name in a narrow lane label: "Vos" for the player, "R3" for the season's rivals,
+ * A runner's name in a narrow lane label: "Tú" for the player, "R3" for the season's rivals,
  * "Pic2" for the neutral fixtures, else the first letters of her name.
  */
 export function runnerShort(entry: RaceEntry, labels: RaceLabels): string {

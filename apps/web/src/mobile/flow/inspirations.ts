@@ -3,9 +3,9 @@
  * (`${seed}:start`, `${seed}:24`, `${seed}:40`), across reloads and the language's remount.
  * Framework-free and subscribable, like the story store; pure and text-free (flow/imports.test.ts).
  */
-import type { SeasonState } from "@falconess/schema";
+import type { ContentIndex, SeasonState } from "@falconess/schema";
 import { z } from "zod";
-import type { Step } from "../../game/controller";
+import { GameController, type Step } from "../../game/controller";
 import { type KeyValueStore, readKey, writeKey } from "../../game/storage";
 import { cardKeys, stepCardKey } from "../inspirationScene";
 
@@ -30,6 +30,28 @@ export type LoadedRun = {
   readonly stepSeen: boolean;
 };
 
+/**
+ * The run «Continuar» would load from `kv`, with its last step and whether that step was read:
+ * replayed by a controller of its own on a read-only view of the storage, so nothing is written
+ * (not the save, not the history). What Boot gives the store as `saved`; the store asks only on a
+ * load with no key stored.
+ */
+export function savedRun(
+  content: ContentIndex | ((rulesetVersion: string) => ContentIndex),
+  kv: KeyValueStore | undefined,
+): LoadedRun | undefined {
+  if (!kv) return undefined;
+  const readOnly: KeyValueStore = {
+    getItem: (key) => kv.getItem(key),
+    setItem: () => undefined,
+    removeItem: () => undefined,
+  };
+  const game = new GameController(content, readOnly);
+  if (!game.continueSaved()) return undefined;
+  const { run, lastStep, lastStepSeen } = game.getSnapshot();
+  return run && { seed: run.seed, state: run.state, step: lastStep, stepSeen: lastStepSeen };
+}
+
 function decode(raw: string): Map<string, readonly string[]> {
   let data: unknown;
   try {
@@ -45,7 +67,10 @@ function decode(raw: string): Map<string, readonly string[]> {
  * The cards shown. On the first load with no key stored (an earlier build kept nothing), it marks
  * the saved run's cards that build already showed: the start's (shown at «Empezar») and every
  * week's whose step was read (it showed before its step was read); an unread step's card plays in
- * D2's order. Then the key exists, so no later season is migrated. Every access to the storage is
+ * D2's order. Then the key exists, so no later season is migrated. Each reading reads the storage
+ * again (another tab of the game may have shown a card since: it never shows twice) and keeps
+ * what this tab knew (each card either tab marked stays marked: the union); a mark writes that
+ * union. A reading with nothing new stored keeps its identity. Every access to the storage is
  * guarded; without it the cards last the visit.
  */
 export class InspirationStore {
@@ -53,11 +78,14 @@ export class InspirationStore {
   readonly #seeds: Map<string, readonly string[]>;
   readonly #sets = new Map<string, ReadonlySet<string>>();
   readonly #listeners = new Set<() => void>();
+  /** What the storage held when it was last read or written. */
+  #stored: string | undefined;
   #version = 0;
 
   constructor(kv: KeyValueStore | undefined, saved?: () => LoadedRun | undefined) {
     this.#kv = kv;
     const raw = readKey(kv, CARDS_KEY);
+    this.#stored = raw;
     this.#seeds = raw === undefined ? new Map() : decode(raw);
     if (raw !== undefined) return;
     const run = saved?.();
@@ -76,11 +104,18 @@ export class InspirationStore {
     };
   };
 
-  /** Changes with every mark that changed something; until then each reading keeps its identity. */
-  readonly version = (): number => this.#version;
+  /**
+   * Changes with every mark that changed something, here or in another tab (read at this call);
+   * until then each reading keeps its identity.
+   */
+  readonly version = (): number => {
+    this.#sync();
+    return this.#version;
+  };
 
-  /** The cards shown in a season (by its seed). */
+  /** The cards shown in a season (by its seed), as the storage holds them now. */
   shown(seed: string): ReadonlySet<string> {
+    this.#sync();
     let set = this.#sets.get(seed);
     if (!set) {
       set = new Set(this.#seeds.get(seed) ?? []);
@@ -89,23 +124,61 @@ export class InspirationStore {
     return set;
   }
 
-  /** Mark a card shown: its season becomes the newest kept. */
+  /**
+   * Mark a card shown: its season becomes the newest kept. The write keeps what another tab
+   * stored since this one read the storage (each card a tab marked stays marked: the union).
+   */
   markShown(seed: string, key: string): void {
+    this.#sync();
+    if (this.#seeds.get(seed)?.includes(key)) return;
     const keys = this.#seeds.get(seed) ?? [];
-    if (keys.includes(key)) return;
-    this.#seeds.delete(seed);
-    this.#seeds.set(seed, [...keys, key]);
-    for (const old of [...this.#seeds.keys()].slice(0, Math.max(0, this.#seeds.size - MAX_SEEDS))) {
-      this.#seeds.delete(old);
-      this.#sets.delete(old);
-    }
-    this.#sets.delete(seed);
+    const merged = new Map(this.#seeds);
+    merged.delete(seed);
+    merged.set(seed, [...keys, key]);
+    this.#seeds.clear();
+    for (const [s, k] of [...merged].slice(Math.max(0, merged.size - MAX_SEEDS)))
+      this.#seeds.set(s, k);
+    this.#sets.clear();
     this.#write();
     this.#version += 1;
     for (const listener of [...this.#listeners]) listener();
   }
 
+  /**
+   * What the storage holds now, merged into what this tab knows when it changed since it was last
+   * read or written: this tab's seasons the storage no longer has first (the oldest, the first to
+   * go), then the storage's, each with what this tab adds to it. Only the seasons whose cards
+   * changed read again; the version changes only when one did.
+   */
+  #sync(): void {
+    const raw = readKey(this.#kv, CARDS_KEY);
+    if (raw === this.#stored) return;
+    this.#stored = raw;
+    const stored = raw === undefined ? new Map<string, readonly string[]>() : decode(raw);
+    const merged = new Map([...this.#seeds].filter(([s]) => !stored.has(s)));
+    for (const [s, theirs] of stored) {
+      const mine = this.#seeds.get(s) ?? [];
+      merged.set(s, [...theirs, ...mine.filter((k) => !theirs.includes(k))]);
+    }
+    let changed = merged.size !== this.#seeds.size;
+    for (const [s, keys] of merged)
+      if (!sameKeys(keys, this.#seeds.get(s))) {
+        changed = true;
+        this.#sets.delete(s);
+      }
+    if (!changed) return;
+    this.#seeds.clear();
+    for (const [s, k] of merged) this.#seeds.set(s, k);
+    this.#version += 1;
+  }
+
   #write(): void {
     writeKey(this.#kv, CARDS_KEY, JSON.stringify({ v: 1, seeds: [...this.#seeds] }));
+    // what the storage holds now: one that refused the write leaves this tab's cards for the visit
+    this.#stored = readKey(this.#kv, CARDS_KEY);
   }
+}
+
+function sameKeys(a: readonly string[], b: readonly string[] | undefined): boolean {
+  return a.length === (b?.length ?? 0) && a.every((k, i) => k === b?.[i]);
 }

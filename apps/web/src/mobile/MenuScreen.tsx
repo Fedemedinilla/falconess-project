@@ -1,19 +1,57 @@
 import type { SeasonState } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
-import { type CSSProperties, type ReactNode, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 import { learnableSkills } from "../screens/model/workshop";
-import { gameText, ui } from "../text/ui";
+import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import { runnerArt } from "./art";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import type { WeekMenu } from "./model";
-import { GradeChip, placeText, StatStrip } from "./Parts";
+import { PANEL_GLYPH, type PanelTab, panelTitle } from "./Panels";
+import { StatStrip } from "./Parts";
 import { TrackCardButton, TrackSheet } from "./TrackCard";
 import { TrainBar } from "./TrainBar";
 import { trackCard } from "./track";
 
 export type MenuAction = "train" | "rest" | "outing" | "workshop" | "skills" | "race" | "menu";
+
+/** The reading panels, in the order the rail lists them. */
+const PANELS: readonly PanelTab[] = ["guide", "goals", "crews", "log"];
+
+/**
+ * The reading rail (owner 2026-11-18): Guía, Metas, Cuadrillas and Registro as small icon buttons
+ * down the right edge, right under «Menú», one tap each — they are reading, and «Menú» is doing.
+ * Guía keeps its dot until it has been opened. In the flow, never over a control; only on a phone
+ * (the wide screen's panel has its own rail with the four).
+ */
+function ReadingRail({
+  onPanel,
+  guideNew,
+}: {
+  onPanel: (tab: PanelTab) => void;
+  guideNew: boolean;
+}) {
+  return (
+    <nav className={s.rail} aria-label={ui("ui.m.reading")}>
+      {PANELS.map((t) => (
+        <button
+          key={t}
+          type="button"
+          className={s.railBtn}
+          id={`m-leer-${t}`}
+          data-new={t === "guide" ? guideNew : undefined}
+          onClick={() => onPanel(t)}
+        >
+          <Glyph name={PANEL_GLYPH[t]} size={19} weight={2.4} />
+          <span className={s.railLb}>{panelTitle(t)}</span>
+          {t === "guide" && guideNew && <span className={s.railDot} data-dot aria-hidden="true" />}
+        </button>
+      ))}
+    </nav>
+  );
+}
 
 function RoundButton({
   id,
@@ -45,7 +83,7 @@ function RoundButton({
       disabled={disabled}
       onClick={(e) => {
         // the second click of a double click lands on the next week's button: ignore it
-        if (e.detail > 1) return;
+        if (isRepeatTap(e)) return;
         onClick();
       }}
     >
@@ -59,21 +97,37 @@ function RoundButton({
 /**
  * The week menu: the runner large in the middle, «Menú» at the top right, the goal's track in a tab
  * at the left edge, her stats on a strip over her legs, «Entrenar» as a wide bar and the other four
- * actions as pills under it (owner 2026-11-14).
+ * actions as pills under it (owner 2026-11-14). On a race week there is no bar of its own (owner
+ * 2026-11-18): the track drawer opens by itself and its card opens the planning card.
  */
 export function MenuScreen({
   ctx,
   state,
   menu,
   pendingEvent,
+  major = false,
   onAction,
+  onPanel,
+  guideNew = false,
+  autoTrack = false,
+  onTrackShown,
 }: {
   ctx: SimContext;
   state: SeasonState;
   menu: WeekMenu;
   pendingEvent: boolean;
+  /** The menu a run opens on comes in slower (D1). Read when it mounts. */
+  major?: boolean;
   onAction: (action: MenuAction) => void;
+  /** The four reading panels live on this screen now; the wide screen passes none (its own rail). */
+  onPanel?: ((tab: PanelTab) => void) | undefined;
+  guideNew?: boolean;
+  /** The track drawer opens by itself now (`flow.openTrack`): a race week, nothing in front. */
+  autoTrack?: boolean;
+  /** Said once the drawer opened by itself: this week does not open it again. */
+  onTrackShown?: (() => void) | undefined;
 }) {
+  const [slow] = useState(major);
   const f = ctx.content.getFalconess(state.falconessId);
   const sponsor = ctx.content.getManufacturer(f.sponsor);
   const art = runnerArt(f.id);
@@ -91,9 +145,18 @@ export function MenuScreen({
   const [trackOpen, setTrackOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const track = goal && trackCard(ctx, goal.courseId);
+  const raceWeek = menu.raceWeek && goal !== undefined;
+  // owner 2026-11-18: where the race bar was, the drawer opens by itself on a race week (the same
+  // information, and it shows the player that the tab is where the race is). The flow decides when
+  // (once a week, never under a layer or a sheet); here it just opens, and a close stays closed.
+  useEffect(() => {
+    if (!autoTrack) return;
+    setDrawer(true);
+    onTrackShown?.();
+  }, [autoTrack, onTrackShown]);
 
   return (
-    <div className={s.screen}>
+    <div className={cx(s.screen, slow && s.screenMajor)}>
       {art && (
         <div
           className={s.hero}
@@ -123,27 +186,8 @@ export function MenuScreen({
             onClick={() => onAction("menu")}
           />
         </div>
+        {onPanel && <ReadingRail onPanel={onPanel} guideNew={guideNew} />}
         <div className={s.grow} />
-        {menu.raceWeek && goal && (
-          <button
-            type="button"
-            className={s.raceBar}
-            id="m-carrera"
-            onClick={() => onAction("race")}
-            disabled={off}
-          >
-            <Glyph name="flag" size={22} weight={2.4} />
-            <span className={s.raceBarT}>
-              <b>{ui("ui.m.race.week")}</b>
-              <span>
-                <GradeChip grade={goal.grade} />
-                {gameText(ctx.content.getCourse(goal.courseId).textKey)} ·{" "}
-                {placeText(goal.minPlace)}
-              </span>
-            </span>
-            <span className={s.raceBarGo}>{ui("ui.m.race.open")}</span>
-          </button>
-        )}
         {/* owner 2026-11-14: the track hides in a tab at the screen's edge; a tap slides it out */}
         {track && (
           <div className={s.drawer}>
@@ -151,6 +195,10 @@ export function MenuScreen({
               type="button"
               className={cx(s.drawerTab, drawer && s.drawerTabOn)}
               id="m-pista-tab"
+              // the scene's notice sits just over the tab, never over the menu's buttons (rule 17)
+              data-toast-anchor
+              // the week's race lives behind this tab now (owner 2026-11-18): what the bar said
+              data-race={raceWeek ? "" : undefined}
               aria-expanded={drawer}
               aria-controls="m-pista"
               aria-label={ui(drawer ? "ui.m.track.tab.close" : "ui.m.track.tab.open")}
@@ -163,7 +211,24 @@ export function MenuScreen({
               className={cx(s.drawerCard, drawer && s.drawerCardOn)}
               inert={drawer ? undefined : true}
             >
-              <TrackCardButton view={track} id="m-pista" onOpen={() => setTrackOpen(true)} />
+              <TrackCardButton
+                view={track}
+                id="m-pista"
+                // owner 2026-11-18: on a race week the card is the door to the planning card (D3),
+                // which shows this same profile and what it asks plus the four positions; on any
+                // other week it opens the plain track sheet, as before
+                onOpen={
+                  raceWeek
+                    ? (e) => {
+                        // a menu action (plan §1.7 rule 3): the second click of a double tap (one
+                        // that ended the week's scene over the menu) opens nothing
+                        if (!isRepeatTap(e)) onAction("race");
+                      }
+                    : () => setTrackOpen(true)
+                }
+                sheet={!raceWeek}
+                disabled={raceWeek && off}
+              />
             </div>
           </div>
         )}

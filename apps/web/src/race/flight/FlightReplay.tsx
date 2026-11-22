@@ -522,8 +522,27 @@ export function FlightReplay({ log, labels, idPrefix, onReveal, minSpeed }: Flig
       stage.layout();
     };
     window.addEventListener("resize", onResize);
+    // the wrapper can change width with the window still (the phone game's tablet frame widens for
+    // the race, L5): the canvas follows it, a frame later, since its new height resizes the wrapper
+    // and must not do so inside the observer's own callback
+    const wrapper = cv.parentElement;
+    let laidAt = Math.round(wrapper?.getBoundingClientRect().width ?? 0);
+    let relayout = 0;
+    const ro =
+      wrapper && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver((entries) => {
+            const width = Math.round(entries[0]?.contentRect.width ?? laidAt);
+            if (width === laidAt) return;
+            laidAt = width;
+            cancelAnimationFrame(relayout);
+            relayout = requestAnimationFrame(onResize);
+          })
+        : undefined;
+    if (wrapper) ro?.observe(wrapper);
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(relayout);
+      ro?.disconnect();
       window.removeEventListener("resize", onResize);
       stageRef.current = null;
       fpvRef.current = null;

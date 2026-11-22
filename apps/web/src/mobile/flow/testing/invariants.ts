@@ -1,8 +1,7 @@
 /**
  * The season walks' invariants I1–I22 (plan §3.4): what must hold over a walk's trace (`world.ts`),
- * whatever the bot did. Each is declared with what it needs of the policy: always asserted for the
- * target policy, and for the active one only once its flag flipped (`requires`). "Per mount" means
- * between two reloads; counts are of completions (a beat a command ended), not of tops.
+ * whatever the bot did, every one over every walk. "Per mount" means between two reloads; counts
+ * are of completions (a beat a command ended), not of tops.
  */
 import type { SeasonState, StoryScene } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
@@ -11,7 +10,6 @@ import { withPosition } from "../../../screens/model/position";
 import { triggerHolds } from "../../storyModel";
 import { weekFx } from "../../weekFx";
 import { isInstant } from "../beats";
-import { type FlowPolicy, TARGET_POLICY } from "../policy";
 import { addedRace } from "../steps";
 import type { Beat } from "../types";
 import { trainingOutcome } from "../week";
@@ -21,7 +19,6 @@ import type { TraceEvent } from "./world";
 /** A world's whole trace: one or more seasons a bot played. */
 export type Walk = {
   readonly name: string;
-  readonly policy: FlowPolicy;
   readonly pace: "normal" | "fast" | "direct";
   readonly reduced: boolean;
   readonly ctx: SimContext;
@@ -32,25 +29,17 @@ export type Walk = {
 export type Invariant = {
   readonly id: string;
   readonly name: string;
-  /** Whether the policy has what the invariant needs (the plan's "ACTIVE from" column). */
-  readonly requires: (p: FlowPolicy) => boolean;
   /** Every place the walk breaks it, described (empty: it holds). */
   readonly check: (w: Walk) => readonly string[];
 };
 
-function invariant(
-  id: string,
-  name: string,
-  requires: (p: FlowPolicy) => boolean,
-  check: (w: Walk) => readonly string[],
-): Invariant {
-  return { id, name, requires, check };
+function invariant(id: string, name: string, check: (w: Walk) => readonly string[]): Invariant {
+  return { id, name, check };
 }
 
 type Ev<T extends TraceEvent["type"]> = Extract<TraceEvent, { type: T }>;
 type Done = Ev<"done">;
 
-const always = (): boolean => true;
 const where = (e: TraceEvent): string =>
   `season ${e.at.season}, mount ${e.at.mount}, move ${e.at.move}`;
 
@@ -134,7 +123,6 @@ const END = 8;
 const I1 = invariant(
   "I1",
   "modes never mix: a race week completes train-result? fx:action? (emblem|enter) scene* position replay? finish? scene* race-result, nothing else",
-  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -152,10 +140,7 @@ const I1 = invariant(
           const early = at === undefined ? kind === "goal-before" : at <= PRE;
           next = early ? PRE : POST;
           const fits =
-            next === PRE
-              ? kind === "goal-before"
-              : kind !== "goal-before" &&
-                (!w.policy.sceneFilters || kind === "goal-after" || kind === "end");
+            next === PRE ? kind === "goal-before" : kind === "goal-after" || kind === "end";
           if (!fits) out.push(`${where(e)}: ${label(e.beat)} (${kind}) inside a race week`);
         } else {
           if (at !== undefined) out.push(`${where(e)}: ${label(e.beat)} inside a race week`);
@@ -175,7 +160,6 @@ const I1 = invariant(
 const I2 = invariant(
   "I2",
   "the emblem: at most once per race week per mount, right after its action; never under Directo or reduced motion, in a watch, or when restoring at stage race",
-  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -196,7 +180,7 @@ const I2 = invariant(
         // between the decision (or the mount's start) and the emblem: only the week's action
         const fp = fpOfKey(k);
         const from = lastIndex(mount, (d, j) => j < i && d.type === "decide" && d.week.fp === fp);
-        // restored, not decided again in this mount (legacy loses the week at a reload, F1)
+        // restored at stage race, and not decided again in this mount
         if (k === restoredRace && from < 0)
           out.push(`${where(e)}: the emblem of a week restored at stage race`);
         for (const d of mount.slice(from + 1, i))
@@ -220,7 +204,6 @@ const SCENE_SCREEN: Readonly<Record<string, string>> = {
 const I3 = invariant(
   "I3",
   "black only under a covered emblem with a scene next; a scene sits over its own mode's screen",
-  always,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {
@@ -253,7 +236,6 @@ const I3 = invariant(
 const I4 = invariant(
   "I4",
   "after a decision no idle menu until its race's result is done; the decided card has no way back",
-  always,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -288,7 +270,6 @@ const fxOf = (d: Done | undefined): string[] =>
 const I5 = invariant(
   "I5",
   "a race week's effects: the action's part (last shown) plus the race's are the week's, and no kind twice in a mount (rule 36)",
-  (p) => p.endSequence,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -320,7 +301,6 @@ const I5 = invariant(
 const I6 = invariant(
   "I6",
   "every committed step is acknowledged exactly once (across reloads), before the next decision",
-  (p) => p.endSequence,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -343,7 +323,6 @@ const I6 = invariant(
 const I7 = invariant(
   "I7",
   "D2 per mount: a step's effects, then its inheritance card, then the turn scenes; at the start the prologue, then the card",
-  (p) => p.order === "d2",
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -392,7 +371,6 @@ function sceneMode(d: Done): string {
 const I8 = invariant(
   "I8",
   "each due scene completes (plays or passes) exactly once per season, in its mode",
-  (p) => p.sceneFilters,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -438,7 +416,6 @@ const I8 = invariant(
 const I9 = invariant(
   "I9",
   "at the end the last step's result or race and its effects complete, and its black box is kept",
-  (p) => p.endSequence,
   (w) => {
     const out: string[] = [];
     for (const season of groups(w.trace, "season")) {
@@ -450,7 +427,7 @@ const I9 = invariant(
       if (addedRace(last.step)) {
         need.push(`${fp}/race:result`);
         if (w.pace !== "direct") need.push(`${fp}/race:replay`);
-      } else if (trainingOutcome(last.step, w.policy.restedCue)) need.push(`${fp}/result`);
+      } else if (trainingOutcome(last.step)) need.push(`${fp}/result`);
       for (const k of need) if (!done.has(k)) out.push(`${where(last)}: ${k} never completed`);
       if (!done.has(`${fp}/fx`) && !done.has(`${fp}/ack`))
         out.push(`${where(last)}: the last week's effects never completed`);
@@ -473,7 +450,6 @@ const SLOT_INERT = new Set(["train", "workshop", "plan", "race"]);
 const I10 = invariant(
   "I10",
   "one screen and at most one layer; a layer means the screen is inert or black",
-  always,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {
@@ -489,7 +465,6 @@ const I10 = invariant(
 const I11 = invariant(
   "I11",
   "the wide screen's panel is locked exactly while a layer, the race mode or a training's result is up",
-  always,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {
@@ -508,7 +483,6 @@ const I11 = invariant(
 const I12 = invariant(
   "I12",
   "a reload inside a decided week plays that week on (same input and position), no idle menu, and «Correr» runs it",
-  (p) => p.resume,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -553,7 +527,6 @@ const I12 = invariant(
 const I13 = invariant(
   "I13",
   `no dead end: every move changes something, and every season reaches its end within ${MAX_MOVES} moves`,
-  always,
   (w) =>
     w.ends.flatMap((e, i) =>
       e.ended && e.stuck === undefined && e.moves < MAX_MOVES
@@ -567,7 +540,6 @@ const I13 = invariant(
 const I14 = invariant(
   "I14",
   "no notice over a layer, the race's replay or finish, or a training's result",
-  always,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {
@@ -589,7 +561,6 @@ const I14 = invariant(
 const I15 = invariant(
   "I15",
   "Directo: no emblem, replay or finish; «Correr» opens on the race's result (after its scene)",
-  always,
   (w) => {
     if (w.pace !== "direct") return [];
     const out: string[] = [];
@@ -615,7 +586,6 @@ const I15 = invariant(
 const I16 = invariant(
   "I16",
   "a reload after «Correr» and before «Continuar» plays the race mode on: the replay (Directo: the result), the scene after it if unseen, the result",
-  (p) => p.resume,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -660,7 +630,6 @@ const I16 = invariant(
 const I17 = invariant(
   "I17",
   "during a training's result the HUD shows the week she trained in",
-  (p) => p.trainView,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {
@@ -677,7 +646,6 @@ const I17 = invariant(
 const I18 = invariant(
   "I18",
   "the finish hold only after a replay that ended by itself, never under Directo",
-  (p) => p.finishHold,
   (w) => {
     const out: string[] = [];
     for (const mount of groups(w.trace, "mount")) {
@@ -703,7 +671,6 @@ const I18 = invariant(
 const I19 = invariant(
   "I19",
   "during the week's effects the HUD's week and mood are the week just played",
-  (p) => p.fxHud,
   (w) => {
     const out: string[] = [];
     for (const f of of(w.trace, "frame")) {
@@ -745,7 +712,6 @@ function keptEnd(key: string, done: ReadonlySet<string>): boolean {
 const I20 = invariant(
   "I20",
   "after a reload the first beats are ones whose end was not kept (§1.8): no read week's result or effects, no card shown, no scene seen, no action part past its stage; and nothing the season ended before the reload that §1.8 keeps comes back",
-  (p) => p.resume,
   (w) => {
     const out: string[] = [];
     for (const reload of of(w.trace, "reload")) {
@@ -788,7 +754,6 @@ const I20 = invariant(
 const I21 = invariant(
   "I21",
   "a watch ends where it began (from the result: the race's effects; from the end: the end), and «Saltar» and the natural end move it on",
-  always,
   (w) => {
     const out: string[] = [];
     for (const m of of(w.trace, "watchMove"))
@@ -836,7 +801,6 @@ const I21 = invariant(
 const I22 = invariant(
   "I22",
   "two derives over the same facts and UI state give the same top, screen and layer",
-  always,
   (w) =>
     of(w.trace, "frame")
       .filter((f) => !f.stable)
@@ -897,6 +861,13 @@ export function coverage(w: Walk): Readonly<Record<string, number>> {
   }
   for (const from of watches.values()) add(`watch:${from}`);
   add("end", w.ends.filter((e) => e.ended).length);
+  // what the step that ended a season played before the End: its race's result or its training's
+  const done = new Set(w.trace.flatMap((e) => (e.type === "done" ? [e.beat.key] : [])));
+  for (const e of w.trace)
+    if (e.type === "act" && e.step.after.status === "ended") {
+      if (done.has(`${e.fp}/race:result`)) add("end:race");
+      if (done.has(`${e.fp}/result`)) add("end:result");
+    }
   return out;
 }
 
@@ -912,28 +883,20 @@ export function walkOf(spec: WalkSpec): Walk {
   return walk;
 }
 
-/**
- * One test per invariant and walk: always for the target policy, and for the active one only when
- * the policy has what the invariant needs (until then it is skipped, and the step that flips the
- * flag turns it on).
- */
+/** One test per invariant and walk. */
 export function itHolds(spec: WalkSpec): void {
   for (const inv of INVARIANTS)
-    it.skipIf(spec.policy !== TARGET_POLICY && !inv.requires(spec.policy))(
-      `${inv.id}: ${inv.name}`,
-      () => {
-        expect(inv.check(walkOf(spec))).toEqual([]);
-      },
-    );
+    it(`${inv.id}: ${inv.name}`, () => {
+      expect(inv.check(walkOf(spec))).toEqual([]);
+    });
 }
 
-/** The kinds of beat (and moments) the target walks must reach between them, so none is vacuous. */
+/** The kinds of beat (and moments) the walks must reach between them, so none is vacuous. */
 export function itReaches(specs: readonly WalkSpec[], kinds: readonly string[]): void {
-  it(`the target walks reach ${kinds.join(", ")}`, () => {
+  it(`the walks reach ${kinds.join(", ")}`, () => {
     const total: Record<string, number> = {};
     for (const spec of specs)
-      if (spec.policy === TARGET_POLICY)
-        for (const [k, n] of Object.entries(coverage(walkOf(spec)))) total[k] = (total[k] ?? 0) + n;
+      for (const [k, n] of Object.entries(coverage(walkOf(spec)))) total[k] = (total[k] ?? 0) + n;
     expect(kinds.filter((k) => !(total[k] ?? 0))).toEqual([]);
   });
 }

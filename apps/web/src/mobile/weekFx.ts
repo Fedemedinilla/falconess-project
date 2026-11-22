@@ -1,14 +1,15 @@
 /**
- * What the week did, shown instead of told (owner 2026-11-13): how she slept, a new injury, the
- * mood that moved, the crews she bonded with, the skill points a race paid and the skills she
- * learned, as stamps with chevrons like a training's result. Pure: read from the step's log notes
- * (`stepLog`, as «Lo que pasó» reads them) and its two states.
+ * What the week did, shown instead of told (owner 2026-11-13): an injured week's rest, how she
+ * slept, a new injury, the mood that moved, the crews she bonded with, the skill points a race paid
+ * and the skills she learned, as stamps with chevrons like a training's result. Pure: read from the
+ * step's log notes (`stepLog`, as «Lo que pasó» reads them) and its two states.
  */
 import { stepLog } from "@falconess/race-view";
 import type { Ruleset } from "@falconess/sim";
 import type { WeekStep } from "../screens/model/week";
 
 export type WeekFxKind =
+  | "recovery"
   | "sleep-great"
   | "sleep-normal"
   | "sleep-poor"
@@ -51,6 +52,9 @@ function weekFxAll(step: WeekStep, ruleset?: Ruleset): WeekFx[] {
   const { before, after } = step;
   const out: WeekFx[] = [];
   const keys = new Set(stepLog(before, after).notes);
+  // an injured week rests whatever the action (O2): no training's result, no sleep roll; it shows
+  // as the injury's own news, with any mood change (the action's part of a race week)
+  if (keys.has("log.injured")) out.push({ kind: "recovery", good: false });
   if (keys.has("log.vigor.rest.great")) out.push({ kind: "sleep-great", good: true });
   else if (keys.has("log.vigor.rest.normal")) out.push({ kind: "sleep-normal", good: true });
   else if (keys.has("log.vigor.rest.poor")) out.push({ kind: "sleep-poor", good: false });

@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * Motion helpers for the phone game's e2e (plan-final §2.8): what one frame of #juego holds, CSS
@@ -22,7 +22,7 @@ export type FrameIssue =
  * It runs in the page, as the frame probe's scan (its init script is built from this function's
  * source) and through `page.evaluate`, so it is self-contained: no imports, no outer names.
  * Each element is named by itself and its nearest landmarks (an id, `data-app`, `data-screen`,
- * `data-layer`, a `<dialog>`), outermost first: `dialog#m-menu-dialogo[open] › button#m-sonido`.
+ * `data-layer`, a `<dialog>`), outermost first: `dialog#m-menu-dialogo[open] › button#m-menu-cerrar`.
  */
 export function frameIssues(): FrameIssue[] {
   const ATTRS = ["data-app", "data-screen", "data-layer", "data-layer-phase", "data-scene"];
@@ -97,6 +97,20 @@ export async function freezeAt(page: Page, ms: number): Promise<void> {
   }, ms);
 }
 
+/**
+ * Holds every CSS animation where it starts, from now on (a style that pauses them all), so what a
+ * tap mounts can be read with `freezeAt` however slow the page is: the fake clock drives the
+ * timers, never the CSS, and a fade can end before a later `freezeAt` reaches it (final review C7).
+ */
+export async function holdAnimations(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const style = document.createElement("style");
+    style.setAttribute("data-hold-animations", "");
+    style.textContent = "*, *::before, *::after { animation-play-state: paused !important; }";
+    document.head.append(style);
+  });
+}
+
 /** The opacity an element shows: the product of the computed opacities up its ancestors. */
 export async function opacityOf(page: Page, selector: string): Promise<number> {
   return page.locator(selector).evaluate((el) => {
@@ -107,55 +121,237 @@ export async function opacityOf(page: Page, selector: string): Promise<number> {
   });
 }
 
-/** What a 5 × 9 grid of points over the game hits (`coverage`). */
+/** What a 5 × 9 grid of points over the game shows (`coverage`). */
 export type Coverage = {
-  /** Points that hit `selector` with every ancestor at opacity 1. */
+  /** Points where the first opaque paint is `selector`'s, with nothing else painted over it. */
   readonly covered: number;
   readonly points: number;
-  /** Each other point: where it is, what it hit, and why it does not count. */
+  /** Each other point: where it is, what shows there, and why it does not count. */
   readonly misses: readonly string[];
 };
 
 /**
- * Whether `selector` covers the game: a 5 × 9 grid of `elementFromPoint` calls over the game's
- * column (`[data-app]`, clipped to the viewport; the viewport without it) must each land inside
- * `selector`, on an element whose every ancestor computes opacity 1. Rule 10 (a scene starts on
- * opaque black) and rule 11 (nothing of the race card under the emblem) are checked with it.
+ * Whether `selector` covers the game: at each point of a 5 × 9 grid over the game's column
+ * (`[data-app]`, clipped to the viewport; the viewport without it), what the player sees must be
+ * `selector`'s own opaque paint. The point's stack (`document.elementsFromPoint`, read with every
+ * element taking pointers for the scan, so what paints but takes no tap counts: a scene's veil) is
+ * read from the top down to its first opaque paint (a background colour at full alpha, every
+ * ancestor at opacity 1): that paint must be inside `selector`, and nothing outside it may paint
+ * over it. A transparent box (a full-screen button, a wrapper) shows nothing and is looked through,
+ * so a scene's stage button does not stand for its black (final review C2); what paints only in
+ * part (an image, a gradient, text, a fading box) inside `selector` is looked through too.
+ * `under` names what to look under (a leaving copy in front: what it uncovers). Rule 10 (a scene
+ * starts on opaque black) and rule 11 (nothing of the race card under the emblem) are checked with
+ * it.
  */
-export async function coverage(page: Page, selector: string): Promise<Coverage> {
+export async function coverage(
+  page: Page,
+  selector: string,
+  options: { readonly under?: string } = {},
+): Promise<Coverage> {
+  return page.evaluate(coverageNow, [selector, options.under ?? ""] as const);
+}
+
+/**
+ * `coverage`'s page side: what the grid over the game shows right now, for `sel`, looking under
+ * `under` (empty: nothing). Self-contained (no imports, no outer names), like `frameIssues`, so an
+ * init script can carry it too (`e2e/mobile-season.spec.ts` reads it at a scene's first commit).
+ */
+export function coverageNow([sel, under]: readonly [string, string]): Coverage {
+  const scan = document.createElement("style");
+  scan.textContent = "*, *::before, *::after { pointer-events: auto !important; }";
+  document.head.append(scan);
+  const app = document.querySelector("[data-app]")?.getBoundingClientRect();
+  const left = Math.max(0, app?.left ?? 0);
+  const top = Math.max(0, app?.top ?? 0);
+  const right = Math.min(window.innerWidth, app?.right ?? window.innerWidth);
+  const bottom = Math.min(window.innerHeight, app?.bottom ?? window.innerHeight);
+  const name = (el: Element): string => {
+    const cls = el.getAttribute("class")?.split(/\s+/)[0];
+    return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
+  };
+  /** The opacity it shows at, with the element that fades it most. */
+  const seen = (el: Element): { opacity: number; by: Element } => {
+    let opacity = 1;
+    let by = el;
+    let least = 1;
+    for (let e: Element | null = el; e; e = e.parentElement) {
+      const o = Number(getComputedStyle(e).opacity);
+      opacity *= o;
+      if (o < least) {
+        least = o;
+        by = e;
+      }
+    }
+    return { opacity, by };
+  };
+  /** A computed colour's alpha (0-1). */
+  const alpha = (color: string): number => {
+    if (color === "transparent") return 0;
+    const slash = /\/\s*([\d.]+)(%?)\s*\)$/.exec(color);
+    if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1);
+    const rgba = /^rgba\((?:[^,]+,){3}\s*([\d.]+)\)$/.exec(color);
+    return rgba ? Number(rgba[1]) : 1;
+  };
+  /** Whether it paints anything of its own: a background, an image, a canvas, or its text. */
+  const paints = (el: Element): boolean => {
+    const style = getComputedStyle(el);
+    if (alpha(style.backgroundColor) > 0 || style.backgroundImage !== "none") return true;
+    if (/^(img|canvas|video|svg)$/i.test(el.tagName)) return true;
+    return [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim());
+  };
+  const misses: string[] = [];
+  let covered = 0;
+  for (let i = 0; i < 5; i++)
+    for (let j = 0; j < 9; j++) {
+      const x = Math.round(left + ((i + 0.5) * (right - left)) / 5);
+      const y = Math.round(top + ((j + 0.5) * (bottom - top)) / 9);
+      const at = `(${x}, ${y})`;
+      let miss: string | undefined = `${at}: nothing`;
+      let faded: string | undefined;
+      for (const el of document.elementsFromPoint(x, y)) {
+        if (under && el.closest(under)) continue;
+        const { opacity, by } = seen(el);
+        if (opacity === 0 || !paints(el)) continue;
+        if (!el.closest(sel)) {
+          miss = `${at}: ${name(el)}, outside ${sel}${faded ? `, under ${faded}` : ""}`;
+          break;
+        }
+        if (opacity >= 0.999 && alpha(getComputedStyle(el).backgroundColor) >= 0.999) {
+          miss = undefined;
+          break;
+        }
+        // a part of it that shows only in part: what is under it shows through
+        if (opacity < 0.999) faded ??= `${name(by)} at opacity ${Number(opacity.toFixed(3))}`;
+      }
+      if (miss === undefined) covered++;
+      else misses.push(miss);
+    }
+  scan.remove();
+  return { covered, points: 45, misses };
+}
+
+/** Lets the page's own updates land (React commits on a posted message, a timer's too). */
+export async function settleUpdates(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    for (let i = 0; i < 3; i++)
+      await new Promise<void>((done) => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = () => done();
+        channel.port2.postMessage(0);
+      });
+  });
+}
+
+/**
+ * Holds the fake clock still (a little ahead of now): timers run only as the test moves it on.
+ * The clock flows while the call travels (a slow dev build can take longer than the lead): aim
+ * again if it got there first.
+ */
+export async function holdClock(page: Page): Promise<void> {
+  for (let tries = 0; ; tries++)
+    try {
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+      return;
+    } catch (error) {
+      if (tries >= 4 || !String(error).includes("past")) throw error;
+    }
+}
+
+/**
+ * What moves inside `scope` right now (reduced motion's check, plan §2.4): every running CSS
+ * animation and Web Animation, and every running CSS transition of anything but opacity, as
+ * `element name`. Press feedback (a transition of `--m-dur-fast`'s length or less, the answer to
+ * the finger's own touch) is not counted. Paused or finished animations do not move.
+ */
+export async function movingNow(page: Page, scope = "[data-app]"): Promise<string[]> {
   return page.evaluate((sel) => {
-    const app = document.querySelector("[data-app]")?.getBoundingClientRect();
-    const left = Math.max(0, app?.left ?? 0);
-    const top = Math.max(0, app?.top ?? 0);
-    const right = Math.min(window.innerWidth, app?.right ?? window.innerWidth);
-    const bottom = Math.min(window.innerHeight, app?.bottom ?? window.innerHeight);
+    const PRESS_MS = 120;
     const name = (el: Element): string => {
       const cls = el.getAttribute("class")?.split(/\s+/)[0];
       return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
     };
-    const misses: string[] = [];
-    let covered = 0;
-    for (let i = 0; i < 5; i++)
-      for (let j = 0; j < 9; j++) {
-        const x = Math.round(left + ((i + 0.5) * (right - left)) / 5);
-        const y = Math.round(top + ((j + 0.5) * (bottom - top)) / 9);
-        const hit = document.elementFromPoint(x, y);
-        if (!hit) {
-          misses.push(`(${x}, ${y}): nothing`);
-          continue;
-        }
-        if (!hit.closest(sel)) {
-          misses.push(`(${x}, ${y}): ${name(hit)}, outside ${sel}`);
-          continue;
-        }
-        let faded: string | undefined;
-        for (let e: Element | null = hit; e && !faded; e = e.parentElement) {
-          const opacity = Number(getComputedStyle(e).opacity);
-          if (opacity < 1) faded = `${name(e)} at opacity ${opacity}`;
-        }
-        if (faded) misses.push(`(${x}, ${y}): ${name(hit)}, under ${faded}`);
-        else covered++;
+    const out: string[] = [];
+    for (const a of document.getAnimations()) {
+      if (a.playState !== "running") continue;
+      const target = a.effect instanceof KeyframeEffect ? a.effect.target : null;
+      if (!target?.closest(sel)) continue;
+      if (a instanceof CSSAnimation) out.push(`${name(target)} ${a.animationName}`);
+      else if (a instanceof CSSTransition) {
+        const ms = Number(a.effect?.getTiming().duration ?? 0);
+        if (a.transitionProperty !== "opacity" && ms > PRESS_MS)
+          out.push(`${name(target)} ${a.transitionProperty}`);
+      } else out.push(`${name(target)} animate()`);
+    }
+    return out.sort();
+  }, scope);
+}
+
+/**
+ * The tab hidden, or shown again (6.11): `document.hidden` and `document.visibilityState` read
+ * as the browser sets them for a tab in the background, and `visibilitychange` fires, as when the
+ * player switches tabs or locks the phone. Playwright cannot hide a page, so it goes on drawing
+ * frames: only what reads these sees the hidden tab (the game's flow timers and its CSS do).
+ */
+export async function setTabHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate((h) => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => h });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => (h ? "hidden" : "visible"),
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, hidden);
+}
+
+/**
+ * The CSS animations inside `scope`, by the play state each element (and its `::before` and
+ * `::after`) computes: what runs, as `element name`, and how many stand paused. A finished
+ * animation still computes its play state, so this reads the rule, not the moment.
+ */
+export async function cssPlayStates(
+  page: Page,
+  scope = "[data-app]",
+): Promise<{ readonly running: readonly string[]; readonly paused: number }> {
+  return page.evaluate((sel) => {
+    const name = (el: Element): string => {
+      const cls = el.getAttribute("class")?.split(/\s+/)[0];
+      return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (cls ? `.${cls}` : "");
+    };
+    const running: string[] = [];
+    let paused = 0;
+    for (const el of document.querySelector(sel)?.querySelectorAll("*") ?? [])
+      for (const pseudo of [null, "::before", "::after"]) {
+        const style = getComputedStyle(el, pseudo);
+        if (style.animationName === "none") continue;
+        if (style.animationPlayState.split(",").some((state) => state.trim() === "running"))
+          running.push(`${name(el)}${pseudo ?? ""} ${style.animationName}`);
+        else paused++;
       }
-    return { covered, points: 45, misses };
-  }, selector);
+    return { running: running.sort(), paused };
+  }, scope);
+}
+
+/** Whether `selector` is in the page right now, without waiting for it. */
+export function present(page: Page, selector: string): Promise<boolean> {
+  return page.evaluate((sel) => document.querySelector(sel) !== null, selector);
+}
+
+/** The held clock (`holdClock`) moved on by `ms`, and the page's updates in. */
+export async function runClock(page: Page, ms: number): Promise<void> {
+  await page.clock.runFor(ms);
+  await settleUpdates(page);
+}
+
+/** Hides the tab, or shows it again (`setTabHidden`), and lets the page take it in. */
+export async function hideTab(page: Page, hidden: boolean): Promise<void> {
+  await setTabHidden(page, hidden);
+  await settleUpdates(page);
+}
+
+/** The game's CSS while the tab is hidden: every animation in `scope` stands paused (6.11). */
+export async function expectCssPaused(page: Page, scope = "[data-app]"): Promise<void> {
+  const states = await cssPlayStates(page, scope);
+  expect(states.running).toEqual([]);
+  expect(states.paused).toBeGreaterThan(0);
 }

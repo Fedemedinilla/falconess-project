@@ -163,7 +163,7 @@ const seconds = (ms: number) => `${(ms / 1000).toFixed(2)} s`;
 /**
  * When, where and what: "page load 1, a DOM change 13.52 s after the load (13.6 s into the test,
  * #juego (no hash)), on screen for 14 frames, from the frame at 13.53 s to the one at 13.76 s:
- * id "m-sonido" on 2 elements: …".
+ * id "m-ritmo" on 2 elements: …".
  */
 function describeEpisode(e: Episode): string {
   const what = e.by === "change" ? "a DOM change" : "the twice-a-second check";
@@ -357,6 +357,74 @@ export async function continueRun(page: Page): Promise<void> {
   await pastTitle(page);
   await page.click("#m-continuar");
   await expect(page.locator("#m-continuar")).toHaveCount(0);
+}
+
+/**
+ * Whether the week on screen is a race week: its track tab says so (owner 2026-11-18, where the
+ * race bar did). After her last goal there is no tab, as there was no bar.
+ */
+export async function raceWeekNow(page: Page): Promise<boolean> {
+  return (await page.locator("#m-pista-tab[data-race]").count()) > 0;
+}
+
+/**
+ * The planning card of a race week (D3): the track drawer's card is its door now (owner
+ * 2026-11-18, where the race bar was). The drawer opens by itself on a race week, so this only
+ * taps the tab when something closed it.
+ */
+export async function openPlan(page: Page): Promise<void> {
+  const tab = page.locator("#m-pista-tab");
+  if ((await tab.getAttribute("aria-expanded")) !== "true") await tab.click();
+  await page.click("#m-pista");
+  await expect(page.locator("#m-precarrera")).toBeVisible();
+}
+
+/**
+ * Takes `ids` out of what this browser has seen (after `seedRun`): each of those scenes is due
+ * again where its trigger says (two of the weeks' scenes at once play one after the other).
+ */
+export async function unseenScenes(page: Page, ids: readonly string[]): Promise<void> {
+  await page.addInitScript((drop) => {
+    const key = "falconess.juego.historia";
+    const story: { runs: Record<string, string[]>; ever: string[] } = JSON.parse(
+      localStorage.getItem(key) ?? '{"runs":{},"ever":[]}',
+    );
+    for (const seed of Object.keys(story.runs))
+      story.runs[seed] = (story.runs[seed] ?? []).filter((id) => !drop.includes(id));
+    story.ever = story.ever.filter((id) => !drop.includes(id));
+    localStorage.setItem(key, JSON.stringify(story));
+  }, ids);
+}
+
+/**
+ * Starts listening to the game's sounds: the tests cannot hear, so each cue the page plays names
+ * itself on `<html data-sfx="count:cue">`. Returns the cues played from now on, in order (one
+ * observer per page load; a reload starts none).
+ */
+export async function watchCues(page: Page): Promise<() => Promise<string[]>> {
+  await page.evaluate(() => {
+    const html = document.documentElement;
+    const countOf = (value: string | null) => Number((value ?? "0:").split(":")[0]);
+    const cues: string[] = [];
+    let last = countOf(html.getAttribute("data-sfx"));
+    // each record's old value is the cue set before it: the last one is the attribute itself
+    const take = (value: string | null) => {
+      const cue = (value ?? "").split(":")[1];
+      if (cue === undefined || countOf(value) <= last) return;
+      last = countOf(value);
+      cues.push(cue);
+    };
+    Reflect.set(window, "__cues", cues);
+    new MutationObserver((records) => {
+      for (const r of records) take(r.oldValue);
+      take(html.getAttribute("data-sfx"));
+    }).observe(html, { attributes: true, attributeFilter: ["data-sfx"], attributeOldValue: true });
+  });
+  return () =>
+    page.evaluate(() => {
+      const cues: unknown = Reflect.get(window, "__cues");
+      return Array.isArray(cues) ? cues.map(String) : [];
+    });
 }
 
 /** The week in play, from the HUD; throws (instead of waiting) when no HUD is on screen. */

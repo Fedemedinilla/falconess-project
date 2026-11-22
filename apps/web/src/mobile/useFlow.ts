@@ -1,26 +1,54 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { allScenes } from "../content/story";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { useAnyModalOpen } from "../ui/modals";
 import { useReducedMotion } from "../ui/useMedia";
-import { isInstant } from "./flow/beats";
+import { followsMotion, isInstant } from "./flow/beats";
 import { type Commands, type FlowPorts, flowCommands } from "./flow/commands";
-import { WeekStore } from "./flow/decidedWeek";
+import { isLaterInSeason, type WeekStore } from "./flow/decidedWeek";
 import { deriveFlow } from "./flow/derive";
 import { factsOf } from "./flow/facts";
-import { InspirationStore } from "./flow/inspirations";
-import { ACTIVE_POLICY } from "./flow/policy";
+import type { InspirationStore } from "./flow/inspirations";
 import type { Flow, FlowFacts } from "./flow/types";
 import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./flow/ui";
 import type { Pace } from "./pace";
-import { playSound } from "./sfx";
+import { playNav, playSound } from "./sfx";
 import { storyStore } from "./storyModel";
 import { usePace } from "./usePace";
 import { useStory } from "./useStory";
 
 /** The flow, the facts and the UI state as a tap or a timer finds them. */
 export type FlowNow = { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
+
+/**
+ * The flow's stores of the page (plan §1.8): made once in Boot next to the controller, on the
+ * browser's storage, so they outlive the language's remount and every run's view.
+ */
+export type FlowStores = {
+  /** The inheritance cards this browser showed (F19). */
+  readonly cards: InspirationStore;
+  /** The race week's record: planned, decided, raced, its race seen (D5, F1). */
+  readonly weeks: WeekStore;
+};
+
+/** Boot's flow stores (`<FlowStoresContext value={stores}>`). */
+export const FlowStoresContext = createContext<FlowStores | undefined>(undefined);
+
+function useFlowStores(): FlowStores {
+  const stores = useContext(FlowStoresContext);
+  if (!stores) throw new Error("useFlow outside <FlowStoresContext>");
+  return stores;
+}
 
 /** «Ritmo» and reduced motion as the flow reads them. */
 type Motion = { readonly pace: Pace; readonly reduced: boolean };
@@ -32,12 +60,19 @@ type Motion = { readonly pace: Pace; readonly reduced: boolean };
  * `layer` keep their identity while they say the same), and the commands on their ports, which act
  * on the game. Instant beats resolve before paint.
  *
- * While the legacy policy is active, the week's record and the cards shown live in memory stores
- * of this mount (today's "lost on reload"; 5.3 and 5.6 move each to a stored one).
+ * The cards shown and the week's record are Boot's (`FlowStoresContext`), on the browser's storage:
+ * a reload plays on what it finds unfinished (D5). The week's record is read as the storage holds
+ * it now, like the save at «Continuar» (another tab may have decided the week). A record that
+ * belongs to no run in play (the run moved on in the test view, another season began) is dropped
+ * once this view shows; the select screen has no run's view, so a record waits there for
+ * «Continuar». A record further on in this run's season (another tab played on) is never dropped
+ * here: this tab's run is the stale one.
  *
- * «Ritmo» and reduced motion are latched while the week is under way (a beat in front): today the
- * game reads them only when a page changes or «Correr» runs, so a change in the wide screen's panel
- * takes effect at the next idle moment (5.5 locks the panel instead).
+ * «Ritmo» and reduced motion are latched (`followsMotion`): a change applies at once at idle, over
+ * a training's result, the week's effects, a card, the event and the decided card, and waits over
+ * the emblem, a scene and the race, which it would cut short or change as they play. The panel of
+ * the wide screen is locked during the week's beats, so there only the phone's own reduced-motion
+ * setting can change mid-week.
  */
 export function useFlow({
   run,
@@ -50,18 +85,19 @@ export function useFlow({
   readonly flow: Flow;
   readonly ui: UiState;
   readonly cmd: Commands;
-  /** The flow as a handler finds it, read again from the stores. */
-  readonly now: () => FlowNow;
-  /** A UI-only event (a notice gone): never one that acts on the game. */
+  /** A UI-only event (a notice shown or gone): never one that acts on the game. */
   readonly dispatch: (e: UiEvent) => void;
+  /** «Ritmo» as the flow reads it (latched): what a beat's own timeline scales by. */
+  readonly pace: Pace;
+  /** Reduced motion as the flow reads it (latched): the layers leave at once. */
+  readonly reduced: boolean;
 } {
   const { game, snap } = useGame();
   const story = useStory();
   const livePace = usePace();
   const liveReduced = useReducedMotion();
   const sheetOpen = useAnyModalOpen() || title;
-  const [weeks] = useState(() => new WeekStore(undefined));
-  const [cards] = useState(() => new InspirationStore(undefined));
+  const { cards, weeks } = useFlowStores();
   const week = useSyncExternalStore(weeks.subscribe, weeks.getSnapshot, weeks.getSnapshot);
   useSyncExternalStore(cards.subscribe, cards.version, cards.version);
   const [motion, setMotion] = useState<Motion>(() => ({ pace: livePace, reduced: liveReduced }));
@@ -92,15 +128,12 @@ export function useFlow({
   // what the last commit showed: the next derive interns against it, a handler reads its latches
   const factsRef = useRef(facts);
   const lastRef = useRef<Flow | undefined>(undefined);
-  const flow = useMemo(
-    () => deriveFlow(ctx, facts, ui, ACTIVE_POLICY, lastRef.current),
-    [ctx, facts, ui],
-  );
-  // the week is settled (nothing in front): «Ritmo» and reduced motion apply
-  if (flow.top.kind === "idle" && (motion.pace !== livePace || motion.reduced !== liveReduced))
+  const flow = useMemo(() => deriveFlow(ctx, facts, ui, lastRef.current), [ctx, facts, ui]);
+  // «Ritmo» and reduced motion apply where they cannot change what is playing
+  if (followsMotion(flow.top) && (motion.pace !== livePace || motion.reduced !== liveReduced))
     setMotion({ pace: livePace, reduced: liveReduced });
 
-  const [{ cmd, now, dispatch }] = useState(() => {
+  const [{ cmd, dispatch }] = useState(() => {
     const dispatch = (e: UiEvent): void => {
       const next = reduceUi(uiRef.current, e);
       if (next === uiRef.current) return;
@@ -127,7 +160,7 @@ export function useFlow({
       const f = factsNow();
       const u = uiRef.current;
       return {
-        flow: deriveFlow(game.context(), f, u, ACTIVE_POLICY, lastRef.current),
+        flow: deriveFlow(game.context(), f, u, lastRef.current),
         facts: f,
         ui: u,
       };
@@ -144,13 +177,12 @@ export function useFlow({
       weeks,
       story: { markSeen: (seed, id) => storyStore.markSeen(seed, id) },
       cards,
-      // the cues play inside the tap; the whoosh stays the run's view's until 5.10
-      sound: { cue: playSound, nav: () => undefined },
-      policy: ACTIVE_POLICY,
+      // inside the tap (iOS plays sounds only there), never on a timer (critic b)
+      sound: { cue: playSound, nav: playNav },
       dispatch,
       now,
     };
-    return { cmd: flowCommands(ports), now, dispatch };
+    return { cmd: flowCommands(ports), dispatch };
   });
 
   useLayoutEffect(() => {
@@ -163,11 +195,14 @@ export function useFlow({
   useLayoutEffect(() => {
     if (isInstant(top)) cmd.resolve(top);
   }, [top, cmd]);
-  // a week's record of another run (the run moved on outside this view) is dropped
+  // a week's record of no run in play (stale, or a preview that no longer plays) is dropped, the
+  // one judged only: another tab may have stored a week of this run since. A record further on in
+  // this run's season is another tab's newer week, and this tab's run the stale one: it stays (C1)
   const record = facts.record;
   useEffect(() => {
-    if (week !== undefined && week.phase !== "raceSeen" && record === undefined) weeks.clear();
-  }, [week, record, weeks]);
+    if (week === undefined || record !== undefined || isLaterInSeason(run, week)) return;
+    if (weeks.getSnapshot() === week) weeks.clear();
+  }, [week, record, weeks, run]);
 
-  return { flow, ui, cmd, now, dispatch };
+  return { flow, ui, cmd, dispatch, pace: facts.pace, reduced: facts.reduced };
 }

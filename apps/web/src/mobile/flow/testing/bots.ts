@@ -17,7 +17,6 @@ import { vigorOf } from "../../../screens/model/actions";
 import { isRaceWeek, type WeekActionInput } from "../../../screens/model/position";
 import type { Pace } from "../../pace";
 import { isInstant } from "../beats";
-import { ACTIVE_POLICY, type FlowPolicy, TARGET_POLICY } from "../policy";
 import type { Beat } from "../types";
 import { loadSave } from "./game";
 import type { Walk } from "./invariants";
@@ -79,8 +78,9 @@ function cheapestSkill(ctx: SimContext, s: SeasonState): string | undefined {
 
 /**
  * Rests below 45 vigor, else trains the lowest of Agility, Stamina and Technique; every sixth week
- * learns a skill (a rest if the workshop refuses). Race weeks cycle a training, a rest, an outing
- * and a workshop that equips another frame.
+ * but the season's last (a skill learned then is never used: a season can end on a training's
+ * result, I9) learns a skill (a rest if the workshop refuses). Race weeks cycle a training, a rest,
+ * an outing and a workshop that equips another frame.
  */
 export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
   let low: (typeof LOWEST)[number] = "agility";
@@ -105,7 +105,7 @@ export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
           : { kind: "rest" };
     }
   }
-  if (s.turn % 6 === 0) {
+  if (s.turn % 6 === 0 && s.turn < ctx.ruleset.season.turns) {
     const skill = cheapestSkill(ctx, s);
     if (skill)
       return {
@@ -298,7 +298,7 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
               w.cmd.position(p);
               if (w.signature().some((v, i) => v !== was[i])) break;
             }
-            w.cmd.open("menu"); // «Listo»
+            w.cmd.open("menu"); // «Elegir la acción»
             break;
           }
           if (race && !planned.has(fp)) {
@@ -373,7 +373,6 @@ function playIntent(w: World, intent: Intent): boolean {
 /** A walk: one world, a bot, and the seasons it plays there one after the other. */
 export type WalkSpec = {
   readonly name: string;
-  readonly policy: FlowPolicy;
   readonly falconessId: string;
   /** Each a season, played in the same browser (a later one passes the scenes an earlier one saw). */
   readonly seeds: readonly string[];
@@ -390,7 +389,6 @@ const BOTS: Readonly<Record<WalkSpec["bot"], IdlePolicy>> = { restHeavy, trainer
 /** Play the walk's seasons, each to its end. */
 export function runWalk(spec: WalkSpec): Walk {
   const w = createWorld({
-    policy: spec.policy,
     ...(spec.pace === undefined ? {} : { pace: spec.pace }),
     ...(spec.reduced === undefined ? {} : { reduced: spec.reduced }),
   });
@@ -407,7 +405,6 @@ export function runWalk(spec: WalkSpec): Walk {
   });
   return {
     name: spec.name,
-    policy: spec.policy,
     pace: w.pace,
     reduced: w.reduced,
     ctx: w.ctx(),
@@ -434,15 +431,13 @@ export function walkMatrix(
   o: { readonly all: boolean; readonly exigente?: boolean },
 ): WalkSpec[] {
   const seeds = ["walk-3", "walk-4"];
-  const core = (policy: FlowPolicy, tag: string): WalkSpec[] => [
-    { name: `${tag} trainer`, policy, falconessId, seeds, bot: "trainer", parents: parents() },
-    { name: `${tag} restHeavy`, policy, falconessId, seeds, bot: "restHeavy" },
+  const specs: WalkSpec[] = [
+    { name: "trainer", falconessId, seeds, bot: "trainer", parents: parents() },
+    { name: "restHeavy", falconessId, seeds, bot: "restHeavy" },
   ];
-  const specs = [...core(TARGET_POLICY, "target"), ...core(ACTIVE_POLICY, "active")];
   if (!o.all) return specs;
   const one = (name: string, extra: Partial<WalkSpec>): WalkSpec => ({
-    name: `target trainer ${name}`,
-    policy: TARGET_POLICY,
+    name: `trainer ${name}`,
     falconessId,
     seeds: ["walk-5"],
     bot: "trainer",

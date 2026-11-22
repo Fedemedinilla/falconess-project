@@ -112,13 +112,13 @@ describe("trainingCue: what a week's action sounds like", () => {
     );
     expect(trainingCue(input, step.before.turn, undefined, card(false))).toBe("confirm");
   });
-  it("an injured week's training rests by rule, yet sounds like a failure", () => {
+  it("an injured week's training rests by rule: it sounds like a confirm, not a failure (F4)", () => {
     const before = { ...start("cue-injured"), injuryTurns: 1 };
     const input = { kind: "train:agility" } as const;
     const after = advanceSeason(ctx, before, input);
     expect(after.log.at(-1)?.notes).toContain("log.injured");
-    // F4: changes in 5.8 (an injured week has no training result)
-    expect(trainingCue(input, before.turn, after, card(false))).toBe("fail");
+    expect(trainingCue(input, before.turn, after, card(false))).toBe("confirm");
+    expect(trainingCue(input, before.turn, after, card(true))).toBe("confirm");
   });
 });
 

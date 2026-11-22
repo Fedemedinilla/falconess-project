@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import { continueRun, pastTitle, seedRun, settle, startMobile, test, week } from "./mobile-helpers";
+import { holdClock, runClock } from "./motion";
 
 /**
  * The phone game's seams (plan-final 2.6): each run gets its own view, so nothing of one season
@@ -15,6 +18,7 @@ test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 /** «Menú» → «Nueva temporada» → confirm, then a new season with her. */
 async function newSeason(page: Page, falconessId: string): Promise<void> {
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-nueva");
   await page.click("#m-nueva-si");
   await page.click(`#m-elegir-${falconessId}`);
@@ -70,34 +74,48 @@ test("F12: crossing the wide-screen size keeps the scene that is playing (no rem
   await expect(scene).toHaveAttribute("data-probe", "kept");
 });
 
-test("F12: the story notice is placed again over the track tab when the window crosses the wide-screen size", async ({
+test("F12: the notice is placed again over its anchor when the window crosses the wide-screen size", async ({
   page,
 }) => {
+  await page.clock.install();
   await page.setViewportSize({ width: 1440, height: 900 });
+  const { save } = JSON.parse(
+    readFileSync(fileURLToPath(new URL("./saves/peregrina-w10.json", import.meta.url)), "utf8"),
+  );
+  // it parses, but the season has no event to answer at its last input: «Continuar» is refused
+  const broken = JSON.stringify({
+    ...save,
+    inputs: [...save.inputs, { kind: "event:choose", option: 0 }],
+  });
+  await page.addInitScript((text) => {
+    localStorage.setItem("falconess.pruebas.partida", text);
+  }, broken);
   await page.goto("./");
   await pastTitle(page);
-  await page.click("#m-elegir-peregrina");
-  await page.click("#m-empezar");
-  await page.click("#m-capitulo-saltar");
-  const notice = page.locator("#m-capitulo-aviso");
+  await page.click("#m-continuar");
+  const notice = page.locator("#m-aviso-error");
   await expect(notice).toBeVisible();
+  // the clock held: the notice stays while the window is resized, on its own timer's time
+  await holdClock(page);
   /**
-   * From where the notice rests (its way-in slide taken out) to the tab's top, on the screen
-   * (owner 2026-11-14: just over the tab).
+   * From where the notice rests (its way-in slide taken out) to its anchor's top, on the screen
+   * (the selection's choices: rule 17).
    */
   const gap = () =>
     page.evaluate(() => {
-      const el = document.getElementById("m-capitulo-aviso");
-      const tab = document.getElementById("m-pista-tab")?.getBoundingClientRect();
-      if (!el || !tab) return Number.NaN;
+      const el = document.getElementById("m-aviso-error");
+      const anchor = document.querySelector("[data-toast-anchor]")?.getBoundingClientRect();
+      if (!el || !anchor) return Number.NaN;
       const shift = getComputedStyle(el).transform;
       const slide = shift === "none" ? 0 : new DOMMatrixReadOnly(shift).m42;
-      return tab.top - (el.getBoundingClientRect().bottom - slide);
+      return anchor.top - (el.getBoundingClientRect().bottom - slide);
     });
   expect(await gap()).toBeGreaterThanOrEqual(0);
-  // the phone's layout: the column and its tab move, the notice follows them
+  expect(await gap()).toBeLessThan(40);
+  // the phone's layout: the column and its choices move, the notice follows them
   await page.setViewportSize({ width: 1000, height: 800 });
-  await expect(page.locator("#m-panel")).toHaveCount(0);
+  // a frame for the ResizeObserver to place it again (the clock drives the frames)
+  await runClock(page, 100);
   await expect(notice).toBeVisible();
   expect(await gap()).toBeGreaterThanOrEqual(0);
   expect(await gap()).toBeLessThan(40);
@@ -115,11 +133,16 @@ test("a scene keeps the «Ritmo» it started with: Normal chosen mid-digest, the
   const scene = page.locator("#m-capitulo");
   await expect(scene).toHaveAttribute("data-digest", "true");
   await scene.evaluate((el) => el.setAttribute("data-probe", "kept"));
-  // the wide screen's panel is live under the scene: Rápido → Directo → Normal
+  // the wide screen's panel is locked under the scene (D4, 5.5): a tap on «Ritmo» changes nothing
   const pace = page.locator("#m-ritmo");
-  await pace.click();
-  await pace.click();
-  await expect(pace).toHaveAttribute("data-pace", "normal");
+  await expect(page.locator("#m-panel")).toHaveAttribute("inert", "");
+  const box = await page.locator("#m-ritmo-normal").boundingBox();
+  if (!box) throw new Error("no «Ritmo» on the panel");
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(pace).toHaveAttribute("data-value", "fast");
+  // «Ritmo» changed all the same (the value's own handler, which no tap reaches now)
+  await page.locator("#m-ritmo-normal").dispatchEvent("click");
+  await expect(pace).toHaveAttribute("data-value", "normal");
   // the game renders again (the panel goes): the same scene, still its digest (2.1, F11)
   await page.setViewportSize({ width: 1000, height: 800 });
   await expect(page.locator("#m-panel")).toHaveCount(0);
@@ -131,11 +154,11 @@ test("a scene keeps the «Ritmo» it started with: Normal chosen mid-digest, the
 test("a chat topic shows as read at once: the story store tells the game (2.4)", async ({
   page,
 }) => {
-  // a week with no scene due and no notice waiting: nothing else renders the game meanwhile
+  // a week with no scene due: nothing else renders the game meanwhile
   await seedRun(page, "peregrina-w10");
   await page.goto("./");
   await continueRun(page);
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
   await page.click("#m-menu");
   await page.click("#m-chat-abrir");
   const topic = page.locator('[data-topic="peregrina-why-race"]');

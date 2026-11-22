@@ -65,7 +65,7 @@
   white-space: nowrap;
 }
 
-/* the short name ("Vos", "R3") replaces the full one on a phone */
+/* the short name ("Tú", "R3") replaces the full one on a phone */
 .labelShort {
   display: none;
   white-space: nowrap;

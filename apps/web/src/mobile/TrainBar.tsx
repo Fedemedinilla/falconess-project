@@ -1,4 +1,5 @@
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
 
@@ -92,7 +93,7 @@ export function TrainBar({
       disabled={disabled}
       onClick={(e) => {
         // the second click of a double click lands on the next week's button: ignore it
-        if (e.detail > 1) return;
+        if (isRepeatTap(e)) return;
         onClick();
       }}
     >

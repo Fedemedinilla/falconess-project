@@ -1,31 +1,37 @@
 /* The week's effects (owner 2026-11-13): stamps and chevrons like a training's result. */
+/* The layer is a grid (6.7): two columns, rows as tall as their tallest effect with a share of the
+   free height drawn between them (WeekFx: `grid-template-rows`), each effect in a cell of its own,
+   so two never overlap, all of them inside the game's column (H6: no `vw`; the tablet's frame and
+   the wide screen's column hold the fixed layer). */
 .layer {
   position: fixed;
   inset: 0;
   z-index: 40;
   display: grid;
-  place-items: center;
-  padding: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 4%;
+  padding: 100px 4% 110px;
   border: 0;
   background: rgb(10 18 30 / 0.35);
   cursor: pointer;
-  animation: layerIn 0.25s ease-out both;
+  animation: layerIn var(--m-dur-layer-in) var(--m-ease-out) both;
 }
-/* each effect at its own spot (--x, --y: its center), kept inside the screen */
+/* H2: on its way out (its time is up, or a tap), the scrim and the stamps fade out together */
+.layer.out {
+  animation: layerOut var(--m-dur-layer-out) var(--m-ease-in) both;
+}
+/* each effect in its cell (WeekFx: its row, column and place in it), never wider than its column */
 .fx {
-  position: absolute;
-  left: clamp(22vw, var(--x), 78vw);
-  top: clamp(100px, var(--y), calc(100% - 110px));
-  transform: translate(-50%, -50%);
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  opacity: 0;
+  /* whole at rest (reduced motion shows it so); its timeline (WeekFx: delay and length) fades it
+     in and out, hidden before and after by the keyframes' fill */
   animation: fxShow 1.3s ease-out both;
-}
-.wide {
-  left: 50%;
 }
 .icon {
   position: relative;
@@ -93,28 +99,27 @@
   stroke: #1e4f8f;
 }
 .stamp {
+  max-width: 100%;
   font-family: var(--cn);
   font-weight: 800;
   font-style: italic;
-  font-size: min(34px, 7.6vw);
+  /* the window's width, or the tablet's frame's (--framew: Mobile.module.css); --fit (WeekFx's
+     fitStamps) makes it smaller when a word would not fit the stamp's cell */
+  font-size: calc(min(34px, calc(var(--framew, 100vw) * 0.076)) * var(--fit, 1));
   line-height: 1.05;
   letter-spacing: 1px;
   text-align: center;
   text-wrap: balance;
+  /* a stamp wraps only between words, never inside one (7.3): the type shrinks instead */
+  overflow-wrap: normal;
+  word-break: normal;
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
   animation: stampIn 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 .stampLong {
-  font-size: min(28px, 6.4vw);
-}
-.fx {
-  width: 40vw;
-}
-.wide {
-  width: auto;
-  max-width: 100vw;
+  font-size: calc(min(28px, calc(var(--framew, 100vw) * 0.064)) * var(--fit, 1));
 }
 .good .stamp {
   background-image: linear-gradient(180deg, #fff6c2 0%, #ffd23f 45%, #ff8a00 100%);
@@ -128,6 +133,11 @@
 }
 @keyframes layerIn {
   from {
+    opacity: 0;
+  }
+}
+@keyframes layerOut {
+  to {
     opacity: 0;
   }
 }
@@ -151,18 +161,19 @@
     transform: none;
   }
 }
+/* the training's stamp, the same body (L11: CSS modules scope keyframes; motion.test checks them) */
 @keyframes stampIn {
   0% {
     opacity: 0;
-    transform: scale(2) rotate(-6deg);
+    transform: scale(2.2) rotate(-6deg);
   }
   60% {
     opacity: 1;
-    transform: scale(0.94) rotate(-2deg);
+    transform: scale(0.92) rotate(-2deg);
   }
   100% {
     opacity: 1;
-    transform: rotate(-3deg);
+    transform: scale(1) rotate(-3deg);
   }
 }
 @keyframes chevUp {
@@ -191,12 +202,17 @@
     transform: rotate(180deg) translateY(-30px);
   }
 }
+/* reduced motion (plan §2.4): every effect whole and still from the first frame, where it lands
+   (the stamp tilted); their time still ends them (WeekFx's timer), and they go at once */
 @media (prefers-reduced-motion: reduce) {
+  .layer,
   .fx,
-  .icon,
-  .stamp,
-  .layer {
-    animation-duration: 0.01s;
+  .icon {
+    animation: none;
+  }
+  .stamp {
+    animation: none;
+    transform: rotate(-3deg);
   }
   .arrows {
     display: none;
@@ -241,7 +257,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(340px, 86vw);
+  width: min(340px, calc(var(--framew, 100vw) * 0.86));
+  max-width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -328,10 +345,11 @@
     left: 130%;
   }
 }
+/* reduced motion: the portraits and the skills' cards whole and still, no shine, no glow */
 @media (prefers-reduced-motion: reduce) {
+  .crews,
   .skill,
-  .shine,
-  .crews {
-    animation-duration: 0.01s;
+  .shine {
+    animation: none;
   }
 }

@@ -2,8 +2,10 @@
  * What a tap or a timer does in the phone's flow (plan §1.7): each command reads the flow, the facts
  * and the UI state as it found them, writes to the stores and dispatches to the UI state in the same
  * synchronous call (critic (c)3: `game.act` and the nav change never come apart), and does nothing
- * for a beat that is no longer the one in front (a stale timer, a second tap, F18). The same code
- * drives the game and the node season walks. Pure and text-free (flow/imports.test.ts).
+ * for a beat that is no longer the one in front (a stale timer, a second tap, F18). The sounds
+ * play here too, inside the tap: the action's cue, and the whoosh only where a tap goes to another
+ * screen (`open`, `raceAgain`, `rewatch`, `raceContinue`), so a timer never sounds (critic b). The
+ * same code drives the game and the node season walks. Pure and text-free (flow/imports.test.ts).
  */
 import type { Position, SeasonState, StoryScene, TrainingKind } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
@@ -16,7 +18,6 @@ import type { StoryStore } from "../storyModel";
 import type { WeekStore } from "./decidedWeek";
 import { watchKey } from "./derive";
 import type { InspirationStore } from "./inspirations";
-import type { FlowPolicy } from "./policy";
 import { trainingCue } from "./trainResult";
 import type { Flow, FlowFacts, InstantBeat, WorkshopTab } from "./types";
 import type { UiEvent, UiState } from "./ui";
@@ -28,20 +29,22 @@ export type FlowPorts = {
   readonly game: Pick<GameController, "act" | "acknowledgeStep" | "getSnapshot">;
   readonly weeks: Pick<
     WeekStore,
-    "plan" | "decide" | "setPosition" | "enterRace" | "markRaceSeen" | "clear"
+    "plan" | "decide" | "setPosition" | "enterRace" | "markRaced" | "markRaceSeen"
   >;
   readonly story: Pick<StoryStore, "markSeen">;
   readonly cards: Pick<InspirationStore, "markShown">;
+  /** The action's cue, and the whoosh of a tap that goes to another screen. */
   readonly sound: { cue(c: SoundCue): void; nav(): void };
-  /** The flag the race commands read (legacy: no finish hold, a watch goes from its replay to its result). */
-  readonly policy: Pick<FlowPolicy, "finishHold">;
   readonly dispatch: (e: UiEvent) => void;
   /** The flow, facts and UI state exactly as this tap or timer found them. */
   readonly now: () => { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
 };
 
 export type Commands = {
-  /** «Entrenar», «Taller», «Habilidades», the race bar's card, «Volver» and «Listo»: only at idle. */
+  /**
+   * «Entrenar», «Taller», «Habilidades», the race bar's card, «Volver» and the planning card's
+   * «Elegir la acción»: only at idle.
+   */
   open(to: "menu" | "train" | "workshop" | "skills" | "plan"): void;
   selectTraining(kind: TrainingKind): void;
   workshopTab(tab: WorkshopTab): void;
@@ -65,9 +68,12 @@ export type Commands = {
   rewatch(turn: number): void;
   /** «Continuar» on a race's result: the race mode ends, or a watch from the end goes back to it. */
   raceContinue(): void;
-  /** A story scene ended (`skipped`: «Saltar»). */
+  /**
+   * A story scene ended (`skipped`: «Saltar»). Since the scene's notice went (owner 2026-11-18)
+   * nothing is shown either way, so `skipped` is only what the scene reports.
+   */
   sceneDone(key: string, skipped: boolean): void;
-  /** «Historia» or «Ver»: a scene again, whole. */
+  /** «Historia»: a scene again, whole. */
   watchScene(scene: StoryScene): void;
   /** An instant beat, before paint: idempotent, and it always ends the beat. */
   resolve(beat: InstantBeat): void;
@@ -160,8 +166,7 @@ export function flowCommands(p: FlowPorts): Commands {
         const after = p.game.getSnapshot();
         // still inside the tap (iOS plays sounds only there)
         p.sound.cue(trainingCue(input, state.turn, after.lastStep?.after, cards));
-        const next = fingerprintNow(p.game);
-        if (next !== undefined) p.dispatch({ type: "acted", fp: next });
+        p.dispatch({ type: "acted" });
         return;
       }
       // the shared preview cache: the facts read this same simulation
@@ -206,9 +211,10 @@ export function flowCommands(p: FlowPorts): Commands {
         p.dispatch({ type: "notice", notice: errorKindOf(p.game) });
         return;
       }
-      p.weeks.clear();
+      // the race plays on, a reload or not, until its result was seen
       const next = fingerprintNow(p.game);
-      if (next !== undefined) p.dispatch({ type: "raced", fp: next });
+      if (next !== undefined) p.weeks.markRaced(next);
+      p.dispatch({ type: "raced" });
     },
 
     complete,
@@ -240,9 +246,12 @@ export function flowCommands(p: FlowPorts): Commands {
         return;
       }
       if (ui.nav.at !== "watch" || ui.nav.stage === "result" || watchKey(ui.nav) !== play) return;
-      // legacy (until 6.3): no finish hold, the replay goes straight to the result
-      const hold = ui.nav.stage === "replay" && p.policy.finishHold;
-      p.dispatch({ type: "watchStage", n: ui.nav.n, stage: hold ? "finish" : "result" });
+      // a watch too: its replay, then its finish held a moment, then its result
+      p.dispatch({
+        type: "watchStage",
+        n: ui.nav.n,
+        stage: ui.nav.stage === "replay" ? "finish" : "result",
+      });
     },
 
     raceAgain() {
@@ -286,27 +295,18 @@ export function flowCommands(p: FlowPorts): Commands {
       }
     },
 
-    sceneDone(key, skipped) {
+    sceneDone(key) {
       const { flow, facts } = p.now();
       const layer = flow.layer;
       if (layer?.kind !== "scene" || layer.key !== key) return;
-      const kind = skipped ? "skipped" : "seen";
       const id = layer.scene.id;
       if (layer.replay) {
-        // «Historia» and «Ver» mark nothing: the scene was seen already
+        // «Historia» marks nothing: the scene was seen already
         p.dispatch({ type: "replay", scene: undefined });
-        p.dispatch({
-          type: "toast",
-          toast: { id: `${key}/${kind}`, sceneId: id, kind, shown: false },
-        });
         return;
       }
       if (flow.top.key !== key) return;
       p.story.markSeen(facts.run.run.seed, id);
-      p.dispatch({
-        type: "toast",
-        toast: { id: `${facts.run.fp}/${id}/${kind}`, sceneId: id, kind, shown: false },
-      });
       p.dispatch({ type: "done", keys: [key] });
     },
 
@@ -327,16 +327,8 @@ export function flowCommands(p: FlowPorts): Commands {
           p.weeks.enterRace(b.fp);
           break;
         case "pass":
+          // seen in an earlier season: marked seen here too, and nothing is shown (owner 2026-11-18)
           p.story.markSeen(facts.run.run.seed, b.scene.id);
-          p.dispatch({
-            type: "toast",
-            toast: {
-              id: `${fp}/${b.scene.id}/passed`,
-              sceneId: b.scene.id,
-              kind: "passed",
-              shown: false,
-            },
-          });
           break;
       }
       // never stalls on a write that changed nothing

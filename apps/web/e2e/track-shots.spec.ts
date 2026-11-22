@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { settle, startMobile, shotTest as test } from "./mobile-helpers";
+import { openPlan, raceWeekNow, settle, startMobile, shotTest as test } from "./mobile-helpers";
 
 /**
  * Screenshots of the track card for review (`E2E_SHOTS=1 playwright test --project shots
@@ -15,10 +15,9 @@ const OUT = process.env.E2E_SHOTS_DIR
 
 test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 
-/** A new season of `falconessId` on its first week's menu, with no scene or notice over it. */
+/** A new season of `falconessId` on its first week's menu, with no scene over it. */
 async function start(page: Page, falconessId: string): Promise<void> {
   await startMobile(page, falconessId);
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
   await expect(page.locator("#m-entrenar")).toBeEnabled();
 }
 
@@ -44,14 +43,15 @@ test("the pre-race card of Peregrina's first goal", async ({ page }) => {
   test.setTimeout(120_000);
   mkdirSync(OUT, { recursive: true });
   await start(page, "peregrina");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
   await page.waitForTimeout(300);
+  // the race week's menu: no bar, the track drawer open by itself (owner 2026-11-18)
+  await expect(page.locator("#m-pista")).toBeVisible();
   await page.screenshot({ path: `${OUT}peregrina-raceweek-menu.png` });
-  await page.click("#m-carrera");
+  await openPlan(page);
   await expect(page.locator("#m-precarrera-pista")).toBeVisible();
   await page.screenshot({ path: `${OUT}peregrina-prerace.png` });
 });

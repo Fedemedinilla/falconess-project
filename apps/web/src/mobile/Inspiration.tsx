@@ -1,17 +1,27 @@
 import type { BlackBox } from "@falconess/schema";
-import { useEffect } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useFlowTimer } from "../ui/flowTimer";
+import { isRepeatTap } from "../ui/tap";
+import { reducedMotion } from "../ui/useMedia";
 import { runnerArt } from "./art";
 import s from "./Inspiration.module.css";
 import type { InspirationScene } from "./inspirationScene";
+import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
+import { MOTION } from "./motion";
 import { playSound } from "./sfx";
+
+/** How the card came to show whole: its intro ended, or a tap hurried it. */
+type Revealed = "time" | "tap";
 
 /**
  * «¡Herencia!» / «¡Inspiración!» (owner 2026-11-11, like a Pokémon evolving): her art glows and
  * flashes, sparks fly, then the card says what each parent's box gave: the stat and how much
  * (or that it was at the cap, or that it did not inspire her this time) and a lifted letter.
- * Reduced motion skips straight to the card.
+ * A tap during the intro shows the card at once (L1); «Continuar» takes taps only once the card
+ * shows (never a card dismissed unseen, nor by the second click of a double tap on the week's
+ * effects). Its way out fades the whole card. Reduced motion shows the card from the start.
  */
 export function InspirationOverlay({
   scene,
@@ -25,17 +35,36 @@ export function InspirationOverlay({
   onDone: () => void;
 }) {
   const art = runnerArt(falconessId);
+  const lid = useLid();
+  const [revealed, setRevealed] = useState<Revealed | undefined>(() =>
+    reducedMotion() ? "time" : undefined,
+  );
+  const shown = revealed !== undefined;
+  const playing = useLayerPhase() === "in";
+  // the card pops in at the end of the intro, and «Continuar» takes taps from then
+  useFlowTimer(
+    playing && !shown ? MOTION.cardReveal : undefined,
+    () => setRevealed((r) => r ?? "time"),
+    "reveal",
+    { fromFrame: true },
+  );
+  const reveal = useRef<HTMLButtonElement>(null);
+  const go = useRef<HTMLButtonElement>(null);
+  useLayerFocus(reveal, !shown);
+  useLayerFocus(go, shown);
   useEffect(() => {
     playSound("boost");
   }, []);
   return (
     <div
-      className={s.overlay}
-      id="m-inspiracion"
+      className={cx(s.overlay, !playing && s.out)}
+      style={{ "--insp-reveal": `${MOTION.cardReveal}ms` } as CSSProperties}
+      id={lid("m-inspiracion")}
       data-kind={scene.kind}
+      data-revealed={revealed}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="m-inspiracion-titulo"
+      aria-labelledby={lid("m-inspiracion-titulo")}
     >
       <div className={s.stage} aria-hidden="true">
         <div className={s.rays} />
@@ -46,7 +75,7 @@ export function InspirationOverlay({
         ))}
       </div>
       <div className={s.card}>
-        <h2 className={s.title} id="m-inspiracion-titulo">
+        <h2 className={s.title} id={lid("m-inspiracion-titulo")}>
           {scene.kind === "start" ? ui("ui.m.inspire.start") : ui("ui.m.inspire.title")}
         </h2>
         <p className={s.sub}>
@@ -91,10 +120,33 @@ export function InspirationOverlay({
             );
           })}
         </ul>
-        <button type="button" className={s.go} id="m-inspiracion-seguir" onClick={onDone}>
+        <button
+          ref={go}
+          type="button"
+          className={s.go}
+          id={lid("m-inspiracion-seguir")}
+          // not before the card shows: no tap, no key
+          disabled={!shown}
+          onClick={(e) => {
+            if (!isRepeatTap(e)) onDone();
+          }}
+        >
           {ui("ui.m.close.continue")}
         </button>
       </div>
+      {!shown && (
+        // a tap anywhere during the intro shows the card at once; the second click of a double
+        // tap (on the week's effects under the finger) does nothing
+        <button
+          ref={reveal}
+          type="button"
+          className={s.reveal}
+          aria-label={ui("ui.m.result.next")}
+          onClick={(e) => {
+            if (!isRepeatTap(e)) setRevealed("tap");
+          }}
+        />
+      )}
     </div>
   );
 }

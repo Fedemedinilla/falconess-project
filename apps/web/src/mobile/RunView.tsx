@@ -1,8 +1,9 @@
-import type { ContentIndex, Position, StoryScene, WorkshopOp } from "@falconess/schema";
-import { difficultyOf } from "@falconess/sim";
+import type { ContentIndex, Position, WorkshopOp } from "@falconess/schema";
+import { difficultyOf, type SimContext } from "@falconess/sim";
 import {
   type ReactElement,
   type ReactNode,
+  type RefObject,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -10,17 +11,19 @@ import {
 } from "react";
 import { navigate } from "../app/useRoute";
 import { allScenes, allTopics } from "../content/story";
+import { addBox } from "../game/boxes";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { EventDialog } from "../screens/EventDialog";
-import { gameText, ui } from "../text/ui";
+import { gameText } from "../text/ui";
 import { cx } from "../ui/cx";
+import { useHidden } from "../ui/visibility";
 import { ChatSheet } from "./ChatSheet";
 import { EndScreen } from "./EndScreen";
-import { ErrorNotice } from "./ErrorNotice";
 import { type ExportItem, ExportSheet, entryItem, HistorySheet } from "./Export";
-import type { Flow, Layer } from "./flow/types";
-import type { Toast } from "./flow/ui";
+import { boxToKeep } from "./flow/box";
+import { introTempo, introTiming } from "./flow/scenes";
+import type { Layer, Screen } from "./flow/types";
 import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
 import { LayerHost } from "./LayerHost";
@@ -29,6 +32,7 @@ import { MenuItems, type MenuItemsProps, MobileMenu } from "./MenuSheet";
 import s from "./Mobile.module.css";
 import { trainingCards, vigorView, weekMenu } from "./model";
 import type { Track } from "./music";
+import { NoticeHost } from "./NoticeHost";
 import { OutingSheet } from "./OutingSheet";
 import {
   CrewsPanel,
@@ -42,17 +46,17 @@ import {
 } from "./Panels";
 import pm from "./Panels.module.css";
 import { accentStyle, Hud } from "./Parts";
+import { paceScale } from "./pace";
 import { PreRaceScreen, RaceScreen } from "./RaceScreens";
 import st from "./Story.module.css";
 import { StoryListSheet } from "./StoryListSheet";
 import { StoryOverlay } from "./StoryOverlay";
-import { StoryToast } from "./StoryToast";
-import { playNav } from "./sfx";
 import { openTopics } from "./storyModel";
 import { TrackSheet } from "./TrackCard";
 import { TrainScreen } from "./TrainScreen";
 import { ScreenTransition } from "./Transition";
 import { type TrackCardView, trackCard } from "./track";
+import { gestureAt, useBackGesture } from "./useBackGesture";
 import { useFlow } from "./useFlow";
 import { useStory } from "./useStory";
 import { WeekFxOverlay } from "./WeekFx";
@@ -61,17 +65,14 @@ import { WorkshopScreen } from "./WorkshopScreen";
 /** The music a run's page wants: the race's own in a race, the menu theme everywhere else. */
 export type RunMusic = Exclude<Track, "title">;
 
-/** How long a story notice stays: a scene passed by, with its «Ver», a little longer. */
-const NOTICE_MS = 4000;
-const PASSED_MS = 6000;
-
 /**
  * One run of the phone game, keyed by the shell per run: everything here starts fresh with a new
  * season, a load or a replay from storage. What shows comes from the flow model (`useFlow`, plan
  * §1): the HUD, the one screen (`data-screen`), the one layer in front of it (`LayerHost`: the
  * week's effects, the inheritance card, a story scene, the emblem, the event dialog), the notices
  * and the sheets. Every tap and every timer that ends a beat goes through the flow's commands,
- * which act on the game and move the flow in the same call. Three modes (owner 2026-11-13):
+ * which act on the game and move the flow in the same call, and play the sounds inside the tap:
+ * a timer never sounds (critic b). Three modes (owner 2026-11-13):
  * training (its screen and result), the menu (the week's decision, its effects, a story scene due
  * after it), and the race (the emblem, only here, then the scene before the race, the position,
  * the race, the scene after it, its result; then the menu).
@@ -105,7 +106,8 @@ export function RunView({
   const { game } = useGame();
   // the scenes seen and the chat read: a mark re-renders the game
   const story = useStory();
-  const { flow, ui: flowUi, cmd, now, dispatch } = useFlow({ run, title: title !== undefined });
+  const flowView = useFlow({ run, title: title !== undefined });
+  const { flow, ui: flowUi, cmd, dispatch, pace, reduced } = flowView;
   const [menuOpen, setMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -131,25 +133,17 @@ export function RunView({
   const [storyListOpen, setStoryListOpen] = useState(false);
   // how far down the season's end was when a race of it was seen again: it comes back there
   const endScroll = useRef(0);
+  // the back gesture (O10): what «Volver» does where there is one, a sheet's «Cerrar» while one
+  // is open, nothing while the week plays or on the season's end; from the menu it leaves #juego
+  useBackGesture(gestureAt(flow), () => cmd.open("menu"));
 
   // the music follows the mode (owner 2026-11-12): the race's own in race mode, the menu theme
   // everywhere else (the shell plays the title theme over the title and the selection)
   const music = flow.music;
   useEffect(() => onMusic(music), [onMusic, music]);
 
-  // a change of screen whooshes (in the commit that changed it, so it replaces the tap's sound),
-  // as each change of today's view did; 5.10 moves the whoosh into the taps' commands
-  const screenName = legacyScreen(flow);
-  const shownName = useRef<string | undefined>(undefined);
-  useLayoutEffect(() => {
-    // an instant beat renders nothing: what shows is the next commit's
-    if (screenName === undefined) return;
-    const was = shownName.current;
-    shownName.current = screenName;
-    if (was !== undefined && was !== screenName) playNav();
-  }, [screenName]);
-
   const ctx = game.context();
+  useSeasonBox(ctx, run);
   const state = run.state;
   const inputs = run.inputs.length;
   const colors = transitionColors(ctx.content, state.falconessId);
@@ -159,47 +153,26 @@ export function RunView({
   const startInput = run.inputs[0];
   const parents = startInput?.kind === "start" ? startInput.parents : [];
 
-  // the story notice: the newest one shows (a new one takes its place), for its time
-  const toast = flowUi.toasts.at(-1);
-  const toastId = toast?.id;
-  const toastMs = toast?.kind === "passed" ? PASSED_MS : NOTICE_MS;
-  useEffect(() => {
-    if (toastId === undefined) return;
-    const t = setTimeout(() => {
-      for (const gone of now().ui.toasts) dispatch({ type: "toastGone", id: gone.id });
-    }, toastMs);
-    return () => clearTimeout(t);
-  }, [toastId, toastMs, now, dispatch]);
+  // the notice of a refused act, while nothing plays in front
   const notices = (
-    <>
-      {toast && (
-        <StoryNotice
-          // placed once, over the track tab: placed again when the wide screen comes or goes (the
-          // column stays, the tab moves; 5.9's NoticeHost re-measures on any resize)
-          key={`${toast.id}/${desk}`}
-          toast={toast}
-          onWatch={(sc) => {
-            // «Ver» plays the scene only where a scene may play now (the menu, a card, a result)
-            if (!now().flow.canReplay) return;
-            for (const gone of now().ui.toasts) dispatch({ type: "toastGone", id: gone.id });
-            cmd.watchScene(sc);
-          }}
-        />
-      )}
-      {flowUi.notice && (
-        <ErrorNotice
-          kind={flowUi.notice}
-          onClose={() => dispatch({ type: "notice", notice: undefined })}
-        />
-      )}
-    </>
+    // under the chat, out of reach as the rest of the game (final review C4)
+    <div style={{ display: "contents" }} inert={chatOpen || undefined}>
+      <NoticeHost flow={flow} notice={flowUi.notice} dispatch={dispatch} />
+    </div>
   );
 
   /** The layer in front of the screen, from the flow's layer. */
   const layer = (l: Layer): ReactElement => {
     switch (l.kind) {
       case "fx":
-        return <WeekFxOverlay fx={l.fx} content={ctx.content} onDone={() => cmd.complete(l.key)} />;
+        return (
+          <WeekFxOverlay
+            fx={l.fx}
+            pace={pace}
+            content={ctx.content}
+            onDone={() => cmd.complete(l.key)}
+          />
+        );
       case "inspiration":
         return (
           <InspirationOverlay
@@ -217,13 +190,17 @@ export function RunView({
             secondary={colors.secondary}
             // «Ritmo» (owner 2026-11-14): a fast digest, unless asked for from «Historia» or «Ver»
             digest={l.digest}
-            onDone={(skipped) => cmd.sceneDone(l.key, skipped)}
+            // its way in: whole, short (a digest) or still (reduced motion)
+            timing={introTiming(introTempo(l.digest, reduced))}
+            // as its exit starts: the flow moves on under its fading copy (D7)
+            onFinish={(skipped) => cmd.sceneDone(l.key, skipped)}
           />
         );
       case "emblem":
         return (
           <ScreenTransition
             beat={l.key}
+            fadeIn={l.fadeIn}
             primary={colors.primary}
             secondary={colors.secondary}
             onCovered={cmd.covered}
@@ -234,11 +211,34 @@ export function RunView({
         return <EventDialog />;
     }
   };
-  const layers = (
-    <LayerHost top={flow.layer} render={layer}>
+  /**
+   * The layers in front of what they cover (`under`: the HUD and the screen, which read the layer
+   * leaving: the race's result after a scene), and the notices after them.
+   */
+  const layers = (under: ReactNode) => (
+    <LayerHost top={flow.layer} render={layer} reduced={reduced} under={under}>
       {notices}
     </LayerHost>
   );
+  // what comes with the run's view is there with its column; what mounts later comes in (D1, L5):
+  // the menu the run opens on comes in slower, the HUD it opens with is the anchor and does not fade
+  const [opened, setOpened] = useState(false);
+  useEffect(() => setOpened(true), []);
+  // L8: the wide screen's column glides to the middle as the End comes, from where it stood beside
+  // the panel; never when the window has just grown into the wide screen (it stood nowhere there)
+  const [deskShown, setDeskShown] = useState(desk);
+  useEffect(() => setDeskShown(desk), [desk]);
+  const glide = desk && deskShown && flow.solo;
+  // while a layer is in front the game behind it is out of reach (L7: no keyboard path to «Menú»
+  // mid-beat); when the last one goes, the focus lands on the screen's own control
+  const layerIn = flow.layer !== undefined;
+  const slotRef = useRef<HTMLDivElement>(null);
+  useFocusHome(layerIn, `${flow.screenKey} ${flow.top.key}`, flow.screen.kind, slotRef);
+  // the chat is a modal sheet inside the column: while it is open the game under it (and the wide
+  // screen's panel beside it) is out of reach too (final review C4)
+  const behind = layerIn || chatOpen;
+  // a hidden tab (6.11): the column's CSS stands still with the flow's timers (`data-hidden`)
+  const hidden = useHidden() ? "" : undefined;
 
   /** «Exportar» of this run: from «Menú», from the panel and from the season's end. */
   const exportRun = () => {
@@ -256,17 +256,18 @@ export function RunView({
     onStory: () => setStoryListOpen(true),
     onNew: () => game.newSeason(),
   };
+  // while her race plays, Metas and Registro show the week before it (no spoiler: critic b)
   const panel = (t: PanelTab): ReactNode =>
     t === "menu" ? (
       <div className={pm.menuGrid}>
         <MenuItems {...items} />
       </div>
     ) : t === "log" ? (
-      <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} />
+      <LogPanel ctx={ctx} seed={run.seed} inputs={run.inputs} hideLast={flow.desk.hideLast} />
     ) : t === "goals" ? (
       <GoalsPanel
         ctx={ctx}
-        state={state}
+        state={flow.desk.of}
         onTrack={(courseId) => setTrackSheet({ view: trackCard(ctx, courseId), open: true })}
       />
     ) : t === "crews" ? (
@@ -304,7 +305,8 @@ export function RunView({
   const atEnd = screen.kind === "end";
   /**
    * The fixed slots (F12): the backdrop and the panel come and go with the wide screen; the
-   * column (keyed by what it shows: the season's end or the run) and the sheets stay.
+   * column and the sheets stay. The column is one element whether it shows the run or the season's
+   * end (only what is inside it changes), so it can glide to the middle as the End comes (L8).
    */
   const slots = (column: ReactElement, panelSlot: ReactElement | null) => (
     <>
@@ -317,9 +319,17 @@ export function RunView({
       {sheets}
     </>
   );
-  /** The one screen: what the probe counts (`data-screen`), with no box of its own. */
+  /**
+   * The one screen: what the probe counts (`data-screen`), with no box of its own; inert while a
+   * layer is in front of it (the week's effects, the card, a scene, the emblem, the event).
+   */
   const slot = (body: ReactNode) => (
-    <div style={{ display: "contents" }} data-screen={screen.kind}>
+    <div
+      ref={slotRef}
+      style={{ display: "contents" }}
+      data-screen={screen.kind}
+      inert={behind || undefined}
+    >
       {body}
     </div>
   );
@@ -327,25 +337,32 @@ export function RunView({
   if (atEnd)
     return slots(
       <div
-        key="end"
-        className={cx(s.app, desk && s.appDesk, desk && flow.solo && s.appDeskSolo)}
+        key="column"
+        className={cx(
+          s.app,
+          desk && s.appDesk,
+          desk && flow.solo && s.appDeskSolo,
+          glide && s.appDeskGlide,
+        )}
         style={style}
         data-app
+        data-hidden={hidden}
         data-mode={flow.mode}
         data-beat={flow.top.kind}
       >
-        {slot(
-          <EndScreen
-            run={run}
-            scroll={endScroll}
-            onRace={cmd.rewatch}
-            onNew={() => game.newSeason()}
-            onTests={() => navigate("fin")}
-            onExport={exportRun}
-          />,
+        {layers(
+          slot(
+            <EndScreen
+              run={run}
+              scroll={endScroll}
+              onRace={cmd.rewatch}
+              onNew={() => game.newSeason()}
+              onTests={() => navigate("fin")}
+              onExport={exportRun}
+            />,
+          ),
         )}
         {exportSheet}
-        {layers}
         {title}
       </div>,
       null,
@@ -397,24 +414,35 @@ export function RunView({
           state={state}
           menu={menu}
           pendingEvent={state.pendingEvent !== undefined}
+          major={!opened}
           onAction={onMenu}
+          onPanel={desk ? undefined : openPanel}
+          guideNew={guideNew}
+          // owner 2026-11-18: on a race week the track drawer opens by itself, once that week
+          autoTrack={flow.openTrack}
+          onTrackShown={() => dispatch({ type: "trackShown", turn: state.turn })}
         />
       );
       break;
     case "train": {
-      // the picker and its result are one screen; a result that ended stays under the emblem
+      // the picker and its result are one screen; a result that ended stays under the emblem.
+      // A result plays on the week she trained in (its buttons, crews and HUD), counting her
+      // stats up to the week after (critic b1, F6)
       const { selected, result, finished } = screen;
+      const week = result?.before ?? state;
       body = (
         <TrainScreen
           ctx={ctx}
-          state={state}
-          cards={cards}
+          state={week}
+          cards={week === state ? cards : trainingCards(ctx, week)}
           selected={selected}
-          injured={result === undefined && menu.injured}
+          injured={(week === state ? menu : weekMenu(ctx, week)).injured}
           onSelect={cmd.selectTraining}
           onConfirm={(kind) => cmd.choose({ kind })}
           onBack={back}
           result={result?.result}
+          after={result?.after}
+          k={paceScale(pace)}
           resultKey={result?.key}
           finished={finished}
           onResultDone={cmd.complete}
@@ -440,7 +468,9 @@ export function RunView({
       const goal = menu.goal;
       if (!goal || !menu.raceWeek) break;
       const decided = screen.kind === "position" ? screen : undefined;
-      const wings = decided ? decided.wings : raceWings(ctx, state);
+      // the decided card's wings follow its action's frame (F5); the planning card comes before
+      // any action, so its default is the equipped frame's
+      const wings = decided?.wings ?? raceWings(ctx, state);
       const position = screen.kind === "position" ? screen.week.position : screen.position;
       body = (
         <PreRaceScreen
@@ -455,7 +485,8 @@ export function RunView({
           position={position}
           input={decided?.week.input}
           onPosition={pickFor(wings)}
-          // «Listo» on the planning card; «Correr» on the decided one (no way back, owner rule)
+          // «Elegir la acción» on the planning card; «Correr» on the decided one (no way back,
+          // owner rule)
           onRun={decided ? cmd.run : back}
           onBack={decided ? undefined : back}
         />
@@ -485,44 +516,54 @@ export function RunView({
 
   return slots(
     <div
-      key="run"
+      key="column"
       // a race of the season's end seen again keeps the end's lone column on the wide screen (M3)
       className={cx(
         s.app,
         flow.wide && s.appWide,
         desk && s.appDesk,
         desk && flow.solo && s.appDeskSolo,
+        glide && s.appDeskGlide,
       )}
       style={style}
       data-app
+      data-hidden={hidden}
       data-mode={flow.mode}
       data-beat={flow.top.kind}
     >
-      {hud && hudMenu && (
-        <Hud
-          hard={difficultyOf(hud.of) === "exigente"}
-          turn={hudMenu.turn}
-          turns={hudMenu.turns}
-          goal={hudMenu.goal}
-          vigor={vigorView(ctx, hud.vigor, hud.preview)}
-          vigorPop={hud.pop}
-          mood={hudMenu.mood}
-          content={ctx.content}
-        />
+      {layers(
+        <>
+          {hud && hudMenu && (
+            <Hud
+              inert={behind}
+              enter={opened}
+              hard={difficultyOf(hud.of) === "exigente"}
+              turn={hudMenu.turn}
+              turns={hudMenu.turns}
+              goal={hudMenu.goal}
+              vigor={vigorView(ctx, hud.vigor, hud.preview)}
+              vigorPop={hud.pop}
+              // a training's result: the bar moves to the week after when its «±N» lands (L3)
+              vigorTo={hud.vigorTo && vigorView(ctx, hud.vigorTo, undefined)}
+              vigorAt={hud.vigorAt}
+              vigorBeat={hud.vigorTo && flow.top.key}
+              mood={hudMenu.mood}
+              content={ctx.content}
+            />
+          )}
+          {slot(body)}
+        </>,
       )}
-      {slot(body)}
-      {layers}
-      {chatOpen && (
-        <ChatSheet
-          name={gameText(`falconess.${state.falconessId}`)}
-          topics={openTopics(allTopics(), state)}
-          read={story.readTopics()}
-          primary={colors.primary}
-          secondary={colors.secondary}
-          onRead={story.markRead}
-          onClose={() => setChatOpen(false)}
-        />
-      )}
+      <ChatSheet
+        open={chatOpen}
+        name={gameText(`falconess.${state.falconessId}`)}
+        topics={openTopics(allTopics(), state)}
+        read={story.readTopics()}
+        primary={colors.primary}
+        secondary={colors.secondary}
+        onRead={story.markRead}
+        onClose={() => setChatOpen(false)}
+      />
       <OutingSheet
         ctx={ctx}
         state={state}
@@ -556,19 +597,18 @@ export function RunView({
       />
       {title}
       {/* the wide screen's panel is its menu: one set of the menu's buttons on the page */}
-      {!desk && (
-        <MobileMenu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          onPanel={openPanel}
-          guideNew={guideNew}
-          items={items}
-        />
-      )}
+      {!desk && <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={items} />}
     </div>,
     desk && !flow.solo ? (
       <div className={cx(s.app, s.appContents)}>
-        <DeskPanel tab={tab} onTab={openPanel} dot={guideNew ? "guide" : undefined}>
+        <DeskPanel
+          tab={tab}
+          onTab={openPanel}
+          dot={guideNew ? "guide" : undefined}
+          // D4: asleep while the week plays in the column (a layer, the race mode, a result), and
+          // under the chat's sheet
+          locked={flow.desk.locked || chatOpen}
+        >
           {panel(tab)}
         </DeskPanel>
       </div>
@@ -576,86 +616,62 @@ export function RunView({
   );
 }
 
+/** Each screen's own control, where the focus lands when the last layer in front of it goes. */
+const HOME: Partial<Record<Screen["kind"], string>> = {
+  menu: "m-entrenar",
+  position: "m-correr",
+  race: "m-carrera-seguir",
+};
+
+const FOCUSABLE = 'button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]';
+
 /**
- * The notice after a story scene (owner 2026-11-13): played («seen», «skipped») or passed by
- * because she saw it in an earlier season (owner 2026-11-14), with «Ver» to play it whole.
+ * When the last layer in front goes (L7), the focus lands on the screen's own control (its main
+ * action: «Entrenar», «Correr», «Continuar»; else its first control), never on the page's body:
+ * it was on the layer, which leaves inert. The same when the flow moves on with no layer in front
+ * (`at`, the screen's key and the top beat's, changed: a training's result that ends on the menu
+ * with no week effects, a race's replay that ends on its result with no scene after it,
+ * «Entrenar» opening the training screen): the control that had the focus went with what it
+ * ended, or went inert. A focus the player put somewhere live stays.
  */
-function StoryNotice({
-  toast,
-  onWatch,
-}: {
-  readonly toast: Toast;
-  readonly onWatch: (scene: StoryScene) => void;
-}) {
-  const scene = allScenes().find((sc) => sc.id === toast.sceneId);
-  if (!scene) return null;
-  return (
-    <StoryToast long={toast.kind === "passed"}>
-      <b>
-        {gameText(scene.kickerKey)} · {gameText(scene.titleKey)}
-      </b>
-      <br />
-      {toast.kind === "passed" ? (
-        <span className={st.toastRow}>
-          {ui("ui.m.story.passed")}
-          <button
-            type="button"
-            className={st.toastBtn}
-            id="m-escena-ver"
-            onClick={() => onWatch(scene)}
-          >
-            {ui("ui.m.story.watch")}
-          </button>
-        </span>
-      ) : (
-        ui(toast.kind === "skipped" ? "ui.m.story.skipped" : "ui.m.story.seen")
-      )}
-    </StoryToast>
-  );
+function useFocusHome(
+  layerIn: boolean,
+  at: string,
+  screen: Screen["kind"],
+  slot: RefObject<HTMLElement | null>,
+): void {
+  const was = useRef({ layerIn, at });
+  useLayoutEffect(() => {
+    const before = was.current;
+    was.current = { layerIn, at };
+    if (layerIn || (!before.layerIn && before.at === at)) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active !== document.body && !active.closest("[inert]"))
+      return;
+    const box = slot.current;
+    const home = HOME[screen];
+    const usable = (el: HTMLElement | null | undefined) =>
+      el && !el.closest("[inert]") && !(el instanceof HTMLButtonElement && el.disabled)
+        ? el
+        : undefined;
+    const el =
+      usable(home ? box?.querySelector<HTMLElement>(`#${home}`) : undefined) ??
+      usable(box?.querySelector<HTMLElement>(FOCUSABLE));
+    el?.focus({ preventScroll: true });
+  }, [layerIn, at, screen, slot]);
 }
 
 /**
- * Today's names of the screens (until 5.10): the whoosh plays when the name changes, as it did on
- * each change of the old view (the training picker and its result, the workshop, the race card,
- * the race). Undefined for an instant beat, which renders nothing.
+ * The season's black box (ADR-0013, plan §1.11, critic (c)9): kept as soon as the run in play has
+ * ended, in the commit of the tap that ended it («Correr», the last action), so before its race,
+ * its scenes and the End, and whatever the player does then. A run loaded ended keeps it too; a
+ * box already kept stays once (`addBox` goes by its id).
  */
-function legacyScreen(flow: Flow): string | undefined {
-  const t = flow.top;
-  switch (t.kind) {
-    case "train-result":
-      return "trained";
-    case "fx":
-      return t.part === "action" ? "actionfx" : "menu";
-    case "emblem":
-    case "position":
-      return "prerace";
-    case "scene":
-      return t.where === "prerace" ? "prerace" : t.where === "race" ? "race" : "menu";
-    case "replay":
-    case "finish":
-    case "race-result":
-      return "race";
-    case "event":
-    case "inspiration":
-      return "menu";
-    case "ack":
-    case "enter":
-    case "pass":
-      return undefined;
-    case "idle":
-      switch (flow.screen.kind) {
-        case "train":
-          return "train";
-        case "workshop":
-          return "workshop";
-        case "plan":
-          return "prerace";
-        case "race":
-          return "race";
-        default:
-          return "menu";
-      }
-  }
+function useSeasonBox(ctx: SimContext, run: ActiveRun): void {
+  useEffect(() => {
+    const box = boxToKeep(ctx, run);
+    if (box) addBox(box);
+  }, [ctx, run]);
 }
 
 /** The sponsor's two colors of the Falconess in play (Kōryū's red and yellow without a palette). */

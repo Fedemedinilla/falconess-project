@@ -1,13 +1,17 @@
 import type { ContentIndex } from "@falconess/schema";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 import { gameBrief } from "../text/brief";
 import { formatSigned } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { FX, fxSpots, fxTotalMs } from "./flow/fxTimeline";
+import { useFlowTimer, useFlowTimers } from "../ui/flowTimer";
+import { isRepeatTap } from "../ui/tap";
+import { useReducedMotion } from "../ui/useMedia";
+import { type FxCell, fxGrid, fxTimeline } from "./flow/fxTimeline";
 import { Glyph, type GlyphName } from "./Glyph";
+import { useLayerFocus, useLayerPhase, useLid } from "./LayerHost";
 import { crewInitials } from "./model";
-import { paceScale } from "./pace";
+import { type Pace, paceScale } from "./pace";
 import { playSound } from "./sfx";
 import f from "./WeekFx.module.css";
 import type { WeekFx, WeekFxKind } from "./weekFx";
@@ -16,6 +20,7 @@ const GLYPH: Partial<Record<WeekFxKind, GlyphName>> = {
   "mood-up": "heart",
   "mood-down": "heart",
   injury: "cross",
+  recovery: "cross",
   "sleep-great": "bed",
   "sleep-normal": "bed",
   "sleep-poor": "bed",
@@ -79,26 +84,30 @@ function Badge({ e, at, content }: { e: WeekFx; at: number; content: ContentInde
   );
 }
 
-/** The skills she learned: compact shining cards, up to five without crowding. */
-function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentIndex }) {
+/** The skills she learned: compact shining cards, up to five without crowding; each pops at `pops[k]`. */
+function Skills({
+  e,
+  pops,
+  content,
+}: {
+  e: WeekFx;
+  pops: readonly number[];
+  content: ContentIndex;
+}) {
   const ids = e.skills ?? [];
   return (
     <ul className={cx(f.skills, ids.length > 3 && f.skillsMany)}>
       {ids.map((id, k) => {
         const skill = content.getSkill(id);
+        const pop = pops[k] ?? 0;
         return (
-          <li
-            key={id}
-            className={f.skill}
-            data-skill={id}
-            style={{ animationDelay: `${at + 250 + k * FX.perSkill}ms` }}
-          >
+          <li key={id} className={f.skill} data-skill={id} style={{ animationDelay: `${pop}ms` }}>
             <Glyph name="book" size={20} weight={2.4} />
             <span>
               <b>{gameText(skill.textKey)}</b>
               {gameBrief(skill.textKey) && <small>{gameBrief(skill.textKey)}</small>}
             </span>
-            <i className={f.shine} style={{ animationDelay: `${at + 450 + k * FX.perSkill}ms` }} />
+            <i className={f.shine} style={{ animationDelay: `${pop + SHINE_AFTER}ms` }} />
           </li>
         );
       })}
@@ -107,36 +116,97 @@ function Skills({ e, at, content }: { e: WeekFx; at: number; content: ContentInd
 }
 
 /**
- * The week's effects shown, not told (owner 2026-11-13): all together, each in a random spot of
- * the screen, a stamp like a training's «¡ÉXITO!» with chevrons, gold and rising for good news,
- * blue and falling for bad. A tap ends them.
+ * A stamp too long for its cell at the full size: many letters, or one long word (at the smaller
+ * size «RECUPERACIÓN» fits its cell on a 360 px phone without breaking).
+ */
+function long(label: string): boolean {
+  return label.length > 14 || label.split(" ").some((w) => w.length >= 11);
+}
+
+/** A skill card's shine runs this long after it popped in. */
+const SHINE_AFTER = 200;
+
+/**
+ * Each stamp's type made smaller, as much as it takes for its longest word to fit its cell (a
+ * stamp wraps only between words, never inside one: «¡MOTIVADA!» broke into «¡MOTIVAD» / «A!»
+ * where the font is wider than the condensed one, as before it loads or where it never does).
+ * It reads layout only (its pop's scale and tilt are transforms) and keeps every stamp's size
+ * otherwise, so the stamps of a week are the size they always were wherever their words fit.
+ */
+function fitStamps(layer: HTMLElement): void {
+  for (const el of layer.querySelectorAll<HTMLElement>(`.${f.stamp}`)) {
+    el.style.removeProperty("--fit");
+    let fit = 1;
+    // the letter spacing does not scale with the type: a few rounds settle it
+    for (let i = 0; i < 4 && el.scrollWidth > el.clientWidth && el.scrollWidth > 0; i++) {
+      fit = Math.floor(((fit * el.clientWidth) / el.scrollWidth) * 1000) / 1000;
+      el.style.setProperty("--fit", String(fit));
+    }
+  }
+}
+
+/** An effect's cell in the layer's grid: its row (between the rows of space), its column, its place. */
+function cellStyle(c: FxCell): CSSProperties {
+  return {
+    gridRow: 2 * c.row + 2,
+    gridColumn: c.col === "both" ? "1 / -1" : c.col + 1,
+    justifySelf: c.x,
+    alignSelf: c.y,
+  };
+}
+
+/**
+ * The week's effects shown, not told (owner 2026-11-13): all together, each in a random cell of
+ * the screen's grid (a cell of its own: two never overlap), a stamp like a training's «¡ÉXITO!»
+ * with chevrons, gold and rising for good news, blue and falling for bad. «Ritmo» shortens their
+ * timeline (`fxTimeline`, the learned skills' pops too: M6). A tap ends them (H2: then the scrim and
+ * the stamps fade out together, as an id-less copy that takes no tap and plays nothing, while the
+ * menu under them is live).
  */
 export function WeekFxOverlay({
   fx,
+  pace,
   content,
   onDone,
 }: {
   fx: readonly WeekFx[];
+  /** The flow's «Ritmo»; read once, when the effects come. */
+  pace: Pace;
   content: ContentIndex;
+  /** Their time is up, or a tap; read when it happens, so a new arrow on each render is fine. */
   onDone: () => void;
 }) {
-  const starts = fx.map((_, i) => FX.stagger * i);
-  // «Ritmo» (owner 2026-11-14): the effects leave sooner, after they popped in
-  const total = Math.max(900, Math.round(fxTotalMs(fx) * paceScale()));
-  const [spots] = useState(() => fxSpots(fx));
-  // biome-ignore lint/correctness/useExhaustiveDependencies: once per mount (keyed by the step)
-  useEffect(() => {
-    const timers = fx.map((e, i) =>
-      setTimeout(
-        () => playSound(e.kind === "skills" ? "boost" : e.good ? "success" : "fail"),
-        starts[i],
-      ),
-    );
-    timers.push(setTimeout(onDone, total));
-    return () => {
-      for (const t of timers) clearTimeout(t);
-    };
+  const lid = useLid();
+  const playing = useLayerPhase() === "in";
+  // reduced motion: every effect whole from the first frame (their CSS has no animation), so they
+  // take no timeline of their own (rule 73: an inline length would bring their fade back)
+  const reduced = useReducedMotion();
+  // the instance is the beat's: its timeline and its cells are drawn once
+  const [{ starts, skillAt, total }] = useState(() => fxTimeline(fx, paceScale(pace)));
+  const [grid] = useState(() => fxGrid(fx));
+  const layer = useRef<HTMLButtonElement>(null);
+  useLayerFocus(layer);
+  // the stamps fit their cells before the first paint, and again whenever the layer's size
+  // changes (the tablet's frame widening, a phone turned, the wide screen narrowed)
+  useLayoutEffect(() => {
+    const el = layer.current;
+    if (!el) return;
+    fitStamps(el);
+    const resized = new ResizeObserver(() => fitStamps(el));
+    resized.observe(el);
+    return () => resized.disconnect();
   }, []);
+  // each effect sounds as it pops in, then they end; once they leave, nothing more (the instance
+  // is the beat's: its timers start once)
+  useFlowTimers(
+    playing ? starts : undefined,
+    (i) => {
+      const e = fx[i];
+      if (e) playSound(e.kind === "skills" ? "boost" : e.good ? "success" : "fail");
+    },
+    "sounds",
+  );
+  useFlowTimer(playing ? total : undefined, onDone, "end");
   const label = (e: WeekFx) =>
     e.kind === "skills"
       ? ui(e.skills && e.skills.length > 1 ? "ui.m.fx.skills.many" : "ui.m.fx.skills", {
@@ -145,37 +215,42 @@ export function WeekFxOverlay({
       : ui(`ui.m.fx.${e.kind}`);
   return (
     <button
+      ref={layer}
       type="button"
-      className={f.layer}
-      id="m-efectos"
+      className={cx(f.layer, !playing && f.out)}
+      style={{
+        gridTemplateRows: grid.space.map((w) => `${w.toFixed(3)}fr`).join(" auto "),
+      }}
+      id={lid("m-efectos")}
       aria-label={fx.map(label).join(" · ")}
-      onClick={onDone}
+      onClick={(e) => {
+        // the second click of a double tap lands on what follows the effects: ignore it
+        if (!isRepeatTap(e)) onDone();
+      }}
     >
       {fx.map((e, i) => {
         const at = starts[i] ?? 0;
-        const spot = spots[i] ?? { x: 50, y: 50 };
+        const cell = grid.cells[i];
         return (
           <span
             key={e.kind}
-            className={cx(f.fx, e.good ? f.good : f.bad, e.kind === "skills" && f.wide)}
+            className={cx(f.fx, e.good ? f.good : f.bad)}
             data-fx={e.kind}
-            style={
-              {
-                animationDelay: `${at}ms`,
-                animationDuration: `${total - at}ms`,
-                "--x": `${spot.x}%`,
-                "--y": `${spot.y}%`,
-              } as CSSProperties
-            }
+            style={{
+              ...(cell ? cellStyle(cell) : {}),
+              ...(reduced
+                ? {}
+                : { animationDelay: `${at}ms`, animationDuration: `${total - at}ms` }),
+            }}
           >
             {e.kind !== "skills" && <Badge e={e} at={at} content={content} />}
             <span
-              className={cx(f.stamp, label(e).length > 14 && f.stampLong)}
+              className={cx(f.stamp, long(label(e)) && f.stampLong)}
               style={{ animationDelay: `${at + 120}ms` }}
             >
               {label(e)}
             </span>
-            {e.kind === "skills" && <Skills e={e} at={at} content={content} />}
+            {e.kind === "skills" && <Skills e={e} pops={skillAt[i] ?? []} content={content} />}
           </span>
         );
       })}

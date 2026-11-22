@@ -3,7 +3,14 @@ import { advanceSeason, seasonGoalsOf, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import type { ActiveRun } from "../../game/controller";
 import { runFingerprint } from "../../game/run";
-import { decodeWeek, encodeWeek, validRecord, WEEK_KEY, WeekStore } from "./decidedWeek";
+import {
+  decodeWeek,
+  encodeWeek,
+  isLaterInSeason,
+  validRecord,
+  WEEK_KEY,
+  WeekStore,
+} from "./decidedWeek";
 import { testContext } from "./testing/content";
 import { blockedStore, memoryStore } from "./testing/memory";
 import type { DecidedWeek, WeekRecord } from "./types";
@@ -69,6 +76,7 @@ describe("the decided week's stored format", () => {
         input: { kind: "workshop", ops: [{ op: "equip-frame", frameId: "nimbus-glide" }] },
       }),
       decided({ input: { kind: "outing", manufacturer: "altair" } }),
+      { phase: "raced", fp: "v3|1|11|0000abcd" },
       { phase: "raceSeen", fp: "v3|1|11|0000abcd" },
     ];
     for (const r of records) expect(decodeWeek(encodeWeek(r))).toEqual(r);
@@ -94,6 +102,7 @@ describe("the decided week's stored format", () => {
       { ...good, stage: "done" },
       { ...good, turn: "10" },
       { v: 1, phase: "raceSeen" },
+      { v: 1, phase: "raced", fp: "v3|1|11|0000abcd", turn: 10 },
       // a position belongs to the record, never to the stored input
       { ...good, input: { kind: "rest", position: "lead" } },
       // only a week's action is decided
@@ -156,7 +165,7 @@ describe("validRecord: a record counts only for the run it was written in", () =
     expect(validRecord(ctx, run, fp, order)).toBeUndefined();
   });
 
-  it("a planned position on this run's race week; a race seen by the run it led to", () => {
+  it("a planned position on this run's race week; a race run or seen by the run it led to", () => {
     const plan: WeekRecord = { phase: "planned", fp, turn: run.state.turn, position: undefined };
     expect(validRecord(ctx, run, fp, plan)).toBe(plan);
     expect(validRecord(ctx, run, fp, { ...plan, turn: 3 })).toBeUndefined();
@@ -164,6 +173,9 @@ describe("validRecord: a record counts only for the run it was written in", () =
     const seen: WeekRecord = { phase: "raceSeen", fp };
     expect(validRecord(ctx, run, fp, seen)).toBe(seen);
     expect(validRecord(ctx, run, fp, { phase: "raceSeen", fp: "x" })).toBeUndefined();
+    const raced: WeekRecord = { phase: "raced", fp };
+    expect(validRecord(ctx, run, fp, raced)).toBe(raced);
+    expect(validRecord(ctx, run, fp, { phase: "raced", fp: "x" })).toBeUndefined();
   });
 
   it("reads the one preview cache that tryPreview and previewOf read (one simulation)", () => {
@@ -181,6 +193,34 @@ describe("validRecord: a record counts only for the run it was written in", () =
       throw new Error("refused");
     });
     expect(validRecord(ctx, refused, fp, week)).toBeUndefined();
+  });
+});
+
+describe("isLaterInSeason: a record a run's view never drops (another tab played on, C1)", () => {
+  const run = runTo("dw-1");
+  const n = run.inputs.length;
+  const of = (fp: string): WeekRecord => decided({ fp, turn: 20, inputs: n + 10 });
+
+  it("a record of this run's season with more inputs: another tab's newer week", () => {
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n + 10}|0123abcd`))).toBe(true);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n + 1}|0123abcd`))).toBe(true);
+    expect(isLaterInSeason(run, { phase: "raced", fp: `v3|dw-1|${n + 1}|0123abcd` })).toBe(true);
+    expect(isLaterInSeason(run, { phase: "raceSeen", fp: `v3|dw-1|${n + 2}|0123abcd` })).toBe(true);
+  });
+
+  it("not this run's own point or an earlier one (a week played differently: it is dropped)", () => {
+    expect(isLaterInSeason(run, of(runFingerprint(run)))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n - 1}|0123abcd`))).toBe(false);
+  });
+
+  it("not another season's (another seed or ruleset), nor a text that is no fingerprint", () => {
+    expect(isLaterInSeason(run, of(`v3|dw-2|${n + 10}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1x|${n + 10}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v2|dw-1|${n + 10}|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|${n + 10}`))).toBe(false);
+    expect(isLaterInSeason(run, of(`v3|dw-1|many|0123abcd`))).toBe(false);
+    expect(isLaterInSeason(run, of("x"))).toBe(false);
   });
 });
 
@@ -232,8 +272,9 @@ describe("the week store", () => {
         (s) => s.setPosition(fp, undefined),
         { phase: "decided", ...w, position: undefined, stage: "race" },
       ],
-      ["«Correr» committed", (s) => s.clear(), undefined],
+      ["«Correr» committed", (s) => s.markRaced(next), { phase: "raced", fp: next }],
       ["«Continuar» on its result", (s) => s.markRaceSeen(next), { phase: "raceSeen", fp: next }],
+      ["a record of no run in play, dropped", (s) => s.clear(), undefined],
     ];
     for (const [moment, act, after] of life) {
       act(store);
@@ -270,8 +311,12 @@ describe("the week store", () => {
     expect(store.getSnapshot()).toBeUndefined();
   });
 
-  it("a race seen takes no position and enters no race", () => {
+  it("a race run or seen takes no position and enters no race", () => {
     const store = new WeekStore(memoryStore());
+    store.markRaced(fp);
+    store.setPosition(fp, "lead");
+    store.enterRace(fp);
+    expect(store.getSnapshot()).toEqual({ phase: "raced", fp });
     store.markRaceSeen(fp);
     store.setPosition(fp, "lead");
     store.enterRace(fp);
@@ -292,5 +337,31 @@ describe("the week store", () => {
       expect(store.getSnapshot()).toEqual({ phase: "decided", ...w });
       expect(new WeekStore(kv).getSnapshot()).toBeUndefined();
     }
+  });
+
+  it("two tabs: each reads what the other stored since its load (as the save is read at «Continuar»)", () => {
+    const kv = memoryStore({ [WEEK_KEY]: encodeWeek({ phase: "raceSeen", fp: "stale" }) });
+    // a tab left on the title since the stale record, and the tab that plays on
+    const waiting = new WeekStore(kv);
+    const playing = new WeekStore(kv);
+    playing.clear();
+    playing.decide(w);
+    expect(waiting.getSnapshot()).toEqual({ phase: "decided", ...w });
+    // the same object while nothing new is stored (no identity churn)
+    expect(waiting.getSnapshot()).toBe(waiting.getSnapshot());
+    // and a write of its own starts from it: the position goes on the other tab's decided week
+    waiting.setPosition(fp, "pack");
+    expect(new WeekStore(kv).getSnapshot()).toEqual({ phase: "decided", ...w, position: "pack" });
+  });
+
+  it("a write the storage refuses keeps this tab's record for the visit", () => {
+    const kv = memoryStore({ [WEEK_KEY]: encodeWeek(planned) });
+    const store = new WeekStore(kv);
+    kv.setItem = () => {
+      throw new Error("quota");
+    };
+    store.decide(w);
+    expect(store.getSnapshot()).toEqual({ phase: "decided", ...w });
+    expect(store.getSnapshot()).toBe(store.getSnapshot());
   });
 });

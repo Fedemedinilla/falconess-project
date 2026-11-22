@@ -295,7 +295,7 @@ export async function playReplayToEnd(page: Page, prefix: string): Promise<numbe
   return playerPlace(page);
 }
 
-/** The player's place in the classification table ("Vos" row). */
+/** The player's place in the classification table ("Tú" row). */
 export async function playerPlace(page: Page): Promise<number> {
   const table = page.getByRole("table", { name: t("ui.race.result.title") });
   const row = table.getByRole("row").filter({ hasText: t("ui.race.you") });

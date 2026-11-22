@@ -5,6 +5,7 @@ import { gameText, ui } from "../../text/ui";
 import { cx } from "../../ui/cx";
 import { Pill } from "../../ui/Pill";
 import { PositionMark } from "../../ui/PositionMark";
+import { isRepeatTap } from "../../ui/tap";
 import { positionOptions } from "../model/position";
 import { Letter } from "./Letter";
 import s from "./PositionPicker.module.css";
@@ -65,6 +66,11 @@ export function PositionPicker({
                 htmlFor={inputId}
                 className={cx(s.option, on && s.on)}
                 data-position={o.position}
+                // one gesture, one decision (F50): the second click of a double tap (one that ended
+                // the scene over the phone's race card) picks nothing; a tap of its own picks
+                onClickCapture={(e) => {
+                  if (isRepeatTap(e)) e.preventDefault();
+                }}
               >
                 <input
                   type="radio"

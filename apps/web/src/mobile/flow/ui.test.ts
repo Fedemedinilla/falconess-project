@@ -1,7 +1,7 @@
 import type { StoryScene } from "@falconess/schema";
 import { describe, expect, it } from "vitest";
 import { testScenes } from "./testing/content";
-import { INITIAL_UI, reduceUi, type Toast, type UiEvent, type UiState } from "./ui";
+import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "./ui";
 
 /** The flow's UI state (plan §1.3): every event, and each cell it ignores (the same state back). */
 
@@ -13,19 +13,30 @@ const scene = (id: string): StoryScene => {
   return sc;
 };
 
-const toast = (id: string, kind: Toast["kind"] = "seen"): Toast => ({
-  id,
-  sceneId: id,
-  kind,
-  shown: false,
-});
-
 describe("reduceUi", () => {
   it("starts on the menu with nothing done, frozen", () => {
-    expect(INITIAL_UI).toMatchObject({ nav: { at: "menu" }, seq: 0, from: "menu", toasts: [] });
+    expect(INITIAL_UI).toMatchObject({ nav: { at: "menu" }, seq: 0, from: "menu" });
     expect(INITIAL_UI.done.size + INITIAL_UI.mine.size).toBe(0);
-    expect([INITIAL_UI.replay, INITIAL_UI.notice]).toEqual([undefined, undefined]);
+    expect([INITIAL_UI.replay, INITIAL_UI.notice, INITIAL_UI.trackWeek]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
     expect(Object.isFrozen(INITIAL_UI)).toBe(true);
+  });
+
+  it("trackShown: the week whose track drawer opened by itself, one week at a time (owner 2026-11-18)", () => {
+    const ten = after({ type: "trackShown", turn: 10 });
+    expect(ten.trackWeek).toBe(10);
+    // the same week again changes nothing: the drawer opens once a week, closed or not
+    expect(reduceUi(ten, { type: "trackShown", turn: 10 })).toBe(ten);
+    // the next race week is its own
+    expect(reduceUi(ten, { type: "trackShown", turn: 20 }).trackWeek).toBe(20);
+    // and nothing else of the state moves
+    expect(reduceUi(ten, { type: "trackShown", turn: 20 })).toMatchObject({
+      nav: { at: "menu" },
+      seq: 0,
+    });
   });
 
   it("open: each screen of the idle menu; the same screen again changes nothing", () => {
@@ -65,19 +76,20 @@ describe("reduceUi", () => {
     expect(reduceUi(train, { type: "tab", tab: "skills" })).toBe(train);
   });
 
-  it("acted and raced: back to the menu, the run is this mount's; decided: where it was decided, the nav kept", () => {
+  it("acted and raced: back to the menu; decided: where it was decided, the nav kept, the week this mount's", () => {
     const train = after({ type: "open", to: "train" });
-    const acted = reduceUi(train, { type: "acted", fp: "a" });
+    const acted = reduceUi(train, { type: "acted" });
     expect(acted.nav).toEqual({ at: "menu" });
-    expect([...acted.mine]).toEqual(["a"]);
-    expect(reduceUi(acted, { type: "acted", fp: "a" })).toBe(acted);
+    expect(acted.mine.size).toBe(0);
+    expect(reduceUi(acted, { type: "acted" })).toBe(acted);
     const decided = reduceUi(train, { type: "decided", fp: "b", from: "train" });
     expect(decided.nav).toBe(train.nav);
     expect([decided.from, [...decided.mine]]).toEqual(["train", ["b"]]);
     expect(reduceUi(decided, { type: "decided", fp: "b", from: "train" })).toBe(decided);
-    const raced = reduceUi(decided, { type: "raced", fp: "c" });
+    const raced = reduceUi(decided, { type: "raced" });
     expect(raced.nav).toEqual({ at: "menu" });
-    expect([...raced.mine]).toEqual(["b", "c"]);
+    expect([...raced.mine]).toEqual(["b"]);
+    expect(reduceUi(raced, { type: "raced" })).toBe(raced);
   });
 
   it("done: the keys accumulate; keys already done change nothing", () => {
@@ -140,29 +152,20 @@ describe("reduceUi", () => {
     expect(reduceUi(cleared, { type: "replay", scene: undefined })).toBe(cleared);
   });
 
-  it("toasts: first in, first out, two at most; a newer one replaces the second, never the first (review 1 item 14)", () => {
-    const a = toast("a");
-    const b = toast("b", "passed");
-    const c = toast("c", "skipped");
-    const two = after({ type: "toast", toast: a }, { type: "toast", toast: b });
-    expect(two.toasts.map((t) => t.id)).toEqual(["a", "b"]);
-    // the first, unshown yet, stays; the newest takes the second place
-    expect(reduceUi(two, { type: "toast", toast: c }).toasts.map((t) => t.id)).toEqual(["a", "c"]);
-    // StrictMode's second run: the same id again adds nothing
-    expect(reduceUi(two, { type: "toast", toast: a })).toBe(two);
-    const shown = reduceUi(two, { type: "toastShown", id: "a" });
-    expect(shown.toasts.map((t) => t.shown)).toEqual([true, false]);
-    expect(reduceUi(shown, { type: "toastShown", id: "a" })).toBe(shown);
-    expect(reduceUi(shown, { type: "toastShown", id: "z" })).toBe(shown);
-    const gone = reduceUi(shown, { type: "toastGone", id: "a" });
-    expect(gone.toasts.map((t) => t.id)).toEqual(["b"]);
-    expect(reduceUi(gone, { type: "toastGone", id: "a" })).toBe(gone);
-  });
-
-  it("notice: a refused act or preview, until cleared", () => {
+  it("notice: a refused act or preview, each one a notice of its own, until cleared or gone", () => {
     const refused = after({ type: "notice", notice: "workshop" });
-    expect(refused.notice).toBe("workshop");
-    expect(reduceUi(refused, { type: "notice", notice: "workshop" })).toBe(refused);
-    expect(reduceUi(refused, { type: "notice", notice: undefined }).notice).toBeUndefined();
+    expect(refused.notice).toEqual({ kind: "workshop", n: 1, shown: false });
+    // the same kind again is another notice (its own time), not the one on screen
+    const again = reduceUi(refused, { type: "notice", notice: "workshop" });
+    expect(again.notice).toEqual({ kind: "workshop", n: 2, shown: false });
+    const shown = reduceUi(again, { type: "noticeShown", n: 2 });
+    expect(shown.notice?.shown).toBe(true);
+    expect(reduceUi(shown, { type: "noticeShown", n: 2 })).toBe(shown);
+    // a stale one (the notice before it) shows or goes nothing
+    expect(reduceUi(shown, { type: "noticeShown", n: 1 })).toBe(shown);
+    expect(reduceUi(shown, { type: "noticeGone", n: 1 })).toBe(shown);
+    expect(reduceUi(shown, { type: "noticeGone", n: 2 }).notice).toBeUndefined();
+    expect(reduceUi(shown, { type: "notice", notice: undefined }).notice).toBeUndefined();
+    expect(reduceUi(INITIAL_UI, { type: "notice", notice: undefined })).toBe(INITIAL_UI);
   });
 });

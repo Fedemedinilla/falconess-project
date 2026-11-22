@@ -4,7 +4,9 @@ import { expect, type Page } from "@playwright/test";
 import { t } from "./fixtures";
 import {
   fingerDrag,
+  openPlan,
   pastTitle,
+  raceWeekNow,
   runRace,
   settle,
   skipPrologue,
@@ -14,6 +16,7 @@ import {
   test,
   toPosition,
   toResult,
+  watchCues,
   week,
 } from "./mobile-helpers";
 
@@ -85,8 +88,10 @@ test("the goal card: the track's profile, its distance class and letters; tap fo
 }) => {
   await startMobile(page, "peregrina");
   // Peregrina's first goal is the Sprint: two Curvas, a home straight, Agility and Technique
-  // the card hides in a tab at the screen's edge (owner 2026-11-14)
+  // the card hides in a tab at the screen's edge (owner 2026-11-14), and on a week with no race
+  // nothing opens it by itself (owner 2026-11-18: only a race week does)
   const card = page.locator("#m-pista");
+  await expect(page.locator("#m-pista-tab")).not.toHaveAttribute("data-race", "");
   await expect(card).toBeHidden();
   await page.locator("#m-pista-tab").click();
   await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
@@ -142,8 +147,9 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
     }
     await settle(page);
   }
-  // the race button opens the card: positions, her letters, distance and passive
-  await page.click("#m-carrera");
+  // the track drawer's card opens the planning card (owner 2026-11-18, where the bar was):
+  // positions, her letters, distance and passive
+  await openPlan(page);
   await expect(page.locator("#m-precarrera-distancia")).toBeVisible();
   await expect(page.locator("#m-precarrera-pasiva")).toBeVisible();
   // the track's profile and letters, as on the goal card
@@ -210,7 +216,7 @@ test("a short season to its end, then a new one; the test view is one tap away",
   await startMobile(page, "caracara");
   // resting every week: the goal races come (and one ends the season, or all four run)
   for (let i = 0; i < 80 && (await page.locator("#m-fin").count()) === 0; i++) {
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     await page.click("#m-descansar");
     if (raceWeek) {
       await toPosition(page);
@@ -287,11 +293,11 @@ test("the race in first person: the camera toggle, a race played from her eyes, 
 }) => {
   test.setTimeout(180_000);
   await startMobile(page, "peregrina");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await toPosition(page);
@@ -345,11 +351,11 @@ test("first person: a finger turns her head sideways, up to her neck's reach, an
   // a fake clock (flowing in real time) lets the test skip the idle seconds
   await page.clock.install();
   await startMobile(page, "peregrina");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await toPosition(page);
@@ -397,37 +403,47 @@ test("sounds: a tap, a change of screen, a training's result; the «Menú» swit
   await expect.poll(cue).toBe("nav");
   await page.click("#m-entrenar-risk-flight");
   await expect.poll(cue).toBe("tap");
+  const cues = await watchCues(page);
   await page.dblclick("#m-entrenar-agility");
   await expect.poll(cue).toMatch(/^(success|boost|fail)$/);
   const result = await page.locator("html").getAttribute("data-sfx");
   // the result is not followed by the whoosh of going back to the menu
   await page.waitForTimeout(300);
   expect(await page.locator("html").getAttribute("data-sfx")).toBe(result);
+  // nor when it ends by itself (critic b): only a tap whooshes, never a timer
+  await expect(page.locator("#m-entrenar")).toBeVisible();
+  await page.waitForTimeout(150);
+  const played = await cues();
+  expect(played.at(-1)).not.toBe("nav");
+  expect(played.slice(played.findIndex((c) => /^(success|boost|fail)$/.test(c)))).not.toContain(
+    "nav",
+  );
   await settle(page);
 
-  // the switch: Propulsor → Visor → apagado → Hangar → Propulsor, remembered on reload
+  // «Menú» → «Ajustes»: every style is there and one tap picks any of them (owner 2026-11-18),
+  // and the pick is remembered on reload
   await page.click("#m-menu");
+  await page.click("#m-grupo-ajustes");
   const sw = page.locator("#m-sonido");
-  await expect(sw).toHaveAttribute("data-style", "propulsor");
+  await expect(sw).toHaveAttribute("data-value", "propulsor");
   for (const style of ["visor", "off", "hangar"]) {
-    await sw.click();
-    await expect(sw).toHaveAttribute("data-style", style);
-    await expect(sw).toContainText(t(`ui.m.sound.${style}`));
+    await page.click(`#m-sonido-${style}`);
+    await expect(sw).toHaveAttribute("data-value", style);
+    await expect(page.locator(`#m-sonido-${style}`)).toContainText(t(`ui.m.sound.${style}`));
   }
   await page.reload();
   await pastTitle(page);
   await page.click("#m-continuar");
   await settle(page);
   await page.click("#m-menu");
-  await expect(page.locator("#m-sonido")).toHaveAttribute("data-style", "hangar");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-sonido")).toHaveAttribute("data-value", "hangar");
 
   // apagado plays nothing
-  await page.locator("#m-sonido").click();
-  await page.locator("#m-sonido").click();
-  await page.locator("#m-sonido").click();
-  await expect(page.locator("#m-sonido")).toHaveAttribute("data-style", "off");
+  await page.click("#m-sonido-off");
+  await expect(page.locator("#m-sonido")).toHaveAttribute("data-value", "off");
   const before = await page.locator("html").getAttribute("data-sfx");
-  await page.click("#m-menu-cerrar");
+  await page.click("#m-ajustes-hoja-cerrar");
   await page.click("#m-entrenar");
   await page.waitForTimeout(200);
   expect(await page.locator("html").getAttribute("data-sfx")).toBe(before);
@@ -491,7 +507,8 @@ test("inheritance: up to two of this browser's black boxes go into the new seaso
   await page.click('[data-box="b3"]');
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
-  // the inheritance card: what each box gave at the start
+  // her prologue first (D2), then the inheritance card: what each box gave at the start
+  await skipPrologue(page);
   const card = page.locator("#m-inspiracion");
   await expect(card).toHaveAttribute("data-kind", "start");
   await expect(card.locator("li[data-parent]")).toHaveCount(2);
@@ -510,8 +527,9 @@ test("export: the run in play, and every season this browser played", async ({ p
   await startMobile(page, "caracara");
   await page.click("#m-descansar");
   await settle(page);
-  // «Menú» → «Exportar partida»: the save as a file or as text
+  // «Menú» → «Partida» → «Exportar partida»: the save as a file or as text
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-exportar-partida");
   const sheet = page.locator("#m-exportar[open]");
   await expect(sheet).toBeVisible();
@@ -527,6 +545,7 @@ test("export: the run in play, and every season this browser played", async ({ p
 
   // a new season: the old one stays in «Temporadas anteriores»
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-nueva");
   await page.click("#m-nueva-si");
   await page.click("#m-elegir-peregrina");
@@ -534,6 +553,7 @@ test("export: the run in play, and every season this browser played", async ({ p
   await expect(page.locator("#m-semana")).toBeVisible();
   await skipPrologue(page);
   await page.click("#m-menu");
+  await page.click("#m-grupo-partida");
   await page.click("#m-temporadas");
   const rows = page.locator("#m-historial li[data-seed]");
   await expect(rows).toHaveCount(2);
@@ -593,7 +613,7 @@ test("language: the menu switches to English and a whole short season reads in E
   };
   for (let i = 0; i < 80 && (await page.locator("#m-fin").count()) === 0; i++) {
     await look();
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     await page.click("#m-descansar");
     await look();
     if (raceWeek) {
@@ -626,7 +646,8 @@ test("language: the switch in «Menú» keeps the run in play", async ({ page })
   await page.dblclick("#m-entrenar-agility");
   await settle(page);
   await page.click("#m-menu");
-  await page.click("#m-idioma");
+  await page.click("#m-grupo-ajustes");
+  await page.click("#m-idioma-en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   expect(await week(page)).toBe(2);
   expect(await spanishLines(page)).toEqual([]);
@@ -645,11 +666,11 @@ test("screen transition: the emblem opens the race mode, then the scene, then th
   await expect(page.locator("#m-entrenar-agility")).toBeVisible();
   await expect(page.locator("#m-transicion")).toHaveCount(0);
   await page.click("#m-volver");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-correr");
   await page.click("#m-descansar");
   // what the rest did plays first, over the menu, before the race mode (owner 2026-11-13)
@@ -717,15 +738,17 @@ test("music: the title theme from the title's tap, the menu theme in the season,
   await skipPrologue(page);
   // the switch, kept on reload
   await page.click("#m-menu");
-  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "true");
-  await page.click("#m-musica");
-  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
-  await expect(page.locator("#m-musica")).toContainText(t("ui.m.music.off"));
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-value", "on");
+  await page.click("#m-musica-off");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-value", "off");
+  await expect(page.locator("#m-musica-off")).toContainText(t("ui.m.music.off"));
   await page.reload();
   await pastTitle(page);
   await page.click("#m-continuar");
   await page.click("#m-menu");
-  await expect(page.locator("#m-musica")).toHaveAttribute("data-on", "false");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-musica")).toHaveAttribute("data-value", "off");
 });
 
 test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays it again; the chat answers", async ({
@@ -745,7 +768,8 @@ test("story: Peregrina's prologue in the cinematic, skipped; «Historia» plays 
   await expect(scene).toContainText(t("story.peregrina-prologue.1"));
   await page.click("#m-capitulo-saltar");
   await expect(scene).toHaveCount(0);
-  await expect(page.locator("#m-capitulo-aviso")).toContainText(t("ui.m.story.skipped"));
+  // skipped, it says nothing at all (owner 2026-11-18)
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
   // «Historia» lists it and plays it again
   await page.click("#m-menu");
   await page.click("#m-historia-abrir");
@@ -808,7 +832,7 @@ test("story order: a week's scene plays after that week's decision, without a tr
   // to week 16, where her chapter 2 is due (week 10 is her first race, to win)
   let k = 0;
   while ((await week(page)) < 16) {
-    const raceWeek = (await page.locator("#m-carrera").count()) > 0;
+    const raceWeek = await raceWeekNow(page);
     if (k++ % 2) await page.click("#m-descansar");
     else {
       await page.click("#m-entrenar");
@@ -920,20 +944,24 @@ test("wide screen (owner 2026-11-13): the game's column with the panel beside it
   expect(await week(page)).toBe(2);
 });
 
-test("phone menu: the guide, goals, crews and log open as sheets", async ({ page }) => {
+test("the week menu's rail: the guide, goals, crews and log open as sheets, one tap each", async ({
+  page,
+}) => {
   await startMobile(page, "peregrina");
-  await page.click("#m-menu");
-  await expect(page.locator("#m-panel-abrir-guide")).toContainText(t("ui.m.guide.new"));
-  await page.click("#m-panel-abrir-crews");
+  // the guide keeps its dot until it has been opened (owner 2026-11-18: a dot, not the «NUEVO» tag)
+  await expect(page.locator("#m-leer-guide")).toHaveAttribute("data-new", "true");
+  await page.click("#m-leer-crews");
   await expect(page.locator("#m-panel-hoja[open] #m-cuadrillas-panel")).toBeVisible();
   await page.click("#m-panel-hoja-cerrar");
-  await page.click("#m-menu");
-  await page.click("#m-panel-abrir-guide");
+  await page.click("#m-leer-guide");
   await expect(page.locator("#m-guia li")).toHaveCount(7);
   await page.click("#m-guia-ok");
   await expect(page.locator("#m-panel-hoja[open]")).toHaveCount(0);
+  await expect(page.locator("#m-leer-guide")).toHaveAttribute("data-new", "false");
+  // «Menú» holds none of the four any more
   await page.click("#m-menu");
-  await expect(page.locator("#m-panel-abrir-guide")).not.toContainText(t("ui.m.guide.new"));
+  for (const tab of ["guide", "goals", "crews", "log"])
+    await expect(page.locator(`#m-panel-abrir-${tab}`)).toHaveCount(0);
 });
 
 test("Ritmo in the menu: Normal, Rápido, Directo, kept after a reload (owner 2026-11-14)", async ({
@@ -941,20 +969,23 @@ test("Ritmo in the menu: Normal, Rápido, Directo, kept after a reload (owner 20
 }) => {
   await startMobile(page, "cernicala");
   await page.click("#m-menu");
+  await page.click("#m-grupo-ajustes");
   const pace = page.locator("#m-ritmo");
-  await expect(pace).toHaveAttribute("data-pace", "normal");
-  await expect(pace).toContainText(t("ui.m.pace", { pace: t("ui.m.pace.normal") }));
-  await pace.click();
-  await expect(pace).toHaveAttribute("data-pace", "fast");
-  await pace.click();
-  await expect(pace).toHaveAttribute("data-pace", "direct");
+  await expect(pace).toHaveAttribute("data-value", "normal");
+  for (const p of ["normal", "fast", "direct"])
+    await expect(page.locator(`#m-ritmo-${p}`)).toContainText(t(`ui.m.pace.${p}`));
+  await page.click("#m-ritmo-fast");
+  await expect(pace).toHaveAttribute("data-value", "fast");
+  await page.click("#m-ritmo-direct");
+  await expect(pace).toHaveAttribute("data-value", "direct");
   await page.reload();
   await pastTitle(page);
   await page.click("#m-continuar");
   await page.click("#m-menu");
-  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-pace", "direct");
-  await page.locator("#m-ritmo").click();
-  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-pace", "normal");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-value", "direct");
+  await page.click("#m-ritmo-normal");
+  await expect(page.locator("#m-ritmo")).toHaveAttribute("data-value", "normal");
 });
 
 test("Directo: no transition, the race opens on its result and «Ver otra vez» plays it", async ({
@@ -972,7 +1003,7 @@ test("Directo: no transition, the race opens on its result and «Ver otra vez» 
     }
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-correr");
   await page.click("#m-descansar");
   await toPosition(page);
@@ -983,7 +1014,7 @@ test("Directo: no transition, the race opens on its result and «Ver otra vez» 
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
 });
 
-test("a scene seen in an earlier season is passed by, with a button to watch it (owner 2026-11-14)", async ({
+test("a scene seen in an earlier season is passed by, saying nothing; «Historia» watches it (owner 2026-11-18)", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -997,10 +1028,13 @@ test("a scene seen in an earlier season is passed by, with a button to watch it 
   await pastTitle(page);
   await page.click("#m-elegir-peregrina");
   await page.click("#m-empezar");
-  const toast = page.locator("#m-capitulo-aviso");
-  await expect(toast).toContainText(t("ui.m.story.passed"));
+  await expect(page.locator("#m-entrenar")).toBeVisible();
   await expect(page.locator("#m-capitulo")).toHaveCount(0);
-  await page.click("#m-escena-ver");
+  await expect(page.locator("#m-capitulo-aviso")).toHaveCount(0);
+  // the only way to it: «Historia», which has it
+  await page.click("#m-menu");
+  await page.click("#m-historia-abrir");
+  await page.click('#m-historia [data-scene="peregrina-prologue"] button');
   await expect(page.locator("#m-capitulo")).toHaveAttribute("data-scene", "peregrina-prologue");
 });
 

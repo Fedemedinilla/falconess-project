@@ -1,7 +1,6 @@
 /**
  * Cernícala's whole seasons, played by the bots on the node world (plan §3.4): every invariant over
- * each walk, the target policy always, the active one where it has what the invariant needs.
- * `FLOW_WALKS=all` adds the paces, reduced motion and Exigente.
+ * each walk. `FLOW_WALKS=all` adds the paces, reduced motion and Exigente.
  */
 import { describe } from "vitest";
 import { walkMatrix } from "./testing/bots";
@@ -31,6 +30,8 @@ describe("Cernícala's season walks", () => {
     "reload:race",
     "box",
     "end",
+    "end:race",
+    "end:result",
     ...(ALL ? ["enter"] : []),
   ]);
 });

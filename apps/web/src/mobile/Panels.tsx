@@ -12,11 +12,11 @@ import {
   startSeason,
   vigor,
 } from "@falconess/sim";
-import { type CSSProperties, type ReactNode, useMemo } from "react";
+import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef } from "react";
 import { goalStatuses } from "../screens/model/season";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useModalDialog } from "../ui/useModalDialog";
+import { useHeld, useModalDialog } from "../ui/useModalDialog";
 import { Glyph, type GlyphName } from "./Glyph";
 import s from "./Mobile.module.css";
 import { crewInitials } from "./model";
@@ -107,16 +107,25 @@ function crewName(ctx: SimContext, id: string): string {
   return gameText(ctx.content.getManufacturer(id).crew.textKey);
 }
 
+/**
+ * Registro: every week of the run, newest first. The weeks are replayed once per run's inputs (a
+ * new week replays them again, a re-render or `hideLast` does not); while her race plays, the week
+ * being raced is left out, or its row would tell how the race went (no spoiler).
+ */
 export function LogPanel({
   ctx,
   seed,
   inputs,
+  hideLast = false,
 }: {
   ctx: SimContext;
   seed: string;
   inputs: readonly RunInput[];
+  /** The last week is the one being raced: not shown until its result is. */
+  hideLast?: boolean;
 }) {
-  const weeks = useMemo(() => logWeeks(ctx, seed, inputs), [ctx, seed, inputs]);
+  const all = useMemo(() => logWeeks(ctx, seed, inputs), [ctx, seed, inputs]);
+  const weeks = hideLast ? all.slice(0, -1) : all;
   if (weeks.length === 0) return <p className={p.note}>{ui("ui.m.log.empty")}</p>;
   return (
     <ol className={p.list} id="m-registro">
@@ -202,6 +211,10 @@ export function LogPanel({
 
 // --- Metas ---------------------------------------------------------------------------------------
 
+/**
+ * Metas: her goals, met, missed or to come, as of `state` (the run's view passes the week before the
+ * race while her race plays, so the goal shows as this week's, not with its place: no spoiler).
+ */
 export function GoalsPanel({
   ctx,
   state,
@@ -421,23 +434,42 @@ export function panelTitle(tab: PanelTab): string {
   return ui(`ui.m.panel.${tab}`);
 }
 
-/** The wide screen's panel: the chosen tab's view and the tabs on the side. */
+/**
+ * The wide screen's panel: the chosen tab's view and the tabs on the side. Locked (D4: inert and
+ * dimmed) while the week plays in the column, so nothing in it (Idioma, Nueva temporada, Ritmo,
+ * Chat, Historia) cuts into a beat.
+ */
 export function DeskPanel({
   tab,
   onTab,
   dot,
+  locked,
   children,
 }: {
   tab: PanelTab;
   onTab: (tab: PanelTab) => void;
   dot: PanelTab | undefined;
+  locked: boolean;
   children: ReactNode;
 }) {
+  // the tabs share one scrolling body: a tab opens at its top (L6), not where the last one was
+  const body = useRef<HTMLDivElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of tab only
+  useLayoutEffect(() => {
+    if (body.current) body.current.scrollTop = 0;
+  }, [tab]);
   return (
-    <aside className={p.desk} id="m-panel" aria-label={panelTitle(tab)}>
+    <aside
+      className={cx(p.desk, locked && p.deskLocked)}
+      id="m-panel"
+      aria-label={panelTitle(tab)}
+      inert={locked || undefined}
+    >
       <div className={p.deskMain}>
         <h2 className={p.deskTitle}>{panelTitle(tab)}</h2>
-        <div className={p.deskBody}>{children}</div>
+        <div className={p.deskBody} ref={body}>
+          {children}
+        </div>
       </div>
       <nav className={p.rail} aria-label={ui("ui.m.panel.tabs")}>
         {PANEL_TABS.map((t) => (
@@ -459,12 +491,12 @@ export function DeskPanel({
   );
 }
 
-/** A panel as a sheet, on a phone (from «Menú»). */
+/** A panel as a sheet, on a phone (from «Menú»); it fades out with the panel it showed. */
 export function PanelSheet({
   open,
-  title,
+  title: openTitle,
   onClose,
-  children,
+  children: openChildren,
 }: {
   open: boolean;
   title: string;
@@ -472,6 +504,7 @@ export function PanelSheet({
   children: ReactNode;
 }) {
   const { ref, mounted } = useModalDialog(open, onClose);
+  const { title, children } = useHeld({ title: openTitle, children: openChildren }, open);
   if (!mounted) return null;
   return (
     <dialog
@@ -482,7 +515,7 @@ export function PanelSheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-panel-hoja-titulo">
+        <h2 className={s.dlTitle} id="m-panel-hoja-titulo" tabIndex={-1}>
           {title}
         </h2>
         {children}

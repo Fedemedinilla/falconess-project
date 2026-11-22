@@ -15,11 +15,12 @@ import {
 /**
  * The phone game (#juego) from seeded saves (`e2e/saves`, written and checked by
  * `scripts/e2e-saves.test.ts`): each opens with «Continuar» where a random season gets only by
- * luck. Then today's behaviour on paths no other test reaches, pinned before the flow model
- * replaces the screen code (plan-final 1.2):
+ * luck. Then paths no other test reaches, pinned before the flow model replaced the screen code
+ * (plan-final 1.2) and kept since:
  *
- * - LEGACY pins: what the game does today and the plan changes, each flipped by its own step;
- * - watch flows: a race seen again, which must keep working through the rewiring (4.1).
+ * - fragile spots, as the plan fixed them: each test was a pin of the old behaviour that the step
+ *   it names (F25 in 5.1, F1 in 5.6, F4 in 5.8, the failed goal's End in 5.4) turned around;
+ * - watch flows: a race seen again, which kept working through the rewiring (4.1).
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -50,7 +51,7 @@ for (const name of SAVES)
     await expect(page.locator("#m-inspiracion")).toHaveCount(0);
   });
 
-test.describe("LEGACY pins", () => {
+test.describe("fragile spots, as the plan fixed them", () => {
   test("F25 (flipped in 5.1): «Ver carrera» on the End opens the race with no emblem", async ({
     page,
   }) => {
@@ -62,7 +63,7 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-transicion")).toHaveCount(0);
   });
 
-  test("F1 (flipped in 5.6): a reload on the decided race card goes back to the week's menu", async ({
+  test("F1 (flipped in 5.6): a reload on the decided race card brings the same card back", async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -76,12 +77,13 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-volver")).toHaveCount(0);
     await page.reload();
     await continueRun(page);
-    await expect(page.locator("#m-entrenar")).toBeVisible();
-    expect(await week(page)).toBe(10);
-    await expect(page.locator("#m-precarrera")).toHaveCount(0);
+    await expect(page.locator("#m-precarrera")).toBeVisible();
+    await expect(page.locator("#m-precarrera-accion")).toBeVisible();
+    await expect(page.locator("#m-volver")).toHaveCount(0);
+    await expect(page.locator("#m-entrenar")).toHaveCount(0);
   });
 
-  test("F4 (flipped in 5.8): a training on an injured week shows a failed result", async ({
+  test("F4 (flipped in 5.8): a training on an injured week shows no result, then the recovery", async ({
     page,
   }) => {
     await seedRun(page, "injured");
@@ -90,8 +92,18 @@ test.describe("LEGACY pins", () => {
     await expect(page.locator("#m-lesion")).toBeVisible();
     await page.click("#m-entrenar");
     await expect(page.locator("#m-entrenar-lesion")).toBeVisible();
+    await page.evaluate(() => {
+      Reflect.set(window, "__result", false);
+      new MutationObserver(() => {
+        if (document.getElementById("m-resultado")) Reflect.set(window, "__result", true);
+      }).observe(document.body, { childList: true, subtree: true });
+    });
     await page.dblclick("#m-entrenar-agility");
-    await expect(page.locator("#m-resultado")).toHaveAttribute("data-outcome", "fail");
+    // she rested by rule (O2): the week's effects say so, no training's result came first
+    await expect(page.locator('#m-efectos [data-fx="recovery"]')).toBeVisible();
+    expect(await page.evaluate(() => Reflect.get(window, "__result"))).toBe(false);
+    await settle(page);
+    expect(await week(page)).toBe(9);
   });
 
   test("a failed goal (5.4 adds the race's effects over the End): the ending scene, the result, the End", async ({

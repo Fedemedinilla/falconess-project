@@ -34,6 +34,9 @@ const PATHS = {
   note: "M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM20 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z",
   chat: "M4 5h16v11H9l-5 4z",
   globe: "M12 3a9 9 0 1 0 .01 0M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18",
+  // the two rows of the grouped menu (owner 2026-11-18): «Ajustes» and «Partida»
+  sliders: "M4 8h9M17 8h3M4 16h3M11 16h9M15 8a2 2 0 1 0 .01 0M9 16a2 2 0 1 0 .01 0",
+  box: "M3 6h18v4H3zM5 10v9h14v-9M10 14h4",
   // the stats of the track card
   flame: "M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 3-6 1 2 2 3 3 3 0-3-1-5 0-8z",
   eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9.5a2.5 2.5 0 1 0 .01 0",

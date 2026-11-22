@@ -1,6 +1,5 @@
 import type { BlackBox } from "@falconess/schema";
-import { type RefObject, useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { addBox } from "../game/boxes";
+import { type RefObject, useLayoutEffect, useMemo, useRef } from "react";
 import type { ActiveRun } from "../game/controller";
 import { useGame } from "../game/useGame";
 import { seasonSummary } from "../screens/model/end";
@@ -8,6 +7,7 @@ import { goalStatuses } from "../screens/model/season";
 import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
+import { isRepeatTap } from "../ui/tap";
 import { runnerArt } from "./art";
 import { Glyph } from "./Glyph";
 import s from "./Mobile.module.css";
@@ -16,7 +16,8 @@ import { StatStrip } from "./Parts";
 
 /**
  * The end of the season on the phone: the grade and score of the sim, each goal race with its
- * place, and her final stats. The test view's #fin keeps the black box and the copy of the run.
+ * place, the black box she leaves (kept already, at the tap that ended the season: RunView's
+ * `useSeasonBox`) and her final stats. The test view's #fin shows the box and the copy of the run.
  * «Exportar» opens the run's own sheet (RunView's: one on the page). A race seen again from here
  * comes back to the End where the player left it (`scroll`, kept by RunView across the race).
  */
@@ -43,11 +44,8 @@ export function EndScreen({
     () => seasonSummary(ctx, state, run.seed, run.inputs),
     [ctx, state, run.seed, run.inputs],
   );
-  // ADR-0013: the season's black box joins this browser's boxes (the select screen offers them)
+  // ADR-0013: the season's black box, kept by RunView at the tap that ended the season
   const box = summary.blackBox;
-  useEffect(() => {
-    if (state.rulesetVersion === "v3") addBox(box);
-  }, [box, state.rulesetVersion]);
   const art = runnerArt(state.falconessId);
   const name = gameText(ctx.content.getFalconess(state.falconessId).textKey);
   const goals = goalStatuses(ctx, state);
@@ -57,7 +55,8 @@ export function EndScreen({
     if (body.current) body.current.scrollTop = scroll.current;
   }, [scroll]);
   return (
-    <div className={s.screen}>
+    // the season's end comes in slower than a week's screens (D1)
+    <div className={cx(s.screen, s.screenMajor)}>
       <div className={s.body} ref={body}>
         <div className={cx(s.panel, s.endc)} id="m-fin">
           {art && <img className={s.endPic} src={art.chibi} alt="" draggable={false} />}
@@ -92,7 +91,9 @@ export function EndScreen({
                   type="button"
                   className={s.linkBtn}
                   id={`m-fin-carrera-${g.goal.turn}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    // the second click of a double tap on the week's effects over the End (F50)
+                    if (isRepeatTap(e)) return;
                     scroll.current = body.current?.scrollTop ?? 0;
                     onRace(g.goal.turn);
                   }}
@@ -120,17 +121,25 @@ export function EndScreen({
           <Glyph name="down" size={20} />
           {ui("ui.m.export.season")}
         </button>
-        <button type="button" className={s.linkBtn} id="m-fin-pruebas" onClick={onTests}>
+        <button
+          type="button"
+          className={s.linkBtn}
+          id="m-fin-pruebas"
+          onClick={(e) => {
+            if (!isRepeatTap(e)) onTests();
+          }}
+        >
           {ui("ui.m.end.detail")}
         </button>
       </div>
-      <div className={s.foot}>
+      {/* a notice (a scene at the season's end) sits just over the foot */}
+      <div className={s.foot} data-toast-anchor>
         <button
           type="button"
           className={cx(s.btn, s.btnMain)}
           id="m-fin-nueva"
           onClick={(e) => {
-            if (e.detail > 1) return;
+            if (isRepeatTap(e)) return;
             onNew();
           }}
         >

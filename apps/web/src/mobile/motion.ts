@@ -13,6 +13,8 @@ export const MOTION = {
   screenMajor: 320,
   layerIn: 240,
   layerOut: 240,
+  /** the inheritance card pops in after its intro (L1), and «Continuar» takes taps from then */
+  cardReveal: 1600,
   emblemIn: 160,
   /** the emblem's full cover between its fade in and its out phase */
   emblemBody: 1080,
@@ -24,9 +26,8 @@ export const MOTION = {
   resultDelay: 400,
   toastIn: 300,
   toastOut: 400,
-  /** a notice's life on screen; with «Ver» or for an error, the long one */
-  toastShort: 4000,
-  toastLong: 6000,
+  /** a notice's life on screen, from its first display */
+  noticeMs: 6000,
   sheetIn: 220,
   sheetOut: 180,
   deskDim: 200,
@@ -36,17 +37,20 @@ export const MOTION = {
   finishHoldMin: 400,
 } as const;
 
-/** The emblem's beat: from its first frame to its out phase (LEGACY 1250 until 6.4). */
+/** The emblem's beat: from its first frame to its out phase (its fade in, then its body). */
 export const EMBLEM_MS = MOTION.emblemIn + MOTION.emblemBody;
 
-/** A story scene's tempo: typing, words, Auto, the chrome, the chapter card. */
+/** A story scene's tempo: typing, words, Auto, the chapter card, a hurried way in. */
 export const STORY = {
   typeMs: 26,
   wordMs: 110,
   autoMs: 4500,
-  chromeAt: 300,
+  /** the chapter's card shows whole at least this long (H4); under reduced motion `rmCardMs` */
   cardMinMs: 700,
   rmCardMs: 900,
+  /** a tap during the way in: the first line this long after it (M10, O7); in a digest the short one */
+  hurryMs: 500,
+  hurryDigestMs: 300,
 } as const;
 
 /** How long each full-screen layer takes to leave (plan §1.9): one entry per kind of layer. */

@@ -2,7 +2,7 @@ import type { SeasonState, TurnLogEntry } from "@falconess/schema";
 import { CURRENT_RULESET, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { simContext } from "../content/load";
-import { inspirationCard, inspirationScene } from "./inspirationScene";
+import { inspirationCard } from "./inspirationScene";
 
 const ctx = simContext(CURRENT_RULESET.version);
 const base = startSeason(ctx, "insp", {
@@ -24,36 +24,6 @@ const rec = (inspired: boolean, parent = 0) => ({
   inspired,
   stat: "agility" as const,
   gain: inspired ? 40 : 0,
-});
-
-describe("the inheritance card's scene (ADR-0013)", () => {
-  it("shows the start's boxes on a run of only its start", () => {
-    const s = withLog([entry(1, { inspirations: [rec(true)] })]);
-    expect(inspirationScene("x", s, 1, undefined, true)?.kind).toBe("start");
-    expect(inspirationScene("x", withLog([entry(1)]), 1, undefined, true)).toBeUndefined();
-  });
-  it("shows the start's card on every call while the run is only its start, read or not", () => {
-    const s = withLog([entry(1, { inspirations: [rec(true)] })]);
-    const step = { before: base, after: s, input: { kind: "rest" as const } };
-    // F19: changes in 5.3 (a card once shown is kept as shown, across reloads)
-    for (const seen of [false, true, true])
-      expect(inspirationScene("x", s, 1, step, seen)).toMatchObject({
-        kind: "start",
-        key: "x:start",
-      });
-  });
-  it("shows a new week's inspirations once, and not when none inspired her", () => {
-    const before = withLog([entry(23)]);
-    const after = withLog([entry(23), entry(24, { inspirations: [rec(true), rec(false, 1)] })]);
-    const step = { before, after, input: { kind: "rest" as const } };
-    const scene = inspirationScene("x", after, 30, step, false);
-    expect(scene).toMatchObject({ kind: "inspiration", turn: 24, key: "x:24" });
-    expect(scene?.records).toHaveLength(2);
-    expect(inspirationScene("x", after, 30, step, true)).toBeUndefined();
-    const quiet = withLog([entry(23), entry(24, { inspirations: [rec(false)] })]);
-    const quietStep = { before, after: quiet, input: { kind: "rest" as const } };
-    expect(inspirationScene("x", quiet, 30, quietStep, false)).toBeUndefined();
-  });
 });
 
 describe("the inheritance card in the flow: shown until it was shown (F19, plan §1.5)", () => {

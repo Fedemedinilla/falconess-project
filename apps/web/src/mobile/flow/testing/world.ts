@@ -5,8 +5,7 @@
  * Every command goes through a recorder that writes what happened to `trace`: each flow after a
  * command (a "render"), each beat a command ended, each act, decision, acknowledgement, reload and
  * black box. `reload()` is the browser's: a new controller continues the saved run, new stores read
- * the same storage (the legacy flags keep the week and the cards in memory, as today) and the UI
- * state starts again.
+ * the same storage and the UI state starts again.
  */
 import { loadSeasonContent } from "@falconess/content";
 import type { BlackBox, Difficulty, RunInput, StoryScene } from "@falconess/schema";
@@ -23,7 +22,6 @@ import { WeekStore } from "../decidedWeek";
 import { deriveFlow } from "../derive";
 import { factsOf } from "../facts";
 import { InspirationStore } from "../inspirations";
-import type { FlowPolicy } from "../policy";
 import type { Beat, DecidedWeek, Flow, FlowFacts, InstantBeat, WeekRecord } from "../types";
 import { INITIAL_UI, reduceUi, type UiEvent, type UiState } from "../ui";
 import { testScenes } from "./content";
@@ -103,7 +101,6 @@ export type TraceEvent =
   | { readonly type: "probe"; readonly at: At; readonly name: string; readonly changed: boolean };
 
 export type WorldOptions = {
-  readonly policy: FlowPolicy;
   readonly pace?: Pace;
   readonly reduced?: boolean;
   readonly scenes?: readonly StoryScene[];
@@ -120,7 +117,6 @@ export type StartOptions = {
 export type Now = { readonly flow: Flow; readonly facts: FlowFacts; readonly ui: UiState };
 
 export type World = {
-  readonly policy: FlowPolicy;
   readonly pace: Pace;
   readonly reduced: boolean;
   readonly trace: TraceEvent[];
@@ -147,21 +143,16 @@ export type World = {
   probe(name: string, fn: (cmd: Commands) => void): void;
 };
 
-/** Whether a reload keeps the week's record and the cards shown (legacy: memory per mount, F1, F19). */
-const keepsWeek = (p: FlowPolicy) => p.resume;
-const keepsCards = (p: FlowPolicy) => p.order === "d2";
-
-export function createWorld(o: WorldOptions): World {
-  const policy = o.policy;
+export function createWorld(o: WorldOptions = {}): World {
   const pace = o.pace ?? "normal";
   const reduced = o.reduced ?? false;
   const scenes = o.scenes ?? testScenes();
   const kv = memoryStore();
   const trace: TraceEvent[] = [];
   let game = new GameController(loadSeasonContent, kv);
-  let weeks = new WeekStore(keepsWeek(policy) ? kv : undefined);
+  let weeks = new WeekStore(kv);
   let story = createStoryStore(kv);
-  let cards = new InspirationStore(keepsCards(policy) ? kv : undefined);
+  let cards = new InspirationStore(kv);
   let ui: UiState = INITIAL_UI;
   let last: Flow | undefined;
   let season = 0;
@@ -187,7 +178,7 @@ export function createWorld(o: WorldOptions): World {
   };
   const now = (): Now => {
     const facts = factsNow();
-    const flow = deriveFlow(game.context(), facts, ui, policy, last);
+    const flow = deriveFlow(game.context(), facts, ui, last);
     last = flow;
     return { flow, facts, ui };
   };
@@ -240,13 +231,12 @@ export function createWorld(o: WorldOptions): World {
         },
         setPosition: (...a) => weeks.setPosition(...a),
         enterRace: (fp) => weeks.enterRace(fp),
+        markRaced: (fp) => weeks.markRaced(fp),
         markRaceSeen: (fp) => weeks.markRaceSeen(fp),
-        clear: () => weeks.clear(),
       },
       story: { markSeen: (seed, id) => story.markSeen(seed, id) },
       cards: { markShown: (seed, key) => cards.markShown(seed, key) },
       sound: { cue: () => {}, nav: () => {} },
-      policy,
       dispatch,
       now,
     });
@@ -274,14 +264,14 @@ export function createWorld(o: WorldOptions): World {
       boxed.add(facts.run.fp);
       trace.push({ type: "box", at: at(), fp: facts.run.fp });
     }
-    const again = deriveFlow(ctx, factsNow(), ui, policy, flow);
+    const again = deriveFlow(ctx, factsNow(), ui, flow);
     trace.push({
       type: "frame",
       at: at(),
       flow,
       facts,
       ui,
-      beats: beatsOf(ctx, facts, ui, policy),
+      beats: beatsOf(ctx, facts, ui),
       stable: again.top === flow.top && again.screen === flow.screen && again.layer === flow.layer,
     });
   };
@@ -343,15 +333,12 @@ export function createWorld(o: WorldOptions): World {
     resolve: (b: InstantBeat) => using("resolve", () => commands.resolve(b)),
   };
 
-  /**
-   * A new mount of the run's view: its stores read the storage again (legacy keeps the week and the
-   * cards in memory, so they start empty), the UI state anew.
-   */
+  /** A new mount of the run's view: its stores read the storage again, the UI state anew. */
   const remount = (): void => {
     mount += 1;
-    weeks = new WeekStore(keepsWeek(policy) ? kv : undefined);
+    weeks = new WeekStore(kv);
     story = createStoryStore(kv);
-    cards = new InspirationStore(keepsCards(policy) ? kv : undefined);
+    cards = new InspirationStore(kv);
     ui = INITIAL_UI;
     last = undefined;
     boxed = new Set();
@@ -359,7 +346,6 @@ export function createWorld(o: WorldOptions): World {
   };
 
   const world: World = {
-    policy,
     pace,
     reduced,
     trace,
@@ -367,7 +353,7 @@ export function createWorld(o: WorldOptions): World {
     ui: () => ui,
     ctx: () => game.context(),
     now,
-    beats: () => beatsOf(game.context(), factsNow(), ui, policy),
+    beats: () => beatsOf(game.context(), factsNow(), ui),
     signature,
     start(falconessId, seed, so = {}) {
       game.newSeason();
@@ -429,7 +415,7 @@ export function createWorld(o: WorldOptions): World {
         seenInRun: story.seenInRun(seed),
         cardsShown: cards.shown(seed),
         flow,
-        beats: beatsOf(game.context(), facts, ui, policy),
+        beats: beatsOf(game.context(), facts, ui),
       };
       game = new GameController(loadSeasonContent, kv);
       if (!game.continueSaved()) throw new Error("the saved run did not continue");

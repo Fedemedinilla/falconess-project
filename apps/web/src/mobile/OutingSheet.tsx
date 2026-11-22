@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { outingPreview } from "../screens/model/actions";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useModalDialog } from "../ui/useModalDialog";
+import { useHeld, useModalDialog } from "../ui/useModalDialog";
 import s from "./Mobile.module.css";
 import { crewInitials } from "./model";
 
@@ -14,7 +14,7 @@ import { crewInitials } from "./model";
  */
 export function OutingSheet({
   ctx,
-  state,
+  state: openState,
   open,
   onPick,
   onClose,
@@ -26,6 +26,8 @@ export function OutingSheet({
   onClose: () => void;
 }) {
   const { ref, mounted } = useModalDialog(open, onClose);
+  // a pick plays the week under it: it fades out with the bonds it showed
+  const state = useHeld(openState, open);
   if (!mounted) return null;
   const S = ctx.ruleset.season;
   const bondMax = Math.floor(100 / S.bondLevelStep);
@@ -39,7 +41,7 @@ export function OutingSheet({
       onClose={onClose}
     >
       <div className={s.dl}>
-        <h2 className={s.dlTitle} id="m-salida-titulo">
+        <h2 className={s.dlTitle} id="m-salida-titulo" tabIndex={-1}>
           {ui("ui.m.outing.title")}
         </h2>
         <p className={s.exportWhat}>{ui("ui.m.outing.hint", { n: S.bondPerOuting })}</p>

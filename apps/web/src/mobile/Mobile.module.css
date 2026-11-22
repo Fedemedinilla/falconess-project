@@ -52,6 +52,9 @@
 .appWide {
   max-width: 720px;
 }
+/* the tablet's frame (rule 18, H6): its transform holds the game's fixed layers (the effects, the
+   scenes, the emblem, the notices, the title) inside it, as the wide screen's column does; what
+   sizes itself by the window's width reads the frame's (--framew) instead, as on a phone */
 @media (min-width: 700px) and (min-height: 640px) {
   .app {
     top: 20px;
@@ -62,10 +65,27 @@
     margin: auto;
     border-radius: 28px;
     box-shadow: 0 10px 40px rgb(20 32 43 / 0.18);
+    transform: translateZ(0);
+    --framew: 390px;
   }
   .appWide {
     width: min(720px, calc(100% - 40px));
     max-width: 720px;
+    --framew: min(720px, calc(100vw - 40px));
+  }
+}
+/* L5, F26: the tablet's frame widens for the race and narrows after it, centered, over 280 ms (the
+   wide screen's column keeps its width: it glides instead, .appDeskGlide) */
+@media (min-width: 700px) and (min-height: 640px) {
+  .app:not(.appDesk) {
+    transition:
+      width var(--m-dur-layout) var(--m-ease-std),
+      max-width var(--m-dur-layout) var(--m-ease-std);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app:not(.appDesk) {
+    transition: none;
   }
 }
 /* the reset stays out of the flight view and the shared dialogs, which bring their own buttons */
@@ -119,6 +139,17 @@
   font-size: 48px;
   line-height: 50px;
   margin-top: 4px;
+}
+/* O3: the calendar turns its page when the week it shows changes (as the week's effects lift) */
+.calFlip {
+  transform-origin: 50% 0;
+  animation: calFlip var(--m-dur-layer-out) var(--m-ease-out) backwards;
+}
+@keyframes calFlip {
+  from {
+    opacity: 0;
+    transform: perspective(240px) rotateX(-80deg);
+  }
 }
 .calS {
   font-size: 13px;
@@ -302,6 +333,19 @@
   font-weight: 700;
   font-size: 16px;
   white-space: nowrap;
+  /* O3: a new mood blends in (its face fades in, .moodIn) */
+  transition:
+    background-color var(--m-dur-screen) var(--m-ease-std),
+    color var(--m-dur-screen) var(--m-ease-std),
+    box-shadow var(--m-dur-screen) var(--m-ease-std);
+}
+.moodIn {
+  animation: moodIn var(--m-dur-screen) var(--m-ease-std) backwards;
+}
+@keyframes moodIn {
+  from {
+    opacity: 0;
+  }
 }
 .mood-hi {
   background: var(--yel);
@@ -317,14 +361,52 @@
   color: var(--warnt);
   box-shadow: inset 0 0 0 2px var(--warn);
 }
+/* L5: the HUD comes back after the race mode with a fade, as the menu under it (the HUD a run opens
+   with is the anchor: it does not fade) */
+.hudIn {
+  animation: screenIn var(--m-dur-screen) var(--m-ease-out) backwards;
+}
+/* reduced motion: the HUD's week and mood change at once, and it comes back at once */
+@media (prefers-reduced-motion: reduce) {
+  .calFlip,
+  .moodIn,
+  .hudIn {
+    animation: none;
+  }
+  .mood {
+    transition: none;
+  }
+}
 
 /* ---- screens ---- */
+/*
+ * D1 (M1): a screen fades in as it mounts, by opacity only: no transform on a screen, ever (the
+ * training's art is measured in place, and a tap lands at once). Fill backwards: its stacking
+ * context lasts only the fade. A screen that changes inside (a training's result, the race's
+ * stages, the menu under its effects) is the same screen and does not fade again. The season's
+ * first menu and the End come in slower.
+ */
 .screen {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  animation: screenIn var(--m-dur-screen) var(--m-ease-out) backwards;
+}
+.screenMajor {
+  animation-duration: var(--m-dur-screen-major);
+}
+@keyframes screenIn {
+  from {
+    opacity: 0;
+  }
+}
+/* reduced motion: a screen is there at once */
+@media (prefers-reduced-motion: reduce) {
+  .screen {
+    animation: none;
+  }
 }
 .body {
   flex: 1;
@@ -649,53 +731,53 @@
   flex: 1;
   min-height: 0;
 }
-.app .raceBar {
+/* The reading rail (owner 2026-11-18): Guía, Metas, Cuadrillas and Registro down the right edge,
+   right under «Menú». An item of `.lay`, in the flow, so it never lands on a control; only on a
+   phone (the wide screen's panel has its own rail). Nothing here moves, so it needs no
+   reduced-motion twin: the press feedback is a transform with no transition. */
+.rail {
   flex: none;
-  min-height: 52px;
-  border-radius: 16px;
-  background: var(--tx);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px 6px 14px;
-  text-align: left;
-  box-shadow: 0 4px 0 rgb(20 32 43 / 0.2);
-}
-.raceBarT {
-  flex: 1;
-  min-width: 0;
+  align-self: flex-end;
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
-.raceBarT b {
-  font-family: var(--cn);
-  font-size: 19px;
-  line-height: 21px;
+.app .railBtn {
+  position: relative;
+  min-width: 68px;
+  min-height: 46px;
+  padding: 3px 8px 4px;
+  border-radius: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow:
+    0 2px 7px rgb(20 32 43 / 0.14),
+    inset 0 0 0 1px rgb(255 255 255 / 0.7);
+  color: var(--tx);
 }
-.raceBarT span {
-  font-size: 12px;
-  line-height: 15px;
-  color: #d8e0e8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.app .railBtn:not(:disabled):active {
+  transform: translateY(1px);
 }
-.raceBarGo {
-  flex: none;
-  min-width: 56px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--yel);
-  color: var(--ink);
+.railLb {
   font-family: var(--cn);
   font-weight: 700;
-  font-size: 18px;
-  line-height: 40px;
-  text-align: center;
-  padding: 0 10px;
+  font-size: 13px;
+  line-height: 13px;
+  letter-spacing: 0.01em;
 }
-
+.railDot {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--acc);
+}
 /* stats strip */
 .strip {
   flex: none;
@@ -1275,6 +1357,65 @@
   font-weight: 700;
   font-size: 19px;
 }
+/* the race's body: its replay, and over it at the finish the banner (the head and «Saltar» stay) */
+.raceBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+/* «Ver otra vez» (§2.6): the replay comes back into the same screen with a screen's fade, opacity
+   only (a replay mounted with its screen comes in with the screen) */
+.replayIn {
+  animation: screenIn var(--m-dur-screen) var(--m-ease-out) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .replayIn {
+    animation: none;
+  }
+}
+/*
+ * The finish (D7): the replay stays on its last frame under a light dim, her place stamps in the
+ * middle; a tap anywhere on it goes on, as «Saltar» does. Opacity and the stamp only: the button's
+ * box never moves (it takes the tap from its first frame).
+ */
+.app .finish {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 14px;
+  padding: 0;
+  cursor: pointer;
+  background: radial-gradient(circle at 50% 45%, rgb(11 11 15 / 0.12), rgb(11 11 15 / 0.42));
+  animation: resultFade var(--m-dur-result-in) var(--m-ease-out) backwards;
+}
+.finishPlace {
+  min-width: 132px;
+  height: 132px;
+  padding: 0 12px;
+  border-radius: 66px;
+  background: var(--yel);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 5px rgb(255 255 255 / 0.9),
+    0 10px 28px rgb(11 11 15 / 0.35);
+  font-family: var(--cn);
+  font-weight: 700;
+  font-size: 72px;
+  line-height: 132px;
+  text-align: center;
+  animation: resultStamp 420ms var(--m-ease-pop) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .finish,
+  .finishPlace {
+    animation: none;
+  }
+}
 .flightWrap {
   min-width: 0;
   font-size: 16px;
@@ -1329,6 +1470,61 @@
 .resultT span {
   font-size: 15px;
   color: var(--tx2);
+}
+/*
+ * The race's result comes in (H1, plan §2.6): the panel rises 12 px and fades in, its place
+ * stamps from +80 ms, the advice fades in at +160 ms and the foot (the notices' anchor) at +200 ms.
+ * Only the panel moves: the advice and the foot hold controls, which take taps (and are measured
+ * for the notices) where they land from the first frame. After a scene's exit (`data-after`) all
+ * of it starts `--m-dur-result-delay` later, when the scene's black is down to about 0.2 (D7).
+ * Fill `backwards`: nothing holds a style once it is in. The stamp's 420 ms and the offsets are
+ * §2.6's (no token of their own).
+ */
+.resultIn {
+  display: contents;
+  --result-at: 0ms;
+}
+.resultIn[data-after="scene"] {
+  --result-at: var(--m-dur-result-delay);
+}
+.resultIn .result {
+  animation: resultRise var(--m-dur-result-in) var(--m-ease-out) var(--result-at) backwards;
+}
+.resultIn .resultPlace {
+  animation: resultStamp 420ms var(--m-ease-pop) calc(var(--result-at) + 80ms) backwards;
+}
+.resultIn .resultAdvice {
+  animation: resultFade var(--m-dur-result-in) var(--m-ease-out) calc(var(--result-at) + 160ms)
+    backwards;
+}
+.resultIn .foot {
+  animation: resultFade var(--m-dur-result-in) var(--m-ease-out) calc(var(--result-at) + 200ms)
+    backwards;
+}
+@keyframes resultRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes resultStamp {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+@keyframes resultFade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resultIn .result,
+  .resultIn .resultPlace,
+  .resultIn .resultAdvice,
+  .resultIn .foot {
+    animation: none;
+  }
 }
 
 /* ---- workshop ---- */
@@ -1563,6 +1759,50 @@
 }
 .sheet::backdrop {
   background: var(--scrim);
+}
+/* M9: it comes in rising 16 px with its scrim; on its close request it fades out where it stands
+   (`data-closing`, useModalDialog: modal and inert until a timer closes it) */
+.sheet[open] {
+  animation: sheetIn var(--m-dur-sheet-in) var(--m-ease-out) both;
+}
+.sheet[open]::backdrop {
+  animation: scrimIn var(--m-dur-sheet-in) var(--m-ease-out) both;
+}
+.sheet[data-closing] {
+  animation: sheetOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+  pointer-events: none;
+}
+.sheet[data-closing]::backdrop {
+  animation: scrimOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+}
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes sheetOut {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes scrimIn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes scrimOut {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open],
+  .sheet[open]::backdrop,
+  .sheet[data-closing],
+  .sheet[data-closing]::backdrop {
+    animation: none;
+  }
 }
 .dl {
   padding: 20px 18px 18px;
@@ -1825,15 +2065,17 @@
   border-top: 1px solid var(--line);
 }
 
+/* reduced motion (plan §2.4): the HUD's and the menu's loops off, the bar and the gains at once */
 @media (prefers-reduced-motion: reduce) {
-  .app .vcost,
-  .app .vfill,
-  .app .gn,
-  .app .boostChip,
-  .app .hero img,
+  .vfill {
+    transition: none;
+  }
+  .vcost,
+  .hero img,
+  .gn,
+  .boostChip,
   .app .sel::before {
     animation: none;
-    transition: none;
   }
 }
 
@@ -2114,14 +2356,13 @@
   }
 }
 
-/* a training's result (owner 2026-11-11): the stamp, the «+N» with rising chevrons */
+/* a training's result (owner 2026-11-11): the stamp, the «+N» with rising chevrons. The rounds and
+   the foot it replaces end hidden; their fade and sink are TrainScreen's own animation (L2: one
+   fade, none under reduced motion or under the emblem). No transform here: the result measures
+   where the foot stands to drop the stats onto it */
 .leaving {
   opacity: 0;
-  transform: translateY(18px);
   pointer-events: none;
-  transition:
-    opacity 0.22s ease-in,
-    transform 0.28s cubic-bezier(0.4, 0, 1, 1);
 }
 .stamp {
   position: absolute;
@@ -2321,10 +2562,18 @@
   z-index: 3;
   background: transparent;
 }
+/* reduced motion: the stamp and the «+N» whole at once where they land (no way in, no chevrons) */
 @media (prefers-reduced-motion: reduce) {
-  .stamp,
+  .stamp {
+    animation: none;
+    transform: rotate(-3deg);
+  }
+  .stampFail {
+    animation: none;
+    transform: none;
+  }
   .pop {
-    animation-duration: 0.01s;
+    animation: none;
   }
   .popArrows {
     display: none;
@@ -2549,6 +2798,16 @@
     transform: translateX(80px) scale(0.85);
   }
 }
+/* reduced motion: «¡SINTONÍA!» and the crews' cards whole at once, where they land */
+@media (prefers-reduced-motion: reduce) {
+  .syncStamp {
+    animation: none;
+    transform: rotate(-3deg);
+  }
+  .crewInCard {
+    animation: none;
+  }
+}
 
 /* ---- the wide screen (owner 2026-11-13): the game in a taller, wider column, the panel beside it.
    The column has a transform, so the game's fixed layers (effects, scenes, the transition, the
@@ -2588,10 +2847,23 @@
     0 0 0 1px rgb(20 32 43 / 0.1),
     0 18px 40px rgb(20 32 43 / 0.18);
   transform: translateZ(0);
+  /* the wide screen keeps the window's measures (no frame) */
+  --framew: initial;
 }
 .app.appDeskSolo,
 .app.appDeskSolo.appWide {
   left: calc(50% - var(--colw) / 2);
+}
+/* L8 (A.6): as the End comes, the column glides from beside the panel to the middle; its transform
+   stays, so the game's fixed layers ride inside it. Only then: on a resize the column and the panel
+   move together, at once */
+.app.appDeskGlide {
+  transition: left var(--m-dur-layout) var(--m-ease-std);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app.appDeskGlide {
+    transition: none;
+  }
 }
 /* the panel is the menu on a wide screen */
 .appDesk :global(#m-menu) {
@@ -2680,7 +2952,8 @@
   pointer-events: auto;
 }
 @media (prefers-reduced-motion: reduce) {
-  .drawerCard {
+  .drawerCard,
+  .drawerCardOn {
     transition: none;
   }
 }
@@ -2845,4 +3118,14 @@
   .acts {
     gap: 10px;
   }
+}
+
+/* ---- a hidden tab (6.11, critic b: two clocks) ----
+   The column's animations stand where they are while the flow's timers wait, and go on with them.
+   `[data-app]` ranks it over every `animation` shorthand of the phone's modules (they would set it
+   running again; motion.test checks it); last in the file, after every other `*`. */
+.app[data-app][data-hidden] *,
+.app[data-app][data-hidden] *::before,
+.app[data-app][data-hidden] *::after {
+  animation-play-state: paused;
 }

@@ -1,7 +1,14 @@
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { settle, startMobile, shotTest as test, toPosition } from "./mobile-helpers";
+import {
+  openPlan,
+  raceWeekNow,
+  settle,
+  startMobile,
+  shotTest as test,
+  toPosition,
+} from "./mobile-helpers";
 
 /**
  * Screenshots of the first-person view turned by a drag (`E2E_SHOTS=1 playwright test --project
@@ -23,11 +30,11 @@ test.beforeAll(() => {
 /** Peregrina's first race week, run in first person from its start, playing. */
 async function toRace(page: Page): Promise<void> {
   await startMobile(page, "peregrina");
-  while ((await page.locator("#m-carrera").count()) === 0) {
+  while (!(await raceWeekNow(page))) {
     await page.click("#m-descansar");
     await settle(page);
   }
-  await page.click("#m-carrera");
+  await openPlan(page);
   await page.click("#m-volver");
   await page.click("#m-descansar");
   await toPosition(page);

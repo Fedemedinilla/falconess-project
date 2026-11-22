@@ -9,10 +9,9 @@ import type { SimContext } from "@falconess/sim";
 import type { Step } from "../../game/controller";
 import { type InspirationScene, inspirationCard } from "../inspirationScene";
 import { type WeekFx, type WeekFxPart, weekFx } from "../weekFx";
-import type { FlowPolicy } from "./policy";
 import { dueScenes, menuOrder } from "./scenes";
 import { addedRace, fxPart } from "./steps";
-import type { Beat, FlowFacts, InstantBeat, SceneMode } from "./types";
+import type { Beat, FlowFacts, InstantBeat, SceneMode, WeekRecord } from "./types";
 import type { UiState } from "./ui";
 import { raceWings, trainBeat } from "./week";
 
@@ -38,6 +37,46 @@ export function isInstant(beat: Beat): beat is InstantBeat {
   return beat.kind === "ack" || beat.kind === "enter" || beat.kind === "pass";
 }
 
+/**
+ * Whether a new «Ritmo» or reduced motion applies with this beat in front (the run's view latches
+ * them, 5.5). It applies at once wherever it cannot change what plays: idle, a training's result
+ * (on a race week the phone's setting turned on there already skips the emblem), the week's
+ * effects, an inheritance card, the event and the decided card (where «Correr» reads it, as the
+ * old game did). It waits over what it shaped and is still playing: the emblem (reduced motion
+ * would cut it), a scene (its digest), the race's replay, finish and result (Directo drops them,
+ * and leaving Directo at a result would put its replay back), and an instant beat.
+ */
+export function followsMotion(beat: Beat): boolean {
+  switch (beat.kind) {
+    case "idle":
+    case "train-result":
+    case "fx":
+    case "inspiration":
+    case "event":
+    case "position":
+      return true;
+    case "emblem":
+    case "scene":
+    case "replay":
+    case "finish":
+    case "race-result":
+    case "ack":
+    case "enter":
+    case "pass":
+      return false;
+  }
+}
+
+/**
+ * Whether the race of the last step plays (again): until its result was seen (`raceSeen`). Once the
+ * season ended, only while this browser's record says «Correr» ran it (`raced`): an End saved
+ * before the season's last week was read (an older build never read it, F3) keeps no such record,
+ * and never replays its last race (lead decision, 5.6); its effects still come, once.
+ */
+function racing(record: WeekRecord | undefined, ended: boolean): boolean {
+  return ended ? record?.phase === "raced" : record?.phase !== "raceSeen";
+}
+
 function cardBeat(card: InspirationScene): Beat {
   return { kind: "inspiration", key: `insp:${card.key}`, card };
 }
@@ -45,15 +84,11 @@ function cardBeat(card: InspirationScene): Beat {
 /**
  * Every beat the game waits for now, in the order they play (§1.4), the idle one last (on a
  * decided race week, its position card). A beat this mount finished is left out, and a key shows
- * once (a scene due both after the race and at the season's end plays once). The legacy policy
- * gives today's order, flag by flag (§1.12).
+ * once (a scene due both after the race and at the season's end plays once). What a reload finds
+ * unfinished plays again (D5, O1, §1.8): the decided week from its stage, the race «Correr» ran
+ * until its result was seen, a training's result while its week is unread.
  */
-export function beatsOf(
-  ctx: SimContext,
-  f: FlowFacts,
-  ui: UiState,
-  p: FlowPolicy,
-): readonly Beat[] {
+export function beatsOf(ctx: SimContext, f: FlowFacts, ui: UiState): readonly Beat[] {
   const { run, fp, step, stepSeen } = f.run;
   const out: Beat[] = [];
   const keys = new Set<string>();
@@ -68,14 +103,14 @@ export function beatsOf(
       ? { kind: "pass", key, scene: sc }
       : { kind: "scene", key, scene: sc, where };
   };
-  const due = (where: SceneMode) => dueScenes(ctx, f.scenes, run.state, where, f.seenInRun, p);
+  const due = (where: SceneMode) => dueScenes(ctx, f.scenes, run.state, where, f.seenInRun);
 
   // C. A decided race week (D5): the action's part, then the race mode up to «Correr».
   const w = f.record?.phase === "decided" ? f.record : undefined;
   if (w && f.preview) {
     const k = (b: string) => `${w.fp}/w:${b}`;
     if (w.stage === "action") {
-      const tb = trainBeat(ctx, f.preview, "preview", k("result"), p);
+      const tb = trainBeat(ctx, f.preview, "preview", k("result"));
       push(tb);
       const afx = stepFx(ctx, f.preview, "action");
       if (afx.length > 0)
@@ -95,62 +130,57 @@ export function beatsOf(
       );
     }
     for (const sc of due("prerace")) push(scene(sc, "prerace"));
-    // nothing after «Correr» exists yet: the card is always the last beat (it has no way back)
-    out.push({ kind: "position", key: k("position"), week: w, wings: raceWings(ctx, run.state) });
+    // nothing after «Correr» exists yet: the card is always the last beat (it has no way back);
+    // it preselects the position of the wings the action leaves her with (F5)
+    out.push({
+      kind: "position",
+      key: k("position"),
+      week: w,
+      wings: raceWings(ctx, run.state, w.input),
+    });
     return out;
   }
 
   // B, C after «Correr», D: the last step while unread (the controller's lastStep, lastStepSeen).
   const ended = run.state.status === "ended";
   const unread = step && !stepSeen && run.state === step.after ? step : undefined;
-  const own = p.resume || ui.mine.has(fp); // legacy: only what this mount committed
-  const tail = p.endSequence || !ended; // legacy: the season's end swallows the rest (F3)
-  const card = ended
-    ? undefined
-    : inspirationCard(
-        run.seed,
-        run.state,
-        run.inputs.length,
-        p.order === "legacy" ? unread : step,
-        f.cardsShown,
-      );
   if (unread) {
     const k = (b: string) => `${fp}/${b}`;
     const race = addedRace(unread);
     // the race part's vigor already showed before «Correr»
     let landed = race !== undefined;
     if (!race) {
-      if (own && tail) {
-        const tb = trainBeat(ctx, unread, "step", k("result"), p);
-        landed = tb !== undefined;
-        push(tb);
-      }
-    } else if (own && f.record?.phase !== "raceSeen") {
+      const tb = trainBeat(ctx, unread, "step", k("result"));
+      landed = tb !== undefined;
+      push(tb);
+    } else if (racing(f.record, ended)) {
       if (f.pace !== "direct") {
+        // the replay, then its finish held a moment (D7): «Saltar» ends both
         push({ kind: "replay", key: k("race:replay"), turn: race.turn });
-        if (p.finishHold) push({ kind: "finish", key: k("race:finish"), turn: race.turn });
+        push({ kind: "finish", key: k("race:finish"), turn: race.turn });
       }
       for (const sc of due("race")) push(scene(sc, "race"));
       push({ kind: "race-result", key: k("race:result"), turn: race.turn });
     }
-    if (p.order === "legacy" && card) push(cardBeat(card)); // C10 as the game plays it today
-    if (tail) {
-      const part = fxPart(unread);
-      const fx = stepFx(ctx, unread, part);
-      push(
-        fx.length > 0
-          ? { kind: "fx", key: k("fx"), part, fx, landed }
-          : { kind: "ack", key: k("ack") },
-      );
-    }
+    // the week's effects, over the season's end too: the step that ended it is read (F3, O5)
+    const part = fxPart(unread);
+    const fx = stepFx(ctx, unread, part);
+    push(
+      fx.length > 0
+        ? { kind: "fx", key: k("fx"), part, fx, landed }
+        : { kind: "ack", key: k("ack") },
+    );
   }
-  // Once the step is read: the event, or the scenes and the inheritance card in D2's order.
+  // Once the step is read: the event, or the scenes and the inheritance card in D2's order (the
+  // card comes from the latest step, read or not, until this browser showed it: F19, C9, C10).
   const event = ended ? undefined : run.state.pendingEvent;
   if (event) push({ kind: "event", key: `event:${event.eventId}/${event.turn}` });
   else {
     const where: SceneMode = ended ? "end" : "menu";
-    const later = p.order === "legacy" && unread ? undefined : card; // legacy pushed it already
-    for (const it of menuOrder(due(where), later, p))
+    const card = ended
+      ? undefined
+      : inspirationCard(run.seed, run.state, run.inputs.length, step, f.cardsShown);
+    for (const it of menuOrder(due(where), card))
       push(it.kind === "card" ? cardBeat(it.card) : scene(it.scene, where));
   }
   out.push({ kind: "idle", key: `idle:${fp}` });

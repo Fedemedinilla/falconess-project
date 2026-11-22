@@ -2,7 +2,7 @@
  * When a story scene shows, and which chat topics are open (owner 2026-11-12). Pure: read from the
  * season state and the goals' results, plus what this browser has already seen.
  */
-import type { ChatTopic, SeasonState, StoryScene, StoryTrigger } from "@falconess/schema";
+import type { ChatTopic, SeasonState, StoryTrigger } from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import { browserStore, type KeyValueStore, readKey, writeKey } from "../game/storage";
 import { goalStatuses } from "../screens/model/goals";
@@ -33,23 +33,6 @@ export function triggerHolds(ctx: SimContext, state: SeasonState, t: StoryTrigge
     case "end":
       return state.status === "ended" && state.endReason === t.result;
   }
-}
-
-/**
- * The first scene of her story due now and not seen in this season yet, in file order: the order
- * the game shipped, pinned (F13) until 5.2. The game asks `dueScenes` (flow/scenes.ts), whose
- * legacy policy gives this order.
- */
-export function dueScene(
-  scenes: readonly StoryScene[],
-  ctx: SimContext,
-  state: SeasonState,
-  seen: ReadonlySet<string>,
-): StoryScene | undefined {
-  return scenes.find(
-    (s) =>
-      s.falconess === state.falconessId && !seen.has(s.id) && triggerHolds(ctx, state, s.trigger),
-  );
 }
 
 /** Her chat topics open this week, in order. */
@@ -90,8 +73,8 @@ export type StoryStore = {
   /** Calls `listener` after every mark that changed something; returns the unsubscribe. */
   readonly subscribe: (listener: () => void) => () => void;
   /**
-   * Changes with every such mark: the snapshot a subscriber compares. Until then every reading
-   * keeps its identity.
+   * Changes with every such mark, here or in another tab (the storage is read again at this call):
+   * the snapshot a subscriber compares. Until then every reading keeps its identity.
    */
   readonly version: () => number;
 };
@@ -126,20 +109,80 @@ function decodeSeen(raw: string | undefined): Seen {
   return { runs, ever: ever ?? [] };
 }
 
-/** The store over a key-value storage that may be missing or throw (every access is guarded). */
+/** `theirs`, then what `mine` adds to it, in each one's order. */
+function union(theirs: readonly string[], mine: readonly string[]): readonly string[] {
+  const extra = mine.filter((id) => !theirs.includes(id));
+  return extra.length === 0 ? theirs : [...theirs, ...extra];
+}
+
+function sameIds(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
+  return (a ?? []).length === (b ?? []).length && (a ?? []).every((id, i) => id === b?.[i]);
+}
+
+/**
+ * What this tab knows merged with what the storage holds now: another tab of the game may have
+ * marked scenes since this one read it (each one either tab marked stays marked).
+ */
+function mergeSeen(stored: Seen, mine: Seen): Seen {
+  const runs: Record<string, readonly string[]> = { ...mine.runs };
+  for (const [seed, ids] of Object.entries(stored.runs))
+    runs[seed] = union(ids, mine.runs[seed] ?? []);
+  return { runs, ever: union(stored.ever, mine.ever) };
+}
+
+/**
+ * The store over a key-value storage that may be missing or throw (every access is guarded). Each
+ * reading reads the storage again (another tab of the game may have marked a scene or a topic
+ * since: neither shows twice) and keeps what this tab knew (each one either tab marked stays
+ * marked: the union); a mark writes that union. A reading with nothing new stored keeps its
+ * identity, and only a mark tells the subscribers (a reading's change shows at their next render).
+ */
 export function createStoryStore(kv: KeyValueStore | undefined): StoryStore {
   let seen: Seen | undefined;
   let read: ReadonlySet<string> | undefined;
   let ever: ReadonlySet<string> | undefined;
+  /** What the storage held when each key was last read or written. */
+  let storedSeen: string | undefined;
+  let storedRead: string | undefined;
   const runs = new Map<string, ReadonlySet<string>>();
   let version = 0;
   const listeners = new Set<() => void>();
+  /** The scenes as stored now, merged into what this tab knew when the stored text changed. */
   const seenData = (): Seen => {
-    seen ??= decodeSeen(readKey(kv, STORY_KEY));
+    const raw = readKey(kv, STORY_KEY);
+    if (seen !== undefined && raw === storedSeen) return seen;
+    storedSeen = raw;
+    const stored = decodeSeen(raw);
+    if (seen === undefined) {
+      seen = stored;
+      return seen;
+    }
+    const mine = seen;
+    const merged = mergeSeen(stored, mine);
+    const differs = (s: string) => !sameIds(merged.runs[s], mine.runs[s]);
+    const seeds = new Set([...Object.keys(merged.runs), ...Object.keys(mine.runs)]);
+    const moved = [...seeds].filter(differs);
+    if (moved.length === 0 && sameIds(merged.ever, mine.ever)) return seen;
+    seen = merged;
+    for (const s of moved) runs.delete(s);
+    if (!sameIds(merged.ever, mine.ever)) ever = undefined;
+    version += 1;
     return seen;
   };
+  /** The topics as stored now, with the ones this tab read. */
   const readTopics = (): ReadonlySet<string> => {
-    read ??= new Set(strings(parse(readKey(kv, CHAT_KEY))) ?? []);
+    const raw = readKey(kv, CHAT_KEY);
+    if (read !== undefined && raw === storedRead) return read;
+    storedRead = raw;
+    const stored = strings(parse(raw)) ?? [];
+    if (read === undefined) {
+      read = new Set(stored);
+      return read;
+    }
+    const merged = union(stored, [...read]);
+    if (sameIds(merged, [...read])) return read;
+    read = new Set(merged);
+    version += 1;
     return read;
   };
   const changed = () => {
@@ -148,36 +191,40 @@ export function createStoryStore(kv: KeyValueStore | undefined): StoryStore {
   };
   return {
     seenInRun: (seed) => {
+      const data = seenData();
       let set = runs.get(seed);
       if (!set) {
-        set = new Set(seenData().runs[seed] ?? []);
+        set = new Set(data.runs[seed] ?? []);
         runs.set(seed, set);
       }
       return set;
     },
     seenEver: () => {
-      ever ??= new Set(seenData().ever);
+      const data = seenData();
+      ever ??= new Set(data.ever);
       return ever;
     },
     markSeen: (seed, sceneId) => {
-      const d = seenData();
-      const inRun = d.runs[seed] ?? [];
-      if (inRun.includes(sceneId) && d.ever.includes(sceneId)) return;
+      const mine = seenData();
+      if (mine.runs[seed]?.includes(sceneId) && mine.ever.includes(sceneId)) return;
       seen = {
-        runs: { ...d.runs, [seed]: inRun.includes(sceneId) ? inRun : [...inRun, sceneId] },
-        ever: d.ever.includes(sceneId) ? d.ever : [...d.ever, sceneId],
+        runs: { ...mine.runs, [seed]: union(mine.runs[seed] ?? [], [sceneId]) },
+        ever: union(mine.ever, [sceneId]),
       };
       ever = undefined;
       runs.delete(seed);
       writeKey(kv, STORY_KEY, JSON.stringify(seen));
+      // what the storage holds now: one that refused the write leaves this tab's marks for the visit
+      storedSeen = readKey(kv, STORY_KEY);
       changed();
     },
     readTopics,
     markRead: (topicId) => {
       const r = readTopics();
       if (r.has(topicId)) return;
-      read = new Set([...r, topicId]);
+      read = new Set(union([...r], [topicId]));
       writeKey(kv, CHAT_KEY, JSON.stringify([...read]));
+      storedRead = readKey(kv, CHAT_KEY);
       changed();
     },
     subscribe: (listener) => {
@@ -186,7 +233,11 @@ export function createStoryStore(kv: KeyValueStore | undefined): StoryStore {
         listeners.delete(listener);
       };
     },
-    version: () => version,
+    version: () => {
+      seenData();
+      readTopics();
+      return version;
+    },
   };
 }
 

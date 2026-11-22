@@ -37,31 +37,13 @@ function weekCard(
   };
 }
 
-/**
- * The scene the last step left (ADR-0013): an inspiration week that began with it (its entry is
- * new to the step), or, on a run of only its start, the start's own. Undefined when no box did
- * anything worth the card (no record inspired her). The rule the game shipped (legacy): a week's
- * card shows only while its step is unread, the start's on every call while the run is only its
- * start. The game now asks `inspirationCard`, whose legacy policy passes it the unread step only;
- * this stays as that rule's pinned reference (F19) until 5.3 deletes both.
- */
-export function inspirationScene(
-  seed: string,
-  state: SeasonState,
-  inputs: number,
-  step: Step | undefined,
-  stepSeen: boolean,
-): InspirationScene | undefined {
-  if (inputs === 1) return startCard(seed, state);
-  return stepSeen ? undefined : weekCard(seed, state, step);
-}
-
 const cards = new WeakMap<readonly InspirationRecord[], InspirationScene>();
 
 /**
- * The flow's card (plan §1.5, F19): the start's while the run is only its start, a week's from
- * the latest step's new entry whether that step was read or not, either one until its key was
- * shown (the inheritance store keeps those across reloads). The same object on every call.
+ * The inheritance card (ADR-0013, plan §1.5, F19): the start's while the run is only its start
+ * (when a box inspired her), a week's from the latest step's new entry whether that step was read
+ * or not, either one until its key was shown (the inheritance store keeps those across reloads
+ * and the language's remount). The same object on every call.
  */
 export function inspirationCard(
   seed: string,

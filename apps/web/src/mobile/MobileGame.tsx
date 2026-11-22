@@ -20,9 +20,10 @@ import { type RunMusic, RunView } from "./RunView";
 import { SelectScreen } from "./SelectScreen";
 import { playNav, queueTap } from "./sfx";
 import { TitleScreen } from "./TitleScreen";
+import { useBackGesture } from "./useBackGesture";
 
 /** A wide screen (owner 2026-11-13): the game's column with the panel beside it. */
-export const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
+const DESK_QUERY = "(min-width: 1100px) and (min-height: 620px)";
 
 /**
  * The title screen shows once per visit, when the page opens on the game (owner 2026-11-12); a
@@ -107,7 +108,8 @@ export function MobileGame() {
   useEffect(() => stopMusic, []);
 
   // the selection and a run are two screens: going between them whooshes (in the click's own
-  // commit, so it replaces its tap); a run whooshes between its own screens
+  // commit, so it replaces its tap; only a tap starts or leaves a run); inside a run, the taps'
+  // commands whoosh (flow/commands.ts)
   const inRun = run !== undefined;
   const firstScreen = useRef(true);
   // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of screen only
@@ -148,6 +150,9 @@ export function MobileGame() {
 
 /** The character select: centered on a wide screen, with no panel beside it. */
 function SelectFrame({ desk, title }: { desk: boolean; title: ReactElement | undefined }) {
+  // the back gesture leaves #juego from here, as from the menu (a sheet open closes first); an
+  // entry the game left (a reload, «Nueva temporada» from «Menú» or the season's end) is taken back
+  useBackGesture("rest");
   return (
     <>
       {desk ? <div className={s.deskBg} aria-hidden="true" /> : null}

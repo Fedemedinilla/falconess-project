@@ -4,17 +4,15 @@ import { describe, expect, it } from "vitest";
 import type { WeekActionInput } from "../../screens/model/position";
 import type { Pace } from "../pace";
 import { isInstant } from "./beats";
-import { TARGET_POLICY } from "./policy";
 import { parents } from "./testing/bots";
 import { label } from "./testing/invariants";
 import { createWorld, type TraceEvent, type World } from "./testing/world";
 import type { Beat } from "./types";
 
 /**
- * The expected sequences of plan Appendix A, on the node world under the target policy: what the
- * player sees and what each tap or timer ends, in order. Each comes from a seeded save of the phone
- * e2e (guarded by `scripts/e2e-saves.test.ts`) or from a bounded search, which fails saying what
- * the content moved.
+ * The expected sequences of plan Appendix A, on the node world: what the player sees and what each
+ * tap or timer ends, in order. Each comes from a seeded save of the phone e2e (guarded by
+ * `scripts/e2e-saves.test.ts`) or from a bounded search, which fails saying what the content moved.
  */
 
 const DRIFT = "content moved: search again or regenerate the saves (WRITE_SAVES=1)";
@@ -80,10 +78,9 @@ function play(w: World, stop?: (b: Beat) => boolean): void {
   throw new Error(`no idle moment: ${label(w.now().flow.top)}`);
 }
 
-const world = (pace: Pace = "normal", reduced = false): World =>
-  createWorld({ policy: TARGET_POLICY, pace, reduced });
+const world = (pace: Pace = "normal", reduced = false): World => createWorld({ pace, reduced });
 
-describe("Appendix A: the expected sequences (target policy)", () => {
+describe("Appendix A: the expected sequences", () => {
   it("A.5 the season's start with parents: the prologue over the menu, then the inheritance card (D2)", () => {
     let w: World | undefined;
     for (let i = 1; i <= 20 && !w; i++) {
@@ -186,6 +183,26 @@ describe("Appendix A: the expected sequences (target policy)", () => {
       "end end · idle",
     ]);
     expect(w.trace.some((e) => e.type === "box")).toBe(true);
+  });
+
+  it("A.10 an injured week: no training's result, the «RECUPERACIÓN» effect over the menu, then the next week (O2)", () => {
+    const w = world();
+    w.load("injured");
+    const turn = w.now().facts.run.run.state.turn;
+    const from = w.trace.length;
+    w.cmd.open("train");
+    w.cmd.selectTraining("train:agility");
+    w.cmd.choose({ kind: "train:agility" });
+    const top = w.now().flow.top;
+    expect(top.kind === "fx" && top.fx[0]?.kind).toBe("recovery");
+    play(w);
+    expect(seen(w, from)).toEqual([
+      "training train · idle",
+      "menu menu(inert) + fx · fx:all",
+      "menu menu · idle",
+    ]);
+    expect(ended(w, from)).toEqual(["fx:all"]);
+    expect(w.now().facts.run.run.state.turn).toBe(turn + 1);
   });
 
   it("the goal-failed path: the race, end-failed in the race mode before the result, the race's effects over the end", () => {

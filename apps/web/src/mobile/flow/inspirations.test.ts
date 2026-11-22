@@ -1,10 +1,13 @@
+import { loadSeasonContent } from "@falconess/content";
 import type { RunInput, SeasonState, TurnLogEntry } from "@falconess/schema";
 import { startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import type { Step } from "../../game/controller";
+import { RUN_KEY, SEEN_KEY } from "../../game/storage";
 import { inspirationCard } from "../inspirationScene";
-import { CARDS_KEY, InspirationStore, type LoadedRun, MAX_SEEDS } from "./inspirations";
+import { CARDS_KEY, InspirationStore, type LoadedRun, MAX_SEEDS, savedRun } from "./inspirations";
 import { testContext } from "./testing/content";
+import { saveSeed } from "./testing/game";
 import { blockedStore, memoryStore } from "./testing/memory";
 
 const ctx = testContext("v3");
@@ -105,6 +108,100 @@ describe("the inheritance cards shown", () => {
     expect(stored.seeds.at(-1)[0]).toBe("x");
   });
 
+  it("two tabs: a mark one of them stored is kept when the other marks later (no card shows again)", () => {
+    const kv = memoryStore();
+    const a = new InspirationStore(kv);
+    // both tabs read the storage before either marked a card
+    const b = new InspirationStore(kv);
+    a.markShown("s", "s:24");
+    b.markShown("s", "s:40");
+    b.markShown("t", "t:start");
+    a.markShown("u", "u:start");
+    const later = new InspirationStore(kv);
+    expect([...later.shown("s")]).toEqual(["s:24", "s:40"]);
+    expect([...later.shown("t")]).toEqual(["t:start"]);
+    expect([...later.shown("u")]).toEqual(["u:start"]);
+    // the season marked last is still the newest kept
+    expect(JSON.parse(kv.data.get(CARDS_KEY) ?? "").seeds.at(-1)[0]).toBe("u");
+    // a tab that writes reads the other's marks too
+    expect(a.shown("s").has("s:40")).toBe(true);
+    // one that marks a card the other already stored writes it once
+    b.markShown("u", "u:start");
+    expect(JSON.parse(kv.data.get(CARDS_KEY) ?? "").seeds.at(-1)).toEqual(["u", ["u:start"]]);
+  });
+
+  it("two tabs: a tab that read the cards before the other one marked reads the mark at its next reading (no card shows twice)", () => {
+    const kv = memoryStore();
+    // a tab whose menu was up (it read the season's cards), and the tab that plays on
+    const waiting = new InspirationStore(kv);
+    const playing = new InspirationStore(kv);
+    const shown = waiting.shown("s");
+    const v = waiting.version();
+    playing.markShown("s", "s:24");
+    expect(waiting.version()).not.toBe(v);
+    expect(waiting.shown("s")).not.toBe(shown);
+    expect([...waiting.shown("s")]).toEqual(["s:24"]);
+    // a reading alone tells no one (a mark does): its subscribers read it at their next render
+    let told = 0;
+    waiting.subscribe(() => {
+      told += 1;
+    });
+    playing.markShown("s", "s:40");
+    expect(waiting.shown("s").has("s:40")).toBe(true);
+    expect(told).toBe(0);
+    // and its own next mark keeps them
+    waiting.markShown("t", "t:start");
+    expect([...new InspirationStore(kv).shown("s")]).toEqual(["s:24", "s:40"]);
+  });
+
+  it("a snapshot with nothing new stored keeps its identity, and another season's mark keeps this one's", () => {
+    const kv = memoryStore({
+      [CARDS_KEY]: JSON.stringify({
+        v: 1,
+        seeds: [
+          ["s", ["s:start"]],
+          ["t", ["t:start"]],
+        ],
+      }),
+    });
+    const a = new InspirationStore(kv);
+    const b = new InspirationStore(kv);
+    const s = a.shown("s");
+    const t = a.shown("t");
+    const v = a.version();
+    expect(a.version()).toBe(v);
+    expect(a.shown("s")).toBe(s);
+    b.markShown("t", "t:24");
+    const v2 = a.version();
+    expect(v2).not.toBe(v);
+    expect(a.shown("s")).toBe(s);
+    expect(a.shown("t")).not.toBe(t);
+    expect([...a.shown("t")]).toEqual(["t:start", "t:24"]);
+    // the same cards stored in another text: nothing changed
+    const tNow = a.shown("t");
+    kv.data.set(CARDS_KEY, JSON.stringify(JSON.parse(kv.data.get(CARDS_KEY) ?? "null"), null, 2));
+    expect(a.version()).toBe(v2);
+    expect(a.shown("t")).toBe(tNow);
+  });
+
+  it("a value another tab broke or removed keeps the cards this tab read (each card shown stays shown)", () => {
+    const kv = memoryStore({ [CARDS_KEY]: JSON.stringify({ v: 1, seeds: [["s", ["s:start"]]] }) });
+    const store = new InspirationStore(kv);
+    store.shown("s");
+    kv.data.set(CARDS_KEY, "{");
+    expect([...store.shown("s")]).toEqual(["s:start"]);
+    kv.data.delete(CARDS_KEY);
+    expect([...store.shown("s")]).toEqual(["s:start"]);
+  });
+
+  it("a mark over a corrupt value stores this tab's cards", () => {
+    const kv = memoryStore({ [CARDS_KEY]: '{"v":1,"seeds":[["s",["s:start"]]]}' });
+    const store = new InspirationStore(kv);
+    kv.data.set(CARDS_KEY, "{");
+    store.markShown("s", "s:24");
+    expect([...new InspirationStore(kv).shown("s")]).toEqual(["s:start", "s:24"]);
+  });
+
   it("reads nothing from a corrupt or foreign value", () => {
     for (const raw of ["{", "[]", '{"v":2,"seeds":[]}', '{"v":1,"seeds":{"s":["s:start"]}}'])
       expect(new InspirationStore(memoryStore({ [CARDS_KEY]: raw })).shown("s").size).toBe(0);
@@ -180,5 +277,47 @@ describe("the one-time migration (plan §1.8): the cards an earlier build alread
       return loaded(true);
     });
     expect(asked).toBe(0);
+  });
+});
+
+describe("the migration's run (Boot): the saved run as «Continuar» would load it, nothing written", () => {
+  /** `peregrina-w24-insp`: seed 1 with two parents, at week 24, whose last step left its card. */
+  const w24 = (read: boolean) => {
+    const seed = saveSeed("peregrina-w24-insp");
+    if (!read) delete seed[SEEN_KEY];
+    return memoryStore(seed);
+  };
+
+  it("replays the stored run with its last step and whether it was read; writes nothing", () => {
+    const kv = w24(true);
+    const before = new Map(kv.data);
+    const run = savedRun(loadSeasonContent, kv);
+    expect(run?.seed).toBe("1");
+    expect(run?.state.turn).toBe(24);
+    expect(run?.step?.after).toBe(run?.state);
+    expect(run?.stepSeen).toBe(true);
+    expect(savedRun(loadSeasonContent, w24(false))?.stepSeen).toBe(false);
+    // the save, its history and its verdict stay as they were (a real «Continuar» writes them)
+    expect(kv.data).toEqual(before);
+  });
+
+  it("the cards the earlier build showed: the start's, and week 24's once its step was read", () => {
+    const read = w24(true);
+    const store = new InspirationStore(read, () => savedRun(loadSeasonContent, read));
+    expect([...store.shown("1")].sort()).toEqual(["1:24", "1:start"]);
+    // unread: week 24's card plays in D2's order
+    const unread = w24(false);
+    const fresh = new InspirationStore(unread, () => savedRun(loadSeasonContent, unread));
+    expect([...fresh.shown("1")]).toEqual(["1:start"]);
+    const run = savedRun(loadSeasonContent, unread);
+    if (!run) throw new Error("no run");
+    expect(inspirationCard(run.seed, run.state, 24, run.step, fresh.shown("1"))?.key).toBe("1:24");
+  });
+
+  it("no run stored, one that does not load, or no storage: none", () => {
+    expect(savedRun(loadSeasonContent, memoryStore())).toBeUndefined();
+    expect(savedRun(loadSeasonContent, memoryStore({ [RUN_KEY]: "{not json" }))).toBeUndefined();
+    expect(savedRun(loadSeasonContent, blockedStore())).toBeUndefined();
+    expect(savedRun(loadSeasonContent, undefined)).toBeUndefined();
   });
 });
