@@ -5,6 +5,9 @@ import { unlockMusic } from "./music";
 import { playSound } from "./sfx";
 import s from "./TitleScreen.module.css";
 
+/** The site build carries the story-mode demo in historia/; the single-page Artifact does not. */
+const STORY_DEMO = import.meta.env.MODE !== "artifact";
+
 /** How long the title takes to clear after the tap. */
 const LEAVE_MS = 450;
 
@@ -24,24 +27,32 @@ export function TitleScreen({ onStart }: { onStart: () => void }) {
     setTimeout(onStart, LEAVE_MS);
   };
   return (
-    <button
-      type="button"
-      className={s.title}
-      data-leaving={leaving || undefined}
-      id="m-titulo"
-      aria-label={ui("ui.m.title.tap")}
-      onClick={start}
-    >
-      <span className={s.sky} aria-hidden="true" />
-      <span className={s.glow} aria-hidden="true" />
-      <span className={s.logo} aria-hidden="true">
-        <FalconEmblem className={s.emblem} />
-        <span className={s.name}>
-          <span className={s.outline}>FALCONESS</span>
-          <span className={s.word}>FALCONESS</span>
+    <>
+      <button
+        type="button"
+        className={s.title}
+        data-leaving={leaving || undefined}
+        id="m-titulo"
+        aria-label={ui("ui.m.title.tap")}
+        onClick={start}
+      >
+        <span className={s.sky} aria-hidden="true" />
+        <span className={s.glow} aria-hidden="true" />
+        <span className={s.logo} aria-hidden="true">
+          <FalconEmblem className={s.emblem} />
+          <span className={s.name}>
+            <span className={s.outline}>FALCONESS</span>
+            <span className={s.word}>FALCONESS</span>
+          </span>
         </span>
-      </span>
-      <span className={s.tap}>{ui("ui.m.title.tap")}</span>
-    </button>
+        <span className={s.tap}>{ui("ui.m.title.tap")}</span>
+      </button>
+      {/* the story-mode demo (owner 2026-11-22) lives beside the game on the site, not in the single page */}
+      {STORY_DEMO && !leaving && (
+        <a className={s.story} id="m-titulo-historia" href="historia/">
+          {ui("ui.m.title.story")}
+        </a>
+      )}
+    </>
   );
 }

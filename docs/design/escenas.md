@@ -1,5 +1,9 @@
 # Cómo se hace una escena en Falconess
 
+**Antes de escribir cualquier escena (dueño, 2026-11-17):** leer enteras `docs/design/biblia-escritura.md`
+y `docs/design/investigacion-personajes.md`. Este documento dice cómo se monta una escena; la biblia,
+cómo se escribe.
+
 Reglas de dirección, arte, escritura e implementación de las escenas de historia. Valen para todas
 las Falconess. Decididas con el dueño el 2026-11-12, probadas en el juego con Peregrina. Antes de
 escribir, leer también `docs/design/investigacion-personajes.md` (por qué un personaje se siente

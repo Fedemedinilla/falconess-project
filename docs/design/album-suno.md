@@ -335,3 +335,53 @@ distorted lead guitar, fast tempo
 (`low-tuned 7-string guitar played clean`, `vinyl scratches`), agregar `lounge` después de
 `future funk` y repetir `no heavy drums` al final. **Si queda sin carácter metal:** subir la guitarra
 de a una palabra (`palm-muted drop-tuned guitar chugs`) en vez de volver a nombrar el género.
+
+## Hangares de la historia principal (capítulos 2 a 4, 2026-11-19)
+
+Loops de fondo para las escenas de cada escudería, uno por personalidad. Siguen las reglas de
+«Música de fondo del juego» (arriba): la letra es la de «Letra (campo Lyrics) para cualquier loop» y
+las exclusiones son las base de fondo más las de cada hangar.
+
+### Kōryū Racing: orgullo y lujo
+
+Una vitrina de lujo que sabe que gana. Elegante, segura, un poco intimidante. Raíz japonesa con
+porte de escudería clásica: piano de cola y cuerdas, con un toque de koto.
+
+```
+instrumental, background music, elegant luxury showroom theme, proud and confident, grand piano
+melody, chamber string quartet, subtle koto accents, warm cello line, soft harp glissandos,
+polished and refined, a hint of racing heritage, steady dynamics, no build-up, loopable, 92 BPM
+```
+
+Exclude: base de fondo + `cheap, playful, lo-fi, rock, synth bass`.
+
+### Altair Systems: laboratorio
+
+Blanco, silencioso, preciso. Amable como una máquina educada que no termina nunca de medir. Que
+suene lindo y frío a la vez; la comedia sale de que la música no se inmuta.
+
+```
+instrumental, background music, minimal electronic, clinical and calm, precise, glassy bell
+synths, soft sine plucks, clean arpeggio in a repeating pattern, subtle data blips, airy cold pad,
+soft ticking clock pulse, polite and emotionless, steady dynamics, no build-up, loopable, 100 BPM
+```
+
+Exclude: base de fondo + `warm, acoustic guitar, organic, emotional, melancholic, orchestral`.
+
+Variante opcional para el cuestionario (si se quiere el chiste también en la música): la misma
+base con `elevator music, bossa-like waiting room feel` después de `minimal electronic`.
+
+### Boneyard Works: taller familiar
+
+Una casa grande llena de chatarra, luces colgadas y una pava caliente. Cálida, desprolija y feliz:
+amigos tocando un domingo mientras arreglan algo.
+
+```
+instrumental, background music, warm folk rock jam, cozy and friendly, acoustic guitar strumming,
+mellow electric guitar with light slide, slightly out-of-tune upright piano, soft harmonica, warm
+bass, light found-object percussion tapping on metal, homemade and lived-in, sunny afternoon,
+steady dynamics, no build-up, loopable, 96 BPM
+```
+
+Exclude: base de fondo sin `lo-fi hiss` (acá un poco de radio vieja le queda bien) + `cold,
+synth, electronic, orchestral, epic, polished`.
