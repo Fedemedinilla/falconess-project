@@ -86,9 +86,10 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
 .bg-lab { background: linear-gradient(180deg, #e9f0f5 0 50%, #cfdbe5 50% 52%, #f4f8fb 52%); }
 .bg.noche { filter: brightness(.38) saturate(.6) hue-rotate(12deg); }
 .bg.tarde { filter: sepia(.55) saturate(1.5) hue-rotate(-18deg) brightness(.85); }
+#langbtn { position: absolute; left: 76px; top: 10px; z-index: 6; font: 600 12px/1 system-ui, sans-serif; padding: 7px 10px; border-radius: 999px; border: 0; background: rgba(10,20,30,.55); color: #fff; letter-spacing: .06em; }
 #musicbtn { position: absolute; left: 10px; top: 10px; z-index: 6; font: 600 12px/1 system-ui, sans-serif; padding: 7px 10px; border-radius: 999px; border: 0; background: rgba(10,20,30,.55); color: #fff; letter-spacing: .04em; }
 #musicbtn.blocked { background: #c0392b; }
-#musicbtn.blocked::after { content: " · toca"; }
+#musicbtn.blocked::after { content: attr(data-tap); }
 .bg svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .chars { position: absolute; inset: 0; pointer-events: none; }
 .ch {
@@ -216,6 +217,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
     <div class="bg bg-koryu" id="bg-koryu"></div>
     <div class="bg bg-altair" id="bg-altair"></div>
     <div class="bg bg-boneyard" id="bg-boneyard"></div>
+    <button type="button" id="langbtn">EN</button>
     <button type="button" id="musicbtn" aria-pressed="true" aria-label="Música">♪ sí</button>
     <div class="chars" id="chars"></div>
     <div class="cue" id="cue"></div>
@@ -4316,6 +4318,4052 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
   "act": "cerrando con su verdad"
  }
 ];
+  var SCRIPT_ES = SCRIPT;
+  var SCRIPT_EN = [
+
+    { t: "card", k: "Main story · Chapter 1", title: "Vuela Alto", sub: "The year of the first league" },
+    { t: "sheet", n: 0 },
+    { t: "sheet", n: 1 },
+    { t: "bg", id: "exterior" },
+    { t: "music", name: "MUSIC · Vuela Alto theme", src: "music/vuela-alto.mp3" },
+    { t: "enter", who: "prota", pos: "right" },
+    { t: "say", who: "prota", expr: "concentración", act: "confirmando que es acá", do: "Holds a crumpled job ad up to her face.", text: "“Vuela Alto. Cleaning and loading. Training on the job.”" },
+    { t: "say", who: "prota", expr: "en blanco", act: "chocando con el cartel", do: "Lowers the paper and looks up at the sign.", text: "Vuela Al…| O." },
+    { t: "say", who: "prota", expr: "fastidio", act: "dándose ánimo con un chiste", do: "Scratches the back of her neck.", text: "It's missing a letter. I'm missing experience. We're even." },
+    { t: "sfx", name: "SFX · a torque wrench, inside. Just once." },
+    { t: "say", who: "prota", expr: "ganas", act: "decidiendo entrar", do: "Straightens her hoodie and walks to the door.", text: "Someone's here." },
+    { t: "exit", who: "prota" },
+
+    { t: "sheet", n: 2 },
+    { t: "bg", id: "interior" },
+    { t: "music", name: "MUSIC · fades out; the hangar's echo stays", src: "stop", fade: true },
+    { t: "enter", who: "vet", pos: "right" },
+    { t: "pause" },
+    { t: "enter", who: "prota", pos: "left" },
+    { t: "say", who: "prota", expr: "ganas", act: "presentándose sin pedir permiso", do: "Holds up the paper like a pass.", text: "I'm here about the ad." },
+    { t: "say", who: "vet", expr: "concentración", act: "probándola", do: "Keeps adjusting the wing. Doesn't turn around.", text: "That ad is three months old." },
+    { t: "say", who: "prota", expr: "sorpresa", act: "midiendo el lugar", do: "Looks around the empty hangar.", text: "And nobody came?" },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "cerrando el tema", do: "Spreads her arms for a second, wrench in hand.", text: "Look around." },
+    { t: "say", who: "prota", expr: "calma", act: "aceptando un puesto que nadie le ofreció", do: "Rolls up her sleeves.", text: "Where's the rag?" },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "contratándola sin decirlo", do: "Points the wrench at a red drawer by the wall.", text: "Red drawer. It's the only one that closes." },
+    { t: "say", who: "vet", expr: "concentración", act: "anotándola sin interés", do: "Still adjusting the wing.", text: "Name?" },
+    { t: "say", who: "prota", expr: "ganas", act: "presentándose de más", speed: "fast", do: "Straightens up all at once.", text: "Nina! …Nina. Once was enough." },
+    { t: "reveal", who: "prota" },
+    { t: "say", who: "vet", expr: "concentración", act: "buscándole el punto flaco", do: "For the first time, she looks at her.", text: "Do you fly?" },
+    { t: "say", who: "prota", expr: "sorpresa", act: "aclarando que no viene a eso", do: "Waves both hands, fast: no.", text: "Me? No. I came to clean." },
+    { t: "say", who: "vet", expr: "calma", act: "aprobándola a su manera", do: "Back to the wing.", text: "Good. The ones who fly never clean." },
+    { t: "narr", act: "mostrando el costo que ella esconde", text: "Edda lifts the wing toward the stand. Halfway up, her right arm stops." },
+    { t: "say", who: "prota", expr: "ganas", act: "rescatándola", speed: "fast", do: "Runs over and grabs the wing by the tip.", text: "I've got it!" },
+    { t: "say", who: "vet", expr: "fastidio", act: "frenando el error", fx: "shake", speed: "fast", do: "Knocks her hand away, sharp.", text: "Not by the edge!" },
+    { t: "say", who: "vet", expr: "concentración", act: "enseñando con el costo", do: "Guides her hands to the metal bar.", text: "By the frame. Dent the edge and it flies crooked for a month." },
+    { t: "say", who: "prota", expr: "concentración", act: "corrigiéndose rápido", do: "Holds the wing up, arms shaking.", text: "Like this?" },
+    { t: "say", who: "vet", expr: "calma", act: "aceptando la ayuda sin nombrarla", do: "They push together.", text: "Like that." },
+    { t: "sfx", quake: true, name: "SFX · the wing locks into the stand. Clack." },
+    { t: "say", who: "vet", expr: "cansancio", act: "escondiendo el brazo ([en blanco] no: es cansancio que oculta)", speed: "slow", do: "Rubs her right shoulder and drops the hand right away.", text: "…" },
+    { t: "say", who: "vet", expr: "fastidio", act: "recuperando el mando", do: "Turns her back to her.", text: "Don't get used to it." },
+    { t: "say", who: "prota", expr: "sorpresa", act: "pidiendo un gracias sin pedirlo", do: "Stays there with her arms in the air.", text: "To what?" },
+    { t: "say", who: "vet", expr: "concentración", act: "negándole el gracias", do: "Without turning around.", text: "Rag. Red drawer." },
+    { t: "narr", act: "mostrando que necesita hacer algo con las manos", text: "She takes out the rag and cleans the red drawer. Then the red drawer's handle." },
+    { t: "say", who: "prota", expr: "concentración", act: "justificándose sola", do: "Scrubs the handle hard.", text: "This one was clean. Now it's cleaner." },
+    { t: "narr", act: "poniendo al viejo en cuadro", text: "In a corner, an old man sleeps in a folding chair. He snores softly." },
+    { t: "say", who: "prota", expr: "sorpresa", act: "preguntando lo que no sabe", do: "Points the rag at the corner and lowers her voice.", text: "And the gentleman?" },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "explicando lo justo", do: "Doesn't even look.", text: "The old man came with the hangar." },
+    { t: "say", who: "vet", expr: "calma", act: "mostrando qué le importa", do: "Tightens a nut on the wing.", text: "What matters is he counts as a coach. That way I can race officially." },
+
+    { t: "sheet", n: 3 },
+    { t: "narr", act: "poniendo el objeto en cuadro", text: "Above the red drawer hangs the painting every home has." },
+    { t: "say", who: "prota", expr: "calma", act: "buscando algo en común", do: "Stops scrubbing and stares at the painting.", text: "At home it was over the table." },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "negándole lo especial", do: "Wipes a tool with an old rag.", text: "In every home it's over something." },
+    { t: "music", name: "MUSIC · cuts out", src: "stop" },
+    { t: "cg", plaque: "The Peace Race" },
+    { t: "pause" },
+    { t: "say", who: "prota", expr: "en blanco", act: "confesando algo chico ([en blanco]: recuerdo, no frialdad)", do: "Speaks without taking her eyes off the painting.", text: "As a kid I didn't look at the five.", speed: "slow" },
+    { t: "say", who: "prota", expr: "calma", act: "sembrando sin saberlo", do: "Points at the blue gap.", text: "I looked at the sky. It seemed like the best-painted part." },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "devolviéndola al trabajo", do: "Taps her shoulder with the wrench: back to work.", text: "The sky doesn't win races." },
+
+    { t: "sheet", n: 4 },
+    { t: "sfx", name: "SFX · the door creaks" },
+    { t: "enter", who: "coach", pos: "center" },
+    { t: "say", who: "coach", expr: "concentración", act: "aferrándose al plan", do: "Comes in out of breath, a notebook hugged to his chest.", text: "I'm Masaru. I'm looking for the head coach. I have an interview at ten." },
+    { t: "reveal", who: "coach" },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "bajándolo a tierra (silencio incómodo antes)", delay: true, do: "Looks at the wall clock. Then at him.", text: "It's eleven." },
+    { t: "say", who: "coach", expr: "cansancio", act: "confesando sin excusarse", do: "Runs a hand through his messy hair.", text: "I got off two stops early. And walked the wrong way." },
+    { t: "say", who: "vet", expr: "calma", act: "mostrando lo que es Vuela Alto", do: "Points the wrench at herself, three times.", text: "I'm the head coach. And the racer. And the one who swept, until today." },
+    { t: "say", who: "prota", expr: "alegría", act: "dándose cuenta de que la tomaron, sin poder frenar", speed: "fast", do: "Raises the rag like a flag.", text: "~So that me~~Wait, do I~From today, I sweep." },
+    { t: "say", who: "vet", expr: "concentración", act: "probándolo como a ella", do: "Crosses her arms.", text: "How many have you coached?" },
+    {
+      t: "choice", label: "What the coach answers",
+      options: [
+        { tag: "Aceptar", text: "None. But I learn fast. I think.", then: [
+          { t: "say", who: "vet", expr: "aburrimiento", act: "pinchándole la duda", do: "Raises an eyebrow.", text: "You think?" },
+          { t: "say", who: "coach", expr: "concentración", act: "siendo honesto de más", do: "Opens the notebook: every page is blank.", text: "Never tested it." },
+          { t: "say", who: "vet", expr: "calma", key: true, act: "tomándolos a los dos", do: "Turns back to the wing.", text: "One who doesn't fly and one who doesn't know if he learns. This team's started worse." }
+        ] },
+        { tag: "Rechazar", text: "Do you need to have coached to coach?", then: [
+          { t: "say", who: "vet", expr: "fastidio", act: "cortándolo", do: "Without blinking.", text: "Yes." },
+          { t: "say", who: "coach", expr: "sorpresa", act: "enterándose recién ahora", do: "Writes something in the notebook.", text: "Ah." },
+          { t: "say", who: "vet", expr: "fastidio", key: true, act: "tomándolos a los dos", do: "Turns back to the wing.", text: "One who doesn't fly and one who asks what he doesn't know. This team's started worse." }
+        ] },
+        { tag: "Desviar", text: "Counting myself, one. And it didn't go great.", then: [
+          { t: "say", who: "prota", expr: "en blanco", act: "aguantándose la risa ([en blanco]: contenerse)", do: "Covers her mouth with the rag.", text: "…" },
+          { t: "say", who: "prota", expr: "alegría", act: "rematando el chiste", do: "Still behind the rag.", text: "It shows." },
+          { t: "say", who: "vet", expr: "aburrimiento", key: true, act: "tomándolos a los dos", do: "Turns back to the wing.", text: "One who doesn't fly and one who laughs at himself. This team's started worse." }
+        ] }
+      ]
+    },
+    { t: "say", who: "coach", expr: "concentración", act: "animándose a lo que le importa", do: "Raises his hand, like in class.", text: "A question about the pay…" },
+    { t: "say", who: "vet", expr: "en blanco", act: "mirándolo ([en blanco]: no piensa contestar)", do: "Looks at him. Says nothing.", text: "…" },
+    { t: "say", who: "coach", expr: "sorpresa", act: "insistiendo", do: "Lowers his hand slowly.", text: "We're getting paid, right?" },
+    { t: "say", who: "vet", expr: "en blanco", act: "mirándolo más", do: "Keeps looking at him.", text: "…" },
+    { t: "say", who: "coach", expr: "alegría", act: "contestándose solo, imitándola", do: "Clasps his hands and puts on a high voice.", text: "I'll take your silence as a ^“Of course, dear coach! Don't you worry!”^" },
+    { t: "say", who: "vet", expr: "concentración", act: "repartiendo el trabajo", do: "Points the wrench at Nina.", text: "Tomorrow at five. You, the rag." },
+    { t: "say", who: "prota", expr: "ganas", act: "yéndose a hacer algo, ya", speed: "fast", do: "Runs off to the other end of the hangar.", text: "Starting now." },
+    { t: "exit", who: "prota" },
+    { t: "sheet", n: 5 },
+    { t: "say", who: "vet", expr: "concentración", act: "probándolo con poco", do: "Points her chin at the coach.", text: "You, watch me fly. And take notes." },
+    { t: "say", who: "coach", expr: "sorpresa", act: "sin saber por dónde empezar", do: "Searches every pocket for a pen.", text: "Notes on what?" },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "sacándoselo de encima", do: "Pulls on her gloves.", text: "Whatever you see." },
+    { t: "say", who: "coach", expr: "ganas", act: "obedeciendo al pie de la letra", do: "Writes slowly, letter by letter.", text: "Noted: “whatever you see.”" },
+    { t: "say", who: "coach", expr: "concentración", act: "descubriendo un hueco", do: "Looks up from the notebook.", text: "And you don't have a coach?" },
+    { t: "say", who: "vet", expr: "aburrimiento", act: "señalando el rincón", do: "Jerks a thumb, without looking, at the folding chair in the corner.", text: "There." },
+    { t: "say", who: "coach", expr: "sorpresa", act: "constatando lo evidente", do: "Leans in for a better look.", text: "He's asleep." },
+    { t: "say", who: "vet", expr: "calma", act: "defendiendo lo único que necesita de él", do: "Shrugs.", text: "Still counts." },
+    { t: "enter", who: "viejo", pos: "left" },
+    { t: "say", who: "viejo", as: "Sleeping old man", expr: "calma", act: "viéndolo todo sin abrir los ojos", delay: true, do: "Speaks without opening his eyes or leaving the chair.", text: "Edda. Right shoulder. Don't lift anything till Thursday." },
+    { t: "reveal", who: "vet" },
+    { t: "say", who: "coach", expr: "en blanco", act: "sin entender qué acaba de pasar", do: "Looks at the old man. Then at Edda.", text: "…" },
+    { t: "say", who: "vet", expr: "fastidio", act: "tapando lo que él vio (anzuelo)", do: "Lets go of her shoulder at once.", text: "Go to sleep, old man." },
+    { t: "say", who: "viejo", as: "Motionless old man", expr: "calma", act: "volviendo a dormir", do: "Pulls his hat down over his eyes.", text: "I am." },
+
+ {
+  "t": "card",
+  "k": "Main story · Chapter 2",
+  "title": "Five and One Minute",
+  "sub": "Vuela Alto"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 1 · Half past four",
+  "rows": [
+   [
+    "Objetivo",
+    "Empezar a trabajar antes que nadie."
+   ],
+   [
+    "Obstáculo",
+    "Adentro ya hay alguien, y no quiere ser visto."
+   ],
+   [
+    "Giro",
+    "Edda duerme en el hangar."
+   ],
+   [
+    "Salida",
+    "Nina espera afuera hasta las cinco. Todos los días."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "exterior-noche"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · none. Crickets.",
+  "src": "stop"
+ },
+ {
+  "t": "narr",
+  "text": "Half past four in the morning. The sign isn't visible yet.",
+  "act": "marcando la hora"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "~Good mor~~Hi, how~Morning. I'm early.",
+  "act": "ensayando la conversación antes de tenerla",
+  "do": "Talks quietly, facing the closed door.",
+  "speed": "fast"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "In case five was late.",
+  "act": "convenciéndose"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · inside, a can cracks open",
+  "quake": false
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Someone's already here?",
+  "act": "descubriendo que no es la primera",
+  "do": "Pushes the door. It gives, unlocked."
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "bg",
+  "id": "interior-noche"
+ },
+ {
+  "t": "narr",
+  "text": "Behind the wing stand there's a cot. Around it, three empty cans and a blanket.",
+  "act": "mostrando lo que nadie tenía que ver"
+ },
+ {
+  "t": "enter",
+  "who": "vet",
+  "pos": "right"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "escondiendo dónde durmió ([en blanco]: ocultar)",
+  "do": "Sits up on the cot at once. Hides the can behind her leg."
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "concentración",
+  "text": "The door opens at five.",
+  "act": "echándola sin echarla"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "It was open.",
+  "act": "diciendo lo que vio"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "aburrimiento",
+  "text": "It opens at five anyway.",
+  "act": "cerrando el tema"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "I'll come back at five.",
+  "act": "eligiendo no haber visto nada",
+  "do": "Looks at the cot just once. Then at the floor."
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "cansancio",
+  "text": "Five.",
+  "act": "aceptando el trato sin decirlo"
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "vet"
+ },
+ {
+  "t": "bg",
+  "id": "exterior-noche"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "“Morning, Edda. I'm early.” …Crossed out.",
+  "act": "anotando la frase que no va a decir",
+  "do": "Sits on the step. Takes a little notebook from her pocket and crosses out a line."
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · at five sharp, the bolt slides open from inside",
+  "quake": false
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Five and one minute. So it doesn't look like I waited.",
+  "act": "cuidando a Edda con un minuto",
+  "do": "Counts sixty on her fingers. Only then does she knock."
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 2 · The one with the broom",
+  "rows": [
+   [
+    "Objetivo",
+    "Hacer bien el trabajo; Masaru, parecer entrenador."
+   ],
+   [
+    "Obstáculo",
+    "Nadie les explica nada."
+   ],
+   [
+    "Giro",
+    "El viejo les pone nombre, y le da a Masaru su primera frase de entrenador."
+   ],
+   [
+    "Salida",
+    "Los dos tienen un lugar en el hangar, aunque no sea con su nombre."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "interior"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · Vuela Alto theme",
+  "src": "music/vuela-alto.mp3"
+ },
+ {
+  "t": "narr",
+  "text": "Tuesday. Masaru shows up at ten past seven with a new notebook under his arm.",
+  "act": "marcando el tiempo"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "enter",
+  "who": "viejo",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "I'm early today.",
+  "act": "anunciando un logro"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "It's ten past seven.",
+  "act": "corrigiéndolo sin dejar de trabajar",
+  "do": "Polishes the leg of the old man's folding chair."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "That's early for me. And I brought a new notebook. For the coach thing.",
+  "act": "mostrando su plan",
+  "do": "Shows the cover: it says “COACH” and three question marks."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "What does a coach do?",
+  "act": "preguntando lo básico"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Exactly. That's page one.",
+  "act": "admitiendo que no sabe"
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "The one with the notebook.",
+  "act": "nombrándolo sin abrir los ojos",
+  "as": "Sleeping old man"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Is he talking to me?",
+  "act": "sin saber si contestar"
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "And the one with the broom.",
+  "act": "nombrándola a ella también",
+  "as": "Sleeping old man"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "I have a name.",
+  "act": "recibiendo un lugar",
+  "do": "Hugs the broom like it was a gift."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "fastidio",
+  "text": "I already had a name. It's Masaru.",
+  "act": "reclamando lo suyo"
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "durmiéndose para no discutir ([en blanco]: dormido)",
+  "do": "Snores.",
+  "as": "Sleeping old man"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Sir. Just one question. What do you tell a racer before she flies?",
+  "act": "pidiendo un consejo de verdad",
+  "do": "Crouches by the chair, pencil ready."
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "The wind gives no warning. The laundry on the line does.",
+  "act": "dejando una frase para dentro de mucho",
+  "as": "Wise old man"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Noted.",
+  "act": "tomándolo en serio",
+  "do": "Writes it in big letters and underlines it."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "What does it mean?",
+  "act": "esperando la explicación"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "No idea. But it's the first thing I've written down that sounds like a coach.",
+  "act": "aceptando lo que tiene"
+ },
+ {
+  "t": "exit",
+  "who": "viejo"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 3 · Payday",
+  "rows": [
+   [
+    "Objetivo",
+    "Cobrar la primera semana."
+   ],
+   [
+    "Obstáculo",
+    "Vuela Alto no tiene plata."
+   ],
+   [
+    "Giro",
+    "Edda les paga con su premio, el que era para el hombro."
+   ],
+   [
+    "Salida",
+    "Nina carga lo pesado sin que se lo pidan."
+   ]
+  ]
+ },
+ {
+  "t": "narr",
+  "text": "Friday. Edda leaves two envelopes on the red drawer without a word.",
+  "act": "marcando el día"
+ },
+ {
+  "t": "enter",
+  "who": "vet",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "A question about the pay… Oh. It's right here.",
+  "act": "llegando tarde a su propia pregunta",
+  "do": "Opens the envelope. Counts. Counts again."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Is this the pay or the tip?",
+  "act": "midiendo lo que no alcanza"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "aburrimiento",
+  "text": "It's what there is.",
+  "act": "sin pedir disculpas"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "This envelope has a stamp. “Prize. Fourth place.”",
+  "act": "leyendo lo que no tenía que leer",
+  "do": "Turns the envelope over."
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "fastidio",
+  "text": "I recycle. Envelopes are expensive.",
+  "act": "tapando el gesto con un chiste",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "Edda. That prize was for the shoulder.",
+  "act": "diciendo la verdad desde el rincón",
+  "as": "Sleeping old man"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "fastidio",
+  "text": "Go to sleep, old man.",
+  "act": "cerrando la puerta que abrió el viejo"
+ },
+ {
+  "t": "choice",
+  "label": "What Masaru does with the envelope",
+  "options": [
+   {
+    "tag": "Aceptar",
+    "text": "Thanks. Really.",
+    "then": [
+     {
+      "t": "say",
+      "who": "vet",
+      "expr": "aburrimiento",
+      "text": "Don't get used to it.",
+      "act": "agradeciendo al revés"
+     }
+    ]
+   },
+   {
+    "tag": "Rechazar",
+    "text": "I don't want it. Use it for the shoulder.",
+    "then": [
+     {
+      "t": "say",
+      "who": "vet",
+      "expr": "fastidio",
+      "text": "It's not for you. It's so you come back Monday.",
+      "act": "negándose a recibir ayuda",
+      "do": "Pushes the envelope back against his chest."
+     }
+    ]
+   },
+   {
+    "tag": "Desviar",
+    "text": "Does fourth place pay in installments?",
+    "then": [
+     {
+      "t": "say",
+      "who": "vet",
+      "expr": "aburrimiento",
+      "text": "Installments start at third place.",
+      "act": "devolviéndole el chiste",
+      "do": "Almost smiles. Doesn't quite."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "What needs carrying today?",
+  "act": "ofreciéndose antes de que Edda se mueva"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "concentración",
+  "text": "Nothing. I carry.",
+  "act": "defendiendo el hombro que no nombra"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Already carried.",
+  "act": "cargando lo pesado para que ella no lo haga",
+  "do": "Lifts the toolbox before Edda can. It's heavier than it looks."
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "sin poder negarse sin hablar del hombro ([en blanco]: ocultar)"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "concentración",
+  "text": "By the frame. Not by the edge.",
+  "act": "aceptando la ayuda con una orden"
+ },
+ {
+  "t": "exit",
+  "who": "vet"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 4 · Up there",
+  "rows": [
+   [
+    "Objetivo",
+    "Terminar la semana; Masaru, anotar «lo que vea»."
+   ],
+   [
+    "Obstáculo",
+    "Masaru no sabe qué mirar y Nina no levanta la vista del piso."
+   ],
+   [
+    "Giro",
+    "Nina ve a Edda sonreír en el aire."
+   ],
+   [
+    "Salida",
+    "No se lo cuenta a nadie."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "exterior-tarde"
+ },
+ {
+  "t": "narr",
+  "text": "At sunset, Edda flies three laps over the field. Masaru watches from below, notebook open.",
+  "act": "poniendo la escena"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Edda flies. There's wind. There's a cow.",
+  "act": "anotando literalmente lo que ve",
+  "do": "Writes without looking at the page."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Is there laundry on a line?",
+  "act": "ayudándolo con lo único que oyó",
+  "do": "Sweeps the entrance without looking up."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "…No.",
+  "act": "buscando en el horizonte"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "calma",
+  "text": "Then it gives no warning.",
+  "act": "aplicando la frase del viejo al pie de la letra"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "perdiendo el hilo ([en blanco]: se le apagó la atención)",
+  "do": "Stares at a cloud shaped like a chair."
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · the wind off the wings passes low over the hangar roof",
+  "quake": false
+ },
+ {
+  "t": "cg",
+  "text": "[ILLUSTRATION] From below, through the broom's bristles: Edda in the air against the sunset, smiling with her whole face."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Up there, she smiles.",
+  "act": "descubriendo algo que no sabe nombrar",
+  "key": true
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Who?",
+  "act": "volviendo de la nube"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "calma",
+  "text": "Nobody. Write down that there's wind.",
+  "act": "guardándose lo que vio"
+ },
+ {
+  "t": "enter",
+  "who": "vet",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "cansancio",
+  "text": "What did you write down, coach?",
+  "act": "volviendo al piso",
+  "do": "Takes off her helmet. No smile now. Cracks open a can."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "That you fly. And there's wind. And a cow.",
+  "act": "entregando su informe completo"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "aburrimiento",
+  "text": "Very useful.",
+  "act": "despachando el informe"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "What does it look like from up there?",
+  "act": "preguntándose algo por primera vez",
+  "do": "Looks at the empty sky where the wing was.",
+  "fx": "whisper"
+ },
+ {
+  "t": "exit",
+  "who": "vet"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · fades out",
+  "src": "stop",
+  "fade": true
+ },
+ {
+  "t": "card",
+  "k": "Main story · Chapter 4",
+  "title": "Showroom Red",
+  "sub": "Kōryū Racing"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 1 · The wings there aren't",
+  "rows": [
+   [
+    "Objetivo",
+    "Nina quiere alas para probar."
+   ],
+   [
+    "Obstáculo",
+    "Edda y el viejo dicen que no."
+   ],
+   [
+    "Giro",
+    "Masaru: si «no» es «acá no», hay un «allá»."
+   ],
+   [
+    "Salida",
+    "Salen a buscar alas a otras escuderías."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "interior"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · Vuela Alto theme",
+  "src": "music/vuela-alto.mp3"
+ },
+ {
+  "t": "narr",
+  "text": "Three weeks later. The Vuela Alto hangar has never been this clean.",
+  "act": "marcando el tiempo"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "viejo",
+  "pos": "center"
+ },
+ {
+  "t": "enter",
+  "who": "vet",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "This one's already shining. But just in case.",
+  "act": "llenando el tiempo para no pensar",
+  "do": "Scrubs the same handle for the fourth time."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "mirando lo que quiere sin animarse ([en blanco]: deseo que no se dice)",
+  "do": "Stares at the sky-blue wing on its stand."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "~Edda, could I borrow your~Ma'am… Edda… are there practice wings? Old ones. Broken ones. Any.",
+  "act": "animándose por fin",
+  "do": "Drops the rag."
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "aburrimiento",
+  "text": "Ma'am? You just added twenty years to me.",
+  "act": "cortándola con sarcasmo",
+  "do": "Still adjusting the wing."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Sorry! Edda. Are there practice wings?",
+  "act": "corrigiéndose rápido"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "concentración",
+  "text": "No.",
+  "act": "negándose sin explicar"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "And ones that aren't for practice?",
+  "act": "insistiendo con torpeza"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "aburrimiento",
+  "text": "There's one. I'm using it.",
+  "act": "cerrando la puerta",
+  "do": "Lifts the wrench toward her own wing."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Sir… do you have any wings stored away? Anywhere?",
+  "act": "probando por otro lado",
+  "do": "Turns toward the folding chair."
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "No.",
+  "act": "negándose dormido",
+  "do": "Doesn't open his eyes.",
+  "delay": true,
+  "as": "Sleeping old man"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "You don't have any, or you won't give them to me?",
+  "act": "buscando una rendija"
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "No.",
+  "act": "negándose del todo",
+  "do": "Opens one eye. Just one.",
+  "fx": "shake",
+  "as": "Curt old man"
+ },
+ {
+  "t": "say",
+  "who": "vet",
+  "expr": "fastidio",
+  "text": "When he says no twice, it's no. I'm going flying.",
+  "act": "terminando la conversación",
+  "do": "Puts on her helmet."
+ },
+ {
+  "t": "exit",
+  "who": "vet"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "I'm here. Late, but here. What did I miss?",
+  "act": "entrando como siempre",
+  "do": "Comes in with a green notebook. It's another notebook."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "I asked for wings. They said no. Twice.",
+  "act": "resumiendo para no llorar ([en blanco]: aguantar)"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Technically, “no” means “not here.”",
+  "act": "dándole una vuelta",
+  "do": "Writes something in the notebook and crosses it out."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "And what does that mean?",
+  "act": "esperando que haya una salida"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "That there's a|… *“there.”*",
+  "act": "abriendo una salida",
+  "do": "Points his pencil at the hangar door."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Kōryū. Altair. Boneyard. The three league teams close by.",
+  "act": "armando un plan de cinco minutos",
+  "do": "Reads an old poster stuck to the wall."
+ },
+ {
+  "t": "say",
+  "who": "viejo",
+  "expr": "calma",
+  "text": "Before you enter someone else's house, look at your shoes.",
+  "act": "dejando una frase para después",
+  "as": "Wise old man"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "…We're going anyway.",
+  "act": "eligiendo ir",
+  "do": "Looks at her sneakers. They're worn out."
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "exit",
+  "who": "viejo"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 2 · Kōryū Racing",
+  "rows": [
+   [
+    "Objetivo",
+    "Entrar a Kōryū sin desentonar."
+   ],
+   [
+    "Obstáculo",
+    "Todo es de lujo, empezando por la acera."
+   ],
+   [
+    "Giro",
+    "La música de fondo es una orquesta de verdad."
+   ],
+   [
+    "Salida",
+    "Ishida los lleva a ver las alas."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "koryu-ext"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · the Vuela Alto theme fades out",
+  "src": "stop",
+  "fade": true
+ },
+ {
+  "t": "narr",
+  "text": "Kōryū Racing's headquarters doesn't look like a hangar: it looks like a red palace shaped like a wing. The red carpet starts on the sidewalk.",
+  "act": "mostrando la diferencia de mundo desde afuera"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Kōryū Racing. Peregrina's team. It says here “winning is a habit.”",
+  "act": "presentando el lugar como guía turístico",
+  "do": "Reads a gold brochure someone handed him on the corner."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Masaru… there's a man polishing the sidewalk.",
+  "act": "viendo algo que no entra en su mundo",
+  "do": "Points, then drops her hand right away."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "aburrimiento",
+  "text": "Ah. That's why it shines.",
+  "act": "aceptando lo inexplicable"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "“Before you enter someone else's house, look at your shoes.”",
+  "act": "acordándose del viejo justo ahora",
+  "do": "Looks at her worn sneakers. Wipes one against the other. No difference."
+ },
+ {
+  "t": "bg",
+  "id": "koryu"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · piano and strings, elegant",
+  "src": "music/koryu.mp3"
+ },
+ {
+  "t": "narr",
+  "text": "Inside, the Kōryū hangar smells of fresh paint. Even the floor shines more than Edda's wing.",
+  "act": "entrando"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Masaru. There are banners. Inside a hangar.",
+  "act": "achicándose",
+  "do": "Stops at the entrance and looks at her sneakers."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "And trophies. This one's taller than you.",
+  "act": "distrayéndose con lo que brilla",
+  "do": "Touches a trophy with one finger and pulls back right away."
+ },
+ {
+  "t": "enter",
+  "who": "ishida",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "Welcome to Kōryū Racing. Ishida, pilot advisor. How may I be of service?",
+  "act": "recibiendo con protocolo",
+  "do": "Appears without a sound, hands behind his back."
+ },
+ {
+  "t": "reveal",
+  "who": "ishida"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "First, one question. That music… ~is that a really expens~Is that a violin? A *real* violin? Right now?",
+  "act": "descubriendo de dónde sale la música",
+  "do": "Points at the ceiling, as if the violin hung there."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "I thought it was the air conditioning. A very in-tune one.",
+  "act": "aportando lo que puede",
+  "do": "Looks at the ceiling vents."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "alegría",
+  "text": "Ha ha. Of course not, little one.",
+  "act": "corrigiendo con una sonrisa de catálogo",
+  "do": "Smiles a smile rehearsed a thousand times. Not unkind; perfect."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "It isn't *one* person. It's our symphony orchestra. They rehearse behind that door.",
+  "act": "diciendo lo increíble como algo normal",
+  "do": "Points a white glove at a golden door at the back.",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Whaaaat?",
+  "act": "sin poder creerlo",
+  "fx": "shake"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Whaaaaaaaaat?",
+  "act": "sin poder creerlo, más largo",
+  "do": "Drops his notebook."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "You have an orchestra… for *background*?",
+  "act": "tratando de entender el tamaño de todo"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "For background, for the entrance and, on Tuesdays, for lunch.",
+  "act": "contestando sin una gota de ironía",
+  "do": "Adjusts a glove."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Um… Good afternoon! We're here for some wings. Practice ones. Basic. The most basic.",
+  "act": "presentándose de más",
+  "do": "Bows, though no one asked her to."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "At Kōryū there is no basic. There is the essential. This way.",
+  "act": "vendiendo sin vender",
+  "do": "Smiles one millimeter."
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 3 · The price",
+  "rows": [
+   [
+    "Objetivo",
+    "Que les muestren las alas de práctica."
+   ],
+   [
+    "Obstáculo",
+    "En Kōryū no existe lo básico."
+   ],
+   [
+    "Giro",
+    "El precio."
+   ],
+   [
+    "Salida",
+    "Se van con las manos vacías, debajo de un póster."
+   ]
+  ]
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a heavy curtain draws back",
+  "quake": false
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "concentración",
+  "text": "The Shiden model. Seven coats of red lacquer. Burst thruster.",
+  "act": "mostrando la joya",
+  "do": "Draws the curtain. Behind it, a wing turns on a pedestal."
+ },
+ {
+  "t": "cg",
+  "text": "[ILLUSTRATION] The Shiden wing turns on its pedestal under golden light. In the red lacquer, tiny and warped, Nina and Masaru stare with their mouths open."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "quedándose sin palabras ([en blanco]: deslumbrada)"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "It shines. It really shines.",
+  "act": "diciendo lo obvio"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "Can I…? I won't touch it. Just look up close. Really close.",
+  "act": "acercándose con miedo de romper algo",
+  "do": "Reaches out without touching."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "You may breathe on it. It polishes itself.",
+  "act": "presumiendo con elegancia"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Technically, this would be the practice one, right?",
+  "act": "buscando la trampa",
+  "do": "Opens the notebook."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "It is our junior racers' practice wing.",
+  "act": "subiendo la vara sin levantar la voz"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Perfect! How do we do this? Do we sign something? Fill something out?",
+  "act": "apurándose antes de tiempo",
+  "speed": "fast"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "Just one question. How do you intend to pay for it?",
+  "act": "cobrando con suavidad",
+  "do": "Steeples his hands."
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · behind the golden door, the orchestra stops dead",
+  "src": "stop"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "cayendo a tierra ([en blanco]: no lo había pensado)"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · epic-joke theme",
+  "src": "music/chiste.mp3"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "How much… is it?",
+  "act": "preguntando lo que no quiere saber",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "Two hundred forty thousand.| Without the *thruster*.",
+  "act": "diciendo la cifra como quien dice la hora",
+  "key": true
+ },
+ {
+  "t": "choice",
+  "label": "What Masaru says",
+  "options": [
+   {
+    "tag": "Aceptar",
+    "text": "Are there installments?",
+    "then": [
+     {
+      "t": "say",
+      "who": "ishida",
+      "expr": "calma",
+      "text": "There are installments. One hundred twenty.",
+      "act": "abriendo una puerta que no sirve"
+     },
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "en blanco",
+      "text": "…",
+      "act": "haciendo la cuenta ([en blanco]: no le da)",
+      "do": "Counts on his fingers. Runs out of fingers."
+     }
+    ]
+   },
+   {
+    "tag": "Rechazar",
+    "text": "That's more than I'll make in my life.",
+    "then": [
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "sorpresa",
+      "text": "In my *whole* life!",
+      "act": "dándose cuenta en voz alta",
+      "do": "Grabs his head with both hands."
+     },
+     {
+      "t": "say",
+      "who": "ishida",
+      "expr": "fastidio",
+      "text": "Quite possibly. That is why it is a Shiden.",
+      "act": "defendiendo la marca"
+     },
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "sorpresa",
+      "text": "Masaru…",
+      "act": "frenándolo",
+      "do": "Tugs his sleeve."
+     }
+    ]
+   },
+   {
+    "tag": "Desviar",
+    "text": "What if we just look at it a little longer? For free.",
+    "then": [
+     {
+      "t": "say",
+      "who": "ishida",
+      "expr": "alegría",
+      "text": "Looking is free. Breathing on it, too.",
+      "act": "dejándose llevar un segundo"
+     },
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "ganas",
+      "text": "Done. I've used it.",
+      "act": "rematando el chiste",
+      "do": "Breathes on the wing, very close."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "~Could I pay it off~Do you take work? I clean really well. A lot. All day.",
+  "act": "ofreciendo lo único que tiene",
+  "do": "Raises her hand like in class."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "We have eleven cleaning staff, miss.",
+  "act": "negándose con cortesía",
+  "do": "Looks at the shining floor. Then at her."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…Twelve would be a prettier number.",
+  "act": "insistiendo sin esperanza"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "alegría",
+  "text": "I shall keep that in mind.",
+  "act": "ablandándose a su pesar",
+  "do": "Half a smile slips out. He puts it away at once."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Thanks for… the shine.",
+  "act": "despidiéndose sin saber cómo",
+  "do": "Closes the notebook slowly."
+ },
+ {
+  "t": "narr",
+  "text": "On the way out they pass a giant poster: a racer in red, diving, smiling like she's already won.",
+  "act": "sembrando a Peregrina"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Someday I want to smile like that. Without the diving part.",
+  "act": "deseando en voz baja",
+  "do": "Stares at the poster."
+ },
+ {
+  "t": "exit",
+  "who": "ishida"
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · fades out",
+  "src": "stop",
+  "fade": true
+ },
+ {
+  "t": "card",
+  "k": "Main story · Chapter 5",
+  "title": "Question Two Hundred Twelve",
+  "sub": "Altair Systems"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 1 · Altair Systems",
+  "rows": [
+   [
+    "Objetivo",
+    "Conseguir alas gratis."
+   ],
+   [
+    "Obstáculo",
+    "Son gratis, pero hay que completar una evaluación."
+   ],
+   [
+    "Giro",
+    "Doscientas doce preguntas."
+   ],
+   [
+    "Salida",
+    "Aceptan, sin saber lo que les espera."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "altair-ext"
+ },
+ {
+  "t": "narr",
+  "text": "Altair Systems looks like an observatory that landed on the grass. The grass is cut to the same height, blade by blade.",
+  "act": "mostrando el lugar desde afuera"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Altair Systems. Cernícala's team. They say they measure everything here.",
+  "act": "presentando el lugar",
+  "do": "Checks the notebook."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Everything everything?",
+  "act": "desconfiando un poco"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "Surely not that much. Let's ring the bell.",
+  "act": "subestimando el lugar",
+  "do": "Rings the bell."
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a soft voice from the door: “Thirty-eight seconds to ring the bell. Logged.”",
+  "quake": false
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "callándose ([en blanco]: no sabe si es un chiste)",
+  "delay": true
+ },
+ {
+  "t": "bg",
+  "id": "altair"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · soft electronic, lab-like",
+  "src": "music/altair.mp3"
+ },
+ {
+  "t": "narr",
+  "text": "Inside, Altair Systems is white, navy blue and silence. The screens show numbers nobody watches.",
+  "act": "entrando"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Why am I whispering?",
+  "act": "contagiándose del lugar",
+  "do": "Whispers, though nobody asked for quiet.",
+  "fx": "whisper"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Don't know. But me too.",
+  "act": "acompañándolo",
+  "do": "Answers in the same whisper."
+ },
+ {
+  "t": "enter",
+  "who": "analista",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Welcome to Altair Systems. Analyst Quist. I have detected two visitors without an appointment.",
+  "act": "registrándolos antes de saludarlos",
+  "do": "Appears behind them with a tablet and a sky-blue visor."
+ },
+ {
+  "t": "reveal",
+  "who": "analista"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Good afternoon! We came for some wings. Basic ones.",
+  "act": "presentándose de un salto",
+  "do": "Jumps a little.",
+  "fx": "shake"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "We have basic wings. At no cost. For candidates who complete the assessment.",
+  "act": "ofreciendo con condiciones",
+  "do": "Swipes across the tablet."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "No cost? Really free?",
+  "act": "entusiasmándose antes de leer la letra chica"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "No|… monetary cost.",
+  "act": "advirtiendo sin advertir"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Is there another kind of cost?",
+  "act": "oliendo la trampa"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "Two hundred twelve questions. Forty-three sub-questions. Nine annexes. One essay. Beginning.",
+  "act": "empezando sin pedir permiso",
+  "do": "Turns the tablet around: a progress bar at zero."
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 2 · The assessment",
+  "rows": [
+   [
+    "Objetivo",
+    "Llegar al final del cuestionario."
+   ],
+   [
+    "Obstáculo",
+    "Cada pregunta toca algo que no quieren decir."
+   ],
+   [
+    "Giro",
+    "Tres horas después van por la veintisiete, y las preguntas llegan a lo que cada uno esconde."
+   ],
+   [
+    "Salida",
+    "Escapan."
+   ]
+  ]
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Question one. Full name.",
+  "act": "midiendo"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Nina!",
+  "act": "contestando de más"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Full.",
+  "act": "exigiendo precisión"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…That is full.",
+  "act": "sin saber qué más dar ([en blanco]: no entiende la pregunta)"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Question two. Average hours of sleep.",
+  "act": "siguiendo"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Counting the times I wake up to rehearse conversations?",
+  "act": "contestando con verdad de más"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "Yes.",
+  "act": "anotando todo"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…Not many.",
+  "act": "dándose cuenta tarde de lo que dijo ([en blanco]: se arrepiente)"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Question three. Blood type. Question four. Allergies. Question four point one. Emotional allergies.",
+  "act": "acelerando sin respirar",
+  "speed": "fast"
+ },
+ {
+  "t": "narr",
+  "text": "Three hours later. The progress bar reads thirteen percent.",
+  "act": "estirando el tiempo"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "cansancio",
+  "text": "Masaru. What question are we on?",
+  "act": "preguntando a escondidas",
+  "do": "Leans toward him without moving her head.",
+  "fx": "whisper"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "No idea. I got lost at four point two, part B.",
+  "act": "confesando que se fue",
+  "do": "Answers just as quietly, staring at a fixed point on the ceiling."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Since then my brain's been a screensaver.",
+  "act": "rindiéndose"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "Sorry.",
+  "act": "riéndose sin querer",
+  "do": "Laughs and covers her mouth."
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "Logged: “screensaver.”",
+  "act": "registrándolo todo",
+  "do": "Doesn't laugh."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "I got lost at eighteen. The one where you had to draw a chart.",
+  "act": "confesando lo suyo"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Question twenty-seven. Number of close friends.",
+  "act": "tocando sin saberlo la herida"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "quedándose sin aire ([en blanco]: la pregunta le pegó)",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Does he count?",
+  "act": "buscando una respuesta que no la deje sola",
+  "do": "Glances sideways at Masaru."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Do I count?",
+  "act": "sorprendiéndose de importar",
+  "do": "Points at himself."
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "I need a number.",
+  "act": "pidiendo lo imposible"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "One. …One and a half, with the old man.",
+  "act": "eligiendo su número",
+  "do": "Raises one finger, slowly. Then half of another."
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "Question twenty-eight, for the companion. Have you completed higher education?",
+  "act": "tocando la herida de él",
+  "do": "Turns the tablet toward Masaru."
+ },
+ {
+  "t": "choice",
+  "label": "What Masaru answers",
+  "options": [
+   {
+    "tag": "Aceptar",
+    "text": "No.",
+    "then": [
+     {
+      "t": "say",
+      "who": "analista",
+      "expr": "calma",
+      "text": "Noted.",
+      "act": "registrando sin juzgar"
+     },
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "en blanco",
+      "text": "…",
+      "act": "callándose lo demás ([en blanco]: no quiere explicar)",
+      "do": "Opens his mouth as if to add something. Adds nothing."
+     }
+    ]
+   },
+   {
+    "tag": "Rechazar",
+    "text": "That's private.",
+    "then": [
+     {
+      "t": "say",
+      "who": "analista",
+      "expr": "concentración",
+      "text": "At Altair, “private” is a category with its own form.",
+      "act": "cerrando la salida"
+     },
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "fastidio",
+      "text": "How many questions does it have?",
+      "act": "temiendo la respuesta"
+     },
+     {
+      "t": "say",
+      "who": "analista",
+      "expr": "calma",
+      "text": "Forty.",
+      "act": "contestando con exactitud"
+     }
+    ]
+   },
+   {
+    "tag": "Desviar",
+    "text": "Define “completed.”",
+    "then": [
+     {
+      "t": "say",
+      "who": "analista",
+      "expr": "concentración",
+      "text": "Reaching the end. With a degree.",
+      "act": "definiendo sin ironía"
+     },
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "cansancio",
+      "text": "Ah. Then no.",
+      "act": "riéndose de sí mismo para no decir más"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Masaru.",
+  "act": "llamándolo en voz baja",
+  "do": "Touches his elbow."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "Yes.",
+  "act": "entendiendo sin que le expliquen",
+  "do": "Stands up all at once."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Run?",
+  "act": "proponiendo la huida"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "Run.",
+  "act": "aceptando con alivio"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · the lab music fades out",
+  "src": "stop",
+  "fade": true
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · epic-joke theme: the great escape",
+  "src": "music/chiste.mp3"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "Thank you so much for the questions! They were really good! Sorry!",
+  "act": "huyendo con buenos modales",
+  "do": "Bows while already leaving."
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · two pairs of sneakers running on a shiny floor",
+  "quake": false
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "cg",
+  "text": "[ILLUSTRATION] Nina and Masaru run down an endless white corridor. Behind them, on a giant screen, the progress bar: 13%."
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · cuts out; the lab's silence returns",
+  "src": "stop"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "Assessment interrupted at question twenty-eight of two hundred twelve.| Result: interesting.",
+  "act": "dejándolos en sus registros",
+  "do": "Alone, she puts the tablet away.",
+  "key": true
+ },
+ {
+  "t": "exit",
+  "who": "analista"
+ },
+ {
+  "t": "card",
+  "k": "Main story · Chapter 6",
+  "title": "Scrap With Wings",
+  "sub": "Boneyard Works"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 1 · The workshop",
+  "rows": [
+   [
+    "Objetivo",
+    "Una última oportunidad de conseguir alas."
+   ],
+   [
+    "Obstáculo",
+    "Parece un depósito de chatarra y nadie atiende."
+   ],
+   [
+    "Giro",
+    "La chica del taller se entusiasma con la idea."
+   ],
+   [
+    "Salida",
+    "Deciden construirlas."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "boneyard-ext"
+ },
+ {
+  "t": "narr",
+  "text": "Boneyard Works is a huge barn with wings hand-painted on the wall. There's laundry drying in the sun, a vegetable garden and a fence made of propellers.",
+  "act": "mostrando el lugar desde afuera"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Boneyard Works. Caracara's team. Last on the list.",
+  "act": "presentando el lugar sin muchas ganas",
+  "do": "Crosses out the third line in the notebook, in advance."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "calma",
+  "text": "It looks like a house.",
+  "act": "relajándose sin darse cuenta"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "It looks like a house that ate a workshop.",
+  "act": "mirando la chatarra"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "I like it.",
+  "act": "sintiéndose bienvenida",
+  "do": "Smiles for the first time all day."
+ },
+ {
+  "t": "bg",
+  "id": "boneyard"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · workshop folk rock, among friends",
+  "src": "music/boneyard.mp3"
+ },
+ {
+  "t": "narr",
+  "text": "Inside, it's a big house someone filled with scrap. There are string lights, plants on the windowsills and a still-warm kettle on the table.",
+  "act": "entrando"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "If they ask us anything here too, I'll faint.",
+  "act": "arrastrando el cansancio",
+  "do": "Drags his feet."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "If it's expensive here too, I'll faint.",
+  "act": "acompañando el chiste",
+  "do": "Steps around a propeller leaning on a bench."
+ },
+ {
+  "t": "enter",
+  "who": "caracara",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "*Hi!* Careful with the propeller, it bites. Are you lost or here on purpose?",
+  "act": "recibiendo como si los conociera",
+  "do": "Slides out from under a frame, grease all the way up to her face.",
+  "fx": "shake"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Is there a difference?",
+  "act": "preguntando en serio"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Around here, not much. What do you need?",
+  "act": "haciéndolos sentir en casa",
+  "do": "Wipes her hands on her pants. The pants come out worse."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Wings. For practice. The cheapest. The cheapest of the cheap.",
+  "act": "juntando coraje",
+  "do": "Clenches her fists to work up the nerve."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "concentración",
+  "text": "For you?",
+  "act": "midiéndola",
+  "do": "Tilts her head."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Can you tell I don't fly?",
+  "act": "esperando el rechazo"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "I can tell you want to. That's the hard part. The rest can be fixed.",
+  "act": "viéndola de verdad",
+  "key": true
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "How much are they? I'm asking first, because last time they said ^“How do you intend to pay for it?”^",
+  "act": "protegiéndose de otro golpe, imitando a Ishida",
+  "do": "Steeples his hands and puts on a velvet voice."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "ganas",
+  "text": "Look around. All of this is free. The hard part is making it fly.",
+  "act": "mostrando su tesoro",
+  "do": "Points a huge wrench at the scrap."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "concentración",
+  "text": "You, notebook guy. Bring me that wheel from the back.",
+  "act": "poniéndolos a trabajar"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Which one?",
+  "act": "perdiéndose otra vez",
+  "do": "Looks at the back: there are forty wheels."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Whichever one you like.",
+  "act": "confiando en el azar"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 2 · The patch job",
+  "rows": [
+   [
+    "Objetivo",
+    "Armar alas con lo que haya."
+   ],
+   [
+    "Obstáculo",
+    "Nada encaja con nada."
+   ],
+   [
+    "Giro",
+    "Nina sirve para algo: deja las piezas como nuevas."
+   ],
+   [
+    "Salida",
+    "Las alas existen."
+   ]
+  ]
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a welder sputters",
+  "quake": false
+ },
+ {
+  "t": "enter",
+  "who": "soldador",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "concentración",
+  "text": "What did you come up with now?",
+  "act": "desconfiando por experiencia",
+  "do": "Lifts his welding mask."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Practice wings, boss. For her. Out of whatever's around.",
+  "act": "contagiando el plan"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "concentración",
+  "text": "Ever flown?",
+  "act": "midiéndola sin rodeos",
+  "do": "Looks Nina up and down."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…In dreams. Does that count?",
+  "act": "diciendo la verdad chiquita ([en blanco]: vergüenza)"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "calma",
+  "text": "Counts more than you think.",
+  "act": "aprobándola a su manera"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "aburrimiento",
+  "text": "If she falls, she falls close to the ground.",
+  "act": "dando permiso con cuidado",
+  "do": "Lowers the mask."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "That's a yes!",
+  "act": "traduciendo al jefe"
+ },
+ {
+  "t": "narr",
+  "text": "Two hours. Sparks, screws from nothing in particular and a radio that only gets one station.",
+  "act": "comprimiendo el trabajo"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Is this okay?",
+  "act": "ofreciendo lo único que sabe hacer",
+  "do": "Sands a rusty part until it shines."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "sorpresa",
+  "text": "How did you get it like that? This part's older than me!",
+  "act": "descubriendo su talento",
+  "do": "Looks at the part. Looks at Nina."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "I clean. It's the only thing I'm good at.",
+  "act": "achicándose sin querer"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Then we've got someone to clean the wing after every crash.",
+  "act": "dándole un lugar en el equipo"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "concentración",
+  "text": "This screw is from a refrigerator.",
+  "act": "desconfiando de la obra",
+  "do": "Holds a screw up to the light."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "ganas",
+  "text": "And it's going to fly.",
+  "act": "apostando por el atajo"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "aburrimiento",
+  "text": "Refrigerators don't fly.",
+  "act": "poniendo los pies en la tierra"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Yet.",
+  "act": "ganando la discusión"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · the frame slams down onto the workbench",
+  "quake": true
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "I didn't touch anything! …I think I didn't touch anything.",
+  "act": "defendiéndose por si acaso"
+ },
+ {
+  "t": "exit",
+  "who": "soldador"
+ },
+ {
+  "t": "cg",
+  "text": "[ILLUSTRATION] The scrap wings hang from a chain: an old propeller, a wheel, sheet metal in five different colors. Sunlight from the skylights shines through them."
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "…That's a wing.",
+  "act": "viendo lo imposible",
+  "do": "Comes in carrying a wheel and freezes."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "It's two. Look closer.",
+  "act": "corrigiéndolo con gusto"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "ganas",
+  "text": "Do you need the wheel?",
+  "act": "queriendo haber ayudado"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "concentración",
+  "text": "Not anymore. But leave it, I like it.",
+  "act": "aceptando lo que traiga"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "ganas",
+  "text": "Try them on. Slowly.",
+  "act": "entregándolas sin ceremonia",
+  "do": "Takes the wings down and sets them in Nina's arms."
+ },
+ {
+  "t": "choice",
+  "label": "What Masaru tells Nina",
+  "options": [
+   {
+    "tag": "Aceptar",
+    "text": "Slowly. Like she said.",
+    "then": [
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "calma",
+      "text": "Slowly.",
+      "act": "obedeciendo",
+      "do": "Puts them on carefully, one strap at a time."
+     }
+    ]
+   },
+   {
+    "tag": "Rechazar",
+    "text": "What if they're too heavy? Better tomorrow.",
+    "then": [
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "fastidio",
+      "text": "No. Today.",
+      "act": "negándose por primera vez",
+      "do": "Puts them on in one go."
+     }
+    ]
+   },
+   {
+    "tag": "Desviar",
+    "text": "Is there a helmet? For me. Just in case.",
+    "then": [
+     {
+      "t": "say",
+      "who": "caracara",
+      "expr": "alegría",
+      "text": "For you there's a pot.",
+      "act": "riéndose de él",
+      "do": "Puts a pot on his head."
+     },
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "alegría",
+      "text": "Looks good on you.",
+      "act": "riéndose también",
+      "do": "Puts them on while laughing."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "They weigh as much as a wardrobe.",
+  "act": "diciendo lo obvio con felicidad",
+  "do": "Wobbles with the wings on."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "A wardrobe that flies. You'll see.",
+  "act": "prometiendo sin dudar"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "…",
+  "act": "intentando mover el ala izquierda ([concentración]: lo intenta en serio)",
+  "do": "Squeezes her eyes and stares hard at the left wing."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "sorpresa",
+  "text": "What are you doing?",
+  "act": "descubriendo el error"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Moving it. With my head. Isn't that how it works?",
+  "act": "explicando lo que imaginó"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "aburrimiento",
+  "text": "It is. When you've got something to do it with.",
+  "act": "corrigiendo sin burlarse, desde el fondo"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "concentración",
+  "text": "It's missing the controller. A chip this tiny.",
+  "act": "nombrando la pieza que falta",
+  "do": "Knocks on the empty frame with a knuckle. It sounds hollow."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "calma",
+  "text": "It's what connects you to the wings. Without it, they're just heavy.",
+  "act": "explicando con las manos ocupadas"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "concentración",
+  "text": "And a helmet to put it in. Otherwise you can't see a thing when you open them.",
+  "act": "sumando la segunda pieza"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Chip. Helmet.",
+  "act": "anotando la lista de lo imposible",
+  "do": "Writes both words and underlines them twice."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Does either of those grow in the scrap?",
+  "act": "esperando un milagro"
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "aburrimiento",
+  "text": "No.",
+  "act": "cerrando la esperanza en una palabra"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "ganas",
+  "text": "Leave that to me.",
+  "act": "tomando el problema como propio",
+  "do": "Wipes one hand on her pants and pulls the phone from her back pocket."
+ },
+ {
+  "t": "say",
+  "who": "soldador",
+  "expr": "concentración",
+  "text": "Caracara! Training tomorrow at six! Don't forget!",
+  "act": "llamándola desde el fondo",
+  "do": "Shouts from the back of the workshop.",
+  "fx": "shake"
+ },
+ {
+  "t": "reveal",
+  "who": "caracara"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "I know, boss!",
+  "act": "contestando sin darse vuelta",
+  "do": "Shouts toward the back without turning around."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "~Can I live here?~Don't give them to me. I'll clean the workshop on Saturdays. Every one. Until they're paid for.",
+  "act": "poniendo ella el precio",
+  "do": "Hugs the scrap wings.",
+  "speed": "fast"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "sorpresa",
+  "text": "Every Saturday? This scrap isn't worth that much.",
+  "act": "intentando bajarle el precio"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "It is to me.",
+  "act": "sosteniendo el trato"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Deal. Saturdays I train at six. Come at eight.",
+  "act": "aceptando con gusto",
+  "do": "Shakes her hand. Leaves grease on her fingers."
+ },
+ {
+  "t": "exit",
+  "who": "caracara"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 3 · What they didn't ask",
+  "rows": [
+   [
+    "Objetivo",
+    "Volver a Vuela Alto con las alas."
+   ],
+   [
+    "Obstáculo",
+    "Las alas no vuelan todavía: faltan el chip y el casco."
+   ],
+   [
+    "Giro",
+    "No saben con quién estuvieron; la chica del taller hace una llamada."
+   ],
+   [
+    "Salida",
+    "Alguien, en algún lado, le debe un favor a Caracara."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "boneyard-ext"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · the workshop folk goes on, quieter, from inside",
+  "src": "stop"
+ },
+ {
+  "t": "narr",
+  "text": "The cart has one wheel that turns the wrong way. The wings rattle like a hardware store over every stone.",
+  "act": "comprimiendo la salida"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "That workshop girl was so nice.",
+  "act": "volviendo feliz",
+  "do": "Pushes the cart with her whole body."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Very. What was her name?",
+  "act": "dándose cuenta tarde"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…I didn't ask.",
+  "act": "dándose cuenta también ([en blanco]: vergüenza)",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "en blanco",
+  "text": "Me|… neither.",
+  "act": "compartiendo la culpa"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Next time I'll ask. And clean her workshop.",
+  "act": "prometiendo volver"
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "enter",
+  "who": "caracara",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Hey, hey. Did I wake you? Good. Listen.",
+  "act": "llamando sin pedir permiso",
+  "do": "Steps out onto the porch, phone to her ear."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "ganas",
+  "text": "I need a controller. A basic one. For a girl who's never flown.",
+  "act": "pidiendo el favor de frente"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "fastidio",
+  "text": "…No, I don't know her. But my instinct never fails.",
+  "act": "defendiendo su olfato",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "aburrimiento",
+  "text": "Okay. That time doesn't count. It was raining.",
+  "act": "descontando un error"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "fastidio",
+  "text": "And that other time? Are you keeping a notebook of my misses or what?",
+  "act": "ofendiéndose a medias",
+  "fx": "shake"
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "alegría",
+  "text": "Sky-blue overalls. Cleans better than you. You won't be able to miss her.",
+  "act": "describiéndola con cariño",
+  "do": "Looks down the road the cart went."
+ },
+ {
+  "t": "say",
+  "who": "caracara",
+  "expr": "calma",
+  "text": "I owe you one.| …Another one. Yes. I know you're keeping count.",
+  "act": "agradeciendo a su manera",
+  "do": "Laughs and hangs up without saying goodbye.",
+  "key": true
+ },
+ {
+  "t": "exit",
+  "who": "caracara"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · fades out",
+  "src": "stop",
+  "fade": true
+ },
+ {
+  "t": "card",
+  "k": "Main story · Chapter 7",
+  "title": "Green Table, Red Drawer",
+  "sub": "Altair Systems"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 1 · The speaker",
+  "rows": [
+   [
+    "Objetivo",
+    "Llegar a Vuela Alto con el carrito y pensar cómo conseguir lo que falta."
+   ],
+   [
+    "Obstáculo",
+    "Un chip y un casco cuestan lo que no tienen."
+   ],
+   [
+    "Giro",
+    "Un parlante de la calle los llama por su nombre. O casi."
+   ],
+   [
+    "Salida",
+    "Vuelven a Altair, corriendo."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "calle"
+ },
+ {
+  "t": "narr",
+  "text": "Half an hour of avenue. The cart keeps pulling left, as if it wanted to go back to the workshop.",
+  "act": "estirando el camino"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Technically, we have wings now. We're missing two things that don't exist in our budget.",
+  "act": "haciendo la cuenta en voz alta",
+  "do": "Reads the notebook as he walks, not watching the sidewalk."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Our budget doesn't exist either. It's a drawing of a coin.",
+  "act": "mostrando la página"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "I can clean more. Before I come in and after I leave.",
+  "act": "ofreciendo lo único que tiene"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "You already clean before you come in and after you leave.",
+  "act": "recordándole la verdad"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Then during.",
+  "act": "redoblando sin pensarlo"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a siren beep; a rusty speaker on a pole crackles on",
+  "quake": true
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "Nina Nina.",
+  "act": "llamándola como quedó registrada",
+  "as": "Voice from the speaker"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "…Nina Nina?",
+  "act": "oyendo un apellido que no tiene",
+  "do": "Stops so suddenly the cart hits her heels."
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "And Masaru, No-Degree. Report to Altair Systems.",
+  "act": "dando la orden como quien pone la mesa",
+  "as": "Voice from the speaker"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "fastidio",
+  "text": "I never said that anywhere.",
+  "act": "defendiendo lo que no puede defender"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "You said it at question twenty-eight.",
+  "act": "recordándoselo sin maldad"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "I said it with my face. Doesn't count.",
+  "act": "perdiendo con dignidad"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "What if we don't go? Do they measure us from far away?",
+  "act": "proponiendo desobedecer en voz baja",
+  "do": "Leans toward Nina and talks without moving his lips.",
+  "fx": "whisper"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "They already measure us from far away.",
+  "act": "señalando el poste con los ojos"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "Now.",
+  "act": "terminando la discusión",
+  "fx": "shake",
+  "as": "Voice from the speaker"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · epic-joke theme",
+  "src": "music/chiste.mp3"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Coming! Right now! Coming!",
+  "act": "obedeciendo a un poste",
+  "do": "Turns the cart around in one move, no idea how."
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 2 · The lab",
+  "rows": [
+   [
+    "Objetivo",
+    "Saber para qué los llamaron."
+   ],
+   [
+    "Obstáculo",
+    "Nadie da la cara: una voz manda desde el fondo."
+   ],
+   [
+    "Giro",
+    "La voz les da un chip. Y después la dueña de la voz mira a Nina."
+   ],
+   [
+    "Salida",
+    "Hay otro chip, en otro cajón."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "altair"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · the lab sound returns, still",
+  "src": "music/altair.mp3"
+ },
+ {
+  "t": "enter",
+  "who": "analista",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "Four minutes and twelve seconds since the call. This way.",
+  "act": "midiéndolos otra vez",
+  "do": "Waits for them at the door, tablet already open."
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Is there another assessment? Because I'm still on four point two.",
+  "act": "temiendo lo peor"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "concentración",
+  "text": "No. This time someone else writes the report.",
+  "act": "anunciando algo que no explica"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Who?",
+  "act": "buscando a alguien con la mirada"
+ },
+ {
+  "t": "say",
+  "who": "analista",
+  "expr": "calma",
+  "text": "Lab three. Don't touch anything. Don't look at it too much either.",
+  "act": "dejándolos en la puerta",
+  "do": "Opens a white door and steps aside."
+ },
+ {
+  "t": "exit",
+  "who": "analista"
+ },
+ {
+  "t": "bg",
+  "id": "lab"
+ },
+ {
+  "t": "narr",
+  "text": "Lab three is bigger than all of Vuela Alto. There are colored tables and screens, and nobody in sight.",
+  "act": "poniendo el lugar"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "Blue table. On your left. The controller.",
+  "act": "dirigiéndolos sin aparecer",
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Is that the voice from the pole?",
+  "act": "reconociendo el tono"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "It's the voice of someone who doesn't say things twice.",
+  "act": "reconociéndolo también"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "It's tiny.",
+  "act": "mirando lo que encontró",
+  "do": "On the blue table there's a blue chip, the size of a fingernail."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Technically, this is what moves the wings. It looks like a candy.",
+  "act": "dudando de la tecnología"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "concentración",
+  "text": "Frame controller. It connects what you feel to the wings and the thruster.",
+  "act": "explicando una sola vez, sin adornos",
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "aburrimiento",
+  "text": "Without it, you're a little girl with a scrap refrigerator on her back.",
+  "act": "diciendo la verdad sin cuidarla",
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "alegría",
+  "text": "~Thank you, ma~~Thank you, mi~Thank you! …Sir. Ma'am. Um.",
+  "act": "agradeciendo sin saber a quién",
+  "do": "Bows toward every table, just in case.",
+  "speed": "fast"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a rolling chair crosses the entire, very long lab, and stops",
+  "quake": false
+ },
+ {
+  "t": "enter",
+  "who": "cernicala",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "cernicala",
+  "expr": "concentración",
+  "text": "…",
+  "act": "estudiándola de lejos ([concentración]: la mide)",
+  "do": "Peeks out from behind a screen. Narrows her eyes behind the visor."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "alegría",
+  "text": "Thank—",
+  "act": "agradeciendo por los dos"
+ },
+ {
+  "t": "say",
+  "who": "cernicala",
+  "expr": "fastidio",
+  "text": "Shh.",
+  "act": "cortándolo sin mirarlo",
+  "do": "Raises one finger. Never takes her eyes off Nina.",
+  "fx": "shake"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…",
+  "act": "quedándose quieta ([en blanco]: no sabe si respirar)"
+ },
+ {
+  "t": "say",
+  "who": "cernicala",
+  "expr": "concentración",
+  "text": "…No.",
+  "act": "descartando en voz baja"
+ },
+ {
+  "t": "say",
+  "who": "cernicala",
+  "expr": "concentración",
+  "text": "…|…Maybe.",
+  "act": "cambiando de idea sin explicar",
+  "speed": "slow"
+ },
+ {
+  "t": "exit",
+  "who": "cernicala"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · the chair rolls back, all the way, and stops on the other side",
+  "quake": false
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "Green table. In the corner. Red drawer. Throw out the blue one.",
+  "act": "dando las indicaciones exactas",
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "And close the door on your way out.",
+  "act": "volviendo a lo suyo",
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 3 · The red drawer",
+  "rows": [
+   [
+    "Objetivo",
+    "Encontrar el cajón rojo sin romper nada."
+   ],
+   [
+    "Obstáculo",
+    "La mesa verde está en un rincón olvidado, bajo polvo y cables."
+   ],
+   [
+    "Giro",
+    "El chip del cajón es viejo, blanco y de otra época."
+   ],
+   [
+    "Salida",
+    "Se van sin molestar, y oyen media llamada."
+   ]
+  ]
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Green table? I see a gray one. And one that was green ten years ago.",
+  "act": "buscando en el rincón",
+  "do": "Nudges a pile of cables aside with his toe."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "That one. Wait.",
+  "act": "reconociendo una tarea",
+  "do": "Takes the rag from her pocket and dusts the table."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "You're cleaning someone else's lab?",
+  "act": "viendo lo inevitable"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "If we're opening her drawer, it should at least be clean.",
+  "act": "explicando su ética"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a drawer that hasn't opened in years gives way at once",
+  "quake": true
+ },
+ {
+  "t": "cg",
+  "text": "[ILLUSTRATION] In Nina's palm, a white chip, large and worn at the edges, with an old glow. Next to it, the factory blue one, new and plain."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "It's bigger. And older. Are you sure it's this one?",
+  "act": "desconfiando del cambio"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "She said red drawer.",
+  "act": "aferrándose a la instrucción ([en blanco]: no puede dejar de mirarlo)"
+ },
+ {
+  "t": "choice",
+  "label": "What Masaru tells Nina",
+  "options": [
+   {
+    "tag": "Aceptar",
+    "text": "It looks right in your hand.",
+    "then": [
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "alegría",
+      "text": "Yeah? …It's warm. Like someone used it a little while ago.",
+      "act": "encontrándole algo propio"
+     }
+    ]
+   },
+   {
+    "tag": "Rechazar",
+    "text": "It looks broken. Let's take the blue one.",
+    "then": [
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "fastidio",
+      "text": "No. She said the red one.",
+      "act": "negándose sin pensarlo dos veces",
+      "do": "Closes her hand over the white chip."
+     }
+    ]
+   },
+   {
+    "tag": "Desviar",
+    "text": "What if we take both? Just in case.",
+    "then": [
+     {
+      "t": "say",
+      "who": "prota",
+      "expr": "sorpresa",
+      "text": "She said to throw out the blue one.",
+      "act": "recordándole la orden"
+     },
+     {
+      "t": "say",
+      "who": "coach",
+      "expr": "concentración",
+      "text": "I'll throw it out later. At home. No rush.",
+      "act": "guardándoselo en el bolsillo",
+      "do": "Slips the blue chip into his chest pocket."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "I'm taking this one. If it doesn't work, it's on me.",
+  "act": "eligiendo ella, y haciéndose cargo",
+  "do": "Closes her hand over the white chip."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Let's go. Quietly.",
+  "act": "saliendo sin molestar",
+  "fx": "whisper"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "fastidio",
+  "text": "…What do you mean you're not at the hangar?",
+  "act": "hablando por teléfono, lejos",
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "say",
+  "who": "parlante",
+  "expr": "calma",
+  "text": "Then they'll get there before you.",
+  "act": "dejando caer la frase como una apuesta",
+  "delay": true,
+  "as": "Voice from the back of the lab"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · the door of lab three closes, very slowly",
+  "quake": false
+ },
+ {
+  "t": "exit",
+  "who": "prota"
+ },
+ {
+  "t": "exit",
+  "who": "coach"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · fades out",
+  "src": "stop",
+  "fade": true
+ },
+ {
+  "t": "card",
+  "k": "Main story · Chapter 8",
+  "title": "Signed on the Forehead",
+  "sub": "Kōryū Racing"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 1 · The comet",
+  "rows": [
+   [
+    "Objetivo",
+    "Volver a casa con el chip."
+   ],
+   [
+    "Obstáculo",
+    "Nina no puede dejar de mirar el chip, y la avenida sigue."
+   ],
+   [
+    "Giro",
+    "Algo rojo los atropella y sale corriendo."
+   ],
+   [
+    "Salida",
+    "Tienen que pasar por Kōryū para llegar a Vuela Alto."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "calle"
+ },
+ {
+  "t": "enter",
+  "who": "prota",
+  "pos": "left"
+ },
+ {
+  "t": "enter",
+  "who": "coach",
+  "pos": "center"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "She didn't tell me her name.",
+  "act": "pensando en la de los lentes",
+  "do": "Walks with the chip in her open palm, as if it were water."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Nobody tells us their name. I'm starting to take it personally.",
+  "act": "sumando la lista del día"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "calma",
+  "text": "She looked at me the way the old man looks before he says no.",
+  "act": "comparando lo único que conoce"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "But she said “maybe.” The old man never said “maybe.” I wrote it down.",
+  "act": "mostrando la evidencia",
+  "do": "Turns the notebook around. It says “MAYBE,” underlined three times."
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · a hum growing from the corner, like a car with no engine",
+  "quake": true
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · epic-joke theme",
+  "src": "music/chiste.mp3"
+ },
+ {
+  "t": "enter",
+  "who": "peregrina",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "fastidio",
+  "text": "&%@#!",
+  "act": "chocando con todo a la vez",
+  "do": "A red blur appears, takes out the cart, and all three go down.",
+  "fx": "shake"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "The chip! Where's the—? …Oh. In my hand.",
+  "act": "rescatando lo único que importa",
+  "speed": "fast"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "sorpresa",
+  "text": "Sky-blue overalls. Scrap wings.",
+  "act": "reconociéndolos desde el piso",
+  "do": "Looks at them from the ground, hair a mess, one eye shut."
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "sorpresa",
+  "text": "No. No, no, no.",
+  "act": "dándose cuenta de que llega tarde"
+ },
+ {
+  "t": "exit",
+  "who": "peregrina"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "Was that a person?",
+  "act": "procesando lo que pasó",
+  "do": "Still sitting on the sidewalk, the notebook open on his face."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "She was running the same way we're going.",
+  "act": "mirando hacia donde se fue"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "The same way, at a different speed. Like everyone today.",
+  "act": "levantándose de a partes"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 2 · The young lady",
+  "rows": [
+   [
+    "Objetivo",
+    "Pasar por delante de Kōryū sin que nadie los mire."
+   ],
+   [
+    "Obstáculo",
+    "Ishida los está esperando en la acera."
+   ],
+   [
+    "Giro",
+    "«La señorita» quiere verlos, y ellos no saben quién es."
+   ],
+   [
+    "Salida",
+    "Entran con el carrito en brazos."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "koryu-ext"
+ },
+ {
+  "t": "enter",
+  "who": "ishida",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "Good afternoon. The young lady is expecting you.",
+  "act": "recibiéndolos como a invitados",
+  "do": "Waits at the end of the red carpet, hands behind his back."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "What young lady?",
+  "act": "preguntando lo obvio"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "The young lady.",
+  "act": "repitiendo lo que no necesita explicación",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "The one who hires the cleaning staff?",
+  "act": "buscando la única señorita que se le ocurre",
+  "do": "Stands up straight, in case it's an interview."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "Please, come in. Carry the cart. Wheels do not touch the carpet.",
+  "act": "cuidando la alfombra antes que nada"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Technically, wheels exist so you don't have to carry things.",
+  "act": "protestando mientras levanta el carrito"
+ },
+ {
+  "t": "exit",
+  "who": "ishida"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 3 · Some fans",
+  "rows": [
+   [
+    "Objetivo",
+    "Que la señorita les dé el casco sin que parezca que corrió."
+   ],
+   [
+    "Obstáculo",
+    "Está sin aire y no sabe actuar."
+   ],
+   [
+    "Giro",
+    "Elige el casco más viejo, y lo firma."
+   ],
+   [
+    "Salida",
+    "Salen con casco, fotos firmadas y una gorra, sin saber quién era."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "koryu"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · the orchestra, behind the golden door",
+  "src": "music/koryu.mp3"
+ },
+ {
+  "t": "enter",
+  "who": "peregrina",
+  "pos": "right"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "alegría",
+  "text": "Oh! What a surprise! Fans!",
+  "act": "fingiendo que estaba ahí desde siempre",
+  "do": "Poses with her hands on her hips. Her chest heaves."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "It's the girl from the poster.",
+  "act": "reconociéndola recién ahora",
+  "fx": "whisper"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "It's the girl from the sidewalk.",
+  "act": "reconociéndola por otro lado"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "ganas",
+  "text": "I've been here… all afternoon. Relaxing. Posing.",
+  "act": "mintiendo entre respiraciones",
+  "do": "Wipes her forehead with the back of her glove, quickly."
+ },
+ {
+  "t": "choice",
+  "label": "What Masaru tells her",
+  "options": [
+   {
+    "tag": "Aceptar",
+    "text": "Yes. Fans. Big fans.",
+    "then": [
+     {
+      "t": "say",
+      "who": "peregrina",
+      "expr": "alegría",
+      "text": "Confirmed! I can see it in your eyes. I always can.",
+      "act": "recibiendo lo que esperaba"
+     }
+    ]
+   },
+   {
+    "tag": "Rechazar",
+    "text": "We don't know who you are.",
+    "then": [
+     {
+      "t": "say",
+      "who": "peregrina",
+      "expr": "en blanco",
+      "text": "…",
+      "act": "no pudiendo procesarlo"
+     },
+     {
+      "t": "say",
+      "who": "peregrina",
+      "expr": "alegría",
+      "text": "What a great joke! Ishida, write that joke down.",
+      "act": "convirtiéndolo en algo posible"
+     }
+    ]
+   },
+   {
+    "tag": "Desviar",
+    "text": "Are you okay? You're breathing like you've been running.",
+    "then": [
+     {
+      "t": "say",
+      "who": "peregrina",
+      "expr": "fastidio",
+      "text": "Running? Negative. I breathe like this. It's my style.",
+      "act": "negando lo evidente con jerga de piloto"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "ganas",
+  "text": "Right. Ishida.",
+  "act": "dando la orden",
+  "do": "Snaps her fingers toward the golden door."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "calma",
+  "text": "Miss.",
+  "act": "obedeciendo desde algún lugar fuera de vista"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · three rhythmic claps; behind the golden door, the orchestra swells",
+  "quake": false
+ },
+ {
+  "t": "narr",
+  "text": "Four people in red walk in, each holding a different helmet. They line up without a word.",
+  "act": "mostrando el lujo"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "concentración",
+  "text": "…",
+  "act": "eligiendo con los ojos ([concentración]: compara cada casco con la cabeza de Nina)",
+  "do": "Looks at a helmet. Looks at Nina. Looks at another helmet. Looks at Nina."
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "concentración",
+  "text": "None. None of them.",
+  "act": "descartando el lujo entero",
+  "do": "Makes a frame with her fingers around Nina's head."
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "ganas",
+  "text": "Got it!",
+  "act": "decidiendo de golpe",
+  "do": "Shoots off toward a cabinet at the back."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "sorpresa",
+  "text": "Did she just measure my head with her fingers?",
+  "act": "procesando el trámite"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "alegría",
+  "text": "This one.",
+  "act": "ofreciendo su elección",
+  "do": "Comes back with an old white helmet, scratched from many flights."
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "concentración",
+  "text": "Miss. That helmet does not leave that drawer. Your coach will not like this.",
+  "act": "advirtiendo con respeto"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "aburrimiento",
+  "text": "Pfft. He's not my dad.",
+  "act": "despachando la advertencia"
+ },
+ {
+  "t": "sfx",
+  "name": "SFX · the squeak of a marker on plastic",
+  "quake": false
+ },
+ {
+  "t": "cg",
+  "text": "[ILLUSTRATION] Peregrina signs the white helmet with a red marker, right on the forehead, tongue out in concentration. Nina holds it with both arms, eyes wide."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "en blanco",
+  "text": "…Thank you.",
+  "act": "agradeciendo sin entender ([en blanco]: no sabe qué acaba de recibir)",
+  "delay": true
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "I can't pay for it.",
+  "act": "devolviendo lo que no puede aceptar",
+  "do": "Holds the helmet back out to her with both arms."
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "sorpresa",
+  "text": "Pay for it? It has my signature. It's worth more now than a minute ago.",
+  "act": "sin entender la objeción"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "Then I owe you one.",
+  "act": "aceptando la deuda en vez del regalo"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "alegría",
+  "text": "Confirmed! You'll pay me back on the track. Now, the most important thing. Breakfast.",
+  "act": "cerrando el trato y pasando al modo cartel"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "ganas",
+  "text": "Fruit, protein, and get to the table first. Second: never walk if you can run. Third—",
+  "act": "recitando su propio comercial",
+  "speed": "fast"
+ },
+ {
+  "t": "say",
+  "who": "ishida",
+  "expr": "concentración",
+  "text": "Ahem.",
+  "act": "frenándola con una tos",
+  "do": "Coughs once, from the doorway."
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "calma",
+  "text": "…That's all for today. The rest is in the photos.",
+  "act": "aterrizando el discurso",
+  "do": "Hands them two signed photos and puts a Kōryū cap on Masaru."
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "sorpresa",
+  "text": "The cap's for me?",
+  "act": "sin saber si es un regalo o un uniforme"
+ },
+ {
+  "t": "say",
+  "who": "peregrina",
+  "expr": "alegría",
+  "text": "So they see you arrive. Someone always has to see you arrive.",
+  "act": "dándole su filosofía en una frase",
+  "key": true
+ },
+ {
+  "t": "exit",
+  "who": "peregrina"
+ },
+ {
+  "t": "sheet",
+  "title": "Scene 4 · Home",
+  "rows": [
+   [
+    "Objetivo",
+    "Llegar a Vuela Alto."
+   ],
+   [
+    "Obstáculo",
+    "No entienden nada de lo que pasó."
+   ],
+   [
+    "Giro",
+    "La radio dice lo que ellos no saben."
+   ],
+   [
+    "Salida",
+    "Mañana a las seis."
+   ]
+  ]
+ },
+ {
+  "t": "bg",
+  "id": "exterior"
+ },
+ {
+  "t": "music",
+  "name": "MUSIC · Vuela Alto theme",
+  "src": "music/vuela-alto.mp3"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "What just happened?",
+  "act": "intentando resumir el día",
+  "do": "He's wearing the cap. He hasn't taken it off."
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "We got wings. A chip. A helmet. And photos.",
+  "act": "contando lo que tiene en los brazos"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "concentración",
+  "text": "Whose photos are they?",
+  "act": "mirando la firma"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "concentración",
+  "text": "It says… “Fly!” And a scribble. And a little drawing of a wing.",
+  "act": "leyendo lo que no se puede leer"
+ },
+ {
+  "t": "narr",
+  "text": "On the radio of a passing car, someone announces Caracara's open training, from Boneyard Works, tomorrow at six.",
+  "act": "dejando que el jugador sepa lo que ellos no"
+ },
+ {
+  "t": "say",
+  "who": "prota",
+  "expr": "ganas",
+  "text": "Tomorrow at six, I start *flying*.",
+  "act": "decidiendo"
+ },
+ {
+  "t": "say",
+  "who": "coach",
+  "expr": "cansancio",
+  "text": "Tomorrow at six, I sleep.",
+  "act": "cerrando con su verdad"
+ }
+];
 
   var log = document.getElementById("log");
   var chars = document.getElementById("chars");
@@ -4396,7 +8444,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
       if (c.av) { av.style.backgroundImage = "url(" + c.av + ")"; av.style.backgroundSize = "cover"; av.style.backgroundPosition = "center top"; } else av.textContent = c.initial;
       var b = document.createElement("div"); b.className = "bubble";
       var w = document.createElement("div"); w.className = "who"; w.textContent = extra.as || c.name;
-      if (extra.expr) { var sm = document.createElement("small"); sm.textContent = extra.expr; w.appendChild(sm); }
+      if (extra.expr) { var sm = document.createElement("small"); sm.textContent = exprLabel(extra.expr); w.appendChild(sm); }
       b.appendChild(w);
       if (extra.do) { var dd = document.createElement("div"); dd.className = "do"; dd.textContent = extra.do; b.appendChild(dd); }
       b.appendChild(p);
@@ -4597,7 +8645,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
     if (master) master.gain.setValueAtTime(0, actx.currentTime); else bgm.volume = 0;
     if (useWA) {
       var ctx = ensureCtx(); if (!ctx) { setBtn("♪ error"); return; }
-      var go = function (buf) { if (current !== name || muted) return; if (srcNode) { try { srcNode.stop(); } catch (e) {} } srcNode = ctx.createBufferSource(); srcNode.buffer = buf; srcNode.loop = true; srcNode.connect(master); srcNode.start(0); ramp(VOL, fin); setBtn("♪ sí", ctx.state !== "running"); };
+      var go = function (buf) { if (current !== name || muted) return; if (srcNode) { try { srcNode.stop(); } catch (e) {} } srcNode = ctx.createBufferSource(); srcNode.buffer = buf; srcNode.loop = true; srcNode.connect(master); srcNode.start(0); ramp(VOL, fin); setBtn(L("♪ sí", "♪ on"), ctx.state !== "running"); };
       if (buffers[name]) return go(buffers[name]);
       var decode = function (ab) {
         var p = ctx.decodeAudioData(ab, function (buf) { buffers = {}; buffers[name] = buf; go(buf); }, function () { setBtn("♪ error"); });
@@ -4612,7 +8660,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
     }
     bgm.src = srcOf(name);
     var q = bgm.play();
-    if (q && q.then) q.then(function () { setBtn("♪ sí"); ramp(VOL, fin); }).catch(function (e) { if (e && e.name === "NotAllowedError") setBtn("♪ sí", true); });
+    if (q && q.then) q.then(function () { setBtn(L("♪ sí", "♪ on")); ramp(VOL, fin); }).catch(function (e) { if (e && e.name === "NotAllowedError") setBtn(L("♪ sí", "♪ on"), true); });
     else ramp(VOL, fin);
   }
   bgm.addEventListener("error", function () {
@@ -4643,9 +8691,29 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
   document.addEventListener("keydown", unlock, true);
   musicBtn.addEventListener("click", function (e) {
     e.stopPropagation(); muted = !muted; musicBtn.setAttribute("aria-pressed", String(!muted));
-    musicBtn.textContent = muted ? "♪ no" : "♪ sí";
+    musicBtn.textContent = muted ? L("♪ no", "♪ off") : L("♪ sí", "♪ on");
     if (muted) { var keep = wanted; hardStop(); wanted = keep; } else if (wanted) startTrack(wanted);
   });
+  /* idioma de la demo: ?lang=en|es, lo elegido antes, o el del navegador */
+  var LANG = (function () {
+    try { var q = location.search.match(/[?&]lang=(es|en)/); if (q) return q[1]; var v = localStorage.getItem("vuelaalto.lang"); if (v === "es" || v === "en") return v; } catch (e) {}
+    return /^en/i.test(navigator.language || "") ? "en" : "es";
+  })();
+  function L(es, en) { return LANG === "en" ? en : es; }
+  var CAST_EN = { prota: { name: "Nervous girl" }, vet: { name: "Woman with tired eyes" }, coach: { name: "Lost young man" }, viejo: { name: "Old man" }, ishida: { name: "Man in white gloves" }, analista: { name: "Woman in the sky-blue visor" }, caracara: { name: "Workshop girl" }, soldador: { name: "Man with the welder" }, cernicala: { name: "Girl in glasses" }, peregrina: { name: "Girl in red" }, parlante: { name: "Voice" } };
+  var EXPR_EN = { "calma": "calm", "alegría": "joy", "ganas": "eager", "aburrimiento": "bored", "fastidio": "annoyed", "sorpresa": "surprise", "concentración": "focus", "cansancio": "tired", "tristeza": "sad", "en blanco": "blank" };
+  function exprLabel(x) { return LANG === "en" ? (EXPR_EN[x] || x) : x; }
+  function applyLang() {
+    document.documentElement.lang = LANG;
+    var set = function (sel, es, en) { var el = document.querySelector(sel); if (el) el.textContent = L(es, en); };
+    set("#dir", "Dirección", "Director"); set("#auto", "Auto", "Auto"); set("#skip", "Saltar", "Skip");
+    set("#tap", "Toca para avanzar", "Tap to continue"); set(".cg .hint", "Toca para volver", "Tap to go back");
+    set(".stage .note", "Prototipo · texto de ejemplo", "Prototype · sample text");
+    var st = document.getElementById("stage"); if (st) st.setAttribute("aria-label", L("Escenario. Toca para avanzar.", "Stage. Tap to continue."));
+    Array.prototype.forEach.call(document.querySelectorAll("#chap option"), function (o) { o.textContent = o.textContent.replace(/^(Cap\.|Ch\.)/, L("Cap.", "Ch.")); });
+    var mb = document.getElementById("musicbtn"); mb.setAttribute("data-tap", L(" · toca", " · tap")); mb.textContent = mb.textContent.replace(/^♪ (sí|on)$/, L("♪ sí", "♪ on")).replace(/^♪ (no|off)$/, L("♪ no", "♪ off"));
+    var lb = document.getElementById("langbtn"); lb.textContent = L("EN", "ES"); lb.setAttribute("aria-label", L("Switch to English", "Cambiar a castellano"));
+  }
   function advance() {
     clearTimeout(autoTimer);
     if (blocked) return;
@@ -4729,7 +8797,8 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
     blocked = false; waiting = false; cg.classList.remove("on");
     document.getElementById("tap").hidden = false;
     Object.keys(CAST).forEach(function (k) { if (CAST[k].real) CAST[k].name = CAST[k].first || (CAST[k].first = CAST[k].name); });
-    Object.keys(CAST).forEach(function (k) { if (CAST[k].first === undefined) CAST[k].first = CAST[k].name; CAST[k].name = CAST[k].first; });
+    SCRIPT = LANG === "en" ? SCRIPT_EN : SCRIPT_ES;
+    Object.keys(CAST).forEach(function (k) { var c = CAST[k]; if (c.esFirst === undefined) { c.esFirst = c.name; c.esReal = c.real; } var t = LANG === "en" && CAST_EN[k]; c.first = t ? t.name : c.esFirst; c.real = t && t.real ? t.real : c.esReal; c.name = c.first; });
     var starts = []; SCRIPT.forEach(function (e, i) { if (e.t === "card") starts.push(i); });
     var ci = Math.max(0, Math.min(starts.length - 1, parseInt(document.getElementById("chap").value, 10) || 0));
     SCRIPT.slice(0, starts[ci]).forEach(function (e) { if (e.t === "reveal") CAST[e.who].name = CAST[e.who].real; });
@@ -4738,6 +8807,12 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
   }
   document.getElementById("chap").addEventListener("change", function (e) { e.stopPropagation(); start(); });
   document.getElementById("chap").addEventListener("click", function (e) { e.stopPropagation(); });
+  document.getElementById("langbtn").addEventListener("click", function (e) {
+    e.stopPropagation(); LANG = LANG === "en" ? "es" : "en";
+    try { localStorage.setItem("vuelaalto.lang", LANG); } catch (err) {}
+    applyLang(); start();
+  });
+  applyLang();
   start();
 })();
 </script>
