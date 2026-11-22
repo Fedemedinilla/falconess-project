@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
   const artifact = mode === "artifact";
   return {
     base: "./",
+    // public/ (the story-mode demo, its music) ships with the site, never inside the single page
+    publicDir: artifact ? false : "public",
     plugins: [react(), ...(artifact ? [viteSingleFile(), artifactPage()] : [])],
     build: {
       outDir: artifact ? "dist-artifact" : "dist",

@@ -1527,6 +1527,7 @@
   "ui.m.music": "Música: {state}",
   "ui.m.music.on": "sí",
   "ui.m.music.off": "no",
+  "ui.m.title.story": "MODO HISTORIA (DEMO)",
   "ui.m.title.tap": "TOCA PARA EMPEZAR",
   "ui.m.sound": "Sonido: {style}",
   "ui.m.sound.label": "Sonido: {style}. Tocar para cambiar de estilo",
