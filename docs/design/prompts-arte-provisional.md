@@ -777,3 +777,46 @@ warm string lights along the porch, a hand-painted wooden sign with no letters, 
 showing the warm workshop inside. Golden afternoon light. Warm, welcoming, a little chaotic, like a big
 family home where everyone builds things together.
 ```
+
+### Prólogo de la historia principal (2026-11-23)
+
+Tres ilustraciones del mismo estilo, que pasan una detrás de otra con la narración abajo. Formato
+**4:3 horizontal**. El bloque de estilo va primero en las tres, igual; no es el estilo del cuadro de
+la carrera de la paz (óleo), es otro, propio del prólogo.
+
+```text
+Epic anime key visual in the style of a legend being told, painted, cinematic and luminous, like the
+opening of a high-budget anime film. Horizontal 4:3. Soft painterly textures, strong rim light, deep
+atmospheric perspective, a limited palette of warm gold against deep blue. Characters small in the frame,
+seen as part of a huge world. No text, no letters, no numbers, no logos, no real brands, no watermark.
+```
+
+#### 1. La carrera
+
+```text
+A league race of winged racers seen from far below, at golden morning light. Three young women with
+anime-style mechanical feathered wings fly high across a vast sky above a racecourse that runs to the
+horizon over hills: one in red and gold, one in navy blue with cyan lights, one in olive green and rust
+orange. Thin trails of light follow them. Far below, a long grandstand packed with tiny cheering people
+and colored banners. Tall slim marker pylons and floating ring gates mark the flight lanes. Sense of speed,
+height and joy.
+```
+
+#### 2. Las mensajeras
+
+```text
+The same world many years ago, during a long war: a dark sky of smoke, fire and storm clouds. A line of
+young women messengers with old, simple, patched mechanical wings and message tubes strapped to their
+backs fly in single file through the smoke, small silhouettes against the flames below. Ahead of them,
+far away, a single round gap opens in the clouds, showing pure blue sky and light. Solemn, brave,
+mythical, like an old legend.
+```
+
+#### 3. Hoy
+
+```text
+The present day, at night: a huge modern racing stadium glowing with lights, colored team banners and
+giant screens showing three winged silhouettes, the sky above it full of light. Far away from it, in the
+dark foreground, on a quiet grassy hill under the stars, one tiny lonely figure of a young woman holding
+a broom stands with her back to us, looking at the glow. Quiet, hopeful, the beginning of a story.
+```
