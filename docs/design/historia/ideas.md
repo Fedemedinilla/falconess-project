@@ -688,3 +688,22 @@ Nota del editor, para cuando se lleven al juego (revisado en el código el 2026-
   limpieza.
 - **Propuesta (Claude, falta aprobar):** capítulo 2 «Cinco y un minuto» (`capitulos/cap-02-trabajo.md`).
   El 3 queda para cuando a Nina le pica el bichito.
+
+### I38 · Primeras reseñas: dos testers, desde el celular (2026-11-23)
+
+Lo que dijeron los dos (dueño):
+- No se entiende de qué hablan desde el inicio (el dueño propone un prólogo del mundo).
+- A veces hablan muy robótico, y se notan restos de parches anteriores (la «bis» de Masaru, el
+  «¡Buenas tardes!» de Nina después de media hora hablando con Ishida).
+- Altair es muy largo, o muy seco.
+- Boneyard muestra familia y calor, pero Caracara y el de la soldadora deberían tratarse más como
+  familia: una charla más jodona entre ellos.
+- La escena del chip de Cernícala confunde: muchas acciones en poco tiempo.
+- Falta una urgencia u objetivo de Nina y Masaru: no se entiende por qué salen a buscar alas.
+
+### I39 · Las mensajeras en el prólogo (2026-11-23)
+
+- **Decidido (dueño, en el texto del prólogo):** las mensajeras conectaban pueblos que se creían
+  aislados; iban de ciudad en ciudad, sobre el suelo asediado y a través de un cielo de eterna
+  oscuridad, con alas mecánicas construidas por los propios pueblos. El don se cuenta como historia
+  («Cuentan las historias…»), no como hecho.
