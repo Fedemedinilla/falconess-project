@@ -89,6 +89,9 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
 #langbtn { position: absolute; left: 76px; top: 10px; z-index: 6; font: 600 12px/1 system-ui, sans-serif; padding: 7px 10px; border-radius: 999px; border: 0; background: rgba(10,20,30,.55); color: #fff; letter-spacing: .06em; }
 .cg.story .cap { font-family: inherit; font-size: 17px; line-height: 1.5; font-style: italic; text-transform: none; letter-spacing: normal; max-width: 92%; margin: 14px auto 0; text-align: center; }
 .cg .frame.pic { aspect-ratio: 4 / 3; max-width: min(100%, 720px); padding: 0; background: #000; }
+.cg .frame img { transition: opacity .35s ease; }
+.cg .cap { transition: opacity .25s ease; }
+.bg-negro { background: #0b1220; }
 #musicbtn { position: absolute; left: 10px; top: 10px; z-index: 6; font: 600 12px/1 system-ui, sans-serif; padding: 7px 10px; border-radius: 999px; border: 0; background: rgba(10,20,30,.55); color: #fff; letter-spacing: .04em; }
 #musicbtn.blocked { background: #c0392b; }
 #musicbtn.blocked::after { content: attr(data-tap); }
@@ -216,6 +219,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
     <div class="bg bg-boneyard-ext" id="bg-boneyard-ext"></div>
     <div class="bg bg-ph bg-calle" id="bg-calle" data-ph="Fondo provisional: una avenida de la ciudad"></div>
     <div class="bg bg-ph bg-lab" id="bg-lab" data-ph="Fondo provisional: el laboratorio tres de Altair"></div>
+    <div class="bg bg-negro" id="bg-negro"></div>
     <div class="bg bg-koryu" id="bg-koryu"></div>
     <div class="bg bg-altair" id="bg-altair"></div>
     <div class="bg bg-boneyard" id="bg-boneyard"></div>
@@ -281,6 +285,10 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
   "k": "Historia principal · Prólogo",
   "title": "Falconess",
   "sub": "Una leyenda que todavía se corre"
+ },
+ {
+  "t": "bg",
+  "id": "negro"
  },
  {
   "t": "music",
@@ -4394,6 +4402,10 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
   "k": "Main story · Prologue",
   "title": "Falconess",
   "sub": "A legend still being raced"
+ },
+ {
+  "t": "bg",
+  "id": "negro"
  },
  {
   "t": "music",
@@ -8712,7 +8724,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
         var fr = cg.querySelector(".frame");
         if (s.text) { fr.classList.add("ph"); fr.setAttribute("data-text", s.text); } else { fr.classList.remove("ph"); }
         var im = document.getElementById("painting"); if (!im.getAttribute("data-orig")) im.setAttribute("data-orig", im.src);
-        if (s.pic && PICS[s.pic]) { fr.classList.remove("ph"); fr.classList.add("pic"); im.src = PICS[s.pic]; } else { fr.classList.remove("pic"); im.src = im.getAttribute("data-orig"); }
+        if (s.pic && PICS[s.pic]) { fr.classList.remove("ph"); fr.classList.add("pic"); if (im.src !== PICS[s.pic]) { if (cg.classList.contains("on") && !reduce) { im.style.opacity = "0"; setTimeout(function () { im.src = PICS[s.pic]; im.style.opacity = "1"; }, 350); } else im.src = PICS[s.pic]; } } else { fr.classList.remove("pic"); im.src = im.getAttribute("data-orig"); }
         drawPainting(); cg.classList.add("on"); return;
       case "choice": return showChoice(s);
       case "end": return showEnd();
@@ -8865,7 +8877,10 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
   }
 
   cg.addEventListener("click", function (e) {
-    e.stopPropagation(); cg.classList.remove("on"); blocked = false; waiting = false; setTimeout(step, reduce ? 0 : 600);
+    e.stopPropagation();
+    var nx = queue[0];
+    if (cg.classList.contains("story") && nx && nx.t === "cg" && nx.big) { blocked = false; waiting = false; step(); return; }
+    cg.classList.remove("on"); blocked = false; waiting = false; setTimeout(step, reduce ? 0 : 600);
   });
   document.getElementById("stage").addEventListener("click", advance);
   log.addEventListener("click", advance);
@@ -8943,7 +8958,7 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
     var starts = []; SCRIPT.forEach(function (e, i) { if (e.t === "card") starts.push(i); });
     var ci = Math.max(0, Math.min(starts.length - 1, parseInt(document.getElementById("chap").value, 10) || 0));
     SCRIPT.slice(0, starts[ci]).forEach(function (e) { if (e.t === "reveal") CAST[e.who].name = CAST[e.who].real; });
-    queue = SCRIPT.slice(starts[ci]); setBg("interior"); playMusic("stop");
+    queue = SCRIPT.slice(starts[ci]); setBg(SCRIPT[starts[ci]] && SCRIPT[starts[ci] + 1] && SCRIPT[starts[ci] + 1].t === "bg" ? SCRIPT[starts[ci] + 1].id : "interior"); playMusic("stop");
     step();
   }
   document.getElementById("chap").addEventListener("change", function (e) { e.stopPropagation(); start(); });
