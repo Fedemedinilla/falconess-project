@@ -700,3 +700,10 @@ Lo que dijeron los dos (dueño):
   familia: una charla más jodona entre ellos.
 - La escena del chip de Cernícala confunde: muchas acciones en poco tiempo.
 - Falta una urgencia u objetivo de Nina y Masaru: no se entiende por qué salen a buscar alas.
+
+### I39 · Las mensajeras en el prólogo (2026-11-23)
+
+- **Decidido (dueño, en el texto del prólogo):** las mensajeras conectaban pueblos que se creían
+  aislados; iban de ciudad en ciudad, sobre el suelo asediado y a través de un cielo de eterna
+  oscuridad, con alas mecánicas construidas por los propios pueblos. El don se cuenta como historia
+  («Cuentan las historias…»), no como hecho.
