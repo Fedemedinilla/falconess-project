@@ -707,3 +707,13 @@ Lo que dijeron los dos (dueño):
   aislados; iban de ciudad en ciudad, sobre el suelo asediado y a través de un cielo de eterna
   oscuridad, con alas mecánicas construidas por los propios pueblos. El don se cuenta como historia
   («Cuentan las historias…»), no como hecho.
+
+### I40 · Nina adulta (2026-11-24)
+
+- **Idea (dueño):** una versión adulta de Nina, más confiada y acostumbrada a ser piloto; quizás
+  entrenando a una nueva generación de Vuela Alto. Imágenes de prueba del dueño: casual (remera
+  celeste con jean, buzo blanco con cargo gris) y traje azul marino con gorra de Vuela Alto y tableta.
+- **Propuesta (Claude, falta aprobar):** que conserve marcas de la Nina de siempre (el broche, el
+  trapo en el bolsillo, limpiar el visor antes de despegar), porque el arco mueve su estado y no su
+  núcleo (biblia, tema 7); y decidir si el azul marino es un cambio de colores de Vuela Alto o si va
+  celeste y blanco, para que no se lea como Altair.
