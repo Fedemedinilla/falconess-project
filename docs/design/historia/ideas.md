@@ -707,3 +707,25 @@ Lo que dijeron los dos (dueño):
   aislados; iban de ciudad en ciudad, sobre el suelo asediado y a través de un cielo de eterna
   oscuridad, con alas mecánicas construidas por los propios pueblos. El don se cuenta como historia
   («Cuentan las historias…»), no como hecho.
+
+### I40 · Nina adulta (2026-11-24)
+
+- **Idea (dueño):** una versión adulta de Nina, más confiada y acostumbrada a ser piloto; quizás
+  entrenando a una nueva generación de Vuela Alto. Imágenes de prueba del dueño: casual (remera
+  celeste con jean, buzo blanco con cargo gris) y traje azul marino con gorra de Vuela Alto y tableta.
+- **Propuesta (Claude, falta aprobar):** que conserve marcas de la Nina de siempre (el broche, el
+  trapo en el bolsillo, limpiar el visor antes de despegar), porque el arco mueve su estado y no su
+  núcleo (biblia, tema 7); y decidir si el azul marino es un cambio de colores de Vuela Alto o si va
+  celeste y blanco, para que no se lea como Altair.
+- **Idea (dueño, 2026-11-24): el arco largo de Nina.** Nina termina tomando lo mejor de las tres
+  estrellas. Primero les gana a las estrellas; cuando las tres se retiran, queda ella como veterana y
+  tiene que ganarle a la nueva generación; después entrena a un par de Falconess nuevas.
+- **Idea (dueño, 2026-11-24): las alumnas son un dúo.** Referencia: Death Note, cuando L ya no está y
+  lo reemplazan dos (Near y Mello) que separados no alcanzan y juntos sí son como un L.
+- **Propuesta (Claude, falta aprobar):**
+  - Lo que toma de cada estrella es una herramienta, no la personalidad, y cada una le cuesta algo
+    (biblia, tema 4, «la protagonista decide y paga»): de Peregrina, el hambre de ganar; de
+    Cernícala, medir antes de moverse; de Caracara, divertirse arriba e improvisar con lo que hay.
+  - El dúo se lleva mal, como Near y Mello: cada una tiene la mitad de lo que Nina juntó, y la
+    última lección de Nina es que la otra mitad está en la compañera.
+  - La carrera de la tormenta (I36), donde Nina pierde, va antes de ganarles a las estrellas.
