@@ -219,6 +219,8 @@ export function inputIcon(input: RunInput): IconName | undefined {
       return undefined;
     case "event:choose":
       return "event";
+    case "workshop:visit":
+      return actionIcon("workshop");
     default:
       return actionIcon(input.kind);
   }

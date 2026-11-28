@@ -147,7 +147,9 @@ describe("rest options (ADR-0006 D4)", () => {
 type WeekKind = Exclude<RunInput["kind"], "start" | "event:choose">;
 
 function inputOf(kind: WeekKind): RunInput {
-  return kind === "workshop" ? { kind, ops: [{ op: "repair" }] } : { kind };
+  if (kind === "workshop") return { kind, ops: [{ op: "repair" }] };
+  if (kind === "workshop:visit") return { kind, ops: [{ op: "learn-skill", skillId: "x" }] };
+  return { kind };
 }
 
 function logOf(...weeks: Array<[WeekKind, string[]]>): Pick<SeasonState, "log"> {
@@ -181,6 +183,14 @@ describe("mood drift (ADR-0006 D5)", () => {
       expect(
         trainingStreak(logOf(["train:agility", ["log.train.ok"]], [cut[0], [...cut[1]]])),
       ).toBe(0);
+  });
+
+  it("skips over a v3 workshop visit, which is no week (ADR-0018)", () => {
+    const visit: [WeekKind, string[]] = ["workshop:visit", ["log.workshop"]];
+    const trained: [WeekKind, string[]] = ["train:agility", ["log.train.ok"]];
+    expect(trainingStreak(logOf(trained, visit, trained))).toBe(2);
+    expect(trainingStreak(logOf(trained, visit))).toBe(1);
+    expect(trainingStreak(logOf(trained, ["rest", ["log.rest"]], visit, visit))).toBe(0);
   });
 
   it("v2: 2 % for the first two, then +4 % per training in a row; v1 never drifts", () => {

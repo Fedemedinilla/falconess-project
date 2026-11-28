@@ -27,6 +27,16 @@ export const WorkshopOp = z.discriminatedUnion("op", [
 export type WorkshopOp = z.infer<typeof WorkshopOp>;
 
 /**
+ * ADR-0018: what a v3 workshop visit can do (the wings and the skills; nothing to repair, no parts).
+ * The same ops as `WorkshopOp`, so the season applies both with the same code.
+ */
+export const WorkshopVisitOp = z.discriminatedUnion("op", [
+  z.strictObject({ op: z.literal("equip-frame"), frameId: Slug }),
+  z.strictObject({ op: z.literal("learn-skill"), skillId: Slug }),
+]);
+export type WorkshopVisitOp = z.infer<typeof WorkshopVisitOp>;
+
+/**
  * The race position of a goal race week (ADR-0008), on the week's action input: absent, she runs in
  * the position of the wings she races with. Only a week with a goal race accepts it.
  */
@@ -54,6 +64,14 @@ export const RunInput = z.discriminatedUnion("kind", [
     kind: z.literal("workshop"),
     ops: z.array(WorkshopOp).min(1).max(8),
     ...RaceWeek,
+  }),
+  /**
+   * ADR-0018 (ruleset v3): a workshop visit that does not spend the week. It closes no week, costs
+   * no vigor and is not counted in `inputsApplied`; it never carries a race position.
+   */
+  z.strictObject({
+    kind: z.literal("workshop:visit"),
+    ops: z.array(WorkshopVisitOp).min(1).max(8),
   }),
   z.strictObject({ kind: z.literal("rest"), ...RaceWeek }),
   z.strictObject({ kind: z.literal("outing"), manufacturer: Slug.optional(), ...RaceWeek }),

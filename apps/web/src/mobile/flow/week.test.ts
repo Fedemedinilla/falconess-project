@@ -268,6 +268,23 @@ describe("raceWings: the position her wings race in by default", () => {
     expect(ran?.position).toBe(wings);
   });
 
+  it("a v3 visit (ADR-0018) equips before the week: the card reads the wings she now has (F5)", () => {
+    const state = raceWeek("week-wings");
+    const other = state.hangar.find((id) => frame(id).style !== frame(state.equippedFrame).style);
+    if (!other) throw new Error("no frame of another style in her hangar");
+    const visited = advanceSeason(ctx, state, {
+      kind: "workshop:visit",
+      ops: [{ op: "equip-frame", frameId: other }],
+    });
+    expect(visited.turn).toBe(state.turn);
+    // the planning card and any week's action race the wings the visit left her on
+    expect(raceWings(ctx, visited)).toBe(DEFAULT_POSITION[frame(other).style]);
+    expect(raceWings(ctx, visited, { kind: "rest" })).toBe(raceWings(ctx, visited));
+    const ran = advanceSeason(ctx, visited, { kind: "rest" }).raceResults.at(-1);
+    expect(ran?.frameId).toBe(other);
+    expect(ran?.position).toBe(raceWings(ctx, visited));
+  });
+
   it("an injured week rests whatever the order: her wings stay the equipped ones", () => {
     const state = { ...raceWeek("week-wings"), injuryTurns: 1 };
     const other = state.hangar.find((id) => frame(id).style !== frame(state.equippedFrame).style);

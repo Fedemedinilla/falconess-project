@@ -7,7 +7,14 @@
  * screen (`open`, `raceAgain`, `rewatch`, `raceContinue`), so a timer never sounds (critic b). The
  * same code drives the game and the node season walks. Pure and text-free (flow/imports.test.ts).
  */
-import type { Position, SeasonState, StoryScene, TrainingKind } from "@falconess/schema";
+import type {
+  Position,
+  SeasonState,
+  StoryScene,
+  TrainingKind,
+  WorkshopOp,
+  WorkshopVisitOp,
+} from "@falconess/schema";
 import type { SimContext } from "@falconess/sim";
 import type { GameController, GameErrorKind } from "../../game/controller";
 import { runFingerprint } from "../../game/run";
@@ -50,6 +57,13 @@ export type Commands = {
   workshopTab(tab: WorkshopTab): void;
   /** The week's action: a normal week commits it, a race week decides it (its preview plays first). */
   choose(input: WeekActionInput): void;
+  /**
+   * The workshop's «Confirmar». On a ruleset with `workshopVisit` (v3, ADR-0018) a visit that spends
+   * no week: committed at once, race week or not, and a position planned for the race week stays
+   * planned. On v1 and v2 (or with an op a visit does not take) the workshop is still the week's
+   * action (`choose`).
+   */
+  visit(ops: WorkshopOp[]): void;
   /** A position on the planning card or the decided one; undefined: her wings' own. */
   position(position: Position | undefined): void;
   /** «Correr». */
@@ -82,6 +96,16 @@ export type Commands = {
 /** Why the controller refused the last act, named as `ui.error.<kind>` names it. */
 function errorKindOf(game: FlowPorts["game"]): GameErrorKind {
   return game.getSnapshot().error?.kind ?? "unexpected";
+}
+
+/** The order as a v3 visit's ops (ADR-0018: wings and skills), or undefined if it holds other ops. */
+function visitOps(ops: readonly WorkshopOp[]): WorkshopVisitOp[] | undefined {
+  const out: WorkshopVisitOp[] = [];
+  for (const op of ops) {
+    if (op.op !== "equip-frame" && op.op !== "learn-skill") return undefined;
+    out.push(op);
+  }
+  return out;
 }
 
 /** The fingerprint of the run the controller holds now. */
@@ -131,7 +155,7 @@ export function flowCommands(p: FlowPorts): Commands {
     p.dispatch({ type: "done", keys: [key] });
   };
 
-  return {
+  const cmds: Commands = {
     open(to) {
       const { flow, facts, ui } = p.now();
       if (flow.top.kind !== "idle" || flow.layer || ui.nav.at === "watch") return;
@@ -186,6 +210,27 @@ export function flowCommands(p: FlowPorts): Commands {
       });
       p.sound.cue(trainingCue(input, state.turn, preview.step.after, cards));
       p.dispatch({ type: "decided", fp, from: screenFrom(ui.nav) });
+    },
+
+    visit(ops) {
+      const vops = p.ctx.ruleset.season.workshopVisit ? visitOps(ops) : undefined;
+      if (vops === undefined) {
+        cmds.choose({ kind: "workshop", ops });
+        return;
+      }
+      const { flow, facts } = p.now();
+      if (!flow.canAct || flow.layer) return; // F27, with the controller's expectInputs
+      const { run } = facts.run;
+      const planned = facts.record?.phase === "planned" ? facts.record : undefined;
+      if (!p.game.act({ kind: "workshop:visit", ops: vops }, run.inputs.length)) {
+        p.dispatch({ type: "notice", notice: errorKindOf(p.game) });
+        return;
+      }
+      // the visit changed the run's fingerprint: the planned position moves with it
+      const next = fingerprintNow(p.game);
+      if (planned && next !== undefined) p.weeks.plan(next, planned.turn, planned.position);
+      p.sound.cue("confirm");
+      p.dispatch({ type: "acted" });
     },
 
     position(position) {
@@ -335,4 +380,5 @@ export function flowCommands(p: FlowPorts): Commands {
       p.dispatch({ type: "done", keys: [b.key] });
     },
   };
+  return cmds;
 }

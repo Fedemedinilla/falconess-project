@@ -166,7 +166,8 @@ export function previewOf(
  * The position her wings race in when none is picked: the default of the frame she races with
  * after the week's action (F5): the one its workshop order equips, else the equipped one (an
  * injured week rests, so its order equips nothing). The planning card, before any action, reads
- * the equipped frame's.
+ * the equipped frame's. On v3 the phone's workshop is a visit that spends no week (ADR-0018): it
+ * equips before the week's action, so the equipped frame already is the one she races with.
  */
 export function raceWings(
   ctx: SimContext,

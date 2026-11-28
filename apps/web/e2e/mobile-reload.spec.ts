@@ -11,7 +11,7 @@ import {
   toResult,
   week,
 } from "./mobile-helpers";
-import { holdClock, setTabHidden } from "./motion";
+import { setTabHidden } from "./motion";
 
 /**
  * A reload (or a closed tab, or a language switch) inside a week plays that week on (D5, F1, C5,
@@ -141,36 +141,30 @@ test("2. a reload over the action's effects: the effects again, then the emblem,
   await expect(page.locator("#m-volver")).toHaveCount(0);
 });
 
-test("3. a reload during the emblem of a week with nothing before it: it opens covered, the menu never shows", async ({
+test("3. a reload after a race week's workshop visit: the wings stay swapped, no week is decided (ADR-0018)", async ({
   page,
 }) => {
   test.setTimeout(90_000);
-  const seen = await watch(page, ["m-transicion", "m-entrenar", "m-precarrera"]);
-  await page.clock.install();
   await seedRun(page, "peregrina-w10");
   await page.goto("./");
   await continueRun(page);
-  // the workshop swaps her wings: no result and no effects, the emblem comes at once
+  const turn = await week(page);
+  // the workshop swaps her wings: a visit that spends no week, so no emblem and no record
   await page.click("#m-taller");
   await page.click("#m-ala-mule");
   await page.click("#m-taller-confirmar");
-  await expect(page.locator("#m-transicion")).toBeVisible();
-  // the clock stands still: the reload lands while the emblem is up (the race mode not begun);
-  // `holdClock` aims again if the clock got past its lead while the call travelled
-  await holdClock(page);
+  await settle(page);
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  expect(await storedWeek(page)).toBeNull();
   await page.reload();
-  // and runs again for the new page (the title leaves on a timer)
-  await page.clock.resume();
   await continueRun(page);
-  await expect(page.locator("#m-transicion")).toHaveCount(1);
-  const restored = await seen();
-  expect(restored.emblem).toBeGreaterThanOrEqual(0.99);
-  expect(restored.order["m-entrenar"]).toBeUndefined();
+  await settle(page);
+  // the same week on the menu, her new wings with it: Mule's ground wings race in the pack
+  expect(await week(page)).toBe(turn);
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  await page.click("#m-descansar");
   await toPosition(page);
-  const { order } = await seen();
-  expect(order["m-precarrera"]).toBeDefined();
-  expect(order["m-entrenar"]).toBeUndefined();
-  await expect(page.locator("#m-volver")).toHaveCount(0);
+  await expect(page.locator("#m-posicion-pack")).toBeChecked();
 });
 
 test("4. a position picked on the decided card survives a reload", async ({ page }) => {

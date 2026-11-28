@@ -77,13 +77,14 @@ export function actionBlock(
 /**
  * Training weeks in a row at the end of the log: the weeks whose action was a training that was
  * actually trained. A rest, an outing, the workshop, an injured week or a forced rest cut the
- * streak; an event choice adds no week. After an input that trained, it counts that week.
+ * streak; an event choice and a v3 workshop visit (ADR-0018) add no week and are skipped. After an
+ * input that trained, it counts that week.
  */
 export function trainingStreak(state: Pick<SeasonState, "log">): number {
   let n = 0;
   for (let i = state.log.length - 1; i >= 0; i--) {
     const e = state.log[i];
-    if (!e?.input) continue;
+    if (!e?.input || e.input.kind === "workshop:visit") continue;
     if (!e.input.kind.startsWith("train:")) break;
     if (e.notes.includes("log.rest.forced") || e.notes.includes("log.injured")) break;
     n += 1;

@@ -1,5 +1,5 @@
 import type { Rng } from "@falconess/rng";
-import type { WorkshopOp } from "@falconess/schema";
+import type { RunInput, WorkshopOp } from "@falconess/schema";
 import { installPart, resolveFrameBuild } from "../frame-build.js";
 import { flightOf } from "../race/flight.js";
 import { changeFatigue, type Draft, note, type SimContext } from "./context.js";
@@ -56,6 +56,28 @@ function checkSkillsFit(ctx: SimContext, d: Draft, op: string): void {
     );
 }
 
+function equipFrame(ctx: SimContext, d: Draft, frameId: string): void {
+  if (!d.hangar.includes(frameId)) throw new WorkshopError(`frame ${frameId} is not in the hangar`);
+  d.equippedFrame = frameId;
+  checkSkillsFit(ctx, d, `equip ${frameId}`);
+}
+
+function learnSkill(ctx: SimContext, d: Draft, skillId: string): void {
+  const skill = ctx.content.skills.get(skillId);
+  if (skill === undefined) throw new WorkshopError(`unknown skill ${skillId}`);
+  if (skill.kind !== "active")
+    throw new WorkshopError(`${skillId} is a passive; it comes with a frame`);
+  if (skill.uniqueTo !== undefined && skill.uniqueTo !== d.falconessId)
+    throw new WorkshopError(`${skillId} is unique to ${skill.uniqueTo}`);
+  if (d.learnedSkills.includes(skillId)) throw new WorkshopError(`${skillId} already learned`);
+  const limit = learnCap(ctx, d);
+  if (d.learnedSkills.length >= limit) throw new WorkshopError(`skill limit ${limit} reached`);
+  if (d.skillPoints < skill.cost)
+    throw new WorkshopError(`need ${skill.cost} skill points, have ${d.skillPoints}`);
+  d.skillPoints -= skill.cost;
+  d.learnedSkills.push(skillId);
+}
+
 export function applyWorkshop(
   ctx: SimContext,
   d: Draft,
@@ -65,13 +87,9 @@ export function applyWorkshop(
   const S = ctx.ruleset.season;
   for (const op of ops) {
     switch (op.op) {
-      case "equip-frame": {
-        if (!d.hangar.includes(op.frameId))
-          throw new WorkshopError(`frame ${op.frameId} is not in the hangar`);
-        d.equippedFrame = op.frameId;
-        checkSkillsFit(ctx, d, `equip ${op.frameId}`);
+      case "equip-frame":
+        equipFrame(ctx, d, op.frameId);
         break;
-      }
       case "install-part": {
         if (!ctx.content.parts.has(op.partId)) throw new WorkshopError(`unknown part ${op.partId}`);
         d.installedParts = installPart(ctx.content, d.installedParts, op.partId, S.maxParts);
@@ -106,26 +124,29 @@ export function applyWorkshop(
         d.frameQuirks[op.frameId] = rollQuirks(ctx, rng, frame.quirkSlots);
         break;
       }
-      case "learn-skill": {
-        const skill = ctx.content.skills.get(op.skillId);
-        if (skill === undefined) throw new WorkshopError(`unknown skill ${op.skillId}`);
-        if (skill.kind !== "active")
-          throw new WorkshopError(`${op.skillId} is a passive; it comes with a frame`);
-        if (skill.uniqueTo !== undefined && skill.uniqueTo !== d.falconessId)
-          throw new WorkshopError(`${op.skillId} is unique to ${skill.uniqueTo}`);
-        if (d.learnedSkills.includes(op.skillId))
-          throw new WorkshopError(`${op.skillId} already learned`);
-        const limit = learnCap(ctx, d);
-        if (d.learnedSkills.length >= limit)
-          throw new WorkshopError(`skill limit ${limit} reached`);
-        if (d.skillPoints < skill.cost)
-          throw new WorkshopError(`need ${skill.cost} skill points, have ${d.skillPoints}`);
-        d.skillPoints -= skill.cost;
-        d.learnedSkills.push(op.skillId);
+      case "learn-skill":
+        learnSkill(ctx, d, op.skillId);
         break;
-      }
     }
   }
   note(d, "log.workshop");
   changeFatigue(ctx, d, S.fatigueCost.workshop);
+}
+
+/**
+ * ADR-0018 (v3): a workshop visit, which is not a week. Its own log entry on the current turn
+ * (input and `log.workshop`), the ops applied as the workshop applies them, and nothing else: no
+ * vigor, no mood, no draw.
+ */
+export function applyWorkshopVisit(
+  ctx: SimContext,
+  d: Draft,
+  input: Extract<RunInput, { kind: "workshop:visit" }>,
+): void {
+  d.log.push({ turn: d.turn, input, notes: [], deltas: {} });
+  for (const op of input.ops) {
+    if (op.op === "equip-frame") equipFrame(ctx, d, op.frameId);
+    else learnSkill(ctx, d, op.skillId);
+  }
+  note(d, "log.workshop");
 }

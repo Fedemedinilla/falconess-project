@@ -158,7 +158,9 @@ export type WeekSummary = {
   /** The step leaves an event waiting for its answer (its dialog opens after this one). */
   readonly eventNext: boolean;
   /** The week's action (an event's answer: the action taken earlier that week), if any. */
-  readonly weekAction: Exclude<RunInput, { kind: "start" | "event:choose" }>["kind"] | undefined;
+  readonly weekAction:
+    | Exclude<RunInput, { kind: "start" | "event:choose" | "workshop:visit" }>["kind"]
+    | undefined;
 };
 
 /** Notes the headline or a cause already says. */
@@ -471,7 +473,13 @@ function actionOfWeek(state: SeasonState, turn: number): WeekSummary["weekAction
     const entry = state.log[i];
     if (!entry || entry.turn !== turn) continue;
     const input = entry.input;
-    if (input && input.kind !== "start" && input.kind !== "event:choose") return input.kind;
+    if (
+      input &&
+      input.kind !== "start" &&
+      input.kind !== "event:choose" &&
+      input.kind !== "workshop:visit"
+    )
+      return input.kind;
   }
   return undefined;
 }
@@ -713,7 +721,7 @@ export function weekSummary(ctx: SimContext, step: WeekStep): WeekSummary {
     notes: extra,
     eventNext: after.status === "active" && after.pendingEvent !== undefined,
     weekAction:
-      input.kind === "start" || input.kind === "event:choose"
+      input.kind === "start" || input.kind === "event:choose" || input.kind === "workshop:visit"
         ? actionOfWeek(before, turn)
         : input.kind,
   };

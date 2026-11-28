@@ -1384,3 +1384,48 @@ golden v3 con campo de la semana 46 volvieron, byte a byte, a los de antes de `5
 - «Las notas de la temporada se ajustaron al crecimiento nuevo: B sigue siendo pasar tus metas.»
 - «Las rivales crecen un poco más lento y las metas piden otros puestos: Peregrina y Caracara se
   juegan la temporada en la final; Cernícala, también en la Escapada de la semana 24.»
+
+## El taller sin semana en Exigente (2026-11-28)
+
+Medido con `pnpm balance:barandas` entero (1000 temporadas por Falconess y base, `e1v3a` / `e1v3b`)
+después de ADR-0018, etiqueta `taller-gratis` contra `e1-full`.
+
+**Por qué baja Peregrina (70,5 → 64,9 % y 69,5 → 64,2 %).** No es la política. La hipótesis de que
+compraba primero las habilidades baratas y llenaba el cupo temprano se midió y no es: sacarle la
+quinta habilidad (`cool-head`, la que ahora aprende casi siempre) deja 64,1 / 63,0 %. Lo que cambia
+es la semana: antes la atenta gastaba ≈ 2 semanas en el taller, que eran semanas cansadas; ahora
+esas semanas van al Simulador (10,1 → 12,0 por temporada), y termina con ≈ +110 de Inteligencia
+(650 → 760) y el resto de las stats casi igual. Toda la caída está en la final (S48, 285 → 342
+derrotas de 1000, v3a) y casi siempre la gana Milana, la rival de historia de su final (ADR-0015):
+333 de 1000 finales, y 268 si esa final se corre con 110 de Inteligencia menos. Milana se arma con el total de la jugadora («piso + 80 % del excedente») pero en sus propias
+proporciones (Inteligencia 17 %): la Inteligencia de más casi no le sirve a Peregrina en esa pista y
+a Milana le llega como Resistencia y Agilidad. La prueba, en la misma temporada: correr solo la
+final con −110 de Inteligencia devuelve 71,4 / 70,2 %, y darle +110 a la temporada de antes la baja
+a 65,5 / 63,0 %. Es una consecuencia del diseño (una rival con nombre sigue el total, no la stat que
+paga), sigue dentro de la banda 55-85 % y no se toca.
+
+**Caracara (89,2 / 89,1 %, fuera de la banda).** Una palanca, sus propias metas (ADR-0014): la final
+de Exigente (S48, Cañón) con `fieldPm` 1100. Se eligió con la grilla de `fieldPm` (1000-1300) corrida
+en la misma carrera de cada meta, temporada por temporada; la final es la última carrera, así que su
+grilla es exacta: 1050 → 85,9 / 84,1 % (al borde), 1100 → 79,9 / 78,6 %, 1150 → 68,0 / 66,4 %. Las
+otras metas mueven menos y peor (S36 a 1150: 83,3 / 83,5 %). No toca el calendario compartido, ni
+las letras (las de pista se leen de las metas de Normal), ni a las otras Falconess.
+
+| E1 (pasan todas las metas) | `e1-full` | `taller-gratis` | Final de Caracara a 1100 |
+| -------------------------- | --------- | --------------- | ------------------------ |
+| Peregrina v3a              | 70,5 %    | 64,9 %          | 64,9 %                   |
+| Peregrina v3b              | 69,5 %    | 64,2 %          | 64,2 %                   |
+| Cernícala v3a              | 78,5 %    | 81,7 %          | 81,7 %                   |
+| Cernícala v3b              | 76,3 %    | 80,6 %          | 80,6 %                   |
+| Caracara v3a               | 84,8 %    | 89,2 %          | 80,1 %                   |
+| Caracara v3b               | 84,9 %    | 89,1 %          | 78,6 %                   |
+
+**Barandas** (`caracara-final`): B1, B4, B5, B6 y B8 pasan, B2 y B3 frágiles, todo byte a byte como en
+`taller-gratis` (el informe solo cambia en la fila de Caracara de E1). B7 falla por la máquina
+cargada (p95 5,49 y 6,98 ms en dos corridas con carga ≈ 5, 7,09 en `taller-gratis`): el motor no
+cambió. E1 pasa (mín 64,2 % Peregrina v3b, máx 81,7 % Cernícala v3a).
+
+**Nota de cambio para el jugador:**
+
+- «Exigente: la final de Caracara en el Cañón tiene un campo más fuerte. Con el taller que ya no
+  gasta la semana, Caracara ganaba la Copa casi siempre.»

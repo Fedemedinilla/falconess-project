@@ -9,12 +9,15 @@ import {
   type RunInput,
   type SeasonState,
   type TrainingKind,
+  type WorkshopOp,
+  type WorkshopVisitOp,
 } from "@falconess/schema";
 import {
   actionBlock,
   facilityLevel,
   goalForTurn,
   nextTrainingDriftPm,
+  type Ruleset,
   resolveFrameBuild,
   type SimContext,
   STAT_ORDER,
@@ -23,6 +26,21 @@ import {
   trainingRisk,
   vigor,
 } from "@falconess/sim";
+
+/**
+ * The input of the workshop's order in `pnpm play`: on a ruleset with `workshopVisit` (v3,
+ * ADR-0018) a visit that spends no week, when the order holds only wings and skills; else the
+ * week's `workshop`, as before.
+ */
+export function workshopInput(ruleset: Ruleset, ops: WorkshopOp[]): RunInput {
+  if (!ruleset.season.workshopVisit) return { kind: "workshop", ops };
+  const visit: WorkshopVisitOp[] = [];
+  for (const op of ops) {
+    if (op.op !== "equip-frame" && op.op !== "learn-skill") return { kind: "workshop", ops };
+    visit.push(op);
+  }
+  return { kind: "workshop:visit", ops: visit };
+}
 
 const TRAININGS: readonly TrainingKind[] = [
   "train:agility",
@@ -46,7 +64,8 @@ export function describeInput(content: ContentIndex, input: RunInput, prev?: Sea
       return opt ? `elige: ${content.t(opt.textKey)}` : `event:choose ${input.option}`;
     }
     case "workshop":
-      return `workshop ${input.ops.map((o) => o.op).join("+")}`;
+    case "workshop:visit":
+      return `${input.kind} ${input.ops.map((o) => o.op).join("+")}`;
     case "outing":
       return `${content.t("action.outing")}${input.manufacturer ? ` (${input.manufacturer})` : ""}`;
     default:

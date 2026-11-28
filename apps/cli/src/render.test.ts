@@ -3,6 +3,7 @@ import type { RunInput } from "@falconess/schema";
 import {
   advanceSeason,
   CURRENT_RULESET,
+  getRuleset,
   RULESET_V1,
   RULESET_V2,
   type SimContext,
@@ -22,6 +23,7 @@ import {
   trainingMenu,
   turnSummary,
   vigorBar,
+  workshopInput,
 } from "./render.js";
 import { runSeason } from "./sim.js";
 
@@ -238,5 +240,29 @@ describe("the race position in the text season (ADR-0008)", () => {
     const s = atGoal(V2);
     const after = advanceSeason(V2, s, { kind: "rest", position: "stalk" });
     expect(turnSummary(V2, after, s).find((l) => l.includes("🏁"))).toMatch(/ en Acecho {2}\(/);
+  });
+});
+
+describe("workshopInput: the workshop of `pnpm play` (ADR-0018)", () => {
+  it("on v3 an order of wings and skills is a visit, which spends no week", () => {
+    const ops = [
+      { op: "equip-frame", frameId: "mule" },
+      { op: "learn-skill", skillId: "clean-start" },
+    ] as const;
+    expect(workshopInput(getRuleset("v3"), [...ops])).toEqual({
+      kind: "workshop:visit",
+      ops: [...ops],
+    });
+  });
+
+  it("on v1 and v2, or with an op a visit does not take, it is still the week's workshop", () => {
+    const learn = [{ op: "learn-skill", skillId: "clean-start" }] as const;
+    expect(workshopInput(RULESET_V1, [...learn])).toEqual({ kind: "workshop", ops: [...learn] });
+    expect(workshopInput(RULESET_V2, [...learn])).toEqual({ kind: "workshop", ops: [...learn] });
+    const repair = [{ op: "repair" }] as const;
+    expect(workshopInput(getRuleset("v3"), [...repair])).toEqual({
+      kind: "workshop",
+      ops: [...repair],
+    });
   });
 });

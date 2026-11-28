@@ -1,5 +1,6 @@
 /**
- * `pnpm balance:barandas`: the eight balance guardrails B1-B8 of ADR-0010
+ * `pnpm balance:barandas`: the eight balance guardrails B1-B8 of ADR-0010 and Exigente's E1
+ * (ADR-0012, method approved by the owner on 2026-11-28)
  * (docs/design/barandas-balance.md) on ruleset v3, measured as `apps/cli/src/balance/barandas.json`
  * says (two seed bases, equal and default fields, levels 300-750, the nine catalogue tracks, 1600
  * races per cell, 1000 seasons per Falconess and base, Wilson 95 %).
@@ -7,7 +8,7 @@
  *   pnpm balance:barandas [-- --quick] [--label <name>] [--workers 4] [--bench-runs 5]
  *                         [--skip-b8] [--out out/barandas] [--record-invariance]
  *
- * Prints the B1..B8 table (PASA / FALLA / FRÁGIL / SIN DATOS) and writes
+ * Prints the B1..B8 and E1 table (PASA / FALLA / FRÁGIL / SIN DATOS) and writes
  * `<out>/barandas-<label>.json` and `.md`. Full mode exits 1 if a guardrail fails or could not be
  * measured; FRÁGIL passes. `--quick` (CI) shrinks every sample: B1-B7 are a smoke test of the
  * harness, never a verdict, and it exits 1 only if B8 moves a byte or a guardrail has no data.
@@ -24,8 +25,9 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 import { loadCalendar, loadSeasonContent } from "@falconess/content";
+import type { Difficulty, StatName } from "@falconess/schema";
 import { argString, parseArgs } from "./args.js";
-import { GUARDRAIL_IDS, guardrailVerdict } from "./balance/barandas.js";
+import { ALL_GUARDRAIL_IDS, guardrailVerdict } from "./balance/barandas.js";
 import {
   type B8Check,
   type BarandasSpec,
@@ -161,6 +163,22 @@ for (const base of BASES) {
         k0,
         k1: Math.min(SEASONS, k0 + SHARD),
       });
+  const e1 = gate("E1");
+  const e1Parents = (e1.parents ?? {}) as Record<string, { stat: StatName; stars: 1 | 2 | 3 }[]>;
+  for (const f of e1.falconess as string[])
+    for (let k0 = 0; k0 < SEASONS; k0 += SHARD)
+      jobs.push({
+        kind: "exigente",
+        group: `e1/${f}/${base}`,
+        rs: V3,
+        falconess: f,
+        base: `e1${base}`,
+        k0,
+        k1: Math.min(SEASONS, k0 + SHARD),
+        difficulty: e1.difficulty as Difficulty,
+        statScalePm: Number(e1.statScalePm),
+        parents: e1Parents[f] ?? [],
+      });
 }
 const cacheOf = (j: BalanceJob) =>
   join(CACHE, `${createHash("sha1").update(JSON.stringify(j)).digest("hex")}.json`);
@@ -211,7 +229,8 @@ async function pool(list: BalanceJob[], par: number): Promise<void> {
   await Promise.all(Array.from({ length: Math.max(1, par) }, one));
 }
 
-const cost = (j: BalanceJob) => (j.kind === "season" ? 30 : j.kind === "statValue" ? 6 : 4);
+const cost = (j: BalanceJob) =>
+  j.kind === "season" || j.kind === "exigente" ? 30 : j.kind === "statValue" ? 6 : 4;
 const todo = jobs.filter((j) => !existsSync(cacheOf(j))).sort((a, b) => cost(b) - cost(a));
 console.log(
   `barandas ${LABEL} (motor ${ENGINE}): ${jobs.length} trabajos, ${todo.length} sin caché${QUICK ? " (rápido: humo, no veredicto)" : ""}`,
@@ -319,8 +338,8 @@ const verdict = guardrailVerdict(Object.fromEntries(results.map((r) => [r.id, r.
 const pad = (s: string, n: number) => s + " ".repeat(Math.max(0, n - s.length));
 const verdictLine = `${verdict.pass ? "PASA" : `FALLA (${verdict.blocking.join(", ")})`}${verdict.fragile.length ? ` · frágiles: ${verdict.fragile.join(", ")}` : ""}`;
 const table = [
-  `Barandas ADR-0010 · ${LABEL} · motor ${ENGINE} · bases ${BASES.join(", ")}${QUICK ? " · RÁPIDO (humo, no veredicto)" : ""}`,
-  ...GUARDRAIL_IDS.map((id) => {
+  `Barandas ADR-0010 y E1 (ADR-0012) · ${LABEL} · motor ${ENGINE} · bases ${BASES.join(", ")}${QUICK ? " · RÁPIDO (humo, no veredicto)" : ""}`,
+  ...ALL_GUARDRAIL_IDS.map((id) => {
     const r = results.find((x) => x.id === id);
     return `${id}  ${pad(r?.name ?? "", 33)} ${pad(r?.status ?? "SIN DATOS", 9)} ${r?.key ?? ""}`;
   }),

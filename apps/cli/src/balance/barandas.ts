@@ -5,8 +5,13 @@
  * (`barandas.json`) cannot drift from the decision silently. Pure functions, no I/O.
  */
 
+/** ADR-0010's eight guardrails, the rows of its threshold table. */
 export const GUARDRAIL_IDS = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"] as const;
 export type GuardrailId = (typeof GUARDRAIL_IDS)[number];
+
+/** Every guardrail the command decides on: ADR-0010's eight and ADR-0012's E1 (Exigente). */
+export const ALL_GUARDRAIL_IDS = [...GUARDRAIL_IDS, "E1"] as const;
+export type AnyGuardrailId = (typeof ALL_GUARDRAIL_IDS)[number];
 
 /** PASA, FALLA, FRÁGIL (passes, but the interval crosses the threshold) or SIN DATOS. */
 export type GuardrailStatus = "PASA" | "FALLA" | "FRÁGIL" | "SIN DATOS";
@@ -25,21 +30,21 @@ export function guardrailStatus(o: GuardrailOutcome): GuardrailStatus {
 }
 
 /**
- * ADR-0010 §2: a change goes in only if the eight pass. FRÁGIL passes (it is noted, not blocking);
+ * ADR-0010 §2: a change goes in only if the eight pass (and E1, ADR-0012). FRÁGIL passes (it is noted, not blocking);
  * FALLA blocks, and so does SIN DATOS (an unmeasured guardrail cannot be said to pass) or a
  * guardrail missing from the list.
  */
-export function guardrailVerdict(statuses: Partial<Record<GuardrailId, GuardrailStatus>>): {
+export function guardrailVerdict(statuses: Partial<Record<AnyGuardrailId, GuardrailStatus>>): {
   pass: boolean;
   exitCode: 0 | 1;
-  blocking: GuardrailId[];
-  fragile: GuardrailId[];
+  blocking: AnyGuardrailId[];
+  fragile: AnyGuardrailId[];
 } {
-  const blocking = GUARDRAIL_IDS.filter((id) => {
+  const blocking = ALL_GUARDRAIL_IDS.filter((id) => {
     const s = statuses[id];
     return s === undefined || s === "FALLA" || s === "SIN DATOS";
   });
-  const fragile = GUARDRAIL_IDS.filter((id) => statuses[id] === "FRÁGIL");
+  const fragile = ALL_GUARDRAIL_IDS.filter((id) => statuses[id] === "FRÁGIL");
   const pass = blocking.length === 0;
   return { pass, exitCode: pass ? 0 : 1, blocking, fragile };
 }
@@ -131,3 +136,50 @@ export function specThresholdNumbers(spec: GuardrailSpec): Partial<Record<Guardr
   for (const id of GUARDRAIL_IDS) out[id] = [...new Set(sets[id])].sort((a, b) => a - b);
   return out;
 }
+
+/** One E1 cell: a Falconess's Exigente seasons in one seed base. */
+export type E1Row = { falconess: string; base: string; runs: number; completed: number };
+
+/** The E1 cell's numbers and its own verdict. */
+export type E1Cell = E1Row & { pct: number; lo: number; hi: number; ok: boolean; fragile: boolean };
+
+/**
+ * E1 (ADR-0012 §4, method approved by the owner on 2026-11-28): the share of Exigente seasons
+ * that pass every goal is within [minPct, maxPct] in every Falconess and seed base, on the point
+ * value (the limits pass). As every guardrail (barandas-balance.md §3), the Wilson 95 % interval
+ * only marks a pass FRÁGIL. A missing cell, or one with fewer seasons than the gate asks, leaves
+ * E1 unmeasured (`ok` null): it cannot be said to pass.
+ */
+export function e1Outcome(
+  rows: readonly E1Row[],
+  gate: { minPct: number; maxPct: number; seasonsPerBase: number },
+  want: { falconess: readonly string[]; bases: readonly string[] },
+): GuardrailOutcome & { cells: E1Cell[] } {
+  const cells: E1Cell[] = [];
+  let measured = true;
+  for (const falconess of want.falconess)
+    for (const base of want.bases) {
+      const r = rows.find((x) => x.falconess === falconess && x.base === base);
+      if (r === undefined || r.runs < gate.seasonsPerBase) {
+        measured = false;
+        continue;
+      }
+      const pct = (100 * r.completed) / r.runs;
+      const [lo, hi] = wilson95(r.completed, r.runs);
+      const ok = pct >= gate.minPct && pct <= gate.maxPct;
+      cells.push({
+        ...r,
+        pct,
+        lo,
+        hi,
+        ok,
+        fragile: ok && crosses(lo, hi, gate.minPct, gate.maxPct),
+      });
+    }
+  if (!measured) return { ok: null, fragile: false, cells };
+  const ok = cells.every((c) => c.ok);
+  return { ok, fragile: ok && cells.some((c) => c.fragile), cells };
+}
+
+/** The ADR that owns E1 (its threshold and, since 2026-11-28, its method). */
+export const ADR0012_E1 = "docs/decisions/ADR-0012-dificultades-y-copa.md";

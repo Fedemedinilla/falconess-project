@@ -241,6 +241,26 @@ describe("RunInput", () => {
       false,
     );
   });
+
+  it("a workshop visit holds 1-8 wing and skill ops and no position (ADR-0018)", () => {
+    const learn = { op: "learn-skill", skillId: "tailwind-read" } as const;
+    const equip = { op: "equip-frame", frameId: "mule" } as const;
+    const visit = (ops: unknown[], extra: object = {}) =>
+      RunInput.safeParse({ kind: "workshop:visit", ops, ...extra }).success;
+    expect(visit([learn])).toBe(true);
+    expect(visit([equip, learn])).toBe(true);
+    expect(visit(Array.from({ length: 8 }, () => learn))).toBe(true);
+    expect(visit([])).toBe(false);
+    expect(visit(Array.from({ length: 9 }, () => learn))).toBe(false);
+    for (const op of [
+      { op: "repair" },
+      { op: "install-part", partId: "x" },
+      { op: "remove-part", partId: "x" },
+      { op: "reroll-quirks", frameId: "mule" },
+    ])
+      expect(visit([op]), op.op).toBe(false);
+    expect(visit([learn], { position: "lead" })).toBe(false);
+  });
 });
 
 describe("race positions (ADR-0008)", () => {
