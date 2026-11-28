@@ -4,8 +4,10 @@
  * JSON, so its result can be cached by the hash of the job and the engine.
  */
 import { loadSeasonContent } from "@falconess/content";
+import type { BlackBox, Difficulty, Position, StatName } from "@falconess/schema";
 import {
   advanceSeason,
+  aptitudeRank,
   flightOf,
   getRuleset,
   type Ruleset,
@@ -24,6 +26,7 @@ import {
   roleIdx,
   winShares,
 } from "./field.js";
+import { advanceAtOwnerLevel } from "./owner-level.js";
 
 export type BalanceJob =
   | {
@@ -64,6 +67,19 @@ export type BalanceJob =
       base: string;
       k0: number;
       k1: number;
+    }
+  | {
+      kind: "exigente";
+      group: string;
+      rs: string;
+      falconess: string;
+      base: string;
+      k0: number;
+      k1: number;
+      difficulty: Difficulty;
+      statScalePm: number;
+      /** E1's boxes (ADR-0012 note of 2026-11-28): only their stat factor is chosen. */
+      parents: { stat: StatName; stars: 1 | 2 | 3 }[];
     }
   | {
       kind: "bench";
@@ -179,6 +195,25 @@ export function runBalanceJob(job: BalanceJob): JobResult {
       }
       return { acc };
     }
+    case "exigente": {
+      // E1: Exigente seasons, attentive player, goal races at the owner's level
+      const ctx: SimContext = { ruleset: R, content: loadSeasonContent(R.version) };
+      const parents = job.parents.map((f, i) => e1Box(ctx, job.falconess, f, i));
+      for (let i = job.k0; i < job.k1; i++) {
+        let s = startSeason(ctx, `${job.base}-${i}`, {
+          kind: "start",
+          falconessId: job.falconess,
+          hangar: [...REFERENCE_HANGAR],
+          parents,
+          difficulty: job.difficulty,
+        });
+        while (s.status === "active")
+          s = advanceAtOwnerLevel(ctx, s, referencePolicy(ctx, s), job.statScalePm);
+        add("runs", 1);
+        if (s.endReason === "completed") add("completed", 1);
+      }
+      return { acc };
+    }
     case "bench": {
       // B7: p95 of an 8-runner race on the job's track, v2 against this ruleset, same entries
       const course = courseOf(job.track);
@@ -201,4 +236,36 @@ export function runBalanceJob(job: BalanceJob): JobResult {
       return { acc: { p95v2: p95(times.v2.slice(50)), p95v3: p95(times.v3.slice(50)) } };
     }
   }
+}
+
+/**
+ * One of E1's boxes: her own v3 box with the chosen stat factor. Its position factor is her worst
+ * letter at 1 star, so a lifted letter never changes where she runs; no distance, no skills.
+ */
+function e1Box(
+  ctx: SimContext,
+  falconessId: string,
+  factor: { stat: StatName; stars: 1 | 2 | 3 },
+  i: number,
+): BlackBox {
+  const f = ctx.content.getFalconess(falconessId);
+  const letters = Object.entries(f.positionAptitude) as [
+    Position,
+    BlackBox["factors"]["aptitude"]["letter"],
+  ][];
+  const [key, letter] = letters.reduce((a, b) => (aptitudeRank(b[1]) < aptitudeRank(a[1]) ? b : a));
+  return {
+    id: `e1-box-${i}`,
+    rulesetVersion: ctx.ruleset.version,
+    falconessId,
+    grade: "A",
+    factors: {
+      stat: { ...factor },
+      aptitude: { kind: "position", key, letter, stars: 1 },
+      skills: [],
+      frameAffinity: REFERENCE_HANGAR[0] ?? "shiden",
+    },
+    seed: `e1-box-${i}`,
+    inputsHash: "e1",
+  };
 }

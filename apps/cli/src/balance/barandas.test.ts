@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  ADR0012_E1,
+  ALL_GUARDRAIL_IDS,
   adrThresholdNumbers,
   crosses,
   e1Outcome,
@@ -34,14 +36,15 @@ describe("barandas: the verdict rules", () => {
       B6: "FRÁGIL",
       B7: "PASA",
       B8: "PASA",
+      E1: "FRÁGIL",
     });
-    expect(v).toEqual({ pass: true, exitCode: 0, blocking: [], fragile: ["B2", "B3", "B6"] });
+    expect(v).toEqual({ pass: true, exitCode: 0, blocking: [], fragile: ["B2", "B3", "B6", "E1"] });
   });
 
   it("a fail is a fail even when marked fragile; a fail, an unmeasured or a missing guardrail blocks", () => {
     expect(guardrailStatus({ ok: false, fragile: true })).toBe("FALLA");
     expect(guardrailStatus({ ok: null, fragile: false })).toBe("SIN DATOS");
-    const all = Object.fromEntries(GUARDRAIL_IDS.map((id) => [id, "PASA" as const]));
+    const all = Object.fromEntries(ALL_GUARDRAIL_IDS.map((id) => [id, "PASA" as const]));
     expect(guardrailVerdict(all).exitCode).toBe(0);
     expect(guardrailVerdict({ ...all, B4: "FALLA" })).toMatchObject({
       pass: false,
@@ -51,6 +54,8 @@ describe("barandas: the verdict rules", () => {
     expect(guardrailVerdict({ ...all, B7: "SIN DATOS" }).blocking).toEqual(["B7"]);
     const { B8: _gone, ...seven } = all;
     expect(guardrailVerdict(seven).blocking).toEqual(["B8"]);
+    const { E1: _e1, ...eight } = all;
+    expect(guardrailVerdict(eight).blocking).toEqual(["E1"]);
   });
 
   it("an interval crosses a floor or a ceiling; Wilson brackets the share", () => {
@@ -121,8 +126,29 @@ describe("barandas.json keeps ADR-0010's thresholds", () => {
   type Spec = GuardrailSpec & { measurement: Record<string, unknown> };
   const spec = JSON.parse(readFileSync(specFile, "utf8")) as Spec | null;
 
-  it("lists exactly B1-B8", () => {
-    expect(spec?.guardrails.map((g) => g.id)).toEqual([...GUARDRAIL_IDS]);
+  it("lists exactly B1-B8 and E1", () => {
+    expect(spec?.guardrails.map((g) => g.id)).toEqual([...ALL_GUARDRAIL_IDS]);
+  });
+
+  it("E1 keeps ADR-0012's threshold and the method the owner approved (2026-11-28)", () => {
+    const e1 = spec?.guardrails.find((g) => g.id === "E1")?.gate;
+    expect(e1).toMatchObject({
+      difficulty: "exigente",
+      minPct: 55,
+      maxPct: 85,
+      statScalePm: 1200,
+      seasonsPerBase: 1000,
+      falconess: ["peregrina", "cernicala", "caracara"],
+      parents: {
+        peregrina: [
+          { stat: "agility", stars: 2 },
+          { stat: "stamina", stars: 2 },
+        ],
+      },
+    });
+    const adr12 = readFileSync(new URL(ADR0012_E1, root), "utf8").replace(/\s+/g, " ");
+    expect(adr12).toContain("entre el 55 y el 85 % de las temporadas pasan todas las metas");
+    expect(adr12).toContain("stats × 1,2");
   });
 
   it("every guardrail's numbers are the ADR table's", () => {
