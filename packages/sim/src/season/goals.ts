@@ -1,5 +1,6 @@
 import type {
   Position,
+  RaceLog,
   RaceOutcome,
   RaceResult,
   RunInput,
@@ -35,17 +36,21 @@ export function inputPosition(input: RunInput): Position | undefined {
  * `${seed}/race/${turn}`, `detail: "results"`. Takes no draw from the season's per-input Rng.
  * Records the result with the position she ran (a DNF is last place with `maxTicks`), pays scrap
  * and (v3) skill points by place, persists the equipped frame's durability (ADR-0003 D35) and maps the outcome. Returns
- * the outcome, or undefined when no race was due.
+ * the outcome, or undefined when no race was due. With `onLog` the race runs with detail "full"
+ * and its log goes to `onLog` (P7: the same places, times and durability as "results").
  */
 export function runGoalRace(
   ctx: SimContext,
   d: Draft,
   position?: Position,
+  onLog?: (log: RaceLog) => void,
 ): RaceOutcome | undefined {
   const goal = goalForTurn(ctx, d);
   if (!goal) return undefined;
   const { course, raceSeed, entries } = goalRaceSetup(ctx, d, goal, position);
-  const log = simulateRace(ctx.ruleset, entries, course, raceSeed, { detail: "results" });
+  const detail = onLog ? "full" : "results";
+  const log = simulateRace(ctx.ruleset, entries, course, raceSeed, { detail });
+  onLog?.(log);
   const me: RaceResult | undefined = log.results.find((r) => r.runnerId === PLAYER_RUNNER_ID);
   const entry = entries.find((e) => e.runnerId === PLAYER_RUNNER_ID);
   if (!me || !entry) throw new Error(`goal race ${raceSeed}: no result for the player`);

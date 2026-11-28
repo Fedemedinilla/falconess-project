@@ -1,5 +1,5 @@
 import type { Rng } from "@falconess/rng";
-import type { RunInput, SeasonState } from "@falconess/schema";
+import type { RaceLog, RunInput, SeasonState } from "@falconess/schema";
 import { changeFatigue, type Draft, draft, note, rngForInput, type SimContext } from "./context.js";
 import { resolveEvent, rollEvent } from "./events.js";
 import { goalForTurn, inputPosition, runGoalRace } from "./goals.js";
@@ -11,6 +11,16 @@ import { applyOuting, applyRest, applyTraining } from "./training.js";
 import { applyWorkshop } from "./workshop.js";
 
 export class InvalidInputError extends Error {}
+
+/** What a caller can ask of `advanceSeason` besides the next state. */
+export type AdvanceOptions = {
+  /**
+   * Receives the log of the input's goal race, if it runs one, run with detail "full" (P7: the
+   * same state as without it): a viewer keeps it instead of running the race again (ADR-0017,
+   * open decision 6). Never called for a week without a goal race.
+   */
+  readonly onGoalRace?: (log: RaceLog) => void;
+};
 
 function endSeason(ctx: SimContext, d: Draft, reason: "completed" | "goal-failed"): void {
   d.status = "ended";
@@ -25,8 +35,14 @@ function endSeason(ctx: SimContext, d: Draft, reason: "completed" | "goal-failed
  * Close the turn: race if due (in the position the week's input chose, ADR-0008), roll an event,
  * and either wait for the choice or move on.
  */
-function closeTurn(ctx: SimContext, d: Draft, rng: Rng, input: RunInput): void {
-  const outcome = runGoalRace(ctx, d, inputPosition(input));
+function closeTurn(
+  ctx: SimContext,
+  d: Draft,
+  rng: Rng,
+  input: RunInput,
+  options: AdvanceOptions,
+): void {
+  const outcome = runGoalRace(ctx, d, inputPosition(input), options.onGoalRace);
   rollEvent(ctx, d, rng);
   if (d.pendingEvent) return; // the next input must be event:choose; the turn advances after it
   finishTurn(ctx, d, rng, outcome === "goal-failed");
@@ -62,7 +78,12 @@ function checkRuleset(ctx: SimContext, state: SeasonState): void {
  * The season reducer: pure, deterministic, `advanceSeason(ctx, state, input) → state'`.
  * The RNG for this step is derived from the seed and the number of inputs applied so far.
  */
-export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInput): SeasonState {
+export function advanceSeason(
+  ctx: SimContext,
+  state: SeasonState,
+  input: RunInput,
+  options: AdvanceOptions = {},
+): SeasonState {
   checkRuleset(ctx, state);
   if (state.status === "ended") throw new InvalidInputError("season has ended");
   if (input.kind === "start") throw new InvalidInputError("season already started");
@@ -82,7 +103,7 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
   checkPosition(ctx, d, input);
 
   applyAction(ctx, d, input, rng);
-  closeTurn(ctx, d, rng, input);
+  closeTurn(ctx, d, rng, input, options);
   return d;
 }
 
