@@ -90,7 +90,8 @@ Método aprobado por el dueño el 2026-11-28. Queda escrito acá porque el scrip
 - El × 1,2 se aplica solo al correr cada carrera de meta: sus stats de esa semana (después del
   entrenamiento, el estado de `goalRaceState`) × 1,2, redondeadas hacia abajo y con el tope de
   Exigente (1200). Nada más se escala: entrenar, descansar y las inspiraciones usan las reales
-  (`apps/cli/src/balance/owner-level.ts`).
+  (`apps/cli/src/balance/owner-level.ts`). Cuando un entrenamiento fallido salta el valor exacto,
+  la carrera corre con el más cercano (a lo sumo 2 puntos por stat).
 - Peregrina lleva dos cajas de 2★, una de Agilidad y una de Resistencia (la fila de ADR-0013 y lo
   que pide ADR-0015). De cada caja solo cuenta el factor de stat: el de posición es su peor letra
   (Pelotón) con 1★, sin distancia ni habilidades. Cernícala y Caracara, sin cajas (ADR-0015: «siguen
