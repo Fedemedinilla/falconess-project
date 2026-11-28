@@ -75,8 +75,9 @@ jugable Falconess» y la demo en un archivo (`pnpm --filter @falconess/web build
 pausa en la v3, para reformularlos (`docs/design/eventos-en-pausa.md`).
 
 **Decisiones abiertas:** el taller cuesta una semana (T4 decía que no); las carreras opcionales (T3)
-no están en el juego; el Sprint, la Escalera y el Circuito piden las mismas letras; la baranda de
-Exigente (E1) se mide a mano y no entra en `pnpm balance:barandas`.
+no están en el juego; el Sprint, la Escalera y el Circuito piden las mismas letras. (Cerrada el
+2026-11-28: la baranda de Exigente, E1, entra a `pnpm balance:barandas` con el método que aprobó el
+dueño, ADR-0012.)
 
 **Pendiente del dueño, para más adelante:**
 

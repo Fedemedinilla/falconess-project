@@ -3,7 +3,7 @@
   "date": "2026-11-10",
   "adr": "docs/decisions/ADR-0010-barandas-de-balance.md",
   "design": "docs/design/barandas-balance.md",
-  "note": "Las ocho barandas de ADR-0010 como puertas que se pueden chequear a máquina. Los umbrales son los del ADR (no se cambian sin un ADR nuevo); apps/cli/src/balance/barandas.test.ts los compara con la tabla del ADR. Comando: pnpm balance:barandas (completo) o pnpm balance:barandas -- --quick (CI).",
+  "note": "Las ocho barandas de ADR-0010 y E1 de ADR-0012 (Exigente) como puertas que se pueden chequear a máquina. Los umbrales son los del ADR (no se cambian sin un ADR nuevo); apps/cli/src/balance/barandas.test.ts los compara con la tabla del ADR. Comando: pnpm balance:barandas (completo) o pnpm balance:barandas -- --quick (CI).",
   "measurement": {
     "ruleset": "v3",
     "engine": "determinista, cero sorteos dentro del tick; cada carrera depende solo de su semilla y su entrada",
@@ -165,6 +165,26 @@
         ]
       },
       "fragileRule": "no hay frágil: cero bytes o falla"
+    },
+    {
+      "id": "E1",
+      "adr": "docs/decisions/ADR-0012-dificultades-y-copa.md",
+      "name": "Exigente al nivel del dueño",
+      "protects": "que Exigente sea difícil pero manejable para quien juega como el dueño, en cada Falconess",
+      "metric": "% de temporadas de Exigente que pasan todas las metas (endReason completed), jugadora atenta que decide con sus stats reales; solo cada carrera de meta corre con sus stats × 1,2 (tope 1200); por Falconess y base. Método aprobado por el dueño el 2026-11-28",
+      "gate": {
+        "difficulty": "exigente",
+        "falconess": ["peregrina", "cernicala", "caracara"],
+        "seasonsPerBase": 1000,
+        "statScalePm": 1200,
+        "parents": {
+          "peregrina": [{ "stat": "agility", "stars": 2 }, { "stat": "stamina", "stars": 2 }]
+        },
+        "boxRest": "las cajas solo traen su factor de stat: el de posición es su peor letra (Pelotón) con 1★, sin distancia ni habilidades (ADR-0013: esos factores no se miden en E1)",
+        "minPct": 55,
+        "maxPct": 85
+      },
+      "fragileRule": "pasa con el valor puntual dentro de 55-85 en cada Falconess y base, pero el intervalo de Wilson al 95 % cruza 55 u 85 en alguna"
     }
   ],
   "reportOnly": {
