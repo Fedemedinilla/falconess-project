@@ -345,3 +345,42 @@ describe("workshop visit on v3 (ADR-0018)", () => {
     }
   });
 });
+
+describe("attentive policy on v3: learns as soon as she can pay (ADR-0018)", () => {
+  const v3: SimContext = { ruleset: RULESET_V3, content: ctx.content };
+  const v2: SimContext = { ruleset: RULESET_V2, content: ctx.content };
+  const begin = (c: SimContext) =>
+    startSeason(c, "attentive-visit", {
+      kind: "start",
+      falconessId: "peregrina",
+      hangar: [...REFERENCE_HANGAR],
+      parents: [],
+    });
+
+  it("visits in the week she can first afford one skill, on a fresh or a tired week", () => {
+    const s = { ...begin(v3), skillPoints: 60, mood: 1 as const };
+    expect(skillsToLearn(v3, s)).toEqual(["clean-start"]); // one skill: below learnAtOnce
+    for (const fatigue of [0, 50])
+      expect(attentivePolicy(v3, { ...s, fatigue })).toEqual({
+        kind: "workshop:visit",
+        ops: [{ op: "learn-skill", skillId: "clean-start" }],
+      });
+  });
+
+  it("keeps her simulator week: after the visit she plays the week she would have", () => {
+    const tired = { ...begin(v3), fatigue: 50, mood: 1 as const };
+    expect(attentivePolicy(v3, tired)).toEqual({ kind: "train:simulator" });
+    const paid = { ...tired, skillPoints: 60 };
+    const after = advanceSeason(v3, paid, attentivePolicy(v3, paid));
+    expect(after.learnedSkills).toContain("clean-start");
+    expect(attentivePolicy(v3, after)).toEqual({ kind: "train:simulator" });
+  });
+
+  it("v2 keeps learnAtOnce: one skill waits, two take the light week", () => {
+    const s = { ...begin(v2), fatigue: 50, mood: 1 as const };
+    expect(attentivePolicy(v2, { ...s, skillPoints: 60 }).kind).toBe("train:simulator");
+    const two = { ...s, skillPoints: 1000 };
+    expect(skillsToLearn(v2, two).length).toBeGreaterThanOrEqual(2);
+    expect(attentivePolicy(v2, two).kind).toBe("workshop");
+  });
+});

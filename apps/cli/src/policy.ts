@@ -331,7 +331,8 @@ export type AttentiveOptions = {
   readonly moodFloor: number;
   /**
    * Learn at the workshop on a light week (instead of the simulator) once she can pay this many
-   * useful skills: the visit costs the week.
+   * useful skills: the visit costs the week. Not used on a ruleset with `workshopVisit` (v3,
+   * ADR-0018), where the visit is free and she learns as soon as she can pay.
    */
   readonly learnAtOnce: number;
 };
@@ -347,8 +348,8 @@ export const ATTENTIVE: AttentiveOptions = {
 /**
  * Attentive policy («jugadora atenta», owner's feedback 2026-11-10): trains like a sensible human.
  * Option 0 on an event and the same workshop visit as the other policies (repair, learn every
- * useful generic active she can pay). Then: rest when the next training fails `restAtFailPm` ‰ or
- * more (or the ruleset would force a rest); go out when mood is below `moodFloor`; a tired but not
+ * useful generic active she can pay; on v3 a free visit as soon as she can pay, ADR-0018). Then:
+ * rest when the next training fails `restAtFailPm` ‰ or more (or the ruleset would force a rest); go out when mood is below `moodFloor`; a tired but not
  * exhausted week (fatigue ≥ `simulatorFromFatigue`) goes to the simulator, which restores vigor and
  * earns skill points; otherwise train the stat of `build` furthest below its share of Agility (the
  * pillar). A goal race week runs in her best position letter.
@@ -360,11 +361,12 @@ export function attentivePolicy(
   opts: AttentiveOptions = ATTENTIVE,
 ): RunInput {
   if (state.pendingEvent) return { kind: "event:choose", option: 0 };
-  if (needsRepair(ctx, state)) {
+  const R = ctx.ruleset;
+  // ADR-0018: with a free visit she learns as soon as she can pay, and keeps her week
+  if (R.season.workshopVisit || needsRepair(ctx, state)) {
     const visit = workshopVisit(ctx, state);
     if (visit) return visit;
   }
-  const R = ctx.ruleset;
   const raceWeek = seasonGoalsOf(ctx, state).some((g) => g.turn === state.turn);
   const withPosition = (input: RunInput): RunInput =>
     raceWeek &&
@@ -381,9 +383,12 @@ export function attentivePolicy(
     return withPosition({ kind: "rest" });
   if (state.mood < opts.moodFloor) return withPosition(outingInput(ctx, state));
   if (state.fatigue >= opts.simulatorFromFatigue && lastWeekKind(state) !== "train:simulator") {
-    // a visit costs the week: she learns on a light week, once she can pay `learnAtOnce` skills
+    // v1/v2: a visit costs the week, so she learns on a light week once she can pay `learnAtOnce`
+    // skills (v3 has visited above already)
     const visit =
-      skillsToLearn(ctx, state).length >= opts.learnAtOnce ? workshopVisit(ctx, state) : undefined;
+      !R.season.workshopVisit && skillsToLearn(ctx, state).length >= opts.learnAtOnce
+        ? workshopVisit(ctx, state)
+        : undefined;
     return withPosition(visit ?? { kind: "train:simulator" });
   }
   return withPosition({ kind: crewTraining(ctx, state, build, target) });
