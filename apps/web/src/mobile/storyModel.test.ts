@@ -1,9 +1,9 @@
-import type { RunInput, SeasonState } from "@falconess/schema";
+import type { ChatTopic, RunInput, SeasonState } from "@falconess/schema";
 import { type SimContext, seasonGoalsOf, startSeason } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { simContext } from "../content/load";
 import type { KeyValueStore } from "../game/storage";
-import { CHAT_KEY, createStoryStore, STORY_KEY, triggerHolds } from "./storyModel";
+import { CHAT_KEY, createStoryStore, replyKeysFor, STORY_KEY, triggerHolds } from "./storyModel";
 
 // her season on v3, with the calendar's goals (the Larga is the fifth)
 const ctx: SimContext = simContext("v3");
@@ -315,5 +315,36 @@ describe("the story store (scenes seen, chat read)", () => {
       expect(story.seenEver().has("peregrina-prologue")).toBe(true);
       expect(story.readTopics().has("peregrina-wings")).toBe(true);
     }
+  });
+});
+
+describe("her reply after a scene (usted → tú, chapter 6)", () => {
+  const topic: ChatTopic = {
+    id: "peregrina-ever-lost",
+    version: 2,
+    falconess: "peregrina",
+    questionKey: "chat.peregrina-ever-lost.q",
+    fromTurn: 10,
+    replyKeys: ["chat.peregrina-ever-lost.1", "chat.peregrina-ever-lost.3"],
+    afterScene: {
+      sceneId: "peregrina-first-vos",
+      replyKeys: ["chat.peregrina-ever-lost.1", "chat.peregrina-ever-lost.3-tu"],
+    },
+  };
+
+  it("answers with «usted» before the scene is seen in this season", () => {
+    expect(replyKeysFor(topic, new Set(["peregrina-prologue"]))).toEqual(topic.replyKeys);
+  });
+
+  it("answers with «tú» once the scene is seen (watched or skipped)", () => {
+    expect(replyKeysFor(topic, new Set(["peregrina-first-vos"]))).toEqual([
+      "chat.peregrina-ever-lost.1",
+      "chat.peregrina-ever-lost.3-tu",
+    ]);
+  });
+
+  it("a topic without afterScene always gives its replies", () => {
+    const { afterScene: _, ...plain } = topic;
+    expect(replyKeysFor(plain, new Set(["peregrina-first-vos"]))).toEqual(topic.replyKeys);
   });
 });

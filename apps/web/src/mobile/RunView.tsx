@@ -559,6 +559,7 @@ export function RunView({
         name={gameText(`falconess.${state.falconessId}`)}
         topics={openTopics(allTopics(), state)}
         read={story.readTopics()}
+        seen={story.seenInRun(state.seed)}
         primary={colors.primary}
         secondary={colors.secondary}
         onRead={story.markRead}

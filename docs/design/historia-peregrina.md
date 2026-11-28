@@ -222,6 +222,15 @@ Gerifalte en la Larga.
 Chat: 9 temas (por qué corre, su día libre, la Jefa, si alguna vez perdió, su pista favorita, por
 qué Kōryū, la Novata, lo más difícil de entrenar, la que dormía en la tribuna).
 
+**El chat sigue el tuteo del capítulo 6 (2026-11-28).** Los temas siguen abiertos después de «Tú
+tenías razón» (`peregrina-first-vos`, semana 39), y dos respuestas decían «usted». Un tema puede
+llevar `afterScene` (`packages/schema/src/story.ts`, `ChatTopic`): otra lista de respuestas, del
+mismo largo, que vale una vez vista esa escena en la temporada (saltada también cuenta). Cada
+temporada la relación empieza de nuevo, así que se mira lo visto en la temporada, no lo visto
+alguna vez. Hoy la usan «¿Alguna vez perdiste?» y «¿Por qué Kōryū?», con una línea nueva cada una
+(`chat.peregrina-ever-lost.3-tu`, `chat.peregrina-why-koryu.2-tu`); son un borrador para la sesión
+de historia. En inglés no hay tú/usted: las claves nuevas repiten el texto de hoy.
+
 ## 3. Formato
 
 No hace falta prolijidad: con el nombre de quien habla y la línea alcanza. Las acotaciones van

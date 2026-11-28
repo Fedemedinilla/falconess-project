@@ -7,6 +7,7 @@ import { reducedMotion, scrollBehavior } from "../ui/useMedia";
 import { useFocusReturn, useSheetPhase } from "../ui/useModalDialog";
 import { useLayerFocus } from "./LayerHost";
 import s from "./Story.module.css";
+import { replyKeysFor } from "./storyModel";
 
 type Bubble = { readonly key: string; readonly text: string; readonly mine: boolean };
 
@@ -17,6 +18,8 @@ type ChatProps = {
   name: string;
   topics: readonly ChatTopic[];
   read: ReadonlySet<string>;
+  /** The scenes seen in this season: a topic answers after one as `afterScene` says. */
+  seen: ReadonlySet<string>;
   primary: string;
   secondary: string;
   onRead: (topicId: string) => void;
@@ -48,6 +51,7 @@ function Chat({
   name,
   topics,
   read,
+  seen,
   primary,
   secondary,
   onRead,
@@ -90,7 +94,8 @@ function Chat({
     ]);
     onRead(t.id);
     let at = 0;
-    t.replyKeys.forEach((k, i) => {
+    const replies = replyKeysFor(t, seen);
+    replies.forEach((k, i) => {
       const text = gameText(k);
       const wait = reducedMotion() ? 0 : TYPING_MS + Math.min(900, text.length * PER_CHAR_MS);
       timers.current.push(setTimeout(() => setTyping(true), at));
@@ -98,7 +103,7 @@ function Chat({
       timers.current.push(
         setTimeout(() => {
           setBubbles((b) => [...b, { key: `${t.id}/${i}/${b.length}`, text, mine: false }]);
-          if (i === t.replyKeys.length - 1) setTyping(false);
+          if (i === replies.length - 1) setTyping(false);
         }, at),
       );
       at += 250;

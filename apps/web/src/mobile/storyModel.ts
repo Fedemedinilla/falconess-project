@@ -40,6 +40,17 @@ export function openTopics(topics: readonly ChatTopic[], state: SeasonState): Ch
   return topics.filter((t) => t.falconess === state.falconessId && state.turn >= t.fromTurn);
 }
 
+/**
+ * Her answer to a topic: the `afterScene` one once its scene has been seen in this season (a
+ * skipped scene counts), else the first one. Peregrina drops «usted» for «tú» in chapter 6, and
+ * each season the relationship starts over, so `seen` is the season's (`seenInRun`), not ever.
+ */
+export function replyKeysFor(topic: ChatTopic, seen: ReadonlySet<string>): readonly string[] {
+  return topic.afterScene !== undefined && seen.has(topic.afterScene.sceneId)
+    ? topic.afterScene.replyKeys
+    : topic.replyKeys;
+}
+
 // --- what this browser has seen ------------------------------------------------------------------
 
 /**

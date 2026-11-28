@@ -79,15 +79,34 @@ export const StoryScene = z.strictObject({
 export type StoryScene = z.infer<typeof StoryScene>;
 
 /** One question of the chat with a Falconess: the player asks, she answers in her own voice. */
-export const ChatTopic = z.strictObject({
-  id: Slug,
-  version: Version,
-  falconess: Slug,
-  /** The pill the player taps (and the player's bubble). */
-  questionKey: TextKey,
-  /** From which week it can be asked; 1 = from the start. */
-  fromTurn: z.number().int().min(1).max(48).default(1),
-  /** Her answer, one bubble per key. */
-  replyKeys: z.array(TextKey).min(1).max(6),
-});
+export const ChatTopic = z
+  .strictObject({
+    id: Slug,
+    version: Version,
+    falconess: Slug,
+    /** The pill the player taps (and the player's bubble). */
+    questionKey: TextKey,
+    /** From which week it can be asked; 1 = from the start. */
+    fromTurn: z.number().int().min(1).max(48).default(1),
+    /** Her answer, one bubble per key. */
+    replyKeys: z.array(TextKey).min(1).max(6),
+    /**
+     * Her answer once the player has seen `sceneId` in this season (a skipped scene counts): the
+     * same bubbles in order, reusing the keys that do not change. Peregrina drops «usted» for «tú»
+     * in chapter 6 (`peregrina-first-vos`), and a topic asked after it answers in «tú».
+     */
+    afterScene: z
+      .strictObject({
+        sceneId: Slug,
+        replyKeys: z.array(TextKey).min(1).max(6),
+      })
+      .optional(),
+  })
+  .refine(
+    (t) => t.afterScene === undefined || t.afterScene.replyKeys.length === t.replyKeys.length,
+    {
+      message: "afterScene.replyKeys must have as many bubbles as replyKeys",
+      path: ["afterScene", "replyKeys"],
+    },
+  );
 export type ChatTopic = z.infer<typeof ChatTopic>;
