@@ -34,6 +34,7 @@ describe("the browser's storage keys", () => {
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys).toMatchInlineSnapshot(`
       [
+        "falconess.juego.ajustes",
         "falconess.juego.cajas",
         "falconess.juego.chat",
         "falconess.juego.guia",

@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
+import { readKey, removeKey, sessionStore, writeKey } from "../game/storage";
 import { type Lang, lang, setLang } from "../text/lang";
 import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
@@ -54,6 +55,29 @@ function menuActions(actions: MenuActions, close: () => void): MenuActions {
 }
 
 // --- the settings, shared by the phone's «Ajustes» and the wide screen's panel --------------------
+
+/**
+ * A new language draws the page again (`<App key={lang}>` in `main.tsx`: every per-language cache
+ * starts over), and «Menú» goes with it. This one-shot flag, set just before the switch and read
+ * once by the next mount, brings the sheet back at «Ajustes» (owner 2026-11-28). This tab only: a
+ * reload or another visit opens nothing.
+ */
+const SETTINGS_RETURN_KEY = "falconess.juego.ajustes";
+
+/** The phone's «Ajustes» switches the language: «Menú» comes back there after the remount. */
+function langFromSettings(next: Lang): void {
+  if (next === lang()) return;
+  writeKey(sessionStore(), SETTINGS_RETURN_KEY, "1");
+  setLang(next);
+}
+
+/** Whether a language switch from «Ajustes» left «Menú» to reopen there; read once, it is gone. */
+export function takeSettingsReturn(): boolean {
+  const store = sessionStore();
+  const on = readKey(store, SETTINGS_RETURN_KEY) === "1";
+  removeKey(store, SETTINGS_RETURN_KEY);
+  return on;
+}
 
 /** Sonido, Música, Ritmo and Idioma as values with setters. */
 function useSettings() {
@@ -129,7 +153,7 @@ function SegRow<T extends string>({
  * phone's «Ajustes» sheet and in the wide screen's «Menú» tab, so a setting is set the same way on
  * both. Switching the language re-renders the whole page in it (`main.tsx`), as it always did.
  */
-export function SettingsCards() {
+export function SettingsCards({ onLang = setLang }: { onLang?: (next: Lang) => void } = {}) {
   const set = useSettings();
   return (
     <>
@@ -169,7 +193,7 @@ export function SettingsCards() {
         values={["es", "en"] as const}
         value={lang()}
         text={(l) => LANG_NAME[l]}
-        onPick={setLang}
+        onPick={onLang}
       />
     </>
   );
@@ -403,15 +427,23 @@ function SubSheet({
   );
 }
 
-type Sub = "settings" | "run" | undefined;
+export type MenuLevel = "settings" | "run";
+type Sub = MenuLevel | undefined;
 
 /**
  * The root and at most one second level. The root closes as a level rises, so its native close must
  * not take the whole menu with it (the level is what the player is looking at); on «Volver» the
  * root rises again.
  */
-function useLevels(open: boolean, closeAll: () => void) {
+function useLevels(open: boolean, closeAll: () => void, at: Sub) {
   const [sub, setSub] = useState<Sub>(undefined);
+  // each open starts at the root, or at the level it was asked at (a language switch, which
+  // remounts the page, comes back at «Ajustes»)
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    setSub(open ? at : undefined);
+  }
   const subRef = useLatest(sub);
   // «Volver» before the root finished fading out (180 ms) would find its `<dialog>` still open and
   // under the level in the top layer: it would come back without its title focused, and under a
@@ -420,9 +452,6 @@ function useLevels(open: boolean, closeAll: () => void) {
   // «Volver» closes the level too, and a sheet that closes says so: without this the whole menu
   // would go 180 ms after the tap, with the root already back on screen
   const back = useRef(false);
-  useEffect(() => {
-    if (!open) setSub(undefined);
-  }, [open]);
   return {
     setSub,
     rootOpen: open && sub === undefined,
@@ -455,15 +484,18 @@ function useLevels(open: boolean, closeAll: () => void) {
  */
 export function MobileMenu({
   open,
+  at,
   onClose,
   items,
 }: {
   open: boolean;
+  /** The level it opens at: the root, unless a language switch brings it back at «Ajustes». */
+  at?: MenuLevel | undefined;
   /** «Cerrar», Escape and the back gesture: the whole menu goes, from any level. */
   onClose: () => void;
   items: MenuItemsProps;
 }) {
-  const lv = useLevels(open, onClose);
+  const lv = useLevels(open, onClose, at);
   const pace = usePace();
   // mounted on open: its buttons start fresh each time («Nueva temporada» unconfirmed)
   const acts = menuActions(items, onClose);
@@ -498,7 +530,7 @@ export function MobileMenu({
         onBack={lv.back}
         onClose={lv.onSubClose}
       >
-        <SettingsCards />
+        <SettingsCards onLang={langFromSettings} />
       </SubSheet>
       <SubSheet
         id="m-partida-hoja"

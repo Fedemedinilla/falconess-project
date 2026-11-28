@@ -344,7 +344,10 @@ pantalla de ajustes de la D y el riel de la E.
   (Hangar · Propulsor · Visor · apagado), Música (sí · no), Ritmo (Normal · Rápido · Directo),
   Idioma (Español · English). Cambiar el estilo de sonido sigue sonando su «success», así se oye lo
   que se eligió; cambiar el idioma vuelve a dibujar la página entera (`main.tsx`), como siempre, y
-  con eso el menú se cierra.
+  con eso el menú se cierra. **Desde el 2026-11-28 (dueño) vuelve a abrirse en «Ajustes»**, con el
+  idioma nuevo apretado y su título enfocado: una marca de un solo uso en `sessionStorage`
+  (`falconess.juego.ajustes`, `takeSettingsReturn` en `MenuSheet.tsx`) la escribe el toque y la lee
+  y borra el montaje siguiente, así que recargar no abre nada. Al cerrarse, el foco vuelve a «Menú».
 - **«Partida»** (`#m-partida-hoja`): Exportar partida · Temporadas anteriores · Vista de pruebas ·
   Nueva temporada (dos toques, el segundo el confirmar). El confirmar ocupa la misma caja que la
   fila, así nada de abajo se mueve entre los dos toques.
