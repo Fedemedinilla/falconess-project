@@ -63,4 +63,25 @@ describe.each([
     }
     expect(races).toBe(3);
   });
+
+  it("keeps the state when the caller changes the log it was handed", () => {
+    let s = startSeason(ctx, "kept-race", START);
+    let races = 0;
+    while (s.status !== "ended" && races < 3) {
+      const input = policy(s);
+      const next = advanceSeason(ctx, s, input, {
+        onGoalRace: (log) => {
+          races += 1;
+          log.results.reverse();
+          for (const r of log.results) {
+            r.place = 99;
+            r.durabilityEnd = 0;
+          }
+        },
+      });
+      expect(next).toEqual(advanceSeason(ctx, s, input));
+      s = next;
+    }
+    expect(races).toBe(3);
+  });
 });

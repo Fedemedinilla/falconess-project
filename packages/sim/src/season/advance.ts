@@ -17,7 +17,8 @@ export type AdvanceOptions = {
   /**
    * Receives the log of the input's goal race, if it runs one, run with detail "full" (P7: the
    * same state as without it): a viewer keeps it instead of running the race again (ADR-0017,
-   * open decision 6). Never called for a week without a goal race.
+   * open decision 6). Called once in a goal-race week, after the season has read the log (even
+   * when the week then waits on an event); never in a week without a goal race. It must not throw.
    */
   readonly onGoalRace?: (log: RaceLog) => void;
 };
