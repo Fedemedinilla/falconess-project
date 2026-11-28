@@ -151,6 +151,48 @@ for (const size of [
   });
 }
 
+for (const who of ["peregrina", "cernicala", "caracara"])
+  test(`the week menu's splash fades out from her hips and is gone at the stats strip: ${who} (owner 2026-11-28)`, async ({
+    page,
+  }) => {
+    await startMobile(page, who);
+    for (const size of [
+      { width: 360, height: 640 },
+      { width: 360, height: 740 },
+      { width: 390, height: 844 },
+      { width: 1024, height: 768 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(size);
+      await expect(page.locator("#m-entrenar")).toBeVisible();
+      const at = `${who} at ${size.width}×${size.height}`;
+      const fade = await page.evaluate(() => {
+        const img = document
+          .querySelector<HTMLElement>("#m-entrenar")
+          ?.closest("[data-screen]")
+          ?.querySelector<HTMLElement>("[aria-hidden] > img");
+        const hero = img?.parentElement;
+        const strip = document.querySelector("#m-stats");
+        if (!hero || !img || !strip) return undefined;
+        const style = getComputedStyle(hero);
+        return {
+          mask: style.maskImage,
+          gone:
+            hero.getBoundingClientRect().bottom -
+            Number.parseFloat(style.getPropertyValue("--foot")),
+          strip: strip.getBoundingClientRect().top,
+          height: img.getBoundingClientRect().height / hero.getBoundingClientRect().height,
+        };
+      });
+      if (!fade) throw new Error(`${at}: no splash`);
+      expect(fade.mask, at).toMatch(/^linear-gradient\(/);
+      // fully see-through at the strip's top, never lower
+      expect(Math.abs(fade.gone - fade.strip), at).toBeLessThanOrEqual(1);
+      // and she keeps her size: 82 % of the screen
+      expect(fade.height, at).toBeCloseTo(0.82, 2);
+    }
+  });
+
 test("the drawer's card is the planning card's door on a race week (D3, owner 2026-11-18)", async ({
   page,
 }) => {

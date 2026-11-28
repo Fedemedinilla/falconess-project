@@ -655,6 +655,16 @@
   --k: 0.82;
   --ty: 0.235;
   --tx: 0.5;
+  /* owner 2026-11-28: her legs no longer show behind and between the week's buttons. From about
+     her hips (52 % of the screen for all three, or higher on a short screen) she fades out, and is
+     gone at the stats strip's top: the strip, the bar and the pills take this much of the screen's
+     foot whatever its size (less on a short screen, below). Her size does not change. */
+  --foot: 266px;
+  mask-image: linear-gradient(
+    to bottom,
+    #000 min(52%, calc(100% - var(--foot) - 64px)),
+    transparent calc(100% - var(--foot))
+  );
 }
 .glow2 {
   position: absolute;
@@ -3110,6 +3120,9 @@
   --c: #6d8397;
 }
 @media (max-height: 700px) {
+  .hero {
+    --foot: 220px;
+  }
   .app .tbar {
     height: 58px;
   }
