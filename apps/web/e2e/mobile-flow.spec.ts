@@ -188,8 +188,9 @@ for (const who of ["peregrina", "cernicala", "caracara"])
       expect(fade.mask, at).toMatch(/^linear-gradient\(/);
       // fully see-through at the strip's top, never lower
       expect(Math.abs(fade.gone - fade.strip), at).toBeLessThanOrEqual(1);
-      // and she keeps her size: 82 % of the screen
-      expect(fade.height, at).toBeCloseTo(0.82, 2);
+      // and she keeps her size: 82 % of the screen, breathing (up to 0.8 % taller)
+      expect(fade.height, at).toBeGreaterThanOrEqual(0.815);
+      expect(fade.height, at).toBeLessThanOrEqual(0.83);
     }
   });
 
