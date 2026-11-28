@@ -34,6 +34,7 @@ import {
   statsLine,
   trainingMenu,
   turnSummary,
+  workshopInput,
 } from "./render.js";
 
 const args = parseArgs(process.argv.slice(2));
@@ -113,7 +114,7 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
     .map((o) => (o.chancePm < 1000 ? `+${o.recovery} ${pmPercent(o.chancePm)}` : `+${o.recovery}`))
     .join(" / ");
   console.log(
-    `6. Taller (vigor ${-S.fatigueCost.workshop})   7. Descansar (vigor ${rest}; ánimo +1 ${pmPercent(S.restMoodUpChance)})   8. Salida (vigor +${-S.fatigueCost.outing}, ánimo +1)   (x salir)`,
+    `6. Taller (${S.workshopVisit ? "no gasta la semana" : `vigor ${-S.fatigueCost.workshop}`})   7. Descansar (vigor ${rest}; ánimo +1 ${pmPercent(S.restMoodUpChance)})   8. Salida (vigor +${-S.fatigueCost.outing}, ánimo +1)   (x salir)`,
   );
   for (;;) {
     const a = await ask("acción> ");
@@ -127,7 +128,7 @@ async function chooseInput(s: SeasonState): Promise<RunInput> {
     if (a === "8") return outingCrew(s);
     if (a === "6") {
       const ops = await workshopMenu(s);
-      if (ops) return { kind: "workshop", ops };
+      if (ops) return workshopInput(ctx.ruleset, ops);
     }
   }
 }
