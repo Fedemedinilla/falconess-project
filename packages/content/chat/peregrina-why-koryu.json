@@ -1,6 +1,6 @@
 {
   "id": "peregrina-why-koryu",
-  "version": 1,
+  "version": 2,
   "falconess": "peregrina",
   "questionKey": "chat.peregrina-why-koryu.q",
   "fromTurn": 1,
@@ -8,5 +8,13 @@
     "chat.peregrina-why-koryu.1",
     "chat.peregrina-why-koryu.2",
     "chat.peregrina-why-koryu.3"
-  ]
+  ],
+  "afterScene": {
+    "sceneId": "peregrina-first-vos",
+    "replyKeys": [
+      "chat.peregrina-why-koryu.1",
+      "chat.peregrina-why-koryu.2-tu",
+      "chat.peregrina-why-koryu.3"
+    ]
+  }
 }

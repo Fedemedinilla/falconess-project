@@ -41,10 +41,20 @@ describe("story scenes and chat topics (owner 2026-11-12)", () => {
         ...s.lines.map((l) => l.textKey),
         ...s.lines.filter((l) => !UNNAMED.has(l.speaker)).map((l) => `speaker.${l.speaker}`),
       ]),
-      ...topics.flatMap((t) => [t.questionKey, ...t.replyKeys]),
+      ...topics.flatMap((t) => [t.questionKey, ...t.replyKeys, ...(t.afterScene?.replyKeys ?? [])]),
     ];
     const missing = keys.filter((k) => es[k] === undefined || en[k] === undefined);
     expect(missing).toEqual([]);
+  });
+
+  it("a topic's reply after a scene names a scene of the same Falconess (usted → tú, chapter 6)", () => {
+    const byId = new Map(scenes.map((s) => [s.id, s]));
+    const after = topics.filter((t) => t.afterScene !== undefined);
+    expect(after.map((t) => t.id).sort()).toEqual(["peregrina-ever-lost", "peregrina-why-koryu"]);
+    for (const t of after) {
+      const scene = byId.get(t.afterScene?.sceneId ?? "");
+      expect(scene?.falconess, t.id).toBe(t.falconess);
+    }
   });
 
   it("one scene per trigger and Falconess", () => {
