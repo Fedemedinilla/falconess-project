@@ -537,6 +537,10 @@ test("a race week's workshop swaps her wings: the card preselects the new wings'
   await page.click("#m-taller");
   await page.click("#m-ala-mule");
   await page.click("#m-taller-confirmar");
+  // ADR-0018: the visit spends no week, so the race week is still to decide: no emblem yet
+  await settle(page);
+  await expect(page.locator("#m-transicion")).toHaveCount(0);
+  await page.click("#m-descansar");
   await toPosition(page);
   await expect(page.locator("#m-posicion-pack")).toBeChecked();
   // the old wings' position is no longer her default: picking it is a choice the race keeps

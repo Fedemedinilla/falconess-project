@@ -190,8 +190,11 @@ test("a race week: pre-race card, the flight view, Saltar and the result", async
   await expect(page.locator("#semana-dialogo[open]")).toHaveCount(0);
 });
 
-test("the workshop: wings and skills, as one order that takes the week", async ({ page }) => {
+test("the workshop: wings and skills, as one order that spends no week (ADR-0018)", async ({
+  page,
+}) => {
   await startMobile(page, "cernicala");
+  const turn = await week(page);
   await page.click("#m-taller");
   await expect(page.locator("#m-taller-wings")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#m-taller-confirmar")).toBeDisabled();
@@ -206,7 +209,9 @@ test("the workshop: wings and skills, as one order that takes the week", async (
   await expect(page.locator('[id^="m-habilidad-"]').first()).toBeVisible();
   await page.click("#m-taller-confirmar");
   await settle(page);
-  expect(await week(page)).toBe(2);
+  // a visit: back on the menu, the same week still to play
+  await expect(page.locator("#m-taller-confirmar")).toHaveCount(0);
+  expect(await week(page)).toBe(turn);
 });
 
 test("a short season to its end, then a new one; the test view is one tap away", async ({

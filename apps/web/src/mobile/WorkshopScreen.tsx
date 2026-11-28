@@ -29,8 +29,9 @@ const GESTURE: Record<Style, TakeoffStyle> = {
 
 /**
  * The v3 workshop on the phone: learn skills with her points, and swap the wings (on v3 a look and
- * a takeoff gesture, and the default race position). Everything chosen goes as one workshop order,
- * the week's action; costs and limits are the sim's (screens/model/workshop.ts).
+ * a takeoff gesture, and the default race position). Everything chosen goes as one order: on v3 a
+ * visit that spends no week (ADR-0018, `visit`), so a race week still waits for its action; costs
+ * and limits are the sim's (screens/model/workshop.ts).
  */
 export function WorkshopScreen({
   ctx,

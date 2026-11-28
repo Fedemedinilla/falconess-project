@@ -447,3 +447,59 @@ describe("watches end where they began (I21, review 1 item 1)", () => {
     expect(h.now().flow.top).toBe(card.top);
   });
 });
+
+describe("the v3 workshop visit (ADR-0018): the workshop's «Confirmar» spends no week", () => {
+  it("on a race week the visit is committed, not decided: the week is still there to play", () => {
+    const t = loadSave("peregrina-w10");
+    const h = harness(t);
+    h.until("idle");
+    const turn = t.game.getSnapshot().run?.state.turn;
+    h.cmd.open("workshop");
+    const before = h.inputs();
+    h.cmd.visit([{ op: "equip-frame", frameId: "mule" }]);
+    expect(h.inputs()).toBe(before + 1);
+    const run = t.game.getSnapshot().run;
+    expect(run?.inputs.at(-1)?.kind).toBe("workshop:visit");
+    expect(run?.state.turn).toBe(turn);
+    expect(run?.state.equippedFrame).toBe("mule");
+    // no race week was decided, and the nav is back on the menu in the same tap
+    expect(t.weeks.getSnapshot()).toBeUndefined();
+    expect(h.ui().nav).toEqual({ at: "menu" });
+    expect(h.cues).toEqual(["nav", "confirm"]);
+    expect(h.until("idle").top.kind).toBe("idle");
+    // the week's action decides the race week, and its card follows the wings she now has (F5)
+    h.cmd.choose({ kind: "rest" });
+    expect(t.weeks.getSnapshot()).toMatchObject({ phase: "decided", stage: "action" });
+    const card = h.until("position").top;
+    expect(card.kind === "position" && card.wings).toBe("pack");
+  });
+
+  it("a position planned before the visit is still planned after it", () => {
+    const t = loadSave("peregrina-w10");
+    const h = harness(t);
+    h.until("idle");
+    h.cmd.open("plan");
+    h.cmd.position("lead");
+    h.cmd.open("menu");
+    h.cmd.open("workshop");
+    h.cmd.visit([{ op: "equip-frame", frameId: "mule" }]);
+    expect(t.weeks.getSnapshot()).toEqual({
+      phase: "planned",
+      fp: fpOf(t),
+      turn: t.game.getSnapshot().run?.state.turn,
+      position: "lead",
+    });
+  });
+
+  it("a refused visit acts on nothing and sets the workshop's notice", () => {
+    const t = loadSave("peregrina-w10");
+    const h = harness(t);
+    h.until("idle");
+    h.cmd.open("skills");
+    const before = h.inputs();
+    h.cmd.visit([{ op: "learn-skill", skillId: "clean-start" }]);
+    expect(h.inputs()).toBe(before);
+    expect(h.ui().notice?.kind).toBe("workshop");
+    expect(t.weeks.getSnapshot()).toBeUndefined();
+  });
+});

@@ -44,8 +44,14 @@ export type Intent =
   | {
       readonly kind: "workshop";
       readonly tab: "wings" | "skills";
-      readonly input: WeekActionInput;
+      /** The workshop's order: a visit on v3 (ADR-0018), the week's action on v1 and v2. */
+      readonly input: Extract<WeekActionInput, { kind: "workshop" }>;
     };
+
+/** ADR-0018: she already went to the workshop this week (a visit spends no week). */
+function visitedThisWeek(s: SeasonState): boolean {
+  return s.log.some((e) => e.turn === s.turn && e.input?.kind === "workshop:visit");
+}
 
 /** A bot's choice of week. `raceWeeks` counts the race weeks it played before this one. */
 export type IdlePolicy = (ctx: SimContext, s: SeasonState, raceWeeks: number) => Intent;
@@ -86,6 +92,8 @@ export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
   let low: (typeof LOWEST)[number] = "agility";
   for (const stat of LOWEST) if (s.stats[stat] < s.stats[low]) low = stat;
   const train: Intent = { kind: "train", training: TRAINING[low] };
+  // a v3 visit spends no week: once there this week, the week's own action follows
+  const visited = visitedThisWeek(s);
   if (isRaceWeek(ctx, s)) {
     const frame = s.hangar.find((f) => f !== s.equippedFrame);
     switch (raceWeeks % 4) {
@@ -96,7 +104,7 @@ export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
       case 2:
         return { kind: "outing" };
       default:
-        return frame
+        return frame && !visited
           ? {
               kind: "workshop",
               tab: "wings",
@@ -105,7 +113,7 @@ export const trainer: IdlePolicy = (ctx, s, raceWeeks) => {
           : { kind: "rest" };
     }
   }
-  if (s.turn % 6 === 0 && s.turn < ctx.ruleset.season.turns) {
+  if (s.turn % 6 === 0 && s.turn < ctx.ruleset.season.turns && !visited) {
     const skill = cheapestSkill(ctx, s);
     if (skill)
       return {
@@ -316,8 +324,12 @@ export function playSeason(w: World, o: BotOptions): WalkEnd {
           const decided = w.trace.length;
           if (!playIntent(w, intent)) break;
           const acted = w.trace.slice(decided).some((e) => e.type === "act" || e.type === "decide");
+          // a v3 visit (ADR-0018) is no week: the week's own action comes next
+          const visit = w.trace
+            .slice(decided)
+            .some((e) => e.type === "act" && e.step.input.kind === "workshop:visit");
           if (acted) {
-            if (race) {
+            if (race && !visit) {
               raceWeeks += 1;
               aim(`week:${fp}`, w.beats());
             }
@@ -355,7 +367,7 @@ function playIntent(w: World, intent: Intent): boolean {
       if (nav.at !== "workshop") w.cmd.open(intent.tab === "skills" ? "skills" : "workshop");
       else if (nav.tab !== intent.tab) w.cmd.workshopTab(intent.tab);
       else {
-        w.cmd.choose(intent.input);
+        w.cmd.visit(intent.input.ops);
         return true;
       }
       return false;

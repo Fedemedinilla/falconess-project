@@ -458,7 +458,7 @@ export function RunView({
           state={state}
           tab={screen.tab}
           onTab={cmd.workshopTab}
-          onConfirm={(ops: WorkshopOp[]) => cmd.choose({ kind: "workshop", ops })}
+          onConfirm={(ops: WorkshopOp[]) => cmd.visit(ops)}
           onBack={back}
         />
       );

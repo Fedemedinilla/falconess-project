@@ -314,6 +314,10 @@ export function createWorld(o: WorldOptions = {}): World {
       via = { kind: "choose" };
       using("complete", () => commands.choose(input));
     },
+    visit: (ops) => {
+      via = { kind: "choose" };
+      using("complete", () => commands.visit(ops));
+    },
     position: (p) => using("complete", () => commands.position(p)),
     run: () => {
       const top = now().flow.top;
