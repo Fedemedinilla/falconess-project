@@ -345,7 +345,11 @@ export function attentivePolicy(
   const R = ctx.ruleset;
   const raceWeek = seasonGoalsOf(ctx, state).some((g) => g.turn === state.turn);
   const withPosition = (input: RunInput): RunInput =>
-    raceWeek && flightOf(R) !== null && input.kind !== "event:choose" && input.kind !== "start"
+    raceWeek &&
+    flightOf(R) !== null &&
+    input.kind !== "event:choose" &&
+    input.kind !== "start" &&
+    input.kind !== "workshop:visit"
       ? { ...input, position: bestLetterPosition(ctx, state) }
       : input;
   const target = buildTraining(state.stats, build);

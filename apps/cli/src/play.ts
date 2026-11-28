@@ -158,7 +158,13 @@ async function outingCrew(s: SeasonState): Promise<RunInput> {
  * `position` in the input), as on the web's card.
  */
 async function choosePosition(s: SeasonState, input: RunInput): Promise<RunInput> {
-  if (s.pendingEvent || input.kind === "start" || input.kind === "event:choose") return input;
+  if (
+    s.pendingEvent ||
+    input.kind === "start" ||
+    input.kind === "event:choose" ||
+    input.kind === "workshop:visit"
+  )
+    return input;
   if (!goalForTurn(ctx, s)) return input;
   const frameId = raceWings(ctx, s, input);
   for (const line of positionMenu(ctx, s, frameId)) console.log(line);

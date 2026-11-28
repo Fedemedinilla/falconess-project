@@ -147,7 +147,9 @@ describe("rest options (ADR-0006 D4)", () => {
 type WeekKind = Exclude<RunInput["kind"], "start" | "event:choose">;
 
 function inputOf(kind: WeekKind): RunInput {
-  return kind === "workshop" ? { kind, ops: [{ op: "repair" }] } : { kind };
+  if (kind === "workshop") return { kind, ops: [{ op: "repair" }] };
+  if (kind === "workshop:visit") return { kind, ops: [{ op: "learn-skill", skillId: "x" }] };
+  return { kind };
 }
 
 function logOf(...weeks: Array<[WeekKind, string[]]>): Pick<SeasonState, "log"> {
