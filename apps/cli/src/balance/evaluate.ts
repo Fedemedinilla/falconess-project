@@ -5,8 +5,9 @@
  */
 import { type Calendar, calendarOptionalRuns } from "@falconess/schema";
 import {
+  type AnyGuardrailId,
   crosses,
-  type GuardrailId,
+  e1Outcome,
   type GuardrailStatus,
   guardrailStatus,
   wilson95,
@@ -23,7 +24,7 @@ export type BarandasSpec = {
     minRacesPerCell: number;
     minSeasonsPerFalconessPerBase: number;
   };
-  guardrails: { id: GuardrailId; name: string; gate: Json }[];
+  guardrails: { id: AnyGuardrailId; name: string; gate: Json }[];
 };
 
 export type Merged = Record<string, { acc: Record<string, number>; t?: number[][] }>;
@@ -31,7 +32,7 @@ export type BenchRun = { detail: string; v3: number; v2: number };
 export type B8Check = { id: string; ok: boolean; detail: string };
 
 export type GuardrailResult = {
-  id: GuardrailId;
+  id: AnyGuardrailId;
   name: string;
   ok: boolean | null;
   fragile: boolean;
@@ -105,12 +106,12 @@ export function evaluateGuardrails(I: EvalInput): GuardrailResult[] {
   const BASES = spec.measurement.seedBases;
   const LEVELS = spec.measurement.levels;
   const CAT = spec.measurement.tracks;
-  const gate = (id: GuardrailId): Json => {
+  const gate = (id: AnyGuardrailId): Json => {
     const g = spec.guardrails.find((x) => x.id === id);
     if (!g) throw new Error(`barandas.json: ${id} missing`);
     return g.gate;
   };
-  const name = (id: GuardrailId) => spec.guardrails.find((g) => g.id === id)?.name ?? id;
+  const name = (id: AnyGuardrailId) => spec.guardrails.find((g) => g.id === id)?.name ?? id;
   const out: GuardrailResult[] = [];
   const push = (r: Omit<GuardrailResult, "status">) =>
     out.push({ ...r, status: guardrailStatus(r) });
@@ -461,6 +462,49 @@ export function evaluateGuardrails(I: EvalInput): GuardrailResult[] {
             ? `distinto: ${bad.join(", ")}`
             : `0 bytes (${b8.length} chequeos)`,
       notes: (b8 ?? []).map((c) => `${c.ok ? "ok" : "FALLA"} · ${c.detail}`),
+    });
+  }
+  {
+    // E1 (ADR-0012)
+    const g = gate("E1");
+    const FAL = g.falconess as string[];
+    const rows = FAL.flatMap((f) =>
+      BASES.map((b) => {
+        const a = M[`e1/${f}/${b}`]?.acc;
+        return { falconess: f, base: b, runs: a?.runs ?? 0, completed: a?.completed ?? 0 };
+      }),
+    );
+    const o = e1Outcome(
+      rows,
+      {
+        minPct: gnum(g, "minPct"),
+        maxPct: gnum(g, "maxPct"),
+        seasonsPerBase: I.quick ? 1 : gnum(g, "seasonsPerBase"),
+      },
+      { falconess: FAL, bases: BASES },
+    );
+    const cell = (c: (typeof o.cells)[number]) =>
+      `${c.falconess} ${c.base} ${r1(c.pct)} [${r1(c.lo)}-${r1(c.hi)}] (${c.runs})${c.ok ? (c.fragile ? " frágil" : "") : " FUERA"}`;
+    const lo = o.cells.reduce<(typeof o.cells)[number] | null>(
+      (p, q) => (p === null || q.pct < p.pct ? q : p),
+      null,
+    );
+    const hi = o.cells.reduce<(typeof o.cells)[number] | null>(
+      (p, q) => (p === null || q.pct > p.pct ? q : p),
+      null,
+    );
+    push({
+      id: "E1",
+      name: name("E1"),
+      ok: o.ok,
+      fragile: o.fragile,
+      key:
+        lo && hi
+          ? `mín ${r1(lo.pct)} % (${lo.falconess} ${lo.base}) · máx ${r1(hi.pct)} % (${hi.falconess} ${hi.base})`
+          : "sin temporadas",
+      notes: [
+        `Pasan todas las metas en Exigente, atenta con las carreras de meta × ${r2(gnum(g, "statScalePm") / 1000)} (umbral ${gnum(g, "minPct")}-${gnum(g, "maxPct")} %): ${o.cells.map(cell).join(" · ")}.`,
+      ],
     });
   }
   return out;
