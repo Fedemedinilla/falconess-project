@@ -3,7 +3,6 @@ import { readKey, removeKey, sessionStore, writeKey } from "../game/storage";
 import { type Lang, lang, setLang } from "../text/lang";
 import { ui } from "../text/ui";
 import { cx } from "../ui/cx";
-import { useLatest } from "../ui/useLatest";
 import { useHeld, useModalDialog } from "../ui/useModalDialog";
 import { Glyph, type GlyphName } from "./Glyph";
 import m from "./MenuSheet.module.css";
@@ -346,13 +345,7 @@ function RootSheet({
   const { ref, mounted } = useModalDialog(open, onClose);
   if (!mounted) return null;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-menu-dialogo"
-      aria-labelledby="m-menu-titulo"
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id="m-menu-dialogo" aria-labelledby="m-menu-titulo">
       <div className={s.dl}>
         <h2 className={s.dlTitle} id="m-menu-titulo" tabIndex={-1}>
           {ui("ui.m.menu")}
@@ -391,13 +384,7 @@ function SubSheet({
   const { title, children } = useHeld({ title: openTitle, children: openChildren }, open);
   if (!mounted) return null;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id={id}
-      aria-labelledby={`${id}-titulo`}
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id={id} aria-labelledby={`${id}-titulo`}>
       <div className={s.dl}>
         <div className={m.subHead}>
           <button
@@ -444,20 +431,21 @@ function useLevels(open: boolean, closeAll: () => void, at: Sub) {
     setWasOpen(open);
     setSub(open ? at : undefined);
   }
-  const subRef = useLatest(sub);
+  // «Volver» closes the level too, and a sheet that closes says so: without this the whole menu
+  // would go with the tap that brings the root back
+  const back = useRef(false);
   // «Volver» before the root finished fading out (180 ms) would find its `<dialog>` still open and
   // under the level in the top layer: it would come back without its title focused, and under a
   // sheet that is still modal. A new key makes it a new element, which opens on its title (L6).
   const [epoch, setEpoch] = useState(0);
-  // «Volver» closes the level too, and a sheet that closes says so: without this the whole menu
-  // would go 180 ms after the tap, with the root already back on screen
-  const back = useRef(false);
   return {
     setSub,
     rootOpen: open && sub === undefined,
     /** The root closed: the whole menu only when no level took its place. */
     onRootClose: () => {
-      if (subRef.current === undefined) closeAll();
+      // this render's level, not a ref: the root closes natively in the very commit a level
+      // rises, before a ref of this component would have caught up
+      if (sub === undefined) closeAll();
     },
     /** A level closed: the whole menu, unless «Volver» is what closed it. */
     onSubClose: () => {

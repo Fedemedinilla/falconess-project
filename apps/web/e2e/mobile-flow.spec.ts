@@ -300,8 +300,8 @@ test("a pick that closes its sheet does not hold what it starts: the outing's cr
   await holdClock(page);
   await page.click(`#m-salida-con-${crew}`);
   // the sheet is released at its close request: the week's effects are there with the pick, under
-  // the sheet on its way out (6.9), which then leaves
-  expect(await present(page, "#m-salida-cuadrilla[data-closing]")).toBe(true);
+  // the sheet's copy on its way out (6.9, open decision 2), which then leaves
+  expect(await present(page, "[data-sheet-copy][data-closing]")).toBe(true);
   expect(await present(page, '#m-efectos [data-fx="bond"]')).toBe(true);
   await page.clock.runFor(200);
   await expect(page.locator("#m-salida-cuadrilla")).toHaveCount(0);

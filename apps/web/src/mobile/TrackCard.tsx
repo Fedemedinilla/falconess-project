@@ -226,7 +226,6 @@ export function TrackSheet({
       id="m-pista-dialogo"
       aria-labelledby="m-pista-titulo"
       data-course={view.courseId}
-      onClose={onClose}
     >
       <div className={s.dl}>
         <p className={s.tsCap}>{ui("ui.m.track.cap")}</p>

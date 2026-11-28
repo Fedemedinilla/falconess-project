@@ -281,10 +281,17 @@ otro camino, así no se acumulan.
   van cuando su fundido terminó, contado desde el cuadro en que empieza (no desde el toque). Las
   salidas (capas, hojas, el chat) usan `--m-ease-in`, que acelera sin cortar al final: su último
   cuadro ya está casi transparente.
-- **Hojas:** entran en 220 ms subiendo 16 px y se van en 180 ms desvaneciéndose con lo que mostraban;
-  se liberan al pedir el cierre, pero siguen siendo modales e `inert` hasta cerrarse (decisión
-  abierta 2). Escape y el atrás de Android cierran igual. El foco vuelve a lo que las abrió (o, si
-  eso ya no está, a lo que abrió aquello); una capa que entró debajo toma el foco al cerrarse. El
+- **Hojas:** entran en 220 ms subiendo 16 px y se van en 180 ms desvaneciéndose con lo que mostraban.
+  **Desde el 2026-11-28 (decisión abierta 2, resuelta):** al pedir el cierre el `<dialog>` se cierra
+  de verdad en ese momento (deja de ser modal: el toque siguiente ya llega al juego, y una hoja que
+  se vuelve a pedir abre otra vez el mismo `<dialog>` sobre su título) y los 180 ms los juega una
+  copia de lo que mostraba (`fadingCopy` en `ui/useModalDialog.ts`), con su velo: sin ids, `inert`,
+  `aria-hidden`, sin tomar punteros, en la capa de arriba como popover manual, la misma regla que
+  siguen las capas del juego; un temporizador la quita. Con movimiento reducido no hay copia.
+  Escape y el atrás de Android cierran igual. El foco vuelve a lo que las abrió (o, si eso ya no
+  está, está oculto o `inert`, a lo que abrió aquello; si quedaba en la hoja cerrada, la deja); una
+  hoja que vuelve a abrirse desde una hoja que ella misma abrió («Volver» de un nivel del «Menú»)
+  conserva lo que la abrió primero. Una capa que entró debajo toma el foco al cerrarse. El
   chat entra en 240 ms y se va en 180; es una hoja dentro de la columna (así lo contienen el marco de
   la tableta y la columna del escritorio): mientras está abierto, el juego de abajo, su aviso y el
   panel del escritorio (que se apaga) no reciben toques ni teclas, su «Cerrar» toma el foco, Escape
@@ -482,9 +489,11 @@ El código mantiene lo de hoy hasta que el dueño responda:
 1. ~~El aviso de una escena no sale si el jugador deja la pantalla durante los 0,8 s de la salida
    de esa escena (6.2).~~ **Resuelta el 2026-11-18:** el dueño sacó el aviso de escena entero, así
    que no hay nada que mostrar ni que descartar (§7).
-2. Un toque sobre el juego durante los 180 ms en que se cierra una hoja no hace nada, porque la hoja
-   que se cierra sigue siendo modal (6.9). Alternativa: cerrarla de verdad al pedir el cierre y
-   desvanecer una copia inerte.
+2. ~~Un toque sobre el juego durante los 180 ms en que se cierra una hoja no hace nada, porque la
+   hoja que se cierra sigue siendo modal (6.9). Alternativa: cerrarla de verdad al pedir el cierre
+   y desvanecer una copia inerte.~~ **Resuelta el 2026-11-28:** el dueño eligió la alternativa; la
+   regla está en §9 y la prueban `mobile-sheets.spec.ts` (un toque a «Entrenar» y una hoja pedida
+   otra vez dentro de los 180 ms).
 3. «Correr» suena solo con su toque (5.10).
 4. En una semana de carrera, el menú debajo de los efectos de la acción muestra los stats de antes de
    la carrera.

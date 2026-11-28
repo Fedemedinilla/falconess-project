@@ -1770,8 +1770,10 @@
 .sheet::backdrop {
   background: var(--scrim);
 }
-/* M9: it comes in rising 16 px with its scrim; on its close request it fades out where it stands
-   (`data-closing`, useModalDialog: modal and inert until a timer closes it) */
+/* M9: it comes in rising 16 px with its scrim. On its close request the `<dialog>` closes at once
+   and its copy fades out where it stood, with its scrim (`data-closing`, useModalDialog's
+   `fadingCopy`: a manual popover, id-less and inert, that takes no pointer, so the page under it
+   is in reach from that tap; ADR-0017 §9, open decision 2) */
 .sheet[open] {
   animation: sheetIn var(--m-dur-sheet-in) var(--m-ease-out) both;
 }
@@ -1784,6 +1786,7 @@
 }
 .sheet[data-closing]::backdrop {
   animation: scrimOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+  pointer-events: none;
 }
 @keyframes sheetIn {
   from {
