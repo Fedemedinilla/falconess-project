@@ -388,13 +388,18 @@ Dos correcciones del dueño sobre lo construido, con una captura de la semana 10
   `ui.trackWeek !== state.turn`. Al abrirse, `MenuScreen` despacha `{type:"trackShown", turn}`: ir
   al taller y volver no lo abre de nuevo, cerrarlo lo deja cerrado esa semana, y la próxima semana
   de carrera lo abre otra vez. Nunca tapa «Entrenar» ni las píldoras: el cajón es un ítem del flujo
-  de la pantalla, arriba de la tira de stats.
+  de la pantalla, arriba de la tira de stats. Desde el 2026-11-28 la tarjeta (y la pestaña) se
+  apoyan 4 px sobre la tira y crecen solo hacia arriba, así no llegan al «Registro» del riel a
+  360 × 740 ni en la tableta (`mobile-flow.spec.ts` mide la caja contra el riel y las acciones).
 - **La puerta a la tarjeta para planear** es ahora la tarjeta del cajón (`#m-pista`): en una semana
   de carrera corre `onAction("race")` (D3) en vez de abrir la hoja de la pista, porque la tarjeta
   para planear ya muestra el perfil, lo que pide y las cuatro posiciones. En una semana sin carrera
   el cajón se comporta como siempre (la hoja `#m-pista-dialogo`), y en una semana de carrera esa
   hoja sigue a un toque desde Metas. La pestaña lleva `data-race` cuando hay carrera: es lo que
-  miran los e2e desde que no hay cartel.
+  miran los e2e desde que no hay cartel. El nombre de la tarjeta dice adónde lleva (2026-11-28):
+  «Planear la carrera: Sprint» (`ui.m.track.plan`) en una semana de carrera, «Ver la pista: …» en
+  las otras; las claves del cartel que ya nadie leía (`ui.m.race.week`, `ui.m.race.open`) se
+  borraron.
 - **Los botones de la escena van después del dibujo.** El dueño: «los botones de auto, registro y
   saltar aparecen antes que el background + líneas negras de la cinemática. Eso hace que se vean
   como que no son parte del todo». El orden es ahora fondo → desenfoque y título del capítulo →

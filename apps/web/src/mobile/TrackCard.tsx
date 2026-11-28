@@ -176,7 +176,10 @@ export function TrackCardButton({
       className={s.tcard}
       id={id}
       data-course={view.courseId}
-      aria-label={ui("ui.m.track.open", { course: gameText(view.nameKey) })}
+      // a race week's card opens the planning card (owner 2026-11-18): it says so (2026-11-28)
+      aria-label={ui(sheet ? "ui.m.track.open" : "ui.m.track.plan", {
+        course: gameText(view.nameKey),
+      })}
       aria-haspopup={sheet ? "dialog" : undefined}
       disabled={disabled}
       onClick={onOpen}

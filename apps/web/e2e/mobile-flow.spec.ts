@@ -199,6 +199,12 @@ test("the drawer's card is the planning card's door on a race week (D3, owner 20
   await seedRun(page, "peregrina-w10");
   await page.goto("./");
   await continueRun(page);
+  // its name says where it leads: the race's plan, not the track's sheet (owner 2026-11-28)
+  await expect(page.locator("#m-pista")).toHaveAttribute(
+    "aria-label",
+    t("ui.m.track.plan", { course: "Sprint" }),
+  );
+  await expect(page.locator("#m-pista")).not.toHaveAttribute("aria-haspopup", "dialog");
   await page.click("#m-pista");
   // the planning card, with everything the bar's card showed: the track, what it asks, the four
   // positions, «Volver» and «Elegir la acción»
@@ -247,12 +253,21 @@ test("the track drawer opens again on the next race week, and on no other week (
   // week 39 has no race: the tab says so and nothing opens by itself
   await expect(page.locator("#m-pista-tab")).not.toHaveAttribute("data-race", "");
   await expect(page.locator("#m-pista")).toBeHidden();
+  // its card opens the track's sheet there, and says so (owner 2026-11-28)
+  await expect(page.locator("#m-pista")).toHaveAttribute(
+    "aria-label",
+    textPattern("ui.m.track.open"),
+  );
   // week 40 has one (its inheritance card first: the drawer waits for it, then opens)
   await page.click("#m-descansar");
   await settle(page);
   expect(await week(page)).toBe(40);
   await expect(page.locator("#m-pista-tab")).toHaveAttribute("data-race", "");
   await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#m-pista")).toHaveAttribute(
+    "aria-label",
+    textPattern("ui.m.track.plan"),
+  );
   // closed, it stays closed for week 40 only
   await page.click("#m-pista-tab");
   await expect(page.locator("#m-pista")).toBeHidden();
