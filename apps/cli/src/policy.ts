@@ -118,12 +118,34 @@ export function lowestStatTraining(stats: FalconessStats): TrainingKind {
   }
 }
 
-/** The workshop visit both policies make: repair a worn frame, learn the useful generic actives. */
+/**
+ * ADR-0018: the most `workshop:visit` inputs a policy makes in one week. A visit does not end the
+ * week, so a policy that kept visiting would never play it; one visit learns everything she pays.
+ */
+export const MAX_VISITS_PER_TURN = 1;
+
+/** The `workshop:visit` inputs already made this week. */
+function visitsThisTurn(state: SeasonState): number {
+  return state.log.filter((e) => e.turn === state.turn && e.input?.kind === "workshop:visit")
+    .length;
+}
+
+/**
+ * The workshop visit every policy makes: repair a worn frame, learn the useful generic actives.
+ * On a ruleset with `workshopVisit` (v3, ADR-0018) it is a visit that does not spend the week, with
+ * only the skills (no wear to repair, and no policy swaps wings), made when there is something to
+ * learn and at most `MAX_VISITS_PER_TURN` times a week.
+ */
 function workshopVisit(ctx: SimContext, state: SeasonState): RunInput | undefined {
-  const learn: WorkshopOp[] = skillsToLearn(ctx, state).map((skillId) => ({
-    op: "learn-skill",
-    skillId,
-  }));
+  const skills = skillsToLearn(ctx, state);
+  if (ctx.ruleset.season.workshopVisit) {
+    if (skills.length === 0 || visitsThisTurn(state) >= MAX_VISITS_PER_TURN) return undefined;
+    return {
+      kind: "workshop:visit",
+      ops: skills.slice(0, 8).map((skillId) => ({ op: "learn-skill", skillId })),
+    };
+  }
+  const learn: WorkshopOp[] = skills.map((skillId) => ({ op: "learn-skill", skillId }));
   if (needsRepair(ctx, state)) return { kind: "workshop", ops: [{ op: "repair" }, ...learn] };
   if (learn.length > 0) return { kind: "workshop", ops: learn };
   return undefined;
@@ -288,11 +310,11 @@ export function bestLetterPosition(ctx: SimContext, state: SeasonState): Positio
   return best;
 }
 
-/** The action of the last week played (event choices skipped), if any. */
+/** The action of the last week played (event choices and workshop visits skipped), if any. */
 function lastWeekKind(state: SeasonState): string | undefined {
   for (let i = state.log.length - 1; i >= 0; i--) {
     const kind = state.log[i]?.input?.kind;
-    if (kind !== undefined && kind !== "event:choose") return kind;
+    if (kind !== undefined && kind !== "event:choose" && kind !== "workshop:visit") return kind;
   }
   return undefined;
 }

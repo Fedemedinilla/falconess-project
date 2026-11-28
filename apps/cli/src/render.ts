@@ -46,7 +46,8 @@ export function describeInput(content: ContentIndex, input: RunInput, prev?: Sea
       return opt ? `elige: ${content.t(opt.textKey)}` : `event:choose ${input.option}`;
     }
     case "workshop":
-      return `workshop ${input.ops.map((o) => o.op).join("+")}`;
+    case "workshop:visit":
+      return `${input.kind} ${input.ops.map((o) => o.op).join("+")}`;
     case "outing":
       return `${content.t("action.outing")}${input.manufacturer ? ` (${input.manufacturer})` : ""}`;
     default:

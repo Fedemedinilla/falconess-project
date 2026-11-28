@@ -280,3 +280,68 @@ describe("attentive policy: the human-like player (owner's feedback 2026-11-10)"
     expect(s.status).toBe("ended");
   });
 });
+
+describe("workshop visit on v3 (ADR-0018)", () => {
+  const v3: SimContext = { ruleset: RULESET_V3, content: ctx.content };
+  const fresh = startSeason(v3, "visit", {
+    kind: "start",
+    falconessId: "peregrina",
+    hangar: [...REFERENCE_HANGAR],
+    parents: [],
+  });
+  const paid = { ...fresh, skillPoints: 60 };
+
+  it("the careful player visits as soon as she can pay, then plays her week", () => {
+    const visit = carefulPolicy(v3, paid);
+    expect(visit).toEqual({
+      kind: "workshop:visit",
+      ops: [{ op: "learn-skill", skillId: "clean-start" }],
+    });
+    const after = advanceSeason(v3, paid, visit);
+    expect(after.turn).toBe(paid.turn);
+    expect(carefulPolicy(v3, after).kind).toMatch(/^(train:|rest|outing)/);
+  });
+
+  it("visits only when there is something to learn, and once per week", () => {
+    expect(carefulPolicy(v3, fresh).kind).not.toBe("workshop:visit");
+    const after = advanceSeason(v3, paid, carefulPolicy(v3, paid));
+    // points for one more skill in the same week: the cap keeps her from visiting again
+    const richer = { ...after, skillPoints: 1000 };
+    expect(skillsToLearn(v3, richer).length).toBeGreaterThan(0);
+    expect(carefulPolicy(v3, richer).kind).not.toBe("workshop:visit");
+    expect(lowestStatPolicy(v3, richer).kind).not.toBe("workshop:visit");
+  });
+
+  it("keeps the week-long workshop on v2", () => {
+    const v2: SimContext = { ruleset: RULESET_V2, content: ctx.content };
+    const s = startSeason(v2, "visit", {
+      kind: "start",
+      falconessId: "peregrina",
+      hangar: [...REFERENCE_HANGAR],
+      parents: [],
+    });
+    expect(carefulPolicy(v2, { ...s, skillPoints: 60 })).toEqual({
+      kind: "workshop",
+      ops: [{ op: "learn-skill", skillId: "clean-start" }],
+    });
+  });
+
+  it("plays whole v3 seasons that visit, never swap wings and end", () => {
+    for (const policy of [carefulPolicy, attentivePolicy, lowestStatPolicy]) {
+      let s = fresh;
+      let visits = 0;
+      for (let n = 0; s.status === "active"; n++) {
+        expect(n, policy.name).toBeLessThan(500);
+        const input = policy(v3, s);
+        if (input.kind === "workshop:visit") {
+          visits += 1;
+          expect(input.ops.every((op) => op.op === "learn-skill")).toBe(true);
+        }
+        expect(input.kind, policy.name).not.toBe("workshop");
+        s = advanceSeason(v3, s, input);
+      }
+      expect(visits, policy.name).toBeGreaterThan(0);
+      expect(s.equippedFrame, policy.name).toBe(fresh.equippedFrame);
+    }
+  });
+});
