@@ -114,6 +114,43 @@ test("a race week's menu has no bar: the track drawer opens by itself, over no a
   await expect(page.locator("#m-pista")).toBeHidden();
 });
 
+/** The reading rail's four buttons, under «Menú». */
+const RAIL = ["#m-leer-guide", "#m-leer-goals", "#m-leer-crews", "#m-leer-log"];
+
+for (const size of [
+  { width: 360, height: 740 },
+  { width: 390, height: 844 },
+  { width: 1024, height: 768 },
+]) {
+  test(`the race week's drawer card sits over the stats strip, into no rail or action button at ${size.width}×${size.height} (owner 2026-11-28)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await seedRun(page, "peregrina-w10");
+    await page.goto("./");
+    await continueRun(page);
+    const card = page.locator("#m-pista");
+    await expect(card).toBeVisible();
+    // the card's fade-and-grow ends before its box is measured
+    await page.waitForTimeout(400);
+    const box = await card.boundingBox();
+    if (!box) throw new Error("the drawer's card has no box");
+    const hit = async (id: string) => {
+      const other = page.locator(id);
+      if ((await other.count()) === 0) return;
+      const b = await other.boundingBox();
+      if (!b) return;
+      const apart =
+        box.x + box.width <= b.x ||
+        b.x + b.width <= box.x ||
+        box.y + box.height <= b.y ||
+        b.y + b.height <= box.y;
+      expect(apart, `${id} under the card`).toBe(true);
+    };
+    for (const id of [...RAIL, ...ACTIONS]) await hit(id);
+  });
+}
+
 test("the drawer's card is the planning card's door on a race week (D3, owner 2026-11-18)", async ({
   page,
 }) => {

@@ -2892,7 +2892,10 @@
     0 0 6px #fff;
   pointer-events: none;
 }
-/* the track's tab at the screen's left edge and its card sliding out (owner 2026-11-14) */
+/* the track's tab at the screen's left edge and its card sliding out (owner 2026-11-14). The card
+   and the tab stand on the stats strip, 4 px over it (the drawer's foot is the strip's top less the
+   column's 10 px gap), and grow upward only as tall as they are: the card reaches the reading rail
+   on no phone of 740 px or more nor on the tablet (owner 2026-11-28; mobile-flow.spec measures it) */
 .drawer {
   position: relative;
   height: 0;
@@ -2902,7 +2905,7 @@
 .drawerTab {
   position: absolute;
   left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
-  bottom: 10px;
+  bottom: -6px;
   width: 34px;
   padding: 10px 0;
   border-radius: 0 12px 12px 0;
@@ -2929,7 +2932,8 @@
   position: absolute;
   left: 26px;
   right: 0;
-  bottom: 6px;
+  /* the card's own 8 px margin below: its face ends 4 px over the strip */
+  bottom: -14px;
   /* owner 2026-11-14: a short, soft fade-and-grow out of the tab instead of a long slide */
   transform-origin: left center;
   transform: translateX(-10px) scale(0.96);
