@@ -24,8 +24,11 @@ import {
   type SimContext,
 } from "@falconess/sim";
 
-/** A week's action input: the only inputs that carry a race position. */
-export type WeekActionInput = Exclude<RunInput, { kind: "start" | "event:choose" }>;
+/** A week's action input: the only inputs that carry a race position (a v3 visit is no week, ADR-0018). */
+export type WeekActionInput = Exclude<
+  RunInput,
+  { kind: "start" | "event:choose" | "workshop:visit" }
+>;
 
 /** The position of a frame's wings: the default when none is chosen. */
 export function wingsPosition(content: ContentIndex, frameId: string): Position {
