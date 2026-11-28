@@ -118,6 +118,8 @@ test("a race week's menu has no bar: the track drawer opens by itself, over no a
 const RAIL = ["#m-leer-guide", "#m-leer-goals", "#m-leer-crews", "#m-leer-log"];
 
 for (const size of [
+  { width: 360, height: 640 },
+  { width: 360, height: 720 },
   { width: 360, height: 740 },
   { width: 390, height: 844 },
   { width: 1024, height: 768 },
@@ -158,6 +160,8 @@ for (const who of ["peregrina", "cernicala", "caracara"])
     await startMobile(page, who);
     for (const size of [
       { width: 360, height: 640 },
+      { width: 360, height: 700 },
+      { width: 360, height: 720 },
       { width: 360, height: 740 },
       { width: 390, height: 844 },
       { width: 1024, height: 768 },

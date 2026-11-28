@@ -3122,9 +3122,24 @@
 .app .pWorkshop {
   --c: #6d8397;
 }
+/* a race week's track card (65 px) stands on the strip, and on a phone under 740 px tall the rail
+   reached down into it: each button puts its icon beside its name, one line high, and the rail
+   ends over the card (owner 2026-11-28; mobile-flow.spec measures 360 × 640 and 740) */
+@media (max-height: 739px) {
+  .rail {
+    gap: 3px;
+  }
+  .app .railBtn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 5px;
+    min-height: 30px;
+    padding: 0 10px 0 8px;
+  }
+}
 @media (max-height: 700px) {
   .hero {
-    --foot: 220px;
+    --foot: 248px;
   }
   .app .tbar {
     height: 58px;
