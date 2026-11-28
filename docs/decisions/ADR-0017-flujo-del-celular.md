@@ -362,9 +362,9 @@ pantalla de ajustes de la D y el riel de la E.
   la raíz se va abajo, abren arriba de todo con su propio título enfocado (`tabIndex={-1}`,
   `aria-labelledby`), y su «Volver» (el chevrón al lado del título) vuelve a traer la raíz, también
   sobre su título. **Escape y el gesto atrás cierran el menú entero**, desde cualquier nivel, y el
-  foco vuelve a «Menú». Un «Volver» dentro de los 180 ms en que la raíz se está yendo le da una
-  clave nueva a su `<dialog>`: si se reusara el viejo, que sigue abierto y debajo del nivel en la
-  capa de arriba, volvería sin el foco en su título.
+  foco vuelve a «Menú». Un «Volver» dentro de los 180 ms en que la raíz se está yendo la abre otra
+  vez sobre su título: desde el 2026-11-28 la raíz ya está cerrada en ese momento (§9), así que se
+  fue la clave nueva que le daba a su `<dialog>`.
 - **La ventana ancha:** la pestaña «Menú» del panel muestra los mismos ajustes **en línea** (hay
   lugar: no hay segundo nivel), con el mismo componente (`SettingsCards`), así un ajuste se pone
   igual en los dos lados. Las pestañas del panel siguen con los cuatro paneles, y su «Menú» sigue

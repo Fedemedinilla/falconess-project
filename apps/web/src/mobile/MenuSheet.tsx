@@ -434,10 +434,6 @@ function useLevels(open: boolean, closeAll: () => void, at: Sub) {
   // «Volver» closes the level too, and a sheet that closes says so: without this the whole menu
   // would go with the tap that brings the root back
   const back = useRef(false);
-  // «Volver» before the root finished fading out (180 ms) would find its `<dialog>` still open and
-  // under the level in the top layer: it would come back without its title focused, and under a
-  // sheet that is still modal. A new key makes it a new element, which opens on its title (L6).
-  const [epoch, setEpoch] = useState(0);
   return {
     setSub,
     rootOpen: open && sub === undefined,
@@ -458,9 +454,7 @@ function useLevels(open: boolean, closeAll: () => void, at: Sub) {
     back: () => {
       back.current = true;
       setSub(undefined);
-      setEpoch((e) => e + 1);
     },
-    epoch,
     isOpen: (which: Exclude<Sub, undefined>) => open && sub === which,
   };
 }
@@ -489,7 +483,7 @@ export function MobileMenu({
   const acts = menuActions(items, onClose);
   return (
     <>
-      <RootSheet key={lv.epoch} open={lv.rootOpen} onClose={lv.onRootClose}>
+      <RootSheet open={lv.rootOpen} onClose={lv.onRootClose}>
         <ChatRow items={items} acts={acts} />
         <ActionRow
           id="m-historia-abrir"
