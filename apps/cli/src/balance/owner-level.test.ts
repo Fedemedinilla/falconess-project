@@ -9,7 +9,12 @@ import {
 } from "@falconess/sim";
 import { describe, expect, it } from "vitest";
 import { REFERENCE_HANGAR, referencePolicy } from "../policy.js";
-import { advanceAtOwnerLevel, ownerRaceInput, scaleStats } from "./owner-level.js";
+import {
+  advanceAtOwnerLevel,
+  OWNER_LEVEL_SLACK,
+  ownerRaceInput,
+  scaleStats,
+} from "./owner-level.js";
 
 const R = getRuleset("v3");
 const ctx: SimContext = { ruleset: R, content: loadSeasonContent("v3") };
@@ -54,4 +59,28 @@ describe("E1's owner level (ADR-0012, owner 2026-11-28)", () => {
     }
     expect(goalWeeks).toBe(2);
   });
+
+  it("when a failed training skips the exact scaled value, the closest one runs (e1v3a-168, week 24)", () => {
+    let s: SeasonState = startSeason(ctx, "e1v3a-168", {
+      kind: "start",
+      falconessId: "cernicala",
+      hangar: [...REFERENCE_HANGAR],
+      parents: [],
+      difficulty: "exigente",
+    });
+    while (s.status === "active" && s.turn < 24)
+      s = advanceAtOwnerLevel(ctx, s, referencePolicy(ctx, s), 1200);
+    expect(s.turn).toBe(24);
+    const input = referencePolicy(ctx, s);
+    const real = goalRaceState(ctx, s, input);
+    const o = ownerRaceInput(ctx, s, input, 1200);
+    expect(real && o).toBeTruthy();
+    if (!real || !o) return;
+    const target = scaleStats(real.stats, 1200, 1200);
+    for (const k of Object.keys(target) as (keyof typeof target)[])
+      expect(Math.abs(o.raced[k] - target[k])).toBeLessThanOrEqual(OWNER_LEVEL_SLACK);
+    expect(advanceAtOwnerLevel(ctx, s, input, 1200).stats).toEqual(
+      advanceSeason(ctx, s, input).stats,
+    );
+  }, 60_000);
 });
