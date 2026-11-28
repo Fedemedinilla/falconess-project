@@ -167,6 +167,31 @@ test("a chat topic shows as read at once: the story store tells the game (2.4)",
   await expect(topic).toHaveAttribute("data-read", "true");
 });
 
+for (const [save, seen] of [
+  ["peregrina-w39-insp", false],
+  ["peregrina-w48", true],
+] as const)
+  test(`the chat answers in «${seen ? "tú" : "usted"}» ${seen ? "after" : "before"} chapter 6 is seen in the season (${save})`, async ({
+    page,
+  }) => {
+    // her «usted → tú» beat (peregrina-first-vos, week 39): the seeded saves have seen it or not
+    const seeded = await seedRun(page, save);
+    expect(seeded.historia.includes("peregrina-first-vos")).toBe(seen);
+    await page.goto("./");
+    await continueRun(page);
+    await expect(page.locator("#m-entrenar")).toBeEnabled();
+    await page.click("#m-menu");
+    await page.click("#m-chat-abrir");
+    const chat = page.locator("#m-chat");
+    await page.click('[data-topic="peregrina-ever-lost"]');
+    const [said, notSaid] = seen
+      ? ["chat.peregrina-ever-lost.3-tu", "chat.peregrina-ever-lost.3"]
+      : ["chat.peregrina-ever-lost.3", "chat.peregrina-ever-lost.3-tu"];
+    await expect(chat).toContainText(t(said));
+    await expect(chat).not.toContainText(t(notSaid));
+    expect(t(seen ? said : notSaid)).toContain("¿Por qué preguntas?");
+  });
+
 test("the season's end opens the run's one «Exportar» sheet, and closing it gives the focus back", async ({
   page,
 }) => {
