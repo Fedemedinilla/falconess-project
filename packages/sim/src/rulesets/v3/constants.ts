@@ -785,6 +785,11 @@ export const FIELD: FieldConstants = {
  */
 export const SEASON: SeasonConstants = {
   ...SEASON_V2,
+  /**
+   * ADR-0018 (owner 2026-10-29, T4): the workshop is a button of the week's menu that does not
+   * spend the week. The old `workshop` input still replays the v3 runs saved before it.
+   */
+  workshopVisit: true,
   simulatorSkillPoints: 15,
   skillPointsByPlace: [100, 75, 60, 45, 35, 25, 20, 10],
   /**

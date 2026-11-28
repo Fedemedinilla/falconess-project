@@ -8,7 +8,7 @@ import { rollCrewPresence } from "./hangar.js";
 import { inspire } from "./inheritance.js";
 import { actionBlock } from "./rules.js";
 import { applyOuting, applyRest, applyTraining } from "./training.js";
-import { applyWorkshop } from "./workshop.js";
+import { applyWorkshop, applyWorkshopVisit } from "./workshop.js";
 
 export class InvalidInputError extends Error {}
 
@@ -66,6 +66,7 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
   checkRuleset(ctx, state);
   if (state.status === "ended") throw new InvalidInputError("season has ended");
   if (input.kind === "start") throw new InvalidInputError("season already started");
+  if (input.kind === "workshop:visit") return visitWorkshop(ctx, state, input);
   const d = draft(state);
   const rng = rngForInput(d.seed, d.inputsApplied);
   d.inputsApplied += 1;
@@ -86,7 +87,28 @@ export function advanceSeason(ctx: SimContext, state: SeasonState, input: RunInp
   return d;
 }
 
-type ActionInput = Exclude<RunInput, { kind: "start" } | { kind: "event:choose" }>;
+/**
+ * ADR-0018: a workshop visit is no week. It takes no Rng and is not counted in `inputsApplied`, so
+ * the week's draws (`seed/inputsApplied`) are the same with or without it; only a ruleset with
+ * `workshopVisit` takes it, and an event pending waits for its choice as for any other input.
+ */
+function visitWorkshop(
+  ctx: SimContext,
+  state: SeasonState,
+  input: Extract<RunInput, { kind: "workshop:visit" }>,
+): SeasonState {
+  if (!ctx.ruleset.season.workshopVisit)
+    throw new InvalidInputError(`ruleset ${ctx.ruleset.version} has no workshop visit`);
+  if (state.pendingEvent) throw new InvalidInputError("an event is pending: expected event:choose");
+  const d = draft(state);
+  applyWorkshopVisit(ctx, d, input);
+  return d;
+}
+
+type ActionInput = Exclude<
+  RunInput,
+  { kind: "start" } | { kind: "event:choose" } | { kind: "workshop:visit" }
+>;
 
 /** A race position belongs to a goal race week (ADR-0008): any other week rejects it. */
 function checkPosition(ctx: SimContext, s: SeasonState, input: RunInput): void {
@@ -147,7 +169,8 @@ export function goalRaceState(
 ): SeasonState | undefined {
   checkRuleset(ctx, state);
   if (state.status === "ended" || state.pendingEvent) return undefined;
-  if (input.kind === "start" || input.kind === "event:choose") return undefined;
+  if (input.kind === "start" || input.kind === "event:choose" || input.kind === "workshop:visit")
+    return undefined;
   const d = draft(state);
   checkPosition(ctx, d, input); // the season rejects it, so the rebuild does too
   if (!goalForTurn(ctx, d)) return undefined;

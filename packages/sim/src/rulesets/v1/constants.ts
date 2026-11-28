@@ -111,6 +111,12 @@ const SEASON_V1 = {
   eventChance: 600,
   maxLearnedSkills: 6,
   maxParts: 4,
+  /**
+   * ADR-0018: whether the season takes `workshop:visit`, a workshop visit that does not spend the
+   * week (no week closed, no vigor, not counted in `inputsApplied`). Off in v1 and v2, whose
+   * workshop is the week-long `workshop`; ruleset v3 turns it on.
+   */
+  workshopVisit: false as boolean,
   rerollBaseScrap: 40,
   /** Scrap earned per race by place (index 0 = 1st). */
   scrapByPlace: [60, 40, 30, 20, 15, 10, 10, 10] as const,

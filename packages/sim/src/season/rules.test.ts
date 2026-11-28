@@ -185,6 +185,14 @@ describe("mood drift (ADR-0006 D5)", () => {
       ).toBe(0);
   });
 
+  it("skips over a v3 workshop visit, which is no week (ADR-0018)", () => {
+    const visit: [WeekKind, string[]] = ["workshop:visit", ["log.workshop"]];
+    const trained: [WeekKind, string[]] = ["train:agility", ["log.train.ok"]];
+    expect(trainingStreak(logOf(trained, visit, trained))).toBe(2);
+    expect(trainingStreak(logOf(trained, visit))).toBe(1);
+    expect(trainingStreak(logOf(trained, ["rest", ["log.rest"]], visit, visit))).toBe(0);
+  });
+
   it("v2: 2 % for the first two, then +4 % per training in a row; v1 never drifts", () => {
     expect([1, 2, 3, 4, 5, 6].map((n) => moodDriftPm(RULESET_V2, n))).toEqual([
       20, 20, 60, 100, 140, 180,
