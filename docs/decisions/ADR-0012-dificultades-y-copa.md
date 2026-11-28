@@ -52,8 +52,8 @@ sea una copa, al estilo de la URA, contra una rival que se arme sobre su propia 
    «Gerifalte» y no «némesis» por la patente del Nemesis System (T20).
 
 4. **Baranda E1 (Exigente):** a nivel del dueño (jugadora atenta con stats × 1,2) entre el 55 y el
-   85 % de las temporadas pasan todas las metas, en cada Falconess. Se mide con
-   `.work/play1/zz-cup.ts` hasta que entre a `pnpm balance:barandas`.
+   85 % de las temporadas pasan todas las metas, en cada Falconess. Se medía con
+   `.work/play1/zz-cup.ts`; desde el 2026-11-28 la mide `pnpm balance:barandas` (método al final).
 
 ## Medida (60 temporadas por Falconess, 2 semillas de carrera)
 
@@ -79,3 +79,24 @@ Con 100 % la final sería una moneda que no se entrena: se descartó.
 - Pendiente: llevar E1 a `pnpm balance:barandas` y hacer que la política de referencia de Exigente
   se acerque al dueño (las dos jugadoras «expertas» probadas no lo lograron: la diferencia del dueño
   viene de un uso más equilibrado del Simulador).
+
+## E1 entra a `pnpm balance:barandas` (2026-11-28)
+
+Método aprobado por el dueño el 2026-11-28. Queda escrito acá porque el script que medía E1
+(`.work/play1/zz-cup.ts`) estaba fuera del repo y se perdió:
+
+- Exigente, con la jugadora atenta (la política de referencia de la v3), que decide toda la
+  temporada con sus stats reales.
+- El × 1,2 se aplica solo al correr cada carrera de meta: sus stats de esa semana (después del
+  entrenamiento, el estado de `goalRaceState`) × 1,2, redondeadas hacia abajo y con el tope de
+  Exigente (1200). Nada más se escala: entrenar, descansar y las inspiraciones usan las reales
+  (`apps/cli/src/balance/owner-level.ts`).
+- Peregrina lleva dos cajas de 2★, una de Agilidad y una de Resistencia (la fila de ADR-0013 y lo
+  que pide ADR-0015). De cada caja solo cuenta el factor de stat: el de posición es su peor letra
+  (Pelotón) con 1★, sin distancia ni habilidades. Cernícala y Caracara, sin cajas (ADR-0015: «siguen
+  midiéndose como antes»).
+- 1000 temporadas por Falconess y base, en las dos bases (`e1v3a`, `e1v3b`), como B1-B8.
+- Umbral sin cambios: pasa si el porcentaje de temporadas que pasan todas las metas
+  (`endReason` `completed`) está entre 55 y 85 % (valor puntual) en cada Falconess y base. El
+  intervalo de Wilson al 95 % solo marca FRÁGIL, como en las demás barandas. Si E1 falla, el
+  comando falla.

@@ -173,6 +173,15 @@ del prototipo, commit `f08bde5`).
 - **Si falla:** el cambio no entra hasta que vuelva a dar cero.
 - **Hoy:** pasa (INV-1 a INV-14).
 
+### E1 · Exigente al nivel del dueño (ADR-0012)
+
+- **2026-11-28:** E1 entra a `pnpm balance:barandas` y bloquea como B1-B8 (método aprobado por el
+  dueño ese día, escrito en ADR-0012 al final). Exigente, jugadora atenta con sus stats reales; solo
+  cada carrera de meta corre con sus stats × 1,2 (tope 1200); Peregrina con dos cajas de 2★
+  (Agilidad y Resistencia), las otras dos sin cajas; 1000 temporadas por Falconess y base.
+- **Umbral (sin cambios):** entre 55 y 85 % de las temporadas pasan todas las metas, en cada
+  Falconess y base (valor puntual; Wilson al 95 % marca frágil).
+
 ## 5. Las cuatro palancas
 
 Todo cambio de balance usa una sola de estas palancas, se mide con las ocho barandas y lleva su nota
