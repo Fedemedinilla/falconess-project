@@ -131,3 +131,47 @@ export function specThresholdNumbers(spec: GuardrailSpec): Partial<Record<Guardr
   for (const id of GUARDRAIL_IDS) out[id] = [...new Set(sets[id])].sort((a, b) => a - b);
   return out;
 }
+
+/** One E1 cell: a Falconess's Exigente seasons in one seed base. */
+export type E1Row = { falconess: string; base: string; runs: number; completed: number };
+
+/** The E1 cell's numbers and its own verdict. */
+export type E1Cell = E1Row & { pct: number; lo: number; hi: number; ok: boolean; fragile: boolean };
+
+/**
+ * E1 (ADR-0012 §4, method approved by the owner on 2026-11-28): the share of Exigente seasons
+ * that pass every goal is within [minPct, maxPct] in every Falconess and seed base, on the point
+ * value (the limits pass). As every guardrail (barandas-balance.md §3), the Wilson 95 % interval
+ * only marks a pass FRÁGIL. A missing cell, or one with fewer seasons than the gate asks, leaves
+ * E1 unmeasured (`ok` null): it cannot be said to pass.
+ */
+export function e1Outcome(
+  rows: readonly E1Row[],
+  gate: { minPct: number; maxPct: number; seasonsPerBase: number },
+  want: { falconess: readonly string[]; bases: readonly string[] },
+): GuardrailOutcome & { cells: E1Cell[] } {
+  const cells: E1Cell[] = [];
+  let measured = true;
+  for (const falconess of want.falconess)
+    for (const base of want.bases) {
+      const r = rows.find((x) => x.falconess === falconess && x.base === base);
+      if (r === undefined || r.runs < gate.seasonsPerBase) {
+        measured = false;
+        continue;
+      }
+      const pct = (100 * r.completed) / r.runs;
+      const [lo, hi] = wilson95(r.completed, r.runs);
+      const ok = pct >= gate.minPct && pct <= gate.maxPct;
+      cells.push({
+        ...r,
+        pct,
+        lo,
+        hi,
+        ok,
+        fragile: ok && crosses(lo, hi, gate.minPct, gate.maxPct),
+      });
+    }
+  if (!measured) return { ok: null, fragile: false, cells };
+  const ok = cells.every((c) => c.ok);
+  return { ok, fragile: ok && cells.some((c) => c.fragile), cells };
+}

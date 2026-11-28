@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   adrThresholdNumbers,
   crosses,
+  e1Outcome,
   GUARDRAIL_IDS,
   type GuardrailSpec,
   guardrailStatus,
@@ -70,6 +71,48 @@ describe("barandas: the verdict rules", () => {
       "| B7  | Rendimiento | `pnpm bench` p95 < 5 ms |",
     ].join("\n");
     expect(adrThresholdNumbers(md)).toEqual({ B6: [1.05], B7: [5] });
+  });
+});
+
+describe("E1 (ADR-0012): Exigente at the owner's level", () => {
+  const gate = { minPct: 55, maxPct: 85, seasonsPerBase: 100 };
+  const want = { falconess: ["a", "b"], bases: ["x", "y"] };
+  const row = (falconess: string, base: string, completed: number, runs = 100) => ({
+    falconess,
+    base,
+    runs,
+    completed,
+  });
+  const rows = (c: number[]) => [
+    row("a", "x", c[0] ?? 0),
+    row("a", "y", c[1] ?? 0),
+    row("b", "x", c[2] ?? 0),
+    row("b", "y", c[3] ?? 0),
+  ];
+
+  it("passes on the point value inside 55-85 % in every Falconess and base", () => {
+    const o = e1Outcome(rows([70, 66, 72, 68]), gate, want);
+    expect(o).toMatchObject({ ok: true, fragile: false });
+    expect(o.cells.map((c) => c.pct)).toEqual([70, 66, 72, 68]);
+  });
+
+  it("fails when one Falconess in one base is under 55 or over 85 (the limits pass)", () => {
+    expect(e1Outcome(rows([70, 54, 72, 68]), gate, want).ok).toBe(false);
+    expect(e1Outcome(rows([70, 66, 86, 68]), gate, want).ok).toBe(false);
+    expect(e1Outcome(rows([55, 85, 70, 70]), gate, want).ok).toBe(true);
+  });
+
+  it("a pass whose Wilson interval crosses 55 or 85 is fragile, not a fail", () => {
+    const o = e1Outcome(rows([57, 70, 70, 70]), gate, want);
+    expect(o).toMatchObject({ ok: true, fragile: true });
+    expect(guardrailStatus(o)).toBe("FRÁGIL");
+  });
+
+  it("no verdict (SIN DATOS) with a missing cell or fewer seasons than the gate asks", () => {
+    expect(e1Outcome(rows([70, 70, 70, 70]).slice(1), gate, want).ok).toBeNull();
+    const short = [...rows([70, 70, 70]).slice(0, 3), row("b", "y", 70, 99)];
+    expect(e1Outcome(short, gate, want).ok).toBeNull();
+    expect(e1Outcome(rows([10, 70, 70, 70]).slice(0, 3), gate, want).ok).toBeNull();
   });
 });
 
