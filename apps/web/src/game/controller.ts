@@ -6,7 +6,14 @@
  * Framework-free on purpose: React subscribes through `useGame` (useSyncExternalStore), tests
  * drive it directly. Snapshots are immutable and change identity only when something changed.
  */
-import type { BlackBox, ContentIndex, Difficulty, RunInput, SeasonState } from "@falconess/schema";
+import type {
+  BlackBox,
+  ContentIndex,
+  Difficulty,
+  RaceLog,
+  RunInput,
+  SeasonState,
+} from "@falconess/schema";
 import {
   advanceSeason,
   CURRENT_RULESET,
@@ -61,6 +68,12 @@ export type Step = {
   readonly before: SeasonState;
   readonly input: RunInput;
   readonly after: SeasonState;
+  /**
+   * The full log of the goal race the step ran, as `act` ran it (ADR-0017, open decision 6): the
+   * race screen reads it instead of running the race again (`stepRaceLog`). Absent when the step
+   * ran no goal race, and after a load: then the race is rebuilt, the same log byte for byte.
+   */
+  readonly raceLog?: RaceLog;
 };
 
 export type GameSnapshot = {
@@ -187,10 +200,15 @@ export class GameController {
     if (!run) return false;
     if (expectInputs !== undefined && run.inputs.length !== expectInputs) return false;
     try {
-      const after = advanceSeason(this.#ctx(run.rulesetVersion), run.state, input);
+      let raceLog: RaceLog | undefined;
+      const after = advanceSeason(this.#ctx(run.rulesetVersion), run.state, input, {
+        onGoalRace: (log) => {
+          raceLog = log;
+        },
+      });
       this.#setRun(
         { ...run, inputs: [...run.inputs, input], state: after },
-        { before: run.state, input, after },
+        { before: run.state, input, after, ...(raceLog === undefined ? {} : { raceLog }) },
         false,
       );
       return true;

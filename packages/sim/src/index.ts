@@ -75,7 +75,12 @@ export {
   WINGS_R4,
   WINGS_V3,
 } from "./rulesets/v3/switches.js";
-export { advanceSeason, goalRaceState, InvalidInputError } from "./season/advance.js";
+export {
+  type AdvanceOptions,
+  advanceSeason,
+  goalRaceState,
+  InvalidInputError,
+} from "./season/advance.js";
 export { type MoodCause, rngForInput, type SimContext, seasonContext } from "./season/context.js";
 export { crewBonusPm, crewSyncOf, inSync } from "./season/crew-sync.js";
 export { difficultyOf, seasonGoalsOf, statCap } from "./season/difficulty.js";

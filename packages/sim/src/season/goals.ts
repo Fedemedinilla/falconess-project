@@ -1,5 +1,6 @@
 import type {
   Position,
+  RaceLog,
   RaceOutcome,
   RaceResult,
   RunInput,
@@ -32,20 +33,24 @@ export function inputPosition(input: RunInput): Position | undefined {
 /**
  * Run this turn's goal race (if any) on the race engine (docs/race-engine.md 21.2): the field of
  * `goalRaceSetup` with the player in `position` (absent = her wings' default, ADR-0008), seed
- * `${seed}/race/${turn}`, `detail: "results"`. Takes no draw from the season's per-input Rng.
+ * `${seed}/race/${turn}`, `detail: "results"` (or "full" with `onLog`). Takes no draw from the season's per-input Rng.
  * Records the result with the position she ran (a DNF is last place with `maxTicks`), pays scrap
  * and (v3) skill points by place, persists the equipped frame's durability (ADR-0003 D35) and maps the outcome. Returns
- * the outcome, or undefined when no race was due.
+ * the outcome, or undefined when no race was due. With `onLog` the race runs with detail "full"
+ * and its log goes to `onLog` (P7: the same places, times and durability as "results") once the
+ * season has read it, so a caller that changes the log cannot change the state.
  */
 export function runGoalRace(
   ctx: SimContext,
   d: Draft,
   position?: Position,
+  onLog?: (log: RaceLog) => void,
 ): RaceOutcome | undefined {
   const goal = goalForTurn(ctx, d);
   if (!goal) return undefined;
   const { course, raceSeed, entries } = goalRaceSetup(ctx, d, goal, position);
-  const log = simulateRace(ctx.ruleset, entries, course, raceSeed, { detail: "results" });
+  const detail = onLog ? "full" : "results";
+  const log = simulateRace(ctx.ruleset, entries, course, raceSeed, { detail });
   const me: RaceResult | undefined = log.results.find((r) => r.runnerId === PLAYER_RUNNER_ID);
   const entry = entries.find((e) => e.runnerId === PLAYER_RUNNER_ID);
   if (!me || !entry) throw new Error(`goal race ${raceSeed}: no result for the player`);
@@ -77,5 +82,6 @@ export function runGoalRace(
     place > goal.minPlace ? "goal-failed" : place === 1 ? "win" : place <= 3 ? "podium" : "lose";
   d.lastRace = { turn: d.turn, outcome };
   if (raceLossCostsMood(ctx.ruleset, place)) changeMood(d, -1, "race-loss");
+  onLog?.(log);
   return outcome;
 }

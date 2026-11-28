@@ -754,6 +754,8 @@ test("the emblem with no scene after it: the race card takes the menu's place on
   expect(await present(page, '[data-layer="emblem"][data-layer-phase="out"]')).toBe(true);
   await expect(page.locator("#m-correr")).toBeFocused();
   await page.click("#m-correr", { timeout: 2000 });
+  // the race's screen paints first; its replay mounts at the next frame (open decision 6)
+  await page.clock.runFor(20);
   await expect(page.locator("#m-carrera-vuelo")).toBeVisible();
 });
 

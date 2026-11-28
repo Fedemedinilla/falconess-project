@@ -13,6 +13,7 @@ import { formatSeconds } from "../text/format";
 import { gameText, ui } from "../text/ui";
 import { cx } from "../ui/cx";
 import { useFlowTimer } from "../ui/flowTimer";
+import { useNextFrame } from "../ui/nextFrame";
 import { isRepeatTap } from "../ui/tap";
 import { Glyph } from "./Glyph";
 import { useLeaving } from "./LayerHost";
@@ -256,15 +257,17 @@ export function RaceScreen({
         <RaceBody again={opened}>
           <div className={s.body}>
             {racing && log ? (
-              <div className={s.flightWrap}>
-                <Replay
-                  log={log}
-                  labels={pageLabels()}
-                  idPrefix="m-carrera"
-                  onReveal={() => onNext(play)}
-                  minSpeed={pace === "fast" ? 2 : undefined}
-                />
-              </div>
+              <LateReplay late={!opened}>
+                <div className={s.flightWrap}>
+                  <Replay
+                    log={log}
+                    labels={pageLabels()}
+                    idPrefix="m-carrera"
+                    onReveal={() => onNext(play)}
+                    minSpeed={pace === "fast" ? 2 : undefined}
+                  />
+                </div>
+              </LateReplay>
             ) : null}
           </div>
           {stage === "finish" && result ? (
@@ -297,6 +300,19 @@ export function RaceScreen({
 function RaceBody({ again, children }: { again: boolean; children: ReactNode }) {
   const [fade] = useState(again);
   return <div className={cx(s.raceBody, fade && s.replayIn)}>{children}</div>;
+}
+
+/**
+ * The replay, mounted one frame after the race's screen (ADR-0017, open decision 6): its first
+ * frame and its measures (≈ 180 ms at 4×) no longer hold the tap that opened the screen, which
+ * paints first with its head and «Saltar». A hidden tab paints no frame: it mounts when the tab
+ * shows. Mounted again inside the screen («Ver otra vez», `late` false) it comes at once, with its
+ * own fade (§2.6). Read at its mount.
+ */
+function LateReplay({ late, children }: { late: boolean; children: ReactNode }) {
+  const [wait] = useState(late);
+  const ready = useNextFrame();
+  return !wait || ready ? children : null;
 }
 
 /**

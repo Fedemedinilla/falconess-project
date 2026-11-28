@@ -436,6 +436,26 @@ decisión abierta del dueño (la 6, abajo). Los números, a 4×:
 | `choose` («Descansar» en semana de carrera) | 186 / 224 ms           | 220 / 259 ms                |
 | `run` («Correr»)                            | 266 / 359 ms           | 340 / 418 ms                |
 
+**Después de la decisión 6 (2026-11-28).** «Correr» guarda la carrera que corrió y monta la
+repetición un cuadro después de la pantalla de carrera (abajo). Medido con un solo método, antes
+(12353f7) y después, en la misma sesión y uno detrás del otro: el script
+`/home/user/measure/taps.mjs` (fuera del repo; el de 2026-11-17 ya no estaba), la app construida
+servida con `vite preview`, Chromium a 390 × 844, la CPU frenada por CDP solo alrededor de cada
+toque, 10 muestras de cada toque, cada una en una página nueva con `peregrina-w10`, la entrada
+`click` de Event Timing. El contenedor estaba más cargado que el 17 (otros agentes), así que los
+valores absolutos son más altos que los de arriba; lo que vale es la comparación:
+
+| Toque                     | Proceso antes → después (mediana / p90) | A la pintura antes → después |
+| ------------------------- | --------------------------------------- | ---------------------------- |
+| `run`, 4×                 | 533 / 660 → 162 / 249 ms                | 652 / 768 → 232 / 328 ms     |
+| `run`, 1×                 | 120 / 162 → 52 / 80 ms                  | 184 / 264 → 68 / 104 ms      |
+| `choose`, 4× (referencia) | 314 / 368 → 298 / 361 ms                | 364 / 488 → 340 / 432 ms     |
+| `choose`, 1× (referencia) | 52 / 73 → 77 / 86 ms                    | 76 / 96 → 108 / 128 ms       |
+
+«Correr» baja a un tercio: lo que queda en el toque es la carrera del commit (ahora con detalle
+«full») y el montaje de la pantalla sin la repetición. `choose` no cambió de código; su diferencia es
+el ruido del contenedor (otra corrida del mismo día, antes → después: 229 → 233 ms de proceso a 4×).
+
 ## Comprobaciones en aparatos
 
 Lo que las pruebas no pueden reemplazar; las hace el dueño a mano:
@@ -497,6 +517,16 @@ El código mantiene lo de hoy hasta que el dueño responda:
      carrera arranca un cuadro más tarde);
    - pintar el toque primero y simular en la tarea siguiente: rompe la regla del toque y el cambio
      de pantalla juntos y agrega un estado intermedio que vive solo en React.
+
+   **Resuelta para «Correr» el 2026-11-28:** el dueño eligió la segunda y la tercera.
+   `advanceSeason` acepta `onGoalRace`, que corre la carrera del objetivo con detalle «full» y
+   entrega su registro (P7: el mismo estado); `act` lo guarda en su `Step.raceLog` y la pantalla de
+   carrera lo lee (`stepRaceLog`) en vez de simularla otra vez. Una recarga no tiene registro
+   guardado y la vuelve a simular: el mismo registro, byte por byte. La repetición se monta un cuadro
+   después de la pantalla (`LateReplay`): la cabecera y «Saltar» se pintan con el toque; con la
+   pestaña oculta espera a que se muestre; «Ver otra vez» la monta en el acto, con su fundido. El
+   toque bajó a un tercio (Medición). **Elegir la acción queda como está**, por decisión del dueño:
+   su carrera de vista previa sigue en el toque.
 7. Un final que una versión anterior guardó después del entrenamiento de la semana 48 (Caracara,
    Cernícala; también la partida de prueba 1 del dueño) abre una vez en el resultado de ese
    entrenamiento, con la semana 48 en el HUD, y a los ≈ 2 s pasa al final: la versión anterior iba

@@ -34,6 +34,14 @@ export function goalRaceLog(
 }
 
 /**
+ * The full log of the goal race `step` ran: the one `act` kept (no race run again), else rebuilt
+ * (`goalRaceLog`), the same log byte for byte.
+ */
+export function stepRaceLog(ctx: SimContext, step: Step): RaceLog | undefined {
+  return step.raceLog ?? goalRaceLog(ctx, step.before, step.input);
+}
+
+/**
  * Step `index` of a run (1 = the first input after `start`), rebuilt by replaying the inputs
  * before it: how a past turn, and its goal race, can be shown again.
  */
