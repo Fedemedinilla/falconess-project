@@ -19,7 +19,7 @@ entrenador.
 Después de su cuarta victoria la invitaron a la gran Larga de fin de temporada, 3600 metros. Se
 anotó antes de que nadie pudiera hablar. Su entrenador sabía que le faltaba resistencia y no quiso
 romperle la ilusión. En la semana 44 conoció a Milana, tirada en el pasto: «¿Tú eres la rápida? Qué
-agotador».
+pereza».
 
 En la Larga, todas las demás eran fondistas. Faltando 400 metros se quedó literalmente sin fuerzas:
 las alas seguían abiertas y ella ya no tenía con qué empujarlas. Primero la pasó Milana, respirando
@@ -63,7 +63,7 @@ es un final temprano.
 | Cap. 6 · Tú tenías razón                    | semana 39                     | canon          |
 | Cap. 7 · La cima                            | antes de la meta 4            | canon          |
 | Cap. 7 · La invitación                      | gana la meta 4                | canon          |
-| Cap. 8 · Qué agotador                       | semana 44                     | canon          |
+| Cap. 8 · Qué pereza                         | semana 44                     | canon          |
 | Cap. 9 · La Larga                           | antes de la meta 5            | canon          |
 | Final · ¿Y ahora qué se hace? (la Larga)    | corre la Larga y no la gana   | **canon**      |
 | Final · Mi Falconess modelo                 | gana la Larga                 | **«¿y si…?»**  |
@@ -79,5 +79,5 @@ la meta.
 
 - Peregrina perdió la gran Larga, última, sin fuerzas, después de cuatro victorias; Milana la ganó.
 - Cernícala lloró después de perder contra ella, y Peregrina no lo entendió.
-- Milana duerme en las tribunas y dice «qué agotador».
+- Milana duerme en las tribunas y dice «qué pereza».
 - Nunca: que Peregrina ganó la Larga, ni que Milana es su Falconess modelo (eso es del «¿y si…?»).

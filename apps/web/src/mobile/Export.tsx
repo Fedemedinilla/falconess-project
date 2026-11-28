@@ -140,13 +140,7 @@ export function ExportSheet({
 
   if (!mounted) return null;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-exportar"
-      aria-labelledby="m-exportar-titulo"
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id="m-exportar" aria-labelledby="m-exportar-titulo">
       {item && (
         <div className={s.dl}>
           <h2 className={s.dlTitle} id="m-exportar-titulo" tabIndex={-1}>
@@ -250,13 +244,7 @@ export function HistorySheet({
   });
   if (!mounted) return null;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-historial"
-      aria-labelledby="m-historial-titulo"
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id="m-historial" aria-labelledby="m-historial-titulo">
       <div className={s.dl}>
         <h2 className={s.dlTitle} id="m-historial-titulo" tabIndex={-1}>
           {ui("ui.m.history.title")}

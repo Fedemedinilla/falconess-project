@@ -7,10 +7,10 @@ import { freezeAt, holdClock, opacityOf, settleUpdates } from "./motion";
  * The phone game's sheets (plan-final 2.5): each `<dialog>` is in the page only while it is open
  * or closing, closes natively before it leaves (the focus goes back to what opened it), and a close
  * request (Escape) closes it as its own «Cerrar» does. 6.9 (M8, M9): a sheet comes in over 220 ms
- * (opacity and a 16 px rise) with its scrim, and on its close request it fades out over 180 ms, still
- * modal (the page stays out of reach) but already released (what it started goes on at once, under
- * it), showing what it showed, then a timer closes it; the chat comes in over 240 ms and leaves over
- * 180 ms the same way.
+ * (opacity and a 16 px rise) with its scrim. On its close request it closes natively at once (open
+ * decision 2, 2026-11-28: the page is in reach from that tap, the focus back where it was) and an
+ * id-less, inert copy of what it showed fades out over 180 ms with its scrim, until a timer removes
+ * it; the chat comes in over 240 ms and leaves over 180 ms.
  */
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -133,7 +133,7 @@ function scrimOf(page: Page, selector: string): Promise<number> {
     .evaluate((el) => Number(getComputedStyle(el, "::backdrop").opacity));
 }
 
-test("«Menú» comes in over 220 ms with its scrim; «Cerrar» fades it out over 180 ms, the page out of reach until it leaves (M9)", async ({
+test("«Menú» comes in over 220 ms with its scrim; «Cerrar» closes it at once and its copy fades out over 180 ms, the page in reach (M9, open decision 2)", async ({
   page,
 }) => {
   await page.clock.install();
@@ -153,22 +153,69 @@ test("«Menú» comes in over 220 ms with its scrim; «Cerrar» fades it out ove
   expect(await opacityOf(page, "#m-menu-dialogo")).toBeGreaterThanOrEqual(0.99);
   expect(await scrimOf(page, "#m-menu-dialogo")).toBeGreaterThanOrEqual(0.99);
   await page.click("#m-menu-cerrar");
-  // its close request: it fades out where it stood, its buttons out of reach, the page too
-  await expect(sheet).toHaveAttribute("data-closing");
-  expect(await sheet.evaluate((el) => (el as HTMLElement).inert)).toBe(true);
-  expect(await reachable(page, "#m-entrenar")).toBe(false);
+  // its close request: the sheet is closed at once, the focus back on «Menú», the page in reach;
+  // a copy of it fades out where it stood, with its scrim, id-less and out of reach
+  await expect(sheet).not.toHaveAttribute("open");
+  await expect(page.locator("#m-menu")).toBeFocused();
+  expect(await reachable(page, "#m-entrenar")).toBe(true);
+  const copy = page.locator("[data-sheet-copy]");
+  await expect(copy).toHaveCount(1);
+  await expect(copy).toHaveAttribute("data-closing");
+  await expect(copy).toHaveAttribute("aria-hidden", "true");
+  expect(await copy.evaluate((el) => (el as HTMLElement).inert)).toBe(true);
+  await expect(copy.locator("[id]")).toHaveCount(0);
+  await expect(copy.locator("h2")).toHaveText(t("ui.m.menu"));
   await freezeAt(page, 90);
-  const fading = await opacityOf(page, "#m-menu-dialogo");
+  const fading = await opacityOf(page, "[data-sheet-copy]");
   expect(fading).toBeGreaterThan(0.05);
   expect(fading).toBeLessThan(0.95);
+  const scrim = await scrimOf(page, "[data-sheet-copy]");
+  expect(scrim).toBeGreaterThan(0.05);
+  expect(scrim).toBeLessThan(0.95);
   await freezeAt(page, 180);
-  expect(await opacityOf(page, "#m-menu-dialogo")).toBeLessThan(0.05);
-  // its timer closes it: out of the page, the focus back on «Menú», the page in reach
+  expect(await opacityOf(page, "[data-sheet-copy]")).toBeLessThan(0.05);
+  // its timer removes the copy and the sheet leaves the page
   await page.clock.runFor(200);
   await settleUpdates(page);
+  await expect(copy).toHaveCount(0);
   await expect(sheet).toHaveCount(0);
   await expect(page.locator("#m-menu")).toBeFocused();
   expect(await reachable(page, "#m-entrenar")).toBe(true);
+});
+
+test("a tap on the game while a sheet fades out reaches it: «Entrenar» inside «Menú»'s 180 ms (open decision 2, 2026-11-28)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await startMobile(page, "peregrina");
+  await page.click("#m-menu");
+  await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+  // the clock held: the sheet's 180 ms never end while the tap comes
+  await holdClock(page);
+  await page.click("#m-menu-cerrar");
+  await page.click("#m-entrenar", { timeout: 3000 });
+  await expect(page.locator("#m-entrenar-agility")).toBeVisible();
+});
+
+test("a sheet asked open again while it fades out opens on its title (open decision 2, 2026-11-28)", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await startMobile(page, "peregrina");
+  await page.click("#m-menu");
+  await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+  await holdClock(page);
+  await page.click("#m-menu-cerrar");
+  await page.click("#m-menu", { timeout: 3000 });
+  await expect(page.locator("#m-menu-dialogo[open]")).toBeVisible();
+  await expect(page.locator("#m-menu-titulo")).toBeFocused();
+  // one «Menú» on screen: the copy that was fading went with the open
+  await expect(page.locator("[data-sheet-copy]")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await page.clock.runFor(200);
+  await settleUpdates(page);
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(page.locator("#m-menu")).toBeFocused();
 });
 
 test("an outing pick: the race week's effects come at once under the closing sheet, which shows what it showed until it leaves (6.9, F10)", async ({
@@ -189,11 +236,15 @@ test("an outing pick: the race week's effects come at once under the closing she
   await page.click(`#m-salida-con-${crew}`);
   // at once (the clock held): released at its close request, so the effects of the outing are up
   await expect(page.locator("#m-efectos")).toHaveCount(1);
-  await expect(sheet).toHaveAttribute("data-closing");
-  // the sheet fades out with the bond it showed (the week has moved on under it)
-  expect(await bond.getAttribute("aria-label")).toBe(before);
+  // the sheet's copy fades out with the bond it showed (the week has moved on under it)
+  const copy = page.locator("[data-sheet-copy]");
+  await expect(copy).toHaveAttribute("data-closing");
+  expect(
+    await copy.locator(`li[data-crew="${crew}"] [role="img"]`).getAttribute("aria-label"),
+  ).toBe(before);
   await page.clock.runFor(200);
   await settleUpdates(page);
+  await expect(copy).toHaveCount(0);
   await expect(sheet).toHaveCount(0);
   await expect(page.locator("#m-efectos")).toHaveCount(1);
 });
@@ -206,11 +257,13 @@ test("a panel's sheet keeps its title and its panel while it fades out (6.9)", a
   await expect(sheet.locator("#m-metas")).toBeVisible();
   await holdClock(page);
   await page.click("#m-panel-hoja-cerrar");
-  await expect(sheet).toHaveAttribute("data-closing");
-  await expect(page.locator("#m-panel-hoja-titulo")).toHaveText(t("ui.m.panel.goals"));
-  await expect(sheet.locator("#m-metas [data-turn]").first()).toBeAttached();
+  const copy = page.locator("[data-sheet-copy]");
+  await expect(copy).toHaveAttribute("data-closing");
+  await expect(copy.locator("h2")).toHaveText(t("ui.m.panel.goals"));
+  await expect(copy.locator("[data-turn]").first()).toBeAttached();
   await page.clock.runFor(200);
   await settleUpdates(page);
+  await expect(copy).toHaveCount(0);
   await expect(sheet).toHaveCount(0);
 });
 

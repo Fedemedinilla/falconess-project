@@ -281,10 +281,17 @@ otro camino, así no se acumulan.
   van cuando su fundido terminó, contado desde el cuadro en que empieza (no desde el toque). Las
   salidas (capas, hojas, el chat) usan `--m-ease-in`, que acelera sin cortar al final: su último
   cuadro ya está casi transparente.
-- **Hojas:** entran en 220 ms subiendo 16 px y se van en 180 ms desvaneciéndose con lo que mostraban;
-  se liberan al pedir el cierre, pero siguen siendo modales e `inert` hasta cerrarse (decisión
-  abierta 2). Escape y el atrás de Android cierran igual. El foco vuelve a lo que las abrió (o, si
-  eso ya no está, a lo que abrió aquello); una capa que entró debajo toma el foco al cerrarse. El
+- **Hojas:** entran en 220 ms subiendo 16 px y se van en 180 ms desvaneciéndose con lo que mostraban.
+  **Desde el 2026-11-28 (decisión abierta 2, resuelta):** al pedir el cierre el `<dialog>` se cierra
+  de verdad en ese momento (deja de ser modal: el toque siguiente ya llega al juego, y una hoja que
+  se vuelve a pedir abre otra vez el mismo `<dialog>` sobre su título) y los 180 ms los juega una
+  copia de lo que mostraba (`fadingCopy` en `ui/useModalDialog.ts`), con su velo: sin ids, `inert`,
+  `aria-hidden`, sin tomar punteros, en la capa de arriba como popover manual, la misma regla que
+  siguen las capas del juego; un temporizador la quita. Con movimiento reducido no hay copia.
+  Escape y el atrás de Android cierran igual. El foco vuelve a lo que las abrió (o, si eso ya no
+  está, está oculto o `inert`, a lo que abrió aquello; si quedaba en la hoja cerrada, la deja); una
+  hoja que vuelve a abrirse desde una hoja que ella misma abrió («Volver» de un nivel del «Menú»)
+  conserva lo que la abrió primero. Una capa que entró debajo toma el foco al cerrarse. El
   chat entra en 240 ms y se va en 180; es una hoja dentro de la columna (así lo contienen el marco de
   la tableta y la columna del escritorio): mientras está abierto, el juego de abajo, su aviso y el
   panel del escritorio (que se apaga) no reciben toques ni teclas, su «Cerrar» toma el foco, Escape
@@ -344,7 +351,10 @@ pantalla de ajustes de la D y el riel de la E.
   (Hangar · Propulsor · Visor · apagado), Música (sí · no), Ritmo (Normal · Rápido · Directo),
   Idioma (Español · English). Cambiar el estilo de sonido sigue sonando su «success», así se oye lo
   que se eligió; cambiar el idioma vuelve a dibujar la página entera (`main.tsx`), como siempre, y
-  con eso el menú se cierra.
+  con eso el menú se cierra. **Desde el 2026-11-28 (dueño) vuelve a abrirse en «Ajustes»**, con el
+  idioma nuevo apretado y su título enfocado: una marca de un solo uso en `sessionStorage`
+  (`falconess.juego.ajustes`, `takeSettingsReturn` en `MenuSheet.tsx`) la escribe el toque y la lee
+  y borra el montaje siguiente, así que recargar no abre nada. Al cerrarse, el foco vuelve a «Menú».
 - **«Partida»** (`#m-partida-hoja`): Exportar partida · Temporadas anteriores · Vista de pruebas ·
   Nueva temporada (dos toques, el segundo el confirmar). El confirmar ocupa la misma caja que la
   fila, así nada de abajo se mueve entre los dos toques.
@@ -352,9 +362,9 @@ pantalla de ajustes de la D y el riel de la E.
   la raíz se va abajo, abren arriba de todo con su propio título enfocado (`tabIndex={-1}`,
   `aria-labelledby`), y su «Volver» (el chevrón al lado del título) vuelve a traer la raíz, también
   sobre su título. **Escape y el gesto atrás cierran el menú entero**, desde cualquier nivel, y el
-  foco vuelve a «Menú». Un «Volver» dentro de los 180 ms en que la raíz se está yendo le da una
-  clave nueva a su `<dialog>`: si se reusara el viejo, que sigue abierto y debajo del nivel en la
-  capa de arriba, volvería sin el foco en su título.
+  foco vuelve a «Menú». Un «Volver» dentro de los 180 ms en que la raíz se está yendo la abre otra
+  vez sobre su título: desde el 2026-11-28 la raíz ya está cerrada en ese momento (§9), así que se
+  fue la clave nueva que le daba a su `<dialog>`.
 - **La ventana ancha:** la pestaña «Menú» del panel muestra los mismos ajustes **en línea** (hay
   lugar: no hay segundo nivel), con el mismo componente (`SettingsCards`), así un ajuste se pone
   igual en los dos lados. Las pestañas del panel siguen con los cuatro paneles, y su «Menú» sigue
@@ -385,13 +395,18 @@ Dos correcciones del dueño sobre lo construido, con una captura de la semana 10
   `ui.trackWeek !== state.turn`. Al abrirse, `MenuScreen` despacha `{type:"trackShown", turn}`: ir
   al taller y volver no lo abre de nuevo, cerrarlo lo deja cerrado esa semana, y la próxima semana
   de carrera lo abre otra vez. Nunca tapa «Entrenar» ni las píldoras: el cajón es un ítem del flujo
-  de la pantalla, arriba de la tira de stats.
+  de la pantalla, arriba de la tira de stats. Desde el 2026-11-28 la tarjeta (y la pestaña) se
+  apoyan 4 px sobre la tira y crecen solo hacia arriba, así no llegan al «Registro» del riel a
+  360 × 740 ni en la tableta (`mobile-flow.spec.ts` mide la caja contra el riel y las acciones).
 - **La puerta a la tarjeta para planear** es ahora la tarjeta del cajón (`#m-pista`): en una semana
   de carrera corre `onAction("race")` (D3) en vez de abrir la hoja de la pista, porque la tarjeta
   para planear ya muestra el perfil, lo que pide y las cuatro posiciones. En una semana sin carrera
   el cajón se comporta como siempre (la hoja `#m-pista-dialogo`), y en una semana de carrera esa
   hoja sigue a un toque desde Metas. La pestaña lleva `data-race` cuando hay carrera: es lo que
-  miran los e2e desde que no hay cartel.
+  miran los e2e desde que no hay cartel. El nombre de la tarjeta dice adónde lleva (2026-11-28):
+  «Planear la carrera: Sprint» (`ui.m.track.plan`) en una semana de carrera, «Ver la pista: …» en
+  las otras; las claves del cartel que ya nadie leía (`ui.m.race.week`, `ui.m.race.open`) se
+  borraron.
 - **Los botones de la escena van después del dibujo.** El dueño: «los botones de auto, registro y
   saltar aparecen antes que el background + líneas negras de la cinemática. Eso hace que se vean
   como que no son parte del todo». El orden es ahora fondo → desenfoque y título del capítulo →
@@ -494,9 +509,11 @@ El código mantiene lo de hoy hasta que el dueño responda:
 1. ~~El aviso de una escena no sale si el jugador deja la pantalla durante los 0,8 s de la salida
    de esa escena (6.2).~~ **Resuelta el 2026-11-18:** el dueño sacó el aviso de escena entero, así
    que no hay nada que mostrar ni que descartar (§7).
-2. Un toque sobre el juego durante los 180 ms en que se cierra una hoja no hace nada, porque la hoja
-   que se cierra sigue siendo modal (6.9). Alternativa: cerrarla de verdad al pedir el cierre y
-   desvanecer una copia inerte.
+2. ~~Un toque sobre el juego durante los 180 ms en que se cierra una hoja no hace nada, porque la
+   hoja que se cierra sigue siendo modal (6.9). Alternativa: cerrarla de verdad al pedir el cierre
+   y desvanecer una copia inerte.~~ **Resuelta el 2026-11-28:** el dueño eligió la alternativa; la
+   regla está en §9 y la prueban `mobile-sheets.spec.ts` (un toque a «Entrenar» y una hoja pedida
+   otra vez dentro de los 180 ms).
 3. «Correr» suena solo con su toque (5.10).
 4. En una semana de carrera, el menú debajo de los efectos de la acción muestra los stats de antes de
    la carrera.

@@ -114,12 +114,98 @@ test("a race week's menu has no bar: the track drawer opens by itself, over no a
   await expect(page.locator("#m-pista")).toBeHidden();
 });
 
+/** The reading rail's four buttons, under «Menú». */
+const RAIL = ["#m-leer-guide", "#m-leer-goals", "#m-leer-crews", "#m-leer-log"];
+
+for (const size of [
+  { width: 360, height: 740 },
+  { width: 390, height: 844 },
+  { width: 1024, height: 768 },
+]) {
+  test(`the race week's drawer card sits over the stats strip, into no rail or action button at ${size.width}×${size.height} (owner 2026-11-28)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await seedRun(page, "peregrina-w10");
+    await page.goto("./");
+    await continueRun(page);
+    const card = page.locator("#m-pista");
+    await expect(card).toBeVisible();
+    // the card's fade-and-grow ends before its box is measured
+    await page.waitForTimeout(400);
+    const box = await card.boundingBox();
+    if (!box) throw new Error("the drawer's card has no box");
+    const hit = async (id: string) => {
+      const other = page.locator(id);
+      if ((await other.count()) === 0) return;
+      const b = await other.boundingBox();
+      if (!b) return;
+      const apart =
+        box.x + box.width <= b.x ||
+        b.x + b.width <= box.x ||
+        box.y + box.height <= b.y ||
+        b.y + b.height <= box.y;
+      expect(apart, `${id} under the card`).toBe(true);
+    };
+    for (const id of [...RAIL, ...ACTIONS]) await hit(id);
+  });
+}
+
+for (const who of ["peregrina", "cernicala", "caracara"])
+  test(`the week menu's splash fades out from her hips and is gone at the stats strip: ${who} (owner 2026-11-28)`, async ({
+    page,
+  }) => {
+    await startMobile(page, who);
+    for (const size of [
+      { width: 360, height: 640 },
+      { width: 360, height: 740 },
+      { width: 390, height: 844 },
+      { width: 1024, height: 768 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(size);
+      await expect(page.locator("#m-entrenar")).toBeVisible();
+      const at = `${who} at ${size.width}×${size.height}`;
+      const fade = await page.evaluate(() => {
+        const img = document
+          .querySelector<HTMLElement>("#m-entrenar")
+          ?.closest("[data-screen]")
+          ?.querySelector<HTMLElement>("[aria-hidden] > img");
+        const hero = img?.parentElement;
+        const strip = document.querySelector("#m-stats");
+        if (!hero || !img || !strip) return undefined;
+        const style = getComputedStyle(hero);
+        return {
+          mask: style.maskImage,
+          gone:
+            hero.getBoundingClientRect().bottom -
+            Number.parseFloat(style.getPropertyValue("--foot")),
+          strip: strip.getBoundingClientRect().top,
+          height: img.getBoundingClientRect().height / hero.getBoundingClientRect().height,
+        };
+      });
+      if (!fade) throw new Error(`${at}: no splash`);
+      expect(fade.mask, at).toMatch(/^linear-gradient\(/);
+      // fully see-through at the strip's top, never lower
+      expect(Math.abs(fade.gone - fade.strip), at).toBeLessThanOrEqual(1);
+      // and she keeps her size: 82 % of the screen, breathing (up to 0.8 % taller)
+      expect(fade.height, at).toBeGreaterThanOrEqual(0.815);
+      expect(fade.height, at).toBeLessThanOrEqual(0.83);
+    }
+  });
+
 test("the drawer's card is the planning card's door on a race week (D3, owner 2026-11-18)", async ({
   page,
 }) => {
   await seedRun(page, "peregrina-w10");
   await page.goto("./");
   await continueRun(page);
+  // its name says where it leads: the race's plan, not the track's sheet (owner 2026-11-28)
+  await expect(page.locator("#m-pista")).toHaveAttribute(
+    "aria-label",
+    t("ui.m.track.plan", { course: "Sprint" }),
+  );
+  await expect(page.locator("#m-pista")).not.toHaveAttribute("aria-haspopup", "dialog");
   await page.click("#m-pista");
   // the planning card, with everything the bar's card showed: the track, what it asks, the four
   // positions, «Volver» and «Elegir la acción»
@@ -168,12 +254,21 @@ test("the track drawer opens again on the next race week, and on no other week (
   // week 39 has no race: the tab says so and nothing opens by itself
   await expect(page.locator("#m-pista-tab")).not.toHaveAttribute("data-race", "");
   await expect(page.locator("#m-pista")).toBeHidden();
+  // its card opens the track's sheet there, and says so (owner 2026-11-28)
+  await expect(page.locator("#m-pista")).toHaveAttribute(
+    "aria-label",
+    textPattern("ui.m.track.open"),
+  );
   // week 40 has one (its inheritance card first: the drawer waits for it, then opens)
   await page.click("#m-descansar");
   await settle(page);
   expect(await week(page)).toBe(40);
   await expect(page.locator("#m-pista-tab")).toHaveAttribute("data-race", "");
   await expect(page.locator("#m-pista-tab")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#m-pista")).toHaveAttribute(
+    "aria-label",
+    textPattern("ui.m.track.plan"),
+  );
   // closed, it stays closed for week 40 only
   await page.click("#m-pista-tab");
   await expect(page.locator("#m-pista")).toBeHidden();
@@ -205,8 +300,8 @@ test("a pick that closes its sheet does not hold what it starts: the outing's cr
   await holdClock(page);
   await page.click(`#m-salida-con-${crew}`);
   // the sheet is released at its close request: the week's effects are there with the pick, under
-  // the sheet on its way out (6.9), which then leaves
-  expect(await present(page, "#m-salida-cuadrilla[data-closing]")).toBe(true);
+  // the sheet's copy on its way out (6.9, open decision 2), which then leaves
+  expect(await present(page, "[data-sheet-copy][data-closing]")).toBe(true);
   expect(await present(page, '#m-efectos [data-fx="bond"]')).toBe(true);
   await page.clock.runFor(200);
   await expect(page.locator("#m-salida-cuadrilla")).toHaveCount(0);

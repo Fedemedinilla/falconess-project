@@ -33,13 +33,7 @@ export function OutingSheet({
   const bondMax = Math.floor(100 / S.bondLevelStep);
   const syncLevel = S.crewSync ? bondLevel(ctx, S.crewSync.minBond) : undefined;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-salida-cuadrilla"
-      aria-labelledby="m-salida-titulo"
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id="m-salida-cuadrilla" aria-labelledby="m-salida-titulo">
       <div className={s.dl}>
         <h2 className={s.dlTitle} id="m-salida-titulo" tabIndex={-1}>
           {ui("ui.m.outing.title")}

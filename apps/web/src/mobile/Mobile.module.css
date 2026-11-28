@@ -655,6 +655,16 @@
   --k: 0.82;
   --ty: 0.235;
   --tx: 0.5;
+  /* owner 2026-11-28: her legs no longer show behind and between the week's buttons. From about
+     her hips (52 % of the screen for all three, or higher on a short screen) she fades out, and is
+     gone at the stats strip's top: the strip, the bar and the pills take this much of the screen's
+     foot whatever its size (less on a short screen, below). Her size does not change. */
+  --foot: 266px;
+  mask-image: linear-gradient(
+    to bottom,
+    #000 min(52%, calc(100% - var(--foot) - 64px)),
+    transparent calc(100% - var(--foot))
+  );
 }
 .glow2 {
   position: absolute;
@@ -1760,8 +1770,10 @@
 .sheet::backdrop {
   background: var(--scrim);
 }
-/* M9: it comes in rising 16 px with its scrim; on its close request it fades out where it stands
-   (`data-closing`, useModalDialog: modal and inert until a timer closes it) */
+/* M9: it comes in rising 16 px with its scrim. On its close request the `<dialog>` closes at once
+   and its copy fades out where it stood, with its scrim (`data-closing`, useModalDialog's
+   `fadingCopy`: a manual popover, id-less and inert, that takes no pointer, so the page under it
+   is in reach from that tap; ADR-0017 §9, open decision 2) */
 .sheet[open] {
   animation: sheetIn var(--m-dur-sheet-in) var(--m-ease-out) both;
 }
@@ -1774,6 +1786,7 @@
 }
 .sheet[data-closing]::backdrop {
   animation: scrimOut var(--m-dur-sheet-out) var(--m-ease-in) both;
+  pointer-events: none;
 }
 @keyframes sheetIn {
   from {
@@ -2892,7 +2905,10 @@
     0 0 6px #fff;
   pointer-events: none;
 }
-/* the track's tab at the screen's left edge and its card sliding out (owner 2026-11-14) */
+/* the track's tab at the screen's left edge and its card sliding out (owner 2026-11-14). The card
+   and the tab stand on the stats strip, 4 px over it (the drawer's foot is the strip's top less the
+   column's 10 px gap), and grow upward only as tall as they are: the card reaches the reading rail
+   on no phone of 740 px or more nor on the tablet (owner 2026-11-28; mobile-flow.spec measures it) */
 .drawer {
   position: relative;
   height: 0;
@@ -2902,7 +2918,7 @@
 .drawerTab {
   position: absolute;
   left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
-  bottom: 10px;
+  bottom: -6px;
   width: 34px;
   padding: 10px 0;
   border-radius: 0 12px 12px 0;
@@ -2929,7 +2945,8 @@
   position: absolute;
   left: 26px;
   right: 0;
-  bottom: 6px;
+  /* the card's own 8 px margin below: its face ends 4 px over the strip */
+  bottom: -14px;
   /* owner 2026-11-14: a short, soft fade-and-grow out of the tab instead of a long slide */
   transform-origin: left center;
   transform: translateX(-10px) scale(0.96);
@@ -3106,6 +3123,9 @@
   --c: #6d8397;
 }
 @media (max-height: 700px) {
+  .hero {
+    --foot: 220px;
+  }
   .app .tbar {
     height: 58px;
   }

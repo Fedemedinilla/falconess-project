@@ -649,6 +649,11 @@ test("language: the switch in «Menú» keeps the run in play", async ({ page })
   await page.click("#m-grupo-ajustes");
   await page.click("#m-idioma-en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  // «Ajustes» comes back after the redraw (owner 2026-11-28), where «Español» is a value by its
+  // own name: closed, nothing of the game is left in Spanish
+  await expect(page.locator("#m-ajustes-hoja[open]")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog")).toHaveCount(0);
   expect(await week(page)).toBe(2);
   expect(await spanishLines(page)).toEqual([]);
   // kept for the next visit

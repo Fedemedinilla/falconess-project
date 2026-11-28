@@ -62,8 +62,8 @@ function Chat({
   const [typing, setTyping] = useState(false);
   const feed = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  // its «Cerrar» takes the focus as it opens, or once a sheet it opened under («Menú», on its way
-  // out and still modal) has gone, as a layer's control does
+  // its «Cerrar» takes the focus as it opens, or once the sheet it was opened from («Menú», still
+  // modal as the chat mounts) has closed, as a layer's control does
   const close = useRef<HTMLButtonElement>(null);
   useLayerFocus(close, !closing);
   // Escape closes it, as a native sheet's close request does

@@ -190,6 +190,35 @@ test("«Ajustes»: every value is shown, the current one pressed, one tap sets a
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
+test("a new language reopens «Menú» at «Ajustes», the new language pressed; a reload opens nothing (owner 2026-11-28)", async ({
+  page,
+}) => {
+  await startMobile(page, "peregrina");
+  await page.click("#m-menu");
+  await page.click("#m-grupo-ajustes");
+  await expect(page.locator("#m-ajustes-hoja-titulo")).toBeFocused();
+  await page.click("#m-idioma-en");
+  // the page is drawn again in English (every per-language cache starts over), and the sheet is
+  // back where the switch was made, its title focused
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("#m-ajustes-hoja[open]")).toBeVisible();
+  await expect(page.locator("#m-ajustes-hoja-titulo")).toHaveText("Settings");
+  await expect(page.locator("#m-ajustes-hoja-titulo")).toBeFocused();
+  await expect(page.locator("#m-idioma-en")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#m-idioma-es")).toHaveAttribute("aria-pressed", "false");
+  // closed, the focus goes back to «Menú»
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(page.locator("#m-menu")).toBeFocused();
+  // a reload is no language switch: the menu stays closed
+  await page.reload();
+  await continueRun(page);
+  await settle(page);
+  await expect(page.locator("#m-entrenar")).toBeEnabled();
+  await page.waitForTimeout(300);
+  await expect(page.locator("dialog")).toHaveCount(0);
+});
+
 test("«Partida»: a new season still takes two taps, and nothing moves between them", async ({
   page,
 }) => {

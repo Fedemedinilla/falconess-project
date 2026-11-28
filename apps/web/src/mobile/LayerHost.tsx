@@ -165,8 +165,9 @@ export function useLeaving(): Layer["kind"] | undefined {
 /**
  * The layer's primary control takes the focus while it is in front (L7), without scrolling: at its
  * mount (a restored week too), or once `ready` (the inheritance card's «Continuar» once revealed).
- * A layer that comes in under a sheet on its way out (an outing's pick, a scene from «Historia»:
- * the sheet is still modal, 6.9) takes it once the sheet has closed, if the focus it gave back to
+ * A layer that comes in with a sheet's close request (an outing's pick, a scene from «Historia»:
+ * the sheet is still modal while the layer mounts, in the same commit) takes it once the sheet has
+ * closed, which is at that request (6.9, ADR-0017 open decision 2), if the focus it gave back to
  * what opened it found nothing live.
  */
 export function useLayerFocus(ref: RefObject<HTMLElement | null>, ready = true): void {

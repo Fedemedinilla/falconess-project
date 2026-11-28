@@ -28,7 +28,13 @@ import { raceWings } from "./flow/week";
 import { InspirationOverlay } from "./Inspiration";
 import { LayerHost } from "./LayerHost";
 import { type MenuAction, MenuScreen } from "./MenuScreen";
-import { MenuItems, type MenuItemsProps, MobileMenu } from "./MenuSheet";
+import {
+  MenuItems,
+  type MenuItemsProps,
+  type MenuLevel,
+  MobileMenu,
+  takeSettingsReturn,
+} from "./MenuSheet";
 import s from "./Mobile.module.css";
 import { trainingCards, vigorView, weekMenu } from "./model";
 import type { Track } from "./music";
@@ -109,6 +115,15 @@ export function RunView({
   const flowView = useFlow({ run, title: title !== undefined });
   const { flow, ui: flowUi, cmd, dispatch, pace, reduced } = flowView;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAt, setMenuAt] = useState<MenuLevel>();
+  // a language switch from «Ajustes» remounted the page: «Menú» comes back there, opened from
+  // «Menú» (where the focus goes back when it closes). Once: the flag is gone when read.
+  useEffect(() => {
+    if (!takeSettingsReturn() || desk) return;
+    document.getElementById("m-menu")?.focus({ preventScroll: true });
+    setMenuAt("settings");
+    setMenuOpen(true);
+  }, [desk]);
   const [exporting, setExporting] = useState<ExportItem>();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [outingOpen, setOutingOpen] = useState(false);
@@ -598,7 +613,17 @@ export function RunView({
       />
       {title}
       {/* the wide screen's panel is its menu: one set of the menu's buttons on the page */}
-      {!desk && <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={items} />}
+      {!desk && (
+        <MobileMenu
+          open={menuOpen}
+          at={menuAt}
+          onClose={() => {
+            setMenuOpen(false);
+            setMenuAt(undefined);
+          }}
+          items={items}
+        />
+      )}
     </div>,
     desk && !flow.solo ? (
       <div className={cx(s.app, s.appContents)}>

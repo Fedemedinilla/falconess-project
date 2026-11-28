@@ -21,14 +21,32 @@ export const EXPLAIN_KEY = "falconess.pruebas.explicaciones";
  */
 export const SEEN_KEY = "falconess.pruebas.vista";
 
+/** Written and removed at once, to see whether a store takes writes. */
+const PROBE_KEY = "falconess.pruebas.sonda";
+
 /** `localStorage` when the browser lets the page use it, else undefined. */
 export function browserStore(): KeyValueStore | undefined {
   try {
     const store = globalThis.localStorage;
     if (!store) return undefined;
-    const probe = "falconess.pruebas.sonda";
-    store.setItem(probe, "1");
-    store.removeItem(probe);
+    store.setItem(PROBE_KEY, "1");
+    store.removeItem(PROBE_KEY);
+    return store;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * `sessionStorage` when the browser lets the page use it, else undefined: what lasts only this
+ * tab's visit (a one-shot flag that a remount reads back), never what a player keeps.
+ */
+export function sessionStore(): KeyValueStore | undefined {
+  try {
+    const store = globalThis.sessionStorage;
+    if (!store) return undefined;
+    store.setItem(PROBE_KEY, "1");
+    store.removeItem(PROBE_KEY);
     return store;
   } catch {
     return undefined;

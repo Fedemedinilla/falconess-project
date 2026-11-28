@@ -507,13 +507,7 @@ export function PanelSheet({
   const { title, children } = useHeld({ title: openTitle, children: openChildren }, open);
   if (!mounted) return null;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-panel-hoja"
-      aria-labelledby="m-panel-hoja-titulo"
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id="m-panel-hoja" aria-labelledby="m-panel-hoja-titulo">
       <div className={s.dl}>
         <h2 className={s.dlTitle} id="m-panel-hoja-titulo" tabIndex={-1}>
           {title}

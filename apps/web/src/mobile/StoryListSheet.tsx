@@ -19,13 +19,7 @@ export function StoryListSheet({
   const { ref, mounted } = useModalDialog(open, onClose);
   if (!mounted) return null;
   return (
-    <dialog
-      ref={ref}
-      className={s.sheet}
-      id="m-historia"
-      aria-labelledby="m-historia-titulo"
-      onClose={onClose}
-    >
+    <dialog ref={ref} className={s.sheet} id="m-historia" aria-labelledby="m-historia-titulo">
       <div className={s.dl}>
         <h2 className={s.dlTitle} id="m-historia-titulo" tabIndex={-1}>
           {ui("ui.m.story.title")}
