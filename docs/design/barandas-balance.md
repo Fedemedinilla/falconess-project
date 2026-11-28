@@ -181,6 +181,10 @@ del prototipo, commit `f08bde5`).
   (Agilidad y Resistencia), las otras dos sin cajas; 1000 temporadas por Falconess y base.
 - **Umbral (sin cambios):** entre 55 y 85 % de las temporadas pasan todas las metas, en cada
   Falconess y base (valor puntual; Wilson al 95 % marca frágil).
+- **2026-11-28, con el taller sin semana (ADR-0018):** Caracara pasaba 89 %; su final de Exigente va
+  con `fieldPm` 1100 (sus propias metas, ADR-0014) y queda en 80,1 / 78,6 %. Peregrina baja a 64-65 %
+  por la Inteligencia de las semanas que ya no van al taller (Milana la convierte en sus stats): es
+  del diseño y sigue en la banda (`temporada-v3.md`, «El taller sin semana en Exigente»).
 
 ## 5. Las cuatro palancas
 

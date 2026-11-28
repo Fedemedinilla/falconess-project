@@ -44,9 +44,25 @@ describe("v3 goals (balance lever «calendario/metas», ADR-0010)", () => {
     }
   });
   it("keeps each Falconess's season her own: only Peregrina's goals carry grades (ADR-0014)", () => {
-    for (const [id, goals] of Object.entries({ ...cal.goals, ...cal.exigenteGoals }))
+    for (const [id, goals] of Object.entries(cal.goals ?? {}))
       if (id !== "peregrina")
         for (const g of goals) expect([g.grade, g.fieldPm], id).toEqual([undefined, undefined]);
+    // Exigente: a field of her own only where E1 asked for it (2026-11-28, Caracara's final)
+    const own: Record<string, readonly (number | undefined)[]> = {
+      cernicala: [undefined, undefined, undefined, undefined, undefined, undefined],
+      caracara: [undefined, undefined, undefined, undefined, undefined, 1100],
+    };
+    for (const [id, fields] of Object.entries(own)) {
+      const goals = cal.exigenteGoals?.[id] ?? [];
+      expect(
+        goals.map((g) => g.grade),
+        id,
+      ).toEqual(fields.map(() => undefined));
+      expect(
+        goals.map((g) => g.fieldPm),
+        id,
+      ).toEqual(fields);
+    }
   });
   it("puts her goals where her identity is: Peregrina short, Cernícala Media, Caracara Larga", () => {
     const dist = (f: string) => v3.getFalconess(f).seasonGoals.map((g) => distance(g.courseId));

@@ -249,7 +249,8 @@
         "courseId": "canyon",
         "minPlace": 1,
         "cup": "final",
-        "mirrorRival": true
+        "mirrorRival": true,
+        "fieldPm": 1100
       }
     ]
   },

@@ -66,3 +66,11 @@ entero en las dos bases:
   guardadas.
 - **Una entrada por operación:** más entradas en el log sin ganar nada; una visita ya agrupa lo que
   se hizo de una vez.
+
+## Qué se midió (2026-11-28)
+
+`pnpm balance:barandas` entero, en las dos bases (detalle en `docs/design/temporada-v3.md`, «El taller
+sin semana en Exigente»): B1-B6 y B8 sin cambios. E1 se movió: Peregrina 70,5 → 64,9 % (v3a) y
+69,5 → 64,2 % (v3b), por la Inteligencia de las semanas que ya no van al taller y que Milana sigue con
+su total (del diseño, dentro de la banda); Caracara 84,8 → 89,2 % y 84,9 → 89,1 %, fuera de la banda,
+corregida con el `fieldPm` 1100 de su final de Exigente (80,1 / 78,6 %).
